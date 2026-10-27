@@ -1,63 +1,213 @@
-# CS2 IP Changer
+<p align="center">
+  <img src="docs/assets/banner.png" alt="CS2 IP Changer: route CS2 and Steam through your phone's mobile data" width="900">
+</p>
 
-Sends CS2 and Steam through your Android phone's mobile data, so community servers see your carrier's IP and never your home IP. If you get IP banned, change the IP from the app and join again. There's a Steam account switcher in it too.
+<p align="center">
+  <a href="https://github.com/Sepd0x/cs2-ip-changer/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/Sepd0x/cs2-ip-changer?include_prereleases&label=release&style=flat-square&labelColor=1b1f24&color=2B74C2"></a>
+  <img alt="Windows 10 and 11, 64-bit" src="https://img.shields.io/badge/Windows-10%20%7C%2011%20x64-3A3A3A?style=flat-square&labelColor=1b1f24">
+  <img alt="Telemetry: none" src="https://img.shields.io/badge/telemetry-none-1A7F37?style=flat-square&labelColor=1b1f24">
+  <a href="https://github.com/Sepd0x/cs2-ip-changer/attestations"><img alt="Builds: attested by GitHub Actions" src="https://img.shields.io/badge/builds-attested-3A3A3A?style=flat-square&labelColor=1b1f24"></a>
+</p>
 
-> Alpha build, so expect bugs. If something breaks your connection, Settings > Restore network removes every route and firewall rule the app added.
+<p align="center">
+  <a href="https://github.com/Sepd0x/cs2-ip-changer/releases"><img src="docs/assets/download.svg" alt="Download for Windows" width="264"></a>
+</p>
 
-![Connection tab](docs/screenshots/connection.png)
+<p align="center">
+  <sub>Admin is needed for the routes and firewall rules. It never touches the game process or its files. No telemetry, no account. <a href="#check-your-download">Check your download</a>.</sub>
+</p>
+
+<p align="center">
+  <a href="#how-it-works">How it works</a>
+  &nbsp;·&nbsp;
+  <a href="#setup">Setup</a>
+  &nbsp;·&nbsp;
+  <a href="#faq">FAQ</a>
+  &nbsp;·&nbsp;
+  <a href="#if-something-goes-wrong">Troubleshooting</a>
+  &nbsp;·&nbsp;
+  <a href="CHANGELOG.md">Changelog</a>
+</p>
+
+CS2 IP Changer sends CS2 and Steam through your Android phone's mobile data, so community servers see your carrier's IP and not your home IP. If you get IP banned, change the IP from the app and join again. There's a Steam account switcher in it too.
+
+> [!WARNING]
+> This is an alpha, so expect bugs. If something breaks your connection, **Settings > Restore network** removes every route and firewall rule the app added.
+
+> [!NOTE]
+> Playing over mobile data usually means higher ping, more jitter and the odd lost packet compared to your home connection, so the game can feel laggier. How much depends on your carrier, the signal where the phone sits and how busy the cell is. In Game only mode the rest of your PC stays on your home connection.
+
+<p align="center">
+  <img src="docs/screenshots/connection.png" alt="The Connection tab: protection status, the IP servers see next to your home IP, phone status and live checks" width="900">
+</p>
+
+## Who it's for
+
+- You got IP banned on a community server and want back in.
+- You play HvH or other community servers and would rather keep your home IP out of their logs.
+- You switch between alt accounts a lot, or you stream and want your home IP and Steam logins off screen.
+
+## How it works
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/how-it-works-dark.svg">
+  <img src="docs/assets/how-it-works-light.svg" alt="Your PC sends CS2 and Steam over the USB cable to the phone, which uses mobile data to reach the server. The server sees the carrier's IP. Your home router still carries the browser, Discord and downloads, but it is blocked for CS2 and your servers." width="100%">
+</picture>
+
+The phone shares its mobile data with the PC over USB tethering (or its hotspot). The app routes CS2, Steam and your servers through it and blocks them on your home connection, so those servers only see the carrier's IP.
 
 ## What it does
 
-- Only CS2, Steam and the servers on your list go through the phone. Your browser, Discord and downloads stay on your home connection and don't eat your mobile data. You can send the whole PC through the phone instead if you want.
-- A Windows Firewall rule works as a kill switch. Your listed servers are blocked on every adapter except the phone, so if the cable comes out the game loses connection instead of falling back to your home IP.
-- `cs2.exe` itself can only use the phone connection. That covers servers you join from the in-game browser or from an invite.
-- Change IP turns mobile data (or airplane mode) off and on over ADB until the carrier hands you a new IP. The old ones stay in a list so you can see they really changed.
-- The Connection tab checks everything live: firewall, routes, the IP servers see compared to your home IP, whether the phone is really on mobile data, and whether Steam uses the same connection as the game. That last check is there because otherwise servers kick you with "No Steam logon". There's a leak test as well.
-- Paste servers as `IP:port`, `connect IP:port` or `steam://connect/...` links. The list shows name, map, players and ping, and you join with one click.
-- The account switcher logs into your saved Steam accounts without typing passwords. Ctrl+Alt+Q closes CS2, logs into the next account and opens the game again, and it works while you're in game. Each account shows VAC, game and trade bans and its cooldown timer. Hide logins keeps usernames off your stream.
+| Feature | Details |
+|---|---|
+| Game-only routing | CS2, Steam and the servers on your list go through the phone. Your browser, Discord and downloads stay on your home connection and don't eat your mobile data. You can send the whole PC through the phone instead. |
+| Kill switch | A Windows Firewall rule blocks your listed servers on every adapter except the phone, and `cs2.exe` can only use the phone connection. If the cable comes out, the game loses connection instead of falling back to your home IP. |
+| Change IP | Turns mobile data (or airplane mode) off and on over ADB until the carrier hands you a new IP. Old IPs stay in a list so you can see they really changed. |
+| Change IP and rejoin | When a server kicks or bans you, the app plays a sound and offers to get a new IP and join the last server again (only once protection is confirmed). <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd> does it from inside the game. |
+| New range check | Tells you if the new IP is in a new /16 or the same one as before, because some admins ban the whole range. It can keep trying until the range changes. |
+| Live checks | Firewall, routes, the IP servers see next to your home IP, whether the phone is really on mobile data, and whether Steam uses the same connection as the game (otherwise servers kick you with "No Steam logon"). There's a leak test too. |
+| Server list | Paste `IP:port`, `connect IP:port` or `steam://connect/...` links. You see name, map, players and ping, and join with one click. |
+| Account switcher | Switches between the Steam accounts saved on your PC without typing passwords. <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Q</kbd> closes CS2, logs into the next account and opens the game again, even mid-game. Each account shows VAC, game and trade bans and its cooldown. |
+| Stream friendly | Hide logins keeps usernames off screen, and your home IP stays masked in the app. |
+| Updates | Once a day at most it checks for a new version and only installs it if the SHA-256 from the release matches. You can turn this off. |
 
-![Servers tab](docs/screenshots/servers.png)
-
-![Accounts tab](docs/screenshots/accounts.png)
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/servers.png" alt="The Servers tab: your server list with name, map, players and ping"></td>
+    <td width="50%"><img src="docs/screenshots/accounts.png" alt="The Accounts tab: saved Steam accounts with ban status and cooldowns"></td>
+  </tr>
+  <tr>
+    <td align="center">Servers</td>
+    <td align="center">Accounts</td>
+  </tr>
+</table>
 
 ## Setup
 
 You need Windows 10 or 11 (64-bit), admin rights and an Android phone with mobile data.
 
-1. Download `CS2IPChanger.exe` from [Releases](../../releases) and put it in its own folder.
-2. Plug the phone in by USB, turn on USB tethering and turn off the phone's Wi-Fi, so it shares mobile data and not your home Wi-Fi.
-3. Run the app (it needs admin) and paste the servers you play on into Servers.
-4. Open Connection and check that everything is green and that the IP servers see is not your home IP.
+1. Download `CS2IPChanger.exe` from [Releases](https://github.com/Sepd0x/cs2-ip-changer/releases) and put it in a folder only admins can change, like `C:\Program Files\CS2 IP Changer`. It runs as admin, so Downloads is a bad place for it.
+2. Plug the phone in by USB, turn on USB tethering and turn off the phone's Wi-Fi, so it shares mobile data and not your home Wi-Fi. While the phone's Wi-Fi is on, the app keeps your servers and CS2 blocked.
+3. Run the app (it needs admin) and paste the servers you play on into **Servers**.
+4. Open **Connection**. With CS2 and Steam running, every check should be green, and the IP servers see must not be your home IP.
+
+The exe isn't code-signed, so Windows SmartScreen may warn you the first time you run it. Click More info > Run anyway, or [check your download](#check-your-download) first.
 
 To change IP from the PC, also turn on USB debugging on the phone. If ADB isn't installed, the app can download Google's platform-tools for you (about 7 MB).
 
-The app is portable. Settings, servers and accounts are saved in `SRT_Dados` next to the exe. To uninstall, click Restore network first and then delete the folder.
+To spot kicks and bans, CS2 needs the `-condebug` launch option. The app adds it when it opens CS2, and tells you if it's missing when you start the game from Steam.
+
+The app is portable. Settings, servers and accounts are saved in `SRT_Dados` next to the exe. To uninstall, click **Restore network** first and then delete the folder.
+
+### Check your download
+
+Releases built by GitHub Actions come with a `CS2IPChanger.exe.sha256` file and a build attestation, which shows the exe was built from this repository's code. To check the attestation, install the [GitHub CLI](https://cli.github.com/), sign in once with `gh auth login` and run:
+
+```powershell
+gh attestation verify CS2IPChanger.exe -R Sepd0x/cs2-ip-changer
+```
+
+To check only the hash, put the `.sha256` file next to the exe and run this in PowerShell. It prints `True` if they match:
+
+```powershell
+(Get-FileHash .\CS2IPChanger.exe).Hash -eq (Get-Content .\CS2IPChanger.exe.sha256).Split()[0]
+```
+
+## If something goes wrong
+
+The firewall rules stay in place when you close the app, on purpose, so your IP can't leak while it's closed. To undo everything:
+
+- In the app: Settings > Restore network. It removes the routes and rules and checks that they're really gone. Protection stays off until you press Run leak test or open the app again.
+- If the window won't open: run `CS2IPChanger.exe --restore`.
+- If you already deleted the app: open [tools/restore.cmd](tools/restore.cmd), click Download raw file, right-click the file and pick Run as administrator, then restart the PC.
+
+Found a bug? [Open an issue](https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose) with the version (bottom left of the window) and the log (Log tab > Copy all). The log has your IPs in it, so blank them out before you post.
 
 ## FAQ
 
-**Can this get me VAC banned?**
+<details>
+<summary><b>Does the account switcher store my Steam password?</b></summary>
+<br>
+
+No. It uses the logins Steam already saved on your PC (the accounts where you ticked Remember me). To switch, it tells Steam which saved account to log into and restarts Steam, the same way other Steam account switchers work. The app never sees your password or your Steam Guard codes.
+</details>
+
+<details>
+<summary><b>Why does it need admin?</b></summary>
+<br>
+
+Routes and firewall rules are system settings, and Windows only lets admins change them. That's also why the exe should live in a folder only admins can change.
+</details>
+
+<details>
+<summary><b>Can this get me VAC banned?</b></summary>
+<br>
+
 It never touches the game process or its files. All it changes is Windows routing, firewall rules and which Steam account logs in. It also won't hide a cheat from VAC or any other anti-cheat, so don't use it for that.
+</details>
 
-**I'm banned on a server. Will this get me back in?**
-Yes. If it's an IP ban, change IP and join again. If they banned your Steam account too, switch to another account (Ctrl+Alt+Q), change IP and you're back on the server.
+<details>
+<summary><b>I'm banned on a server. Will this get me back in?</b></summary>
+<br>
 
-**Does it stop me from getting banned?**
+Yes. If it's an IP ban, change IP and join again. If they banned your Steam account too, switch to another account (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Q</kbd>), change IP and you're back on the server.
+</details>
+
+<details>
+<summary><b>Some admins ban a whole IP range. Does that matter?</b></summary>
+<br>
+
+After each change the app tells you whether the new IP is in a new /16 or in the same one as before. If you want it to keep going until the range changes, turn on Settings > Keep changing until the IP is in a new /16.
+</details>
+
+<details>
+<summary><b>Does it stop me from getting banned?</b></summary>
+<br>
+
 No app can stop an admin from banning you. What it does is keep your home IP out of every server's ban list, so a ban never sticks to your house and getting back in takes a few seconds.
+</details>
 
-**Why bother hiding my home IP?**
+<details>
+<summary><b>Why bother hiding my home IP?</b></summary>
+<br>
+
 Anyone running a community server can see the IP of every player who joins, and IP bans are tied to it. With the phone's IP, nobody gets your home connection to DDoS it, and after a ban you change IP and keep playing on the same servers.
+</details>
 
-**My carrier uses CGNAT. Is that a problem?**
+<details>
+<summary><b>My carrier uses CGNAT. Is that a problem?</b></summary>
+<br>
+
 No. You share a public IP with other customers and servers see that shared one. Change IP still works, but sometimes the carrier gives you the same IP back, so the app keeps trying (you set how many times).
+</details>
 
-**Can I use the phone's Wi-Fi hotspot instead of a cable?**
+<details>
+<summary><b>Will my ping be worse?</b></summary>
+<br>
+
+Usually, yes. Mobile data adds latency and jitter, and some cells drop packets when they're busy, so expect a higher ping than at home and a game that can feel less smooth. A good 5G or 4G signal helps a lot: put the phone near a window, keep it charging and don't run other heavy stuff on it. The ping column in Servers is measured through the phone, so it shows what you'll get before you join.
+</details>
+
+<details>
+<summary><b>Can I use the phone's Wi-Fi hotspot instead of a cable?</b></summary>
+<br>
+
 Yes. Connect the PC to the hotspot and pick it under Connection > How the PC connects to the phone. The app remembers the network name, and if Windows jumps back to your home router it blocks everything.
+</details>
 
-**What about a 4G/5G USB dongle or router?**
+<details>
+<summary><b>What about a 4G/5G USB dongle or router?</b></summary>
+<br>
+
 It works as the connection. Change IP needs an Android phone with ADB, though.
+</details>
 
-**What happens when I close the app?**
+<details>
+<summary><b>What happens when I close the app?</b></summary>
+<br>
+
 Protection stays on, so closing the app can't leak your IP. If you'd rather have it turn off, there's a setting for that.
+</details>
 
 ## Privacy
 
@@ -69,6 +219,7 @@ There's no telemetry and no account. The app only talks to these services:
 | Carrier and city of an IP | ip-api.com |
 | Profiles, avatars and bans of your accounts | steamcommunity.com, Steam's avatar servers and, if you add a key, api.steampowered.com |
 | Downloading ADB (only if you ask) | dl.google.com |
+| Checking for updates (can be turned off) | api.github.com, github.com |
 
 Your Steam Web API key stays on your PC, in `SRT_Dados/settings.json`.
 

@@ -18,6 +18,10 @@ public sealed partial class Settings
     public string ChangeMethod { get; set; } = "data";    // "data" | "airplane"
     public int OffSeconds { get; set; } = 4;
     public int MaxAttempts { get; set; } = 3;
+    public bool RequireNew16 { get; set; }               // Change IP keeps trying until the /16 differs from the IP before
+    public bool CheckUpdates { get; set; } = true;
+    public DateTime? LastUpdateCheck { get; set; }
+    public string UpdateLatest { get; set; }              // highest version seen on GitHub at the last check
     public string SteamApiKey { get; set; }
     public bool LaunchCs2 { get; set; }
     public bool SteamSilent { get; set; }
@@ -40,19 +44,21 @@ public sealed class IpHistoryEntry
     public string Ip { get; set; }
     public string Isp { get; set; }
     public string Reason { get; set; }
-    [JsonIgnore] public string TimeText => Time.ToString(Time.Date == DateTime.Today ? "HH:mm" : "dd/MM HH:mm");
-    [JsonIgnore] public string ReasonText => Reason switch { "trocado" => "after changing", "detetado" => "seen on open", _ => Reason };
+    [JsonIgnore] public string TimeText => Time.ToString(Time.Date == DateTime.Today ? "HH:mm" : "d MMM", System.Globalization.CultureInfo.InvariantCulture);
+    [JsonIgnore] public string ReasonText => Reason switch { "trocado" => "after changing", "detetado" => "at startup", _ => Reason };
 }
 
 public sealed class CheckItem : Observable
 {
-    bool? _ok; string _detail;
+    bool? _ok; bool _waiting; string _detail;
     public string Title { get; init; }
     public string Help { get; init; }
     public bool? Ok { get => _ok; set { if (Set(ref _ok, value)) { Raise(nameof(Glyph)); Raise(nameof(Brush)); } } }
     public string Detail { get => _detail; set => Set(ref _detail, value); }
+    /// <summary>Not OK yet, but safe: blocked while waiting for the phone (amber, not red).</summary>
+    public bool Waiting { get => _waiting; set { if (Set(ref _waiting, value)) Raise(nameof(Brush)); } }
     public string Glyph => Ok switch { true => "", false => "", _ => "" };
-    public Brush Brush => Ok switch { true => Ui.Good, false => Ui.Bad, _ => Ui.Faint };
+    public Brush Brush => Waiting ? Ui.Warn : Ok switch { true => Ui.Good, false => Ui.Bad, _ => Ui.Faint };
 }
 
 // ------------------------------------------------------------ Servers
@@ -75,7 +81,7 @@ public sealed class ServerItem : Observable
     /// <summary>The last server you joined through the app (gets a different color in the list).</summary>
     [JsonIgnore] public bool IsLast { get => _isLast; set { if (Set(ref _isLast, value)) Raise(nameof(LastText)); } }
     [JsonIgnore] public DateTime? LastAt { get => _lastAt; set { if (Set(ref _lastAt, value)) Raise(nameof(LastText)); } }
-    [JsonIgnore] public string LastText => IsLast ? "You played here " + Fmt.Ago(LastAt) : null;
+    [JsonIgnore] public string LastText => !IsLast ? null : LastAt == null ? "Last server you joined" : "You played here " + Fmt.Ago(LastAt);
 
     [JsonIgnore] public string Key => $"{Ip}:{Port}";
     [JsonIgnore] public string StarGlyph => Favorite ? "" : "";
@@ -200,7 +206,7 @@ public sealed class AccountItem : Observable
     public Brush QuickBrush => Excluded ? Ui.LineStrong : Ui.Muted;
     public string QuickTip => Excluded
         ? "Skipped in quick switch. Click to include it again."
-        : "In quick switch. Click to skip it: quick switch will pass over this account.";
+        : "In quick switch. Click to skip this account.";
     public string QuickMenuText => Excluded ? "Include in quick switch" : "Skip in quick switch";
     public bool HasLastServer => Meta.LastServer != null;
     public string LastServerText => Meta.LastServer == null ? null
@@ -230,9 +236,9 @@ public sealed class AccountItem : Observable
                 lines.Add($"Checked {Fmt.Ago(P.Checked)}");
             }
             else lines.Add("\nNo status yet: click \"Refresh\".");
-            if (InCooldown) lines.Add($"\nCooldown set by you until {Meta.CooldownUntil:dd/MM HH:mm}");
+            if (InCooldown) lines.Add($"\nCooldown set by you until {Fmt.When(Meta.CooldownUntil)}");
             if (Excluded) lines.Add("Skipped in quick switch.");
-            if (Meta.LastServer != null) lines.Add($"Last server: {Meta.LastServerName ?? Meta.LastServer} ({Meta.LastServer}), {Meta.LastServerAt:dd/MM HH:mm}");
+            if (Meta.LastServer != null) lines.Add($"Last server: {Meta.LastServerName ?? Meta.LastServer} ({Meta.LastServer}), {Fmt.When(Meta.LastServerAt)}");
             if (HasNote) lines.Add("\nNote: " + Note);
             lines.Add("\nClick Log in to switch. Right-click for more options.");
             return string.Join("\n", lines);
@@ -269,6 +275,7 @@ public static class Ui
     public static Brush Bad => B("Bad");
     public static Brush BadSoft => B("BadSoft");
     public static Brush Faint => B("Faint");
+    public static Brush Text => B("Text");
     public static Brush Accent => B("Accent");
     public static Brush Line => B("Line");
     public static Brush LineStrong => B("LineStrong");

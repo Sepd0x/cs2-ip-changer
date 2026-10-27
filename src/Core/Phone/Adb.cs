@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using System.Runtime.InteropServices;
 using System.Net.Http;
 
 namespace SRT.Core;
@@ -26,9 +27,9 @@ public static class Adb
     {
         var candidates = new List<string>
         {
+            Path.Combine(Paths.Data, "platform-tools", "adb.exe"),
             Path.Combine(Paths.AppDir, "platform-tools", "adb.exe"),
             Path.Combine(Paths.AppDir, "adb.exe"),
-            Path.Combine(Paths.Data, "platform-tools", "adb.exe"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Android", "Sdk", "platform-tools", "adb.exe"),
         };
         foreach (var dir in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';'))
@@ -41,7 +42,66 @@ public static class Adb
                     candidates.Add(Path.Combine(d, "platform-tools", "adb.exe"));
         }
         catch { }
-        return candidates.FirstOrDefault(File.Exists);
+        // The app runs as admin: only an adb.exe signed by Google is ever started.
+        foreach (var c in candidates.Where(File.Exists).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            if (IsGoogleSigned(c)) return c;
+            if (Skipped.Add(c)) Log.Warn($"Ignored {c}: it is not signed by Google.");
+        }
+        return null;
+    }
+
+    static readonly HashSet<string> Skipped = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Valid Authenticode signature (WinVerifyTrust) whose signer is Google LLC.</summary>
+    public static bool IsGoogleSigned(string path)
+    {
+        try
+        {
+            if (!Trust.Verify(path)) return false;
+#pragma warning disable SYSLIB0057
+            var cert = System.Security.Cryptography.X509Certificates.X509Certificate.CreateFromSignedFile(path);
+#pragma warning restore SYSLIB0057
+            return System.Text.RegularExpressions.Regex.IsMatch(cert.Subject, @"(^|,\s*)O=Google LLC(,|$)");
+        }
+        catch { return false; }
+    }
+
+    static class Trust
+    {
+        static readonly Guid GenericVerifyV2 = new("00AAC56B-CD44-11d0-8CC2-00C04FC295EE");
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct FileInfo { public uint cbStruct; [MarshalAs(UnmanagedType.LPWStr)] public string pcwszFilePath; public IntPtr hFile; public IntPtr pgKnownSubject; }
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct Data
+        {
+            public uint cbStruct; public IntPtr pPolicyCallbackData; public IntPtr pSIPClientData; public uint dwUIChoice;
+            public uint fdwRevocationChecks; public uint dwUnionChoice; public IntPtr pFile; public uint dwStateAction;
+            public IntPtr hWVTStateData; public IntPtr pwszURLReference; public uint dwProvFlags; public uint dwUIContext; public IntPtr pSignatureSettings;
+        }
+
+        [DllImport("wintrust.dll", CharSet = CharSet.Unicode)]
+        static extern int WinVerifyTrust(IntPtr hwnd, [MarshalAs(UnmanagedType.LPStruct)] Guid action, ref Data data);
+
+        public static bool Verify(string path)
+        {
+            var file = new FileInfo { cbStruct = (uint)Marshal.SizeOf<FileInfo>(), pcwszFilePath = path };
+            var pFile = Marshal.AllocHGlobal(Marshal.SizeOf<FileInfo>());
+            try
+            {
+                Marshal.StructureToPtr(file, pFile, false);
+                // No UI, no revocation check and no network (works offline), a file.
+                var data = new Data { cbStruct = (uint)Marshal.SizeOf<Data>(), dwUIChoice = 2, dwUnionChoice = 1, pFile = pFile, dwProvFlags = 0x10 | 0x1000 };
+                return WinVerifyTrust(IntPtr.Zero, GenericVerifyV2, ref data) == 0;
+            }
+            finally
+            {
+                Marshal.DestroyStructure<FileInfo>(pFile);
+                Marshal.FreeHGlobal(pFile);
+            }
+        }
     }
 
     /// <summary>Downloads Google's official platform-tools into the app folder (~7 MB).</summary>
@@ -62,6 +122,13 @@ public static class Adb
 
     static Task<ProcResult> Run(string adb, string args, int timeout = 12000) => Proc.Run(adb, args, timeout);
 
+    /// <summary>The phone says USB tethering (rndis) is on.</summary>
+    public static async Task<bool> TetheringOn(string adb, string serial)
+    {
+        var r = await Run(adb, $"-s {serial} shell getprop sys.usb.state", 6000);
+        return r.Code == 0 && r.Output.Contains("rndis");
+    }
+
     public static async Task<PhoneInfo> Status(string adb)
     {
         var r = await Run(adb, "devices", 15000);
@@ -71,6 +138,8 @@ public static class Adb
         if (line == null) return new PhoneInfo(null, "none", null, null, null, null);
         var parts = line.Split('\t');
         var serial = parts[0];
+        // The serial comes from the device and goes into command lines: letters, digits and . : - _ only.
+        if (!System.Text.RegularExpressions.Regex.IsMatch(serial, @"^[\w.:-]+$")) return new PhoneInfo(null, "none", null, null, null, null);
         var state = parts[1].Trim();
         if (state != "device") return new PhoneInfo(serial, state, null, null, null, null);
 

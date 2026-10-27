@@ -1,4 +1,4 @@
-﻿namespace SRT.Core;
+namespace SRT.Core;
 
 public sealed class GuardReport
 {
@@ -20,6 +20,10 @@ public sealed class GuardReport
     public bool PcDefaultIsEgress { get; init; }
     public int PcDefaultIndex { get; init; }
     public string Error { get; init; }
+    /// <summary>Why the candidate isn't trusted (null = trusted or no candidate).</summary>
+    public string DistrustReason { get; init; }
+    /// <summary>"ifIndex|localIp" of the candidate: the app only trusts a connection whose public IP it measured.</summary>
+    public string CandidateKey { get; init; }
     /// <summary>Routes to Valve's servers go through the protected connection (null = option off or no connection).</summary>
     public bool? SteamRoutesOk { get; init; }
     public SteamLink Steam { get; init; } = new();
@@ -41,16 +45,51 @@ public sealed class Guard
     string _fwSignature;
     int _metricAppliedTo = -1;
     readonly HashSet<string> _ownedRoutes = new(); // "prefix|ifIndex|nexthop"
+    static string OwnedFile => Paths.File("owned.json");
     readonly HashSet<string> _warned = new();
     string _lastProblem;
 
     static readonly string[] SplitPrefixes = { "0.0.0.0/1", "128.0.0.0/1" };
 
-    public Task<GuardReport> Sync(Settings s, IReadOnlyCollection<string> ips, bool force = false, bool distrust = false, bool cs2Running = false) =>
+    /// <summary>What the app changed in Windows, saved to disk so a crash or a kill doesn't leave orphans behind.</summary>
+    public sealed class OwnedState
+    {
+        public List<string> Routes { get; set; } = new();
+        public int MetricIf { get; set; } = -1;
+        /// <summary>When Windows booted: routes and the metric only live until a restart.</summary>
+        public DateTime Boot { get; set; }
+    }
+
+    static DateTime BootTime => DateTime.Now.AddMilliseconds(-Environment.TickCount64);
+
+    public Guard()
+    {
+        var st = Store.Load(OwnedFile, () => new OwnedState());
+        // From before a restart: Windows already dropped those routes, and the interface index may now be another adapter.
+        if (Math.Abs((st.Boot - BootTime).TotalMinutes) > 2) return;
+        foreach (var r in st.Routes ?? new()) _ownedRoutes.Add(r);
+        _metricAppliedTo = st.MetricIf;
+    }
+
+    void SaveOwned()
+    {
+        try { Store.Save(OwnedFile, new OwnedState { Routes = _ownedRoutes.ToList(), MetricIf = _metricAppliedTo, Boot = BootTime }); }
+        catch (Exception ex) { Log.Warn("Could not save owned.json: " + ex.Message); }
+    }
+    void Own(string key) { if (_ownedRoutes.Add(key)) SaveOwned(); }
+    bool Disown(string key) { if (!_ownedRoutes.Remove(key)) return false; SaveOwned(); return true; }
+
+    public const string WhyUnchecked = "The phone connection's public IP hasn't been checked yet.";
+
+    public static string KeyOf(Adapter a) => a == null ? null : $"{a.Index}|{a.LocalIp}";
+
+    /// <param name="distrust">Why the connection can't be trusted right now (null = trusted).</param>
+    /// <param name="verifiedKey">The candidate whose public IP was measured and isn't the home IP. Any other candidate stays blocked.</param>
+    public Task<GuardReport> Sync(Settings s, IReadOnlyCollection<string> ips, bool force = false, string distrust = null, bool cs2Running = false, string verifiedKey = null) =>
         Task.Run(async () =>
         {
             await _gate.WaitAsync();
-            try { return await SyncCore(s, ips.Distinct().ToList(), force, distrust, cs2Running); }
+            try { return await SyncCore(s, ips.Distinct().ToList(), force, distrust, cs2Running, verifiedKey); }
             catch (Exception ex)
             {
                 Log.Error("Sync: " + ex.Message);
@@ -59,12 +98,14 @@ public sealed class Guard
             finally { _gate.Release(); }
         });
 
-    async Task<GuardReport> SyncCore(Settings s, List<string> ips, bool force, bool distrust, bool cs2Running)
+    async Task<GuardReport> SyncCore(Settings s, List<string> ips, bool force, string distrust, bool cs2Running, string verifiedKey)
     {
         var adapters = Net.Scan();
         var candidate = Net.PickEgress(adapters, s.EgressAdapterId, s.EgressSsid, out var problem);
-        var egress = distrust ? null : candidate;
-        if (distrust && candidate != null) problem = "The public IP of the connection is the same as your home IP.";
+        // A new connection (another adapter or local IP) is only trusted after its public IP is measured.
+        if (distrust == null && candidate != null && KeyOf(candidate) != verifiedKey) distrust = WhyUnchecked;
+        var egress = distrust != null ? null : candidate;
+        if (distrust != null && candidate != null) problem = distrust;
         if (problem != _lastProblem) { if (problem != null) Log.Warn(problem + " Servers blocked."); _lastProblem = problem; }
         var fwProblem = Firewall.CheckEnabled();
         var mode = s.GameMode && cs2Running ? "all" : s.Mode;
@@ -77,11 +118,12 @@ public sealed class Guard
         {
             var allow = egress?.LocalIp;
             var sig = string.Join(",", ips.OrderBy(i => i)) + "|" + allow + "|" + candidate?.LocalIp + "|" + cs2;
-            if (force || sig != _fwSignature || !Firewall.Verify(Firewall.RuleName, ips, allow))
+            if (force || sig != _fwSignature || !Firewall.Verify(Firewall.RuleName, ips, allow) || (cs2 != null && !Firewall.Verify(Firewall.Cs2RuleName, null, allow, cs2)))
             {
-                Firewall.Apply(Firewall.RuleName, ips, null, allow, "Managed by CS2 IP Changer. Servers in the list can only be reached from the local IP of the protected connection.");
-                Firewall.Apply(Firewall.EchoRuleName, new[] { Net.EchoIp }, null, candidate?.LocalIp, "Managed by CS2 IP Changer. Makes sure the IP test measures the protected connection.");
-                if (cs2 != null) Firewall.Apply(Firewall.Cs2RuleName, null, cs2, allow, "Managed by CS2 IP Changer. CS2 can only go out through the protected connection: servers not in the list never see your home IP.");
+                // Each rule on its own: one failing must not leave the others on an old allowed IP.
+                Try(() => Firewall.Apply(Firewall.RuleName, ips, null, allow, "Managed by CS2 IP Changer. Servers in the list can only be reached from the local IP of the protected connection."));
+                Try(() => Firewall.Apply(Firewall.EchoRuleName, new[] { Net.EchoIp }, null, candidate?.LocalIp, "Managed by CS2 IP Changer. Makes sure the IP test measures the protected connection."));
+                if (cs2 != null) Try(() => Firewall.Apply(Firewall.Cs2RuleName, null, cs2, allow, "Managed by CS2 IP Changer. CS2 can only go out through the protected connection: servers not in the list never see your home IP."));
                 else Firewall.Remove(Firewall.Cs2RuleName);
                 _fwSignature = sig;
                 Log.Info(egress == null
@@ -89,7 +131,7 @@ public sealed class Guard
                     : $"Kill switch: servers in the list" + (cs2 != null ? " and CS2" : "") + $" only go out through \"{egress.Name}\" ({egress.LocalIp}).");
             }
             killOk = Firewall.Verify(Firewall.RuleName, ips, allow);
-            if (cs2 != null) cs2Ok = Firewall.Verify(Firewall.Cs2RuleName, null, allow);
+            if (cs2 != null) cs2Ok = Firewall.Verify(Firewall.Cs2RuleName, null, allow, cs2);
 
             if (!s.LegacyCleaned)
             {
@@ -107,7 +149,7 @@ public sealed class Guard
             if (s.KeepPcOffPhone && mode == "servers" && (egress.IsPhone || egress.IsWifi) && _metricAppliedTo != egress.Index && HasOtherInternet(adapters, egress))
             {
                 var r = await Net.SetInterfaceMetric(egress.Index, 900);
-                if (r.Ok) { _metricAppliedTo = egress.Index; Log.Info("The PC keeps using the home network; only the game goes through the phone."); }
+                if (r.Ok) { _metricAppliedTo = egress.Index; SaveOwned(); Log.Info("The PC keeps using the home network; only the game goes through the phone."); }
             }
             await EnsureRoutes(ips, egress, adapters);
             foreach (var ip in ips)
@@ -138,7 +180,7 @@ public sealed class Guard
                 foreach (var pfx in SplitPrefixes)
                 {
                     var r = await Net.AddRoute(pfx, egress, 5);
-                    if (r.Ok) _ownedRoutes.Add($"{pfx}|{egress.Index}|{egress.Gateway}");
+                    if (r.Ok) Own($"{pfx}|{egress.Index}|{egress.Gateway}");
                 }
                 Log.Info(s.Mode == "all" ? "The whole PC goes through the phone." : "CS2 is open: the whole PC goes through the phone.");
             }
@@ -156,7 +198,9 @@ public sealed class Guard
             Egress = egress,
             Candidate = candidate,
             EgressProblem = problem,
-            Distrusted = distrust && candidate != null,
+            Distrusted = distrust != null && candidate != null,
+            DistrustReason = candidate != null ? distrust : null,
+            CandidateKey = KeyOf(candidate),
             FirewallProblem = fwProblem,
             KillSwitchOk = killOk,
             Cs2LockOk = cs2Ok,
@@ -170,6 +214,12 @@ public sealed class Guard
             Steam = steam,
             SteamOnEgress = steamOnEgress,
         };
+    }
+
+    static void Try(Action a)
+    {
+        try { a(); }
+        catch (Exception ex) { Log.Error("Firewall: " + (ex.InnerException ?? ex).Message); }
     }
 
     static bool HasOtherInternet(List<Adapter> adapters, Adapter egress) =>
@@ -189,13 +239,13 @@ public sealed class Guard
             if ((ours || adapters.Any(a => a.Index == rt.Index && a.IsPhone)) && (rt.Index != via.Index || rt.NextHop != (via.Gateway ?? "0.0.0.0")))
             {
                 await Net.DeleteRoute(rt);
-                _ownedRoutes.Remove($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
+                Disown($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
             }
         }
         foreach (var ip in missing)
         {
             var r = await Net.AddRoute(ip + "/32", via);
-            if (r.Ok) _ownedRoutes.Add($"{ip}/32|{via.Index}|{via.Gateway ?? "0.0.0.0"}");
+            if (r.Ok) Own($"{ip}/32|{via.Index}|{via.Gateway ?? "0.0.0.0"}");
             else Log.Warn($"Route {ip}: {r.Output}");
         }
     }
@@ -213,14 +263,14 @@ public sealed class Guard
             if ((ours || adapters.Any(a => a.Index == rt.Index && a.IsPhone)) && (rt.Index != via.Index || rt.NextHop != hop))
             {
                 await Net.DeleteRoute(rt);
-                _ownedRoutes.Remove($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
+                Disown($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
             }
         }
         var added = 0;
         foreach (var pfx in missing)
         {
             var r = await Net.AddRoute(pfx, via);
-            if (r.Ok) { _ownedRoutes.Add($"{pfx}|{via.Index}|{hop}"); added++; }
+            if (r.Ok) { Own($"{pfx}|{via.Index}|{hop}"); added++; }
             else Log.Warn($"Route {pfx}: {r.Output}");
         }
         if (added > 0) Log.Info($"Steam through the phone: {added} Valve block(s) go through \"{via.Name}\".");
@@ -235,7 +285,7 @@ public sealed class Guard
             if (_ownedRoutes.Contains($"{rt.Prefix}|{rt.Index}|{rt.NextHop}") || adapters.Any(a => a.Index == rt.Index && a.IsPhone))
             {
                 await Net.DeleteRoute(rt);
-                _ownedRoutes.Remove($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
+                Disown($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
             }
         }
         Log.Info("Steam through the phone turned off: Steam goes back to the home network.");
@@ -250,7 +300,7 @@ public sealed class Guard
             if (_ownedRoutes.Contains($"{rt.Prefix}|{rt.Index}|{rt.NextHop}") || adapters.Any(a => a.Index == rt.Index && a.IsPhone))
             {
                 await Net.DeleteRoute(rt);
-                _ownedRoutes.Remove($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
+                Disown($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
             }
         }
         Log.Info("The rest of the PC goes back to the home network.");
@@ -267,7 +317,7 @@ public sealed class Guard
             foreach (var rt in await Net.ListRoutes())
             {
                 if (!rt.Prefix.EndsWith("/32") || !set.Contains(rt.Prefix[..^3])) continue;
-                if (_ownedRoutes.Remove($"{rt.Prefix}|{rt.Index}|{rt.NextHop}") || adapters.Any(a => a.Index == rt.Index && a.IsPhone))
+                if (Disown($"{rt.Prefix}|{rt.Index}|{rt.NextHop}") || adapters.Any(a => a.Index == rt.Index && a.IsPhone))
                     await Net.DeleteRoute(rt);
             }
             _fwSignature = null;
@@ -275,8 +325,8 @@ public sealed class Guard
         finally { _gate.Release(); }
     });
 
-    /// <summary>Undoes everything the app created: rules, routes and whole-PC mode.</summary>
-    public Task RestoreAll(IReadOnlyCollection<string> ips) => Task.Run(async () =>
+    /// <summary>Undoes everything the app created: rules, routes and whole-PC mode. Returns what is left (null = all clean).</summary>
+    public Task<string> RestoreAll(IReadOnlyCollection<string> ips) => Task.Run(async () =>
     {
         await _gate.WaitAsync();
         try
@@ -291,14 +341,30 @@ public sealed class Guard
                 if (ours || (onPhone && (serverRoute || SplitPrefixes.Contains(rt.Prefix) || Net.ValvePrefixes.Contains(rt.Prefix)))) await Net.DeleteRoute(rt);
             }
             _ownedRoutes.Clear();
+            SaveOwned();
             Firewall.RemoveAll();
             if (_metricAppliedTo >= 0)
             {
                 await Proc.Run("powershell", $"-NoProfile -Command \"Set-NetIPInterface -InterfaceIndex {_metricAppliedTo} -AddressFamily IPv4 -AutomaticMetric Enabled -PolicyStore ActiveStore\"", 20000);
                 _metricAppliedTo = -1;
+                SaveOwned();
             }
             _fwSignature = null;
-            Log.Ok("Network restored: app rules and routes removed.");
+
+            // Reads everything back: the restore only counts if nothing of ours is left.
+            var left = new List<string>();
+            adapters = Net.Scan();
+            foreach (var rt in await Net.ListRoutes())
+            {
+                var onPhone = adapters.Any(a => a.Index == rt.Index && a.IsPhone);
+                var serverRoute = rt.Prefix.EndsWith("/32") && set.Contains(rt.Prefix[..^3]);
+                if (onPhone && (serverRoute || SplitPrefixes.Contains(rt.Prefix) || Net.ValvePrefixes.Contains(rt.Prefix))) left.Add("route " + rt.Prefix);
+            }
+            left.AddRange(Firewall.Remaining().Select(n => "rule \"" + n + "\""));
+            if (left.Count == 0) { Log.Ok("Network restored: app rules and routes removed, checked."); return null; }
+            var what = string.Join(", ", left.Take(5)) + (left.Count > 5 ? $" and {left.Count - 5} more" : "");
+            Log.Error("Restore network left: " + what + ".");
+            return what;
         }
         finally { _gate.Release(); }
     });

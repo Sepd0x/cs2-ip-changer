@@ -1,0 +1,87 @@
+# Builds CS2IPChanger.exe when a v* tag is pushed, signs a build provenance attestation for it
+# and attaches the exe and its SHA-256 to the GitHub release of that tag.
+#
+# The tag has to match <Version> in src/ServerRouteTool.csproj (tag v0.1.0-alpha.3 for 0.1.0-alpha.3).
+# If the release already exists (drafted by hand with notes), the files are added to it. If not, it is
+# created with docs/release-<version>.md as notes when that file exists. A version with a "-" is a prerelease.
+#
+# Third-party actions are pinned to a commit. The comment next to each one says which tag it is.
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write      # create the release and upload files to it
+      id-token: write      # get the OIDC token that signs the attestation
+      attestations: write  # store the attestation
+    env:
+      DOTNET_NOLOGO: '1'
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Check that the tag matches the version
+        id: version
+        run: |
+          $version = ([xml](Get-Content src/ServerRouteTool.csproj -Raw)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
+          if ("v$version" -cne $env:GITHUB_REF_NAME) {
+            throw "Tag $env:GITHUB_REF_NAME does not match <Version>$version</Version> in the csproj"
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Publish
+        run: dotnet publish src/ServerRouteTool.csproj -c Release -o out
+
+      - name: Compute SHA-256
+        run: |
+          $hash = (Get-FileHash out/CS2IPChanger.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          [IO.File]::WriteAllText("$PWD/out/CS2IPChanger.exe.sha256", "$hash  CS2IPChanger.exe`n")
+          "SHA-256: $hash" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Attest build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: out/CS2IPChanger.exe
+
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          $files = 'out/CS2IPChanger.exe', 'out/CS2IPChanger.exe.sha256'
+          $existing = gh release list --limit 100 --json tagName --jq '.[].tagName'
+          if ($existing -contains $tag) {
+            gh release upload $tag @files --clobber
+          } else {
+            $opts = @('--verify-tag', '--title', "CS2 IP Changer $env:VERSION")
+            $notes = "docs/release-$env:VERSION.md"
+            if (Test-Path $notes) { $opts += @('--notes-file', $notes) } else { $opts += '--generate-notes' }
+            if ($env:VERSION -like '*-*') { $opts += '--prerelease' }
+            gh release create $tag @files @opts
+          }

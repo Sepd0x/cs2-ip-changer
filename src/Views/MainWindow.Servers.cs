@@ -204,6 +204,12 @@ public partial class MainWindow
         UpdateStatusUi();
     }
 
+    void SrvCopyConnect_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not ServerItem s) return;
+        try { Clipboard.SetText("connect " + s.Key); Toast($"Copied: connect {s.Key}", true); } catch { Toast("Couldn't copy. Try again.", false); }
+    }
+
     void SrvFav_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is not ServerItem s) return;
@@ -226,6 +232,7 @@ public partial class MainWindow
     {
         if (!_demo)
         {
+            if (_restored) { Toast("Protection is off since Restore network. Click Run leak test first.", false); return; }
             await SyncNow(force: true);
             if (_distrust || _cDiff.Ok == false) { Toast("Not joining: the phone IP is the same as your home IP.", false); return; }
             var fullOk = _last?.Egress != null && _last.EffectiveMode == "all" && _last.FullModeOk;
@@ -253,6 +260,7 @@ public partial class MainWindow
                 return;
             }
         }
+        if (_demo) { Toast($"Demo: joining {s.Title}.", true); MarkLast(s); return; }
         try
         {
             Process.Start(new ProcessStartInfo($"steam://connect/{s.Key}") { UseShellExecute = true });
@@ -261,7 +269,7 @@ public partial class MainWindow
             Toast($"Opening {s.Title} in Steam…", true);
             MarkLast(s);
         }
-        catch (Exception ex) { Toast("Could not open Steam: " + ex.Message, false); }
+        catch (Exception ex) { Toast("Couldn't open Steam: " + ex.Message, Tone.Error); }
     }
 
     async Task RestartSteamAndConnect(ServerItem s)
@@ -278,7 +286,7 @@ public partial class MainWindow
             Toast($"Steam is restarting. CS2 opens and joins {s.Title}.", true);
             MarkLast(s);
         }
-        catch (Exception ex) { Log.Error("Restart Steam: " + ex.Message); Toast(ex.Message, false); }
+        catch (Exception ex) { Log.Error("Restart Steam: " + ex.Message); Toast(ex.Message, Tone.Error); }
         finally { HideProgress(); }
     }
 
@@ -315,5 +323,6 @@ public partial class MainWindow
             x.LastAt = x.IsLast ? _s.LastServerAt : null;
         }
         _serverView.Refresh();
+        UpdateRejoinBtn();
     }
 }

@@ -16,9 +16,15 @@ namespace SRT;
 // Protection
 public partial class MainWindow
 {
+    const string WhySame = "The public IP of the connection is the same as your home IP.";
+    const string WhyWifi = "The phone's Wi-Fi is on, so it may be sharing your home network instead of mobile data.";
+
+    /// <summary>The USB phone has its own Wi-Fi on: tethering may be carrying the home network, so it isn't trusted.</summary>
+    bool PhoneWifiOn => _phone?.Ready == true && _phone.WifiOn && _last?.Candidate?.IsWifi != true;
+
     async Task SyncNow(bool force = false)
     {
-        if (_demo) return;
+        if (_demo || _restored) return;
         if (_syncing) { _syncAgain = true; return; }
         _syncing = true;
         try
@@ -34,7 +40,8 @@ public partial class MainWindow
                 if (_s.GameMode) Log.Info(cs2Running ? "CS2 open: the whole PC goes through the phone." : "CS2 closed: the rest of the PC is back on the home network.");
                 force = true;
             }
-            var rep = await _guard.Sync(_s, ips, force, _distrust, cs2Running);
+            var reason = _distrust ? WhySame : PhoneWifiOn ? WhyWifi : null;
+            var rep = await _guard.Sync(_s, ips, force, reason, cs2Running, _verifiedKey);
             if (legacyBefore != _s.LegacyCleaned || cs2Before != _s.Cs2Path) SaveSettings();
             ApplyReport(rep);
         }
@@ -60,7 +67,9 @@ public partial class MainWindow
         if (_wasProtected && !protectedNow)
         {
             if (Steam.Cs2Running) System.Media.SystemSounds.Hand.Play();
-            Toast((rep.EgressProblem ?? "The phone connection dropped.") + " Servers and CS2 are now blocked: your IP can't leak.", false);
+            var safe = rep.KillSwitchOk && rep.FirewallProblem == null;
+            Toast((rep.EgressProblem ?? "The phone connection dropped.") + (safe ? $" {Blocked(rep)} are now blocked: your IP can't leak." : " The block isn't confirmed: don't join a server, check the Log."),
+                safe ? Tone.Warn : Tone.Error);
         }
         else if (!_wasProtected && protectedNow && _lastEgressKey != null && _everProtected)
             Toast("Protection is back.", true);
@@ -79,7 +88,7 @@ public partial class MainWindow
         TrackSteam(rep);
         DiagReport(rep);
         UpdateStatusUi();
-        if (egressChanged) _ = RefreshPublicIps();
+        if (egressChanged || rep.CandidateKey != _measuredKey) _ = RefreshPublicIps();
     }
 
     /// <summary>
@@ -113,19 +122,25 @@ public partial class MainWindow
         _cFirewall.Detail = rep.FirewallProblem ?? "On";
         _cKill.Ok = n == 0 ? null : rep.KillSwitchOk;
         _cKill.Detail = n == 0 ? "No servers in the list" : rep.KillSwitchOk ? (n == 1 ? "1 IP blocked on the home network" : $"{n} IPs blocked on the home network") : "Rule not confirmed";
-        _cEgress.Ok = rep.Egress != null;
+        var waiting = rep.Egress == null && rep.KillSwitchOk && rep.FirewallProblem == null;
+        _cEgress.Ok = rep.Egress != null ? true : waiting || n == 0 ? null : false;
+        _cEgress.Waiting = waiting;
         _cEgress.Detail = rep.Egress != null
             ? $"{rep.Egress.Name} · {rep.Egress.LocalIp}" + (rep.Egress.IsWifi && rep.Egress.Ssid != null ? $" · {rep.Egress.Ssid}" : "")
-            : rep.EgressProblem ?? "Connect the phone (USB cable or hotspot)";
+            : rep.DistrustReason == Guard.WhyUnchecked ? $"{rep.Candidate?.Name ?? "Phone"}: checking its public IP…"
+            : rep.DistrustReason == WhyWifi ? "Blocked while the phone's Wi-Fi is on"
+            : rep.DistrustReason == WhySame ? "Blocked: same IP as your home IP"
+            : rep.EgressProblem ?? "Waiting for the phone";
         _cCs2.Ok = !_s.LockCs2 ? null : rep.Cs2LockOk;
         _cCs2.Detail = !_s.LockCs2 ? "Turned off in Settings"
             : rep.Cs2LockOk == null ? "Couldn't find cs2.exe (open CS2 once)"
             : rep.Cs2LockOk == true ? (rep.Egress != null ? "CS2 only goes out through the phone" : "CS2 blocked until you connect the phone") : "Rule not confirmed";
-        _cRoutes.Ok = n == 0 ? null : rep.Egress != null && routesOk == n;
-        _cRoutes.Detail = n == 0 ? "No servers in the list" : $"{routesOk} of {n} {(n == 1 ? "IP" : "IPs")} through the phone";
+        _cRoutes.Ok = n == 0 || waiting ? null : rep.Egress != null && routesOk == n;
+        _cRoutes.Waiting = n > 0 && waiting;
+        _cRoutes.Detail = n == 0 ? "No servers in the list" : waiting ? "Blocked until the phone is connected" : $"{routesOk} of {n} {(n == 1 ? "IP" : "IPs")} through the phone";
         var same = _egressPublic != null && _homePublic != null && _egressPublic == _homePublic;
         _cDiff.Ok = _egressPublic == null || _homePublic == null ? null : !same;
-        _cDiff.Detail = _egressPublic == null ? "Waiting for the phone's IP" : _homePublic == null ? "No home network to compare" : same ? "Same IP: the phone is sharing your Wi-Fi" : "Different";
+        _cDiff.Detail = _egressPublic == null ? "Waiting for the phone's IP" : _homePublic == null ? "No home network to compare" : same ? "Same IP: the phone is sharing your Wi-Fi" : "Yes";
         _cSteam.Ok = Steam.IsRunning && _steamLog.Online == false ? false
             : !SteamReady ? null
             : !_s.SteamOnEgress || rep.Egress == null ? null
@@ -138,7 +153,7 @@ public partial class MainWindow
             : rep.Egress == null ? "Waiting for the phone"
             : !rep.Steam.Connected && Steam.IsRunning && _steamLog.Online == true ? "Connected over UDP (the Valve route goes through the phone)"
             : !rep.Steam.Connected ? (Steam.IsRunning ? "Steam is not connected to Valve right now" : "Steam closed")
-            : rep.SteamOnEgress == true ? (rep.SteamRoutesOk == false ? "Connected through the phone (Valve routes to be confirmed)" : "Connected through the phone, like CS2")
+            : rep.SteamOnEgress == true ? (rep.SteamRoutesOk == false ? "Connected through the phone (Valve routes not confirmed yet)" : "Connected through the phone, like CS2")
             : "Connected through the home network: restart Steam (or switch account) before playing";
 
         if (rep.EffectiveMode == "all")
@@ -149,46 +164,63 @@ public partial class MainWindow
         else
         {
             _cPc.Ok = rep.Egress == null ? null : !rep.PcDefaultIsEgress;
-            _cPc.Detail = rep.PcDefaultIsEgress ? $"The whole PC is using {rep.PcDefaultName} (uses data)" : $"Home network: {rep.PcDefaultName}";
+            _cPc.Detail = rep.PcDefaultIsEgress ? $"The whole PC is using {rep.PcDefaultName} (uses mobile data)" : $"Home network: {rep.PcDefaultName}";
         }
 
         var wifiLock = !string.IsNullOrEmpty(_s.EgressSsid) ? $" · only valid on the hotspot \"{_s.EgressSsid}\"" : "";
         EgressDetail.Text = rep.Egress == null
-            ? (rep.EgressProblem ?? "No phone connection. Plug it in with a USB cable or connect to the Wi-Fi hotspot.") + wifiLock
+            ? (rep.Candidate != null ? $"{rep.Candidate.Kind} · local IP {rep.Candidate.LocalIp} · not in use yet"
+                : rep.EgressProblem ?? "Not connected. Use a USB cable or the phone's Wi-Fi hotspot.") + wifiLock
             : $"{rep.Egress.Kind} · local IP {rep.Egress.LocalIp} · gateway {rep.Egress.Gateway ?? "direct"}{wifiLock}";
         PcRouteText.Text = rep.EffectiveMode == "all"
             ? (_s.Mode == "all" ? "Everything, including Steam, goes out through the phone." : "While CS2 is open, the whole PC goes out through the phone.")
             : $"The rest of the PC stays on: {rep.PcDefaultName}";
 
         // Hero
+        var held = n == 0 || rep.KillSwitchOk ? "warn" : "bad";
+        var cs2Off = _s.LockCs2 && rep.Cs2LockOk == false;
         if (rep.FirewallProblem != null)
             SetHero("bad", "Windows Firewall is off", rep.FirewallProblem + ". Without the Firewall there is no kill switch; turn it on in Windows Security > Firewall.");
+        else if (rep.DistrustReason == Guard.WhyUnchecked)
+            SetHero(held, "Checking the phone's IP…", $"{Blocked(rep)} stay blocked until the app confirms the phone's public IP is not your home IP.");
+        else if (rep.DistrustReason == WhyWifi && !same)
+            SetHero(held, "Phone Wi-Fi is on",
+                $"{Blocked(rep)} are blocked. With Wi-Fi on, the phone may share your home network instead of mobile data: turn it off under Phone.");
         else if (rep.Distrusted || same)
-            SetHero("bad", "Your IP is the same as your home IP",
-                "Servers and CS2 are blocked until the IP is different again. The phone is sharing your home Wi-Fi, or the PC went back to the router. Turn off the phone's Wi-Fi (Phone card).");
+            SetHero(held, "Your IP is the same as your home IP",
+                $"{Blocked(rep)} are blocked until the IP is different. The phone is sharing your home Wi-Fi, or the PC went back to the router. Turn off the phone's Wi-Fi under Phone.");
         else if (rep.Egress == null && rep.EgressProblem != null)
-            SetHero("bad", "You left the phone's network", rep.EgressProblem + " Servers and CS2 are blocked until you are back on the hotspot: your IP can't leak.");
+            SetHero(held, "You left the phone's network", rep.EgressProblem + $" {Blocked(rep)} are blocked until you are back on the hotspot.");
         else if (rep.Egress == null)
-            SetHero(n > 0 && rep.KillSwitchOk ? "warn" : "idle", "Phone disconnected",
-                n > 0 && rep.KillSwitchOk
-                    ? "You're safe: the listed servers and CS2 are blocked until you connect the phone (USB cable or hotspot)."
-                    : "Connect the phone with a USB cable or to the Wi-Fi hotspot.");
-        else if (rep.EffectiveMode == "all" && rep.FullModeOk && (n == 0 || rep.KillSwitchOk))
-            SetHero("good", _s.Mode == "all" ? "Protected · whole PC" : "Protected · whole PC with CS2", $"All traffic goes out through {rep.Egress.Name}. Any server sees only the phone's IP.");
+            SetHero(n == 0 ? "idle" : held, "Phone disconnected",
+                n == 0 ? "Connect the phone with a USB cable or to its Wi-Fi hotspot."
+                : rep.KillSwitchOk ? $"You're safe: {Blocked(rep, lower: true)} are blocked until you connect the phone (USB cable or Wi-Fi hotspot)."
+                : "The block on your servers isn't confirmed, so they could see your home IP. Don't join until Checks are green.");
+        else if (rep.EffectiveMode == "all" && rep.FullModeOk && (n == 0 || rep.KillSwitchOk) && !cs2Off)
+            SetHero("good", _s.Mode == "all" ? "Protected · whole PC" : "Protected · whole PC (CS2 open)", $"The PC's IPv4 traffic goes out through {rep.Egress.Name}. CS2 and your servers only see the phone's IP.");
+        else if (rep.EffectiveMode == "all" && !rep.FullModeOk)
+            SetHero(held, "Whole PC hasn't switched over", $"The rest of the PC is still on {rep.PcDefaultName}." + (n > 0 && rep.KillSwitchOk ? " Servers on your list are still protected." : "") + " Check the Log.");
         else if (n == 0)
             SetHero("idle", "Ready", "The phone is connected. Add servers on the Servers page, or pick \"Whole PC\" under What goes through the phone.");
-        else if (rep.KillSwitchOk && routesOk == n)
-            SetHero("good", "Protected", "Servers on your list only see the phone's IP. On your home network they are blocked.");
+        else if (rep.KillSwitchOk && routesOk == n && !cs2Off)
+            SetHero("good", "Protected", _s.LockCs2 && rep.Cs2LockOk == null
+                ? "Servers on your list only see the phone's IP. CS2 itself gets locked once you open it."
+                : "Servers on your list only see the phone's IP. If the phone drops, they are blocked.");
+        else if (!rep.KillSwitchOk)
+            SetHero("bad", "Protection incomplete", "The firewall block was not confirmed, so servers on your list could see your home IP. Check the Log.");
         else
-            SetHero("warn", "Protection incomplete", !rep.KillSwitchOk ? "The Firewall block was not confirmed. Check the Log." : $"Only {routesOk} of {n} routes confirmed. Another VPN may be interfering.");
+            SetHero("warn", "Protection incomplete", cs2Off ? "Your servers are protected, but the CS2 rule was not confirmed. Check the Log." : $"Only {routesOk} of {n} routes confirmed. Another VPN may be interfering.");
 
-        SideIp.Text = _egressPublic ?? "";
+        ShowIps();
         UpdatePhoneCheck();
         ServerCount.Text = _servers.Count == 0 ? "" : $"{_servers.Count} {(_servers.Count == 1 ? "server" : "servers")} on {n} {(n == 1 ? "IP" : "IPs")}";
         ServersEmpty.Visibility = _servers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         QueryBtn.IsEnabled = CopyBtn.IsEnabled = ServerSearch.IsEnabled = _servers.Count > 0;
         ServerHeader.Visibility = _servers.Count == 0 ? Visibility.Hidden : Visibility.Visible;
     }
+
+    /// <summary>What the kill switch holds back right now: CS2 is only named when its own rule is on.</summary>
+    string Blocked(GuardReport rep, bool lower = false) => _s.LockCs2 && rep.Cs2LockOk == true ? (lower ? "servers" : "Servers") + " and CS2" : lower ? "your servers" : "Your servers";
 
     void SetHero(string kind, string title, string sub)
     {
@@ -294,6 +326,7 @@ public partial class MainWindow
     {
         if (_demo) return;
         _lastIpCheck = DateTime.Now;
+        var seq = ++_ipSeq;
         var rep = _last;
         // Measured through the candidate (even when it's no longer trusted) to know when it becomes safe again.
         var candidate = rep?.Candidate;
@@ -301,26 +334,45 @@ public partial class MainWindow
         // game mode, or only the hotspot exists), it can't be measured: the last confirmed home IP is shown.
         var homeIf = rep == null || rep.PcDefaultIsEgress || candidate?.Index == rep.PcDefaultIndex ? -1 : rep.PcDefaultIndex;
 
+        var key = Guard.KeyOf(candidate);
+        _measuredKey = key;
         var tE = Net.EgressPublicIp(candidate);
         var tH = Net.HomePublicIp(homeIf);
         string e = null, h = null;
         try { e = await tE; } catch { }
         try { h = await tH; } catch { }
 
+        // A newer check started meanwhile (or the connection changed): this result is stale.
+        if (seq != _ipSeq || key != Guard.KeyOf(_last?.Candidate)) return;
+
         // 3rd barrier: phone connection IP equal to the home IP = it isn't using mobile data. Block everything.
+        // A failed measurement (e == null) changes nothing: it never lifts a block and never grants trust.
         var homeRef = h ?? _s.LastHomeIp;
         var same = e != null && homeRef != null && e == homeRef;
-        if (same != _distrust)
+        if (e != null)
         {
-            _distrust = same;
-            if (same)
+            var changed = false;
+            if (same != _distrust)
             {
-                Log.Error($"The phone connection IP ({e}) is the same as your home IP. Servers and CS2 blocked.");
-                if (Steam.Cs2Running) System.Media.SystemSounds.Hand.Play();
-                Toast("The phone's IP is the same as your home IP. Servers and CS2 are now blocked.", false);
+                _distrust = same;
+                changed = true;
+                if (same)
+                {
+                    Log.Error($"The phone connection IP ({e}) is the same as your home IP. Servers and CS2 blocked.");
+                    if (Steam.Cs2Running) System.Media.SystemSounds.Hand.Play();
+                    Toast("The phone's IP is the same as your home IP. Servers and CS2 are now blocked.", false);
+                }
+                else Log.Ok("The phone connection IP is different from your home IP again.");
             }
-            else Log.Ok("The phone connection IP is different from your home IP again.");
-            _ = SyncNow(force: true);
+            // Mid-change the phone may still show the old IP: trust only comes from the check after the change.
+            var verified = same || _changingIp ? null : key;
+            if (verified != _verifiedKey)
+            {
+                if (verified != null && !changed) Log.Ok($"Phone connection checked: servers see {e}.");
+                _verifiedKey = verified;
+                changed = true;
+            }
+            if (changed) _ = SyncNow(force: true);
         }
 
         if (e != _egressPublic && e != null && !same)
@@ -349,14 +401,18 @@ public partial class MainWindow
 
     void ShowIps()
     {
-        EgressIp.Text = _egressPublic ?? "—";
-        EgressIsp.Text = _egressPublic == null ? (_last?.Egress == null ? "No phone connection" : "Getting the IP through the phone…")
+        var inUse = _last?.Egress != null;
+        var isHome = _egressPublic != null && _egressPublic == _homePublic;
+        EgressIp.Text = _egressPublic == null ? "—" : isHome && !_reveal ? Fmt.MaskIp(_egressPublic) : _egressPublic;
+        EgressIp.Foreground = inUse ? Ui.Text : Ui.Faint;
+        EgressIsp.Text = _egressPublic == null ? (_last?.Candidate != null ? "Checking the IP through the phone…" : "No phone connection")
+            : !inUse ? "Not in use: servers are blocked"
             : (_egressInfo?.Short ?? "") + (_egressInfo?.Proxy == true ? "  ·  flagged as VPN/proxy" : "");
         HomeIp.Text = _homePublic == null ? "—" : _reveal ? _homePublic : Fmt.MaskIp(_homePublic);
         HomeIsp.Text = _homePublic == null ? "No home network detected"
             : (_homeInfo?.Short ?? "") + (_homeCached ? "  ·  last confirmed" : "");
-        SideIp.Text = _egressPublic ?? "";
-        CopyIpBtn.Visibility = _egressPublic == null ? Visibility.Collapsed : Visibility.Visible;
+        SideIp.Text = inUse ? _egressPublic ?? "" : "";
+        CopyIpBtn.Visibility = _egressPublic == null || !inUse ? Visibility.Collapsed : Visibility.Visible;
         RevealBtn.Visibility = _homePublic == null ? Visibility.Collapsed : Visibility.Visible;
     }
 
@@ -377,8 +433,9 @@ public partial class MainWindow
         ClearHistoryBtn.Visibility = _history.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    void ClearHistory_Click(object sender, RoutedEventArgs e)
+    async void ClearHistory_Click(object sender, RoutedEventArgs e)
     {
+        if (!await Ask("Clear previous IPs", "The app uses them to tell you when a new IP is in the same range as an earlier one. Clear them?", "Clear")) return;
         _history.Clear();
         _s.IpHistory = new();
         SaveSettings();
@@ -403,6 +460,7 @@ public partial class MainWindow
     {
         if (_demo) { Toast("Test finished: everything protected.", true); return; }
         LeakBtn.IsEnabled = false;
+        _restored = false;
         if (!_tick.IsEnabled) _tick.Start();
         ShowProgress("Testing: Firewall, kill switch, routes and public IP…");
         try

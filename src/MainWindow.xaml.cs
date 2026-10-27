@@ -32,7 +32,9 @@ public partial class MainWindow : Window
     string _egressPublic, _homePublic;
     Net.IpInfo _egressInfo, _homeInfo;
     string _lastEgressKey;
-    bool _distrust, _cs2WasRunning, _wasProtected, _everProtected, _homeCached, _switching, _reveal, _syncing, _syncAgain, _changingIp, _querying, _refreshingAcc, _uiLock, _closingDone;
+    string _verifiedKey, _measuredKey;
+    int _ipSeq;
+    bool _distrust, _restored, _phoneBusy, _tetherHinted, _cs2WasRunning, _wasProtected, _everProtected, _homeCached, _switching, _reveal, _syncing, _syncAgain, _changingIp, _querying, _refreshingAcc, _uiLock, _closingDone;
     string _adb;
     PhoneInfo _phone;
     DateTime _lastIpCheck = DateTime.MinValue;
@@ -53,6 +55,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         ParseDevArgs(args);
+        _justUpdated = args.Contains("--updated");
         ShowVersion();
 
         Log.Added += e => Dispatcher.BeginInvoke(() =>
@@ -92,7 +95,12 @@ public partial class MainWindow : Window
             if (PageLog.IsVisible) UpdateDiagInfo();
             if (AutoQueryBox.IsChecked == true && PageServers.IsVisible) await QueryServers(true);
         };
-        _secondTimer.Tick += (_, _) => OnSecond();
+        _secondTimer.Tick += (_, _) =>
+        {
+            OnSecond();
+            // In a match, the phone's Wi-Fi coming back on is checked every 2 s (Android moves tethering to Wi-Fi at once).
+            if (!_demo && !_changingIp && _adb != null && DateTime.Now.Second % 2 == 0 && Steam.Cs2Running) _ = RefreshPhone();
+        };
         _toastTimer.Tick += (_, _) => HideToast();
 
         StateChanged += (_, _) =>
@@ -135,6 +143,8 @@ public partial class MainWindow : Window
             });
             _queryTimer.Start();
             if (_servers.Count > 0) _ = QueryServers(true);
+            AfterUpdateStart();
+            _ = CheckForUpdates();
         }
         _secondTimer.Start();
         AfterStartupDev();
@@ -145,8 +155,10 @@ public partial class MainWindow : Window
         WatchSteamLog();
         await SyncNow();
         DiagTick();
+        WatchCs2Console();
+        if (!_checkingUpdate && _s.CheckUpdates && (_s.LastUpdateCheck == null || (DateTime.Now - _s.LastUpdateCheck.Value).TotalHours >= 24)) _ = CheckForUpdates();
         if (!_changingIp && DateTime.Now.Second % 10 < 5) _ = RefreshPhone();
-        if (!_changingIp && (DateTime.Now - _lastIpCheck).TotalSeconds > 90) _ = RefreshPublicIps();
+        if (!_changingIp && (DateTime.Now - _lastIpCheck).TotalSeconds > (Steam.Cs2Running ? 15 : 90)) _ = RefreshPublicIps();
     }
 
     void OnSecond()

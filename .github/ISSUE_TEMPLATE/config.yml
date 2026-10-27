@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security problem (private)
+    url: https://github.com/Sepd0x/cs2-ip-changer/security/advisories/new
+    about: A way your home IP could leak, or a problem in something that runs as admin. Please don't open a public issue for these.

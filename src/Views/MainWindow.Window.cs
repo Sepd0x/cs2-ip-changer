@@ -21,7 +21,7 @@ public partial class MainWindow
         if (PageNet == null) return;
         var map = new (RadioButton nav, FrameworkElement page, string title)[]
         {
-            (NavNet, PageNet, "Connection"), (NavServers, PageServers, "Servers"), (NavAccounts, PageAccounts, "Steam accounts"),
+            (NavNet, PageNet, "Connection"), (NavServers, PageServers, "Servers"), (NavAccounts, PageAccounts, "Accounts"),
             (NavLog, PageLog, "Log"), (NavSettings, PageSettings, "Settings"),
         };
         foreach (var (nav, page, title) in map)
@@ -50,7 +50,7 @@ public partial class MainWindow
     void Max_Click(object sender, RoutedEventArgs e) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
     void Close_Click(object sender, RoutedEventArgs e) => Close();
 
-    // ------------------------------------------------------------ Global hotkey (Ctrl+Alt+Q = quick switch)
+    // ------------------------------------------------------------ Global hotkeys (Ctrl+Alt+Q = quick switch, Ctrl+Alt+R = change IP and rejoin)
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     static extern bool RegisterHotKey(IntPtr hWnd, int id, uint modifiers, uint vk);
@@ -58,7 +58,7 @@ public partial class MainWindow
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
-    const int HotkeyId = 0x5157;
+    const int HotkeyId = 0x5157, RejoinHotkeyId = 0x5152;
     const uint MOD_ALT = 0x1, MOD_CONTROL = 0x2, MOD_NOREPEAT = 0x4000;
     const int WM_HOTKEY = 0x0312;
     IntPtr _hwnd;
@@ -69,9 +69,24 @@ public partial class MainWindow
         if (_demo) return;
         _hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
         System.Windows.Interop.HwndSource.FromHwnd(_hwnd)?.AddHook(WndProc);
+        RegisterHotkeys();
+    }
+
+    void RegisterHotkeys()
+    {
         if (!RegisterHotKey(_hwnd, HotkeyId, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, (uint)KeyInterop.VirtualKeyFromKey(Key.Q)))
             Log.Warn("The Ctrl+Alt+Q hotkey is already in use by another program; use the Quick switch button.");
+        if (!RegisterHotKey(_hwnd, RejoinHotkeyId, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, (uint)KeyInterop.VirtualKeyFromKey(Key.R)))
+            Log.Warn("The Ctrl+Alt+R hotkey is already in use by another program; use the Change IP and rejoin button.");
         RegisterDevHotkeys();
+    }
+
+    void UnregisterHotkeys()
+    {
+        if (_hwnd == IntPtr.Zero) return;
+        UnregisterHotKey(_hwnd, HotkeyId);
+        UnregisterHotKey(_hwnd, RejoinHotkeyId);
+        UnregisterDevHotkeys();
     }
 
     IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -82,13 +97,19 @@ public partial class MainWindow
             Log.Info("Hotkey Ctrl+Alt+Q: quick switch.");
             _ = QuickSwitch();
         }
+        else if (msg == WM_HOTKEY && wParam.ToInt32() == RejoinHotkeyId)
+        {
+            handled = true;
+            System.Media.SystemSounds.Asterisk.Play();   // heard in game: the key was taken
+            _ = ChangeIpAndRejoin("Hotkey Ctrl+Alt+R");
+        }
         else if (msg == WM_HOTKEY) OnDevHotkey(wParam.ToInt32(), ref handled);
         return IntPtr.Zero;
     }
 
     protected override void OnClosed(EventArgs e)
     {
-        if (_hwnd != IntPtr.Zero) { UnregisterHotKey(_hwnd, HotkeyId); UnregisterDevHotkeys(); }
+        UnregisterHotkeys();
         base.OnClosed(e);
     }
 
@@ -96,6 +117,14 @@ public partial class MainWindow
     {
         if (_closingDone || _demo || !_s.CleanupOnExit) return;
         e.Cancel = true;
+        // Removing the block with CS2 still in a match would send its next packets out with the home IP.
+        if (Steam.Cs2Running && !_restored)
+        {
+            if (!await Ask("CS2 is still open", "Turning protection off now would send CS2's traffic through your home connection. Close CS2 first, or close the app and keep protection on this time.", "Keep protection and close")) return;
+            _closingDone = true;
+            Close();
+            return;
+        }
         _closingDone = true;
         ShowProgress("Undoing the routes and the kill switch…");
 

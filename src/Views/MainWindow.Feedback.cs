@@ -16,11 +16,15 @@ namespace SRT;
 // Notifications and dialog
 public partial class MainWindow
 {
-    void Toast(string text, bool ok)
+    enum Tone { Ok, Warn, Error, Info }
+
+    void Toast(string text, bool ok) => Toast(text, ok ? Tone.Ok : Tone.Warn);
+
+    void Toast(string text, Tone tone)
     {
         ToastText.Text = text;
-        ToastIcon.Text = ok ? "" : "";
-        ToastIcon.Foreground = ok ? Ui.Good : Ui.Warn;
+        ToastIcon.Text = tone switch { Tone.Ok => "", Tone.Error => "", Tone.Info => "", _ => "" };
+        ToastIcon.Foreground = tone switch { Tone.Ok => Ui.Good, Tone.Error => Ui.Bad, Tone.Info => Ui.Muted, _ => Ui.Warn };
         ToastBox.Visibility = Visibility.Visible;
         ToastBox.BeginAnimation(OpacityProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(160)));
         _toastTimer.Stop();
@@ -36,8 +40,9 @@ public partial class MainWindow
         ToastBox.BeginAnimation(OpacityProperty, a);
     }
 
-    void ShowProgress(string text) { ProgressText.Text = text; ProgressPanel.Visibility = Visibility.Visible; }
-    void HideProgress() => ProgressPanel.Visibility = Visibility.Collapsed;
+    // The progress line takes the place of the hero's buttons, so nothing below moves.
+    void ShowProgress(string text) { ProgressText.Text = text; ProgressPanel.Visibility = Visibility.Visible; ActionRow.Visibility = Visibility.Hidden; }
+    void HideProgress() { ProgressPanel.Visibility = Visibility.Collapsed; ActionRow.Visibility = Visibility.Visible; }
 
     TaskCompletionSource<bool> _dialogTcs;
 
@@ -46,6 +51,7 @@ public partial class MainWindow
     {
         _dialogTcs?.TrySetResult(false);
         _dialogTcs = new TaskCompletionSource<bool>();
+        if (ToastBox.Visibility == Visibility.Visible) HideToast();   // the dialog says it already
         DialogTitle.Text = title;
         DialogText.Text = text;
         DialogOk.Content = ok;
@@ -59,7 +65,8 @@ public partial class MainWindow
         DialogInput.Visibility = inputs >= 1 ? Visibility.Visible : Visibility.Collapsed;
         DialogInput2.Visibility = inputs >= 2 ? Visibility.Visible : Visibility.Collapsed;
         Dialog.Visibility = Visibility.Visible;
-        if (inputs > 0) DialogInput.Focus(); else DialogOk.Focus();
+        // After layout: a control that was collapsed a moment ago can't take focus yet.
+        Dispatcher.BeginInvoke(() => { if (inputs > 0) Keyboard.Focus(DialogInput); else Keyboard.Focus(DialogOk); }, DispatcherPriority.Input);
         return _dialogTcs.Task;
     }
 
@@ -69,6 +76,7 @@ public partial class MainWindow
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {
         if (Dialog.Visibility == Visibility.Visible && e.Key == Key.Escape) { DialogCancel_Click(this, null); e.Handled = true; }
+        else if (Dialog.Visibility == Visibility.Visible && e.Key == Key.Enter && Keyboard.FocusedElement != DialogCancel) { DialogOk_Click(this, null); e.Handled = true; }
         base.OnPreviewKeyDown(e);
     }
 }

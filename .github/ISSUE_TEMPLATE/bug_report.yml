@@ -1,0 +1,85 @@
+name: Bug report
+description: Something doesn't work or the app shows a wrong result.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If the problem is your connection, try Settings > Restore network first. If the window won't open, run `CS2IPChanger.exe --restore`.
+
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: It's at the bottom left of the window.
+      placeholder: v0.1.0 alpha.3
+    validations:
+      required: true
+
+  - type: dropdown
+    id: windows
+    attributes:
+      label: Windows
+      options:
+        - Windows 11
+        - Windows 10
+    validations:
+      required: true
+
+  - type: dropdown
+    id: link
+    attributes:
+      label: How the PC connects to the phone
+      options:
+        - USB cable (tethering)
+        - Phone's Wi-Fi hotspot
+        - 4G/5G USB dongle or router
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: routing
+    attributes:
+      label: What goes through the phone
+      options:
+        - Game only
+        - Whole PC while CS2 is open
+        - Whole PC, always
+        - Not sure
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what you got instead. Screenshots help.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the app with the phone plugged in
+        2. Press Change IP
+        3. ...
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: |
+        Log tab > Copy all, then paste it here. If the app won't open, write `none`.
+        Before you post, replace your home IP, Steam account names, your Wi-Fi or hotspot name and your Windows user name (it shows up in file paths) with something like `xxx`.
+      render: text
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Before posting
+      options:
+        - label: I removed my home IP, Steam account names, Wi-Fi name and Windows user name from the log and the screenshots.
+          required: true

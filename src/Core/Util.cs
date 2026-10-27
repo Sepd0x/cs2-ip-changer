@@ -130,10 +130,22 @@ public sealed record ProcResult(int Code, string Output)
 
 public static class Proc
 {
+    /// <summary>
+    /// "netsh" and "powershell" always come from System32. The app runs as admin, and a bare name would make
+    /// Windows look in the app's own folder first (often Downloads), where anything could be planted.
+    /// </summary>
+    static string Resolve(string file)
+    {
+        if (Path.IsPathRooted(file)) return file;
+        var sys = Environment.SystemDirectory;
+        if (file.Equals("powershell", StringComparison.OrdinalIgnoreCase)) return Path.Combine(sys, "WindowsPowerShell", "v1.0", "powershell.exe");
+        return Path.Combine(sys, file.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ? file : file + ".exe");
+    }
+
     /// <summary>Runs a program with no window and without blocking the UI.</summary>
     public static async Task<ProcResult> Run(string file, string args, int timeoutMs = 15000, CancellationToken ct = default)
     {
-        var psi = new ProcessStartInfo(file, args)
+        var psi = new ProcessStartInfo(Resolve(file), args)
         {
             UseShellExecute = false,
             CreateNoWindow = true,
@@ -168,6 +180,9 @@ public static class Proc
 
 public static class Fmt
 {
+    /// <summary>"27 Oct 21:05": the same on every Windows language, never month/day mix-ups.</summary>
+    public static string When(DateTime? t) => t?.ToString("d MMM HH:mm", System.Globalization.CultureInfo.InvariantCulture) ?? "";
+
     public static string Ago(DateTime? t)
     {
         if (t == null) return "never";

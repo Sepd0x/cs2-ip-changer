@@ -29,6 +29,8 @@ public partial class MainWindow
             MethodCombo.SelectedIndex = _s.ChangeMethod == "airplane" ? 1 : 0;
             OffSecondsBox.Text = _s.OffSeconds.ToString();
             AttemptsBox.Text = _s.MaxAttempts.ToString();
+            New16Box.IsChecked = _s.RequireNew16;
+            CheckUpdatesBox.IsChecked = _s.CheckUpdates;
             KeepOffBox.IsChecked = _s.KeepPcOffPhone;
             LockCs2Box.IsChecked = _s.LockCs2;
             SteamEgressBox.IsChecked = _s.SteamOnEgress;
@@ -50,6 +52,7 @@ public partial class MainWindow
         _s.ChangeMethod = (MethodCombo.SelectedItem as ComboBoxItem)?.Tag as string ?? "data";
         if (int.TryParse(OffSecondsBox.Text, out var off)) _s.OffSeconds = Math.Clamp(off, 1, 60);
         if (int.TryParse(AttemptsBox.Text, out var att)) _s.MaxAttempts = Math.Clamp(att, 1, 10);
+        _s.RequireNew16 = New16Box.IsChecked == true;
         _s.KeepPcOffPhone = KeepOffBox.IsChecked == true;
         var guardChanged = _s.LockCs2 != (LockCs2Box.IsChecked == true) || _s.SteamOnEgress != (SteamEgressBox.IsChecked == true);
         _s.LockCs2 = LockCs2Box.IsChecked == true;
@@ -69,17 +72,21 @@ public partial class MainWindow
     {
         if (!await Ask("Restore network", "This removes the Firewall block, the routes and the \"Whole PC\" mode. The servers in the list will see your home IP until you open the app again. The list stays saved.", "Restore", danger: true)) return;
         if (_demo) return;
+        // Stays restored: network changes no longer put the rules back until Run leak test or the next start.
+        _restored = true;
         _tick.Stop();
-        await _guard.RestoreAll(_servers.Select(s => s.Ip).Distinct().ToList());
-        Toast("Network restored. Protection comes back when you reopen the app or press Run leak test.", true);
+        var left = await _guard.RestoreAll(_servers.Select(s => s.Ip).Distinct().ToList());
+        _last = null; // the old report would redraw "Protected" on the next IP check
+        if (left == null) Toast("Network restored and checked. Protection comes back when you reopen the app or press Run leak test.", true);
+        else Toast("Couldn't remove: " + left + ". Restart the PC to clear the routes, or run the app with --restore.", Tone.Error);
         foreach (var s in _servers) { s.Protected = false; s.RouteText = "Off"; }
-        SetHero("bad", "Protection off", "You restored the network. Press Run leak test to protect again.");
+        SetHero("bad", "Protection off", "You restored the network. Click Run leak test to protect again.");
     }
 
     void OpenFirewall_Click(object sender, RoutedEventArgs e)
     {
-        try { Process.Start(new ProcessStartInfo("wf.msc") { UseShellExecute = true }); }
-        catch (Exception ex) { Toast("Couldn't open the Firewall: " + ex.Message, false); }
+        try { Process.Start(new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "wf.msc")) { UseShellExecute = true }); }
+        catch (Exception ex) { Toast("Couldn't open the Firewall: " + ex.Message, Tone.Error); }
         Toast("In Outbound Rules, look for 'ServerRouteTool v9 - kill switch'.", true);
 
     }

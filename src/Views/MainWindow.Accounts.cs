@@ -152,6 +152,7 @@ public partial class MainWindow
     async Task SwitchTo(AccountItem a, bool cs2, bool ask = true)
     {
         if (_switching) return;
+        _cs2ClosedByAppAt = DateTime.Now; // the switch closes CS2 itself: that exit is not a crash
         if (_demo)
         {
             foreach (var x in _accounts) x.Active = x == a;
@@ -191,7 +192,7 @@ public partial class MainWindow
                 if (active != null) foreach (var x in _accounts) x.Active = x.SteamId == active;
             }));
         }
-        catch (Exception ex) { Log.Error("Account switch: " + ex.Message); Toast(ex.Message, false); }
+        catch (Exception ex) { Log.Error("Account switch: " + ex.Message); Toast(ex.Message, Tone.Error); }
         finally { a.Busy = false; _switching = false; UpdateQuickInfo(); }
     }
 
@@ -288,7 +289,7 @@ public partial class MainWindow
         a.RefreshAll();
         SaveAccounts();
         ApplyAccountFilter();
-        Toast(minutes == 0 ? $"Cooldown cleared for {a.Name}." : $"{a.Name}: cooldown until {a.Meta.CooldownUntil:dd/MM HH:mm}.", true);
+        Toast(minutes == 0 ? $"Cooldown cleared for {a.Name}." : $"{a.Name}: cooldown until {Fmt.When(a.Meta.CooldownUntil)}.", true);
     }
 
     void AccFav_Click(object sender, RoutedEventArgs e)
@@ -325,6 +326,7 @@ public partial class MainWindow
 
     void UnhideAll_Click(object sender, RoutedEventArgs e)
     {
+        if (_demo) { Toast("Demo: all accounts are visible again.", true); return; }   // the demo never reads the real Steam accounts
         foreach (var m in _accMeta.Values) m.Hidden = false;
         SaveAccounts();
         LoadAccounts();

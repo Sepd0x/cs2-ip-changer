@@ -24,7 +24,7 @@
     <SolidColorBrush x:Key="LineStrong" Color="#383838"/>
     <SolidColorBrush x:Key="Text" Color="#DDDDDD"/>
     <SolidColorBrush x:Key="Muted" Color="#9B9B9B"/>
-    <SolidColorBrush x:Key="Faint" Color="#7E7E7E"/>
+    <SolidColorBrush x:Key="Faint" Color="#888888"/>
     <SolidColorBrush x:Key="Good" Color="#7CC95A"/>
     <SolidColorBrush x:Key="GoodSoft" Color="#1E7CC95A"/>
     <SolidColorBrush x:Key="Warn" Color="#E3BF4B"/>
@@ -145,7 +145,19 @@
     </Style>
 
     <!-- ============================================================ Buttons -->
+    <!-- Keyboard focus (Tab): a thin accent outline; the mouse doesn't show it -->
+    <Style x:Key="FocusRing">
+        <Setter Property="Control.Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Rectangle Margin="-2" Stroke="{StaticResource Accent}" StrokeThickness="1" SnapsToDevicePixels="True"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="Btn" TargetType="Button">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
         <Setter Property="Background" Value="{StaticResource BtnFill}"/>
         <Setter Property="Foreground" Value="{StaticResource Text}"/>
         <Setter Property="BorderBrush" Value="{StaticResource LineStrong}"/>
@@ -182,8 +194,17 @@
 
     <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource Btn}">
         <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+        <Setter Property="Background" Value="{StaticResource AccentSoft}"/>
         <Setter Property="BorderBrush" Value="{StaticResource AccentDim}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
+        <Style.Triggers>
+            <!-- Disabled: plain, so it doesn't read as selected -->
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{StaticResource Faint}"/>
+                <Setter Property="Background" Value="{StaticResource BtnFill}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource LineStrong}"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style x:Key="Ghost" TargetType="Button" BasedOn="{StaticResource Btn}">
@@ -197,6 +218,9 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter Property="Foreground" Value="{StaticResource Text}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="b" Property="Opacity" Value="0.4"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -242,6 +266,7 @@
 
     <!-- ============================================================ Tabs on the left: icon and name -->
     <Style x:Key="Nav" TargetType="RadioButton">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
         <Setter Property="Foreground" Value="{StaticResource Faint}"/>
         <Setter Property="FontSize" Value="10.5"/>
         <Setter Property="Cursor" Value="Hand"/>
@@ -302,6 +327,7 @@
 
     <!-- Checkbox: small square, filled with the color when on -->
     <Style x:Key="Switch" TargetType="CheckBox">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
         <Setter Property="Foreground" Value="{StaticResource Text}"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="FontSize" Value="12"/>
@@ -345,6 +371,7 @@
 
     <!-- Choice (radio) with the same square -->
     <Style x:Key="Choice" TargetType="RadioButton">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
         <Setter Property="Foreground" Value="{StaticResource Text}"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="FontSize" Value="12"/>

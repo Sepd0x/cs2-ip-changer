@@ -123,16 +123,16 @@
                         </Border>
                     </WrapPanel>
 
+                    <StackPanel Grid.Row="2" Margin="0,4,0,0">
+                        <TextBlock Text="{Binding LastServerText}" Foreground="{StaticResource Muted}" FontSize="11" TextTrimming="CharacterEllipsis"
+                                   Visibility="{Binding HasLastServer, Converter={StaticResource Vis}}" ToolTip="{Binding LastServerText}"/>
+                        <TextBlock Text="{Binding Note}" Foreground="{StaticResource Faint}" FontSize="11" TextTrimming="CharacterEllipsis" ToolTip="{Binding Note}"/>
+                    </StackPanel>
                     <Grid Grid.Row="3" Margin="0,6,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="{Binding LastServerText}" Foreground="{StaticResource Muted}" FontSize="11" TextTrimming="CharacterEllipsis"
-                                       Visibility="{Binding HasLastServer, Converter={StaticResource Vis}}"/>
-                            <TextBlock Text="{Binding Note}" Foreground="{StaticResource Faint}" FontSize="11" TextTrimming="CharacterEllipsis"/>
-                        </StackPanel>
                         <Button Grid.Column="1" Margin="8,0,0,0" Padding="16,4" Click="AccSwitch_Click" VerticalAlignment="Bottom">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -177,6 +177,17 @@
 
         <DataTemplate x:Key="ServerRow">
             <Grid ToolTip="{Binding Tip}" ToolTipService.ShowDuration="30000" Background="Transparent">
+                <Grid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Join" Tag="&#xE768;" Click="SrvConnect_Click"/>
+                        <Separator/>
+                        <MenuItem Header="Copy IP:port" Tag="&#xE8C8;" Click="CopyServers_Click"/>
+                        <MenuItem Header="Copy connect command" Tag="&#xE8C8;" Click="SrvCopyConnect_Click"/>
+                        <MenuItem Header="Favorite (yes/no)" Tag="&#xE734;" Click="SrvFav_Click"/>
+                        <Separator/>
+                        <MenuItem Header="Remove" Tag="&#xE74D;" Click="RemoveServers_Click"/>
+                    </ContextMenu>
+                </Grid.ContextMenu>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="28"/>
                     <ColumnDefinition Width="3*" MinWidth="200"/>
@@ -188,12 +199,12 @@
                 </Grid.ColumnDefinitions>
                 <Button Style="{StaticResource IconBtn}" Content="{Binding StarGlyph}" Click="SrvFav_Click" ToolTip="Favorite: stays at the top" Width="24" Height="24" FontSize="11"/>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Text="{Binding LastText}" Foreground="{StaticResource Info}" FontSize="11" Margin="10,0,0,0" VerticalAlignment="Center"
+                    <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" Margin="0,0,10,0"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,1,0,0">
+                        <TextBlock Text="{Binding Key}" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Faint}"/>
+                        <TextBlock Text="{Binding LastText}" Foreground="{StaticResource Info}" FontSize="11" Margin="10,0,0,0"
                                    Visibility="{Binding IsLast, Converter={StaticResource Vis}}"/>
                     </StackPanel>
-                    <TextBlock Text="{Binding Key}" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Faint}" Margin="0,1,0,0"/>
                 </StackPanel>
                 <TextBlock Grid.Column="2" Text="{Binding Map}" VerticalAlignment="Center" Foreground="{StaticResource Muted}" TextTrimming="CharacterEllipsis"/>
                 <StackPanel Grid.Column="3" VerticalAlignment="Center">
@@ -249,7 +260,11 @@
                                          ToolTip="Everything the app did, with timestamps"/>
                             <RadioButton x:Name="NavSettings" Style="{StaticResource Nav}" Tag="&#xE713;" Content="Settings" Checked="Nav_Checked"/>
                         </StackPanel>
-                        <TextBlock x:Name="VersionText" Grid.Row="2" Foreground="{StaticResource Faint}" FontSize="10.5" TextAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+                        <StackPanel Grid.Row="2" Margin="0,0,0,12">
+                            <TextBlock x:Name="VersionText" Foreground="{StaticResource Faint}" FontSize="10.5" TextAlignment="Center" HorizontalAlignment="Center"/>
+                            <Button x:Name="UpdateBtn" Style="{StaticResource Primary}" Click="Update_Click" Content="Update" Padding="10,3" Margin="0,6,0,0" FontSize="11"
+                                    HorizontalAlignment="Center" Visibility="Collapsed"/>
+                        </StackPanel>
                     </Grid>
                 </Border>
 
@@ -355,20 +370,23 @@
                                                     <Button x:Name="RevealBtn" Style="{StaticResource IconBtn}" Content="&#xE7B3;" Click="Reveal_Click" Margin="4,0,0,0" FontSize="11"
                                                             ToolTip="Show or hide"/>
                                                 </StackPanel>
-                                                <TextBlock x:Name="HomeIsp" Text="—" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,1,0,0" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock x:Name="HomeIsp" Text="—" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,1,0,0" TextTrimming="CharacterEllipsis"
+                                                           ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                             </StackPanel>
                                         </Grid>
 
-                                        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,16,0,0">
+                                        <StackPanel Grid.Row="2" x:Name="ActionRow" Orientation="Horizontal" Margin="0,16,0,0">
                                             <Button x:Name="ChangeIpBtn" Style="{StaticResource Primary}" Padding="22,6" Click="ChangeIp_Click" Content="Change IP"
                                                     ToolTipService.ShowOnDisabled="True"
                                                     ToolTip="Turns the phone's mobile data off and on until the carrier gives a new IP. Needs the phone set up over ADB. If you are on a server, you will drop."/>
+                                            <Button x:Name="RejoinBtn" Click="Rejoin_Click" Content="Change IP and rejoin"
+                                                    ToolTip="Changes the IP, then joins the last server again. Only joins with protection confirmed. In game: Ctrl+Alt+R."/>
                                             <Button x:Name="LeakBtn" Click="LeakTest_Click" Content="Run leak test"
                                                     ToolTip="Full test: Firewall, block, each server's route and whether the phone's IP really differs from your home IP."/>
                                         </StackPanel>
 
-                                        <StackPanel Grid.Row="3" x:Name="ProgressPanel" Margin="0,12,0,0" Visibility="Collapsed">
-                                            <TextBlock x:Name="ProgressText" Text="" Margin="0,0,0,6"/>
+                                        <StackPanel Grid.Row="2" x:Name="ProgressPanel" Margin="0,16,0,0" VerticalAlignment="Center" Visibility="Collapsed">
+                                            <TextBlock x:Name="ProgressText" Text="" Margin="0,0,0,6" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                             <ProgressBar IsIndeterminate="True"/>
                                         </StackPanel>
                                     </Grid>
@@ -397,16 +415,17 @@
                                     </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="2" Style="{StaticResource Group}" Header="Previous IPs">
+                                <HeaderedContentControl Grid.Row="2" Style="{StaticResource Group}" Header="Previous IPs" VerticalAlignment="Top">
                                     <StackPanel>
                                         <TextBlock x:Name="HistoryEmpty" Text="No IP changes yet." Style="{StaticResource Sub}"/>
+                                        <ScrollViewer MaxHeight="84" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                                         <ItemsControl x:Name="History">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
                                                     <Grid Margin="0,0,0,6">
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="54"/>
-                                                            <ColumnDefinition Width="130"/>
+                                                            <ColumnDefinition Width="118"/>
                                                             <ColumnDefinition Width="*"/>
                                                             <ColumnDefinition Width="Auto"/>
                                                         </Grid.ColumnDefinitions>
@@ -418,6 +437,7 @@
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
+                                        </ScrollViewer>
                                         <Button x:Name="ClearHistoryBtn" HorizontalAlignment="Left" Margin="0,6,0,0" Content="Clear history" Click="ClearHistory_Click"/>
                                     </StackPanel>
                                 </HeaderedContentControl>
@@ -440,9 +460,9 @@
                                                             <ColumnDefinition Width="160"/>
                                                             <ColumnDefinition Width="*"/>
                                                         </Grid.ColumnDefinitions>
-                                                        <Border Width="7" Height="7" Background="{Binding Brush}" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                                        <Border Width="7" Height="7" Background="{Binding Brush}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,5,0,0"/>
                                                         <TextBlock Grid.Column="1" Text="{Binding Title}"/>
-                                                        <TextBlock Grid.Column="2" Text="{Binding Detail}" Foreground="{StaticResource Muted}" TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock Grid.Column="2" Text="{Binding Detail}" Foreground="{StaticResource Muted}" TextWrapping="Wrap"/>
                                                     </Grid>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
@@ -613,7 +633,7 @@
                                     <CheckBox x:Name="OptOffline" Style="{StaticResource Switch}" Content="Offline" Margin="0,0,18,0" Click="AccOpt_Click"
                                               ToolTip="Steam offline mode (you cannot play online)"/>
                                     <CheckBox x:Name="OptStreamer" Style="{StaticResource Switch}" Content="Hide logins" Margin="0,0,18,0" Click="AccOpt_Click"
-                                              ToolTip="For streams: logins are covered"/>
+                                              ToolTip="For streams: hides the login names"/>
                                 </WrapPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                     <Button Click="AccAdd_Click" Content="Add"
@@ -705,13 +725,13 @@
                                         <CheckBox x:Name="LockCs2Box" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
                                             <StackPanel>
                                                 <TextBlock Text="CS2 only through the phone"/>
-                                                <TextBlock Text="CS2 only gets network through the phone. If the cable drops, it goes offline instead of using the home connection." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="CS2 can only use the phone connection. If the cable drops, CS2 goes offline instead of using your home network." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
                                         <CheckBox x:Name="SteamEgressBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
                                             <StackPanel>
                                                 <TextBlock Text="Steam through the phone"/>
-                                                <TextBlock Text="Avoids the 'No Steam logon' kick. Valve downloads also go through here." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="Avoids the 'No Steam logon' kick. Steam downloads also use mobile data." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
                                         <CheckBox x:Name="KeepOffBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
@@ -723,16 +743,17 @@
                                         <CheckBox x:Name="CleanupBox" Style="{StaticResource Switch}" Click="SettingChanged">
                                             <StackPanel>
                                                 <TextBlock Text="Turn off protection when closing the app"/>
-                                                <TextBlock Text="Off is safer: the block stays active with the app closed." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="Leave this off to stay protected: the block stays on after you close the app." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
                                     </StackPanel>
                                 </HeaderedContentControl>
 
                                 <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Change IP">
-                                    <Grid>
+                                    <StackPanel>
+                                    <Grid MaxWidth="560" HorizontalAlignment="Left">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*" MinWidth="200"/>
                                             <ColumnDefinition Width="12"/>
                                             <ColumnDefinition Width="90"/>
                                             <ColumnDefinition Width="12"/>
@@ -757,6 +778,13 @@
                                                      ToolTip="If the carrier returns the same IP, the app retries up to this many times."/>
                                         </StackPanel>
                                     </Grid>
+                                    <CheckBox x:Name="New16Box" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,12,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="Keep changing until the IP is in a new /16"/>
+                                            <TextBlock Text="Many admins ban a whole range. Uses the attempts above." Style="{StaticResource OptSub}"/>
+                                        </StackPanel>
+                                    </CheckBox>
+                                    </StackPanel>
                                 </HeaderedContentControl>
 
                                 <HeaderedContentControl Grid.Row="2" Style="{StaticResource Group}" Header="Maintenance" VerticalAlignment="Top">
@@ -772,15 +800,16 @@
                             <Grid Grid.Column="2">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
                                 <HeaderedContentControl Style="{StaticResource Group}" Header="Steam">
                                     <StackPanel>
                                         <TextBlock Text="Steam Web API key (optional)"/>
                                         <TextBlock Text="With it, bans come from the official API. It stays on this PC only." Style="{StaticResource OptSub}" Margin="0,1,0,8"/>
-                                        <Grid>
+                                        <Grid MaxWidth="560" HorizontalAlignment="Left">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*" MinWidth="200"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBox x:Name="ApiKeyBox" Height="28" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" LostFocus="SettingChanged" Tag="Works without a key too"/>
@@ -789,7 +818,16 @@
                                     </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="How it works" VerticalAlignment="Top">
+                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Updates">
+                                    <CheckBox x:Name="CheckUpdatesBox" Style="{StaticResource Switch}" Click="CheckUpdates_Click">
+                                        <StackPanel>
+                                            <TextBlock Text="Check for updates"/>
+                                            <TextBlock Text="Once a day, on GitHub. Nothing installs without your OK and a matching SHA-256." Style="{StaticResource OptSub}"/>
+                                        </StackPanel>
+                                    </CheckBox>
+                                </HeaderedContentControl>
+
+                                <HeaderedContentControl Grid.Row="2" Style="{StaticResource Group}" Header="How it works" VerticalAlignment="Top">
                                     <TextBlock Style="{StaticResource Sub}" LineHeight="19">
                                         The phone shares its mobile data with the PC, over a USB cable or the Wi-Fi hotspot. The app sends the game through it: servers see the carrier IP, not your home IP.<LineBreak/><LineBreak/>
                                         If the connection drops, the kill switch blocks those servers instead of letting your IP through.<LineBreak/><LineBreak/>
@@ -802,11 +840,14 @@
                     </ScrollViewer>
 
                     <!-- Toast -->
-                    <Border x:Name="ToastBox" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,24,24" MaxWidth="460"
+                    <Border x:Name="ToastBox" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,30,30" MaxWidth="520"
                             Background="{StaticResource Surface2}" BorderBrush="{StaticResource LineStrong}" BorderThickness="1" Padding="12,9" Visibility="Collapsed" Opacity="0">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="18" ShadowDepth="2" Opacity="0.55" Color="Black"/>
+                        </Border.Effect>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock x:Name="ToastIcon" Text="&#xE73E;" Style="{StaticResource Icon}" FontSize="12" Foreground="{StaticResource Good}" VerticalAlignment="Top" Margin="0,2,10,0"/>
-                            <TextBlock x:Name="ToastText" TextWrapping="Wrap" MaxWidth="400"/>
+                            <TextBlock x:Name="ToastText" TextWrapping="Wrap" MaxWidth="460"/>
                         </StackPanel>
                     </Border>
 

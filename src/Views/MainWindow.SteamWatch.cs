@@ -21,6 +21,7 @@ public partial class MainWindow
     static readonly TimeSpan AfterCrashWait = TimeSpan.FromMinutes(5);
     DateTime? _cs2CrashAt;
     string _cs2CrashServer;
+    DateTime _cs2ClosedByAppAt;
 
     /// <summary>Steam has a Valve session and, if the IP changed, has already redone it on the new IP.</summary>
     bool SteamReady => !Steam.IsRunning || (_steamLog.Online != false && (_ipChangedAt == null || _steamLog.LastLogon >= _ipChangedAt));
@@ -74,7 +75,7 @@ public partial class MainWindow
         var link = Net.ReadSteamLink();
         var n = Net.ResetLink(link);
         Diag.Write("steam-reset", new { connections = n, total = link.Keys.Count });
-        if (n > 0) Log.Info($"Cut {n} old Steam connection(s): it reconnects now on the new IP.");
+        if (n > 0) Log.Info($"Closed {n} old Steam connection(s). Steam reconnects on the new IP.");
     }
 
     // ------------------------------------------------------------ How CS2 exits
@@ -120,10 +121,11 @@ public partial class MainWindow
         var hex = code == null ? "?" : $"0x{(uint)code.Value:X8}";
         var name = code is int c && CrashCodes.TryGetValue((uint)c, out var n) ? n : null;
         Diag.Write("cs2-exit", new { code, hex, reason = name, minutes = min });
-        if (code == 0) Log.Info($"CS2 closed normally after {min} min.");
+        if ((DateTime.Now - _cs2ClosedByAppAt).TotalSeconds < 60) Log.Info($"CS2 closed by the account switch after {min} min.");
+        else if (code == 0) Log.Info($"CS2 closed normally after {min} min.");
         else
         {
-            Log.Warn($"CS2 closed with error {hex}{(name != null ? $" ({name})" : "")} after {min} min. If it was a crash, export diagnostics in Log.");
+            Log.Warn($"CS2 closed with error {hex}{(name != null ? $" ({name})" : "")} after {min} min. If it was a crash, use Copy all in Log and add it to your report.");
             if (min >= 1 && _s.LastServer != null)
             {
                 _cs2CrashAt = DateTime.Now;
@@ -132,7 +134,7 @@ public partial class MainWindow
                 Log.Warn($"CS2 crashed. Do not rejoin {_cs2CrashServer} before {until:HH:mm}: the server still has the old session and kicks with \"No Steam logon\". Another server is fine right away.");
                 Toast($"CS2 crashed. Rejoin the same server only after {until:HH:mm} (another one is fine right away).", false);
             }
-            else Toast($"CS2 closed with error {hex}. It is in the diagnostics.", false);
+            else Toast($"CS2 closed with error {hex}. Details are in the Log.", false);
         }
     }
 
@@ -143,7 +145,7 @@ public partial class MainWindow
         var until = _cs2CrashAt.Value + AfterCrashWait;
         if (DateTime.Now >= until) return true;
         var wait = await Ask("CS2 crashed on this server recently",
-            $"CS2 crashed at {_cs2CrashAt:HH:mm} inside {s.Title}. The server still has that session and, a few minutes later, kicks the account with \"No Steam logon\", even if you already rejoined.\n\n" +
+            $"CS2 crashed at {_cs2CrashAt:HH:mm} on {s.Title}. The server still has that session and, a few minutes later, kicks the account with \"No Steam logon\", even if you already rejoined.\n\n" +
             $"Wait until {until:HH:mm:ss} and join automatically? Another server is fine right away.", "Wait and join", "Join now");
         Diag.Write("wait-after-crash", new { server = s.Key, seconds = (int)(until - DateTime.Now).TotalSeconds, waited = wait });
         if (!wait) return true;
