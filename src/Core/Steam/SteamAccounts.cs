@@ -9,7 +9,7 @@ using Microsoft.Win32;
 
 namespace SRT.Core;
 
-/// <summary>Contas guardadas no Steam deste PC e troca de conta.</summary>
+/// <summary>Accounts saved in this PC's Steam, and account switching.</summary>
 public static partial class Steam
 {
     const long SteamId64Base = 76561197960265728;
@@ -66,7 +66,7 @@ public static partial class Steam
         return File.Exists(p) ? p : null;
     }
 
-    /// <summary>Caminho do cs2.exe: o guardado, o do processo aberto, ou procurado nas bibliotecas do Steam.</summary>
+    /// <summary>Path to cs2.exe: the saved one, the one from the running process, or searched in the Steam libraries.</summary>
     public static string Cs2Path(SRT.Settings s)
     {
         if (s.Cs2Path != null && File.Exists(s.Cs2Path)) return s.Cs2Path;
@@ -91,7 +91,7 @@ public static partial class Steam
             found = libs.Select(l => Path.Combine(l, "steamapps", "common", "Counter-Strike Global Offensive", "game", "bin", "win64", "cs2.exe"))
                 .FirstOrDefault(File.Exists);
         }
-        if (found != null && found != s.Cs2Path) { s.Cs2Path = found; Log.Info("CS2 encontrado em " + found); }
+        if (found != null && found != s.Cs2Path) { s.Cs2Path = found; Log.Info("CS2 found at " + found); }
         return found;
     }
 
@@ -109,10 +109,10 @@ public static partial class Steam
         await Task.Delay(800);
     }
 
-    /// <summary>Troca de conta como os gestores de contas conhecidos: AutoLoginUser + MostRecent, e reinicia o Steam.</summary>
+    /// <summary>Switches account like the known account managers: AutoLoginUser + MostRecent, then restarts Steam.</summary>
     public static async Task SwitchTo(string accountName, string steamId, bool offline, string extraArgs)
     {
-        if (Exe == null || !File.Exists(Exe)) throw new InvalidOperationException("Não encontrei o Steam instalado neste PC.");
+        if (Exe == null || !File.Exists(Exe)) throw new InvalidOperationException("Could not find Steam installed on this PC.");
         await CloseSteam();
 
         using (var k = Registry.CurrentUser.CreateSubKey(@"Software\Valve\Steam"))
@@ -150,15 +150,15 @@ public static partial class Steam
         Process.Start(new ProcessStartInfo(Exe, extraArgs ?? "") { UseShellExecute = true });
     }
 
-    /// <summary>Fecha e volta a abrir o Steam na mesma conta (ex.: para se ligar pela saída protegida).</summary>
+    /// <summary>Closes and reopens Steam on the same account (e.g. so it connects through the protected connection).</summary>
     public static async Task Restart(string args)
     {
-        if (Exe == null || !File.Exists(Exe)) throw new InvalidOperationException("Não encontrei o Steam instalado neste PC.");
+        if (Exe == null || !File.Exists(Exe)) throw new InvalidOperationException("Could not find Steam installed on this PC.");
         await CloseSteam();
         Process.Start(new ProcessStartInfo(Exe, args ?? "") { UseShellExecute = true });
     }
 
-    /// <summary>A conta está marcada para entrar em modo offline (o Steam não a confirma aos servidores).</summary>
+    /// <summary>The account is set to log in in offline mode (Steam does not confirm it to servers).</summary>
     public static bool WantsOffline(string steamId)
     {
         try
@@ -170,7 +170,7 @@ public static partial class Steam
         catch { return false; }
     }
 
-    /// <summary>Abre o Steam no ecrã de login para acrescentar uma conta nova.</summary>
+    /// <summary>Opens Steam on the login screen to add a new account.</summary>
     public static async Task AddNew()
     {
         await CloseSteam();

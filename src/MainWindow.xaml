@@ -1,7 +1,7 @@
 ﻿<Window x:Class="SRT.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="ServerRouteTool" Width="1240" Height="800" MinWidth="1020" MinHeight="660"
+        Title="CS2 IP Changer" Width="1240" Height="800" MinWidth="1020" MinHeight="660"
         WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="CanResize"
         Background="{StaticResource Bg}" Foreground="{StaticResource Text}"
         FontFamily="{StaticResource UiFont}" FontSize="12"
@@ -31,36 +31,36 @@
             <Setter Property="Margin" Value="0,1,0,0"/>
         </Style>
 
-        <!-- Cartão de conta -->
+        <!-- Account card -->
         <DataTemplate x:Key="AccountCard">
             <Border Margin="0,0,10,10" Style="{StaticResource Card}" BorderBrush="{Binding CardBorder}"
                     ToolTip="{Binding Tip}" ToolTipService.InitialShowDelay="700" ToolTipService.ShowDuration="30000">
                 <Border.ContextMenu>
                     <ContextMenu>
-                        <MenuItem Header="Entrar nesta conta" Tag="&#xE8AB;" Click="AccSwitch_Click"/>
-                        <MenuItem Header="Entrar e abrir o CS2" Tag="&#xE768;" Click="AccSwitchCs2_Click"/>
+                        <MenuItem Header="Log in to this account" Tag="&#xE8AB;" Click="AccSwitch_Click"/>
+                        <MenuItem Header="Log in and open CS2" Tag="&#xE768;" Click="AccSwitchCs2_Click"/>
                         <Separator/>
-                        <MenuItem Header="Abrir perfil Steam" Tag="&#xE8A7;" Click="AccProfile_Click"/>
-                        <MenuItem Header="Abrir no Leetify" Tag="&#xE9D9;" Click="AccLeetify_Click"/>
-                        <MenuItem Header="Abrir no csstats.gg" Tag="&#xE9D2;" Click="AccCsstats_Click"/>
-                        <MenuItem Header="Copiar SteamID64" Tag="&#xE8C8;" Click="AccCopyId_Click"/>
-                        <MenuItem Header="Copiar login" Tag="&#xE8C8;" Click="AccCopyLogin_Click"/>
+                        <MenuItem Header="Open Steam profile" Tag="&#xE8A7;" Click="AccProfile_Click"/>
+                        <MenuItem Header="Open in Leetify" Tag="&#xE9D9;" Click="AccLeetify_Click"/>
+                        <MenuItem Header="Open in csstats.gg" Tag="&#xE9D2;" Click="AccCsstats_Click"/>
+                        <MenuItem Header="Copy SteamID64" Tag="&#xE8C8;" Click="AccCopyId_Click"/>
+                        <MenuItem Header="Copy login" Tag="&#xE8C8;" Click="AccCopyLogin_Click"/>
                         <Separator/>
-                        <MenuItem Header="Cooldown: 21 horas" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="1260"/>
-                        <MenuItem Header="Cooldown: 3 dias (72 h)" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="4320"/>
-                        <MenuItem Header="Cooldown: 7 dias" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="10080"/>
-                        <MenuItem Header="Cooldown: 14 dias" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="20160"/>
-                        <MenuItem Header="Cooldown: 31 dias" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="44640"/>
-                        <MenuItem Header="Cooldown: 45 dias" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="64800"/>
-                        <MenuItem Header="Cooldown: 181 dias" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="260640"/>
-                        <MenuItem Header="Cooldown personalizado…" Tag="&#xE70F;" Click="AccCooldown_Click" CommandParameter="-1"/>
-                        <MenuItem Header="Tirar o cooldown" Tag="&#xE711;" Click="AccCooldown_Click" CommandParameter="0"/>
+                        <MenuItem Header="Cooldown: 21 hours" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="1260"/>
+                        <MenuItem Header="Cooldown: 3 days (72 h)" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="4320"/>
+                        <MenuItem Header="Cooldown: 7 days" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="10080"/>
+                        <MenuItem Header="Cooldown: 14 days" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="20160"/>
+                        <MenuItem Header="Cooldown: 31 days" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="44640"/>
+                        <MenuItem Header="Cooldown: 45 days" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="64800"/>
+                        <MenuItem Header="Cooldown: 181 days" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="260640"/>
+                        <MenuItem Header="Custom cooldown…" Tag="&#xE70F;" Click="AccCooldown_Click" CommandParameter="-1"/>
+                        <MenuItem Header="Clear cooldown" Tag="&#xE711;" Click="AccCooldown_Click" CommandParameter="0"/>
                         <Separator/>
                         <MenuItem Header="{Binding QuickMenuText}" Tag="&#xE8AB;" Click="AccToggleQuick_Click"/>
-                        <MenuItem Header="Favorita (sim/não)" Tag="&#xE734;" Click="AccFav_Click"/>
-                        <MenuItem Header="Nota e etiquetas…" Tag="&#xE70F;" Click="AccNote_Click"/>
-                        <MenuItem Header="Atualizar só esta" Tag="&#xE72C;" Click="AccRefreshOne_Click"/>
-                        <MenuItem Header="Esconder da lista" Tag="&#xED1A;" Click="AccHide_Click"/>
+                        <MenuItem Header="Favorite (yes/no)" Tag="&#xE734;" Click="AccFav_Click"/>
+                        <MenuItem Header="Note and tags…" Tag="&#xE70F;" Click="AccNote_Click"/>
+                        <MenuItem Header="Refresh this one" Tag="&#xE72C;" Click="AccRefreshOne_Click"/>
+                        <MenuItem Header="Hide from list" Tag="&#xED1A;" Click="AccHide_Click"/>
                     </ContextMenu>
                 </Border.ContextMenu>
                 <Grid>
@@ -89,8 +89,8 @@
                         <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxWidth="130"/>
-                                <TextBlock Text="  em uso" Foreground="{StaticResource Good}" FontSize="11" VerticalAlignment="Center"
-                                           Visibility="{Binding Active, Converter={StaticResource Vis}}" ToolTip="Conta com sessão iniciada agora"/>
+                                <TextBlock Text="  in use" Foreground="{StaticResource Good}" FontSize="11" VerticalAlignment="Center"
+                                           Visibility="{Binding Active, Converter={StaticResource Vis}}" ToolTip="Account currently logged in"/>
                             </StackPanel>
                             <TextBlock Text="{Binding LoginShown}" Foreground="{StaticResource Faint}" FontFamily="{StaticResource Mono}" FontSize="11"
                                        TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
@@ -99,26 +99,26 @@
                             <Button Style="{StaticResource IconBtn}" Content="{Binding QuickGlyph}" Foreground="{Binding QuickBrush}" Click="AccToggleQuick_Click"
                                     ToolTip="{Binding QuickTip}" Width="24" Height="24" FontSize="11"/>
                             <Button Style="{StaticResource IconBtn}" Content="{Binding StarGlyph}" Click="AccFav_Click" Width="24" Height="24" FontSize="11"
-                                    ToolTip="Favorita: fica no topo"/>
+                                    ToolTip="Favorite: stays at the top"/>
                         </StackPanel>
                     </Grid>
 
                     <WrapPanel Grid.Row="1" Margin="0,10,0,0" MinHeight="16">
-                        <TextBlock Style="{StaticResource Tag}" Text="limpa" Foreground="{StaticResource Good}" Visibility="{Binding Clean, Converter={StaticResource Vis}}"
-                                   ToolTip="Nenhum VAC, game ban, trade ban ou ban da comunidade no perfil público"/>
+                        <TextBlock Style="{StaticResource Tag}" Text="clean" Foreground="{StaticResource Good}" Visibility="{Binding Clean, Converter={StaticResource Vis}}"
+                                   ToolTip="No VAC, game ban, trade ban or community ban on the public profile"/>
                         <TextBlock Style="{StaticResource Tag}" Text="{Binding VacText}" Foreground="{StaticResource Bad}" Visibility="{Binding HasVac, Converter={StaticResource Vis}}"/>
                         <TextBlock Style="{StaticResource Tag}" Text="{Binding GameBanText}" Foreground="{StaticResource Bad}" Visibility="{Binding HasGameBan, Converter={StaticResource Vis}}"/>
                         <TextBlock Style="{StaticResource Tag}" Text="trade ban" Foreground="{StaticResource Warn}" Visibility="{Binding HasTradeBan, Converter={StaticResource Vis}}"/>
-                        <TextBlock Style="{StaticResource Tag}" Text="comunidade" Foreground="{StaticResource Bad}" Visibility="{Binding HasCommunityBan, Converter={StaticResource Vis}}"/>
+                        <TextBlock Style="{StaticResource Tag}" Text="community" Foreground="{StaticResource Bad}" Visibility="{Binding HasCommunityBan, Converter={StaticResource Vis}}"/>
                         <TextBlock Style="{StaticResource Tag}" Text="{Binding CooldownText}" Foreground="{StaticResource Warn}" Visibility="{Binding InCooldown, Converter={StaticResource Vis}}"
-                                   ToolTip="Cooldown marcado por ti. Botão direito para mudar."/>
-                        <TextBlock Style="{StaticResource Tag}" Text="fora da troca" Visibility="{Binding Excluded, Converter={StaticResource Vis}}"/>
-                        <TextBlock Style="{StaticResource Tag}" Text="limitada" Visibility="{Binding Limited, Converter={StaticResource Vis}}"/>
-                        <TextBlock Style="{StaticResource Tag}" Text="privado" Visibility="{Binding Private, Converter={StaticResource Vis}}"/>
+                                   ToolTip="Cooldown set by you. Right-click to change."/>
+                        <TextBlock Style="{StaticResource Tag}" Text="skipped" Visibility="{Binding Excluded, Converter={StaticResource Vis}}"/>
+                        <TextBlock Style="{StaticResource Tag}" Text="limited" Visibility="{Binding Limited, Converter={StaticResource Vis}}"/>
+                        <TextBlock Style="{StaticResource Tag}" Text="private" Visibility="{Binding Private, Converter={StaticResource Vis}}"/>
                         <TextBlock Style="{StaticResource Tag}" Text="{Binding LevelText}" Visibility="{Binding HasLevel, Converter={StaticResource Vis}}"/>
                         <TextBlock Style="{StaticResource Tag}" Text="{Binding HoursText}" Visibility="{Binding HasHours, Converter={StaticResource Vis}}"/>
                         <Border BorderBrush="{StaticResource LineStrong}" BorderThickness="1" Padding="5,0,5,1" Margin="0,0,10,3"
-                                Visibility="{Binding HasTags, Converter={StaticResource Vis}}" ToolTip="Etiquetas tuas (botão direito > Nota e etiquetas)">
+                                Visibility="{Binding HasTags, Converter={StaticResource Vis}}" ToolTip="Your tags (right-click > Note and tags)">
                             <TextBlock Text="{Binding Tags}" Foreground="{StaticResource Info}" FontSize="11"/>
                         </Border>
                     </WrapPanel>
@@ -136,11 +136,11 @@
                         <Button Grid.Column="1" Margin="8,0,0,0" Padding="16,4" Click="AccSwitch_Click" VerticalAlignment="Bottom">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-                                    <Setter Property="Content" Value="Entrar"/>
-                                    <Setter Property="ToolTip" Value="Fecha o Steam e volta a abri-lo nesta conta. Só serve para contas com 'Lembrar-me' neste PC."/>
+                                    <Setter Property="Content" Value="Log in"/>
+                                    <Setter Property="ToolTip" Value="Closes Steam and reopens it on this account. Only works for accounts with 'Remember me' ticked on this PC."/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding Active}" Value="True">
-                                            <Setter Property="Content" Value="Em uso"/>
+                                            <Setter Property="Content" Value="In use"/>
                                             <Setter Property="IsEnabled" Value="False"/>
                                         </DataTrigger>
                                     </Style.Triggers>
@@ -152,7 +152,7 @@
             </Border>
         </DataTemplate>
 
-        <!-- Linha da lista de servidores -->
+        <!-- Server list row -->
         <Style x:Key="ServerRowItem" TargetType="ListBoxItem" BasedOn="{StaticResource RowItem}">
             <Setter Property="Template">
                 <Setter.Value>
@@ -186,7 +186,7 @@
                     <ColumnDefinition Width="1*" MinWidth="95"/>
                     <ColumnDefinition Width="80"/>
                 </Grid.ColumnDefinitions>
-                <Button Style="{StaticResource IconBtn}" Content="{Binding StarGlyph}" Click="SrvFav_Click" ToolTip="Favorito: fica no topo" Width="24" Height="24" FontSize="11"/>
+                <Button Style="{StaticResource IconBtn}" Content="{Binding StarGlyph}" Click="SrvFav_Click" ToolTip="Favorite: stays at the top" Width="24" Height="24" FontSize="11"/>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis"/>
@@ -204,14 +204,14 @@
                     </Grid>
                 </StackPanel>
                 <TextBlock Grid.Column="4" Text="{Binding PingText}" Foreground="{Binding PingBrush}" FontFamily="{StaticResource Mono}" FontSize="11.5" VerticalAlignment="Center"
-                           ToolTip="Medido pelo telemóvel, o mesmo caminho que o jogo usa"/>
+                           ToolTip="Measured through the phone, the same path the game uses"/>
                 <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center"
-                            ToolTip="Protegido = o Windows manda este servidor pelo telemóvel e bloqueia-o na rede de casa.">
+                            ToolTip="Protected = Windows sends this server through the phone and blocks it on the home network.">
                     <Border Width="7" Height="7" Background="{Binding RouteBrush}" VerticalAlignment="Center"/>
                     <TextBlock Text="{Binding RouteText}" Foreground="{StaticResource Muted}" Margin="8,0,0,0" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
-                <Button Grid.Column="6" Padding="14,4" Margin="0" Click="SrvConnect_Click" HorizontalAlignment="Right" Content="Entrar"
-                        ToolTip="Confirma a rota deste servidor e só depois abre o jogo. Se falhar, não abre."/>
+                <Button Grid.Column="6" Padding="14,4" Margin="0" Click="SrvConnect_Click" HorizontalAlignment="Right" Content="Join"
+                        ToolTip="Checks this server's route first, then opens the game. If the check fails, the game does not open."/>
             </Grid>
         </DataTemplate>
     </Window.Resources>
@@ -230,7 +230,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- ============================================================ Separadores -->
+                <!-- ============================================================ Tabs -->
                 <Border Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
                     <Grid>
                         <Grid.RowDefinitions>
@@ -239,28 +239,28 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <StackPanel Margin="0,48,-1,0">
-                            <RadioButton x:Name="NavNet" Style="{StaticResource Nav}" Tag="&#xEA18;" Content="Ligação" IsChecked="True" Checked="Nav_Checked"
-                                         ToolTip="O IP que os servidores veem, trocar IP e o telemóvel"/>
-                            <RadioButton x:Name="NavServers" Style="{StaticResource Nav}" Tag="&#xE968;" Content="Servidores" Checked="Nav_Checked"
-                                         ToolTip="Os servidores que passam pelo telemóvel"/>
-                            <RadioButton x:Name="NavAccounts" Style="{StaticResource Nav}" Tag="&#xE716;" Content="Contas" Checked="Nav_Checked"
-                                         ToolTip="Trocar de conta Steam com um clique"/>
-                            <RadioButton x:Name="NavLog" Style="{StaticResource Nav}" Tag="&#xE81C;" Content="Registo" Checked="Nav_Checked"
-                                         ToolTip="Tudo o que a app fez, com hora"/>
-                            <RadioButton x:Name="NavSettings" Style="{StaticResource Nav}" Tag="&#xE713;" Content="Definições" Checked="Nav_Checked"/>
+                            <RadioButton x:Name="NavNet" Style="{StaticResource Nav}" Tag="&#xEA18;" Content="Connection" IsChecked="True" Checked="Nav_Checked"
+                                         ToolTip="The IP servers see, Change IP and the phone"/>
+                            <RadioButton x:Name="NavServers" Style="{StaticResource Nav}" Tag="&#xE968;" Content="Servers" Checked="Nav_Checked"
+                                         ToolTip="Servers that go through the phone"/>
+                            <RadioButton x:Name="NavAccounts" Style="{StaticResource Nav}" Tag="&#xE716;" Content="Accounts" Checked="Nav_Checked"
+                                         ToolTip="Switch Steam account with one click"/>
+                            <RadioButton x:Name="NavLog" Style="{StaticResource Nav}" Tag="&#xE81C;" Content="Log" Checked="Nav_Checked"
+                                         ToolTip="Everything the app did, with timestamps"/>
+                            <RadioButton x:Name="NavSettings" Style="{StaticResource Nav}" Tag="&#xE713;" Content="Settings" Checked="Nav_Checked"/>
                         </StackPanel>
                         <TextBlock x:Name="VersionText" Grid.Row="2" Foreground="{StaticResource Faint}" FontSize="10.5" TextAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,12"/>
                     </Grid>
                 </Border>
 
-                <!-- ============================================================ Conteúdo -->
+                <!-- ============================================================ Content -->
                 <Grid Grid.Column="1">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="44"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- barra de cima: página, estado, troca rápida, janela -->
+                    <!-- top bar: page, status, quick switch, window -->
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -268,34 +268,34 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="ServerRoute" FontWeight="SemiBold" Foreground="{StaticResource Muted}"/>
+                            <TextBlock Text="CS2 IP Changer" FontWeight="SemiBold" Foreground="{StaticResource Muted}"/>
                             <TextBlock Text="  /  " Foreground="{StaticResource Faint}"/>
-                            <TextBlock x:Name="PageTitle" Text="Ligação" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="PageTitle" Text="Connection" FontWeight="SemiBold"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0" Cursor="Hand" Background="Transparent"
-                                        MouseLeftButtonUp="SideStatus_Click" WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Clica para ir à Ligação.">
+                                        MouseLeftButtonUp="SideStatus_Click" WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Click to go to Connection.">
                                 <Border Width="7" Height="7" VerticalAlignment="Center" Background="{Binding Fill, ElementName=SideDot}"/>
                                 <Ellipse x:Name="SideDot" Width="0" Height="0" Fill="{StaticResource Warn}"/>
-                                <TextBlock x:Name="SideState" Text="A verificar…" Margin="8,0,0,0" Foreground="{Binding Fill, ElementName=SideDot}"/>
+                                <TextBlock x:Name="SideState" Text="Checking…" Margin="8,0,0,0" Foreground="{Binding Fill, ElementName=SideDot}"/>
                                 <TextBlock x:Name="SideIp" Text="—" FontFamily="{StaticResource Mono}" Foreground="{StaticResource Muted}" FontSize="11.5" Margin="10,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
                             <Button x:Name="SideQuick" Click="Quick_Click" Margin="0" Padding="10,4" WindowChrome.IsHitTestVisibleInChrome="True" ToolTipService.ShowOnDisabled="True"
-                                    ToolTip="Troca rápida (Ctrl+Alt+Q, também dentro do jogo): fecha o CS2, entra na conta seguinte e volta a abri-lo.">
+                                    ToolTip="Quick switch (Ctrl+Alt+Q, also in game): closes CS2, logs into the next account and reopens it.">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock x:Name="SideQuickLabel" Text="Troca rápida"/>
+                                    <TextBlock x:Name="SideQuickLabel" Text="Quick switch"/>
                                     <TextBlock x:Name="SideQuickNext" Text="" FontWeight="SemiBold" Margin="5,0,0,0" TextTrimming="CharacterEllipsis" MaxWidth="120"/>
                                 </StackPanel>
                             </Button>
                         </StackPanel>
                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
-                            <Button Style="{StaticResource Chrome}" Content="&#xE921;" Click="Min_Click" WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Minimizar"/>
-                            <Button x:Name="MaxBtn" Style="{StaticResource Chrome}" Content="&#xE922;" Click="Max_Click" WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Maximizar"/>
-                            <Button Style="{StaticResource Chrome}" Content="&#xE8BB;" Click="Close_Click" WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Fechar"/>
+                            <Button Style="{StaticResource Chrome}" Content="&#xE921;" Click="Min_Click" WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Minimize"/>
+                            <Button x:Name="MaxBtn" Style="{StaticResource Chrome}" Content="&#xE922;" Click="Max_Click" WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Maximize"/>
+                            <Button Style="{StaticResource Chrome}" Content="&#xE8BB;" Click="Close_Click" WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Close"/>
                         </StackPanel>
                     </Grid>
 
-                    <!-- ======================================== Página: Ligação -->
+                    <!-- ======================================== Page: Connection -->
                     <ScrollViewer x:Name="PageNet" Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="16,0,16,6">
                         <Grid MinHeight="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
                             <Grid.ColumnDefinitions>
@@ -310,7 +310,7 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <HeaderedContentControl x:Name="Hero" Style="{StaticResource Group}" Header="Estado">
+                                <HeaderedContentControl x:Name="Hero" Style="{StaticResource Group}" Header="Status">
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
@@ -327,8 +327,8 @@
                                                 <TextBlock x:Name="HeroIcon" Text="&#xEA18;" Style="{StaticResource Icon}" FontSize="14" Foreground="{StaticResource Warn}" HorizontalAlignment="Center"/>
                                             </Border>
                                             <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                                <TextBlock x:Name="HeroTitle" Text="A verificar a ligação…" Style="{StaticResource H1}" Foreground="{Binding Foreground, ElementName=HeroIcon}"/>
-                                                <TextBlock x:Name="HeroSub" Text="Um momento." Style="{StaticResource Sub}" Margin="0,2,0,0"/>
+                                                <TextBlock x:Name="HeroTitle" Text="Checking the connection…" Style="{StaticResource H1}" Foreground="{Binding Foreground, ElementName=HeroIcon}"/>
+                                                <TextBlock x:Name="HeroSub" Text="One moment." Style="{StaticResource Sub}" Margin="0,2,0,0"/>
                                             </StackPanel>
                                         </Grid>
 
@@ -339,32 +339,32 @@
                                                 <ColumnDefinition Width="*" MaxWidth="300"/>
                                                 <ColumnDefinition Width="0.01*"/>
                                             </Grid.ColumnDefinitions>
-                                            <StackPanel ToolTip="O IP público que os servidores da lista veem.">
-                                                <TextBlock Text="IP que os servidores veem" Style="{StaticResource Key}"/>
+                                            <StackPanel ToolTip="The public IP the servers in your list see.">
+                                                <TextBlock Text="IP servers see" Style="{StaticResource Key}"/>
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock x:Name="EgressIp" Text="—" FontFamily="{StaticResource Mono}" FontSize="19"/>
-                                                    <Button x:Name="CopyIpBtn" Style="{StaticResource IconBtn}" Content="&#xE8C8;" Click="CopyEgressIp_Click" Margin="4,0,0,0" FontSize="11" ToolTip="Copiar o IP"/>
+                                                    <Button x:Name="CopyIpBtn" Style="{StaticResource IconBtn}" Content="&#xE8C8;" Click="CopyEgressIp_Click" Margin="4,0,0,0" FontSize="11" ToolTip="Copy IP"/>
                                                 </StackPanel>
                                                 <TextBlock x:Name="EgressIsp" Text="—" Foreground="{StaticResource Muted}" FontSize="11.5" Margin="0,1,0,0" TextTrimming="CharacterEllipsis"
                                                            ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                             </StackPanel>
-                                            <StackPanel Grid.Column="2" ToolTip="Escondido para não aparecer em capturas nem em streams.">
-                                                <TextBlock Text="IP da tua casa" Style="{StaticResource Key}"/>
+                                            <StackPanel Grid.Column="2" ToolTip="Hidden so it does not show up in screenshots or streams.">
+                                                <TextBlock Text="Your home IP" Style="{StaticResource Key}"/>
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBlock x:Name="HomeIp" Text="—" FontFamily="{StaticResource Mono}" FontSize="19" Foreground="{StaticResource Faint}"/>
                                                     <Button x:Name="RevealBtn" Style="{StaticResource IconBtn}" Content="&#xE7B3;" Click="Reveal_Click" Margin="4,0,0,0" FontSize="11"
-                                                            ToolTip="Mostrar ou esconder"/>
+                                                            ToolTip="Show or hide"/>
                                                 </StackPanel>
                                                 <TextBlock x:Name="HomeIsp" Text="—" Foreground="{StaticResource Faint}" FontSize="11.5" Margin="0,1,0,0" TextTrimming="CharacterEllipsis"/>
                                             </StackPanel>
                                         </Grid>
 
                                         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,16,0,0">
-                                            <Button x:Name="ChangeIpBtn" Style="{StaticResource Primary}" Padding="22,6" Click="ChangeIp_Click" Content="Trocar IP"
+                                            <Button x:Name="ChangeIpBtn" Style="{StaticResource Primary}" Padding="22,6" Click="ChangeIp_Click" Content="Change IP"
                                                     ToolTipService.ShowOnDisabled="True"
-                                                    ToolTip="Desliga e volta a ligar os dados móveis do telemóvel até a operadora dar um IP novo. Precisa do telemóvel pronto no ADB. Se estiveres num servidor, cais."/>
-                                            <Button x:Name="LeakBtn" Click="LeakTest_Click" Content="Testar fugas de IP"
-                                                    ToolTip="Teste completo: Firewall, bloqueio, a rota de cada servidor e se o IP do telemóvel é mesmo diferente do de casa."/>
+                                                    ToolTip="Turns the phone's mobile data off and on until the carrier gives a new IP. Needs the phone set up over ADB. If you are on a server, you will drop."/>
+                                            <Button x:Name="LeakBtn" Click="LeakTest_Click" Content="Run leak test"
+                                                    ToolTip="Full test: Firewall, block, each server's route and whether the phone's IP really differs from your home IP."/>
                                         </StackPanel>
 
                                         <StackPanel Grid.Row="3" x:Name="ProgressPanel" Margin="0,12,0,0" Visibility="Collapsed">
@@ -374,32 +374,32 @@
                                     </Grid>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Telemóvel">
+                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Phone">
                                     <StackPanel>
                                         <StackPanel Orientation="Horizontal">
                                             <Ellipse x:Name="PhoneDot" Width="7" Height="7" Fill="{StaticResource Faint}"/>
-                                            <TextBlock x:Name="PhoneState" Text="A procurar…" Margin="8,0,0,0" FontWeight="SemiBold"/>
+                                            <TextBlock x:Name="PhoneState" Text="Searching…" Margin="8,0,0,0" FontWeight="SemiBold"/>
                                         </StackPanel>
                                         <TextBlock x:Name="PhoneDetail" Text="" Foreground="{StaticResource Faint}" FontSize="11.5" TextWrapping="Wrap" Margin="15,2,0,12"/>
                                         <WrapPanel>
-                                            <Button x:Name="AdbInstallBtn" Style="{StaticResource Primary}" Click="AdbInstall_Click" Margin="0,0,6,6" Visibility="Collapsed" Content="Instalar ADB"
-                                                    ToolTip="Descarrega o ADB oficial da Google (~7 MB) para a pasta da app. Só uma vez."/>
-                                            <Button x:Name="WifiOffBtn" Style="{StaticResource Primary}" Click="WifiOff_Click" Margin="0,0,6,6" Visibility="Collapsed" Content="Desligar o Wi-Fi do telemóvel"
-                                                    ToolTip="Para a partilha USB usar os dados móveis e não a rede de casa."/>
-                                            <Button x:Name="TetherBtn" Click="Tether_Click" Margin="0,0,6,6" Content="Ativar partilha USB"
-                                                    ToolTip="Pede ao telemóvel para ligar a partilha de Internet por USB. Nalguns modelos tens de a ligar à mão."/>
-                                            <Button Click="PhoneHelp_Click" Margin="0,0,6,6" Content="Preparar o telemóvel" ToolTip="O que fazer no telemóvel (uma vez só)"/>
+                                            <Button x:Name="AdbInstallBtn" Style="{StaticResource Primary}" Click="AdbInstall_Click" Margin="0,0,6,6" Visibility="Collapsed" Content="Install ADB"
+                                                    ToolTip="Downloads Google's official ADB (~7 MB) to the app folder. One time only."/>
+                                            <Button x:Name="WifiOffBtn" Style="{StaticResource Primary}" Click="WifiOff_Click" Margin="0,0,6,6" Visibility="Collapsed" Content="Turn off phone Wi-Fi"
+                                                    ToolTip="So USB tethering uses mobile data and not the home network."/>
+                                            <Button x:Name="TetherBtn" Click="Tether_Click" Margin="0,0,6,6" Content="Turn on USB tethering"
+                                                    ToolTip="Asks the phone to turn on USB tethering. On some models you have to turn it on by hand."/>
+                                            <Button Click="PhoneHelp_Click" Margin="0,0,6,6" Content="Phone setup" ToolTip="What to do on the phone (one time only)"/>
                                         </WrapPanel>
-                                        <TextBlock Text="Como o PC liga ao telemóvel" Style="{StaticResource Key}" Margin="0,8,0,5"/>
+                                        <TextBlock Text="How the PC connects to the phone" Style="{StaticResource Key}" Margin="0,8,0,5"/>
                                         <ComboBox x:Name="EgressCombo" SelectionChanged="EgressCombo_Changed" MaxWidth="420" HorizontalAlignment="Left" MinWidth="280"
-                                                  ToolTip="Cabo USB (recomendado) ou o ponto de acesso Wi-Fi do telemóvel. Também serve uma pen ou router 4G/5G por USB."/>
+                                                  ToolTip="USB cable (recommended) or the phone's Wi-Fi hotspot. A USB 4G/5G dongle or router also works."/>
                                         <TextBlock x:Name="EgressDetail" Text="—" Foreground="{StaticResource Faint}" FontSize="11.5" TextWrapping="Wrap" Margin="0,6,0,0"/>
                                     </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="2" Style="{StaticResource Group}" Header="IPs anteriores">
+                                <HeaderedContentControl Grid.Row="2" Style="{StaticResource Group}" Header="Previous IPs">
                                     <StackPanel>
-                                        <TextBlock x:Name="HistoryEmpty" Text="Ainda sem trocas de IP." Style="{StaticResource Sub}"/>
+                                        <TextBlock x:Name="HistoryEmpty" Text="No IP changes yet." Style="{StaticResource Sub}"/>
                                         <ItemsControl x:Name="History">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
@@ -418,7 +418,7 @@
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
-                                        <Button x:Name="ClearHistoryBtn" HorizontalAlignment="Left" Margin="0,6,0,0" Content="Limpar histórico" Click="ClearHistory_Click"/>
+                                        <Button x:Name="ClearHistoryBtn" HorizontalAlignment="Left" Margin="0,6,0,0" Content="Clear history" Click="ClearHistory_Click"/>
                                     </StackPanel>
                                 </HeaderedContentControl>
                             </Grid>
@@ -429,7 +429,7 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <HeaderedContentControl Style="{StaticResource Group}" Header="Verificação">
+                                <HeaderedContentControl Style="{StaticResource Group}" Header="Checks">
                                     <StackPanel>
                                         <ItemsControl x:Name="Checks">
                                             <ItemsControl.ItemTemplate>
@@ -447,29 +447,29 @@
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
-                                        <Button HorizontalAlignment="Left" Margin="0,4,0,0" Content="Abrir a Firewall do Windows"
-                                                Click="OpenFirewall_Click" ToolTip="As regras da app estão em Regras de Saída, com o nome 'ServerRouteTool'."/>
+                                        <Button HorizontalAlignment="Left" Margin="0,4,0,0" Content="Open Windows Firewall"
+                                                Click="OpenFirewall_Click" ToolTip="The app's rules are under Outbound Rules, named 'ServerRouteTool'."/>
                                     </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="O que sai pelo telemóvel">
+                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="What goes through the phone">
                                     <StackPanel>
                                         <RadioButton x:Name="ModeServers" Style="{StaticResource Choice}" GroupName="mode" Checked="Mode_Checked">
                                             <StackPanel>
-                                                <TextBlock Text="Só o jogo"/>
-                                                <TextBlock Text="CS2, Steam e a lista de servidores. O resto do PC fica na rede de casa." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="Game only"/>
+                                                <TextBlock Text="CS2, Steam and the server list. The rest of the PC stays on the home network." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </RadioButton>
                                         <RadioButton x:Name="ModeGame" Style="{StaticResource Choice}" GroupName="mode" Checked="Mode_Checked">
                                             <StackPanel>
-                                                <TextBlock Text="Todo o PC, com o CS2 aberto"/>
-                                                <TextBlock Text="Entras em qualquer servidor. Ao fechar o CS2, volta ao normal." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="Whole PC while CS2 is open"/>
+                                                <TextBlock Text="You can join any server. When you close CS2, it goes back to normal." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </RadioButton>
                                         <RadioButton x:Name="ModeAll" Style="{StaticResource Choice}" GroupName="mode" Checked="Mode_Checked" Margin="0">
                                             <StackPanel>
-                                                <TextBlock Text="Todo o PC, sempre"/>
-                                                <TextBlock Text="Tudo sai pelo telemóvel. Gasta mais dados." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="Whole PC, always"/>
+                                                <TextBlock Text="Everything goes through the phone. Uses more data." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </RadioButton>
                                         <TextBlock x:Name="PcRouteText" Visibility="Collapsed"/>
@@ -479,14 +479,14 @@
                         </Grid>
                     </ScrollViewer>
 
-                    <!-- ======================================== Página: Servidores -->
+                    <!-- ======================================== Page: Servers -->
                     <Grid x:Name="PageServers" Grid.Row="1" Margin="16,0,16,6" Visibility="Collapsed">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <HeaderedContentControl Style="{StaticResource Group}" Header="Adicionar servidores">
+                        <HeaderedContentControl Style="{StaticResource Group}" Header="Add servers">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -495,22 +495,22 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBox x:Name="BulkInput" Height="28" AcceptsReturn="True" TextWrapping="NoWrap" VerticalScrollBarVisibility="Disabled"
                                          FontFamily="{StaticResource Mono}" VerticalContentAlignment="Center" PreviewKeyDown="BulkInput_KeyDown"
-                                         Tag="IP:porta, connect … ou steam://connect/…  (Ctrl+Enter adiciona)"
-                                         ToolTip="Aceita IP:porta, 'IP porta', 'connect IP:porta', links steam://connect e listas inteiras. Os repetidos são ignorados."/>
+                                         Tag="IP:port, connect … or steam://connect/…  (Ctrl+Enter adds)"
+                                         ToolTip="Accepts IP:port, 'IP port', 'connect IP:port', steam://connect links and whole lists. Duplicates are ignored."/>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,0,0" VerticalAlignment="Center"
-                                            ToolTip="Porta usada quando só colas o IP (o CS2 usa 27015)">
-                                    <TextBlock Text="Porta por defeito" Foreground="{StaticResource Faint}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                            ToolTip="Port used when you paste only the IP (CS2 uses 27015)">
+                                    <TextBlock Text="Default port" Foreground="{StaticResource Faint}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                                     <TextBox x:Name="DefaultPortBox" Width="64" Height="28" FontFamily="{StaticResource Mono}" VerticalContentAlignment="Center"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="10,0,0,0">
-                                    <Button Style="{StaticResource Primary}" Click="AddServers_Click" Content="Adicionar" ToolTip="Adiciona e passa logo esses servidores pelo telemóvel (Ctrl+Enter)"/>
-                                    <Button Click="PasteServers_Click" Content="Colar" ToolTip="Adiciona o que estiver na área de transferência"/>
-                                    <Button Click="ImportServers_Click" Margin="0" Content="Importar" ToolTip="Lê todos os IP:porta de um ficheiro .txt, .csv ou .cfg"/>
+                                    <Button Style="{StaticResource Primary}" Click="AddServers_Click" Content="Add" ToolTip="Adds those servers and routes them through the phone right away (Ctrl+Enter)"/>
+                                    <Button Click="PasteServers_Click" Content="Paste" ToolTip="Adds whatever is on the clipboard"/>
+                                    <Button Click="ImportServers_Click" Margin="0" Content="Import" ToolTip="Reads every IP:port from a .txt, .csv or .cfg file"/>
                                 </StackPanel>
                             </Grid>
                         </HeaderedContentControl>
 
-                        <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Servidores" Padding="6,14,6,6">
+                        <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Servers" Padding="6,14,6,6">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -523,14 +523,14 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="ServerSearch" Tag="Procurar nome, IP ou mapa" TextChanged="ServerSearch_Changed" VerticalAlignment="Center"/>
+                                    <TextBox x:Name="ServerSearch" Tag="Search name, IP or map" TextChanged="ServerSearch_Changed" VerticalAlignment="Center"/>
                                     <TextBlock x:Name="ServerCount" Grid.Column="1" Foreground="{StaticResource Faint}" VerticalAlignment="Center" Margin="12,0,0,0"/>
                                     <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                        <CheckBox x:Name="AutoQueryBox" Style="{StaticResource Switch}" Content="Atualizar a cada 30 s" Margin="0,0,14,0" VerticalAlignment="Center" Click="AutoQuery_Click"
-                                                  ToolTip="Jogadores, mapa e ping a cada 30 segundos, sempre pelo telemóvel"/>
-                                        <Button x:Name="QueryBtn" Click="QueryServers_Click" Content="Atualizar" ToolTip="Pergunta a cada servidor o nome, mapa, jogadores e ping (pelo telemóvel, nunca pela rede de casa)"/>
-                                        <Button x:Name="CopyBtn" Click="CopyServers_Click" Content="Copiar" ToolTip="Copia os selecionados (ou todos) como IP:porta"/>
-                                        <Button x:Name="RemoveBtn" Style="{StaticResource Danger}" Margin="0" Click="RemoveServers_Click" Content="Remover" IsEnabled="False" ToolTipService.ShowOnDisabled="True" ToolTip="Remove os servidores selecionados e as rotas deles. Seleciona primeiro (Ctrl ou Shift para vários)."/>
+                                        <CheckBox x:Name="AutoQueryBox" Style="{StaticResource Switch}" Content="Refresh every 30 s" Margin="0,0,14,0" VerticalAlignment="Center" Click="AutoQuery_Click"
+                                                  ToolTip="Players, map and ping every 30 seconds, always through the phone"/>
+                                        <Button x:Name="QueryBtn" Click="QueryServers_Click" Content="Refresh" ToolTip="Asks each server for its name, map, players and ping (through the phone, never the home network)"/>
+                                        <Button x:Name="CopyBtn" Click="CopyServers_Click" Content="Copy" ToolTip="Copies the selected servers (or all) as IP:port"/>
+                                        <Button x:Name="RemoveBtn" Style="{StaticResource Danger}" Margin="0" Click="RemoveServers_Click" Content="Remove" IsEnabled="False" ToolTipService.ShowOnDisabled="True" ToolTip="Removes the selected servers and their routes. Select first (Ctrl or Shift for several)."/>
                                     </StackPanel>
                                 </Grid>
                                 <Grid x:Name="ServerHeader" Grid.Row="1" Margin="8,0,8,4">
@@ -543,29 +543,29 @@
                                         <ColumnDefinition Width="1*" MinWidth="95"/>
                                         <ColumnDefinition Width="80"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="1" Text="Servidor" Style="{StaticResource CardTitle}" Margin="4,0,0,0"/>
-                                    <TextBlock Grid.Column="2" Text="Mapa" Style="{StaticResource CardTitle}" Margin="0"/>
-                                    <TextBlock Grid.Column="3" Text="Jogadores" Style="{StaticResource CardTitle}" Margin="0"/>
+                                    <TextBlock Grid.Column="1" Text="Server" Style="{StaticResource CardTitle}" Margin="4,0,0,0"/>
+                                    <TextBlock Grid.Column="2" Text="Map" Style="{StaticResource CardTitle}" Margin="0"/>
+                                    <TextBlock Grid.Column="3" Text="Players" Style="{StaticResource CardTitle}" Margin="0"/>
                                     <TextBlock Grid.Column="4" Text="Ping" Style="{StaticResource CardTitle}" Margin="0"/>
-                                    <TextBlock Grid.Column="5" Text="Rota" Style="{StaticResource CardTitle}" Margin="0"/>
+                                    <TextBlock Grid.Column="5" Text="Route" Style="{StaticResource CardTitle}" Margin="0"/>
                                 </Grid>
                                 <ListBox x:Name="ServerList" Grid.Row="2" SelectionMode="Extended" ItemContainerStyle="{StaticResource ServerRowItem}"
                                          ItemTemplate="{StaticResource ServerRow}" MouseDoubleClick="ServerList_DoubleClick" SelectionChanged="ServerList_SelectionChanged"
                                          VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"/>
                                 <StackPanel x:Name="ServersEmpty" Grid.Row="2" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed">
-                                    <TextBlock Text="Ainda não tens servidores" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Escreve IP:porta na caixa de cima, cola uma lista ou importa um ficheiro .txt ou .cfg." Foreground="{StaticResource Muted}" Margin="0,4,0,12" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="No servers yet" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Type IP:port in the box above, paste a list or import a .txt or .cfg file." Foreground="{StaticResource Muted}" Margin="0,4,0,12" HorizontalAlignment="Center"/>
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <Button Style="{StaticResource Primary}" Click="PasteServers_Click" Content="Colar da área de transferência"/>
-                                        <Button Click="ImportServers_Click" Margin="0" Content="Importar ficheiro"/>
+                                        <Button Style="{StaticResource Primary}" Click="PasteServers_Click" Content="Paste from clipboard"/>
+                                        <Button Click="ImportServers_Click" Margin="0" Content="Import file"/>
                                     </StackPanel>
                                 </StackPanel>
                             </Grid>
                         </HeaderedContentControl>
                     </Grid>
 
-                    <!-- ======================================== Página: Contas -->
-                    <HeaderedContentControl x:Name="PageAccounts" Grid.Row="1" Margin="16,0,16,18" Style="{StaticResource Group}" Header="Contas guardadas neste PC" Visibility="Collapsed">
+                    <!-- ======================================== Page: Accounts -->
+                    <HeaderedContentControl x:Name="PageAccounts" Grid.Row="1" Margin="16,0,16,18" Style="{StaticResource Group}" Header="Accounts saved on this PC" Visibility="Collapsed">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -579,23 +579,23 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBox x:Name="AccSearch" Tag="Procurar contas" TextChanged="AccFilter_Changed" VerticalAlignment="Center"
-                                         ToolTip="Nome, login, SteamID, notas e etiquetas"/>
+                                <TextBox x:Name="AccSearch" Tag="Search accounts" TextChanged="AccFilter_Changed" VerticalAlignment="Center"
+                                         ToolTip="Name, login, SteamID, notes and tags"/>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
-                                    <RadioButton x:Name="FAll" Style="{StaticResource Seg}" GroupName="accf" Content="Todas" IsChecked="True" Checked="AccFilter_Changed"/>
-                                    <RadioButton x:Name="FFav" Style="{StaticResource Seg}" GroupName="accf" Content="Favoritas" Checked="AccFilter_Changed"/>
-                                    <RadioButton x:Name="FClean" Style="{StaticResource Seg}" GroupName="accf" Content="Sem ban" Checked="AccFilter_Changed"/>
-                                    <RadioButton x:Name="FBan" Style="{StaticResource Seg}" GroupName="accf" Content="Com ban" Checked="AccFilter_Changed"/>
+                                    <RadioButton x:Name="FAll" Style="{StaticResource Seg}" GroupName="accf" Content="All" IsChecked="True" Checked="AccFilter_Changed"/>
+                                    <RadioButton x:Name="FFav" Style="{StaticResource Seg}" GroupName="accf" Content="Favorites" Checked="AccFilter_Changed"/>
+                                    <RadioButton x:Name="FClean" Style="{StaticResource Seg}" GroupName="accf" Content="Clean" Checked="AccFilter_Changed"/>
+                                    <RadioButton x:Name="FBan" Style="{StaticResource Seg}" GroupName="accf" Content="Banned" Checked="AccFilter_Changed"/>
                                     <RadioButton x:Name="FCool" Style="{StaticResource Seg}" GroupName="accf" Content="Cooldown" Checked="AccFilter_Changed"/>
-                                    <RadioButton x:Name="FOut" Style="{StaticResource Seg}" GroupName="accf" Content="Fora da troca" Checked="AccFilter_Changed"/>
+                                    <RadioButton x:Name="FOut" Style="{StaticResource Seg}" GroupName="accf" Content="Skipped" Checked="AccFilter_Changed"/>
                                 </StackPanel>
                                 <TextBlock x:Name="AccCount" Grid.Column="2" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" Foreground="{StaticResource Faint}" VerticalAlignment="Center" HorizontalAlignment="Right"
                                            TextTrimming="CharacterEllipsis" Margin="12,0,12,0"/>
-                                <ComboBox x:Name="AccSort" Grid.Column="3" Width="160" SelectionChanged="AccFilter_Changed" ToolTip="Ordem (as favoritas ficam sempre primeiro)">
-                                    <ComboBoxItem Content="Mais recentes" Tag="recent"/>
-                                    <ComboBoxItem Content="Nome" Tag="name"/>
-                                    <ComboBoxItem Content="Limpas primeiro" Tag="clean"/>
-                                    <ComboBoxItem Content="Mais horas de CS2" Tag="hours"/>
+                                <ComboBox x:Name="AccSort" Grid.Column="3" Width="160" SelectionChanged="AccFilter_Changed" ToolTip="Order (favorites always come first)">
+                                    <ComboBoxItem Content="Most recent" Tag="recent"/>
+                                    <ComboBoxItem Content="Name" Tag="name"/>
+                                    <ComboBoxItem Content="Clean first" Tag="clean"/>
+                                    <ComboBoxItem Content="Most CS2 hours" Tag="hours"/>
                                 </ComboBox>
                             </Grid>
 
@@ -605,25 +605,25 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <WrapPanel VerticalAlignment="Center">
-                                    <TextBlock Text="Ao entrar:" Foreground="{StaticResource Faint}" Margin="0,0,14,0" VerticalAlignment="Center"/>
-                                    <CheckBox x:Name="OptCs2" Style="{StaticResource Switch}" Content="Abrir o CS2" Margin="0,0,18,0" Click="AccOpt_Click"
-                                              ToolTip="Depois de entrar, o Steam abre logo o CS2. A troca rápida abre-o sempre."/>
-                                    <CheckBox x:Name="OptSilent" Style="{StaticResource Switch}" Content="Steam minimizado" Margin="0,0,18,0" Click="AccOpt_Click"
-                                              ToolTip="O Steam arranca na bandeja, sem abrir a janela"/>
+                                    <TextBlock Text="On login:" Foreground="{StaticResource Faint}" Margin="0,0,14,0" VerticalAlignment="Center"/>
+                                    <CheckBox x:Name="OptCs2" Style="{StaticResource Switch}" Content="Open CS2" Margin="0,0,18,0" Click="AccOpt_Click"
+                                              ToolTip="After logging in, Steam opens CS2 right away. Quick switch always opens it."/>
+                                    <CheckBox x:Name="OptSilent" Style="{StaticResource Switch}" Content="Start Steam minimized" Margin="0,0,18,0" Click="AccOpt_Click"
+                                              ToolTip="Steam starts in the tray, without opening its window"/>
                                     <CheckBox x:Name="OptOffline" Style="{StaticResource Switch}" Content="Offline" Margin="0,0,18,0" Click="AccOpt_Click"
-                                              ToolTip="Modo offline do Steam (não dá para jogar online)"/>
-                                    <CheckBox x:Name="OptStreamer" Style="{StaticResource Switch}" Content="Esconder logins" Margin="0,0,18,0" Click="AccOpt_Click"
-                                              ToolTip="Para streams: os logins ficam tapados"/>
+                                              ToolTip="Steam offline mode (you cannot play online)"/>
+                                    <CheckBox x:Name="OptStreamer" Style="{StaticResource Switch}" Content="Hide logins" Margin="0,0,18,0" Click="AccOpt_Click"
+                                              ToolTip="For streams: logins are covered"/>
                                 </WrapPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Button Click="AccAdd_Click" Content="Adicionar"
-                                            ToolTip="Abre o login do Steam. Entra com a conta nova e marca 'Lembrar-me'."/>
+                                    <Button Click="AccAdd_Click" Content="Add"
+                                            ToolTip="Opens the Steam login. Log in with the new account and tick 'Remember me'."/>
                                     <Button x:Name="AccRefreshBtn" Click="AccRefresh_Click"
-                                            ToolTip="Vai ao perfil público de cada conta buscar avatar, nome, bans, nível e horas. Uma por segundo, para a Steam não bloquear.">
-                                        <TextBlock x:Name="AccRefreshText" Text="Atualizar"/>
+                                            ToolTip="Visits each account's public profile to fetch avatar, name, bans, level and hours. One per second so Steam does not block you.">
+                                        <TextBlock x:Name="AccRefreshText" Text="Refresh"/>
                                     </Button>
-                                    <Button x:Name="QuickBtn" Style="{StaticResource Primary}" Margin="0" Click="Quick_Click" Content="Troca rápida"
-                                            ToolTip="Ctrl+Alt+Q, também dentro do jogo: fecha o CS2, entra na conta seguinte e volta a abri-lo."/>
+                                    <Button x:Name="QuickBtn" Style="{StaticResource Primary}" Margin="0" Click="Quick_Click" Content="Quick switch"
+                                            ToolTip="Ctrl+Alt+Q, also in game: closes CS2, logs into the next account and reopens it."/>
                                 </StackPanel>
                             </Grid>
 
@@ -637,15 +637,15 @@
                                 </ItemsControl>
                             </ScrollViewer>
                             <StackPanel x:Name="AccountsEmpty" Grid.Row="2" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed">
-                                <TextBlock Text="Ainda não há contas" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center"/>
-                                <TextBlock x:Name="AccountsEmptyText" Text="Não encontrei contas guardadas no Steam deste PC." Foreground="{StaticResource Muted}" TextAlignment="Center" Margin="0,4,0,12"/>
-                                <Button Style="{StaticResource Primary}" Click="AccAdd_Click" Content="Adicionar conta" HorizontalAlignment="Center" Margin="0"/>
+                                <TextBlock Text="No accounts yet" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                <TextBlock x:Name="AccountsEmptyText" Text="No saved accounts found in Steam on this PC." Foreground="{StaticResource Muted}" TextAlignment="Center" Margin="0,4,0,12"/>
+                                <Button Style="{StaticResource Primary}" Click="AccAdd_Click" Content="Add account" HorizontalAlignment="Center" Margin="0"/>
                             </StackPanel>
                         </Grid>
                     </HeaderedContentControl>
 
-                    <!-- ======================================== Página: Registo -->
-                    <HeaderedContentControl x:Name="PageLog" Grid.Row="1" Margin="16,0,16,18" Style="{StaticResource Group}" Header="Tudo o que a app fez, com hora" Padding="6,14,6,6" Visibility="Collapsed">
+                    <!-- ======================================== Page: Log -->
+                    <HeaderedContentControl x:Name="PageLog" Grid.Row="1" Margin="16,0,16,18" Style="{StaticResource Group}" Header="Everything the app did, with timestamps" Padding="6,14,6,6" Visibility="Collapsed">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -679,13 +679,13 @@
                                 </ListBox.ItemTemplate>
                             </ListBox>
                             <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="8,8,8,2">
-                                <Button Click="LogCopy_Click" Content="Copiar tudo" ToolTip="Copia o registo para colares onde precisares (ex.: para pedir ajuda)"/>
-                                <Button Click="LogClear_Click" Margin="0" Content="Limpar o ecrã" ToolTip="Limpa esta lista. O ficheiro do registo fica em SRT_Dados."/>
+                                <Button Click="LogCopy_Click" Content="Copy all" ToolTip="Copies the log so you can paste it where you need it (e.g. to ask for help)"/>
+                                <Button Click="LogClear_Click" Margin="0" Content="Clear screen" ToolTip="Clears this list. The log file stays in SRT_Dados."/>
                             </StackPanel>
                         </Grid>
                     </HeaderedContentControl>
 
-                    <!-- ======================================== Página: Definições -->
+                    <!-- ======================================== Page: Settings -->
                     <ScrollViewer x:Name="PageSettings" Grid.Row="1" Padding="16,0,16,6" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
                         <Grid MinHeight="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
                             <Grid.ColumnDefinitions>
@@ -700,36 +700,36 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <HeaderedContentControl Style="{StaticResource Group}" Header="Proteção">
+                                <HeaderedContentControl Style="{StaticResource Group}" Header="Protection">
                                     <StackPanel x:Name="ProtectionOptions">
                                         <CheckBox x:Name="LockCs2Box" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
                                             <StackPanel>
-                                                <TextBlock Text="CS2 só pelo telemóvel"/>
-                                                <TextBlock Text="O CS2 só tem rede pelo telemóvel. Se o cabo cair, fica sem rede em vez de usar a de casa." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="CS2 only through the phone"/>
+                                                <TextBlock Text="CS2 only gets network through the phone. If the cable drops, it goes offline instead of using the home connection." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
                                         <CheckBox x:Name="SteamEgressBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
                                             <StackPanel>
-                                                <TextBlock Text="Steam pelo telemóvel"/>
-                                                <TextBlock Text="Evita o kick «No Steam logon». Os downloads da Valve também passam por aqui." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="Steam through the phone"/>
+                                                <TextBlock Text="Avoids the 'No Steam logon' kick. Valve downloads also go through here." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
                                         <CheckBox x:Name="KeepOffBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
                                             <StackPanel>
-                                                <TextBlock Text="Poupar os dados móveis"/>
-                                                <TextBlock Text="Em «Só o jogo», impede o Windows de passar o PC todo para o telemóvel." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="Save mobile data"/>
+                                                <TextBlock Text="In 'Game only', stops Windows from moving the whole PC onto the phone." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
                                         <CheckBox x:Name="CleanupBox" Style="{StaticResource Switch}" Click="SettingChanged">
                                             <StackPanel>
-                                                <TextBlock Text="Desligar a proteção ao fechar a app"/>
-                                                <TextBlock Text="Desligado é mais seguro: o bloqueio continua com a app fechada." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="Turn off protection when closing the app"/>
+                                                <TextBlock Text="Off is safer: the block stays active with the app closed." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
                                     </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Trocar IP">
+                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Change IP">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
@@ -739,32 +739,32 @@
                                             <ColumnDefinition Width="90"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel>
-                                            <TextBlock Text="Como" Style="{StaticResource Key}" Margin="0,0,0,5"/>
+                                            <TextBlock Text="Method" Style="{StaticResource Key}" Margin="0,0,0,5"/>
                                             <ComboBox x:Name="MethodCombo" SelectionChanged="SettingChanged"
-                                                      ToolTip="Dados móveis: desliga só os dados. Modo avião: a operadora quase sempre dá IP novo, mas alguns telemóveis desligam a partilha USB.">
-                                                <ComboBoxItem Content="Desligar e ligar os dados móveis" Tag="data"/>
-                                                <ComboBoxItem Content="Modo avião" Tag="airplane"/>
+                                                      ToolTip="Mobile data: turns off data only. Airplane mode: the carrier almost always gives a new IP, but some phones drop USB tethering.">
+                                                <ComboBoxItem Content="Turn mobile data off and on" Tag="data"/>
+                                                <ComboBoxItem Content="Airplane mode" Tag="airplane"/>
                                             </ComboBox>
                                         </StackPanel>
                                         <StackPanel Grid.Column="2">
-                                            <TextBlock Text="Pausa (s)" Style="{StaticResource Key}" Margin="0,0,0,5" ToolTip="Quanto tempo os dados ficam desligados em cada tentativa"/>
+                                            <TextBlock Text="Pause (s)" Style="{StaticResource Key}" Margin="0,0,0,5" ToolTip="How long data stays off on each attempt"/>
                                             <TextBox x:Name="OffSecondsBox" Height="28" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" LostFocus="SettingChanged"
-                                                     ToolTip="Quanto tempo os dados ficam desligados. 4 a 10 s é o normal."/>
+                                                     ToolTip="How long data stays off. 4 to 10 s is normal."/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="4">
-                                            <TextBlock Text="Tentativas" Style="{StaticResource Key}" Margin="0,0,0,5"/>
+                                            <TextBlock Text="Attempts" Style="{StaticResource Key}" Margin="0,0,0,5"/>
                                             <TextBox x:Name="AttemptsBox" Height="28" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" LostFocus="SettingChanged"
-                                                     ToolTip="Se a operadora devolver o mesmo IP, a app repete até este número."/>
+                                                     ToolTip="If the carrier returns the same IP, the app retries up to this many times."/>
                                         </StackPanel>
                                     </Grid>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="2" Style="{StaticResource Group}" Header="Manutenção" VerticalAlignment="Top">
+                                <HeaderedContentControl Grid.Row="2" Style="{StaticResource Group}" Header="Maintenance" VerticalAlignment="Top">
                                     <WrapPanel VerticalAlignment="Top">
-                                        <Button Style="{StaticResource Danger}" Click="Restore_Click" Margin="0,0,6,6" Content="Restaurar a rede"
-                                                ToolTip="Remove tudo o que a app criou no Windows (bloqueio na Firewall e rotas). A lista de servidores fica."/>
-                                        <Button Click="UnhideAll_Click" Margin="0,0,6,6" Content="Mostrar contas escondidas"/>
-                                        <Button Click="OpenData_Click" Margin="0,0,6,6" Content="Abrir a pasta de dados" ToolTip="Abre a pasta SRT_Dados, ao lado do .exe"/>
+                                        <Button Style="{StaticResource Danger}" Click="Restore_Click" Margin="0,0,6,6" Content="Restore network"
+                                                ToolTip="Removes everything the app created in Windows (Firewall block and routes). The server list stays."/>
+                                        <Button Click="UnhideAll_Click" Margin="0,0,6,6" Content="Show hidden accounts"/>
+                                        <Button Click="OpenData_Click" Margin="0,0,6,6" Content="Open data folder" ToolTip="Opens the SRT_Dados folder, next to the .exe"/>
                                     </WrapPanel>
                                 </HeaderedContentControl>
                             </Grid>
@@ -776,32 +776,32 @@
                                 </Grid.RowDefinitions>
                                 <HeaderedContentControl Style="{StaticResource Group}" Header="Steam">
                                     <StackPanel>
-                                        <TextBlock Text="Chave da Steam Web API (opcional)"/>
-                                        <TextBlock Text="Com ela, os bans vêm da API oficial. Fica só neste PC." Style="{StaticResource OptSub}" Margin="0,1,0,8"/>
+                                        <TextBlock Text="Steam Web API key (optional)"/>
+                                        <TextBlock Text="With it, bans come from the official API. It stays on this PC only." Style="{StaticResource OptSub}" Margin="0,1,0,8"/>
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBox x:Name="ApiKeyBox" Height="28" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" LostFocus="SettingChanged" Tag="Sem chave também funciona"/>
-                                            <Button Grid.Column="1" Margin="6,0,0,0" Click="ApiKeyLink_Click" Content="Obter chave" ToolTip="Abre steamcommunity.com/dev/apikey"/>
+                                            <TextBox x:Name="ApiKeyBox" Height="28" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" LostFocus="SettingChanged" Tag="Works without a key too"/>
+                                            <Button Grid.Column="1" Margin="6,0,0,0" Click="ApiKeyLink_Click" Content="Get key" ToolTip="Opens steamcommunity.com/dev/apikey"/>
                                         </Grid>
                                     </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Como funciona" VerticalAlignment="Top">
+                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="How it works" VerticalAlignment="Top">
                                     <TextBlock Style="{StaticResource Sub}" LineHeight="19">
-                                        O telemóvel partilha os dados móveis com o PC, por cabo USB ou pelo ponto de acesso Wi-Fi. A app manda o jogo por ali: os servidores veem o IP da operadora, não o de casa.<LineBreak/><LineBreak/>
-                                        Se a ligação cair, o kill switch bloqueia esses servidores em vez de deixar passar o teu IP.<LineBreak/><LineBreak/>
-                                        Trocar IP desliga e liga os dados até vir um IP novo. Uma pen ou router 4G/5G por USB também serve.<LineBreak/><LineBreak/>
-                                        <Run Foreground="{StaticResource Faint}">Com CGNAT o IP da operadora é partilhado com outros clientes.</Run>
+                                        The phone shares its mobile data with the PC, over a USB cable or the Wi-Fi hotspot. The app sends the game through it: servers see the carrier IP, not your home IP.<LineBreak/><LineBreak/>
+                                        If the connection drops, the kill switch blocks those servers instead of letting your IP through.<LineBreak/><LineBreak/>
+                                        Change IP turns data off and on until a new IP comes. A USB 4G/5G dongle or router also works.<LineBreak/><LineBreak/>
+                                        <Run Foreground="{StaticResource Faint}">With CGNAT the carrier IP is shared with other customers.</Run>
                                     </TextBlock>
                                 </HeaderedContentControl>
                             </Grid>
                         </Grid>
                     </ScrollViewer>
 
-                    <!-- Notificação -->
+                    <!-- Toast -->
                     <Border x:Name="ToastBox" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,24,24" MaxWidth="460"
                             Background="{StaticResource Surface2}" BorderBrush="{StaticResource LineStrong}" BorderThickness="1" Padding="12,9" Visibility="Collapsed" Opacity="0">
                         <StackPanel Orientation="Horizontal">
@@ -813,7 +813,7 @@
                 </Grid>
             </Grid>
 
-            <!-- Diálogo -->
+            <!-- Dialog -->
             <Grid x:Name="Dialog" Grid.Row="0" Grid.RowSpan="2" Background="#B0000000" Visibility="Collapsed">
                 <HeaderedContentControl Style="{StaticResource Group}" Width="480" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="18,20,18,16">
                     <HeaderedContentControl.Header>
@@ -826,8 +826,8 @@
                         <TextBlock x:Name="DialogLabel2" Style="{StaticResource Key}" Margin="0,10,0,4" Visibility="Collapsed"/>
                         <TextBox x:Name="DialogInput2" Margin="0,0,0,0" Visibility="Collapsed"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
-                            <Button x:Name="DialogCancel" Content="Cancelar" Click="DialogCancel_Click"/>
-                            <Button x:Name="DialogOk" Style="{StaticResource Primary}" Content="Continuar" Margin="0" Click="DialogOk_Click"/>
+                            <Button x:Name="DialogCancel" Content="Cancel" Click="DialogCancel_Click"/>
+                            <Button x:Name="DialogOk" Style="{StaticResource Primary}" Content="Continue" Margin="0" Click="DialogOk_Click"/>
                         </StackPanel>
                     </StackPanel>
                 </HeaderedContentControl>

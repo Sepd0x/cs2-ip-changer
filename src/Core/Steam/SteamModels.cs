@@ -9,7 +9,7 @@ using Microsoft.Win32;
 
 namespace SRT.Core;
 
-// ------------------------------------------------------------ Contas guardadas no Steam deste PC
+// ------------------------------------------------------------ Accounts saved in this PC's Steam
 
 public sealed record LocalAccount(string SteamId, string AccountName, string PersonaName, bool MostRecent, long Timestamp);
 

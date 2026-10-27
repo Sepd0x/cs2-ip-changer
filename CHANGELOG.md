@@ -1,20 +1,31 @@
 # Changelog
 
-Todas as alterações relevantes ficam aqui. O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-PT/1.1.0/) e as versões seguem o [Semantic Versioning](https://semver.org/lang/pt-PT/).
+Notable changes to this project are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/).
+
+## [0.1.0-alpha.2] - 2026-10-27
+
+### Changed
+- Renamed from ServerRouteTool to CS2 IP Changer. The exe is now `CS2IPChanger.exe`.
+- The whole interface is in English now, including logs, checks and tooltips.
+- README, changelog and release notes rewritten in English.
+
+### Upgrading
+- Put `CS2IPChanger.exe` in the same folder as the old `ServerRouteTool.exe`. It reads the same `SRT_Dados` folder, so your servers, accounts and settings carry over. The firewall rules keep their old names, so nothing needs to be redone.
 
 ## [0.1.0-alpha.1] - 2026-10-27
 
-Primeira versão pública.
+First public release, as ServerRouteTool.
 
-### Adicionado
-- Saída pelo telemóvel (Tethering USB ou ponto de acesso Wi-Fi) com três modos: só o jogo, tudo com o CS2 aberto, tudo sempre.
-- Kill switch na Firewall do Windows para os servidores da lista e o CS2 trancado ao telemóvel.
-- Steam na mesma saída que o CS2, para evitar o kick "No Steam logon".
-- Verificação ao vivo: Firewall, kill switch, saída, rotas, IP diferente de casa, telemóvel nos dados móveis, CS2, Steam e resto do PC.
-- Trocar IP por ADB (dados móveis ou modo avião), com histórico dos IPs e teste de fugas.
-- Lista de servidores com nome, mapa, jogadores e ping, favoritos e entrada com um clique. Começa vazia.
-- Troca de contas Steam, troca rápida com Ctrl+Alt+Q, bans (VAC, game ban, trade ban, conta limitada) e cooldowns.
-- Restaurar rede, para desfazer rotas e regras num clique.
-- Interface escura em português.
+### Added
+- Phone connection (USB tethering or Wi-Fi hotspot) with three modes: game only, whole PC while CS2 is open, whole PC always.
+- Windows Firewall kill switch for the listed servers, and `cs2.exe` locked to the phone connection.
+- Steam on the same connection as CS2, to avoid the "No Steam logon" kick.
+- Live checks: firewall, kill switch, routes, IP different from home, phone on mobile data, CS2, Steam and the rest of the PC.
+- Change IP over ADB (mobile data or airplane mode), with an IP history and a leak test.
+- Server list with name, map, players and ping, favorites and one-click join. It starts empty.
+- Steam account switcher with Ctrl+Alt+Q quick switch, bans (VAC, game ban, trade ban, limited account) and cooldowns.
+- Restore network, to undo every route and rule in one click.
+- Dark interface in Portuguese.
 
+[0.1.0-alpha.2]: ../../releases/tag/v0.1.0-alpha.2
 [0.1.0-alpha.1]: ../../releases/tag/v0.1.0-alpha.1

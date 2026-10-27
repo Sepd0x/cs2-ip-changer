@@ -13,7 +13,7 @@ using SRT.Core;
 
 namespace SRT;
 
-// Telemóvel e troca de IP
+// Phone and IP change
 public partial class MainWindow
 {
     async Task RefreshPhone()
@@ -22,7 +22,7 @@ public partial class MainWindow
         _adb ??= Adb.Find();
         if (_adb == null)
         {
-            SetPhone(Ui.Faint, "ADB não instalado", "Precisas dele para trocar o IP pelo botão. Instala com um clique.");
+            SetPhone(Ui.Faint, "ADB not installed", "You need it to change the IP with the button. Install it with one click.");
             AdbInstallBtn.Visibility = Visibility.Visible;
             return;
         }
@@ -30,37 +30,37 @@ public partial class MainWindow
         var info = await Adb.Status(_adb);
         _phone = info;
         DiagPhone(info);
-        if (info == null) SetPhone(Ui.Bad, "ADB não arrancou", "Tenta reinstalar o ADB.");
-        else if (info.State == "none") SetPhone(Ui.Faint, "Telemóvel não visto pelo ADB", "Liga a Depuração USB nas opções de programador. Vê \"Preparar o telemóvel\".");
-        else if (!info.Ready) SetPhone(Ui.Warn, "À espera de autorização", info.Summary);
+        if (info == null) SetPhone(Ui.Bad, "ADB failed to start", "Try reinstalling ADB.");
+        else if (info.State == "none") SetPhone(Ui.Faint, "Phone not seen by ADB", "Turn on USB debugging in developer options. See \"Phone setup\".");
+        else if (!info.Ready) SetPhone(Ui.Warn, "Waiting for authorization", info.Summary);
         else if (info.WifiOn)
-            SetPhone(Ui.Warn, "Wi-Fi do telemóvel ligado",
-                (info.WifiSsid != null ? $"Ligado a {info.WifiSsid}. " : "") + "Com o Wi-Fi ligado, o PC pode receber a rede de casa em vez dos dados móveis.");
-        else SetPhone(Ui.Good, "Pronto para trocar IP", info.Summary);
+            SetPhone(Ui.Warn, "Phone Wi-Fi is on",
+                (info.WifiSsid != null ? $"Connected to {info.WifiSsid}. " : "") + "With Wi-Fi on, the PC may get your home network instead of mobile data.");
+        else SetPhone(Ui.Good, "Ready to change IP", info.Summary);
         WifiOffBtn.Visibility = info?.Ready == true && info.WifiOn ? Visibility.Visible : Visibility.Collapsed;
         UpdatePhoneCheck();
     }
 
-    /// <summary>Verificação "Dados móveis": o telemóvel partilha os dados e não o Wi-Fi de casa.</summary>
+    /// <summary>"Mobile data" check: the phone shares its data and not the home Wi-Fi.</summary>
     void UpdatePhoneCheck()
     {
-        // Trocar IP só faz sentido com o telemóvel pronto no ADB.
+        // Change IP only makes sense with the phone ready on ADB.
         ChangeIpBtn.IsEnabled = !_changingIp && _phone?.Ready == true;
         var egress = _last?.Egress;
         if (egress != null && egress.IsWifi)
         {
             _cPhoneData.Ok = null;
-            _cPhoneData.Detail = "Pelo ponto de acesso: o telemóvel já usa os dados";
+            _cPhoneData.Detail = "Through the hotspot: the phone is already using its data";
         }
         else if (_phone?.Ready != true)
         {
             _cPhoneData.Ok = null;
-            _cPhoneData.Detail = _adb == null ? "Sem ADB: confirma que o Wi-Fi do telemóvel está desligado" : "Telemóvel não visto pelo ADB";
+            _cPhoneData.Detail = _adb == null ? "No ADB: make sure the phone's Wi-Fi is off" : "Phone not seen by ADB";
         }
         else
         {
             _cPhoneData.Ok = !_phone.WifiOn;
-            _cPhoneData.Detail = _phone.WifiOn ? $"O Wi-Fi do telemóvel está ligado{(_phone.WifiSsid != null ? $" ({_phone.WifiSsid})" : "")}: desliga-o" : $"{_phone.Carrier} · {_phone.NetType}".Trim(' ', '·');
+            _cPhoneData.Detail = _phone.WifiOn ? $"The phone's Wi-Fi is on{(_phone.WifiSsid != null ? $" ({_phone.WifiSsid})" : "")}: turn it off" : $"{_phone.Carrier} · {_phone.NetType}".Trim(' ', '·');
         }
     }
 
@@ -76,8 +76,8 @@ public partial class MainWindow
     async Task TurnPhoneWifiOff()
     {
         var r = await Adb.DisableWifi(_adb, _phone.Serial);
-        if (r.Ok) { Log.Ok("Wi-Fi do telemóvel desligado: o tethering passa a usar os dados móveis."); Toast("Wi-Fi do telemóvel desligado.", true); }
-        else { Log.Warn("Desligar o Wi-Fi do telemóvel: " + r.Output); Toast("O telemóvel recusou. Desliga o Wi-Fi à mão.", false); }
+        if (r.Ok) { Log.Ok("Phone Wi-Fi turned off: tethering now uses mobile data."); Toast("Phone Wi-Fi turned off.", true); }
+        else { Log.Warn("Turning off the phone Wi-Fi: " + r.Output); Toast("The phone refused. Turn off Wi-Fi manually.", false); }
     }
 
     void SetPhone(Brush dot, string state, string detail)
@@ -89,104 +89,104 @@ public partial class MainWindow
 
     async void AdbInstall_Click(object sender, RoutedEventArgs e)
     {
-        var ok = await Ask("Instalar o ADB", "Vou descarregar as platform-tools oficiais da Google (cerca de 7 MB) de dl.google.com para a pasta SRT_Dados ao lado da app. Só é preciso uma vez.", "Descarregar");
+        var ok = await Ask("Install ADB", "I'll download Google's official platform-tools (about 7 MB) from dl.google.com into the SRT_Dados folder next to the app. You only need to do this once.", "Download");
         if (!ok) return;
         AdbInstallBtn.IsEnabled = false;
-        ShowProgress("A descarregar o ADB da Google…");
+        ShowProgress("Downloading ADB from Google…");
         try
         {
             _adb = await Adb.Download(new Progress<string>(t => ProgressText.Text = t));
-            if (_adb != null) { Log.Ok("ADB instalado em " + _adb); Toast("ADB instalado.", true); }
-            else Toast("Descarreguei, mas não encontrei o adb.exe.", false);
+            if (_adb != null) { Log.Ok("ADB installed at " + _adb); Toast("ADB installed.", true); }
+            else Toast("Downloaded, but adb.exe was not found.", false);
         }
-        catch (Exception ex) { Log.Error("Download do ADB: " + ex.Message); Toast("Não consegui descarregar o ADB: " + ex.Message, false); }
+        catch (Exception ex) { Log.Error("ADB download: " + ex.Message); Toast("Couldn't download ADB: " + ex.Message, false); }
         finally { HideProgress(); AdbInstallBtn.IsEnabled = true; await RefreshPhone(); }
     }
 
     async void Tether_Click(object sender, RoutedEventArgs e)
     {
-        if (_phone?.Ready != true) { Toast("O telemóvel tem de estar pronto no ADB primeiro.", false); return; }
+        if (_phone?.Ready != true) { Toast("The phone has to be ready on ADB first.", false); return; }
         var r = await Adb.EnableUsbTether(_adb, _phone.Serial);
-        Log.Info("Pedido de tethering USB: " + (r.Ok ? "enviado" : r.Output));
-        Toast(r.Ok ? "Pedido enviado. Se não ligar em 10 s, liga a partilha USB à mão." : "O telemóvel recusou. Liga a partilha USB à mão.", r.Ok);
+        Log.Info("USB tethering request: " + (r.Ok ? "sent" : r.Output));
+        Toast(r.Ok ? "Request sent. If it doesn't turn on within 10 s, turn on USB tethering manually." : "The phone refused. Turn on USB tethering manually.", r.Ok);
         await Task.Delay(4000);
         await SyncNow(force: true);
     }
 
-    void PhoneHelp_Click(object sender, RoutedEventArgs e) => _ = Ask("Preparar o telemóvel (uma vez)",
-        "1. Definições > Acerca do telemóvel > Informações do software: toca 7 vezes em \"Número de compilação\".\n" +
-        "2. Opções de programador: liga \"Depuração USB\".\n" +
-        "3. Liga o cabo. No telemóvel aceita \"Permitir depuração USB\" (marca \"Permitir sempre\").\n" +
-        "4. Definições > Ligações > Hotspot e tethering: liga \"Tethering USB\".\n" +
-        "5. Desliga o Wi-Fi do telemóvel: senão ele partilha a rede de casa e o IP fica igual.\n\n" +
-        "Se a app não vir o telemóvel no ADB: instala o \"Samsung USB Driver for Mobile Phones\" (site da Samsung) e volta a ligar o cabo.\n" +
-        "Sem depuração USB tudo funciona, exceto o botão Trocar IP: nesse caso liga e desliga o modo avião à mão.",
-        "Percebi", null);
+    void PhoneHelp_Click(object sender, RoutedEventArgs e) => _ = Ask("Phone setup (once)",
+        "1. Settings > About phone > Software information: tap \"Build number\" 7 times.\n" +
+        "2. Developer options: turn on \"USB debugging\".\n" +
+        "3. Plug in the cable. On the phone, accept \"Allow USB debugging\" (tick \"Always allow\").\n" +
+        "4. Settings > Connections > Mobile Hotspot and Tethering: turn on \"USB tethering\".\n" +
+        "5. Turn off the phone's Wi-Fi: otherwise it shares the home network and the IP stays the same.\n\n" +
+        "If the app doesn't see the phone in ADB: install the \"Samsung USB Driver for Mobile Phones\" (Samsung website) and plug the cable in again.\n" +
+        "Without USB debugging everything works except the Change IP button: in that case turn airplane mode on and off manually.",
+        "Got it", null);
 
     async void ChangeIp_Click(object sender, RoutedEventArgs e)
     {
         if (_changingIp) return;
-        if (_demo) { Toast("Demonstração: IP trocado.", true); return; }
+        if (_demo) { Toast("Demo: IP changed.", true); return; }
         if (_last?.Egress != null && !_last.Egress.IsPhone)
         {
-            Toast("A ligação escolhida não é um telemóvel: o botão Trocar IP só funciona com o telemóvel por ADB.", false);
+            Toast("The chosen connection is not a phone: the Change IP button only works with a phone over ADB.", false);
             return;
         }
         if (_adb == null || _phone?.Ready != true)
         {
-            Toast(_adb == null ? "Instala o ADB primeiro (cartão Telemóvel)." : "O telemóvel não está pronto no ADB. Vê \"Preparar o telemóvel\".", false);
+            Toast(_adb == null ? "Install ADB first (Phone card)." : "The phone is not ready on ADB. See \"Phone setup\".", false);
             return;
         }
-        if (Steam.Cs2Running && !await Ask("O CS2 está aberto", "Se estiveres dentro de um servidor, vais cair quando o IP mudar. Continuar?", "Trocar IP")) return;
+        if (Steam.Cs2Running && !await Ask("CS2 is open", "If you're in a server, you'll be dropped when the IP changes. Continue?", "Change IP")) return;
 
         _changingIp = true;
         ChangeIpBtn.IsEnabled = false;
-        ChangeIpBtn.Content = "A trocar…";
+        ChangeIpBtn.Content = "Changing…";
         var method = _s.ChangeMethod == "airplane" ? Adb.Method.Airplane : Adb.Method.MobileData;
         var old = _egressPublic;
         string got = null;
         _ipChangedAt = DateTime.Now.AddTicks(-(DateTime.Now.Ticks % TimeSpan.TicksPerSecond));
-        Diag.Write("trocar-ip", new { de = old });
+        Diag.Write("change-ip", new { from = old });
         try
         {
             if (_phone.WifiOn)
             {
-                ShowProgress("O Wi-Fi do telemóvel está ligado: a desligá-lo para usar os dados móveis…");
+                ShowProgress("The phone's Wi-Fi is on: turning it off to use mobile data…");
                 await TurnPhoneWifiOff();
                 await Task.Delay(3000);
             }
             for (var attempt = 1; attempt <= Math.Max(1, _s.MaxAttempts); attempt++)
             {
-                ShowProgress($"Tentativa {attempt}/{_s.MaxAttempts}: a desligar os dados do telemóvel por {_s.OffSeconds} s…");
+                ShowProgress($"Attempt {attempt}/{_s.MaxAttempts}: turning off the phone's data for {_s.OffSeconds} s…");
                 var err = await Adb.Cycle(_adb, _phone.Serial, method, Math.Clamp(_s.OffSeconds, 1, 60));
                 if (err != null) { Log.Error(err); Toast(err, false); return; }
 
-                ProgressText.Text = $"Tentativa {attempt}/{_s.MaxAttempts}: à espera que a rede móvel volte…";
+                ProgressText.Text = $"Attempt {attempt}/{_s.MaxAttempts}: waiting for the mobile network to come back…";
                 got = await WaitForEgressIp(TimeSpan.FromSeconds(50));
-                if (got == null) { ProgressText.Text = "A rede ainda não voltou…"; continue; }
+                if (got == null) { ProgressText.Text = "The network hasn't come back yet…"; continue; }
                 if (got != old) break;
-                Log.Info($"A operadora devolveu o mesmo IP ({got}).");
+                Log.Info($"The carrier gave back the same IP ({got}).");
             }
 
             if (got != null) ResetSteamAfterIpChange();
-            Diag.Write("ip-trocado", new { de = old, para = got });
+            Diag.Write("ip-changed", new { from = old, to = got });
             if (got != null && got != old)
             {
                 _egressPublic = got;
                 _egressInfo = await Net.Lookup(got);
                 AddHistory(got, _egressInfo, "trocado");
-                Log.Ok($"IP trocado: {old ?? "?"} → {got}");
-                Toast($"IP novo: {got}", true);
+                Log.Ok($"IP changed: {old ?? "?"} → {got}");
+                Toast($"New IP: {got}", true);
             }
             else if (got == old)
-                Toast("A operadora deu sempre o mesmo IP. Tenta o modo avião nas Definições ou espera uns minutos.", false);
+                Toast("The carrier kept giving the same IP. Try airplane mode in Settings or wait a few minutes.", false);
             else
-                Toast("A rede móvel não voltou a tempo. Confirma o telemóvel.", false);
+                Toast("The mobile network didn't come back in time. Check the phone.", false);
         }
         finally
         {
             _changingIp = false;
-            ChangeIpBtn.Content = "Trocar IP";
+            ChangeIpBtn.Content = "Change IP";
             UpdatePhoneCheck();
             HideProgress();
             ShowIps();
@@ -204,7 +204,8 @@ public partial class MainWindow
             var egress = Net.PickEgress(adapters, _s.EgressAdapterId, _s.EgressSsid);
             if (egress != null)
             {
-                // Se o cabo voltou com outra placa, a rota do teste de IP tem de ser refeita antes de perguntar.
+                // If the cable came back with another adapter, the IP-test route has to be rebuilt before asking.
+
                 if (Net.BestInterface(Net.EchoIp) != egress.Index) await SyncNow(force: true);
                 try
                 {

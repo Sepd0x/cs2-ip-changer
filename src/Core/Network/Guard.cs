@@ -3,11 +3,11 @@
 public sealed class GuardReport
 {
     public List<Adapter> Adapters { get; init; } = new();
-    /// <summary>A saída em que se confia agora (null = tudo bloqueado).</summary>
+    /// <summary>The connection trusted right now (null = everything blocked).</summary>
     public Adapter Egress { get; init; }
-    /// <summary>A placa que seria a saída antes da verificação do IP (para continuar a medir o IP por ela).</summary>
+    /// <summary>The adapter that would be the protected connection before the IP check (so the IP keeps being measured through it).</summary>
     public Adapter Candidate { get; init; }
-    /// <summary>Porque é que não há saída (ex.: o Wi-Fi saltou para o router de casa).</summary>
+    /// <summary>Why there is no protected connection (e.g. the Wi-Fi jumped to the home router).</summary>
     public string EgressProblem { get; init; }
     public bool Distrusted { get; init; }
     public string FirewallProblem { get; init; }
@@ -20,20 +20,20 @@ public sealed class GuardReport
     public bool PcDefaultIsEgress { get; init; }
     public int PcDefaultIndex { get; init; }
     public string Error { get; init; }
-    /// <summary>As rotas dos servidores da Valve saem pela saída (null = opção desligada ou sem saída).</summary>
+    /// <summary>Routes to Valve's servers go through the protected connection (null = option off or no connection).</summary>
     public bool? SteamRoutesOk { get; init; }
     public SteamLink Steam { get; init; } = new();
-    /// <summary>O steam.exe fala com a Valve pela saída (null = Steam fechado ou sem ligação).</summary>
+    /// <summary>steam.exe talks to Valve through the protected connection (null = Steam closed or not connected).</summary>
     public bool? SteamOnEgress { get; init; }
     public bool AllRoutesOk => RouteOk.Count > 0 && RouteOk.Values.All(v => v);
 }
 
 /// <summary>
-/// Mantém a proteção, em três barreiras:
-///  1. Firewall: os servidores (e o próprio cs2.exe) só podem sair com o IP local da saída protegida.
-///  2. A saída só conta se for a rede certa (no Wi-Fi, o ponto de acesso guardado).
-///  3. Se o IP público da saída for igual ao de casa, deixa de se confiar nela (a janela avisa com <c>distrust</c>).
-/// Tudo corre fora da thread da janela, uma operação de cada vez.
+/// Keeps protection up, in three layers:
+///  1. Firewall: the servers (and cs2.exe itself) can only go out with the local IP of the protected connection.
+///  2. The connection only counts if it is the right network (on Wi-Fi, the saved hotspot).
+///  3. If the connection's public IP equals the home one, it is no longer trusted (the window signals this with <c>distrust</c>).
+/// Everything runs off the window thread, one operation at a time.
 /// </summary>
 public sealed class Guard
 {
@@ -53,7 +53,7 @@ public sealed class Guard
             try { return await SyncCore(s, ips.Distinct().ToList(), force, distrust, cs2Running); }
             catch (Exception ex)
             {
-                Log.Error("Sincronização: " + ex.Message);
+                Log.Error("Sync: " + ex.Message);
                 return new GuardReport { Error = ex.Message };
             }
             finally { _gate.Release(); }
@@ -64,13 +64,13 @@ public sealed class Guard
         var adapters = Net.Scan();
         var candidate = Net.PickEgress(adapters, s.EgressAdapterId, s.EgressSsid, out var problem);
         var egress = distrust ? null : candidate;
-        if (distrust && candidate != null) problem = "O IP público da saída é igual ao da tua casa.";
-        if (problem != _lastProblem) { if (problem != null) Log.Warn(problem + " Servidores bloqueados."); _lastProblem = problem; }
+        if (distrust && candidate != null) problem = "The public IP of the connection is the same as your home IP.";
+        if (problem != _lastProblem) { if (problem != null) Log.Warn(problem + " Servers blocked."); _lastProblem = problem; }
         var fwProblem = Firewall.CheckEnabled();
         var mode = s.GameMode && cs2Running ? "all" : s.Mode;
         var cs2 = s.LockCs2 ? Steam.Cs2Path(s) : null;
 
-        // 1) Firewall primeiro: nunca há um momento em que um servidor seja acessível com o IP de casa.
+        // 1) Firewall first: there is never a moment when a server is reachable with the home IP.
         var killOk = false;
         bool? cs2Ok = null;
         if (fwProblem == null)
@@ -79,14 +79,14 @@ public sealed class Guard
             var sig = string.Join(",", ips.OrderBy(i => i)) + "|" + allow + "|" + candidate?.LocalIp + "|" + cs2;
             if (force || sig != _fwSignature || !Firewall.Verify(Firewall.RuleName, ips, allow))
             {
-                Firewall.Apply(Firewall.RuleName, ips, null, allow, "Gerida pelo ServerRouteTool. Os servidores da lista só podem ser contactados a partir do IP local da saída protegida.");
-                Firewall.Apply(Firewall.EchoRuleName, new[] { Net.EchoIp }, null, candidate?.LocalIp, "Gerida pelo ServerRouteTool. Garante que o teste de IP mede a saída protegida.");
-                if (cs2 != null) Firewall.Apply(Firewall.Cs2RuleName, null, cs2, allow, "Gerida pelo ServerRouteTool. O CS2 só pode sair pela saída protegida: servidores fora da lista nunca veem o IP de casa.");
+                Firewall.Apply(Firewall.RuleName, ips, null, allow, "Managed by CS2 IP Changer. Servers in the list can only be reached from the local IP of the protected connection.");
+                Firewall.Apply(Firewall.EchoRuleName, new[] { Net.EchoIp }, null, candidate?.LocalIp, "Managed by CS2 IP Changer. Makes sure the IP test measures the protected connection.");
+                if (cs2 != null) Firewall.Apply(Firewall.Cs2RuleName, null, cs2, allow, "Managed by CS2 IP Changer. CS2 can only go out through the protected connection: servers not in the list never see your home IP.");
                 else Firewall.Remove(Firewall.Cs2RuleName);
                 _fwSignature = sig;
                 Log.Info(egress == null
-                    ? "Kill switch: servidores da lista" + (cs2 != null ? " e CS2" : "") + " bloqueados (sem saída)."
-                    : $"Kill switch: servidores da lista" + (cs2 != null ? " e CS2" : "") + $" só saem por \"{egress.Name}\" ({egress.LocalIp}).");
+                    ? "Kill switch: servers in the list" + (cs2 != null ? " and CS2" : "") + " blocked (no connection)."
+                    : $"Kill switch: servers in the list" + (cs2 != null ? " and CS2" : "") + $" only go out through \"{egress.Name}\" ({egress.LocalIp}).");
             }
             killOk = Firewall.Verify(Firewall.RuleName, ips, allow);
             if (cs2 != null) cs2Ok = Firewall.Verify(Firewall.Cs2RuleName, null, allow);
@@ -94,12 +94,12 @@ public sealed class Guard
             if (!s.LegacyCleaned)
             {
                 var n = Firewall.RemoveLegacy();
-                if (n > 0) Log.Ok($"Removidas {n} regras antigas da v6/v7/v8.");
+                if (n > 0) Log.Ok($"Removed {n} old rules from v6/v7/v8.");
                 s.LegacyCleaned = true;
             }
         }
 
-        // 2) Rotas /32: o teste de IP vai sempre pela candidata; os servidores só pela saída confiável.
+        // 2) /32 routes: the IP test always goes through the candidate; servers only through the trusted connection.
         if (candidate != null) await EnsureRoutes(new List<string> { Net.EchoIp }, candidate, adapters);
         var routeOk = new Dictionary<string, bool>();
         if (egress != null)
@@ -107,20 +107,20 @@ public sealed class Guard
             if (s.KeepPcOffPhone && mode == "servers" && (egress.IsPhone || egress.IsWifi) && _metricAppliedTo != egress.Index && HasOtherInternet(adapters, egress))
             {
                 var r = await Net.SetInterfaceMetric(egress.Index, 900);
-                if (r.Ok) { _metricAppliedTo = egress.Index; Log.Info("O PC continua a usar a rede de casa; só o jogo vai pelo telemóvel."); }
+                if (r.Ok) { _metricAppliedTo = egress.Index; Log.Info("The PC keeps using the home network; only the game goes through the phone."); }
             }
             await EnsureRoutes(ips, egress, adapters);
             foreach (var ip in ips)
             {
                 routeOk[ip] = Net.BestInterface(ip) == egress.Index;
-                if (!routeOk[ip] && _warned.Add(ip)) Log.Warn($"O Windows não escolhe a saída para {ip}. Outra VPN pode estar a sobrepor-se.");
+                if (!routeOk[ip] && _warned.Add(ip)) Log.Warn($"Windows does not pick the protected connection for {ip}. Another VPN may be overriding it.");
                 if (routeOk[ip]) _warned.Remove(ip);
             }
         }
         else foreach (var ip in ips) routeOk[ip] = false;
 
-        // 2b) Steam na mesma saída: os blocos da Valve vão pelo telemóvel antes de o CS2 abrir, e o modo jogo
-        // deixa de mudar o caminho do Steam a meio do jogo (a causa do kick "No Steam logon").
+        // 2b) Steam on the same connection: Valve's blocks go through the phone before CS2 opens, and game mode
+        // no longer changes Steam's path mid-game (the cause of the "No Steam logon" kick).
         bool? steamRoutesOk = null;
         if (s.SteamOnEgress && egress != null)
         {
@@ -129,7 +129,7 @@ public sealed class Guard
         }
         else await RemovePrefixRoutes(Net.ValvePrefixes, adapters);
 
-        // 3) PC inteiro (ou modo jogo): 0/1 + 128/1 ganham à rota por defeito sem a apagar (como fazem as VPN).
+        // 3) Whole PC (or game mode): 0/1 + 128/1 beat the default route without deleting it (as VPNs do).
         var fullOk = false;
         if (mode == "all" && egress?.Gateway != null)
         {
@@ -140,7 +140,7 @@ public sealed class Guard
                     var r = await Net.AddRoute(pfx, egress, 5);
                     if (r.Ok) _ownedRoutes.Add($"{pfx}|{egress.Index}|{egress.Gateway}");
                 }
-                Log.Info(s.Mode == "all" ? "Todo o PC sai pelo telemóvel." : "O CS2 está aberto: todo o PC passa pelo telemóvel.");
+                Log.Info(s.Mode == "all" ? "The whole PC goes through the phone." : "CS2 is open: the whole PC goes through the phone.");
             }
             fullOk = Net.BestInterface("1.1.1.1") == egress.Index;
         }
@@ -175,12 +175,12 @@ public sealed class Guard
     static bool HasOtherInternet(List<Adapter> adapters, Adapter egress) =>
         adapters.Any(a => a.Up && a.Gateway != null && a.Index != egress.Index && !a.IsPhone);
 
-    /// <summary>Caminho rápido: a API do Windows diz se cada IP já sai pela placa. Só se faltar algum se mexe em rotas.</summary>
+    /// <summary>Fast path: the Windows API says whether each IP already leaves through the adapter. Routes are only touched if one is missing.</summary>
     async Task EnsureRoutes(List<string> ips, Adapter via, List<Adapter> adapters)
     {
         var missing = ips.Where(ip => Net.BestInterface(ip) != via.Index).ToList();
         if (missing.Count == 0) return;
-        // Limpa rotas nossas que ficaram noutra placa (ex.: o cabo voltou com outro índice, ou mudou a rede Wi-Fi).
+        // Clears our routes left on another adapter (e.g. the cable came back with another index, or the Wi-Fi network changed).
         foreach (var rt in await Net.ListRoutes())
         {
             var ip = rt.Prefix.EndsWith("/32") ? rt.Prefix[..^3] : null;
@@ -196,11 +196,11 @@ public sealed class Guard
         {
             var r = await Net.AddRoute(ip + "/32", via);
             if (r.Ok) _ownedRoutes.Add($"{ip}/32|{via.Index}|{via.Gateway ?? "0.0.0.0"}");
-            else Log.Warn($"Rota {ip}: {r.Output}");
+            else Log.Warn($"Route {ip}: {r.Output}");
         }
     }
 
-    /// <summary>Como EnsureRoutes, mas para blocos inteiros (ex.: os da Valve).</summary>
+    /// <summary>Like EnsureRoutes, but for whole blocks (e.g. Valve's).</summary>
     async Task EnsurePrefixRoutes(string[] prefixes, Adapter via, List<Adapter> adapters)
     {
         var missing = prefixes.Where(p => Net.BestInterface(Net.ProbeIp(p)) != via.Index).ToList();
@@ -221,9 +221,9 @@ public sealed class Guard
         {
             var r = await Net.AddRoute(pfx, via);
             if (r.Ok) { _ownedRoutes.Add($"{pfx}|{via.Index}|{hop}"); added++; }
-            else Log.Warn($"Rota {pfx}: {r.Output}");
+            else Log.Warn($"Route {pfx}: {r.Output}");
         }
-        if (added > 0) Log.Info($"Steam pela saída: {added} bloco(s) da Valve passam por \"{via.Name}\".");
+        if (added > 0) Log.Info($"Steam through the phone: {added} Valve block(s) go through \"{via.Name}\".");
     }
 
     async Task RemovePrefixRoutes(string[] prefixes, List<Adapter> adapters)
@@ -238,7 +238,7 @@ public sealed class Guard
                 _ownedRoutes.Remove($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
             }
         }
-        Log.Info("Steam pela saída desligado: o Steam volta à rede de casa.");
+        Log.Info("Steam through the phone turned off: Steam goes back to the home network.");
     }
 
     async Task RemoveSplitRoutes(List<Adapter> adapters)
@@ -253,10 +253,10 @@ public sealed class Guard
                 _ownedRoutes.Remove($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
             }
         }
-        Log.Info("O resto do PC volta à rede de casa.");
+        Log.Info("The rest of the PC goes back to the home network.");
     }
 
-    /// <summary>Remove rotas de servidores que saíram da lista (só as da app ou em placas de telemóvel).</summary>
+    /// <summary>Removes routes for servers that left the list (only the app's own or those on phone adapters).</summary>
     public Task RemoveIps(IEnumerable<string> ips, Settings s) => Task.Run(async () =>
     {
         await _gate.WaitAsync();
@@ -275,7 +275,7 @@ public sealed class Guard
         finally { _gate.Release(); }
     });
 
-    /// <summary>Desfaz tudo o que a app criou: regras, rotas e o modo PC inteiro.</summary>
+    /// <summary>Undoes everything the app created: rules, routes and whole-PC mode.</summary>
     public Task RestoreAll(IReadOnlyCollection<string> ips) => Task.Run(async () =>
     {
         await _gate.WaitAsync();
@@ -298,7 +298,7 @@ public sealed class Guard
                 _metricAppliedTo = -1;
             }
             _fwSignature = null;
-            Log.Ok("Rede restaurada: regras e rotas da app removidas.");
+            Log.Ok("Network restored: app rules and routes removed.");
         }
         finally { _gate.Release(); }
     });

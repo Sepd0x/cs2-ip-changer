@@ -6,89 +6,89 @@ using SRT.Core;
 
 namespace SRT;
 
-// O Steam e o CS2 vistos de fora: sessão na Valve (pelo registo do Steam) e como o CS2 fecha
+// Steam and CS2 seen from outside: Valve session (from the Steam log) and how CS2 exits
 public partial class MainWindow
 {
     readonly SteamLogWatcher _steamLog = new();
-    /// <summary>Hora (ao segundo) da última troca de IP: até o Steam voltar a iniciar sessão depois dela, não se entra.</summary>
+    /// <summary>Time (to the second) of the last IP change: until Steam logs on again after it, don't join.</summary>
     DateTime? _ipChangedAt;
     readonly List<Process> _cs2Watched = new();
     /// <summary>
-    /// Depois de um crash dentro de um servidor, esse servidor fica com a sessão antiga. Uns 3 a 4 min depois o Steam
-    /// diz-lhe que ela acabou e ele expulsa a conta com "No Steam logon", mesmo que já tenhas voltado a entrar
-    /// (27 out.: voltar 2 min depois deu kick; 3 min 25 s depois, não). Até esta hora não se volta ao mesmo servidor.
+    /// After a crash inside a server, that server keeps the old session. About 3 to 4 min later Steam
+    /// tells it the session is over and it kicks the account with "No Steam logon", even if you already rejoined
+    /// (Oct 27: rejoining 2 min later got a kick; 3 min 25 s later did not). Until this time, don't return to the same server.
     /// </summary>
     static readonly TimeSpan AfterCrashWait = TimeSpan.FromMinutes(5);
     DateTime? _cs2CrashAt;
     string _cs2CrashServer;
 
-    /// <summary>O Steam tem sessão na Valve e, se o IP mudou, já a refez pelo IP novo.</summary>
+    /// <summary>Steam has a Valve session and, if the IP changed, has already redone it on the new IP.</summary>
     bool SteamReady => !Steam.IsRunning || (_steamLog.Online != false && (_ipChangedAt == null || _steamLog.LastLogon >= _ipChangedAt));
 
     void WatchSteamLog()
     {
         foreach (var ev in _steamLog.Poll())
         {
-            Diag.Write("steam-log", new { hora = ev.Time.ToString("HH:mm:ss"), tipo = ev.Kind, linha = ev.Line });
+            Diag.Write("steam-log", new { time = ev.Time.ToString("HH:mm:ss"), kind = ev.Kind, line = ev.Line });
             switch (ev.Kind)
             {
-                case "caiu":
+                case "dropped":
                     var why = Regex.Match(ev.Line, @"ConnectionDisconnected\('([^']*)'\)").Groups[1].Value;
-                    Log.Warn($"O Steam caiu da Valve às {ev.Time:HH:mm:ss} ({why})."
-                        + (Steam.Cs2Running ? " Se estavas num servidor, é isto que dá kick com \"No Steam logon\"." : ""));
+                    Log.Warn($"Steam dropped from Valve at {ev.Time:HH:mm:ss} ({why})."
+                        + (Steam.Cs2Running ? " If you were on a server, this is what causes the \"No Steam logon\" kick." : ""));
                     break;
-                case "ligou":
-                    Log.Ok($"O Steam tem sessão na Valve ({ev.Time:HH:mm:ss}).");
+                case "online":
+                    Log.Ok($"Steam has a Valve session ({ev.Time:HH:mm:ss}).");
                     break;
-                case "recusado":
-                    Log.Warn("O Steam não conseguiu iniciar sessão: " + ev.Line);
+                case "refused":
+                    Log.Warn("Steam could not log on: " + ev.Line);
                     break;
             }
         }
     }
 
-    /// <summary>Espera até <paramref name="seconds"/> s que o Steam fique pronto. false = não ficou.</summary>
+    /// <summary>Waits up to <paramref name="seconds"/> s for Steam to be ready. false = it was not.</summary>
     async Task<bool> WaitSteamReady(int seconds)
     {
         WatchSteamLog();
         if (SteamReady) return true;
-        ShowProgress("À espera que o Steam volte a ter sessão na Valve…");
+        ShowProgress("Waiting for Steam to get a Valve session again…");
         try
         {
             for (var i = seconds; i > 0; i--)
             {
                 await Task.Delay(1000);
                 WatchSteamLog();
-                if (SteamReady) { Log.Ok("O Steam está pronto: já podes entrar sem levar kick."); return true; }
-                ProgressText.Text = $"À espera que o Steam volte a ter sessão na Valve… {i} s";
+                if (SteamReady) { Log.Ok("Steam is ready: you can join without getting kicked."); return true; }
+                ProgressText.Text = $"Waiting for Steam to get a Valve session again… {i} s";
             }
             return false;
         }
         finally { HideProgress(); }
     }
 
-    /// <summary>Depois de o IP mudar: corta as ligações antigas do Steam para ele se religar já, e não daqui a 30 s.</summary>
+    /// <summary>After the IP changes: cuts Steam's old connections so it reconnects now, not in 30 s.</summary>
     void ResetSteamAfterIpChange()
     {
         if (!Steam.IsRunning) return;
         var link = Net.ReadSteamLink();
         var n = Net.ResetLink(link);
-        Diag.Write("steam-cortado", new { ligacoes = n, de = link.Keys.Count });
-        if (n > 0) Log.Info($"Cortei {n} ligação(ões) antigas do Steam: religa-se já pelo IP novo.");
+        Diag.Write("steam-reset", new { connections = n, total = link.Keys.Count });
+        if (n > 0) Log.Info($"Cut {n} old Steam connection(s): it reconnects now on the new IP.");
     }
 
-    // ------------------------------------------------------------ Como o CS2 fecha
+    // ------------------------------------------------------------ How CS2 exits
 
     static readonly Dictionary<uint, string> CrashCodes = new()
     {
-        [0xC0000005] = "acesso inválido à memória",
-        [0xC0000409] = "pilha corrompida",
-        [0xC0000374] = "memória (heap) corrompida",
-        [0xC000001D] = "instrução inválida",
-        [0xC00000FD] = "pilha esgotada",
-        [0xC0000094] = "divisão por zero",
-        [0x80000003] = "paragem forçada (breakpoint)",
-        [0xE06D7363] = "exceção não tratada",
+        [0xC0000005] = "invalid memory access",
+        [0xC0000409] = "stack corrupted",
+        [0xC0000374] = "heap corrupted",
+        [0xC000001D] = "illegal instruction",
+        [0xC00000FD] = "stack exhausted",
+        [0xC0000094] = "divide by zero",
+        [0x80000003] = "forced stop (breakpoint)",
+        [0xE06D7363] = "unhandled exception",
     };
 
     void WatchCs2Exit()
@@ -108,7 +108,7 @@ public partial class MainWindow
                 };
                 _cs2Watched.Add(p);
             }
-            catch (Exception ex) { Log.Warn("Não consigo vigiar o CS2: " + ex.Message); p.Dispose(); }
+            catch (Exception ex) { Log.Warn("Cannot watch CS2: " + ex.Message); p.Dispose(); }
         }
     }
 
@@ -119,40 +119,40 @@ public partial class MainWindow
         var min = (int)(DateTime.Now - start).TotalMinutes;
         var hex = code == null ? "?" : $"0x{(uint)code.Value:X8}";
         var name = code is int c && CrashCodes.TryGetValue((uint)c, out var n) ? n : null;
-        Diag.Write("cs2-saiu", new { codigo = code, hex, motivo = name, minutos = min });
-        if (code == 0) Log.Info($"O CS2 fechou normalmente ao fim de {min} min.");
+        Diag.Write("cs2-exit", new { code, hex, reason = name, minutes = min });
+        if (code == 0) Log.Info($"CS2 closed normally after {min} min.");
         else
         {
-            Log.Warn($"O CS2 fechou com erro {hex}{(name != null ? $" ({name})" : "")} ao fim de {min} min. Se foi um crash, exporta o diagnóstico em Registo.");
+            Log.Warn($"CS2 closed with error {hex}{(name != null ? $" ({name})" : "")} after {min} min. If it was a crash, export diagnostics in Log.");
             if (min >= 1 && _s.LastServer != null)
             {
                 _cs2CrashAt = DateTime.Now;
                 _cs2CrashServer = _s.LastServer;
                 var until = _cs2CrashAt.Value + AfterCrashWait;
-                Log.Warn($"O CS2 crashou. Não voltes ao {_cs2CrashServer} antes das {until:HH:mm}: o servidor ainda tem a sessão antiga e dá kick com \"No Steam logon\". Outro servidor pode ser já.");
-                Toast($"O CS2 crashou. Volta ao mesmo servidor só depois das {until:HH:mm} (outro pode ser já).", false);
+                Log.Warn($"CS2 crashed. Do not rejoin {_cs2CrashServer} before {until:HH:mm}: the server still has the old session and kicks with \"No Steam logon\". Another server is fine right away.");
+                Toast($"CS2 crashed. Rejoin the same server only after {until:HH:mm} (another one is fine right away).", false);
             }
-            else Toast($"O CS2 fechou com erro {hex}. Ficou no diagnóstico.", false);
+            else Toast($"CS2 closed with error {hex}. It is in the diagnostics.", false);
         }
     }
 
-    /// <summary>Se o CS2 crashou há pouco neste servidor, pergunta e (se quiseres) espera. false = não entrar.</summary>
+    /// <summary>If CS2 crashed on this server recently, asks and (if you want) waits. false = don't join.</summary>
     async Task<bool> WaitAfterCrash(ServerItem s)
     {
         if (_cs2CrashAt == null || s.Key != _cs2CrashServer) return true;
         var until = _cs2CrashAt.Value + AfterCrashWait;
         if (DateTime.Now >= until) return true;
-        var wait = await Ask("O CS2 crashou há pouco neste servidor",
-            $"O CS2 crashou às {_cs2CrashAt:HH:mm} dentro do {s.Title}. O servidor ainda tem essa sessão e, uns minutos depois, expulsa a conta com \"No Steam logon\", mesmo que já tenhas voltado.\n\n" +
-            $"Espero até às {until:HH:mm:ss} e entro sozinho? Outro servidor pode ser já.", "Esperar e entrar", "Entrar já");
-        Diag.Write("espera-pos-crash", new { servidor = s.Key, segundos = (int)(until - DateTime.Now).TotalSeconds, esperou = wait });
+        var wait = await Ask("CS2 crashed on this server recently",
+            $"CS2 crashed at {_cs2CrashAt:HH:mm} inside {s.Title}. The server still has that session and, a few minutes later, kicks the account with \"No Steam logon\", even if you already rejoined.\n\n" +
+            $"Wait until {until:HH:mm:ss} and join automatically? Another server is fine right away.", "Wait and join", "Join now");
+        Diag.Write("wait-after-crash", new { server = s.Key, seconds = (int)(until - DateTime.Now).TotalSeconds, waited = wait });
         if (!wait) return true;
-        ShowProgress("À espera que o servidor largue a sessão antiga…");
+        ShowProgress("Waiting for the server to drop the old session…");
         try
         {
             while (DateTime.Now < until)
             {
-                ProgressText.Text = $"À espera que o servidor largue a sessão antiga… {Fmt.Left(until - DateTime.Now)}";
+                ProgressText.Text = $"Waiting for the server to drop the old session… {Fmt.Left(until - DateTime.Now)}";
                 await Task.Delay(1000);
             }
         }

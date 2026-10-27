@@ -2,8 +2,8 @@ using SRT.Core;
 
 namespace SRT;
 
-// Ganchos da build de desenvolvimento (diagnóstico, demonstração e capturas). A build normal não os
-// implementa e o compilador tira as chamadas.
+// Hooks for the development build (diagnostics, demo and screenshots). The normal build doesn't
+// implement them and the compiler removes the calls.
 public partial class MainWindow
 {
     partial void ParseDevArgs(string[] args);
@@ -23,11 +23,12 @@ public partial class MainWindow
     partial void DiagTick();
     partial void UpdateDiagInfo();
 
-    /// <summary>Barra lateral: a versão em duas linhas (cabe nos 80 px); a completa fica na dica.</summary>
+    /// <summary>Sidebar: the version on two lines (fits in 80 px); the full one goes in the tooltip.</summary>
     void ShowVersion()
     {
         var parts = AppInfo.Version.Split('+');
         VersionText.Text = "v" + parts[0].Replace("-", "\n") + (parts.Length > 1 ? "\n" + parts[1] : "");
-        VersionText.ToolTip = "ServerRouteTool " + AppInfo.Version;
+        VersionText.ToolTip = "CS2 IP Changer " + AppInfo.Version
+;
     }
 }

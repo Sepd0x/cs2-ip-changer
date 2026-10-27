@@ -10,7 +10,7 @@ public partial class App : Application
     {
         Paths.Ensure();
         DispatcherUnhandledException += OnUiError;
-        TaskScheduler.UnobservedTaskException += (_, a) => { Log.Error("Tarefa: " + a.Exception?.GetBaseException().Message); a.SetObserved(); };
+        TaskScheduler.UnobservedTaskException += (_, a) => { Log.Error("Task: " + a.Exception?.GetBaseException().Message); a.SetObserved(); };
         base.OnStartup(e);
         var w = new MainWindow(e.Args);
         MainWindow = w;
@@ -19,7 +19,7 @@ public partial class App : Application
 
     static void OnUiError(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
-        // Um erro nunca fecha a app: fica no registo e a janela continua.
+        // An error never closes the app: it goes to the log and the window carries on.
         Log.Error(e.Exception.GetBaseException().Message);
         e.Handled = true;
     }

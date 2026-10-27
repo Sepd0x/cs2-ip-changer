@@ -13,7 +13,7 @@ using SRT.Core;
 
 namespace SRT;
 
-// Definições
+// Settings
 public partial class MainWindow
 {
     void ApplySettingsToUi()
@@ -67,20 +67,21 @@ public partial class MainWindow
 
     async void Restore_Click(object sender, RoutedEventArgs e)
     {
-        if (!await Ask("Restaurar a rede", "Isto tira o bloqueio da Firewall, as rotas e o modo «Todo o PC». Os servidores da lista passam a ver o IP de casa até voltares a abrir a app. A lista fica guardada.", "Restaurar", danger: true)) return;
+        if (!await Ask("Restore network", "This removes the Firewall block, the routes and the \"Whole PC\" mode. The servers in the list will see your home IP until you open the app again. The list stays saved.", "Restore", danger: true)) return;
         if (_demo) return;
         _tick.Stop();
         await _guard.RestoreAll(_servers.Select(s => s.Ip).Distinct().ToList());
-        Toast("Rede restaurada. A proteção volta quando reabrires a app ou carregares em Testar fugas.", true);
-        foreach (var s in _servers) { s.Protected = false; s.RouteText = "Desligado"; }
-        SetHero("bad", "Proteção desligada", "Restauraste a rede. Carrega em Testar fugas para voltar a proteger.");
+        Toast("Network restored. Protection comes back when you reopen the app or press Run leak test.", true);
+        foreach (var s in _servers) { s.Protected = false; s.RouteText = "Off"; }
+        SetHero("bad", "Protection off", "You restored the network. Press Run leak test to protect again.");
     }
 
     void OpenFirewall_Click(object sender, RoutedEventArgs e)
     {
         try { Process.Start(new ProcessStartInfo("wf.msc") { UseShellExecute = true }); }
-        catch (Exception ex) { Toast("Não consegui abrir a Firewall: " + ex.Message, false); }
-        Toast("Em Regras de Saída procura 'ServerRouteTool v9 - kill switch'.", true);
+        catch (Exception ex) { Toast("Couldn't open the Firewall: " + ex.Message, false); }
+        Toast("In Outbound Rules, look for 'ServerRouteTool v9 - kill switch'.", true);
+
     }
 
     void OpenData_Click(object sender, RoutedEventArgs e) => Process.Start(new ProcessStartInfo(Paths.Data) { UseShellExecute = true });

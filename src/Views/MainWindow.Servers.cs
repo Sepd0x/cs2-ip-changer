@@ -13,7 +13,7 @@ using SRT.Core;
 
 namespace SRT;
 
-// Servidores
+// Servers
 public partial class MainWindow
 {
     void LoadServers()
@@ -21,13 +21,13 @@ public partial class MainWindow
         var list = _demo ? null : Store.Load<List<ServerItem>>(Paths.File("servers.json"), () => null);
         if (list == null && !_demo)
         {
-            // Migração: a lista da v8 (servers.json ao lado do .exe) passa para SRT_Dados.
+            // Migration: the v8 list (servers.json next to the .exe) moves to SRT_Dados.
             var old = Path.Combine(Paths.AppDir, "servers.json");
             list = File.Exists(old) ? Store.Load<List<ServerItem>>(old, () => null) : null;
         }
         if (list == null)
         {
-            // Primeira vez: a lista começa vazia (cola-se em Servidores).
+            // First run: the list starts empty (paste servers in Servers).
             var defaults = new List<(string Ip, int Port)>();
             AddDefaultServers(defaults);
             list = defaults.Select(d => new ServerItem { Ip = d.Ip, Port = d.Port }).ToList();
@@ -73,13 +73,13 @@ public partial class MainWindow
 
     async Task AddFromText(string text)
     {
-        if (string.IsNullOrWhiteSpace(text)) { Toast("Nada para adicionar.", false); return; }
+        if (string.IsNullOrWhiteSpace(text)) { Toast("Nothing to add.", false); return; }
         var n = ParseInto(text, out var ignored);
         SaveServers();
         ShowLastServer();
-        if (n == 0 && ignored.Count == 0) { Toast("Esses servidores já estão na lista.", false); return; }
-        Log.Info($"Adicionados {n} servidor(es)." + (ignored.Count > 0 ? " Ignorados: " + string.Join(", ", ignored) : ""));
-        Toast(n > 0 ? $"{n} servidor(es) adicionados e protegidos." + (ignored.Count > 0 ? $" {ignored.Count} ignorados." : "") : "Nenhum IP:porta válido.", n > 0);
+        if (n == 0 && ignored.Count == 0) { Toast("Those servers are already in the list.", false); return; }
+        Log.Info($"Added {n} server(s)." + (ignored.Count > 0 ? " Ignored: " + string.Join(", ", ignored) : ""));
+        Toast(n > 0 ? $"{n} server(s) added and protected." + (ignored.Count > 0 ? $" {ignored.Count} ignored." : "") : "No valid IP:port.", n > 0);
         _s.DefaultPort = int.TryParse(DefaultPortBox.Text, out var dp) ? dp : 27015;
         SaveSettings();
         await SyncNow(force: true);
@@ -97,7 +97,7 @@ public partial class MainWindow
 
     async void ImportServers_Click(object sender, RoutedEventArgs e)
     {
-        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = "Listas (*.txt;*.csv;*.cfg;*.log)|*.txt;*.csv;*.cfg;*.log|Todos (*.*)|*.*", Title = "Escolhe uma lista de servidores" };
+        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = "Lists (*.txt;*.csv;*.cfg;*.log)|*.txt;*.csv;*.cfg;*.log|All (*.*)|*.*", Title = "Choose a server list" };
         if (dlg.ShowDialog(this) == true) await AddFromText(await File.ReadAllTextAsync(dlg.FileName));
     }
 
@@ -142,7 +142,7 @@ public partial class MainWindow
     {
         if (_demo || _querying) return;
         var egress = _last?.Egress;
-        if (egress == null) { if (!quiet) Toast("Telemóvel desligado: não consulto servidores pela rede de casa.", false); return; }
+        if (egress == null) { if (!quiet) Toast("Phone disconnected: not querying servers over your home network.", false); return; }
         _querying = true;
         try
         {
@@ -174,7 +174,7 @@ public partial class MainWindow
                 }
                 finally { gate.Release(); }
             }));
-            if (!quiet) Toast($"{ok} de {targets.Count} servidor(es) responderam.", ok > 0);
+            if (!quiet) Toast($"{ok} of {targets.Count} server(s) responded.", ok > 0);
         }
         finally { _querying = false; }
     }
@@ -186,20 +186,20 @@ public partial class MainWindow
         var list = SelectedOrAll();
         if (list.Count == 0) return;
         Clipboard.SetText(string.Join("\r\n", list.Select(s => s.Key)));
-        Toast($"{list.Count} servidor(es) copiados.", true);
+        Toast($"{list.Count} server(s) copied.", true);
     }
 
     async void RemoveServers_Click(object sender, RoutedEventArgs e)
     {
         var sel = ServerList.SelectedItems.Cast<ServerItem>().ToList();
-        if (sel.Count == 0) { Toast("Seleciona primeiro os servidores a remover.", false); return; }
+        if (sel.Count == 0) { Toast("Select the servers to remove first.", false); return; }
         foreach (var s in sel) _servers.Remove(s);
         SaveServers();
         var still = _servers.Select(s => s.Ip).ToHashSet();
         var gone = sel.Select(s => s.Ip).Where(ip => !still.Contains(ip)).Distinct().ToList();
-        // Primeiro o kill switch deixa de cobrir esses IPs só depois de as rotas saírem (sem janela de fuga para os que ficam).
+        // The kill switch stops covering these IPs only after their routes are gone (no leak window for the ones that stay).
         if (!_demo && gone.Count > 0) await _guard.RemoveIps(gone, _s);
-        Log.Info($"Removidos {sel.Count} servidor(es).");
+        Log.Info($"Removed {sel.Count} server(s).");
         await SyncNow(force: true);
         UpdateStatusUi();
     }
@@ -227,27 +227,27 @@ public partial class MainWindow
         if (!_demo)
         {
             await SyncNow(force: true);
-            if (_distrust || _cDiff.Ok == false) { Toast("Não abro: o IP do telemóvel é igual ao de casa.", false); return; }
+            if (_distrust || _cDiff.Ok == false) { Toast("Not joining: the phone IP is the same as your home IP.", false); return; }
             var fullOk = _last?.Egress != null && _last.EffectiveMode == "all" && _last.FullModeOk;
             if (s.Protected != true && !fullOk)
             {
-                Toast($"Não abro o {s.Key}: a proteção não está confirmada ({s.RouteText}).", false);
+                Toast($"Not joining {s.Key}: protection is not confirmed ({s.RouteText}).", false);
                 return;
             }
-            // As duas causas conhecidas do kick "No Steam logon": o Steam em modo offline, ou noutra rede que o CS2.
-            if (Steam.WantsOffline(Steam.ActiveSteamId()) && !await Ask("O Steam está em modo offline",
-                    "Em modo offline o Steam não confirma a tua conta e o servidor dá kick com \"No Steam logon\" passados uns minutos.\n\n" +
-                    "Desliga \"Offline\" em Contas Steam e volta a entrar na conta.", "Entrar mesmo assim"))
+            // The two known causes of the "No Steam logon" kick: Steam in offline mode, or Steam on a different network than CS2.
+            if (Steam.WantsOffline(Steam.ActiveSteamId()) && !await Ask("Steam is in offline mode",
+                    "In offline mode Steam does not confirm your account, and the server kicks you with \"No Steam logon\" after a few minutes.\n\n" +
+                    "Turn off \"Offline\" in Accounts and log in to the account again.", "Join anyway"))
                 return;
             if (!await WaitAfterCrash(s)) return;
-            if (!SteamReady && !await WaitSteamReady(60) && !await Ask("O Steam ainda não tem sessão",
-                    "O Steam ainda não voltou a ligar-se à Valve (por exemplo, depois de trocares o IP). Se entrares agora, o servidor dá kick com \"No Steam logon\" passados uns minutos.",
-                    "Entrar mesmo assim"))
+            if (!SteamReady && !await WaitSteamReady(60) && !await Ask("Steam has no session yet",
+                    "Steam has not reconnected to Valve yet (for example, after you changed the IP). If you join now, the server kicks you with \"No Steam logon\" after a few minutes.",
+                    "Join anyway"))
                 return;
-            if (_s.SteamOnEgress && _last?.SteamOnEgress == false && await Ask("O Steam está noutra rede",
-                    "O CS2 vai pelo telemóvel, mas o Steam está ligado pela rede de casa. Quando o Steam se religar, o servidor dá kick com \"No Steam logon\".\n\n" +
-                    $"Reinicio o Steam pelo telemóvel e entro no {s.Title}?" + (Steam.Cs2Running ? " O CS2 fecha e volta a abrir." : ""),
-                    "Reiniciar e entrar", "Entrar assim"))
+            if (_s.SteamOnEgress && _last?.SteamOnEgress == false && await Ask("Steam is on another network",
+                    "CS2 goes through the phone, but Steam is connected through your home network. When Steam reconnects, the server kicks you with \"No Steam logon\".\n\n" +
+                    $"Restart Steam through the phone and join {s.Title}?" + (Steam.Cs2Running ? " CS2 closes and opens again." : ""),
+                    "Restart and join", "Join anyway"))
             {
                 await RestartSteamAndConnect(s);
                 return;
@@ -256,33 +256,33 @@ public partial class MainWindow
         try
         {
             Process.Start(new ProcessStartInfo($"steam://connect/{s.Key}") { UseShellExecute = true });
-            Diag.Write("entrar", new { servidor = s.Key, nome = s.Title, protegido = s.Protected, modo = _last?.EffectiveMode, steamNaSaida = _last?.SteamOnEgress, steamIps = _last?.Steam.LocalIps });
-            Log.Ok($"A entrar em {s.Key} pelo telemóvel.");
-            Toast($"A abrir {s.Title} no Steam…", true);
+            Diag.Write("join", new { server = s.Key, name = s.Title, isProtected = s.Protected, mode = _last?.EffectiveMode, steamOnEgress = _last?.SteamOnEgress, steamIps = _last?.Steam.LocalIps });
+            Log.Ok($"Joining {s.Key} through the phone.");
+            Toast($"Opening {s.Title} in Steam…", true);
             MarkLast(s);
         }
-        catch (Exception ex) { Toast("Não consegui abrir o Steam: " + ex.Message, false); }
+        catch (Exception ex) { Toast("Could not open Steam: " + ex.Message, false); }
     }
 
     async Task RestartSteamAndConnect(ServerItem s)
     {
-        ShowProgress("A reiniciar o Steam pelo telemóvel…");
+        ShowProgress("Restarting Steam through the phone…");
         try
         {
             foreach (var p in Process.GetProcessesByName("cs2")) try { p.Kill(true); } catch { }
             for (var i = 0; i < 20 && Steam.Cs2Running; i++) await Task.Delay(150);
-            // As rotas da Valve já estão na saída: o Steam novo liga-se por lá, e o CS2 abre e entra no servidor.
+            // Valve routes already go through the phone: the new Steam connects that way, and CS2 opens and joins the server.
             await Steam.Restart((_s.SteamSilent ? "-silent " : "") + $"-applaunch 730 -condebug +connect {s.Key}");
-            Diag.Write("steam-reiniciado", new { servidor = s.Key });
-            Log.Ok($"Steam reiniciado pelo telemóvel; o CS2 abre e entra em {s.Key}.");
-            Toast($"Steam a reiniciar. O CS2 abre e entra em {s.Title}.", true);
+            Diag.Write("steam-restarted", new { server = s.Key });
+            Log.Ok($"Steam restarted through the phone; CS2 opens and joins {s.Key}.");
+            Toast($"Steam is restarting. CS2 opens and joins {s.Title}.", true);
             MarkLast(s);
         }
-        catch (Exception ex) { Log.Error("Reiniciar o Steam: " + ex.Message); Toast(ex.Message, false); }
+        catch (Exception ex) { Log.Error("Restart Steam: " + ex.Message); Toast(ex.Message, false); }
         finally { HideProgress(); }
     }
 
-    /// <summary>Guarda o servidor como o último (na app e na conta com sessão iniciada) e pinta-o na lista.</summary>
+    /// <summary>Saves the server as the last one (in the app and in the logged-in account) and highlights it in the list.</summary>
     void MarkLast(ServerItem s)
     {
         _s.LastServer = s.Key;
@@ -303,7 +303,7 @@ public partial class MainWindow
 
     void ShowLastServer()
     {
-        // Versões antigas só guardavam o último servidor em cada conta: usa-se o mais recente de todas.
+        // Old versions only stored the last server per account: use the most recent across all accounts.
         if (_s.LastServer == null && _accounts.Select(a => a.Meta).Where(m => m.LastServer != null).MaxBy(m => m.LastServerAt) is AccountMeta m)
         {
             _s.LastServer = m.LastServer;

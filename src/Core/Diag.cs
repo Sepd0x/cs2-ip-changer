@@ -3,8 +3,8 @@ using System.Diagnostics;
 namespace SRT.Core;
 
 /// <summary>
-/// Pontos de diagnóstico espalhados pela app. Na build normal não fazem nada: o compilador tira as chamadas
-/// (e os argumentos) porque o símbolo PRIVADO não está definido. A build de desenvolvimento liga-os.
+/// Diagnostic points scattered through the app. In the normal build they do nothing: the compiler removes the calls
+/// (and their arguments) because the PRIVADO symbol is not defined. The development build turns them on.
 /// </summary>
 public static partial class Diag
 {

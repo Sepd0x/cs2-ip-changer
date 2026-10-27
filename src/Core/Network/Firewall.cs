@@ -5,11 +5,11 @@ using System.Reflection;
 namespace SRT.Core;
 
 /// <summary>
-/// Firewall do Windows por COM (HNetCfg): muito mais rápido do que Get-NetFirewallRule.
+/// Windows Firewall through COM (HNetCfg): much faster than Get-NetFirewallRule.
 ///
-/// Cada regra bloqueia o tráfego de saída que NÃO tenha como origem o IP local da saída protegida.
-/// Assim, se o Wi-Fi do PC saltar do ponto de acesso para o router de casa (ou o cabo cair), o IP local
-/// muda e a Firewall bloqueia no mesmo instante, sem esperar pela app.
+/// Each rule blocks outbound traffic that does NOT come from the local IP of the protected connection.
+/// So if the PC's Wi-Fi jumps from the hotspot to the home router (or the cable drops), the local IP
+/// changes and the Firewall blocks at that instant, without waiting for the app.
 /// </summary>
 public static class Firewall
 {
@@ -35,7 +35,7 @@ public static class Firewall
     static object Call(object o, string name, params object[] args) =>
         o.GetType().InvokeMember(name, BindingFlags.InvokeMethod, null, o, args);
 
-    /// <summary>Devolve null se o Firewall estiver ativo em todos os perfis em uso; senão, a explicação.</summary>
+    /// <summary>Returns null if the Firewall is on in every profile in use; otherwise, the explanation.</summary>
     public static string CheckEnabled()
     {
         try
@@ -43,21 +43,21 @@ public static class Firewall
             var p = Policy();
             var current = (int)Get(p, "CurrentProfileTypes");
             var off = new List<string>();
-            foreach (var (bit, name) in new[] { (1, "Domínio"), (2, "Privada"), (4, "Pública") })
+            foreach (var (bit, name) in new[] { (1, "Domain"), (2, "Private"), (4, "Public") })
                 if ((current & bit) != 0 && !(bool)Get(p, "FirewallEnabled", bit)) off.Add(name);
-            return off.Count == 0 ? null : "Firewall do Windows desligado no perfil " + string.Join(", ", off);
+            return off.Count == 0 ? null : "Windows Firewall is off for the profile: " + string.Join(", ", off);
         }
-        catch (Exception ex) { return "Não consegui ler o Firewall do Windows: " + ex.Message; }
+        catch (Exception ex) { return "Could not read Windows Firewall: " + ex.Message; }
     }
 
-    /// <summary>Regra pelo nome, ou null se não existir. "Item" é um método COM (não uma propriedade).</summary>
+    /// <summary>Rule by name, or null if it does not exist. "Item" is a COM method (not a property).</summary>
     static object Item(object rules, string name)
     {
         try { return Call(rules, "Item", name); }
         catch (TargetInvocationException ex) when (ex.InnerException?.HResult == ERROR_FILE_NOT_FOUND) { return null; }
     }
 
-    /// <summary>Apaga todas as regras com este nome (a 9.0 deixava duplicados). Devolve quantas.</summary>
+    /// <summary>Deletes every rule with this name (9.0 left duplicates). Returns how many.</summary>
     static int RemoveAllNamed(object rules, string name)
     {
         var n = 0;
@@ -78,7 +78,7 @@ public static class Firewall
         return new IPAddress(b).ToString();
     }
 
-    /// <summary>Todos os IPv4 exceto <paramref name="allowed"/>, em intervalos (mais todo o IPv6).</summary>
+    /// <summary>Every IPv4 except <paramref name="allowed"/>, as ranges (plus all of IPv6).</summary>
     public static string AllExcept(string allowed)
     {
         var v = ToUInt(IPAddress.Parse(allowed));
@@ -90,14 +90,14 @@ public static class Firewall
     }
 
     /// <summary>
-    /// Cria (ou recria) uma regra de bloqueio. <paramref name="remoteIps"/> null = qualquer destino;
-    /// <paramref name="program"/> null = qualquer programa; <paramref name="allowLocalIp"/> null = bloqueia tudo.
+    /// Creates (or recreates) a block rule. <paramref name="remoteIps"/> null = any destination;
+    /// <paramref name="program"/> null = any program; <paramref name="allowLocalIp"/> null = blocks everything.
     /// </summary>
     public static void Apply(string name, IReadOnlyCollection<string> remoteIps, string program, string allowLocalIp, string description)
     {
         var rules = Get(Policy(), "Rules");
         var old = RemoveAllNamed(rules, name);
-        if (old > 1) Log.Ok($"Limpei {old - 1} regras repetidas ({name}).");
+        if (old > 1) Log.Ok($"Removed {old - 1} duplicate rules ({name}).");
         if (remoteIps != null && remoteIps.Count == 0) return;
 
         var rule = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FWRule", true));
@@ -115,7 +115,7 @@ public static class Firewall
         Call(rules, "Add", rule);
     }
 
-    /// <summary>Lê a regra de volta: ativa, de bloqueio, com os destinos e a origem permitida certos.</summary>
+    /// <summary>Reads the rule back: enabled, a block rule, with the right destinations and allowed source.</summary>
     public static bool Verify(string name, IReadOnlyCollection<string> remoteIps, string allowLocalIp)
     {
         try
@@ -131,7 +131,7 @@ public static class Firewall
             var local = (string)Get(rule, "LocalAddresses") ?? "*";
             if (allowLocalIp == null) return local == "*";
             if (local == "*") return false;
-            // A origem permitida tem de ficar de fora de todos os intervalos bloqueados.
+            // The allowed source must fall outside every blocked range.
             var a = ToUInt(IPAddress.Parse(allowLocalIp));
             foreach (var part in local.Split(','))
             {
@@ -146,7 +146,7 @@ public static class Firewall
         }
         catch (Exception ex)
         {
-            Log.Warn($"Não consegui ler a regra {name}: " + (ex.InnerException ?? ex).Message);
+            Log.Warn($"Could not read rule {name}: " + (ex.InnerException ?? ex).Message);
             return false;
         }
     }
@@ -154,7 +154,7 @@ public static class Firewall
     public static void Remove(string name = RuleName)
     {
         try { RemoveAllNamed(Get(Policy(), "Rules"), name); }
-        catch (Exception ex) { Log.Warn($"Remover {name}: " + (ex.InnerException ?? ex).Message); }
+        catch (Exception ex) { Log.Warn($"Remove {name}: " + (ex.InnerException ?? ex).Message); }
     }
 
     public static void RemoveAll()
@@ -162,7 +162,7 @@ public static class Firewall
         foreach (var n in new[] { RuleName, EchoRuleName, Cs2RuleName }) Remove(n);
     }
 
-    /// <summary>Remove as regras antigas da v6/v7/v8 (uma por IP e por placa).</summary>
+    /// <summary>Removes the old v6/v7/v8 rules (one per IP and per adapter).</summary>
     public static int RemoveLegacy()
     {
         var n = 0;
@@ -172,7 +172,7 @@ public static class Firewall
             var names = new List<string>();
             foreach (var r in (IEnumerable)rules)
             {
-                // Por COM, "Name" é o nome visível; as versões antigas usavam "ServerRouteTool: ..." e o grupo "ServerRouteTool v…".
+                // Over COM, "Name" is the display name; old versions used "ServerRouteTool: ..." and the group "ServerRouteTool v…".
                 var name = (string)Get(r, "Name");
                 var group = (string)Get(r, "Grouping") ?? "";
                 if (name == null || name.StartsWith("ServerRouteTool v9")) continue;
@@ -181,7 +181,7 @@ public static class Firewall
             }
             foreach (var name in names.Distinct()) { RemoveAllNamed(rules, name); n++; }
         }
-        catch (Exception ex) { Log.Warn("Limpeza das regras antigas falhou: " + ex.Message); }
+        catch (Exception ex) { Log.Warn("Cleaning up old rules failed: " + ex.Message); }
         return n;
     }
 }

@@ -11,13 +11,13 @@ public sealed record PhoneInfo(string Serial, string State, string Model, string
     {
         "device" => string.Join(" · ", new[] { Model, Carrier, NetType, Battery is int b ? $"{b}%" : null }
                         .Where(s => !string.IsNullOrWhiteSpace(s))),
-        "unauthorized" => "Aceita o pedido \"Permitir depuração USB\" no ecrã do telemóvel",
-        "offline" => "Telemóvel offline no ADB: desliga e volta a ligar o cabo",
+        "unauthorized" => "Accept the \"Allow USB debugging\" prompt on your phone screen",
+        "offline" => "Phone offline in ADB: unplug and reconnect the cable",
         _ => State,
     };
 }
 
-/// <summary>Controlo do telemóvel Android por ADB (depuração USB) para renovar o IP dos dados móveis.</summary>
+/// <summary>Controls the Android phone through ADB (USB debugging) to renew the mobile data IP.</summary>
 public static class Adb
 {
     public const string PlatformToolsUrl = "https://dl.google.com/android/repository/platform-tools-latest-windows.zip";
@@ -44,17 +44,17 @@ public static class Adb
         return candidates.FirstOrDefault(File.Exists);
     }
 
-    /// <summary>Descarrega as platform-tools oficiais da Google para a pasta da app (~7 MB).</summary>
+    /// <summary>Downloads Google's official platform-tools into the app folder (~7 MB).</summary>
     public static async Task<string> Download(IProgress<string> progress)
     {
         var zip = Path.Combine(Paths.Data, "platform-tools.zip");
         using (var http = new HttpClient { Timeout = TimeSpan.FromMinutes(3) })
         {
-            progress?.Report("A descarregar o ADB da Google…");
+            progress?.Report("Downloading ADB from Google…");
             var bytes = await http.GetByteArrayAsync(PlatformToolsUrl);
             await File.WriteAllBytesAsync(zip, bytes);
         }
-        progress?.Report("A extrair…");
+        progress?.Report("Extracting…");
         await Task.Run(() => ZipFile.ExtractToDirectory(zip, Paths.Data, true));
         try { File.Delete(zip); } catch { }
         return Find();
@@ -82,7 +82,7 @@ public static class Adb
         if (lv != null && int.TryParse(lv.Replace("level:", "").Trim(), out var b)) battery = b;
         var carrier = L(1)?.Split(',').FirstOrDefault(s => !string.IsNullOrWhiteSpace(s));
         var net = L(2)?.Split(',').FirstOrDefault(s => !string.IsNullOrWhiteSpace(s) && s != "Unknown");
-        // Wi-Fi do telemóvel ligado = o tethering partilha a rede de casa em vez dos dados móveis.
+        // Phone Wi-Fi on = tethering shares the home network instead of mobile data.
         var w = await Run(adb, $"-s {serial} shell \"settings get global wifi_on; cmd wifi status 2>/dev/null | grep -m1 -i 'connected to'\"");
         var wl = w.Output.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).ToArray();
         var wifiOn = wl.Length > 0 && wl[0] != "0" && wl[0] != "null";
@@ -104,7 +104,7 @@ public static class Adb
 
     public enum Method { MobileData, Airplane }
 
-    /// <summary>Desliga a ligação de dados do telemóvel e volta a ligar. O tethering USB fica ativo.</summary>
+    /// <summary>Turns the phone's data connection off and on again. USB tethering stays on.</summary>
     public static async Task<string> Cycle(string adb, string serial, Method method, int offSeconds)
     {
         string off, on;
@@ -121,21 +121,21 @@ public static class Adb
         var r1 = await Run(adb, $"-s {serial} shell {off}");
         if (!r1.Ok || r1.Output.Contains("Exception") || r1.Output.Contains("not found"))
         {
-            // Em algumas versões de Android o "svc data" não está disponível: tenta o modo avião.
+            // On some Android versions "svc data" is not available: try airplane mode.
             if (method == Method.MobileData) return await Cycle(adb, serial, Method.Airplane, offSeconds);
-            return "O telemóvel recusou o comando: " + r1.Output;
+            return "The phone refused the command: " + r1.Output;
         }
         await Task.Delay(TimeSpan.FromSeconds(offSeconds));
         var r2 = await Run(adb, $"-s {serial} shell {on}");
-        if (!r2.Ok) return "Desliguei os dados mas não consegui voltar a ligar: " + r2.Output + " (liga-os à mão no telemóvel)";
+        if (!r2.Ok) return "Turned data off but could not turn it back on: " + r2.Output + " (turn it on manually on the phone)";
         return null;
     }
 
-    /// <summary>Desliga o Wi-Fi do telemóvel para o tethering usar os dados móveis.</summary>
+    /// <summary>Turns off the phone's Wi-Fi so tethering uses mobile data.</summary>
     public static Task<ProcResult> DisableWifi(string adb, string serial) =>
         Run(adb, $"-s {serial} shell svc wifi disable");
 
-    /// <summary>Pede ao Android para ativar o tethering USB (pode não funcionar em todos os modelos).</summary>
+    /// <summary>Asks Android to turn on USB tethering (may not work on every model).</summary>
     public static Task<ProcResult> EnableUsbTether(string adb, string serial) =>
         Run(adb, $"-s {serial} shell svc usb setFunctions rndis");
 }

@@ -22,14 +22,14 @@ public sealed class Adapter
     public bool IsPhone { get; init; }
     public bool IsVpn { get; init; }
     public bool IsWifi { get; init; }
-    /// <summary>Nome da rede Wi-Fi a que a placa está ligada (só placas Wi-Fi).</summary>
+    /// <summary>Name of the Wi-Fi network the adapter is connected to (Wi-Fi adapters only).</summary>
     public string Ssid { get; set; }
-    public string Kind => IsPhone ? "Telemóvel (USB)" : IsWifi ? "Wi-Fi" : IsVpn ? "VPN" : "Rede";
+    public string Kind => IsPhone ? "Phone (USB)" : IsWifi ? "Wi-Fi" : IsVpn ? "VPN" : "Network";
     public string Display => $"{Name}  ·  {Description}";
     public override string ToString() => Display;
 }
 
-/// <summary>Placas de rede e a rota que o Windows escolhe para cada IP.</summary>
+/// <summary>Network adapters and the route Windows picks for each IP.</summary>
 public static partial class Net
 {
     static readonly Regex PhonePattern = new(
@@ -40,7 +40,7 @@ public static partial class Net
         "WireGuard|WARP|Cloudflare|TAP-|Wintun|OpenVPN|Proton|Mullvad|NordLynx|Nord|Surfshark|ExpressVPN|Windscribe|Tailscale|ZeroTier|VPN",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-    // ------------------------------------------------------------ Adaptadores (rápido, sem PowerShell)
+    // ------------------------------------------------------------ Adapters (fast, no PowerShell)
 
     public static List<Adapter> Scan()
     {
@@ -84,13 +84,13 @@ public static partial class Net
     static readonly Regex SsidLine = new(@"^\s*SSID\s*:\s*(.+?)\s*$", RegexOptions.Multiline | RegexOptions.Compiled);
     static readonly Regex GuidLine = new(@"([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})", RegexOptions.Compiled);
 
-    /// <summary>Lê a rede Wi-Fi atual de cada placa ("netsh wlan show interfaces"; o rótulo SSID não é traduzido).</summary>
+    /// <summary>Reads the current Wi-Fi network of each adapter ("netsh wlan show interfaces"; the SSID label is not translated).</summary>
     static void FillSsids(List<Adapter> list)
     {
         try
         {
             var r = Proc.Run("netsh", "wlan show interfaces", 6000).GetAwaiter().GetResult();
-            // Um bloco por placa; o GUID do bloco liga-o à placa certa.
+            // One block per adapter; the block's GUID links it to the right adapter.
             var blocks = Regex.Split(r.Output, @"\r?\n\s*\r?\n");
             foreach (var b in blocks)
             {
@@ -105,9 +105,9 @@ public static partial class Net
     }
 
     /// <summary>
-    /// Escolhe a saída: a placa fixada nas definições, ou o primeiro telemóvel USB ativo.
-    /// Numa placa Wi-Fi a saída só vale enquanto estiver ligada ao ponto de acesso guardado: se o PC
-    /// saltar para o router de casa, a mesma placa deixa de contar como saída.
+    /// Picks the protected connection: the adapter pinned in Settings, or the first active USB phone.
+    /// On a Wi-Fi adapter it only counts while connected to the saved hotspot: if the PC
+    /// jumps to the home router, the same adapter stops counting.
     /// </summary>
     public static Adapter PickEgress(List<Adapter> all, string fixedId, string fixedSsid, out string problem)
     {
@@ -118,8 +118,8 @@ public static partial class Net
             if (a != null && a.IsWifi && !string.IsNullOrEmpty(fixedSsid) && a.Ssid != fixedSsid)
             {
                 problem = a.Ssid == null
-                    ? $"O Wi-Fi do PC não está ligado ao ponto de acesso \"{fixedSsid}\"."
-                    : $"O Wi-Fi do PC está ligado a \"{a.Ssid}\" e não ao ponto de acesso \"{fixedSsid}\".";
+                    ? $"The PC's Wi-Fi is not connected to the hotspot \"{fixedSsid}\"."
+                    : $"The PC's Wi-Fi is connected to \"{a.Ssid}\", not to the hotspot \"{fixedSsid}\".";
                 return null;
             }
             return a;
@@ -129,7 +129,7 @@ public static partial class Net
 
     public static Adapter PickEgress(List<Adapter> all, string fixedId, string fixedSsid) => PickEgress(all, fixedId, fixedSsid, out _);
 
-    // ------------------------------------------------------------ Rota escolhida pelo Windows
+    // ------------------------------------------------------------ Route picked by Windows
 
     [DllImport("iphlpapi.dll")]
     static extern int GetBestInterface(uint destAddr, out uint bestIfIndex);

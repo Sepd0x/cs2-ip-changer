@@ -24,7 +24,7 @@ public abstract class Observable : INotifyPropertyChanged
 
 public static class AppInfo
 {
-    /// <summary>A versão do csproj (ex.: 0.1.0-alpha.1); a build de desenvolvimento acrescenta "+dev".</summary>
+    /// <summary>The csproj version (e.g. 0.1.0-alpha.1); the development build adds "+dev".</summary>
     public static readonly string Version =
         typeof(AppInfo).Assembly.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
             .OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion ?? "0.0.0";
@@ -32,7 +32,7 @@ public static class AppInfo
 
 public static class Paths
 {
-    // Portátil: tudo fica ao lado do .exe, numa pasta própria.
+    // Portable: everything sits next to the .exe, in its own folder.
     public static readonly string AppDir = AppContext.BaseDirectory;
     public static readonly string Data = Path.Combine(AppDir, "SRT_Dados");
     public static readonly string Avatars = Path.Combine(Data, "avatars");
@@ -66,7 +66,7 @@ public static class Store
         }
         catch (Exception ex)
         {
-            Log.Warn($"Não consegui ler {Path.GetFileName(path)} ({ex.Message}); guardei uma cópia .bak.");
+            Log.Warn($"Could not read {Path.GetFileName(path)} ({ex.Message}); saved a .bak copy.");
             try { System.IO.File.Copy(path, path + ".bak", true); } catch { }
         }
         return fallback();
@@ -130,7 +130,7 @@ public sealed record ProcResult(int Code, string Output)
 
 public static class Proc
 {
-    /// <summary>Corre um programa sem janela e sem bloquear a interface.</summary>
+    /// <summary>Runs a program with no window and without blocking the UI.</summary>
     public static async Task<ProcResult> Run(string file, string args, int timeoutMs = 15000, CancellationToken ct = default)
     {
         var psi = new ProcessStartInfo(file, args)
@@ -153,13 +153,13 @@ public static class Proc
         p.BeginOutputReadLine();
         p.BeginErrorReadLine();
 
-        // Espera pela SAÍDA do processo, não pelo fim das streams: o adb deixa um servidor em segundo plano
-        // que herda a saída e nunca a fecha. WaitForExitAsync esperaria por ela para sempre.
+        // Waits for the process to EXIT, not for the streams to end: adb leaves a background server
+        // that inherits the output and never closes it. WaitForExitAsync would wait for it forever.
         var timeout = Task.Delay(timeoutMs, ct);
         if (await Task.WhenAny(exited.Task, timeout) != exited.Task)
         {
             try { p.Kill(); } catch { }
-            return new ProcResult(-2, "Tempo esgotado: " + Path.GetFileName(file) + " " + args);
+            return new ProcResult(-2, "Timed out: " + Path.GetFileName(file) + " " + args);
         }
         await Task.WhenAny(Task.WhenAll(outDone.Task, errDone.Task), Task.Delay(400));
         lock (sb) return new ProcResult(p.ExitCode, sb.ToString().Trim());
@@ -170,17 +170,17 @@ public static class Fmt
 {
     public static string Ago(DateTime? t)
     {
-        if (t == null) return "nunca";
+        if (t == null) return "never";
         var d = DateTime.Now - t.Value;
-        if (d.TotalSeconds < 60) return "agora";
-        if (d.TotalMinutes < 60) return $"há {(int)d.TotalMinutes} min";
-        if (d.TotalHours < 24) return $"há {(int)d.TotalHours} h";
-        return $"há {(int)d.TotalDays} d";
+        if (d.TotalSeconds < 60) return "just now";
+        if (d.TotalMinutes < 60) return $"{(int)d.TotalMinutes} min ago";
+        if (d.TotalHours < 24) return $"{(int)d.TotalHours} h ago";
+        return $"{(int)d.TotalDays} d ago";
     }
 
     public static string Left(TimeSpan d)
     {
-        if (d.TotalSeconds <= 0) return "terminou";
+        if (d.TotalSeconds <= 0) return "ended";
         if (d.TotalDays >= 1) return $"{(int)d.TotalDays} d {d.Hours} h";
         if (d.TotalHours >= 1) return $"{(int)d.TotalHours} h {d.Minutes:00} min";
         return $"{d.Minutes} min {d.Seconds:00} s";
@@ -193,7 +193,7 @@ public static class Fmt
         return p.Length == 4 ? $"{p[0]}.{p[1]}.•••.•••" : "•••";
     }
 
-    /// <summary>"3d 4h", "21h", "90m" ou só horas ("36").</summary>
+    /// <summary>"3d 4h", "21h", "90m" or just hours ("36").</summary>
     public static TimeSpan? ParseDuration(string text)
     {
         var total = TimeSpan.Zero;

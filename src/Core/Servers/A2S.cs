@@ -7,7 +7,7 @@ namespace SRT.Core;
 
 public sealed record ServerInfo(string Name, string Map, int Players, int MaxPlayers, int Bots, int PingMs, List<string> PlayerNames);
 
-/// <summary>Consulta Source A2S (nome, mapa, jogadores) sempre a partir do IP local da saída protegida.</summary>
+/// <summary>Source A2S query (name, map, players), always from the local IP of the protected connection.</summary>
 public static class A2S
 {
     static readonly byte[] Header = { 0xFF, 0xFF, 0xFF, 0xFF };
@@ -22,19 +22,19 @@ public static class A2S
         var data = await Exchange(udp, ep, req, timeoutMs);
         if (data.Length >= 9 && data[4] == 0x41)
         {
-            // Desafio: repetir o pedido com os 4 bytes recebidos.
+            // Challenge: repeat the request with the 4 bytes received.
             req = req.Concat(data.Skip(5).Take(4)).ToArray();
             data = await Exchange(udp, ep, req, timeoutMs);
         }
         sw.Stop();
-        if (data.Length < 6 || data[4] != 0x49) throw new InvalidDataException("Resposta A2S inválida");
+        if (data.Length < 6 || data[4] != 0x49) throw new InvalidDataException("Invalid A2S response");
 
         var o = 6;
         var name = CStr(data, ref o);
         var map = CStr(data, ref o);
-        CStr(data, ref o); // pasta
-        CStr(data, ref o); // jogo
-        if (o + 5 > data.Length) throw new InvalidDataException("Resposta A2S incompleta");
+        CStr(data, ref o); // folder
+        CStr(data, ref o); // game
+        if (o + 5 > data.Length) throw new InvalidDataException("Incomplete A2S response");
         o += 2; // appid
         int players = data[o], max = data[o + 1], bots = data[o + 2];
 
@@ -61,7 +61,7 @@ public static class A2S
         var list = new List<(string n, int score, float t)>();
         for (var i = 0; i < count && o < data.Length; i++)
         {
-            o++; // índice
+            o++; // index
             var n = CStr(data, ref o);
             if (o + 8 > data.Length) break;
             var score = BitConverter.ToInt32(data, o);

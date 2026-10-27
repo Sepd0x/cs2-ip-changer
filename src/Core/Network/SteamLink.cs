@@ -5,26 +5,26 @@ using System.Runtime.InteropServices;
 
 namespace SRT.Core;
 
-/// <summary>As ligações do steam.exe aos servidores da Valve, vistas pela tabela TCP do Windows.</summary>
+/// <summary>steam.exe's connections to Valve's servers, as seen in the Windows TCP table.</summary>
 public sealed class SteamLink
 {
-    /// <summary>IPs locais por onde o steam.exe fala com a Valve (vazio = Steam fechado ou sem ligação).</summary>
+    /// <summary>Local IPs steam.exe uses to talk to Valve (empty = Steam closed or not connected).</summary>
     public List<string> LocalIps { get; init; } = new();
-    /// <summary>"remoto:porta|porta local" de cada ligação: se nenhuma sobrevive entre duas leituras, o Steam religou-se.</summary>
+    /// <summary>"remote:port|local port" of each connection: if none survives between two reads, Steam reconnected.</summary>
     public HashSet<string> Keys { get; init; } = new();
     public bool Connected => LocalIps.Count > 0;
-    /// <summary>As linhas da tabela tal como o Windows as dá (para as poder cortar).</summary>
+    /// <summary>The table rows as Windows gives them (so they can be cut).</summary>
     public List<Net.TcpRow> Rows { get; init; } = new();
 }
 
 /// <summary>
-/// O servidor de jogo pergunta ao Steam se a conta continua ligada. Se o steam.exe perder ou refizer a ligação
-/// aos servidores da Valve a meio do jogo (outra placa, outro IP), o Steam responde que não e o servidor dá
-/// kick com "No Steam logon". Por isso o Steam fica na mesma saída que o CS2, e a app vigia a ligação.
+/// The game server asks Steam whether the account is still connected. If steam.exe loses or redoes its connection
+/// to Valve's servers mid-game (another adapter, another IP), Steam says no and the server kicks
+/// with "No Steam logon". So Steam stays on the same connection as CS2, and the app watches the link.
 /// </summary>
 public static partial class Net
 {
-    // Blocos da Valve (AS32590, anunciados a 27 out. 2026, RIPEstat): login do Steam (CM), amigos e relays.
+    // Valve blocks (AS32590, announced on 2026-10-27, RIPEstat): Steam login (CM), friends and relays.
     public static readonly string[] ValvePrefixes =
     {
         "45.121.184.0/22", "103.10.124.0/23", "103.28.54.0/23", "146.66.152.0/21", "155.133.224.0/19", "162.254.192.0/21",
@@ -48,7 +48,7 @@ public static partial class Net
         return ValveNets.Any(n => (v & n.Mask) == n.Net);
     }
 
-    /// <summary>Um IP dentro do bloco, para perguntar ao Windows por que placa sai.</summary>
+    /// <summary>An IP inside the block, to ask Windows which adapter it leaves through.</summary>
     public static string ProbeIp(string prefix)
     {
         var b = new byte[4];
@@ -72,8 +72,8 @@ public static partial class Net
     const uint MIB_TCP_STATE_DELETE_TCB = 12;
 
     /// <summary>
-    /// Corta as ligações (precisa de administrador). Depois de trocar o IP, a ligação antiga do Steam fica
-    /// morta mas o Steam só o percebe uns 30 s depois; cortada, religa-se logo pelo IP novo.
+    /// Cuts the connections (needs administrator). After changing the IP, Steam's old connection is dead
+    /// but Steam only notices about 30 s later; once cut, it reconnects right away through the new IP.
     /// </summary>
     public static int ResetLink(SteamLink link)
     {
@@ -89,7 +89,7 @@ public static partial class Net
 
     public static SteamLink ReadSteamLink() => ReadLink("steam", IsValve);
 
-    /// <summary>Ligações TCP estabelecidas de um programa para os destinos que <paramref name="remoteFilter"/> aceita.</summary>
+    /// <summary>Established TCP connections of a program to the destinations <paramref name="remoteFilter"/> accepts.</summary>
     public static SteamLink ReadLink(string process, Func<string, bool> remoteFilter)
     {
         var pids = new HashSet<uint>();
@@ -107,7 +107,7 @@ public static partial class Net
             {
                 if (GetExtendedTcpTable(buf, ref size, false, AF_INET, TCP_TABLE_OWNER_PID_CONNECTIONS, 0) != 0) continue;
                 var n = Marshal.ReadInt32(buf);
-                // MIB_TCPROW_OWNER_PID: estado, IP local, porta local, IP remoto, porta remota, PID (6 × 4 bytes).
+                // MIB_TCPROW_OWNER_PID: state, local IP, local port, remote IP, remote port, PID (6 × 4 bytes).
                 for (var i = 0; i < n; i++)
                 {
                     var row = buf + 4 + i * 24;

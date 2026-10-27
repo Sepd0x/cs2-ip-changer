@@ -13,7 +13,7 @@ using SRT.Core;
 
 namespace SRT;
 
-// Proteção
+// Protection
 public partial class MainWindow
 {
     async Task SyncNow(bool force = false)
@@ -31,7 +31,7 @@ public partial class MainWindow
             if (cs2Running != _cs2WasRunning)
             {
                 _cs2WasRunning = cs2Running;
-                if (_s.GameMode) Log.Info(cs2Running ? "CS2 aberto: todo o PC passa pelo telemóvel." : "CS2 fechado: o resto do PC volta à rede de casa.");
+                if (_s.GameMode) Log.Info(cs2Running ? "CS2 open: the whole PC goes through the phone." : "CS2 closed: the rest of the PC is back on the home network.");
                 force = true;
             }
             var rep = await _guard.Sync(_s, ips, force, _distrust, cs2Running);
@@ -44,26 +44,26 @@ public partial class MainWindow
 
     void ApplyReport(GuardReport rep)
     {
-        if (rep.Error != null && rep.Adapters.Count == 0) { SetHero("bad", "Erro a aplicar a proteção", rep.Error); return; }
+        if (rep.Error != null && rep.Adapters.Count == 0) { SetHero("bad", "Error applying protection", rep.Error); return; }
         var egressKey = rep.Egress == null ? null : $"{rep.Egress.Index}|{rep.Egress.LocalIp}";
         var egressChanged = egressKey != _lastEgressKey;
         if (egressChanged && _lastEgressKey != null)
         {
-            if (rep.Egress == null) Log.Warn("A saída caiu. Kill switch ativo: servidores e CS2 bloqueados.");
-            else Log.Ok($"Saída: {rep.Egress.Name} ({rep.Egress.LocalIp}).");
+            if (rep.Egress == null) Log.Warn("The phone connection dropped. Kill switch on: servers and CS2 blocked.");
+            else Log.Ok($"Phone connection: {rep.Egress.Name} ({rep.Egress.LocalIp}).");
         }
         _lastEgressKey = egressKey;
         _last = rep;
 
-        // Alerta quando a proteção cai (com som se o CS2 estiver aberto).
+        // Alert when protection drops (with a sound if CS2 is open).
         var protectedNow = rep.Egress != null && rep.FirewallProblem == null && rep.KillSwitchOk;
         if (_wasProtected && !protectedNow)
         {
             if (Steam.Cs2Running) System.Media.SystemSounds.Hand.Play();
-            Toast((rep.EgressProblem ?? "A ligação ao telemóvel caiu.") + " Bloqueei os servidores e o CS2: o teu IP não sai.", false);
+            Toast((rep.EgressProblem ?? "The phone connection dropped.") + " Servers and CS2 are now blocked: your IP can't leak.", false);
         }
         else if (!_wasProtected && protectedNow && _lastEgressKey != null && _everProtected)
-            Toast("Proteção de volta.", true);
+            Toast("Protection is back.", true);
         if (protectedNow) _everProtected = true;
         _wasProtected = protectedNow;
 
@@ -73,7 +73,7 @@ public partial class MainWindow
         {
             var ok = rep.RouteOk.TryGetValue(srv.Ip, out var r) && r && rep.KillSwitchOk;
             srv.Protected = rep.Egress == null ? (rep.KillSwitchOk ? null : false) : ok;
-            srv.RouteText = rep.Egress == null ? (rep.KillSwitchOk ? "Bloqueado" : "Sem proteção") : ok ? "Protegido" : !rep.KillSwitchOk ? "Sem kill switch" : "Rota falhou";
+            srv.RouteText = rep.Egress == null ? (rep.KillSwitchOk ? "Blocked" : "Unprotected") : ok ? "Protected" : !rep.KillSwitchOk ? "No kill switch" : "Route failed";
         }
 
         TrackSteam(rep);
@@ -83,8 +83,8 @@ public partial class MainWindow
     }
 
     /// <summary>
-    /// Regista por onde o Steam fala com a Valve e quando se religa. Um "No Steam logon" a meio do jogo
-    /// coincide com uma destas linhas no Registo (é a prova para saber a causa).
+    /// Logs how Steam reaches Valve and when it reconnects. A "No Steam logon" mid-game
+    /// lines up with one of these lines in the Log (that's the proof of the cause).
     /// </summary>
     void TrackSteam(GuardReport rep)
     {
@@ -92,11 +92,11 @@ public partial class MainWindow
         var path = !link.Connected ? "off" : rep.SteamOnEgress == true ? "egress" : rep.SteamOnEgress == false ? "home" : "?";
         if (path != _steamPath)
         {
-            if (path == "egress") Log.Ok($"O Steam está ligado à Valve pelo telemóvel ({rep.Egress?.LocalIp}).");
+            if (path == "egress") Log.Ok($"Steam is connected to Valve through the phone ({rep.Egress?.LocalIp}).");
             else if (path == "home")
             {
-                Log.Warn($"O Steam está ligado à Valve por outra rede ({string.Join(", ", link.LocalIps)}), não pela saída. Reinicia o Steam antes de jogar.");
-                if (_s.SteamOnEgress) Toast("O Steam está noutra rede: reinicia-o (ou troca de conta) antes de jogar, senão levas kick com \"No Steam logon\".", false);
+                Log.Warn($"Steam is connected to Valve through another network ({string.Join(", ", link.LocalIps)}), not the phone connection. Restart Steam before playing.");
+                if (_s.SteamOnEgress) Toast("Steam is on another network: restart it (or switch account) before playing, or you'll get kicked with \"No Steam logon\".", false);
             }
         }
         _steamPath = path;
@@ -110,81 +110,81 @@ public partial class MainWindow
         var routesOk = rep.RouteOk.Values.Count(v => v);
 
         _cFirewall.Ok = rep.FirewallProblem == null;
-        _cFirewall.Detail = rep.FirewallProblem ?? "Ligado";
+        _cFirewall.Detail = rep.FirewallProblem ?? "On";
         _cKill.Ok = n == 0 ? null : rep.KillSwitchOk;
-        _cKill.Detail = n == 0 ? "Sem servidores na lista" : rep.KillSwitchOk ? (n == 1 ? "1 IP bloqueado na rede de casa" : $"{n} IPs bloqueados na rede de casa") : "Regra não confirmada";
+        _cKill.Detail = n == 0 ? "No servers in the list" : rep.KillSwitchOk ? (n == 1 ? "1 IP blocked on the home network" : $"{n} IPs blocked on the home network") : "Rule not confirmed";
         _cEgress.Ok = rep.Egress != null;
         _cEgress.Detail = rep.Egress != null
             ? $"{rep.Egress.Name} · {rep.Egress.LocalIp}" + (rep.Egress.IsWifi && rep.Egress.Ssid != null ? $" · {rep.Egress.Ssid}" : "")
-            : rep.EgressProblem ?? "Liga o telemóvel (cabo USB ou ponto de acesso)";
+            : rep.EgressProblem ?? "Connect the phone (USB cable or hotspot)";
         _cCs2.Ok = !_s.LockCs2 ? null : rep.Cs2LockOk;
-        _cCs2.Detail = !_s.LockCs2 ? "Desligado nas Definições"
-            : rep.Cs2LockOk == null ? "Não encontrei o cs2.exe (abre o CS2 uma vez)"
-            : rep.Cs2LockOk == true ? (rep.Egress != null ? "O CS2 só sai pelo telemóvel" : "CS2 bloqueado até ligares o telemóvel") : "Regra não confirmada";
+        _cCs2.Detail = !_s.LockCs2 ? "Turned off in Settings"
+            : rep.Cs2LockOk == null ? "Couldn't find cs2.exe (open CS2 once)"
+            : rep.Cs2LockOk == true ? (rep.Egress != null ? "CS2 only goes out through the phone" : "CS2 blocked until you connect the phone") : "Rule not confirmed";
         _cRoutes.Ok = n == 0 ? null : rep.Egress != null && routesOk == n;
-        _cRoutes.Detail = n == 0 ? "Sem servidores na lista" : $"{routesOk} de {n} {(n == 1 ? "IP" : "IPs")} pelo telemóvel";
+        _cRoutes.Detail = n == 0 ? "No servers in the list" : $"{routesOk} of {n} {(n == 1 ? "IP" : "IPs")} through the phone";
         var same = _egressPublic != null && _homePublic != null && _egressPublic == _homePublic;
         _cDiff.Ok = _egressPublic == null || _homePublic == null ? null : !same;
-        _cDiff.Detail = _egressPublic == null ? "À espera do IP do telemóvel" : _homePublic == null ? "Sem rede de casa para comparar" : same ? "É o mesmo IP! O telemóvel está a partilhar o Wi-Fi" : "Diferentes";
+        _cDiff.Detail = _egressPublic == null ? "Waiting for the phone's IP" : _homePublic == null ? "No home network to compare" : same ? "Same IP: the phone is sharing your Wi-Fi" : "Different";
         _cSteam.Ok = Steam.IsRunning && _steamLog.Online == false ? false
             : !SteamReady ? null
             : !_s.SteamOnEgress || rep.Egress == null ? null
-            // Por UDP a tabela TCP não mostra a ligação: vale o registo do Steam mais as rotas da Valve.
+            // Over UDP the TCP table doesn't show the connection: the Steam log plus the Valve routes count instead.
             : !rep.Steam.Connected && Steam.IsRunning && _steamLog.Online == true ? rep.SteamRoutesOk
             : rep.SteamOnEgress;
-        _cSteam.Detail = Steam.IsRunning && _steamLog.Online == false ? $"Sem sessão na Valve desde as {_steamLog.LastDrop:HH:mm:ss}: entrar agora dá kick"
-            : !SteamReady ? "A religar-se depois da troca de IP"
-            : !_s.SteamOnEgress ? "Desligado nas Definições"
-            : rep.Egress == null ? "À espera do telemóvel"
-            : !rep.Steam.Connected && Steam.IsRunning && _steamLog.Online == true ? "Ligado por UDP (a rota da Valve vai pela saída)"
-            : !rep.Steam.Connected ? (Steam.IsRunning ? "O Steam não está ligado à Valve agora" : "Steam fechado")
-            : rep.SteamOnEgress == true ? (rep.SteamRoutesOk == false ? "Ligado pelo telemóvel (rotas da Valve por confirmar)" : "Ligado pelo telemóvel, como o CS2")
-            : "Ligado pela rede de casa: reinicia o Steam (ou troca de conta) antes de jogar";
+        _cSteam.Detail = Steam.IsRunning && _steamLog.Online == false ? $"No Valve session since {_steamLog.LastDrop:HH:mm:ss}: joining now gets you kicked"
+            : !SteamReady ? "Reconnecting after the IP change"
+            : !_s.SteamOnEgress ? "Turned off in Settings"
+            : rep.Egress == null ? "Waiting for the phone"
+            : !rep.Steam.Connected && Steam.IsRunning && _steamLog.Online == true ? "Connected over UDP (the Valve route goes through the phone)"
+            : !rep.Steam.Connected ? (Steam.IsRunning ? "Steam is not connected to Valve right now" : "Steam closed")
+            : rep.SteamOnEgress == true ? (rep.SteamRoutesOk == false ? "Connected through the phone (Valve routes to be confirmed)" : "Connected through the phone, like CS2")
+            : "Connected through the home network: restart Steam (or switch account) before playing";
 
         if (rep.EffectiveMode == "all")
         {
             _cPc.Ok = rep.Egress == null ? null : rep.FullModeOk;
-            _cPc.Detail = rep.FullModeOk ? (_s.Mode == "all" ? "Todo o PC sai pelo telemóvel" : "CS2 aberto: todo o PC sai pelo telemóvel") : "O PC todo ainda não passou";
+            _cPc.Detail = rep.FullModeOk ? (_s.Mode == "all" ? "The whole PC goes out through the phone" : "CS2 open: the whole PC goes out through the phone") : "The whole PC hasn't switched over yet";
         }
         else
         {
             _cPc.Ok = rep.Egress == null ? null : !rep.PcDefaultIsEgress;
-            _cPc.Detail = rep.PcDefaultIsEgress ? $"O PC todo está a usar {rep.PcDefaultName} (gasta dados)" : $"Rede de casa: {rep.PcDefaultName}";
+            _cPc.Detail = rep.PcDefaultIsEgress ? $"The whole PC is using {rep.PcDefaultName} (uses data)" : $"Home network: {rep.PcDefaultName}";
         }
 
-        var wifiLock = !string.IsNullOrEmpty(_s.EgressSsid) ? $" · só vale no ponto de acesso «{_s.EgressSsid}»" : "";
+        var wifiLock = !string.IsNullOrEmpty(_s.EgressSsid) ? $" · only valid on the hotspot \"{_s.EgressSsid}\"" : "";
         EgressDetail.Text = rep.Egress == null
-            ? (rep.EgressProblem ?? "Sem ligação ao telemóvel. Liga-o por cabo USB ou ao ponto de acesso Wi-Fi.") + wifiLock
-            : $"{rep.Egress.Kind} · IP local {rep.Egress.LocalIp} · gateway {rep.Egress.Gateway ?? "direto"}{wifiLock}";
+            ? (rep.EgressProblem ?? "No phone connection. Plug it in with a USB cable or connect to the Wi-Fi hotspot.") + wifiLock
+            : $"{rep.Egress.Kind} · local IP {rep.Egress.LocalIp} · gateway {rep.Egress.Gateway ?? "direct"}{wifiLock}";
         PcRouteText.Text = rep.EffectiveMode == "all"
-            ? (_s.Mode == "all" ? "Tudo, incluindo o Steam, sai pelo telemóvel." : "Modo jogo: com o CS2 aberto, todo o PC sai pelo telemóvel.")
-            : $"O resto do PC continua em: {rep.PcDefaultName}";
+            ? (_s.Mode == "all" ? "Everything, including Steam, goes out through the phone." : "While CS2 is open, the whole PC goes out through the phone.")
+            : $"The rest of the PC stays on: {rep.PcDefaultName}";
 
-        // Herói
+        // Hero
         if (rep.FirewallProblem != null)
-            SetHero("bad", "Firewall do Windows desligado", rep.FirewallProblem + ". Sem Firewall não há kill switch; liga-o em Segurança do Windows > Firewall.");
+            SetHero("bad", "Windows Firewall is off", rep.FirewallProblem + ". Without the Firewall there is no kill switch; turn it on in Windows Security > Firewall.");
         else if (rep.Distrusted || same)
-            SetHero("bad", "O IP é o mesmo da tua casa",
-                "Bloqueei os servidores e o CS2 até o IP voltar a ser diferente. O telemóvel está a partilhar o Wi-Fi de casa, ou o PC voltou ao router. Desliga o Wi-Fi do telemóvel (cartão Telemóvel).");
+            SetHero("bad", "Your IP is the same as your home IP",
+                "Servers and CS2 are blocked until the IP is different again. The phone is sharing your home Wi-Fi, or the PC went back to the router. Turn off the phone's Wi-Fi (Phone card).");
         else if (rep.Egress == null && rep.EgressProblem != null)
-            SetHero("bad", "Saíste da rede do telemóvel", rep.EgressProblem + " Os servidores e o CS2 estão bloqueados até voltares ao ponto de acesso: o teu IP não sai.");
+            SetHero("bad", "You left the phone's network", rep.EgressProblem + " Servers and CS2 are blocked until you are back on the hotspot: your IP can't leak.");
         else if (rep.Egress == null)
-            SetHero(n > 0 && rep.KillSwitchOk ? "warn" : "idle", "Telemóvel desligado",
+            SetHero(n > 0 && rep.KillSwitchOk ? "warn" : "idle", "Phone disconnected",
                 n > 0 && rep.KillSwitchOk
-                    ? "Estás seguro: os servidores da lista e o CS2 estão bloqueados até ligares o telemóvel (cabo USB ou ponto de acesso)."
-                    : "Liga o telemóvel por cabo USB ou ao ponto de acesso Wi-Fi.");
+                    ? "You're safe: the listed servers and CS2 are blocked until you connect the phone (USB cable or hotspot)."
+                    : "Connect the phone with a USB cable or to the Wi-Fi hotspot.");
         else if (rep.EffectiveMode == "all" && rep.FullModeOk && (n == 0 || rep.KillSwitchOk))
-            SetHero("good", _s.Mode == "all" ? "Protegido · todo o PC" : "Protegido · todo o PC com o CS2", $"Todo o tráfego sai por {rep.Egress.Name}. Qualquer servidor vê só o IP da saída.");
+            SetHero("good", _s.Mode == "all" ? "Protected · whole PC" : "Protected · whole PC with CS2", $"All traffic goes out through {rep.Egress.Name}. Any server sees only the phone's IP.");
         else if (n == 0)
-            SetHero("idle", "Pronto", "O telemóvel está ligado. Adiciona servidores na página Servidores, ou escolhe «Todo o PC» em O que sai pelo telemóvel.");
+            SetHero("idle", "Ready", "The phone is connected. Add servers on the Servers page, or pick \"Whole PC\" under What goes through the phone.");
         else if (rep.KillSwitchOk && routesOk == n)
-            SetHero("good", "Protegido", "Os servidores da lista só te veem pelo telemóvel. Pela rede de casa estão bloqueados.");
+            SetHero("good", "Protected", "Servers on your list only see the phone's IP. On your home network they are blocked.");
         else
-            SetHero("warn", "Proteção incompleta", !rep.KillSwitchOk ? "O bloqueio na Firewall não foi confirmado. Vê o Registo." : $"Só {routesOk} de {n} rotas confirmadas. Outra VPN pode estar a interferir.");
+            SetHero("warn", "Protection incomplete", !rep.KillSwitchOk ? "The Firewall block was not confirmed. Check the Log." : $"Only {routesOk} of {n} routes confirmed. Another VPN may be interfering.");
 
         SideIp.Text = _egressPublic ?? "";
         UpdatePhoneCheck();
-        ServerCount.Text = _servers.Count == 0 ? "" : $"{_servers.Count} {(_servers.Count == 1 ? "servidor" : "servidores")} em {n} {(n == 1 ? "IP" : "IPs")}";
+        ServerCount.Text = _servers.Count == 0 ? "" : $"{_servers.Count} {(_servers.Count == 1 ? "server" : "servers")} on {n} {(n == 1 ? "IP" : "IPs")}";
         ServersEmpty.Visibility = _servers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         QueryBtn.IsEnabled = CopyBtn.IsEnabled = ServerSearch.IsEnabled = _servers.Count > 0;
         ServerHeader.Visibility = _servers.Count == 0 ? Visibility.Hidden : Visibility.Visible;
@@ -194,10 +194,10 @@ public partial class MainWindow
     {
         var (fg, bg, glyph, side) = kind switch
         {
-            "good" => (Ui.Good, Ui.GoodSoft, "", "Protegido"),
-            "bad" => (Ui.Bad, Ui.BadSoft, "", "Atenção"),
-            "warn" => (Ui.Warn, Ui.WarnSoft, "", "Telemóvel desligado"),
-            _ => (Ui.Muted, (Brush)FindResource("Surface3"), "", "Pronto"),
+            "good" => (Ui.Good, Ui.GoodSoft, "", "Protected"),
+            "bad" => (Ui.Bad, Ui.BadSoft, "", "Attention"),
+            "warn" => (Ui.Warn, Ui.WarnSoft, "", "Phone disconnected"),
+            _ => (Ui.Muted, (Brush)FindResource("Surface3"), "", "Ready"),
         };
         HeroBadge.Background = bg;
         HeroIcon.Foreground = fg;
@@ -205,7 +205,7 @@ public partial class MainWindow
         HeroTitle.Text = title;
         HeroSub.Text = sub;
         SideDot.Fill = fg;
-        // A barra de cima repete o estado da página (só o "Protegido · …" encolhe).
+        // The top bar repeats the page state (only "Protected · …" gets shortened).
         SideState.Text = kind == "good" ? side : title;
     }
 
@@ -219,22 +219,22 @@ public partial class MainWindow
         {
             EgressCombo.Tag = sig;
             EgressCombo.Items.Clear();
-            EgressCombo.Items.Add(new ComboBoxItem { Content = "Cabo USB (automático)", Tag = null });
+            EgressCombo.Items.Add(new ComboBoxItem { Content = "USB cable (automatic)", Tag = null });
             foreach (var a in usable.OrderByDescending(a => a.IsPhone).ThenByDescending(a => a.IsWifi))
             {
                 var label = a.IsWifi
-                    ? $"Ponto de acesso Wi-Fi · {(a.Id == _s.EgressAdapterId && _s.EgressSsid != null ? _s.EgressSsid : a.Ssid ?? a.Name)}"
+                    ? $"Wi-Fi hotspot · {(a.Id == _s.EgressAdapterId && _s.EgressSsid != null ? _s.EgressSsid : a.Ssid ?? a.Name)}"
                     : $"{a.Kind} · {a.Name}";
                 EgressCombo.Items.Add(new ComboBoxItem
                 {
                     Content = label, Tag = a.Id,
                     ToolTip = a.IsWifi
-                        ? $"{a.Description}\nLigado agora a: {a.Ssid ?? "nenhuma rede"}.\nAo escolher, a app guarda esta rede: se o PC saltar para outra (ex.: o router de casa), bloqueia tudo."
+                        ? $"{a.Description}\nConnected now to: {a.Ssid ?? "no network"}.\nWhen you pick it, the app remembers this network: if the PC jumps to another one (e.g. the home router), everything is blocked."
                         : a.Description,
                 });
             }
             if (_s.EgressAdapterId != null && !usable.Any(a => a.Id == _s.EgressAdapterId))
-                EgressCombo.Items.Add(new ComboBoxItem { Content = _s.EgressSsid != null ? $"Ponto de acesso · {_s.EgressSsid} (desligado)" : "Placa escolhida (desligada)", Tag = _s.EgressAdapterId });
+                EgressCombo.Items.Add(new ComboBoxItem { Content = _s.EgressSsid != null ? $"Hotspot · {_s.EgressSsid} (disconnected)" : "Chosen adapter (disconnected)", Tag = _s.EgressAdapterId });
             EgressCombo.SelectedItem = EgressCombo.Items.Cast<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == _s.EgressAdapterId) ?? EgressCombo.Items[0];
         }
         finally { _uiLock = false; }
@@ -250,14 +250,14 @@ public partial class MainWindow
         {
             if (a.Ssid == null)
             {
-                Toast("Liga primeiro o Wi-Fi do PC ao ponto de acesso do telemóvel e escolhe outra vez.", false);
+                Toast("First connect the PC's Wi-Fi to the phone's hotspot, then pick it again.", false);
                 FillEgressCombo(_last.Adapters);
                 return;
             }
-            if (!await Ask("Ponto de acesso do telemóvel",
-                    $"O Wi-Fi do PC está ligado a «{a.Ssid}». Confirma que esta é a rede do telemóvel (ponto de acesso).\n\n" +
-                    "A app guarda este nome: se o Wi-Fi do PC saltar para outra rede, como o router de casa, os servidores e o CS2 ficam bloqueados.",
-                    "É o telemóvel"))
+            if (!await Ask("Phone hotspot",
+                    $"The PC's Wi-Fi is connected to \"{a.Ssid}\". Confirm this is the phone's network (hotspot).\n\n" +
+                    "The app remembers this name: if the PC's Wi-Fi jumps to another network, like the home router, servers and CS2 get blocked.",
+                    "It's the phone"))
             {
                 FillEgressCombo(_last.Adapters);
                 return;
@@ -269,7 +269,7 @@ public partial class MainWindow
         _distrust = false;
         SaveSettings();
         EgressCombo.Tag = null;
-        Log.Info(id == null ? "Saída: telemóvel por USB (automático)." : a?.IsWifi == true ? $"Saída: ponto de acesso «{_s.EgressSsid}» no {a.Name}." : $"Saída fixada: {it.Content}.");
+        Log.Info(id == null ? "Phone connection: phone over USB (automatic)." : a?.IsWifi == true ? $"Phone connection: hotspot \"{_s.EgressSsid}\" on {a.Name}." : $"Phone connection pinned: {it.Content}.");
         await SyncNow(force: true);
         _ = RefreshPublicIps();
     }
@@ -283,9 +283,9 @@ public partial class MainWindow
         _s.Mode = mode;
         if (mode != "all") _s.GameMode = game;
         SaveSettings();
-        Log.Info(mode == "all" ? "Tudo, sempre: todo o PC sai pelo telemóvel."
-            : game ? "Tudo, com o CS2 aberto: enquanto o CS2 estiver aberto, todo o PC sai pelo telemóvel."
-            : "Só o jogo: o resto do PC fica na rede de casa.");
+        Log.Info(mode == "all" ? "Whole PC, always: the whole PC goes out through the phone."
+            : game ? "Whole PC while CS2 is open: the whole PC goes out through the phone while CS2 is open."
+            : "Game only: the rest of the PC stays on the home network.");
         await SyncNow(force: true);
         _ = RefreshPublicIps();
     }
@@ -295,10 +295,10 @@ public partial class MainWindow
         if (_demo) return;
         _lastIpCheck = DateTime.Now;
         var rep = _last;
-        // Mede-se pela candidata (mesmo quando já não se confia nela) para saber quando volta a ser segura.
+        // Measured through the candidate (even when it's no longer trusted) to know when it becomes safe again.
         var candidate = rep?.Candidate;
-        // Casa = a placa que o Windows usa para o resto do PC. Se essa placa for a do telemóvel (PC inteiro,
-        // modo jogo, ou só há o ponto de acesso), não há como medir: mostra-se o último IP de casa confirmado.
+        // Home = the adapter Windows uses for the rest of the PC. If that adapter is the phone's (whole PC,
+        // game mode, or only the hotspot exists), it can't be measured: the last confirmed home IP is shown.
         var homeIf = rep == null || rep.PcDefaultIsEgress || candidate?.Index == rep.PcDefaultIndex ? -1 : rep.PcDefaultIndex;
 
         var tE = Net.EgressPublicIp(candidate);
@@ -307,7 +307,7 @@ public partial class MainWindow
         try { e = await tE; } catch { }
         try { h = await tH; } catch { }
 
-        // 3.ª barreira: o IP da saída igual ao de casa = a saída não está a usar os dados móveis. Bloqueia tudo.
+        // 3rd barrier: phone connection IP equal to the home IP = it isn't using mobile data. Block everything.
         var homeRef = h ?? _s.LastHomeIp;
         var same = e != null && homeRef != null && e == homeRef;
         if (same != _distrust)
@@ -315,11 +315,11 @@ public partial class MainWindow
             _distrust = same;
             if (same)
             {
-                Log.Error($"O IP da saída ({e}) é igual ao de casa. Servidores e CS2 bloqueados.");
+                Log.Error($"The phone connection IP ({e}) is the same as your home IP. Servers and CS2 blocked.");
                 if (Steam.Cs2Running) System.Media.SystemSounds.Hand.Play();
-                Toast("O IP do telemóvel é igual ao de casa. Bloqueei os servidores e o CS2.", false);
+                Toast("The phone's IP is the same as your home IP. Servers and CS2 are now blocked.", false);
             }
-            else Log.Ok("O IP da saída voltou a ser diferente do de casa.");
+            else Log.Ok("The phone connection IP is different from your home IP again.");
             _ = SyncNow(force: true);
         }
 
@@ -350,11 +350,11 @@ public partial class MainWindow
     void ShowIps()
     {
         EgressIp.Text = _egressPublic ?? "—";
-        EgressIsp.Text = _egressPublic == null ? (_last?.Egress == null ? "Sem ligação ao telemóvel" : "A obter o IP pelo telemóvel…")
-            : (_egressInfo?.Short ?? "") + (_egressInfo?.Proxy == true ? "  ·  marcado como VPN/proxy" : "");
+        EgressIsp.Text = _egressPublic == null ? (_last?.Egress == null ? "No phone connection" : "Getting the IP through the phone…")
+            : (_egressInfo?.Short ?? "") + (_egressInfo?.Proxy == true ? "  ·  flagged as VPN/proxy" : "");
         HomeIp.Text = _homePublic == null ? "—" : _reveal ? _homePublic : Fmt.MaskIp(_homePublic);
-        HomeIsp.Text = _homePublic == null ? "Sem rede de casa detetada"
-            : (_homeInfo?.Short ?? "") + (_homeCached ? "  ·  último confirmado" : "");
+        HomeIsp.Text = _homePublic == null ? "No home network detected"
+            : (_homeInfo?.Short ?? "") + (_homeCached ? "  ·  last confirmed" : "");
         SideIp.Text = _egressPublic ?? "";
         CopyIpBtn.Visibility = _egressPublic == null ? Visibility.Collapsed : Visibility.Visible;
         RevealBtn.Visibility = _homePublic == null ? Visibility.Collapsed : Visibility.Visible;
@@ -396,15 +396,15 @@ public partial class MainWindow
     {
         if (_egressPublic == null) return;
         Clipboard.SetText(_egressPublic);
-        Toast("IP copiado.", true);
+        Toast("IP copied.", true);
     }
 
     async void LeakTest_Click(object sender, RoutedEventArgs e)
     {
-        if (_demo) { Toast("Teste concluído: tudo protegido.", true); return; }
+        if (_demo) { Toast("Test finished: everything protected.", true); return; }
         LeakBtn.IsEnabled = false;
         if (!_tick.IsEnabled) _tick.Start();
-        ShowProgress("A testar: Firewall, kill switch, rotas e IP público…");
+        ShowProgress("Testing: Firewall, kill switch, routes and public IP…");
         try
         {
             await SyncNow(force: true);
@@ -412,13 +412,14 @@ public partial class MainWindow
             var bad = _checks.Where(c => c.Ok == false).Select(c => c.Title).ToList();
             if (bad.Count == 0)
             {
-                Log.Ok("Teste de fugas: tudo confirmado.");
-                Toast(_egressPublic != null ? $"Sem fugas. Os servidores veem {_egressPublic}." : "Sem fugas: os servidores estão bloqueados até ligares o telemóvel.", true);
+                Log.Ok("Leak test: everything confirmed.");
+                Toast(_egressPublic != null ? $"No leaks. Servers see {_egressPublic}." : "No leaks: servers are blocked until you connect the phone.", true);
             }
             else
             {
-                Log.Warn("Teste de fugas falhou em: " + string.Join(", ", bad));
-                Toast("Atenção: " + string.Join(", ", bad) + ". Vê a Verificação.", false);
+                Log.Warn("Leak test failed on: " + string.Join(", ", bad));
+                Toast("Warning: " + string.Join(", ", bad) + ". See Checks.", false);
+
             }
         }
         finally { HideProgress(); LeakBtn.IsEnabled = true; }

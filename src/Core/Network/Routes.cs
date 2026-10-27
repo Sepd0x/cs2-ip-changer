@@ -12,7 +12,7 @@ namespace SRT.Core;
 
 public static partial class Net
 {
-    // ------------------------------------------------------------ Rotas (netsh, store=active: desaparecem ao reiniciar)
+    // ------------------------------------------------------------ Routes (netsh, store=active: they disappear on reboot)
 
     public sealed record Route(string Prefix, int Index, string NextHop);
 
@@ -34,7 +34,7 @@ public static partial class Net
     {
         var hop = via.Gateway ?? "0.0.0.0";
         var r = await Proc.Run("netsh", $"interface ipv4 add route prefix={prefix} interface={via.Index} nexthop={hop} metric={metric} store=active");
-        // "O objeto já existe" conta como sucesso: a verificação real é feita a seguir.
+        // "Already exists" (the regex also matches the Portuguese Windows text) counts as success: the real check comes next.
         if (!r.Ok && Regex.IsMatch(r.Output, "exist|existe", RegexOptions.IgnoreCase)) return new ProcResult(0, r.Output);
         return r;
     }

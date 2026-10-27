@@ -7,12 +7,12 @@ namespace SRT;
 
 public sealed partial class Settings
 {
-    public string Mode { get; set; } = "servers";         // "servers" = só a lista · "all" = PC inteiro
-    public string EgressAdapterId { get; set; }           // null = telemóvel USB automático
-    public string EgressSsid { get; set; }                // placa Wi-Fi: só vale ligada a este ponto de acesso
-    public bool LockCs2 { get; set; } = true;             // cs2.exe só pode sair pela saída protegida
-    public bool GameMode { get; set; } = true;            // CS2 aberto = PC inteiro pela saída
-    public bool SteamOnEgress { get; set; } = true;       // o Steam fala com a Valve pela mesma saída que o CS2
+    public string Mode { get; set; } = "servers";         // "servers" = list only · "all" = whole PC
+    public string EgressAdapterId { get; set; }           // null = automatic USB phone
+    public string EgressSsid { get; set; }                // Wi-Fi adapter: only valid when connected to this hotspot
+    public bool LockCs2 { get; set; } = true;             // cs2.exe can only go out through the protected connection
+    public bool GameMode { get; set; } = true;            // CS2 open = whole PC through the phone connection
+    public bool SteamOnEgress { get; set; } = true;       // Steam talks to Valve through the same connection as CS2
     public string Cs2Path { get; set; }
     public bool KeepPcOffPhone { get; set; } = true;
     public string ChangeMethod { get; set; } = "data";    // "data" | "airplane"
@@ -28,7 +28,7 @@ public sealed partial class Settings
     public int DefaultPort { get; set; } = 27015;
     public bool LegacyCleaned { get; set; }
     public string LastHomeIp { get; set; }
-    public string LastServer { get; set; }                // IP:porta do último servidor em que entraste pela app
+    public string LastServer { get; set; }                // IP:port of the last server you joined through the app
     public DateTime? LastServerAt { get; set; }
     public string AccountSort { get; set; } = "recent";
     public List<IpHistoryEntry> IpHistory { get; set; } = new();
@@ -41,7 +41,7 @@ public sealed class IpHistoryEntry
     public string Isp { get; set; }
     public string Reason { get; set; }
     [JsonIgnore] public string TimeText => Time.ToString(Time.Date == DateTime.Today ? "HH:mm" : "dd/MM HH:mm");
-    [JsonIgnore] public string ReasonText => Reason switch { "trocado" => "depois de trocar", "detetado" => "visto ao abrir", _ => Reason };
+    [JsonIgnore] public string ReasonText => Reason switch { "trocado" => "after changing", "detetado" => "seen on open", _ => Reason };
 }
 
 public sealed class CheckItem : Observable
@@ -55,7 +55,7 @@ public sealed class CheckItem : Observable
     public Brush Brush => Ok switch { true => Ui.Good, false => Ui.Bad, _ => Ui.Faint };
 }
 
-// ------------------------------------------------------------ Servidores
+// ------------------------------------------------------------ Servers
 
 public sealed class ServerItem : Observable
 {
@@ -72,14 +72,14 @@ public sealed class ServerItem : Observable
     DateTime? _lastAt;
     List<string> _playerNames;
 
-    /// <summary>O último servidor em que entraste pela app (fica com outra cor na lista).</summary>
+    /// <summary>The last server you joined through the app (gets a different color in the list).</summary>
     [JsonIgnore] public bool IsLast { get => _isLast; set { if (Set(ref _isLast, value)) Raise(nameof(LastText)); } }
     [JsonIgnore] public DateTime? LastAt { get => _lastAt; set { if (Set(ref _lastAt, value)) Raise(nameof(LastText)); } }
-    [JsonIgnore] public string LastText => IsLast ? "Jogaste aqui " + Fmt.Ago(LastAt) : null;
+    [JsonIgnore] public string LastText => IsLast ? "You played here " + Fmt.Ago(LastAt) : null;
 
     [JsonIgnore] public string Key => $"{Ip}:{Port}";
     [JsonIgnore] public string StarGlyph => Favorite ? "" : "";
-    [JsonIgnore] public string Title => !string.IsNullOrWhiteSpace(Label) ? Label : !string.IsNullOrWhiteSpace(ServerName) ? ServerName : "Servidor sem resposta";
+    [JsonIgnore] public string Title => !string.IsNullOrWhiteSpace(Label) ? Label : !string.IsNullOrWhiteSpace(ServerName) ? ServerName : "Server not responding";
     [JsonIgnore] public string ServerName { get => _name; set { if (Set(ref _name, value)) Raise(nameof(Title)); } }
     [JsonIgnore] public string Map { get => _map; set => Set(ref _map, value); }
     [JsonIgnore] public string PlayersText { get => _players; set => Set(ref _players, value); }
@@ -99,14 +99,14 @@ public sealed class ServerItem : Observable
     {
         get
         {
-            var head = $"{Key}\nDuplo clique para entrar pelo Steam.";
+            var head = $"{Key}\nDouble-click to join through Steam.";
             if (PlayerNames == null || PlayerNames.Count == 0) return head;
-            return head + "\n\nJogadores agora:\n" + string.Join("\n", PlayerNames.Take(24)) + (PlayerNames.Count > 24 ? "\n…" : "");
+            return head + "\n\nPlayers now:\n" + string.Join("\n", PlayerNames.Take(24)) + (PlayerNames.Count > 24 ? "\n…" : "");
         }
     }
 }
 
-// ------------------------------------------------------------ Contas Steam
+// ------------------------------------------------------------ Steam accounts
 
 public sealed class AccountMeta
 {
@@ -114,8 +114,8 @@ public sealed class AccountMeta
     public string Tags { get; set; }
     public bool Favorite { get; set; }
     public bool Hidden { get; set; }
-    public bool ExcludeQuick { get; set; }      // lista negra: fica fora da troca rápida
-    public string LastServer { get; set; }      // IP:porta do último servidor em que entraste (pela app) com esta conta
+    public bool ExcludeQuick { get; set; }      // skipped: left out of quick switch
+    public string LastServer { get; set; }      // IP:port of the last server you joined (through the app) with this account
     public string LastServerName { get; set; }
     public DateTime? LastServerAt { get; set; }
     public DateTime? CooldownUntil { get; set; }
@@ -187,9 +187,9 @@ public sealed class AccountItem : Observable
     public bool Private => P?.Private == true;
     public bool Clean => Checked && !HasVac && !HasGameBan && !HasTradeBan && !HasCommunityBan;
     public string VacText => P == null ? null : P.VacBans > 1 ? $"{P.VacBans} VAC" : "VAC";
-    public string GameBanText => P == null ? null : P.GameBans > 1 ? $"{P.GameBans} game bans" : "Game ban";
-    public string BanAgeText => P?.DaysSinceLastBan is int d ? $"último há {d} d" : null;
-    public string LevelText => P?.Level is int l ? $"Nível {l}" : null;
+    public string GameBanText => P == null ? null : P.GameBans > 1 ? $"{P.GameBans} game bans" : "game ban";
+    public string BanAgeText => P?.DaysSinceLastBan is int d ? $"last {d} d ago" : null;
+    public string LevelText => P?.Level is int l ? $"Level {l}" : null;
     public string HoursText => P?.Cs2Hours is double h ? $"{h:0} h CS2" : null;
     public bool HasLevel => P?.Level != null;
     public bool HasHours => P?.Cs2Hours != null;
@@ -199,13 +199,13 @@ public sealed class AccountItem : Observable
     public string QuickGlyph => "";
     public Brush QuickBrush => Excluded ? Ui.LineStrong : Ui.Muted;
     public string QuickTip => Excluded
-        ? "Fora da troca rápida (lista negra). Clica para voltar a incluir."
-        : "Na troca rápida. Clica para pôr na lista negra: a troca rápida passa a saltar esta conta.";
-    public string QuickMenuText => Excluded ? "Voltar a pôr na troca rápida" : "Tirar da troca rápida (lista negra)";
+        ? "Skipped in quick switch. Click to include it again."
+        : "In quick switch. Click to skip it: quick switch will pass over this account.";
+    public string QuickMenuText => Excluded ? "Include in quick switch" : "Skip in quick switch";
     public bool HasLastServer => Meta.LastServer != null;
     public string LastServerText => Meta.LastServer == null ? null
-        : $"Último: {(string.IsNullOrWhiteSpace(Meta.LastServerName) ? Meta.LastServer : Meta.LastServerName)} · {Fmt.Ago(Meta.LastServerAt)}";
-    /// <summary>Entra na troca rápida: não está na lista negra, sem cooldown e sem VAC/game ban.</summary>
+        : $"Last: {(string.IsNullOrWhiteSpace(Meta.LastServerName) ? Meta.LastServer : Meta.LastServerName)} · {Fmt.Ago(Meta.LastServerAt)}";
+    /// <summary>Eligible for quick switch: not skipped, no cooldown, no VAC/game ban.</summary>
     public bool Usable => !Excluded && !InCooldown && !HasVac && !HasGameBan;
     public string CooldownText => InCooldown ? "Cooldown " + Fmt.Left(Meta.CooldownUntil.Value - DateTime.Now) : null;
 
@@ -219,22 +219,22 @@ public sealed class AccountItem : Observable
             if (P != null)
             {
                 lines.Add("");
-                lines.Add(Clean ? "Sem bans registados no perfil público." : "Bans registados:");
+                lines.Add(Clean ? "No bans on record on the public profile." : "Bans on record:");
                 if (HasVac) lines.Add($"• {P.VacBans} VAC ban(s)" + (BanAgeText != null ? $", {BanAgeText}" : ""));
                 if (HasGameBan) lines.Add($"• {P.GameBans} game ban(s)");
                 if (HasTradeBan) lines.Add($"• Trade ban: {P.TradeBan}");
-                if (HasCommunityBan) lines.Add("• Ban da comunidade Steam");
-                if (Limited) lines.Add("• Conta limitada (sem 5 USD gastos)");
-                if (Private) lines.Add("• Perfil privado: horas e nível podem não aparecer");
-                if (P.MemberSince != null) lines.Add($"Membro desde {P.MemberSince}");
-                lines.Add($"Verificado {Fmt.Ago(P.Checked)}");
+                if (HasCommunityBan) lines.Add("• Steam Community ban");
+                if (Limited) lines.Add("• Limited account (no 5 USD spent)");
+                if (Private) lines.Add("• Private profile: hours and level may not show");
+                if (P.MemberSince != null) lines.Add($"Member since {P.MemberSince}");
+                lines.Add($"Checked {Fmt.Ago(P.Checked)}");
             }
-            else lines.Add("\nAinda sem estado: carrega em \"Atualizar estado\".");
-            if (InCooldown) lines.Add($"\nCooldown marcado por ti até {Meta.CooldownUntil:dd/MM HH:mm}");
-            if (Excluded) lines.Add("Fora da troca rápida (lista negra).");
-            if (Meta.LastServer != null) lines.Add($"Último servidor: {Meta.LastServerName ?? Meta.LastServer} ({Meta.LastServer}), {Meta.LastServerAt:dd/MM HH:mm}");
-            if (HasNote) lines.Add("\nNota: " + Note);
-            lines.Add("\nClique em Entrar para trocar. Botão direito para mais opções.");
+            else lines.Add("\nNo status yet: click \"Refresh\".");
+            if (InCooldown) lines.Add($"\nCooldown set by you until {Meta.CooldownUntil:dd/MM HH:mm}");
+            if (Excluded) lines.Add("Skipped in quick switch.");
+            if (Meta.LastServer != null) lines.Add($"Last server: {Meta.LastServerName ?? Meta.LastServer} ({Meta.LastServer}), {Meta.LastServerAt:dd/MM HH:mm}");
+            if (HasNote) lines.Add("\nNote: " + Note);
+            lines.Add("\nClick Log in to switch. Right-click for more options.");
             return string.Join("\n", lines);
         }
     }

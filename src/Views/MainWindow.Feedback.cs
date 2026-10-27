@@ -13,7 +13,7 @@ using SRT.Core;
 
 namespace SRT;
 
-// Notificações e diálogo
+// Notifications and dialog
 public partial class MainWindow
 {
     void Toast(string text, bool ok)
@@ -41,7 +41,8 @@ public partial class MainWindow
 
     TaskCompletionSource<bool> _dialogTcs;
 
-    Task<bool> Ask(string title, string text, string ok, string cancel = "Cancelar", int inputs = 0, bool danger = false, string label1 = null, string label2 = null)
+    Task<bool> Ask(string title, string text, string ok, string cancel = "Cancel",
+ int inputs = 0, bool danger = false, string label1 = null, string label2 = null)
     {
         _dialogTcs?.TrySetResult(false);
         _dialogTcs = new TaskCompletionSource<bool>();

@@ -12,11 +12,11 @@ namespace SRT.Core;
 
 public static partial class Net
 {
-    // ------------------------------------------------------------ IP público (o que os servidores veem)
+    // ------------------------------------------------------------ Public IP (what servers see)
 
     /// <summary>
-    /// Endereço fixo (Cloudflare) que devolve o IP de quem pergunta. A proteção dá-lhe rota pela saída e põe-no
-    /// no kill switch, por isso a resposta é SEMPRE o IP da saída: se o telemóvel cair, o pedido falha em vez de mentir.
+    /// Fixed address (Cloudflare) that returns the IP of whoever asks. Protection gives it a route through the
+    /// protected connection and puts it in the kill switch, so the answer is ALWAYS the connection's IP: if the phone drops, the request fails instead of lying.
     /// </summary>
     public const string EchoIp = "1.0.0.1";
 
@@ -28,8 +28,8 @@ public static partial class Net
     };
 
     /// <summary>
-    /// Cliente HTTP que só liga se o Windows for mesmo enviar o pedido pela placa <paramref name="requiredIf"/>.
-    /// Não se confia apenas em "ligar ao IP local": em alguns PCs o Windows ignora-o.
+    /// HTTP client that only connects if Windows will really send the request through adapter <paramref name="requiredIf"/>.
+    /// Binding to the local IP alone is not trusted: on some PCs Windows ignores it.
     /// </summary>
     static HttpClient ClientVia(int requiredIf, string bindLocalIp, int timeoutSec = 7)
     {
@@ -41,7 +41,7 @@ public static partial class Net
             {
                 var addrs = await Dns.GetHostAddressesAsync(ctx.DnsEndPoint.Host, AddressFamily.InterNetwork, ct);
                 var ok = addrs.Where(a => BestInterface(a.ToString()) == requiredIf).ToArray();
-                if (ok.Length == 0) throw new HttpRequestException($"O Windows não enviaria {ctx.DnsEndPoint.Host} pela placa {requiredIf}.");
+                if (ok.Length == 0) throw new HttpRequestException($"Windows would not send {ctx.DnsEndPoint.Host} through adapter {requiredIf}.");
                 var s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
                 try
                 {
@@ -53,11 +53,11 @@ public static partial class Net
             },
         };
         var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(timeoutSec + 1) };
-        http.DefaultRequestHeaders.UserAgent.ParseAdd("ServerRouteTool/9");
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("CS2IPChanger/0.1");
         return http;
     }
 
-    /// <summary>O IP público que os servidores veem (pela saída protegida).</summary>
+    /// <summary>The public IP servers see (through the protected connection).</summary>
     public static async Task<string> EgressPublicIp(Adapter egress, CancellationToken ct = default)
     {
         if (egress == null || BestInterface(EchoIp) != egress.Index) return null;
@@ -73,7 +73,7 @@ public static partial class Net
         catch { return null; }
     }
 
-    /// <summary>O IP público do resto do PC (rede de casa). Só responde se o pedido sair mesmo por essa placa.</summary>
+    /// <summary>The public IP of the rest of the PC (home network). Only answers if the request really leaves through that adapter.</summary>
     public static async Task<string> HomePublicIp(int homeIf, CancellationToken ct = default)
     {
         if (homeIf <= 0) return null;
@@ -91,7 +91,7 @@ public static partial class Net
         return null;
     }
 
-    /// <summary>IP público sem condições (testes e diagnóstico).</summary>
+    /// <summary>Public IP with no conditions (tests and diagnostics).</summary>
     public static async Task<string> AnyPublicIp()
     {
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };

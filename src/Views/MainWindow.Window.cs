@@ -13,7 +13,7 @@ using SRT.Core;
 
 namespace SRT;
 
-// Navegação e janela
+// Navigation and window
 public partial class MainWindow
 {
     void Nav_Checked(object sender, RoutedEventArgs e)
@@ -21,8 +21,8 @@ public partial class MainWindow
         if (PageNet == null) return;
         var map = new (RadioButton nav, FrameworkElement page, string title)[]
         {
-            (NavNet, PageNet, "Ligação"), (NavServers, PageServers, "Servidores"), (NavAccounts, PageAccounts, "Contas Steam"),
-            (NavLog, PageLog, "Registo"), (NavSettings, PageSettings, "Definições"),
+            (NavNet, PageNet, "Connection"), (NavServers, PageServers, "Servers"), (NavAccounts, PageAccounts, "Steam accounts"),
+            (NavLog, PageLog, "Log"), (NavSettings, PageSettings, "Settings"),
         };
         foreach (var (nav, page, title) in map)
         {
@@ -40,7 +40,7 @@ public partial class MainWindow
     void LogCopy_Click(object sender, RoutedEventArgs e)
     {
         var text = string.Join(Environment.NewLine, _log.Reverse().Select(l => $"{l.TimeText}  {l.Text}"));
-        try { Clipboard.SetText(text); Toast("Registo copiado.", true); } catch { Toast("Não consegui copiar. Tenta outra vez.", false); }
+        try { Clipboard.SetText(text); Toast("Log copied.", true); } catch { Toast("Couldn't copy. Try again.", false); }
     }
 
     void LogClear_Click(object sender, RoutedEventArgs e) => _log.Clear();
@@ -50,7 +50,7 @@ public partial class MainWindow
     void Max_Click(object sender, RoutedEventArgs e) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
     void Close_Click(object sender, RoutedEventArgs e) => Close();
 
-    // ------------------------------------------------------------ Atalho global (Ctrl+Alt+Q = troca rápida)
+    // ------------------------------------------------------------ Global hotkey (Ctrl+Alt+Q = quick switch)
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     static extern bool RegisterHotKey(IntPtr hWnd, int id, uint modifiers, uint vk);
@@ -70,7 +70,7 @@ public partial class MainWindow
         _hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
         System.Windows.Interop.HwndSource.FromHwnd(_hwnd)?.AddHook(WndProc);
         if (!RegisterHotKey(_hwnd, HotkeyId, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, (uint)KeyInterop.VirtualKeyFromKey(Key.Q)))
-            Log.Warn("O atalho Ctrl+Alt+Q já está a ser usado por outro programa; usa o botão Troca rápida.");
+            Log.Warn("The Ctrl+Alt+Q hotkey is already in use by another program; use the Quick switch button.");
         RegisterDevHotkeys();
     }
 
@@ -79,7 +79,7 @@ public partial class MainWindow
         if (msg == WM_HOTKEY && wParam.ToInt32() == HotkeyId)
         {
             handled = true;
-            Log.Info("Atalho Ctrl+Alt+Q: troca rápida.");
+            Log.Info("Hotkey Ctrl+Alt+Q: quick switch.");
             _ = QuickSwitch();
         }
         else if (msg == WM_HOTKEY) OnDevHotkey(wParam.ToInt32(), ref handled);
@@ -97,7 +97,8 @@ public partial class MainWindow
         if (_closingDone || _demo || !_s.CleanupOnExit) return;
         e.Cancel = true;
         _closingDone = true;
-        ShowProgress("A desfazer as rotas e o kill switch…");
+        ShowProgress("Undoing the routes and the kill switch…");
+
         try { await _guard.RestoreAll(_servers.Select(s => s.Ip).Distinct().ToList()); } catch { }
         Close();
     }

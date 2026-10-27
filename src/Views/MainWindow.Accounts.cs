@@ -13,7 +13,7 @@ using SRT.Core;
 
 namespace SRT;
 
-// Contas Steam
+// Steam accounts
 public partial class MainWindow
 {
     void LoadAccounts()
@@ -22,7 +22,7 @@ public partial class MainWindow
         _accounts.Clear();
         List<LocalAccount> locals;
         try { locals = Steam.ReadAccounts(); }
-        catch (Exception ex) { Log.Warn("Não consegui ler as contas do Steam: " + ex.Message); locals = new(); }
+        catch (Exception ex) { Log.Warn("Could not read the Steam accounts: " + ex.Message); locals = new(); }
         var active = Steam.ActiveSteamId();
         foreach (var l in locals)
         {
@@ -31,10 +31,10 @@ public partial class MainWindow
             _accounts.Add(new AccountItem(l, meta) { Active = l.SteamId == active, Streamer = _s.StreamerMode });
         }
         AccountsEmptyText.Text = Steam.InstallDir() == null
-            ? "O Steam não está instalado neste PC."
-            : "Não encontrei contas guardadas.\nEntra no Steam com \"Lembrar-me\" marcado, ou usa Adicionar conta.";
+            ? "Steam is not installed on this PC."
+            : "No saved accounts found.\nLog in to Steam with \"Remember me\" checked, or use Add account.";
         ApplyAccountFilter();
-        Log.Info($"{_accounts.Count} conta(s) Steam neste PC.");
+        Log.Info($"{_accounts.Count} Steam account(s) on this PC.");
     }
 
     void SaveAccounts() { if (!_demo) Store.Save(Paths.File("accounts.json"), _accMeta); }
@@ -46,7 +46,7 @@ public partial class MainWindow
         ApplyAccountFilter();
     }
 
-    // Cartões em grelha: tantas colunas quantas cabem (mín. 250 px cada), todas da mesma largura.
+    // Cards in a grid: as many columns as fit (min. 250 px each), all the same width.
     System.Windows.Controls.Primitives.UniformGrid _accGrid;
 
     void AccGrid_Loaded(object sender, RoutedEventArgs e)
@@ -87,14 +87,14 @@ public partial class MainWindow
         _accShown.Clear();
         foreach (var a in ordered) _accShown.Add(a);
         var bans = _accounts.Count(a => a.HasVac || a.HasGameBan);
-        AccCount.Text = _accounts.Count == 0 ? "" : $"{_accShown.Count} de {_accounts.Count}" + (bans > 0 ? $" · {bans} com ban" : "");
+        AccCount.Text = _accounts.Count == 0 ? "" : $"{_accShown.Count} of {_accounts.Count}" + (bans > 0 ? $" · {bans} banned" : "");
         AccountsEmpty.Visibility = _accounts.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         UpdateQuickInfo();
     }
 
-    // ------------------------------------------------------------ Troca rápida
+    // ------------------------------------------------------------ Quick switch
 
-    /// <summary>A próxima conta da rotação: fora da lista negra, sem cooldown nem ban, a menos usada há mais tempo.</summary>
+    /// <summary>The next account in the rotation: not skipped, no cooldown or ban, least recently used.</summary>
     AccountItem NextQuick()
     {
         var active = _accounts.FirstOrDefault(a => a.Active)?.SteamId;
@@ -108,13 +108,13 @@ public partial class MainWindow
     {
         var next = NextQuick();
         var pool = _accounts.Count(a => a.Usable);
-        SideQuickLabel.Text = next == null ? "Troca rápida" : "Trocar para";
+        SideQuickLabel.Text = next == null ? "Quick switch" : "Switch to";
         SideQuickNext.Text = next?.Name ?? "";
         SideQuick.IsEnabled = QuickBtn.IsEnabled = next != null;
-        if (next == null) SideQuick.ToolTip = QuickBtn.ToolTip = "Sem contas para a troca rápida: adiciona contas ou tira-as do cooldown.";
+        if (next == null) SideQuick.ToolTip = QuickBtn.ToolTip = "No accounts for quick switch: add accounts or clear their cooldown.";
         var tip = next == null
-            ? "Nenhuma conta disponível: estão todas fora da troca, em cooldown ou com ban."
-            : $"Fecha o CS2, entra em {next.Name} e volta a abrir o CS2.\n{pool} conta(s) na rotação (sem lista negra, cooldown nem ban).\nAtalho em qualquer lado, mesmo dentro do jogo: Ctrl+Alt+Q.";
+            ? "No account available: all are skipped, on cooldown or banned."
+            : $"Closes CS2, logs in to {next.Name} and opens CS2 again.\n{pool} account(s) in the rotation (not skipped, no cooldown or ban).\nShortcut anywhere, even in game: Ctrl+Alt+Q.";
         QuickBtn.ToolTip = tip;
         SideQuick.ToolTip = tip;
     }
@@ -125,12 +125,12 @@ public partial class MainWindow
     {
         var next = NextQuick();
         var skipped = _accounts.Where(a => !a.Usable).Select(a =>
-            $"{a.Name} ({(a.Excluded ? "lista negra" : a.InCooldown ? "cooldown" : "ban")})").ToList();
-        if (skipped.Count > 0) Log.Info("Troca rápida saltou: " + string.Join(", ", skipped));
-        if (next == null) { Toast("Sem contas para a troca rápida: estão todas na lista negra, em cooldown ou com ban.", false); return; }
-        if (next.Meta.ExcludeQuick) { Log.Error("Troca rápida escolheu uma conta da lista negra; cancelado."); return; }
-        Log.Info($"Troca rápida: {next.Name}.");
-        // Pedido explícito: fecha o CS2 sem perguntar.
+            $"{a.Name} ({(a.Excluded ? "skipped" : a.InCooldown ? "cooldown" : "ban")})").ToList();
+        if (skipped.Count > 0) Log.Info("Quick switch skipped: " + string.Join(", ", skipped));
+        if (next == null) { Toast("No accounts for quick switch: all are skipped, on cooldown or banned.", false); return; }
+        if (next.Meta.ExcludeQuick) { Log.Error("Quick switch picked a skipped account; cancelled."); return; }
+        Log.Info($"Quick switch: {next.Name}.");
+        // Explicit request: close CS2 without asking.
         await SwitchTo(next, cs2: true, ask: false);
     }
 
@@ -141,7 +141,7 @@ public partial class MainWindow
         a.RefreshAll();
         SaveAccounts();
         ApplyAccountFilter();
-        Toast(a.Excluded ? $"{a.Name} saiu da troca rápida." : $"{a.Name} voltou à troca rápida.", true);
+        Toast(a.Excluded ? $"{a.Name} is now skipped in quick switch." : $"{a.Name} is back in quick switch.", true);
     }
 
     static AccountItem Acc(object sender) => (sender as FrameworkElement)?.DataContext as AccountItem;
@@ -157,32 +157,32 @@ public partial class MainWindow
             foreach (var x in _accounts) x.Active = x == a;
             a.Meta.LastUsed = DateTime.Now;
             UpdateQuickInfo();
-            Toast($"Demonstração: a entrar em {a.Name}.", true);
+            Toast($"Demo: logging in to {a.Name}.", true);
             return;
         }
         if (Steam.Cs2Running)
         {
-            if (ask && !await Ask("O CS2 está aberto", $"Para entrar em {a.Name} tenho de fechar o CS2 e o Steam. Continuar?", "Fechar e trocar")) return;
+            if (ask && !await Ask("CS2 is open", $"CS2 and Steam have to close to log in to {a.Name}. Continue?", "Close and switch")) return;
             foreach (var p in Process.GetProcessesByName("cs2")) try { p.Kill(true); } catch { }
             for (var i = 0; i < 20 && Steam.Cs2Running; i++) await Task.Delay(150);
         }
         _switching = true;
         a.Busy = true;
-        Toast($"A entrar em {a.Name}…", true);
+        Toast($"Logging in to {a.Name}…", true);
         try
         {
-            // Sem o CS2 trancado à saída, só se abre o jogo com a proteção confirmada.
+            // Without CS2 locked to the phone connection, the game only opens with confirmed protection.
             if (cs2 && !_s.LockCs2 && (_last?.Egress == null || _distrust))
             {
                 cs2 = false;
-                Toast("Troquei de conta mas não abri o CS2: a proteção não está ativa e o CS2 não está trancado.", false);
+                Toast("Switched account but did not open CS2: protection is off and CS2 is not locked.", false);
             }
             var args = string.Join(" ", new[] { _s.SteamSilent ? "-silent" : null, cs2 ? "-applaunch 730 -condebug" : null }.Where(x => x != null));
             await Steam.SwitchTo(a.Login, a.SteamId, _s.SteamOffline, args);
             a.Meta.LastUsed = DateTime.Now;
             SaveAccounts();
-            Log.Ok($"Conta trocada para {a.Name}" + (cs2 ? " (CS2 a abrir)." : "."));
-            Diag.Write("conta", new { steamId = a.SteamId, cs2, offline = _s.SteamOffline });
+            Log.Ok($"Switched to {a.Name}" + (cs2 ? " (CS2 opening)." : "."));
+            Diag.Write("account", new { steamId = a.SteamId, cs2, offline = _s.SteamOffline });
             foreach (var x in _accounts) x.Active = x == a;
             UpdateQuickInfo();
             _ = Task.Delay(8000).ContinueWith(_ => Dispatcher.Invoke(() =>
@@ -191,14 +191,14 @@ public partial class MainWindow
                 if (active != null) foreach (var x in _accounts) x.Active = x.SteamId == active;
             }));
         }
-        catch (Exception ex) { Log.Error("Troca de conta: " + ex.Message); Toast(ex.Message, false); }
+        catch (Exception ex) { Log.Error("Account switch: " + ex.Message); Toast(ex.Message, false); }
         finally { a.Busy = false; _switching = false; UpdateQuickInfo(); }
     }
 
     async void AccAdd_Click(object sender, RoutedEventArgs e)
     {
         if (_demo) return;
-        if (!await Ask("Adicionar conta", "O Steam vai fechar e abrir no ecrã de login. Entra com a conta nova e marca \"Lembrar-me\". Depois volta aqui e ela aparece na lista.", "Abrir login")) return;
+        if (!await Ask("Add account", "Steam will close and open on the login screen. Log in with the new account and check \"Remember me\". Then come back here and it shows up in the list.", "Open login")) return;
         try { await Steam.AddNew(); WaitForNewAccount(); }
         catch (Exception ex) { Toast(ex.Message, false); }
     }
@@ -209,7 +209,7 @@ public partial class MainWindow
         for (var i = 0; i < 60; i++)
         {
             await Task.Delay(5000);
-            if (Steam.ReadAccounts().Count > before) { LoadAccounts(); Toast("Conta nova adicionada.", true); return; }
+            if (Steam.ReadAccounts().Count > before) { LoadAccounts(); Toast("New account added.", true); return; }
         }
     }
 
@@ -228,7 +228,7 @@ public partial class MainWindow
             for (var i = 0; i < list.Count; i++)
             {
                 var a = list[i];
-                AccRefreshText.Text = $"A verificar {i + 1}/{list.Count}…";
+                AccRefreshText.Text = $"Checking {i + 1}/{list.Count}…";
                 try
                 {
                     var oldUrl = a.Meta.Profile?.AvatarUrl;
@@ -248,13 +248,13 @@ public partial class MainWindow
             }
             SaveAccounts();
             ApplyAccountFilter();
-            Toast(errors == 0 ? $"{list.Count} conta(s) atualizadas." : $"Atualizadas, com {errors} erro(s). A Steam pode estar a limitar pedidos: tenta daqui a um minuto.", errors == 0);
+            Toast(errors == 0 ? $"{list.Count} account(s) refreshed." : $"Refreshed, with {errors} error(s). Steam may be rate limiting requests: try again in a minute.", errors == 0);
         }
         finally
         {
             _refreshingAcc = false;
             AccRefreshBtn.IsEnabled = true;
-            AccRefreshText.Text = "Atualizar estado";
+            AccRefreshText.Text = "Refresh";
         }
     }
 
@@ -268,8 +268,8 @@ public partial class MainWindow
         try { Process.Start(new ProcessStartInfo(string.Format(fmt, a.SteamId)) { UseShellExecute = true }); } catch { }
     }
 
-    void AccCopyId_Click(object sender, RoutedEventArgs e) { if (Acc(sender) is AccountItem a) { Clipboard.SetText(a.SteamId); Toast("SteamID64 copiado.", true); } }
-    void AccCopyLogin_Click(object sender, RoutedEventArgs e) { if (Acc(sender) is AccountItem a) { Clipboard.SetText(a.Login ?? ""); Toast("Login copiado.", true); } }
+    void AccCopyId_Click(object sender, RoutedEventArgs e) { if (Acc(sender) is AccountItem a) { Clipboard.SetText(a.SteamId); Toast("SteamID64 copied.", true); } }
+    void AccCopyLogin_Click(object sender, RoutedEventArgs e) { if (Acc(sender) is AccountItem a) { Clipboard.SetText(a.Login ?? ""); Toast("Login copied.", true); } }
 
     async void AccCooldown_Click(object sender, RoutedEventArgs e)
     {
@@ -278,17 +278,17 @@ public partial class MainWindow
         if (minutes < 0)
         {
             DialogInput.Text = "";
-            DialogInput.Tag = "Ex.: 21h, 3d, 90m, 2d 12h";
-            if (!await Ask($"Cooldown de {a.Name}", "Quanto tempo falta? Usa d (dias), h (horas) e m (minutos).", "Marcar", "Cancelar", inputs: 1, label1: "Tempo que falta")) return;
+            DialogInput.Tag = "E.g. 21h, 3d, 90m, 2d 12h";
+            if (!await Ask($"Cooldown for {a.Name}", "How much time is left? Use d (days), h (hours) and m (minutes).", "Set", "Cancel", inputs: 1, label1: "Time left")) return;
             var t = Fmt.ParseDuration(DialogInput.Text);
-            if (t == null) { Toast("Não percebi a duração. Exemplo: 3d 4h", false); return; }
+            if (t == null) { Toast("Could not read that duration. Example: 3d 4h", false); return; }
             minutes = (int)Math.Ceiling(t.Value.TotalMinutes);
         }
         a.Meta.CooldownUntil = minutes == 0 ? null : DateTime.Now.AddMinutes(minutes);
         a.RefreshAll();
         SaveAccounts();
         ApplyAccountFilter();
-        Toast(minutes == 0 ? $"Cooldown de {a.Name} retirado." : $"{a.Name}: cooldown até {a.Meta.CooldownUntil:dd/MM HH:mm}.", true);
+        Toast(minutes == 0 ? $"Cooldown cleared for {a.Name}." : $"{a.Name}: cooldown until {a.Meta.CooldownUntil:dd/MM HH:mm}.", true);
     }
 
     void AccFav_Click(object sender, RoutedEventArgs e)
@@ -303,10 +303,10 @@ public partial class MainWindow
     {
         if (Acc(sender) is not AccountItem a) return;
         DialogInput.Text = a.Meta.Note ?? "";
-        DialogInput.Tag = "Ex.: conta principal, premier 15k";
+        DialogInput.Tag = "E.g. main account, premier 15k";
         DialogInput2.Text = a.Meta.Tags ?? "";
-        DialogInput2.Tag = "Ex.: main, faceit";
-        if (!await Ask($"Nota de {a.Name}", "Só fica neste PC. A pesquisa também procura aqui.", "Guardar", "Cancelar", inputs: 2, label1: "Nota", label2: "Etiquetas (separadas por vírgulas)")) return;
+        DialogInput2.Tag = "E.g. main, faceit";
+        if (!await Ask($"Note for {a.Name}", "Stays on this PC only. Search looks here too.", "Save", "Cancel", inputs: 2, label1: "Note", label2: "Tags (comma separated)")) return;
         a.Meta.Note = string.IsNullOrWhiteSpace(DialogInput.Text) ? null : DialogInput.Text.Trim();
         a.Meta.Tags = string.IsNullOrWhiteSpace(DialogInput2.Text) ? null : DialogInput2.Text.Trim();
         a.RefreshAll();
@@ -320,7 +320,7 @@ public partial class MainWindow
         _accounts.Remove(a);
         SaveAccounts();
         ApplyAccountFilter();
-        Toast($"{a.Name} escondida. Volta em Definições > Mostrar contas escondidas.", true);
+        Toast($"{a.Name} hidden. Bring it back in Settings > Show hidden accounts.", true);
     }
 
     void UnhideAll_Click(object sender, RoutedEventArgs e)
@@ -328,7 +328,7 @@ public partial class MainWindow
         foreach (var m in _accMeta.Values) m.Hidden = false;
         SaveAccounts();
         LoadAccounts();
-        Toast("Todas as contas voltaram a aparecer.", true);
+        Toast("All accounts are visible again.", true);
     }
 
     void AccOpt_Click(object sender, RoutedEventArgs e)

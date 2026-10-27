@@ -13,10 +13,10 @@ using SRT.Core;
 
 namespace SRT;
 
-/// <summary>Janela principal. Cada área vive no seu ficheiro MainWindow.*.cs.</summary>
+/// <summary>Main window. Each area lives in its own MainWindow.*.cs file.</summary>
 public partial class MainWindow : Window
 {
-    // ------------------------------------------------------------ Estado
+    // ------------------------------------------------------------ State
     Settings _s;
     readonly ObservableCollection<ServerItem> _servers = new();
     ICollectionView _serverView;
@@ -42,7 +42,7 @@ public partial class MainWindow : Window
     readonly DispatcherTimer _secondTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     readonly DispatcherTimer _toastTimer = new() { Interval = TimeSpan.FromSeconds(4.5) };
 
-    bool _demo = false;   // só a build de desenvolvimento o liga (--demo)
+    bool _demo = false;   // only the development build turns it on (--demo)
 
     CheckItem _cFirewall, _cKill, _cEgress, _cRoutes, _cDiff, _cPhoneData, _cCs2, _cSteam, _cPc;
     string _steamPath;
@@ -72,15 +72,15 @@ public partial class MainWindow : Window
         Checks.ItemsSource = _checks;
         foreach (var h in _s.IpHistory.OrderByDescending(h => h.Time).Take(30)) _history.Add(h);
 
-        _checks.Add(_cFirewall = new CheckItem { Title = "Firewall", Help = "Tem de estar ligado: é ele que aplica o kill switch." });
-        _checks.Add(_cKill = new CheckItem { Title = "Bloqueio (kill switch)", Help = "Regra que bloqueia os servidores da lista em todas as placas menos no telemóvel." });
-        _checks.Add(_cEgress = new CheckItem { Title = "Ligação ao telemóvel", Help = "O telemóvel por cabo USB, por onde os servidores são contactados." });
-        _checks.Add(_cRoutes = new CheckItem { Title = "Rotas", Help = "Confirmado pelo próprio Windows: cada IP da lista vai pelo telemóvel." });
-        _checks.Add(_cDiff = new CheckItem { Title = "IP diferente de casa", Help = "Se o telemóvel estiver a partilhar o Wi-Fi de casa em vez dos dados móveis, o IP seria o mesmo." });
-        _checks.Add(_cPhoneData = new CheckItem { Title = "Dados móveis", Help = "Com o Wi-Fi do telemóvel ligado, a partilha pode levar a rede de casa em vez dos dados móveis. Lido por ADB; sem ADB, confirma à mão." });
-        _checks.Add(_cCs2 = new CheckItem { Title = "CS2 só pelo telemóvel", Help = "Regra na Firewall: o cs2.exe só sai pelo telemóvel. Servidores fora da lista (browser do jogo, convites) também nunca veem o IP de casa." });
-        _checks.Add(_cSteam = new CheckItem { Title = "Steam pelo telemóvel", Help = "O steam.exe fala com a Valve pelo telemóvel, como o CS2. Se o Steam estiver noutra rede ou se religar a meio do jogo, o servidor dá kick com \"No Steam logon\"." });
-        _checks.Add(_cPc = new CheckItem { Title = "Resto do PC", Help = "Por onde sai o tráfego normal do PC (Steam, browser, Discord)." });
+        _checks.Add(_cFirewall = new CheckItem { Title = "Firewall", Help = "Must be on: it enforces the kill switch." });
+        _checks.Add(_cKill = new CheckItem { Title = "Kill switch", Help = "Rule that blocks the listed servers on every adapter except the phone." });
+        _checks.Add(_cEgress = new CheckItem { Title = "Phone connection", Help = "The phone over a USB cable, which is how the servers are reached." });
+        _checks.Add(_cRoutes = new CheckItem { Title = "Routes", Help = "Confirmed by Windows itself: every IP in the list goes through the phone." });
+        _checks.Add(_cDiff = new CheckItem { Title = "IP differs from home", Help = "If the phone is sharing your home Wi-Fi instead of mobile data, the IP would be the same." });
+        _checks.Add(_cPhoneData = new CheckItem { Title = "Mobile data", Help = "With the phone's Wi-Fi on, tethering may carry your home network instead of mobile data. Read through ADB; without ADB, check it yourself." });
+        _checks.Add(_cCs2 = new CheckItem { Title = "CS2 only through the phone", Help = "Firewall rule: cs2.exe only goes out through the phone. Servers not in the list (game browser, invites) never see your home IP either." });
+        _checks.Add(_cSteam = new CheckItem { Title = "Steam through the phone", Help = "steam.exe talks to Valve through the phone, like CS2. If Steam is on another network or reconnects mid-game, the server kicks you with \"No Steam logon\"." });
+        _checks.Add(_cPc = new CheckItem { Title = "Rest of the PC", Help = "Where the normal PC traffic goes out (Steam, browser, Discord)." });
 
         ApplySettingsToUi();
         UpdateHistoryEmpty();
@@ -114,7 +114,7 @@ public partial class MainWindow : Window
 
     async Task Startup()
     {
-        Log.Info($"ServerRouteTool {AppInfo.Version} aberto{(_demo ? " (demonstração)" : "")}.");
+        Log.Info($"CS2 IP Changer {AppInfo.Version} started{(_demo ? " (demo)" : "")}.");
         if (_demo) LoadDemo();
         else
         {
@@ -127,7 +127,7 @@ public partial class MainWindow : Window
             _ = RefreshPhone();
             _ = RefreshPublicIps();
             _tick.Start();
-            // Uma mudança de rede (cabo, Wi-Fi a saltar para outra rede) sincroniza logo, sem esperar pelos 5 s.
+            // A network change (cable, Wi-Fi jumping to another network) syncs right away, without waiting for the 5 s.
             System.Net.NetworkInformation.NetworkChange.NetworkAddressChanged += (_, _) => Dispatcher.BeginInvoke(async () =>
             {
                 await SyncNow();
@@ -160,7 +160,8 @@ public partial class MainWindow : Window
                 a.Meta.CooldownUntil = null;
                 a.RefreshAll();
                 SaveAccounts();
-                Toast($"O cooldown de {a.Name} terminou.", true);
+                Toast($"The cooldown for {a.Name} has ended.", true);
+
             }
         }
     }
