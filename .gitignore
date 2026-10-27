@@ -1,0 +1,13 @@
+# Build
+bin/
+obj/
+publish/
+*.user
+.vs/
+
+# Build de desenvolvimento e coisas locais (nunca vão para o GitHub)
+src/Privado/
+tests/
+_antigo/
+SRT_Dados/
+*.zip
