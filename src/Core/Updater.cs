@@ -16,7 +16,8 @@ public static class Updater
     public const string ReleasesPage = "https://github.com/" + Repo + "/releases";
     public const string ExeName = "CS2IPChanger.exe";
 
-    public sealed record Release(string Version, string Tag, string PageUrl, string ExeUrl, string ShaUrl);
+    /// <summary>A release on GitHub. <see cref="Size"/> is the exe's size in bytes (0 = not known).</summary>
+    public sealed record Release(string Version, string Tag, string PageUrl, string ExeUrl, string ShaUrl, long Size = 0);
 
     // ------------------------------------------------------------ Versions (SemVer 2.0)
 
@@ -82,17 +83,22 @@ public static class Updater
             var tag = Str(r, "tag_name");
             if (!IsValid(tag)) continue;
             string exe = null, sha = null;
+            long size = 0;
             if (r.TryGetProperty("assets", out var assets) && assets.ValueKind == JsonValueKind.Array)
                 foreach (var a in assets.EnumerateArray())
                 {
                     var name = Str(a, "name");
                     var url = Str(a, "browser_download_url");
                     if (!IsRepoUrl(url, "/releases/download/")) continue;
-                    if (name == ExeName) exe = url;
+                    if (name == ExeName)
+                    {
+                        exe = url;
+                        if (a.TryGetProperty("size", out var sz) && sz.ValueKind == JsonValueKind.Number && sz.TryGetInt64(out var n)) size = n;
+                    }
                     else if (name == ExeName + ".sha256") sha = url;
                 }
             var page = Str(r, "html_url");
-            var rel = new Release(Clean(tag), tag, IsRepoUrl(page, "/releases/") ? page : ReleasesPage, exe, sha);
+            var rel = new Release(Clean(tag), tag, IsRepoUrl(page, "/releases/") ? page : ReleasesPage, exe, sha, size);
             if (best == null || Compare(rel.Version, best.Version) > 0) best = rel;
         }
         return best;

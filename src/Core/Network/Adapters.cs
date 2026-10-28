@@ -20,11 +20,13 @@ public sealed class Adapter
     public string LocalIp { get; init; }
     public string Gateway { get; init; }
     public bool IsPhone { get; init; }
+    /// <summary>USB network adapter that isn't a phone (docks, USB-Ethernet dongles): only used when picked by hand.</summary>
+    public bool IsUsbNet { get; init; }
     public bool IsVpn { get; init; }
     public bool IsWifi { get; init; }
     /// <summary>Name of the Wi-Fi network the adapter is connected to (Wi-Fi adapters only).</summary>
     public string Ssid { get; set; }
-    public string Kind => IsPhone ? "Phone (USB)" : IsWifi ? "Wi-Fi" : IsVpn ? "VPN" : "Network";
+    public string Kind => IsPhone ? "Phone (USB)" : IsUsbNet ? "USB network" : IsWifi ? "Wi-Fi" : IsVpn ? "VPN" : "Network";
     public string Display => $"{Name}  ·  {Description}";
     public override string ToString() => Display;
 }
@@ -32,9 +34,15 @@ public sealed class Adapter
 /// <summary>Network adapters and the route Windows picks for each IP.</summary>
 public static partial class Net
 {
+    // Only what phones (and 4G dongles that act like one) show up as. A laptop dock's USB-Ethernet is the home network.
     static readonly Regex PhonePattern = new(
-        "Remote NDIS|RNDIS|Internet Sharing Device|USB.*Ethernet|USB.*Network|Mobile USB|Android|Apple Mobile Device Ethernet|iPhone",
+        "Remote NDIS|RNDIS|Internet Sharing Device|Mobile USB|Android|Apple Mobile Device Ethernet|iPhone",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    static readonly Regex UsbNetPattern = new("USB.*Ethernet|USB.*Network|USB.*GbE|USB.*LAN", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    public static bool LooksLikePhone(string description) => PhonePattern.IsMatch(description ?? "");
+    public static bool LooksLikeUsbNet(string description) => !LooksLikePhone(description) && UsbNetPattern.IsMatch(description ?? "");
 
     static readonly Regex VpnPattern = new(
         "WireGuard|WARP|Cloudflare|TAP-|Wintun|OpenVPN|Proton|Mullvad|NordLynx|Nord|Surfshark|ExpressVPN|Windscribe|Tailscale|ZeroTier|VPN",
@@ -71,6 +79,7 @@ public static partial class Net
                     LocalIp = local,
                     Gateway = gw,
                     IsPhone = PhonePattern.IsMatch(desc) || PhonePattern.IsMatch(ni.Name),
+                    IsUsbNet = !(PhonePattern.IsMatch(desc) || PhonePattern.IsMatch(ni.Name)) && (UsbNetPattern.IsMatch(desc) || UsbNetPattern.IsMatch(ni.Name)),
                     IsVpn = ni.NetworkInterfaceType is NetworkInterfaceType.Ppp or NetworkInterfaceType.Tunnel || VpnPattern.IsMatch(desc) || VpnPattern.IsMatch(ni.Name),
                     IsWifi = ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211,
                 });

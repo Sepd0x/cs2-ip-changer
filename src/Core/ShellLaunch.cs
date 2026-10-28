@@ -5,7 +5,8 @@ namespace SRT.Core;
 
 /// <summary>
 /// Opens a program as the signed-in user, without the app's admin rights: the desktop shell (Explorer) starts it, like a double-click.
-/// There is no fallback that starts it from this process, because that would pass admin rights on.
+/// There is no fallback here that starts it from this process, because that would pass admin rights on
+/// (Steam has one of its own, logged, so a broken Explorer doesn't stop the game from opening).
 /// </summary>
 public static class ShellLaunch
 {
@@ -39,9 +40,15 @@ public static class ShellLaunch
     const int SWC_DESKTOP = 8, SWFO_NEEDDISPATCH = 1, SVGIO_BACKGROUND = 0;
 
     /// <summary>Starts the exe with no arguments. Null if it worked, otherwise the reason. Call it on the UI thread (STA).</summary>
-    public static string Open(string exe)
+    public static string Open(string exe) => IsLaunchable(exe, out var why) ? OpenAsUser(exe, "", Path.GetDirectoryName(exe)) : why;
+
+    /// <summary>
+    /// Opens a program (with arguments) or a link (steam://, https://) as the signed-in user, through Explorer.
+    /// Null if it worked, otherwise the reason. No check on what it opens: the caller decides. Call it on the UI thread (STA).
+    /// </summary>
+    public static string OpenAsUser(string fileOrUrl, string args, string workDir)
     {
-        if (!IsLaunchable(exe, out var why)) return why;
+        if (string.IsNullOrWhiteSpace(fileOrUrl)) return "nothing to open";
         try
         {
             dynamic windows = Activator.CreateInstance(Type.GetTypeFromCLSID(ShellWindowsClsid, true)!);
@@ -52,7 +59,7 @@ public static class ShellLaunch
             if (browser.QueryActiveShellView(out var view) != 0 || view.GetItemObject(SVGIO_BACKGROUND, ref DispatchIid, out var bg) != 0)
                 return "Explorer's desktop isn't ready";
             dynamic app = ((dynamic)bg).Application;
-            app.ShellExecute(exe, "", Path.GetDirectoryName(exe), "open", 1);
+            app.ShellExecute(fileOrUrl, args ?? "", workDir ?? "", "open", 1);
             return null;
         }
         catch (Exception ex) { return ex.Message; }

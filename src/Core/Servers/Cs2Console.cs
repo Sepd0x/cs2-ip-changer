@@ -3,7 +3,8 @@ using System.Text.RegularExpressions;
 
 namespace SRT.Core;
 
-public enum KickKind { None, Kick, Ban }
+/// <summary>Steam = Steam or VAC refused the account (a new IP doesn't help).</summary>
+public enum KickKind { None, Kick, Ban, Steam }
 
 /// <summary>
 /// Reads CS2's console.log (written with -condebug) and spots a kick or ban from the server.
@@ -32,8 +33,11 @@ public static class Cs2Console
         new(@"^\s*\]", O),
         new(@"left the game|player_disconnect", O),
         // "No Steam logon" is a Steam session problem, not an admin: a new IP would not help.
-        new(@"NOSTEAMLOGIN|NOSTEAMTICKET|no steam logon", O),
+        new(@"NOSTEAMLOGIN|NOSTEAMTICKET|no steam logon|NETWORK_DISCONNECT_STEAM_LOGON\b", O),
     };
+
+    // Steam or VAC said no: it's about the account, so changing the IP and rejoining is no use.
+    static readonly Regex SteamStrong = new(@"NETWORK_DISCONNECT_KICKED_VAC\w*|NETWORK_DISCONNECT_(KICKED_)?VACBANNED|NETWORK_DISCONNECT_STEAM_\w*", O);
 
     // The line is about the connection ending or being refused.
     static readonly Regex Context = new(
@@ -69,6 +73,7 @@ public static class Cs2Console
     public static KickKind Classify(string line)
     {
         if (string.IsNullOrWhiteSpace(line) || Ignore.Any(r => r.IsMatch(line))) return KickKind.None;
+        if (SteamStrong.IsMatch(line)) return KickKind.Steam;
         if (BanStrong.Any(r => r.IsMatch(line))) return KickKind.Ban;
         if (KickStrong.Any(r => r.IsMatch(line))) return KickKind.Kick;
         if (!Context.IsMatch(line)) return KickKind.None;

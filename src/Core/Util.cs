@@ -87,11 +87,14 @@ public static class Store
 
 public enum LogLevel { Info, Ok, Warn, Error }
 
-public sealed class LogEntry
+public sealed class LogEntry : Observable
 {
+    string _shown;
     public DateTime Time { get; init; }
     public LogLevel Level { get; init; }
     public string Text { get; init; }
+    /// <summary>What the Log page shows: the text, or the text with the home IP and logins covered (Hide logins).</summary>
+    public string Shown { get => _shown ?? Text; set => Set(ref _shown, value); }
     public string TimeText => Time.ToString("HH:mm:ss");
 }
 

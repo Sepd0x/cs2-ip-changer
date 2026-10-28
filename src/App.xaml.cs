@@ -7,13 +7,16 @@ namespace SRT;
 public partial class App : Application
 {
     static Mutex _single;
+    const string InstanceName = @"Global\CS2IPChanger.Instance";
 
     protected override void OnStartup(StartupEventArgs e)
     {
         Paths.Ensure();
+        // Before the single-instance lock: it's the way out when a stuck copy holds the lock and its window won't open.
+        if (e.Args.Any(a => a.Equals("--restore", StringComparison.OrdinalIgnoreCase))) { RestoreAndExit(); return; }
         // One instance only: two would fight over the same Firewall rules (the demo touches nothing).
         var first = true;
-        if (!e.Args.Contains("--demo")) _single = new Mutex(true, @"Global\CS2IPChanger.Instance", out first);
+        if (!e.Args.Contains("--demo")) _single = new Mutex(true, InstanceName, out first);
         // Started by an update: the old copy is still closing, give it a few seconds.
         if (!first && e.Args.Contains("--updated"))
         {
@@ -26,7 +29,6 @@ public partial class App : Application
             Shutdown();
             return;
         }
-        if (e.Args.Any(a => a.Equals("--restore", StringComparison.OrdinalIgnoreCase))) { RestoreAndExit(); return; }
         DispatcherUnhandledException += OnUiError;
         TaskScheduler.UnobservedTaskException += (_, a) => { Log.Error("Task: " + a.Exception?.GetBaseException().Message); a.SetObserved(); };
         base.OnStartup(e);
@@ -56,10 +58,13 @@ public partial class App : Application
             left = new Guard().RestoreAll(servers.Select(s => s.Ip).Distinct().ToList()).GetAwaiter().GetResult();
         }
         catch (Exception ex) { left = ex.Message; }
-        MessageBox.Show(left == null
+        var running = false;
+        try { if (Mutex.TryOpenExisting(InstanceName, out var other)) { running = true; other.Dispose(); } } catch (UnauthorizedAccessException) { running = true; }
+        MessageBox.Show((left == null
                 ? "Network restored: the Firewall rules and routes from CS2 IP Changer are gone."
-                : "Restore network left: " + left + ".\nRestart the PC to clear routes. Rules can be removed in Windows Firewall > Outbound Rules (names start with ServerRouteTool v9).",
-            "CS2 IP Changer", MessageBoxButton.OK, left == null ? MessageBoxImage.Information : MessageBoxImage.Warning);
+                : "Restore network left: " + left + ".\nRestart the PC to clear routes. Rules can be removed in Windows Firewall > Outbound Rules (names start with ServerRouteTool v9).")
+                + (running ? "\n\nAnother copy of the app is still running: close it, or it puts the rules back." : ""),
+            "CS2 IP Changer", MessageBoxButton.OK, left == null && !running ? MessageBoxImage.Information : MessageBoxImage.Warning);
         Shutdown();
     }
 

@@ -45,12 +45,29 @@ public partial class MainWindow
 
     void LogClear_Click(object sender, RoutedEventArgs e) => _log.Clear();
 
+    // ------------------------------------------------------------ Hide logins also covers the Log on screen (the file keeps everything)
+
+    /// <summary>With Hide logins on, the home IP and the account logins show as ••• in the Log page.</summary>
+    void MaskLog(LogEntry e)
+    {
+        if (_s == null || !_s.StreamerMode) { e.Shown = null; return; }
+        var text = e.Text ?? "";
+        foreach (var ip in new[] { _s.LastHomeIp, _homePublic }.Where(x => !string.IsNullOrEmpty(x)).Distinct())
+            text = Regex.Replace(text, @"(?<![\d.])" + Regex.Escape(ip) + @"(?![\d])", "•••");
+        foreach (var login in _accounts.Select(a => a.Login).Where(l => !string.IsNullOrWhiteSpace(l)).Distinct(StringComparer.OrdinalIgnoreCase))
+            text = Regex.Replace(text, @"(?<![\w])" + Regex.Escape(login) + @"(?![\w])", "•••", RegexOptions.IgnoreCase);
+        e.Shown = text == e.Text ? null : text;
+    }
+
+    /// <summary>After Hide logins changes, or a new home IP or account list is known.</summary>
+    void RemaskLog() { foreach (var e in _log) MaskLog(e); }
+
     void SideStatus_Click(object sender, MouseButtonEventArgs e) => NavNet.IsChecked = true;
     void Min_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
     void Max_Click(object sender, RoutedEventArgs e) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
     void Close_Click(object sender, RoutedEventArgs e) => Close();
 
-    // ------------------------------------------------------------ Global hotkeys (Ctrl+Alt+Q = switch, Ctrl+Alt+R = change IP and rejoin)
+    // ------------------------------------------------------------ Global hotkeys (Settings > Switch; by default Ctrl+Shift+F9 = switch, Ctrl+Shift+F10 = change IP and rejoin)
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     static extern bool RegisterHotKey(IntPtr hWnd, int id, uint modifiers, uint vk);
@@ -74,11 +91,18 @@ public partial class MainWindow
 
     void RegisterHotkeys()
     {
-        if (!RegisterHotKey(_hwnd, HotkeyId, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, (uint)KeyInterop.VirtualKeyFromKey(Key.Q)))
-            Log.Warn("The Ctrl+Alt+Q hotkey is already in use by another program; use the Switch button.");
-        if (!RegisterHotKey(_hwnd, RejoinHotkeyId, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, (uint)KeyInterop.VirtualKeyFromKey(Key.R)))
-            Log.Warn("The Ctrl+Alt+R hotkey is already in use by another program; use the Change IP and rejoin button.");
+        RegisterOne(HotkeyId, _s.HotkeySwitch, "the Switch button");
+        RegisterOne(RejoinHotkeyId, _s.HotkeyRejoin, "the Change IP and rejoin button");
         RegisterDevHotkeys();
+    }
+
+    void RegisterOne(int id, string text, string instead)
+    {
+        if (_hwnd == IntPtr.Zero) return;
+        if (!Hotkey.TryParse(text, out var mods, out var vk))
+            Log.Warn($"The hotkey \"{text}\" can't be used (pick another one in Settings > Switch); use {instead}.");
+        else if (!RegisterHotKey(_hwnd, id, mods | MOD_NOREPEAT, vk))
+            Log.Warn($"The {text} hotkey is already in use by another program; pick another one in Settings > Switch, or use {instead}.");
     }
 
     void UnregisterHotkeys()
@@ -94,13 +118,13 @@ public partial class MainWindow
         if (msg == WM_HOTKEY && wParam.ToInt32() == HotkeyId)
         {
             handled = true;
-            Log.Info("Hotkey Ctrl+Alt+Q: switch.");
-            _ = QuickSwitch("Hotkey Ctrl+Alt+Q");
+            Log.Info($"Hotkey {_s.HotkeySwitch}: switch.");
+            _ = QuickSwitch($"Hotkey {_s.HotkeySwitch}");
         }
         else if (msg == WM_HOTKEY && wParam.ToInt32() == RejoinHotkeyId)
         {
             handled = true;
-            _ = ChangeIpAndRejoin("Hotkey Ctrl+Alt+R");
+            _ = ChangeIpAndRejoin($"Hotkey {_s.HotkeyRejoin}");
         }
         else if (msg == WM_HOTKEY) OnDevHotkey(wParam.ToInt32(), ref handled);
         return IntPtr.Zero;

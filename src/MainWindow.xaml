@@ -223,6 +223,8 @@
                         <Separator/>
                         <MenuItem Header="Mark the account in use as banned here" Tag="&#xE7BA;" Click="SrvMarkBan_Click"/>
                         <MenuItem Header="Clear ban marks here" Tag="&#xE711;" Click="SrvClearBans_Click" IsEnabled="{Binding HasBans}"/>
+                        <MenuItem Header="Set community name…" Tag="&#xE716;" Click="SrvNetwork_Click"
+                                  ToolTip="Servers with the same community name share ban marks. Empty: the app guesses from the server name."/>
                         <Separator/>
                         <MenuItem Header="Remove" Tag="&#xE74D;" Click="RemoveServers_Click"/>
                     </ContextMenu>
@@ -372,7 +374,7 @@
                                 <TextBlock x:Name="SideIp" Text="—" FontFamily="{StaticResource Mono}" Foreground="{StaticResource Muted}" FontSize="11.5" Margin="10,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
                             <Button x:Name="SideQuick" Click="Quick_Click" Margin="0" Padding="10,4" MinWidth="120" WindowChrome.IsHitTestVisibleInChrome="True" ToolTipService.ShowOnDisabled="True"
-                                    ToolTip="Switch (Ctrl+Alt+Q, also in game): new IP, next account, back to the last server.">
+                                    ToolTip="Switch (its hotkey works in game too): new IP, next account, back to the last server.">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock x:Name="SideQuickLabel" Text="Switch"/>
                                     <TextBlock x:Name="SideQuickNext" Text="" FontWeight="SemiBold" Margin="3,0,0,0" TextTrimming="CharacterEllipsis" MaxWidth="120"/>
@@ -456,7 +458,7 @@
                                                     ToolTipService.ShowOnDisabled="True"
                                                     ToolTip="Turns the phone's mobile data off and on until the carrier gives a new IP. Needs the phone set up over ADB. If you are on a server, you will drop."/>
                                             <Button x:Name="RejoinBtn" Click="Rejoin_Click" Content="Change IP and rejoin"
-                                                    ToolTip="Changes the IP, then joins the last server again. Only joins with protection confirmed. In game: Ctrl+Alt+R."/>
+                                                    ToolTip="Changes the IP, then joins the last server again. Only joins with protection confirmed. In game: the rejoin hotkey (Settings > Switch)."/>
                                             <Button x:Name="LeakBtn" Click="LeakTest_Click" Content="Run leak test"
                                                     ToolTip="Full test: Firewall, block, each server's route and whether the phone's IP really differs from your home IP."/>
                                         </StackPanel>
@@ -758,7 +760,7 @@
                                     </Button>
                                     <Button Style="{StaticResource IconBtn}" Content="&#xE713;" Click="SwitchSteps_Click" Margin="0,0,6,0" ToolTip="Choose what Switch does"/>
                                     <Button x:Name="QuickBtn" Style="{StaticResource Primary}" Margin="0" Click="Quick_Click" Content="Switch"
-                                            ToolTip="Ctrl+Alt+Q, also in game: new IP, next account, back to the last server."/>
+                                            ToolTip="Switch (its hotkey works in game too): new IP, next account, back to the last server."/>
                                 </StackPanel>
                             </Grid>
 
@@ -797,7 +799,7 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="{Binding TimeText}" Foreground="{StaticResource Faint}" FontFamily="{StaticResource Mono}" FontSize="11.5"/>
-                                            <TextBlock Grid.Column="1" Text="{Binding Text}" TextWrapping="Wrap" Tag="{Binding Level}" MaxWidth="900" HorizontalAlignment="Left">
+                                            <TextBlock Grid.Column="1" Text="{Binding Shown}" TextWrapping="Wrap" Tag="{Binding Level}" MaxWidth="900" HorizontalAlignment="Left">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
                                                         <Setter Property="Foreground" Value="{StaticResource Muted}"/>
@@ -815,6 +817,8 @@
                             </ListBox>
                             <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="8,8,8,2">
                                 <Button Click="LogCopy_Click" Content="Copy all" ToolTip="Copies the log so you can paste it where you need it (e.g. to ask for help)"/>
+                                <Button Click="ExportReport_Click" Content="Export diagnostics"
+                                        ToolTip="Saves a .zip on the Desktop for a bug report: this log, the app's settings and rules, Steam's connection log and CS2's console. Your home IP and API key are left out."/>
                                 <Button Click="LogClear_Click" Margin="0" Content="Clear screen" ToolTip="Clears this list. The log file stays in SRT_Dados."/>
                             </StackPanel>
                         </Grid>
@@ -969,9 +973,13 @@
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" MinWidth="300"/>
                                                 <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBox x:Name="ApiKeyBox" Height="30" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" LostFocus="SettingChanged" Tag="Works without a key too"/>
-                                            <Button Grid.Column="1" Margin="6,0,0,0" Click="ApiKeyLink_Click" Content="Get key" ToolTip="Opens steamcommunity.com/dev/apikey"/>
+                                            <PasswordBox x:Name="ApiKeyPwd" Height="30" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" LostFocus="SettingChanged"
+                                                         ToolTip="Works without a key too. Hidden so it doesn't show on stream or in screenshots."/>
+                                            <TextBox x:Name="ApiKeyBox" Height="30" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" LostFocus="SettingChanged" Tag="Works without a key too" Visibility="Collapsed"/>
+                                            <Button x:Name="ApiKeyShowBtn" Grid.Column="1" Margin="6,0,0,0" Click="ApiKeyShow_Click" Content="Show" ToolTipService.ShowOnDisabled="True" ToolTip="Shows the key"/>
+                                            <Button Grid.Column="2" Margin="6,0,0,0" Click="ApiKeyLink_Click" Content="Get key" ToolTip="Opens steamcommunity.com/dev/apikey"/>
                                         </Grid>
                                     </StackPanel>
                                 </HeaderedContentControl>
@@ -979,7 +987,28 @@
                                 <HeaderedContentControl x:Name="SwitchGroup" Grid.Row="1" Style="{StaticResource Group}" Header="Switch">
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource OptSub}" Margin="0,0,0,10"
-                                                   Text="What Switch does: the button, the top bar and Ctrl+Alt+Q, also in game. Ctrl+Alt+R always changes the IP and rejoins with the same account."/>
+                                                   Text="What Switch does: the button, the top bar and the Switch hotkey, also in game. The rejoin hotkey always changes the IP and rejoins with the same account."/>
+                                        <Grid MaxWidth="560" HorizontalAlignment="Left" Margin="0,0,0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" MinWidth="150"/>
+                                                <ColumnDefinition Width="12"/>
+                                                <ColumnDefinition Width="*" MinWidth="150"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="Switch hotkey" Style="{StaticResource Key}" Margin="0,0,0,5"/>
+                                                <TextBox x:Name="HotkeySwitchBox" Height="28" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" IsReadOnly="True" IsReadOnlyCaretVisible="False"
+                                                         PreviewKeyDown="HotkeyBox_PreviewKeyDown" GotKeyboardFocus="HotkeyBox_GotFocus" LostKeyboardFocus="HotkeyBox_LostFocus"
+                                                         ToolTip="Click here and press the keys. Escape puts back Ctrl+Shift+F9."/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="Change IP and rejoin hotkey" Style="{StaticResource Key}" Margin="0,0,0,5"/>
+                                                <TextBox x:Name="HotkeyRejoinBox" Height="28" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" IsReadOnly="True" IsReadOnlyCaretVisible="False"
+                                                         PreviewKeyDown="HotkeyBox_PreviewKeyDown" GotKeyboardFocus="HotkeyBox_GotFocus" LostKeyboardFocus="HotkeyBox_LostFocus"
+                                                         ToolTip="Click here and press the keys. Escape puts back Ctrl+Shift+F10."/>
+                                            </StackPanel>
+                                        </Grid>
+                                        <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,0,0,12"
+                                                   Text="Press the keys you want. Avoid Ctrl+Alt: on many keyboards it is AltGr, which types @ and €."/>
                                         <CheckBox x:Name="SwIpBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
                                             <StackPanel>
                                                 <TextBlock Text="Change the IP"/>

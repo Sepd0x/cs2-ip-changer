@@ -265,9 +265,9 @@ public partial class MainWindow
                     "In offline mode Steam does not confirm your account, and the server kicks you with \"No Steam logon\" after a few minutes.\n\n" +
                     "Turn off \"Offline\" in Accounts and log in to the account again.", "Join anyway"))
                 return false;
-            if (ActiveAccount() is AccountItem acc && acc.BanFor(s.Key, s.ServerName) is { } ban && !await Ask($"{acc.Name} was banned here",
+            if (ActiveAccount() is AccountItem acc && acc.BanFor(s.Key, s.ServerName, s.Network) is { } ban && !await Ask($"{acc.Name} was banned here",
                     (ban.Key == s.Key ? $"{s.Title} banned {acc.Name}" : $"{ban.Value?.Name ?? ban.Key}, on the same network as {s.Title}, banned {acc.Name}")
-                    + $" on {Fmt.When(ban.Value?.At)}. Networks usually share their ban list, and if the ban is on the account, a new IP won't help.\n\nSwitch (Ctrl+Alt+Q) changes the IP and the account together.",
+                    + $" on {Fmt.When(ban.Value?.At)}. Networks usually share their ban list, and if the ban is on the account, a new IP won't help.\n\nSwitch ({_s.HotkeySwitch}) changes the IP and the account together.",
                     "Join anyway"))
                 return false;
             if (!await WaitAfterCrash(s)) return false;
@@ -298,11 +298,11 @@ public partial class MainWindow
                 var log = Cs2Console.LogPath(_s.Cs2Path ?? Steam.Cs2Path(_s));
                 long from = 0;
                 try { from = log != null && File.Exists(log) ? new FileInfo(log).Length : 0; } catch { }
-                Process.Start(new ProcessStartInfo(steam, "-applaunch 730 -condebug") { UseShellExecute = true });
+                Steam.Launch("-applaunch 730 -condebug -conclearlog");
                 JoinStarted(s);
                 return await ConnectWhenMenuReady(s, log, from);
             }
-            Process.Start(new ProcessStartInfo($"steam://connect/{s.Key}") { UseShellExecute = true });
+            Steam.OpenUrl($"steam://connect/{s.Key}");
             JoinStarted(s);
             return true;
         }
@@ -340,7 +340,7 @@ public partial class MainWindow
             if (!Steam.Cs2Running) { Log.Warn($"CS2 didn't open, so {s.Key} wasn't joined."); Toast($"CS2 didn't open, so {s.Title} wasn't joined.", false); return false; }
             if (_restored || _distrust) { Log.Warn($"Not joining {s.Key}: protection changed while CS2 was opening."); Toast($"Not joining {s.Title}: protection changed while CS2 was opening.", false); return false; }
             if (ready) await Task.Delay(2000);
-            Process.Start(new ProcessStartInfo($"steam://connect/{s.Key}") { UseShellExecute = true });
+            Steam.OpenUrl($"steam://connect/{s.Key}");
             Log.Info($"CS2 menu {(ready ? "ready" : "not seen after 2 min")}: joining {s.Key}.");
             return true;
         }
@@ -426,7 +426,7 @@ public partial class MainWindow
             var log = Cs2Console.LogPath(_s.Cs2Path ?? Steam.Cs2Path(_s));
             long from = 0;
             try { from = log != null && File.Exists(log) ? new FileInfo(log).Length : 0; } catch { }
-            await Steam.Restart((_s.SteamSilent ? "-silent " : "") + "-applaunch 730 -condebug");
+            await Steam.Restart((_s.SteamSilent ? "-silent " : "") + "-applaunch 730 -condebug -conclearlog");
             if (openWith) OpenWithCs2();
             Diag.Write("steam-restarted", new { server = s.Key });
             Log.Ok($"Steam restarted through the phone; CS2 opens and joins {s.Key}.");

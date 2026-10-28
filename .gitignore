@@ -7,7 +7,7 @@ publish/
 
 # Build de desenvolvimento e coisas locais (nunca vão para o GitHub)
 src/Privado/
-tests/
+tests/out*.txt
 _antigo/
 SRT_Dados/
 *.zip

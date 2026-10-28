@@ -95,13 +95,31 @@ public static partial class Steam
         return found;
     }
 
+    /// <summary>
+    /// Starts Steam as the signed-in user (through Explorer), so Steam, CS2 and what they open never get the app's admin rights.
+    /// There is no fallback that starts it from this process: that would pass the admin rights on. Call it on the UI thread (STA).
+    /// </summary>
+    public static void Launch(string args)
+    {
+        var err = ShellLaunch.OpenAsUser(Exe, args ?? "", InstallDir());
+        if (err != null) throw new InvalidOperationException($"Explorer could not start Steam ({err}). Open Steam yourself and try again.");
+    }
+
+    /// <summary>A steam:// or https:// link, opened as the signed-in user. Never opened from this process (see <see cref="Launch"/>).</summary>
+    public static void OpenUrl(string url)
+    {
+        var err = ShellLaunch.OpenAsUser(url, "", null);
+        if (err != null) throw new InvalidOperationException($"Explorer could not open {url} ({err}).");
+    }
+
     public static bool IsRunning => Process.GetProcessesByName("steam").Length > 0;
     public static bool Cs2Running => Process.GetProcessesByName("cs2").Length > 0;
 
     static async Task CloseSteam()
     {
         if (!IsRunning) return;
-        try { Process.Start(new ProcessStartInfo(Exe, "-shutdown") { UseShellExecute = false }); } catch { }
+        // "-shutdown" only signals the running Steam, but it is still steam.exe started by this process: through Explorer, like the rest.
+        if (ShellLaunch.OpenAsUser(Exe, "-shutdown", InstallDir()) is string err) Log.Warn($"Could not ask Steam to close ({err}); closing it the hard way.");
         for (var i = 0; i < 40 && IsRunning; i++) await Task.Delay(250);
         foreach (var name in new[] { "steam", "steamwebhelper", "steamservice" })
             foreach (var p in Process.GetProcessesByName(name))
@@ -113,7 +131,20 @@ public static partial class Steam
     public static async Task SwitchTo(string accountName, string steamId, bool offline, string extraArgs)
     {
         if (Exe == null || !File.Exists(Exe)) throw new InvalidOperationException("Could not find Steam installed on this PC.");
+        // The file is rewritten by this parser: only when it reads back exactly, so nothing Steam keeps there gets lost.
+        // Checked before closing Steam, and again after (Steam writes the file when it exits).
+        const string NotUnderstood = "Steam's loginusers.vdf has content this version doesn't understand, so the account wasn't changed. Log in from Steam itself.";
+        var path = LoginUsersPath;
+        var edit = path != null && File.Exists(path) && steamId != null;
+        if (edit && !VdfNode.RoundTrips(File.ReadAllText(path))) throw new InvalidOperationException(NotUnderstood);
         await CloseSteam();
+
+        var text = edit ? File.ReadAllText(path) : null;
+        if (edit && !VdfNode.RoundTrips(text))
+        {
+            Launch("");   // Steam back on the account it had
+            throw new InvalidOperationException(NotUnderstood);
+        }
 
         using (var k = Registry.CurrentUser.CreateSubKey(@"Software\Valve\Steam"))
         {
@@ -121,12 +152,10 @@ public static partial class Steam
             k.SetValue("RememberPassword", 1, RegistryValueKind.DWord);
         }
 
-        var path = LoginUsersPath;
-        if (path != null && File.Exists(path) && steamId != null)
+        if (edit)
         {
-            var backup = path + ".srt-backup";
-            if (!File.Exists(backup)) File.Copy(path, backup);
-            var doc = VdfNode.Parse(File.ReadAllText(path));
+            BackupLoginUsers(path);
+            var doc = VdfNode.Parse(text);
             var users = doc.Child("users");
             if (users != null)
             {
@@ -147,7 +176,20 @@ public static partial class Steam
             }
         }
 
-        Process.Start(new ProcessStartInfo(Exe, extraArgs ?? "") { UseShellExecute = true });
+        Launch(extraArgs);
+    }
+
+    /// <summary>A dated copy before each write (loginusers.vdf.srt-backup-yyyyMMdd-HHmmss); only the 10 newest of those are kept.</summary>
+    static void BackupLoginUsers(string path)
+    {
+        File.Copy(path, $"{path}.srt-backup-{DateTime.Now:yyyyMMdd-HHmmss}", true);
+        try
+        {
+            var dir = Path.GetDirectoryName(path)!;
+            foreach (var old in Directory.GetFiles(dir, Path.GetFileName(path) + ".srt-backup-*").OrderByDescending(f => f, StringComparer.Ordinal).Skip(10))
+                File.Delete(old);
+        }
+        catch (Exception ex) { Log.Warn("Could not tidy the old loginusers.vdf backups: " + ex.Message); }
     }
 
     /// <summary>Closes and reopens Steam on the same account (e.g. so it connects through the protected connection).</summary>
@@ -155,7 +197,7 @@ public static partial class Steam
     {
         if (Exe == null || !File.Exists(Exe)) throw new InvalidOperationException("Could not find Steam installed on this PC.");
         await CloseSteam();
-        Process.Start(new ProcessStartInfo(Exe, args ?? "") { UseShellExecute = true });
+        Launch(args);
     }
 
     /// <summary>The account is set to log in in offline mode (Steam does not confirm it to servers).</summary>
@@ -175,6 +217,6 @@ public static partial class Steam
     {
         await CloseSteam();
         using (var k = Registry.CurrentUser.CreateSubKey(@"Software\Valve\Steam")) k.SetValue("AutoLoginUser", "", RegistryValueKind.String);
-        Process.Start(new ProcessStartInfo(Exe, "") { UseShellExecute = true });
+        Launch("");
     }
 }

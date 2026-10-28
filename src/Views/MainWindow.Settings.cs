@@ -36,6 +36,8 @@ public partial class MainWindow
             SwRejoinBox.IsChecked = _s.SwitchRejoin;
             SwOpenWithBox.IsChecked = _s.SwitchOpenWith;
             SoundsBox.IsChecked = _s.CommandSounds;
+            HotkeySwitchBox.Text = _s.HotkeySwitch;
+            HotkeyRejoinBox.Text = _s.HotkeyRejoin;
             CheckUpdatesBox.IsChecked = _s.CheckUpdates;
             KeepOffBox.IsChecked = _s.KeepPcOffPhone;
             LockCs2Box.IsChecked = _s.LockCs2;
@@ -43,6 +45,8 @@ public partial class MainWindow
             ApplyDevSettings();
             CleanupBox.IsChecked = _s.CleanupOnExit;
             ApiKeyBox.Text = _s.SteamApiKey ?? "";
+            ApiKeyPwd.Password = _s.SteamApiKey ?? "";
+            ShowApiKey(false);
             OptCs2.IsChecked = _s.LaunchCs2;
             OptSilent.IsChecked = _s.SteamSilent;
             OptOffline.IsChecked = _s.SteamOffline;
@@ -73,11 +77,63 @@ public partial class MainWindow
         ReadDevSettings();
         if (guardChanged) _ = SyncNow(force: true);
         _s.CleanupOnExit = CleanupBox.IsChecked == true;
-        _s.SteamApiKey = string.IsNullOrWhiteSpace(ApiKeyBox.Text) ? null : ApiKeyBox.Text.Trim();
+        var key = ApiKeyBox.Visibility == Visibility.Visible ? ApiKeyBox.Text : ApiKeyPwd.Password;
+        _s.SteamApiKey = string.IsNullOrWhiteSpace(key) ? null : key.Trim();
         OffSecondsBox.Text = _s.OffSeconds.ToString();
         AttemptsBox.Text = _s.MaxAttempts.ToString();
         SaveSettings();
         UpdateQuickInfo();
+    }
+
+    // ------------------------------------------------------------ Hotkeys: the box takes the combination you press
+
+    // While a box has focus the hotkeys are off, so pressing the current one sets it instead of running it.
+    void HotkeyBox_GotFocus(object sender, KeyboardFocusChangedEventArgs e) { if (!_demo) UnregisterHotkeys(); }
+    void HotkeyBox_LostFocus(object sender, KeyboardFocusChangedEventArgs e) { if (!_demo && !_closingDone) RegisterHotkeys(); }
+
+    void HotkeyBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        var box = (TextBox)sender;
+        var rejoin = box == HotkeyRejoinBox;
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        var mods = Keyboard.Modifiers;
+        if (key == Key.Tab && mods == ModifierKeys.None) return;   // Tab still moves on
+        e.Handled = true;
+        if (Hotkey.IsModifier(key) || key is Key.ImeProcessed or Key.DeadCharProcessed) return;
+        string text;
+        if (key == Key.Escape && mods == ModifierKeys.None) text = rejoin ? Settings.DefaultHotkeyRejoin : Settings.DefaultHotkeySwitch;
+        else
+        {
+            if (Hotkey.Problem(mods, key) is string why) { Toast(why, false); return; }
+            text = Hotkey.Format(mods, key);
+        }
+        if (string.Equals(text, rejoin ? _s.HotkeySwitch : _s.HotkeyRejoin, StringComparison.OrdinalIgnoreCase))
+        {
+            Toast($"{text} is already the {(rejoin ? "Switch" : "rejoin")} hotkey.", false);
+            return;
+        }
+        box.Text = text;
+        if (rejoin) _s.HotkeyRejoin = text; else _s.HotkeySwitch = text;
+        SaveSettings();
+        UpdateQuickInfo();
+        UpdateRejoinBtn();
+        Log.Info($"{(rejoin ? "Change IP and rejoin" : "Switch")} hotkey: {text}.");
+    }
+
+    // ------------------------------------------------------------ Steam Web API key: hidden unless you ask (never while Hide logins is on)
+
+    void ApiKeyShow_Click(object sender, RoutedEventArgs e) => ShowApiKey(ApiKeyBox.Visibility != Visibility.Visible);
+
+    void ShowApiKey(bool show)
+    {
+        show &= !_s.StreamerMode;
+        // The two boxes always hold the same key; only one is on screen.
+        if (show) ApiKeyBox.Text = ApiKeyPwd.Password; else ApiKeyPwd.Password = ApiKeyBox.Text;
+        ApiKeyBox.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        ApiKeyPwd.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
+        ApiKeyShowBtn.Content = show ? "Hide" : "Show";
+        ApiKeyShowBtn.IsEnabled = !_s.StreamerMode;
+        ApiKeyShowBtn.ToolTip = _s.StreamerMode ? "Hide logins is on (Accounts): the key stays hidden." : show ? "Hides the key" : "Shows the key";
     }
 
     void SwitchSteps_Click(object sender, RoutedEventArgs e)
@@ -112,5 +168,5 @@ public partial class MainWindow
     }
 
     void OpenData_Click(object sender, RoutedEventArgs e) => Process.Start(new ProcessStartInfo(Paths.Data) { UseShellExecute = true });
-    void ApiKeyLink_Click(object sender, RoutedEventArgs e) => Process.Start(new ProcessStartInfo("https://steamcommunity.com/dev/apikey") { UseShellExecute = true });
+    void ApiKeyLink_Click(object sender, RoutedEventArgs e) => OpenUrl("https://steamcommunity.com/dev/apikey");
 }

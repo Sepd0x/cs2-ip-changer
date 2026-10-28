@@ -4,7 +4,7 @@ using SRT.Core;
 
 namespace SRT;
 
-// Kick or ban seen in CS2's console, "Change IP and rejoin" (button and Ctrl+Alt+R) and the switch (new IP, next account, rejoin)
+// Kick or ban seen in CS2's console, "Change IP and rejoin" (button and its hotkey) and the switch (new IP, next account, rejoin)
 public partial class MainWindow
 {
     readonly ConsoleTail _cs2Console = new();
@@ -69,8 +69,8 @@ public partial class MainWindow
         if (written >= _cs2StartedAt) return;
         if (DateTime.Now - _cs2StartedAt < TimeSpan.FromSeconds(90) || DateTime.Now - _cs2LogSeenAt < TimeSpan.FromSeconds(60)) return;
         _condebugHinted = true;
-        Log.Warn("CS2 is not writing console.log, so kicks and bans can't be detected. In Steam, add -condebug to CS2's launch options.");
-        Toast("To detect kicks and bans, add -condebug to CS2's launch options in Steam (CS2 > Properties).", false);
+        Log.Warn("CS2 is not writing console.log, so kicks and bans can't be detected. In Steam, add -condebug -conclearlog to CS2's launch options.");
+        Toast("To detect kicks and bans, add -condebug -conclearlog to CS2's launch options in Steam (CS2 > Properties).", false);
     }
 
     void OnKicked(KickKind kind, string line)
@@ -88,11 +88,19 @@ public partial class MainWindow
         _lastKickAt = DateTime.Now;
         System.Media.SystemSounds.Hand.Play();
         var acc = ActiveAccount();
+        if (kind == KickKind.Steam)
+        {
+            // VAC or Steam refused the account: no rejoin offer and no server ban mark, a new IP changes nothing.
+            Log.Warn($"Steam or VAC refused the connection to {_s.LastServer ?? "the server"}" + (acc != null ? $" on {acc.Name}" : "") + ". A new IP won't help. Console: " + Cut(line));
+            Diag.Write("kick", new { kind = "steam", line, server = _s.LastServer });
+            Toast("Steam or VAC refused the connection. A new IP won't help: check the account.", Tone.Error);
+            return;
+        }
         Log.Warn($"You were {what} from {_s.LastServer ?? "the server"}" + (acc != null ? $" on {acc.Name}" : "") + ". Console: " + Cut(line));
         if (kind == KickKind.Ban && _servers.FirstOrDefault(x => x.Key == _s.LastServer) is ServerItem banned && acc != null) MarkServerBan(acc, banned);
         Diag.Write("kick", new { kind = what, line, server = _s.LastServer });
         Toast(_s.LastServer == null ? $"You were {what} from the server."
-            : $"You were {what} from the server. Press Ctrl+Alt+R to change IP and rejoin.", false);
+            : $"You were {what} from the server. Press {_s.HotkeyRejoin} to change IP and rejoin.", false);
         UpdateRejoinBtn();
         if (_s.LastServer != null && Dialog.Visibility != Visibility.Visible && !_changingIp && !_rejoining) _ = OfferRejoin(what);
     }
@@ -114,12 +122,12 @@ public partial class MainWindow
     void MarkServerBan(AccountItem a, ServerItem s)
     {
         a.Meta.ServerBans ??= new();
-        a.Meta.ServerBans[s.Key] = new ServerBan { At = DateTime.Now, Name = s.ServerName };
+        a.Meta.ServerBans[s.Key] = new ServerBan { At = DateTime.Now, Name = s.ServerName, Network = ServerNetwork.Clean(s.Network) };
         a.RefreshAll();
         SaveAccounts();
         ApplyServerBans();
         UpdateQuickInfo();
-        var same = _servers.Count(x => x != s && ServerNetwork.Same(s.Key, s.ServerName, x.Key, x.ServerName));
+        var same = _servers.Count(x => x != s && ServerNetwork.Same(s.Key, s.ServerName, s.Network, x.Key, x.ServerName, x.Network));
         Log.Warn($"{a.Name} marked as banned on {s.Key}" + (same > 0 ? $" and {same} other server(s) of the same network" : "") + ". Switch skips it there.");
         Diag.Write("server-ban", new { steamId = a.SteamId, server = s.Key, name = s.ServerName });
     }
@@ -130,7 +138,7 @@ public partial class MainWindow
         var acc = ActiveAccount();
         foreach (var s in _servers)
         {
-            var b = acc?.BanFor(s.Key, s.ServerName);
+            var b = acc?.BanFor(s.Key, s.ServerName, s.Network);
             s.BannedText = b == null ? null : b.Value.Key == s.Key ? $"Banned here ({acc.Name})" : $"Banned on this network ({acc.Name})";
         }
     }
@@ -148,7 +156,7 @@ public partial class MainWindow
         if ((sender as FrameworkElement)?.DataContext is not ServerItem s) return;
         foreach (var a in _accounts)
         {
-            if (a.BanFor(s.Key, s.ServerName) is not { } b) continue;
+            if (a.BanFor(s.Key, s.ServerName, s.Network) is not { } b) continue;
             a.Meta.ServerBans.Remove(b.Key);
             if (a.Meta.ServerBans.Count == 0) a.Meta.ServerBans = null;
             a.RefreshAll();
@@ -159,16 +167,39 @@ public partial class MainWindow
         Toast($"Ban marks cleared on {s.Title}.", true);
     }
 
+    /// <summary>Puts a server in a community by hand: servers with the same name share ban marks. Empty goes back to the name tag.</summary>
+    async void SrvNetwork_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not ServerItem s) return;
+        var known = _servers.Select(x => x.Network).Where(n => n != null).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n).ToList();
+        DialogInput.Text = s.Network ?? "";
+        DialogInput.Tag = known.Count > 0 ? "E.g. " + string.Join(", ", known.Take(3)) : "E.g. EXAMPLE.GG, MY COMMUNITY";
+        var guess = ServerNetwork.Tag(s.ServerName);
+        if (!await Ask($"Community of {s.Title}", "Servers with the same community name share ban marks: a ban on one counts on all of them, and Switch skips that account there.\n\n"
+                + (guess != null ? $"Empty: the app uses the tag from the server name ({guess})." : "Empty: the app guesses from the server name (none found for this one)."),
+                "Save", "Cancel", inputs: 1, label1: "Community name")) return;
+        s.Network = ServerNetwork.Clean(DialogInput.Text);
+        // Ban marks already on this server take the new name too.
+        foreach (var a in _accounts)
+            if (a.Meta.ServerBans?.TryGetValue(s.Key, out var b) == true && b != null) { b.Network = s.Network; a.RefreshAll(); }
+        SaveServers();
+        SaveAccounts();
+        ApplyServerBans();
+        UpdateQuickInfo();
+        Log.Info(s.Network == null ? $"{s.Key}: community from the server name again." : $"{s.Key}: community set to {s.Network}.");
+        Toast(s.Network == null ? $"{s.Title} uses the tag from its name again." : $"{s.Title} is now in the community {s.Network}.", true);
+    }
+
     void UpdateRejoinBtn()
     {
         RejoinBtn.IsEnabled = !_changingIp && !_rejoining && _s.LastServer != null && _phone?.Ready == true;
         RejoinBtn.ToolTip = (_s.LastServer == null ? "Join a server from Servers first. " : $"Changes the IP, then joins {_s.LastServer} again. ")
-            + "Only joins with protection confirmed. In game: Ctrl+Alt+R.";
+            + $"Only joins with protection confirmed. In game: {_s.HotkeyRejoin}.";
 
     }
 
 
-    /// <summary>What a switch does. Switch (Ctrl+Alt+Q) takes the steps from Settings; Ctrl+Alt+R is new IP, same account, rejoin.</summary>
+    /// <summary>What a switch does. Switch (button and hotkey) takes the steps from Settings; the rejoin hotkey is new IP, same account, rejoin.</summary>
     readonly record struct SwitchSteps(bool Ip, bool Account, bool Rejoin, bool OpenWith);
 
     SwitchSteps SwitchChoice => new(_s.SwitchIp, _s.SwitchAccount, _s.SwitchRejoin, _s.SwitchOpenWith);
@@ -212,6 +243,6 @@ public partial class MainWindow
 
     async void Rejoin_Click(object sender, RoutedEventArgs e) => await ChangeIpAndRejoin("Button");
 
-    /// <summary>Ctrl+Alt+R and the button: new IP, same account, back to the last server (with all the usual checks).</summary>
+    /// <summary>The rejoin hotkey and the button: new IP, same account, back to the last server (with all the usual checks).</summary>
     Task ChangeIpAndRejoin(string from) => RunCommand("Change IP and rejoin", "starting…", () => RunSwitch(new SwitchSteps(true, false, true, true), from));
 }

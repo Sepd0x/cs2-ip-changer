@@ -123,7 +123,7 @@ public partial class MainWindow
 
     async void AdbInstall_Click(object sender, RoutedEventArgs e)
     {
-        var ok = await Ask("Install ADB", "Download Google's official platform-tools (about 7 MB) from dl.google.com into the app's data folder? You only need to do this once.", "Download");
+        var ok = await Ask("Install ADB", "Download Google's official platform-tools (about 7 MB) from dl.google.com into the app's data folder? You only need to do this once." + MobileDataNote(), "Download");
         if (!ok) return;
         AdbInstallBtn.IsEnabled = false;
         ShowProgress("Downloading ADB from Google…");
@@ -165,9 +165,11 @@ public partial class MainWindow
     {
         if (_changingIp) return false;
         if (_demo) { Toast("Demo: IP changed.", true); return false; }
-        if (_last?.Egress != null && !_last.Egress.IsPhone)
+        // USB tethering, or the phone's hotspot (saved by name) with the cable plugged in only for ADB.
+        var hotspot = _last?.Egress is { IsWifi: true } && !string.IsNullOrEmpty(_s.EgressSsid);
+        if (_last?.Egress != null && !_last.Egress.IsPhone && !hotspot)
         {
-            Toast("The chosen connection is not a phone: the Change IP button only works with a phone over ADB.", false);
+            Toast("The chosen connection is not a phone: the Change IP button only works with a phone over ADB (USB tethering, or its hotspot with the cable plugged in).", false);
             return false;
         }
         if (_adb == null || _phone?.Ready != true)
@@ -191,7 +193,8 @@ public partial class MainWindow
         Diag.Write("change-ip", new { from = first });
         try
         {
-            if (_phone.WifiOn)
+            // On the hotspot the phone's Wi-Fi is left alone: on some phones turning it off also stops the hotspot.
+            if (_phone.WifiOn && !hotspot)
             {
                 ShowProgress("The phone's Wi-Fi is on: turning it off to use mobile data…");
                 await TurnPhoneWifiOff();
@@ -207,10 +210,11 @@ public partial class MainWindow
                 got = await WaitForEgressIp(TimeSpan.FromSeconds(50));
                 if (got == null) { ShowProgress("The network hasn't come back yet…"); continue; }
                 if (got == first) { Log.Info($"The carrier gave back the same IP ({got})."); continue; }
-                // Many admins ban the whole range: optionally keep going until the /16 is different too.
-                if (_s.RequireNew16 && first != null && IpRange.Same16(got, first) && attempt < _s.MaxAttempts)
+                // Many admins ban the whole range: optionally keep going until the /16 is new, against every earlier IP
+                // (the same list the range note after the change uses).
+                if (_s.RequireNew16 && attempt < _s.MaxAttempts && IpRange.FirstSame16(got, _history.Select(h => h.Ip).Append(first).Where(x => x != null)) is string seen)
                 {
-                    Log.Info($"New IP {got} is in the same /16 as {first}: trying again.");
+                    Log.Info($"New IP {got} is in the same /16 as {seen}: trying again.");
                     continue;
                 }
                 break;

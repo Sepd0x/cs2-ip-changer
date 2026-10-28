@@ -43,8 +43,41 @@ public sealed class VdfNode
         }
     }
 
-    static string Token(string t, ref int p)
+    static string Token(string t, ref int p) => Token(t, ref p, out _, out _);
+
+    /// <summary>
+    /// True if writing the parsed file gives back the same tokens, quoted text as it was (escapes included).
+    /// False on anything this parser doesn't keep: unquoted words (#include, [$WIN32] conditions), stray braces, escapes it would drop.
+    /// </summary>
+    public static bool RoundTrips(string text)
     {
+        try
+        {
+            var before = Tokens(text);
+            if (before == null) return false;
+            var after = Tokens(Parse(text).Write());
+            return after != null && before.SequenceEqual(after);
+        }
+        catch { return false; }
+    }
+
+    /// <summary>Raw tokens; null if one is a bare word (Steam quotes every key and value).</summary>
+    static List<string> Tokens(string t)
+    {
+        var list = new List<string>();
+        var p = 0;
+        while (Token(t, ref p, out var quoted, out var raw) is string tok)
+        {
+            if (!quoted && tok != "{" && tok != "}") return null;
+            list.Add(quoted ? "\"" + raw + "\"" : tok);
+        }
+        return list;
+    }
+
+    static string Token(string t, ref int p, out bool quoted, out string raw)
+    {
+        quoted = false;
+        raw = null;
         while (p < t.Length)
         {
             if (char.IsWhiteSpace(t[p])) { p++; continue; }
@@ -56,12 +89,15 @@ public sealed class VdfNode
         if (t[p] == '"')
         {
             p++;
+            var start = p;
             var sb = new StringBuilder();
             while (p < t.Length && t[p] != '"')
             {
                 if (t[p] == '\\' && p + 1 < t.Length) { sb.Append(t[p + 1]); p += 2; continue; }
                 sb.Append(t[p++]);
             }
+            quoted = true;
+            raw = t[start..Math.Min(p, t.Length)];
             p++;
             return sb.ToString();
         }

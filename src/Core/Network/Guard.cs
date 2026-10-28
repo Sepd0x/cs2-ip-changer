@@ -15,7 +15,13 @@ public sealed class GuardReport
     public bool? Cs2LockOk { get; init; }
     public Dictionary<string, bool> RouteOk { get; init; } = new();
     public string EffectiveMode { get; init; }
+    /// <summary>Whole PC: the routes, DNS and IPv6 rules are all confirmed.</summary>
     public bool FullModeOk { get; init; }
+    /// <summary>Whole PC: Windows sends the rest of the PC's IPv4 through the protected connection.</summary>
+    public bool FullRoutesOk { get; init; }
+    /// <summary>Whole PC: DNS only leaves through the protected connection, and IPv6 is blocked (null = not in whole PC mode).</summary>
+    public bool? DnsOk { get; init; }
+    public bool? Ipv6Ok { get; init; }
     public string PcDefaultName { get; init; }
     public bool PcDefaultIsEgress { get; init; }
     public int PcDefaultIndex { get; init; }
@@ -30,6 +36,8 @@ public sealed class GuardReport
     /// <summary>steam.exe talks to Valve through the protected connection (null = Steam closed or not connected).</summary>
     public bool? SteamOnEgress { get; init; }
     public bool AllRoutesOk => RouteOk.Count > 0 && RouteOk.Values.All(v => v);
+    /// <summary>There is a home connection (another active adapter with a gateway, not the candidate and not a phone) whose IP can be compared.</summary>
+    public bool HasHome { get; init; }
 }
 
 /// <summary>
@@ -113,25 +121,45 @@ public sealed class Guard
 
         // 1) Firewall first: there is never a moment when a server is reachable with the home IP.
         var killOk = false;
-        bool? cs2Ok = null;
+        bool? cs2Ok = null, dnsOk = null, ipv6Ok = null;
+        // Whole PC moves only IPv4 with the routes: DNS to the home router (a directly connected network) and IPv6 would
+        // still leave from home. So DNS may only leave from the protected connection, and IPv6 is blocked everywhere.
+        var full = mode == "all" && egress?.Gateway != null ? FullModeRules(egress.LocalIp) : null;
         if (fwProblem == null)
         {
             var allow = egress?.LocalIp;
-            var sig = string.Join(",", ips.OrderBy(i => i)) + "|" + allow + "|" + candidate?.LocalIp + "|" + cs2;
-            if (force || sig != _fwSignature || !Firewall.Verify(Firewall.RuleName, ips, allow) || (cs2 != null && !Firewall.Verify(Firewall.Cs2RuleName, null, allow, cs2)))
+            var sig = string.Join(",", ips.OrderBy(i => i)) + "|" + allow + "|" + candidate?.LocalIp + "|" + cs2 + "|" + (full != null);
+            var echoOk = false;
+            // Every rule read back once per sync (and again only after they are rewritten).
+            void ReadBack()
+            {
+                killOk = Firewall.Verify(Firewall.RuleName, ips, allow);
+                echoOk = Firewall.Verify(Firewall.EchoRuleName, new[] { Net.EchoIp }, candidate?.LocalIp, Environment.ProcessPath);
+                cs2Ok = cs2 != null ? Firewall.Verify(Firewall.Cs2RuleName, null, allow, cs2) : null;
+                dnsOk = full != null ? Firewall.Verify(full[0]) && Firewall.Verify(full[1]) : null;
+                ipv6Ok = full != null ? Firewall.Verify(full[2]) : null;
+            }
+            ReadBack();
+            if (force || sig != _fwSignature || !killOk || !echoOk || cs2Ok == false || dnsOk == false || ipv6Ok == false)
             {
                 // Each rule on its own: one failing must not leave the others on an old allowed IP.
                 Try(() => Firewall.Apply(Firewall.RuleName, ips, null, allow, "Managed by CS2 IP Changer. Servers in the list can only be reached from the local IP of the protected connection."));
-                Try(() => Firewall.Apply(Firewall.EchoRuleName, new[] { Net.EchoIp }, null, candidate?.LocalIp, "Managed by CS2 IP Changer. Makes sure the IP test measures the protected connection."));
+                // Only the app's own IP test: other programs (1.0.0.1 is also a public DNS server) are left alone.
+                Try(() => Firewall.Apply(Firewall.EchoRuleName, new[] { Net.EchoIp }, Environment.ProcessPath, candidate?.LocalIp, "Managed by CS2 IP Changer. Makes sure the app's IP test measures the protected connection."));
                 if (cs2 != null) Try(() => Firewall.Apply(Firewall.Cs2RuleName, null, cs2, allow, "Managed by CS2 IP Changer. CS2 can only go out through the protected connection: servers not in the list never see your home IP."));
                 else Firewall.Remove(Firewall.Cs2RuleName);
+                if (full != null) foreach (var r in full) Try(() => Firewall.Apply(r));
+                else foreach (var n in FullModeRuleNames) Firewall.Remove(n);
                 _fwSignature = sig;
                 Log.Info(egress == null
                     ? "Kill switch: servers in the list" + (cs2 != null ? " and CS2" : "") + " blocked (no connection)."
                     : $"Kill switch: servers in the list" + (cs2 != null ? " and CS2" : "") + $" only go out through \"{egress.Name}\" ({egress.LocalIp}).");
+                ReadBack();
             }
-            killOk = Firewall.Verify(Firewall.RuleName, ips, allow);
-            if (cs2 != null) cs2Ok = Firewall.Verify(Firewall.Cs2RuleName, null, allow, cs2);
+            if (dnsOk == false && _warned.Add("dns")) Log.Warn("Whole PC: the DNS rule was not confirmed, so name lookups may still go to the home router.");
+            if (ipv6Ok == false && _warned.Add("ipv6")) Log.Warn("Whole PC: the IPv6 block was not confirmed, so sites over IPv6 may still see your home connection.");
+            if (dnsOk == true) _warned.Remove("dns");
+            if (ipv6Ok == true) _warned.Remove("ipv6");
 
             if (!s.LegacyCleaned)
             {
@@ -144,13 +172,15 @@ public sealed class Guard
         // 2) /32 routes: the IP test always goes through the candidate; servers only through the trusted connection.
         if (candidate != null) await EnsureRoutes(new List<string> { Net.EchoIp }, candidate, adapters);
         var routeOk = new Dictionary<string, bool>();
+        // Also before the phone is trusted: with the rest of the PC on the home network, the home IP can be read and compared.
+        var offPc = egress ?? candidate;
+        if (offPc != null && s.KeepPcOffPhone && mode == "servers" && (offPc.IsPhone || offPc.IsWifi) && _metricAppliedTo != offPc.Index && HasOtherInternet(adapters, offPc))
+        {
+            var r = await Net.SetInterfaceMetric(offPc.Index, 900);
+            if (r.Ok) { _metricAppliedTo = offPc.Index; SaveOwned(); Log.Info("The PC keeps using the home network; only the game goes through the phone."); }
+        }
         if (egress != null)
         {
-            if (s.KeepPcOffPhone && mode == "servers" && (egress.IsPhone || egress.IsWifi) && _metricAppliedTo != egress.Index && HasOtherInternet(adapters, egress))
-            {
-                var r = await Net.SetInterfaceMetric(egress.Index, 900);
-                if (r.Ok) { _metricAppliedTo = egress.Index; SaveOwned(); Log.Info("The PC keeps using the home network; only the game goes through the phone."); }
-            }
             await EnsureRoutes(ips, egress, adapters);
             foreach (var ip in ips)
             {
@@ -206,15 +236,32 @@ public sealed class Guard
             Cs2LockOk = cs2Ok,
             RouteOk = routeOk,
             EffectiveMode = mode,
-            FullModeOk = fullOk,
+            FullModeOk = fullOk && dnsOk == true && ipv6Ok == true,
+            FullRoutesOk = fullOk,
+            DnsOk = dnsOk,
+            Ipv6Ok = ipv6Ok,
             PcDefaultName = pc?.Name ?? "—",
             PcDefaultIsEgress = egress != null && pcIdx == egress.Index,
             PcDefaultIndex = pcIdx,
             SteamRoutesOk = steamRoutesOk,
             Steam = steam,
             SteamOnEgress = steamOnEgress,
+            HasHome = adapters.Any(a => a.Up && a.Gateway != null && a.Index != candidate?.Index && !a.IsPhone),
         };
     }
+
+    static readonly string[] FullModeRuleNames = { Firewall.DnsUdpRuleName, Firewall.DnsTcpRuleName, Firewall.Ipv6RuleName };
+
+    /// <summary>DNS (UDP and TCP 53) only from the protected connection's local IP; all outbound IPv6 blocked.</summary>
+    static Firewall.FwRule[] FullModeRules(string allowLocalIp) => new[]
+    {
+        new Firewall.FwRule(Firewall.DnsUdpRuleName, null, null, allowLocalIp, "Managed by CS2 IP Changer. Whole PC mode: DNS only goes out through the protected connection.",
+            Firewall.NET_FW_IP_PROTOCOL_UDP, "53"),
+        new Firewall.FwRule(Firewall.DnsTcpRuleName, null, null, allowLocalIp, "Managed by CS2 IP Changer. Whole PC mode: DNS only goes out through the protected connection.",
+            Firewall.NET_FW_IP_PROTOCOL_TCP, "53"),
+        new Firewall.FwRule(Firewall.Ipv6RuleName, null, null, null, "Managed by CS2 IP Changer. Whole PC mode: the routes only move IPv4, so IPv6 is blocked (Windows falls back to IPv4).",
+            LocalAddresses: Firewall.AllIpv6),
+    };
 
     static void Try(Action a)
     {

@@ -16,7 +16,7 @@ public partial class MainWindow
     /// <summary>
     /// After a crash inside a server, that server keeps the old session. About 3 to 4 min later Steam
     /// tells it the session is over and it kicks the account with "No Steam logon", even if you already rejoined
-    /// (Oct 27: rejoining 2 min later got a kick; 3 min 25 s later did not). Until this time, don't return to the same server.
+    /// (measured: rejoining 2 min later got the kick; 3 min 25 s later did not). Until this time, don't return to the same server.
     /// </summary>
     static readonly TimeSpan AfterCrashWait = TimeSpan.FromMinutes(5);
     DateTime? _cs2CrashAt;

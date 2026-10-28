@@ -16,13 +16,24 @@ public static class Firewall
     public const string RuleName = "ServerRouteTool v9 - kill switch";
     public const string EchoRuleName = "ServerRouteTool v9 - teste de IP";
     public const string Cs2RuleName = "ServerRouteTool v9 - CS2 so pela saida";
+    // Whole PC mode: DNS only through the protected connection, and no IPv6 at all (the routes only move IPv4).
+    public const string DnsUdpRuleName = "ServerRouteTool v9 - DNS UDP so pela saida";
+    public const string DnsTcpRuleName = "ServerRouteTool v9 - DNS TCP so pela saida";
+    public const string Ipv6RuleName = "ServerRouteTool v9 - IPv6 bloqueado";
 
     const int NET_FW_RULE_DIR_OUT = 2;
     const int NET_FW_ACTION_BLOCK = 0;
-    const int NET_FW_IP_PROTOCOL_ANY = 256;
+    public const int NET_FW_IP_PROTOCOL_ANY = 256, NET_FW_IP_PROTOCOL_TCP = 6, NET_FW_IP_PROTOCOL_UDP = 17;
     const int NET_FW_PROFILE2_ALL = 0x7FFFFFFF;
     const int ERROR_FILE_NOT_FOUND = unchecked((int)0x80070002);
-    const string AllIpv6 = "::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+    public const string AllIpv6 = "::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff";
+
+    /// <summary>
+    /// One outbound block rule. <see cref="RemoteIps"/> null = any destination; <see cref="Program"/> null = any program;
+    /// <see cref="AllowLocalIp"/> null = blocks every source. <see cref="LocalAddresses"/>, when given, is the exact source list instead.
+    /// </summary>
+    public sealed record FwRule(string Name, IReadOnlyCollection<string> RemoteIps, string Program, string AllowLocalIp, string Description,
+        int Protocol = NET_FW_IP_PROTOCOL_ANY, string RemotePorts = null, string LocalAddresses = null);
 
     static object Policy() => Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwPolicy2", true));
 
@@ -94,23 +105,29 @@ public static class Firewall
     /// <paramref name="program"/> null = any program; <paramref name="allowLocalIp"/> null = blocks everything.
     /// The new rule goes in under a temporary name before the old one is removed, so there is never a moment without a block.
     /// </summary>
-    public static void Apply(string name, IReadOnlyCollection<string> remoteIps, string program, string allowLocalIp, string description)
+    public static void Apply(string name, IReadOnlyCollection<string> remoteIps, string program, string allowLocalIp, string description) =>
+        Apply(new FwRule(name, remoteIps, program, allowLocalIp, description));
+
+    public static void Apply(FwRule r)
     {
+        var name = r.Name;
         var rules = Get(Policy(), "Rules");
-        if (remoteIps != null && remoteIps.Count == 0) { RemoveAllNamed(rules, name); return; }
+        if (r.RemoteIps != null && r.RemoteIps.Count == 0) { RemoveAllNamed(rules, name); return; }
 
         // A unique temporary name: if the rename at the end ever fails, that rule keeps blocking until the next Apply.
         var temp = $"{name} (updating {Guid.NewGuid():N})"[..(name.Length + 20)] + ")";
         var rule = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FWRule", true));
         SetP(rule, "Name", temp);
-        SetP(rule, "Description", description);
+        SetP(rule, "Description", r.Description);
         SetP(rule, "Grouping", "ServerRouteTool");
         SetP(rule, "Direction", NET_FW_RULE_DIR_OUT);
         SetP(rule, "Action", NET_FW_ACTION_BLOCK);
-        SetP(rule, "Protocol", NET_FW_IP_PROTOCOL_ANY);
-        if (program != null) SetP(rule, "ApplicationName", program);
-        if (remoteIps != null) SetP(rule, "RemoteAddresses", string.Join(",", remoteIps));
-        if (allowLocalIp != null) SetP(rule, "LocalAddresses", AllExcept(allowLocalIp));
+        SetP(rule, "Protocol", r.Protocol);   // before the ports: COM refuses ports on "any protocol"
+        if (r.RemotePorts != null) SetP(rule, "RemotePorts", r.RemotePorts);
+        if (r.Program != null) SetP(rule, "ApplicationName", r.Program);
+        if (r.RemoteIps != null) SetP(rule, "RemoteAddresses", string.Join(",", r.RemoteIps));
+        if (r.LocalAddresses != null) SetP(rule, "LocalAddresses", r.LocalAddresses);
+        else if (r.AllowLocalIp != null) SetP(rule, "LocalAddresses", AllExcept(r.AllowLocalIp));
         SetP(rule, "Profiles", NET_FW_PROFILE2_ALL);
         SetP(rule, "Enabled", true);
         Call(rules, "Add", rule);
@@ -133,11 +150,15 @@ public static class Firewall
 
     /// <summary>
     /// Reads the rule back and compares every field that matters with what <see cref="Apply"/> sets:
-    /// outbound, block, any protocol and port, every profile and interface, the program, the destinations,
-    /// and a source filter that blocks every local IPv4 and IPv6 address except the allowed one.
+    /// outbound, block, the protocol and ports, every profile and interface, the program, the destinations,
+    /// and a source filter that blocks every local IPv4 and IPv6 address except the allowed one (or the exact list asked for).
     /// </summary>
-    public static bool Verify(string name, IReadOnlyCollection<string> remoteIps, string allowLocalIp, string program = null)
+    public static bool Verify(string name, IReadOnlyCollection<string> remoteIps, string allowLocalIp, string program = null) =>
+        Verify(new FwRule(name, remoteIps, program, allowLocalIp, null));
+
+    public static bool Verify(FwRule r)
     {
+        var (name, remoteIps, allowLocalIp, program) = (r.Name, r.RemoteIps, r.AllowLocalIp, r.Program);
         try
         {
             var rules = Get(Policy(), "Rules");
@@ -146,7 +167,14 @@ public static class Firewall
             if (CountNamed(rules, name) != 1) return false;
             if (!(bool)Get(rule, "Enabled") || (int)Get(rule, "Action") != NET_FW_ACTION_BLOCK) return false;
             if ((int)Get(rule, "Direction") != NET_FW_RULE_DIR_OUT) return false;
-            if ((int)Get(rule, "Protocol") != NET_FW_IP_PROTOCOL_ANY) return false;
+            if ((int)Get(rule, "Protocol") != r.Protocol) return false;
+            if (r.Protocol is NET_FW_IP_PROTOCOL_TCP or NET_FW_IP_PROTOCOL_UDP)
+            {
+                // A port added by hand on either side would only block part of the traffic.
+                if (!IsAny((string)Get(rule, "LocalPorts"), "*")) return false;
+                var ports = (string)Get(rule, "RemotePorts");
+                if (r.RemotePorts == null ? !IsAny(ports, "*") : ports?.Replace(" ", "") != r.RemotePorts) return false;
+            }
             if (((int)Get(rule, "Profiles") & 7) != 7) return false;
             if (!IsAny((string)Get(rule, "InterfaceTypes"), "All")) return false;
             if (Get(rule, "Interfaces") is Array ifs && ifs.Length > 0) return false;
@@ -165,6 +193,8 @@ public static class Firewall
             }
 
             var local = (string)Get(rule, "LocalAddresses") ?? "*";
+            if (r.LocalAddresses == AllIpv6) return CoversAllIpv6(local);
+            if (r.LocalAddresses != null) return string.Equals(local, r.LocalAddresses, StringComparison.OrdinalIgnoreCase);
             if (allowLocalIp == null) return IsAny(local, "*");
             return CoversAllExcept(local, allowLocalIp);
         }
@@ -219,14 +249,7 @@ public static class Firewall
         {
             var part = raw.Trim();
             if (part.Length == 0) continue;
-            if (part == "::/0") { v6All = true; continue; }
-            if (part.Contains(':'))
-            {
-                var e6 = part.Split('-');
-                if (e6.Length == 2 && IPAddress.TryParse(e6[0], out var l6) && IPAddress.TryParse(e6[1], out var h6) &&
-                    l6.Equals(IPAddress.IPv6Any) && h6.Equals(IPAddress.Parse("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"))) v6All = true;
-                continue;
-            }
+            if (part.Contains(':')) { v6All |= IsAllIpv6(part); continue; }
             var ends = part.Split('-');
             if (ends.Length == 2 && IPAddress.TryParse(ends[0], out var lo) && IPAddress.TryParse(ends[1], out var hi))
                 v4.Add((ToUInt(lo), ToUInt(hi)));
@@ -253,6 +276,17 @@ public static class Firewall
         return next == (ulong)a ? a == uint.MaxValue : next >= 1UL << 32;
     }
 
+    /// <summary>True if the source list blocks all of IPv6 ("::/0" or the full range, however Windows writes it).</summary>
+    public static bool CoversAllIpv6(string local) => (local ?? "").Split(',').Any(p => IsAllIpv6(p.Trim()));
+
+    static bool IsAllIpv6(string part)
+    {
+        if (part == "::/0") return true;
+        var e6 = part.Split('-');
+        return e6.Length == 2 && IPAddress.TryParse(e6[0], out var l6) && IPAddress.TryParse(e6[1], out var h6) &&
+            l6.Equals(IPAddress.IPv6Any) && h6.Equals(IPAddress.Parse("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"));
+    }
+
     public static void Remove(string name = RuleName)
     {
         try { var rules = Get(Policy(), "Rules"); RemoveAllNamed(rules, name); RemoveTemps(rules, name); }
@@ -261,7 +295,7 @@ public static class Firewall
 
     public static void RemoveAll()
     {
-        foreach (var n in new[] { RuleName, EchoRuleName, Cs2RuleName }) Remove(n);
+        foreach (var n in new[] { RuleName, EchoRuleName, Cs2RuleName, DnsUdpRuleName, DnsTcpRuleName, Ipv6RuleName }) Remove(n);
     }
 
     /// <summary>Names of the app's rules still in the Firewall (current ones and leftovers of an interrupted update).</summary>

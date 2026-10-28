@@ -120,14 +120,17 @@ public static partial class Net
         lock (InfoCache) if (InfoCache.TryGetValue(ip, out var c)) return c;
         try
         {
+            // HTTPS only: the home IP and the phone's IP don't travel in the clear.
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(6) };
-            var json = await http.GetStringAsync($"http://ip-api.com/json/{ip}?fields=status,country,city,isp,mobile,proxy");
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("CS2IPChanger/0.1");
+            var json = await http.GetStringAsync($"https://ipwho.is/{ip}");
             using var doc = JsonDocument.Parse(json);
             var r = doc.RootElement;
-            if (r.GetProperty("status").GetString() != "success") return null;
-            var info = new IpInfo(
-                r.GetProperty("isp").GetString(), r.GetProperty("city").GetString(), r.GetProperty("country").GetString(),
-                r.GetProperty("mobile").GetBoolean(), r.GetProperty("proxy").GetBoolean());
+            if (!r.TryGetProperty("success", out var ok) || ok.ValueKind != JsonValueKind.True) return null;
+            static string S(JsonElement e, string name) => e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
+            var conn = r.TryGetProperty("connection", out var c) ? c : default;
+            var isp = S(conn, "isp");
+            var info = new IpInfo(string.IsNullOrWhiteSpace(isp) ? S(conn, "org") : isp, S(r, "city"), S(r, "country"), false, false);
             lock (InfoCache) InfoCache[ip] = info;
             return info;
         }

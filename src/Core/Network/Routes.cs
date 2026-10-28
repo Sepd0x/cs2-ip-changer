@@ -34,8 +34,8 @@ public static partial class Net
     {
         var hop = via.Gateway ?? "0.0.0.0";
         var r = await Proc.Run("netsh", $"interface ipv4 add route prefix={prefix} interface={via.Index} nexthop={hop} metric={metric} store=active");
-        // "Already exists" (the regex also matches the Portuguese Windows text) counts as success: the real check comes next.
-        if (!r.Ok && Regex.IsMatch(r.Output, "exist|existe", RegexOptions.IgnoreCase)) return new ProcResult(0, r.Output);
+        // "Already exists" counts as success. netsh says it in the Windows language, so the route table is read instead of the text.
+        if (!r.Ok && (await ListRoutes()).Any(rt => rt.Prefix == prefix && rt.Index == via.Index && (via.Gateway == null || rt.NextHop == hop))) return new ProcResult(0, r.Output);
         return r;
     }
 

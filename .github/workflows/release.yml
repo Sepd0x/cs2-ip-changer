@@ -53,6 +53,9 @@ jobs:
           }
           "version=$version" >> $env:GITHUB_OUTPUT
 
+      - name: Run the tests
+        run: dotnet run --project tests/Tests.csproj -c Debug
+
       - name: Publish
         run: dotnet publish src/ServerRouteTool.csproj -c Release -o out
 

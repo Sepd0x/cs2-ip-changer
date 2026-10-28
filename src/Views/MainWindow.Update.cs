@@ -78,7 +78,8 @@ public partial class MainWindow
                 return;
             }
             HideProgress();
-            if (!await Ask("Update CS2 IP Changer", $"Download version {r.Version} from GitHub, check its SHA-256 and restart the app?\n\nProtection stays on while it restarts. If you're in a server, you'll drop for a few seconds while the new version checks the phone's IP.", "Update")) return;
+            var size = r.Size > 0 ? $" (about {Math.Max(1, (r.Size + 500_000) / 1_000_000)} MB)" : "";
+            if (!await Ask("Update CS2 IP Changer", $"Download version {r.Version}{size} from GitHub, check its SHA-256 and restart the app?{MobileDataNote()}\n\nProtection stays on while it restarts. If you're in a server, you'll drop for a few seconds while the new version checks the phone's IP.", "Update")) return;
             ShowProgress("Downloading the update…");
             var sha = await Updater.Download(r, new Progress<string>(t => ProgressText.Text = t));
             Log.Ok($"Update {r.Version} downloaded, SHA-256 matches ({sha[..12]}…). Restarting.");
@@ -94,6 +95,9 @@ public partial class MainWindow
         }
         finally { HideProgress(); _updating = false; UpdateBtn.IsEnabled = true; }
     }
+
+    /// <summary>For a download question: a warning when the rest of the PC goes out through the phone right now.</summary>
+    string MobileDataNote() => _last?.PcDefaultIsEgress == true ? "\n\nThis download goes through the phone's mobile data." : "";
 
     /// <summary>Frees the hotkeys and the single-instance lock for the new copy. The rules stay: protection doesn't drop.</summary>
     void PrepareExitForUpdate()
@@ -111,8 +115,10 @@ public partial class MainWindow
         Toast($"Updated to {AppInfo.Version}.", true);
     }
 
+    /// <summary>Opens a web page in the browser as the signed-in user (a browser started by the app would have admin rights).</summary>
     static void OpenUrl(string url)
     {
+        if (ShellLaunch.OpenAsUser(url, "", null) == null) return;
         try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
     }
 

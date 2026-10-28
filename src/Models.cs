@@ -36,7 +36,10 @@ public sealed partial class Settings
     public DateTime? LastServerAt { get; set; }
     public string AccountSort { get; set; } = "recent";
     public bool AutoJoinFollowed { get; set; }            // a followed player moves to another server in the list: join it
-    public bool SwitchIp { get; set; } = true;            // Switch (Ctrl+Alt+Q): change the IP first
+    public string HotkeySwitch { get; set; } = DefaultHotkeySwitch;   // global hotkey for Switch (never Ctrl+Alt: that is AltGr)
+    public string HotkeyRejoin { get; set; } = DefaultHotkeyRejoin;   // global hotkey for Change IP and rejoin
+    public const string DefaultHotkeySwitch = "Ctrl+Shift+F9", DefaultHotkeyRejoin = "Ctrl+Shift+F10";
+    public bool SwitchIp { get; set; } = true;            // Switch: change the IP first
     public bool SwitchAccount { get; set; } = true;       // Switch: log in to the next account
     public bool SwitchRejoin { get; set; } = true;        // Switch: join the last server again
     public bool SwitchOpenWith { get; set; } = true;      // Switch: open the "Open with CS2" programs with CS2
@@ -84,6 +87,9 @@ public sealed class ServerItem : Observable
     public string Ip { get; set; }
     public int Port { get; set; }
     public string Label { get; set; }
+    string _network;
+    /// <summary>Community name you set by hand: servers with the same one share bans (null = from the name tag).</summary>
+    public string Network { get => _network; set { if (Set(ref _network, value)) Raise(nameof(Tip)); } }
     bool _fav;
     public bool Favorite { get => _fav; set { if (Set(ref _fav, value)) Raise(nameof(StarGlyph)); } }
 
@@ -154,7 +160,7 @@ public sealed class ServerItem : Observable
     {
         get
         {
-            var head = $"{Key}\nDouble-click to join through Steam.";
+            var head = $"{Key}" + (Network != null ? $" · community {Network}" : "") + "\nDouble-click to join through Steam.";
             if (Players is not { Count: > 0 }) return head;
             return head + "\nClick the player count to see who is on.\n\nPlayers now:\n" + string.Join("\n", Players.Take(24).Select(p => p.Name)) + (Players.Count > 24 ? "\n…" : "");
         }
@@ -237,11 +243,12 @@ public sealed class AccountMeta
     public SteamProfile Profile { get; set; }
 }
 
-/// <summary>A ban by a community server. The name keeps the network tag, so the ban also counts on the rest of that network.</summary>
+/// <summary>A ban by a community server. The name keeps the network tag (and Network the community name you set), so the ban also counts on the rest of that network.</summary>
 public sealed class ServerBan
 {
     public DateTime At { get; set; }
     public string Name { get; set; }
+    public string Network { get; set; }
 }
 
 public sealed class AccountItem : Observable
@@ -330,18 +337,18 @@ public sealed class AccountItem : Observable
     public string CooldownText => InCooldown ? "Cooldown " + Fmt.Left(Meta.CooldownUntil.Value - DateTime.Now) : null;
     public bool HasServerBans => Meta.ServerBans is { Count: > 0 };
     public string ServerBansText => !HasServerBans ? null : Meta.ServerBans.Count == 1 ? "banned on 1 server" : $"banned on {Meta.ServerBans.Count} servers";
-    /// <summary>The ban that covers this server: on it, or on another server of the same network (same IP or same name tag). Null if none.</summary>
-    public KeyValuePair<string, ServerBan>? BanFor(string key, string name)
+    /// <summary>The ban that covers this server: on it, or on another server of the same network (see <see cref="ServerNetwork.Same"/>). Null if none.</summary>
+    public KeyValuePair<string, ServerBan>? BanFor(string key, string name, string network)
     {
         if (key == null || Meta.ServerBans == null) return null;
         if (Meta.ServerBans.TryGetValue(key, out var direct)) return new(key, direct);
         foreach (var b in Meta.ServerBans)
-            if (ServerNetwork.Same(b.Key, b.Value?.Name, key, name)) return b;
+            if (ServerNetwork.Same(b.Key, b.Value?.Name, b.Value?.Network, key, name, network)) return b;
         return null;
     }
     public string ServerBansTip => !HasServerBans ? null
         : "Banned by these servers (not a Steam ban):\n" + string.Join("\n", Meta.ServerBans.OrderByDescending(b => b.Value?.At).Select(b => $"• {b.Value?.Name ?? b.Key} ({b.Key}), {Fmt.When(b.Value?.At)}"))
-          + "\nIt also counts on servers of the same network (same IP or same name tag). Switch skips this account there. Right-click > Clear server bans to undo.";
+          + "\nIt also counts on servers of the same community (same name tag, or the community name you set on Servers). Switch skips this account there. Right-click > Clear server bans to undo.";
 
     public Brush CardBorder => Active ? Ui.Accent : Ui.Line;
 

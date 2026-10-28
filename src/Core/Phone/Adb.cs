@@ -143,8 +143,13 @@ public static class Adb
         var state = parts[1].Trim();
         if (state != "device") return new PhoneInfo(serial, state, null, null, null, null);
 
-        var q = await Run(adb, $"-s {serial} shell \"getprop ro.product.model; getprop gsm.operator.alpha; getprop gsm.network.type; dumpsys battery | grep -m1 level\"");
-        var lines = q.Output.Split('\n').Select(l => l.Trim()).ToArray();
+        // One shell for everything (it runs every 2 s during a match): model, carrier, network, battery | Wi-Fi on, Wi-Fi network.
+        var q = await Run(adb, $"-s {serial} shell \"getprop ro.product.model; getprop gsm.operator.alpha; getprop gsm.network.type; dumpsys battery | grep -m1 level; " +
+            "echo ---; settings get global wifi_on; cmd wifi status 2>/dev/null | grep -m1 -i 'connected to'\"");
+        var all = q.Output.Replace("\r", "").Split('\n');
+        var cut = Array.FindIndex(all, l => l.Trim() == "---");
+        var lines = (cut >= 0 ? all[..cut] : all).Select(l => l.Trim()).ToArray();
+        var wifiPart = cut >= 0 ? string.Join("\n", all[(cut + 1)..]) : "";
         string L(int i) => i < lines.Length ? lines[i] : null;
         int? battery = null;
         var lv = L(3);
@@ -152,11 +157,10 @@ public static class Adb
         var carrier = L(1)?.Split(',').FirstOrDefault(s => !string.IsNullOrWhiteSpace(s));
         var net = L(2)?.Split(',').FirstOrDefault(s => !string.IsNullOrWhiteSpace(s) && s != "Unknown");
         // Phone Wi-Fi on = tethering shares the home network instead of mobile data.
-        var w = await Run(adb, $"-s {serial} shell \"settings get global wifi_on; cmd wifi status 2>/dev/null | grep -m1 -i 'connected to'\"");
-        var wl = w.Output.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).ToArray();
+        var wl = wifiPart.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).ToArray();
         var wifiOn = wl.Length > 0 && wl[0] != "0" && wl[0] != "null";
         string ssid = null;
-        var m = System.Text.RegularExpressions.Regex.Match(w.Output, "connected to \"?([^\"\r\n]+)\"?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        var m = System.Text.RegularExpressions.Regex.Match(wifiPart, "connected to \"?([^\"\r\n]+)\"?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         if (m.Success) ssid = m.Groups[1].Value.Trim();
         return new PhoneInfo(serial, state, L(0), carrier, PrettyNet(net), battery, wifiOn, ssid);
     }

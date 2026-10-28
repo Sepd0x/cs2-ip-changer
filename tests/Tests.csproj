@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+  <!-- Os testes do Diag só existem na build de desenvolvimento (a pasta Privado fica fora do git) -->
+  <PropertyGroup Condition="Exists('$(MSBuildProjectDirectory)\..\src\Privado')">
+    <DefineConstants>$(DefineConstants);PRIVADO</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\src\ServerRouteTool.csproj" />
+  </ItemGroup>
+</Project>

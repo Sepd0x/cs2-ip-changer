@@ -34,6 +34,7 @@ public partial class MainWindow
             ? "Steam is not installed on this PC."
             : "No saved accounts found.\nLog in to Steam with \"Remember me\" checked, or use Add account.";
         ApplyAccountFilter();
+        if (_s.StreamerMode) RemaskLog();
         Log.Info($"{_accounts.Count} Steam account(s) on this PC.");
     }
 
@@ -98,7 +99,7 @@ public partial class MainWindow
     AccountItem NextQuick(ServerItem server = null)
     {
         var active = _accounts.FirstOrDefault(a => a.Active)?.SteamId;
-        return _accounts.Where(a => a.Usable && a.SteamId != active && a.BanFor(server?.Key, server?.ServerName) == null)
+        return _accounts.Where(a => a.Usable && a.SteamId != active && a.BanFor(server?.Key, server?.ServerName, server?.Network) == null)
             .OrderBy(a => a.Meta.LastUsed ?? DateTime.MinValue)
             .ThenBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase)
             .FirstOrDefault();
@@ -119,7 +120,7 @@ public partial class MainWindow
         var tip = steps.Count == 0 ? "Switch does nothing yet: pick its steps in Settings > Switch."
             : "Switch " + (steps.Count == 1 ? steps[0] : string.Join(", ", steps.Take(steps.Count - 1)) + " and " + steps[^1]) + " (with the usual checks)."
               + (c.Account ? $"\n{pool} account(s) in the rotation (not skipped, no cooldown or ban)." : "")
-              + "\nPick the steps in Settings > Switch. Shortcut anywhere, even in game: Ctrl+Alt+Q.";
+              + $"\nPick the steps in Settings > Switch. Shortcut anywhere, even in game: {_s.HotkeySwitch}.";
         QuickBtn.ToolTip = tip;
         SideQuick.ToolTip = tip;
 
@@ -189,7 +190,7 @@ public partial class MainWindow
                 cs2 = false;
                 Toast("Switched account but did not open CS2: protection is off and CS2 is not locked.", false);
             }
-            var args = string.Join(" ", new[] { _s.SteamSilent ? "-silent" : null, cs2 ? "-applaunch 730 -condebug" : null }.Where(x => x != null));
+            var args = string.Join(" ", new[] { _s.SteamSilent ? "-silent" : null, cs2 ? "-applaunch 730 -condebug -conclearlog" : null }.Where(x => x != null));
             await Steam.SwitchTo(a.Login, a.SteamId, _s.SteamOffline, args);
             if (cs2 && openWith) OpenWithCs2();
             a.Meta.LastUsed = DateTime.Now;
@@ -280,7 +281,7 @@ public partial class MainWindow
     static void OpenUrl(AccountItem a, string fmt)
     {
         if (a == null) return;
-        try { Process.Start(new ProcessStartInfo(string.Format(fmt, a.SteamId)) { UseShellExecute = true }); } catch { }
+        OpenUrl(string.Format(fmt, a.SteamId));
     }
 
     void AccCopyId_Click(object sender, RoutedEventArgs e) { if (Acc(sender) is AccountItem a) { Clipboard.SetText(a.SteamId); Toast("SteamID64 copied.", true); } }
@@ -365,6 +366,8 @@ public partial class MainWindow
         _s.SteamOffline = OptOffline.IsChecked == true;
         _s.StreamerMode = OptStreamer.IsChecked == true;
         foreach (var a in _accounts) a.Streamer = _s.StreamerMode;
+        ShowApiKey(false);
+        RemaskLog();
         SaveSettings();
     }
 }

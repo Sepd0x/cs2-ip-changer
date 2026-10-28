@@ -60,6 +60,7 @@ public partial class MainWindow : Window
 
         Log.Added += e => Dispatcher.BeginInvoke(() =>
         {
+            MaskLog(e);
             _log.Insert(0, e);
             while (_log.Count > 600) _log.RemoveAt(_log.Count - 1);
         });
