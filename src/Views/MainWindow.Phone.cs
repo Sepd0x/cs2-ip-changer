@@ -41,6 +41,8 @@ public partial class MainWindow
         if (info == null) SetPhone(Ui.Bad, "ADB failed to start", "Try reinstalling ADB.");
         else if (info.State == "none") SetPhone(Ui.Faint, "Phone not seen by ADB", "Turn on USB debugging in developer options. See \"Phone setup\".");
         else if (!info.Ready) SetPhone(Ui.Warn, "Waiting for authorization", info.Summary);
+        else if (info.WifiOn && info.WifiConnected == false)
+            SetPhone(Ui.Good, "Ready to change IP", info.Summary + " · Wi-Fi on, not connected (still mobile data)");
         else if (info.WifiOn)
             SetPhone(Ui.Warn, "Phone Wi-Fi is on",
                 (info.WifiSsid != null ? $"Connected to {info.WifiSsid}. " : "") + "With Wi-Fi on, the PC may get your home network instead of mobile data.");
@@ -63,7 +65,7 @@ public partial class MainWindow
 
         if (PhoneWifiOn != wifiBefore)
         {
-            if (PhoneWifiOn) { Log.Warn("The phone's Wi-Fi is on. Servers and CS2 blocked until it's off."); _verifiedKey = null; }
+            if (PhoneWifiOn) { Log.Warn("The phone's Wi-Fi is on" + (_phone.WifiSsid != null ? $" (connected to {_phone.WifiSsid})" : "") + ". Servers and CS2 blocked until it's off."); _verifiedKey = null; }
             else Log.Ok("The phone's Wi-Fi is off again. Checking the phone's IP before trusting it.");
             await SyncNow(force: true);
             if (!PhoneWifiOn) _ = RefreshPublicIps();
@@ -92,9 +94,10 @@ public partial class MainWindow
         else
         {
             // Wi-Fi on with the block confirmed: blocked and safe (amber); without the block it's a real risk (red).
-            _cPhoneData.Waiting = _phone.WifiOn && _last?.KillSwitchOk == true;
-            _cPhoneData.Ok = _cPhoneData.Waiting ? null : !_phone.WifiOn;
-            _cPhoneData.Detail = _phone.WifiOn ? $"Phone Wi-Fi is on{(_phone.WifiSsid != null ? $" ({_phone.WifiSsid})" : "")}" : $"{_phone.Carrier} · {_phone.NetType}".Trim(' ', '·');
+            var wifi = _phone.WifiOn && _phone.WifiConnected != false;
+            _cPhoneData.Waiting = wifi && _last?.KillSwitchOk == true;
+            _cPhoneData.Ok = _cPhoneData.Waiting ? null : !wifi;
+            _cPhoneData.Detail = wifi ? $"Phone Wi-Fi is on{(_phone.WifiSsid != null ? $" ({_phone.WifiSsid})" : "")}" : $"{_phone.Carrier} · {_phone.NetType}".Trim(' ', '·');
         }
     }
 
@@ -234,6 +237,7 @@ public partial class MainWindow
                 _egressPublic = got;
                 _egressInfo = await Net.Lookup(got);
                 AddHistory(got, _egressInfo, "trocado");
+                ResetQuality();
                 Log.Ok($"Mobile data back on: {got} (the IP before wasn't known, so it can't be compared). {range}");
                 Toast($"New IP: {got}. {range}", !sameRange);
                 return true;
@@ -244,6 +248,7 @@ public partial class MainWindow
                 _egressPublic = got;
                 _egressInfo = await Net.Lookup(got);
                 AddHistory(got, _egressInfo, "trocado");
+                ResetQuality();
                 if (sameRange) Log.Warn($"IP changed: {first} → {got}. {range}");
                 else Log.Ok($"IP changed: {first} → {got}. {range}");
                 Toast($"New IP: {got}. {range}", !sameRange);

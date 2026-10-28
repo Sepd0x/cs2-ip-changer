@@ -860,6 +860,12 @@
                                                 <TextBlock Text="In 'Game only', stops Windows from moving the whole PC onto the phone." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
+                                        <CheckBox x:Name="AutoModeBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
+                                            <StackPanel>
+                                                <TextBlock Text="Pick the mode by connection quality"/>
+                                                <TextBlock Text="When the mobile connection is weak, Whole PC drops to Game only so CS2 doesn't share it, and comes back when it's fine (with CS2 closed). You always get a notice." Style="{StaticResource OptSub}"/>
+                                            </StackPanel>
+                                        </CheckBox>
                                         <CheckBox x:Name="CleanupBox" Style="{StaticResource Switch}" Click="SettingChanged">
                                             <StackPanel>
                                                 <TextBlock Text="Turn off protection when closing the app"/>
@@ -987,7 +993,7 @@
                                 <HeaderedContentControl x:Name="SwitchGroup" Grid.Row="1" Style="{StaticResource Group}" Header="Switch">
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource OptSub}" Margin="0,0,0,10"
-                                                   Text="What Switch does: the button, the top bar and the Switch hotkey, also in game. The rejoin hotkey always changes the IP and rejoins with the same account."/>
+                                                   Text="What Switch does: the button, the top bar and the Switch hotkey, also in game. The rejoin hotkey changes the IP and rejoins with the same account, or with the next one if that account is banned there."/>
                                         <Grid MaxWidth="560" HorizontalAlignment="Left" Margin="0,0,0,4">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" MinWidth="150"/>
@@ -1070,8 +1076,10 @@
                                                                 <TextBlock Text="{Binding Path}" Style="{StaticResource OptSub}" TextTrimming="CharacterEllipsis"/>
                                                             </StackPanel>
                                                         </CheckBox>
-                                                        <CheckBox Grid.Column="1" IsChecked="{Binding AsAdmin}" Click="OpenWithToggle_Click" Content="As admin" VerticalAlignment="Top" Margin="12,2,8,0"
-                                                                  ToolTip="Opens it with Run as administrator: Windows asks first (UAC). For programs that only work as admin."/>
+                                                        <CheckBox Grid.Column="1" Style="{StaticResource Switch}" IsChecked="{Binding AsAdmin}" Click="OpenWithToggle_Click" VerticalAlignment="Top" Margin="16,0,8,0"
+                                                                  ToolTip="Opens it with Run as administrator: Windows asks first (UAC). For programs that only work as admin.">
+                                                            <TextBlock Text="As admin"/>
+                                                        </CheckBox>
                                                         <Button Grid.Column="2" Style="{StaticResource IconBtn}" Content="&#xE74D;" Click="OpenWithRemove_Click" FontSize="11" ToolTip="Remove" VerticalAlignment="Top"/>
                                                     </Grid>
                                                 </DataTemplate>

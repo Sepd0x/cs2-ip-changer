@@ -22,13 +22,31 @@ public partial class MainWindow
     /// <summary>The phone's IP was measured, but there is a home network whose IP was never read: nothing to compare with yet.</summary>
     bool _noHome;
 
-    /// <summary>The USB phone has its own Wi-Fi on: tethering may be carrying the home network, so it isn't trusted.</summary>
-    bool PhoneWifiOn => _phone?.Ready == true && _phone.WifiOn && _last?.Candidate?.IsWifi != true;
+    /// <summary>
+    /// The USB phone is on a Wi-Fi network: tethering may be carrying the home network, so it isn't trusted.
+    /// Wi-Fi on but on no network doesn't count: some phones turn it on for a second or two to scan, and blocking then
+    /// moved Steam and the whole PC off the phone and back, cutting every connection. Unknown (old Android) still counts.
+    /// </summary>
+    bool PhoneWifiOn => _phone?.Ready == true && _phone.WifiOn && _phone.WifiConnected != false && _last?.Candidate?.IsWifi != true;
 
+    TaskCompletionSource _syncRerun;
+    bool _syncAgainForce;
+
+    /// <summary>
+    /// Applies protection now. If a sync is already running, this one runs right after it and the caller waits for it:
+    /// a join checks the result, so it must not read the state from before (that showed "protection is not confirmed").
+    /// </summary>
     async Task SyncNow(bool force = false)
     {
         if (_demo || _restored) return;
-        if (_syncing) { _syncAgain = true; return; }
+        if (_syncing)
+        {
+            _syncAgain = true;
+            _syncAgainForce |= force;
+            _syncRerun ??= new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            await _syncRerun.Task;
+            return;
+        }
         _syncing = true;
         try
         {
@@ -41,6 +59,7 @@ public partial class MainWindow
             {
                 _cs2WasRunning = cs2Running;
                 if (_s.GameMode) Log.Info(cs2Running ? "CS2 open: the whole PC goes through the phone." : "CS2 closed: the rest of the PC is back on the home network.");
+                if (!cs2Running) QualityOnCs2Closed();
                 force = true;
             }
             var reason = _distrust ? WhySame : PhoneWifiOn ? WhyWifi : _noHome ? WhyNoHome : null;
@@ -49,7 +68,16 @@ public partial class MainWindow
             ApplyReport(rep);
         }
         finally { _syncing = false; }
-        if (_syncAgain) { _syncAgain = false; await SyncNow(); }
+        if (_syncAgain)
+        {
+            _syncAgain = false;
+            var again = _syncAgainForce;
+            _syncAgainForce = false;
+            var waiting = _syncRerun;
+            _syncRerun = null;
+            try { await SyncNow(again); }
+            finally { waiting?.TrySetResult(); }
+        }
     }
 
     void ApplyReport(GuardReport rep)
@@ -333,6 +361,7 @@ public partial class MainWindow
         if (mode == _s.Mode && (mode == "all" || game == _s.GameMode)) return;
         _s.Mode = mode;
         if (mode != "all") _s.GameMode = game;
+        _s.WholePcBeforeWeak = null;   // your choice wins over a mode the app dropped because of a weak connection
         SaveSettings();
         Log.Info(mode == "all" ? "Whole PC, always: the whole PC goes out through the phone."
             : game ? "Whole PC while CS2 is open: the whole PC goes out through the phone while CS2 is open."

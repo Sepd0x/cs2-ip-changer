@@ -211,7 +211,6 @@ foreach (var l in new[] {
 foreach (var l in new[] {
     "Disconnect: NETWORK_DISCONNECT_DISCONNECT_BY_USER",
     "Disconnecting from server: NETWORK_DISCONNECT_EXITING",
-    "[Client] Disconnected from server: NETWORK_DISCONNECT_TIMEDOUT",
     "Disconnect: Server shutting down",
     "Disconnect: NETWORK_DISCONNECT_CHANGELEVEL",
     "Disconnect: NETWORK_DISCONNECT_KICKED_NOSTEAMLOGIN",
@@ -299,7 +298,8 @@ Check("Lista vazia", Updater.PickLatest("[]") == null);
 // Linhas reais da consola do CS2 (teste de 27 out.)
 Check("Real: ban KICKBANADDED (Netchan)", Cs2Console.Classify("10/27 22:49:25 [Networking] Netchan 'server' closed unexpectedly: NETWORK_DISCONNECT_KICKBANADDED") == KickKind.Ban);
 Check("Real: ban KICKBANADDED (fase de ligação)", Cs2Console.Classify("10/27 22:49:25 [Client] Disconnection during connection phase. Sign-on state: 5 (SIGNONSTATE_SPAWN). Disconnect reason: NETWORK_DISCONNECT_KICKBANADDED.") == KickKind.Ban);
-Check("Real: timeout não é kick", Cs2Console.Classify("10/27 22:22:28 [Client] Disconnected from server: NETWORK_DISCONNECT_TIMEDOUT") == KickKind.None);
+// beta.3: o timeout deixou de ser "nada": é "sem resposta" (oferece novo IP), nunca kick nem ban
+Check("Real: timeout é sem resposta, não kick", Cs2Console.Classify("10/27 22:22:28 [Client] Disconnected from server: NETWORK_DISCONNECT_TIMEDOUT") == KickKind.NoAnswer);
 Check("Real: sair à mão não é kick", Cs2Console.Classify("10/27 22:46:58 [Client] Disconnected from server: NETWORK_DISCONNECT_DISCONNECT_BY_USER") == KickKind.None);
 Check("Real: mapa local a fechar não é kick", Cs2Console.Classify("10/27 22:18:20 [Server] Disconnect client 'Acc1' from server: NETWORK_DISCONNECT_SHUTDOWN (Server shutdown)") == KickKind.None && Cs2Console.Classify("10/27 22:18:20 [Client] Disconnecting from server: NETWORK_DISCONNECT_LOOPDEACTIVATE") == KickKind.None);
 Check("Real: HOSTSTATE_IDLE não é kick", Cs2Console.Classify("10/27 22:46:27 [Client] Disconnecting from server: NETWORK_DISCONNECT_REQUEST_HOSTSTATE_IDLE") == KickKind.None);
@@ -357,7 +357,9 @@ Check("VAC: KICKED_VACNETABNORMALBEHAVIOR", Cs2Console.Classify("10/29 21:03:11 
     Cs2Console.Classify("10/29 21:03:11 [Client] Disconnected from server: NETWORK_DISCONNECT_KICKED_VACNETABNORMALBEHAVIOR").ToString());
 Check("VAC: VACBANNED", Cs2Console.Classify("[Networking] Netchan 'server' closed unexpectedly: NETWORK_DISCONNECT_KICKED_VACBANNED") == KickKind.Steam
     && Cs2Console.Classify("Disconnect: NETWORK_DISCONNECT_VACBANNED") == KickKind.Steam);
-Check("Steam: STEAM_BANNED é da conta", Cs2Console.Classify("Disconnect reason: NETWORK_DISCONNECT_STEAM_BANNED") == KickKind.Steam);
+// beta.3: STEAM_BANNED é a lista de bans do servidor (caso real de 28 out., 38.3.226.237, depois de um KICKBANADDED na mesma comunidade)
+Check("Servidor: STEAM_BANNED é ban do servidor", Cs2Console.Classify("10/28 15:53:27 [Client] Disconnected from server: NETWORK_DISCONNECT_STEAM_BANNED") == KickKind.Ban);
+Check("Steam: STEAM_LOGON continua a ser do Steam", Cs2Console.Classify("Disconnect reason: NETWORK_DISCONNECT_STEAM_AUTHINVALID") == KickKind.Steam);
 Check("No Steam logon continua ignorado", Cs2Console.Classify("Disconnect: NETWORK_DISCONNECT_KICKED_NOSTEAMLOGIN") == KickKind.None
     && Cs2Console.Classify("Disconnect: NETWORK_DISCONNECT_STEAM_LOGON") == KickKind.None);
 Check("Ban do servidor continua ban", Cs2Console.Classify("Disconnect: NETWORK_DISCONNECT_KICKBANADDED") == KickKind.Ban);
@@ -472,6 +474,55 @@ if (args.Contains("--sons")) foreach (var k in Enum.GetValues<Tones.Kind>()) { T
     catch (Exception ex) { Check("A2S com servidor falso", false, ex.Message); }
     Check("A2S: pacote partido comprimido é recusado",
         A2S.Split(Pkt(new byte[] { 0xFE, 0xFF, 0xFF, 0xFF }, BitConverter.GetBytes(unchecked((int)0x80000007)), new byte[] { 2, 0, 0, 0, 1 })) == null);
+}
+
+// beta.3: qualidade da ligação do telemóvel (níveis e a regra das duas medições)
+{
+    LinkQuality Q(int avg, int jit, int lost = 0, string net = "4G") => new(8, lost, avg, jit, net);
+    Check("Qualidade: boa", Q(45, 6).Level == QualityLevel.Good);
+    Check("Qualidade: razoável por jitter", Q(45, 25).Level == QualityLevel.Fair);
+    Check("Qualidade: razoável com 1 perda", Q(45, 6, 1).Level == QualityLevel.Fair);
+    Check("Qualidade: fraca por ping", Q(160, 6).Level == QualityLevel.Bad);
+    Check("Qualidade: fraca por perdas (2 em 8)", Q(45, 6, 2).Level == QualityLevel.Bad);
+    Check("Qualidade: fraca em 3G mesmo com bom ping", Q(45, 6, 0, "3G").Level == QualityLevel.Bad);
+    Check("Qualidade: sem resposta é fraca", new LinkQuality(8, 8, 0, 0, "4G").Level == QualityLevel.Bad);
+    Check("Regra: uma má sozinha não chega", Quality.Settled(new[] { Q(45, 6), Q(200, 60) }, QualityLevel.Good) == QualityLevel.Good);
+    Check("Regra: duas más seguidas é fraca", Quality.Settled(new[] { Q(200, 60), Q(200, 60) }, QualityLevel.Good) == QualityLevel.Bad);
+    Check("Regra: sai de fraca só com duas boas", Quality.Settled(new[] { Q(200, 60), Q(45, 6) }, QualityLevel.Bad) == QualityLevel.Bad
+        && Quality.Settled(new[] { Q(45, 6), Q(45, 6) }, QualityLevel.Bad) == QualityLevel.Good);
+    Check("Regra: 1.ª medição má não decide", Quality.Settled(new[] { Q(200, 60) }, QualityLevel.Unknown) == QualityLevel.Unknown);
+}
+
+// beta.3: kicks e bans que ficavam por marcar, e o servidor que não responde
+Check("Timeout: TIMEDOUT é sem resposta", Cs2Console.Classify("10/28 17:02:11 [Client] Disconnected from server: NETWORK_DISCONNECT_TIMEDOUT") == KickKind.NoAnswer);
+Check("Timeout: pedido de ligação sem resposta", Cs2Console.Classify("Disconnect reason: NETWORK_DISCONNECT_CONNECT_REQUEST_TIMEDOUT") == KickKind.NoAnswer);
+Check("Timeout: 'Connection failed after 4 retries'", Cs2Console.Classify("Connection failed after 4 retries.") == KickKind.NoAnswer);
+Check("Sair pelo menu não é nada", Cs2Console.Classify("[Client] Disconnected from server: NETWORK_DISCONNECT_DISCONNECT_BY_USER") == KickKind.None);
+Check("Mudança de mapa não é nada", Cs2Console.Classify("[Client] Disconnecting from server: NETWORK_DISCONNECT_LOOPDEACTIVATE") == KickKind.None);
+Check("Sign-on lido da linha real", Cs2Console.SignOnState("10/28 14:56:43 [Client] Disconnection during connection phase. Sign-on state: 6 (SIGNONSTATE_FULL). Disconnect reason: NETWORK_DISCONNECT_KICKBANADDED.") == 6
+    && Cs2Console.SignOnState("[Client] Disconnected from server: NETWORK_DISCONNECT_KICKED") == null);
+Check("O mais forte: ban ganha a kick", Cs2Console.Stronger(KickKind.Kick, KickKind.Ban) == KickKind.Ban && Cs2Console.Stronger(KickKind.Ban, KickKind.Kick) == KickKind.Ban);
+Check("O mais forte: kick ganha a timeout", Cs2Console.Stronger(KickKind.NoAnswer, KickKind.Kick) == KickKind.Kick);
+
+// beta.3 (revisão): o servidor atual muda também para o menu e relays; "No Steam logon" é dito; queda e login no mesmo segundo
+Check("Ligação ao menu é linha de ligação", Cs2Console.IsConnectLine("10/28 16:26:59 [Client] CL:  Connected to 'loopback:1'") && Cs2Console.ConnectedServer("[Client] CL:  Connected to 'loopback:1'") == null);
+Check("Ligação a relay da Valve é linha de ligação", Cs2Console.IsConnectLine("[Client] CL:  Connected to '=[A:1:123456:7890]:0'"));
+Check("Ligação a servidor dá o IP", Cs2Console.ConnectedServer("10/28 15:54:33 [Client] CL:  Connected to '38.3.226.237:27010'") == "38.3.226.237:27010");
+Check("No Steam logon é reconhecido", Cs2Console.IsNoSteamLogon("Disconnect: NETWORK_DISCONNECT_KICKED_NOSTEAMLOGIN") && Cs2Console.IsNoSteamLogon("[Client] Disconnected from server: NETWORK_DISCONNECT_STEAM_LOGON"));
+Check("No Steam logon no chat não conta", !Cs2Console.IsNoSteamLogon("[ALL] Bob: no steam logon again lol"));
+{
+    var f = Path.Combine(Path.GetTempPath(), $"srt-steamlog-{Guid.NewGuid():N}.txt");
+    File.WriteAllText(f, "[2026-10-28 15:00:00] [0,0] RecvMsgClientLogOnResponse() : processing complete" + "\n");
+    var w = new SteamLogWatcher();
+    w.Poll(f);
+    File.AppendAllText(f, "[2026-10-28 15:53:50] [0,0] ConnectionDisconnected('I/O Operation Failed')" + "\n"
+        + "[2026-10-28 15:53:50] [0,0] RecvMsgClientLogOnResponse() : processing complete" + "\n");
+    w.Poll(f);
+    Check("Steam: queda e login no mesmo segundo acaba online", w.Online == true);
+    File.AppendAllText(f, "[2026-10-28 15:54:10] [0,0] ConnectionDisconnected('I/O Operation Failed')" + "\n");
+    w.Poll(f);
+    Check("Steam: queda depois do login fica offline", w.Online == false);
+    try { File.Delete(f); } catch { }
 }
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");

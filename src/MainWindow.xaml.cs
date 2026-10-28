@@ -46,7 +46,7 @@ public partial class MainWindow : Window
 
     bool _demo = false;   // only the development build turns it on (--demo)
 
-    CheckItem _cFirewall, _cKill, _cEgress, _cRoutes, _cDiff, _cPhoneData, _cCs2, _cSteam, _cPc;
+    CheckItem _cFirewall, _cKill, _cEgress, _cRoutes, _cDiff, _cPhoneData, _cQuality, _cCs2, _cSteam, _cPc;
     string _steamPath;
 
     static readonly Regex ServerRegex = new(@"(?<![\d.])(\d{1,3}(?:\.\d{1,3}){3})(?!\d|\.\d)(?:[ \t]*[:,; \t][ \t]*(\d+)(?!\d|\.\d))?", RegexOptions.Compiled);
@@ -84,6 +84,7 @@ public partial class MainWindow : Window
         _checks.Add(_cRoutes = new CheckItem { Title = "Routes", Help = "Confirmed by Windows itself: every IP in the list goes through the phone." });
         _checks.Add(_cDiff = new CheckItem { Title = "IP differs from home", Help = "If the phone is sharing your home Wi-Fi instead of mobile data, the IP would be the same." });
         _checks.Add(_cPhoneData = new CheckItem { Title = "Mobile data", Help = "With the phone's Wi-Fi on, tethering may carry your home network instead of mobile data. Read through ADB; without ADB, check it yourself." });
+        _checks.Add(_cQuality = new CheckItem { Title = "Connection quality", Help = "Ping, jitter and loss through the phone, measured every 30 s. Weak means lag in game: the app warns, and can drop Whole PC to Game only while it lasts (Settings > Protection)." });
         _checks.Add(_cCs2 = new CheckItem { Title = "CS2 only through the phone", Help = "Firewall rule: cs2.exe's game traffic (UDP) only goes out through the phone. Servers not in the list (game browser, invites) never see your home IP either. Web requests from CS2 use the normal connection." });
         _checks.Add(_cSteam = new CheckItem { Title = "Steam through the phone", Help = "steam.exe talks to Valve through the phone, like CS2. If Steam is on another network or reconnects mid-game, the server kicks you with \"No Steam logon\"." });
         _checks.Add(_cPc = new CheckItem { Title = "Rest of the PC", Help = "Where the normal PC traffic goes out (Steam, browser, Discord)." });
@@ -161,6 +162,7 @@ public partial class MainWindow : Window
         await SyncNow();
         DiagTick();
         WatchCs2Console();
+        _ = WatchQuality();
         if (!_checkingUpdate && _s.CheckUpdates && (_s.LastUpdateCheck == null || (DateTime.Now - _s.LastUpdateCheck.Value).TotalHours >= 24)) _ = CheckForUpdates();
         if (!_changingIp && DateTime.Now.Second % 10 < 5) _ = RefreshPhone();
         if (!_changingIp && (DateTime.Now - _lastIpCheck).TotalSeconds > (Steam.Cs2Running ? 15 : 90)) _ = RefreshPublicIps();

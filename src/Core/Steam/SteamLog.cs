@@ -20,8 +20,11 @@ public sealed class SteamLogWatcher
 
     public DateTime? LastLogon { get; private set; }
     public DateTime? LastDrop { get; private set; }
-    /// <summary>true = logged on to Valve; false = dropped or logged off; null = not known yet.</summary>
-    public bool? Online => LastLogon == null && LastDrop == null ? null : LastDrop == null || LastLogon > LastDrop;
+    /// <summary>
+    /// true = logged on to Valve; false = dropped or logged off; null = not known yet. From the last of those lines in the file:
+    /// a drop and a logon in the same second (after the app cuts Steam's old connections) end online, not offline.
+    /// </summary>
+    public bool? Online { get; private set; }
 
     /// <summary>New lines since the last read, already classified. The first read only sets the state.</summary>
     public List<SteamLogEvent> Poll()
@@ -54,8 +57,8 @@ public sealed class SteamLogWatcher
                 if (!m.Success || !DateTime.TryParseExact(m.Groups[1].Value, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var t)) continue;
                 var kind = Classify(line);
                 if (kind == null) continue;
-                if (kind == "online") LastLogon = t;
-                if (kind is "dropped" or "offline") LastDrop = t;
+                if (kind == "online") { LastLogon = t; Online = true; }
+                if (kind is "dropped" or "offline") { LastDrop = t; Online = false; }
                 if (!first) events.Add(new SteamLogEvent(t, kind, line[(m.Length)..].Trim()));
             }
         }

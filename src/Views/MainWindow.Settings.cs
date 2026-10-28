@@ -42,6 +42,7 @@ public partial class MainWindow
             KeepOffBox.IsChecked = _s.KeepPcOffPhone;
             LockCs2Box.IsChecked = _s.LockCs2;
             SteamEgressBox.IsChecked = _s.SteamOnEgress;
+            AutoModeBox.IsChecked = _s.AutoModeByQuality;
             ApplyDevSettings();
             CleanupBox.IsChecked = _s.CleanupOnExit;
             ApiKeyBox.Text = _s.SteamApiKey ?? "";
@@ -71,6 +72,7 @@ public partial class MainWindow
         if (!_s.CommandSounds && SoundsBox.IsChecked == true) Tones.Play(Tones.Kind.Done);   // so you know how they sound
         _s.CommandSounds = SoundsBox.IsChecked == true;
         _s.KeepPcOffPhone = KeepOffBox.IsChecked == true;
+        _s.AutoModeByQuality = AutoModeBox.IsChecked == true;
         var guardChanged = _s.LockCs2 != (LockCs2Box.IsChecked == true) || _s.SteamOnEgress != (SteamEgressBox.IsChecked == true);
         _s.LockCs2 = LockCs2Box.IsChecked == true;
         _s.SteamOnEgress = SteamEgressBox.IsChecked == true;

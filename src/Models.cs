@@ -44,6 +44,8 @@ public sealed partial class Settings
     public bool SwitchRejoin { get; set; } = true;        // Switch: join the last server again
     public bool SwitchOpenWith { get; set; } = true;      // Switch: open the "Open with CS2" programs with CS2
     public bool CommandSounds { get; set; } = true;       // a short sound when a command starts and ends (heard in game)
+    public bool AutoModeByQuality { get; set; } = true;   // weak phone connection: Whole PC drops to Game only until it's fine again
+    public string WholePcBeforeWeak { get; set; }         // "all" | "game": the Whole PC mode to go back to (null = none dropped)
     public List<OpenWithItem> OpenWithCs2 { get; set; } = new();
     public List<IpHistoryEntry> IpHistory { get; set; } = new();
 }

@@ -50,6 +50,8 @@ public partial class MainWindow
     {
         var list = _openWith.Where(x => x.Enabled).ToList();
         if (list.Count == 0) return;
+        // In Whole PC these programs go out through the phone too: a new IP or a phone hiccup cuts their connections (logins, licences).
+        if (_s.Mode == "all" || _s.GameMode) Log.Info("Whole PC is on, so the programs opened with CS2 also go through the phone. If one loses its connection after Change IP, use Game only: they stay on your home network.");
         if (_demo) { Toast("Demo: opening " + string.Join(", ", list.Select(x => x.Name)) + " with CS2.", true); return; }
         foreach (var p in list)
         {

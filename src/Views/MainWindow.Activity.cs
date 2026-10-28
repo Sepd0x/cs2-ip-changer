@@ -17,11 +17,42 @@ public partial class MainWindow
     /// <summary>Runs a command with feedback. The work returns true when it did what was asked.</summary>
     async Task RunCommand(string name, string firstStep, Func<Task<bool>> work)
     {
+        await TakeOver(name);
         if (!BeginCommand(name, firstStep)) return;
         var ok = false;
         try { ok = await work(); }
         catch (Exception ex) { Log.Error($"{name}: {ex.Message}"); Toast(ex.Message, Tone.Error); }
         finally { EndCommand(ok); }
+    }
+
+    CancellationTokenSource _commandCts;
+    /// <summary>More than 0: the running command is only waiting (your answer in the app, CS2's menu, Steam, the server after a crash).</summary>
+    int _commandWaiting;
+
+    /// <summary>The running command was stopped by a newer one: it returns without doing anything else.</summary>
+    bool CommandCancelled => _commandCts?.IsCancellationRequested == true;
+
+    /// <summary>Marks a wait inside the running command: while it lasts, a new command stops it instead of being refused.</summary>
+    IDisposable CommandWait()
+    {
+        var cts = _commandCts;
+        _commandWaiting++;
+        return new Scope(() => { if (_commandCts == cts && _commandWaiting > 0) _commandWaiting--; });
+    }
+
+    sealed class Scope(Action end) : IDisposable { public void Dispose() => end(); }
+
+    /// <summary>
+    /// In game you can't see a question in the app, and every hotkey you pressed got "still busy" while it waited:
+    /// a command that is only waiting is stopped, and the new one runs. Changing the IP or the account is never cut in half.
+    /// </summary>
+    async Task TakeOver(string name)
+    {
+        if (_command == null || _commandWaiting <= 0 || _changingIp || _switching) return;
+        Log.Info($"{_command} stopped while {_commandStep ?? "waiting"}: {name} takes over.");
+        _commandCts?.Cancel();
+        if (Dialog.Visibility == Visibility.Visible) { Dialog.Visibility = Visibility.Collapsed; _dialogTcs?.TrySetResult(false); }
+        for (var i = 0; i < 50 && (_command != null || _rejoining); i++) await Task.Delay(100);
     }
 
     /// <summary>False (with a sound and the reason) when another command is still running.</summary>
@@ -35,8 +66,13 @@ public partial class MainWindow
             Log.Info($"{name} ignored: still busy with {what}.");
             return false;
         }
+        // A question from before (rejoin offer after a kick, follow) answered by this command instead: close it,
+        // or clicking it later would change the IP or switch account mid-match.
+        if (Dialog.Visibility == Visibility.Visible) { Dialog.Visibility = Visibility.Collapsed; _dialogTcs?.TrySetResult(false); }
         _command = name;
         _commandDeclined = false;
+        _commandCts = new CancellationTokenSource();
+        _commandWaiting = 0;
         Sound(Tones.Kind.Start);
         Step(step);
         return true;

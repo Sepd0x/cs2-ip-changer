@@ -24,7 +24,12 @@ public partial class MainWindow
     DateTime _cs2ClosedByAppAt;
 
     /// <summary>Steam has a Valve session and, if the IP changed, has already redone it on the new IP.</summary>
-    bool SteamReady => !Steam.IsRunning || (_steamLog.Online != false && (_ipChangedAt == null || _steamLog.LastLogon >= _ipChangedAt));
+    /// <summary>
+    /// Steam on the home network (Steam through the phone off) doesn't log on again when the phone's IP changes, and
+    /// after 2 minutes without a new logon line the IP change no longer holds joins back (the log may just not show it).
+    /// </summary>
+    bool SteamReady => !Steam.IsRunning || (_steamLog.Online != false && (_ipChangedAt == null || !_s.SteamOnEgress
+        || _steamLog.LastLogon >= _ipChangedAt || DateTime.Now - _ipChangedAt > TimeSpan.FromMinutes(2)));
 
     void WatchSteamLog()
     {
@@ -48,19 +53,34 @@ public partial class MainWindow
         }
     }
 
-    /// <summary>Waits up to <paramref name="seconds"/> s for Steam to be ready. false = it was not.</summary>
+    /// <summary>
+    /// Waits up to <paramref name="seconds"/> s for Steam to be ready. false = it was not.
+    /// Steam's log doesn't always show the new login after an IP change; Steam holding its connections to Valve
+    /// through the phone for 5 s in a row also counts (the old ones were cut when the IP changed).
+    /// </summary>
     async Task<bool> WaitSteamReady(int seconds)
     {
         WatchSteamLog();
         if (SteamReady) return true;
         ShowProgress("Waiting for Steam to get a Valve session again…");
+        using var wait = CommandWait();
+        var linked = 0;
         try
         {
             for (var i = seconds; i > 0; i--)
             {
                 await Task.Delay(1000);
+                if (CommandCancelled) return false;
                 WatchSteamLog();
                 if (SteamReady) { Log.Ok("Steam is ready: you can join without getting kicked."); return true; }
+                var egress = _last?.Egress?.LocalIp;
+                linked = egress != null && Net.ReadSteamLink().LocalIps.Contains(egress) ? linked + 1 : 0;
+                if (linked >= 5)
+                {
+                    _ipChangedAt = null;
+                    Log.Ok("Steam is connected to Valve through the phone (its log didn't show the new login, so the connection counts): you can join.");
+                    return true;
+                }
                 ShowProgress($"Waiting for Steam to get a Valve session again… {i} s");
             }
             return false;
@@ -148,12 +168,15 @@ public partial class MainWindow
             $"CS2 crashed at {_cs2CrashAt:HH:mm} on {s.Title}. The server still has that session and, a few minutes later, kicks the account with \"No Steam logon\", even if you already rejoined.\n\n" +
             $"Wait until {until:HH:mm:ss} and join automatically? Another server is fine right away.", "Wait and join", "Join now");
         Diag.Write("wait-after-crash", new { server = s.Key, seconds = (int)(until - DateTime.Now).TotalSeconds, waited = wait });
+        if (CommandCancelled) return false;
         if (!wait) return true;
         ShowProgress("Waiting for the server to drop the old session…");
+        using var waiting = CommandWait();
         try
         {
             while (DateTime.Now < until)
             {
+                if (CommandCancelled) return false;
                 ShowProgress($"Waiting for the server to drop the old session… {Fmt.Left(until - DateTime.Now)}");
                 await Task.Delay(1000);
             }

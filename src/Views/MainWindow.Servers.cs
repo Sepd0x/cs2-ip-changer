@@ -287,6 +287,7 @@ public partial class MainWindow
                     $"Restart Steam through the phone and join {s.Title}?" + (Steam.Cs2Running ? " CS2 closes and opens again." : ""),
                     "Restart and join", "Join anyway"))
                 return await RestartSteamAndConnect(s, openWith);
+            if (CommandCancelled) return false;
         }
         if (_demo) { Toast($"Demo: joining {s.Title}.", true); MarkLast(s); return true; }
         try
@@ -321,12 +322,14 @@ public partial class MainWindow
     async Task<bool> ConnectWhenMenuReady(ServerItem s, string log, long from)
     {
         ShowProgress($"Opening CS2. It joins {s.Title} when the main menu is ready…");
+        using var wait = CommandWait();
         try
         {
             var ready = false;
             for (var i = 0; i < 120 && !ready; i++)
             {
                 await Task.Delay(1000);
+                if (CommandCancelled) return false;
                 if (!Steam.Cs2Running || log == null) continue;
                 try
                 {
@@ -420,6 +423,7 @@ public partial class MainWindow
         ShowProgress("Restarting Steam through the phone…");
         try
         {
+            _cs2ClosedByAppAt = DateTime.Now;   // closed on purpose: that exit is not a crash
             foreach (var p in Process.GetProcessesByName("cs2")) try { p.Kill(true); } catch { }
             for (var i = 0; i < 20 && Steam.Cs2Running; i++) await Task.Delay(150);
             // Valve routes already go through the phone: the new Steam connects that way, then CS2 opens and joins from its menu.

@@ -4,7 +4,9 @@ using System.Net.Http;
 
 namespace SRT.Core;
 
-public sealed record PhoneInfo(string Serial, string State, string Model, string Carrier, string NetType, int? Battery, bool WifiOn = false, string WifiSsid = null)
+/// <param name="WifiConnected">The phone's Wi-Fi is on a network (true), on but on none (false), or the phone doesn't say (null, Android 10 and older).</param>
+public sealed record PhoneInfo(string Serial, string State, string Model, string Carrier, string NetType, int? Battery, bool WifiOn = false, string WifiSsid = null,
+    bool? WifiConnected = null)
 {
     public bool Ready => State == "device";
 
@@ -145,7 +147,7 @@ public static class Adb
 
         // One shell for everything (it runs every 2 s during a match): model, carrier, network, battery | Wi-Fi on, Wi-Fi network.
         var q = await Run(adb, $"-s {serial} shell \"getprop ro.product.model; getprop gsm.operator.alpha; getprop gsm.network.type; dumpsys battery | grep -m1 level; " +
-            "echo ---; settings get global wifi_on; cmd wifi status 2>/dev/null | grep -m1 -i 'connected to'\"");
+            "echo ---; settings get global wifi_on; cmd wifi status 2>/dev/null | grep -m1 -i 'connected'\"");
         var all = q.Output.Replace("\r", "").Split('\n');
         var cut = Array.FindIndex(all, l => l.Trim() == "---");
         var lines = (cut >= 0 ? all[..cut] : all).Select(l => l.Trim()).ToArray();
@@ -162,7 +164,9 @@ public static class Adb
         string ssid = null;
         var m = System.Text.RegularExpressions.Regex.Match(wifiPart, "connected to \"?([^\"\r\n]+)\"?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         if (m.Success) ssid = m.Groups[1].Value.Trim();
-        return new PhoneInfo(serial, state, L(0), carrier, PrettyNet(net), battery, wifiOn, ssid);
+        // "Wifi is not connected": the radio is on (Samsung turns it on by itself to scan), but tethering is still on mobile data.
+        bool? connected = m.Success ? true : wifiPart.Contains("not connected", StringComparison.OrdinalIgnoreCase) ? false : null;
+        return new PhoneInfo(serial, state, L(0), carrier, PrettyNet(net), battery, wifiOn, ssid, wifiOn ? connected : false);
     }
 
     static string PrettyNet(string t) => t?.ToUpperInvariant() switch
@@ -199,7 +203,13 @@ public static class Adb
             return "The phone refused the command: " + r1.Output;
         }
         await Task.Delay(TimeSpan.FromSeconds(offSeconds));
+        // Turning data or airplane mode off can drop USB tethering, and ADB with it, for a few seconds: keep trying for about 20 s.
         var r2 = await Run(adb, $"-s {serial} shell {on}");
+        for (var i = 0; i < 4 && !r2.Ok; i++)
+        {
+            await Task.Delay(5000);
+            r2 = await Run(adb, $"-s {serial} shell {on}");
+        }
         if (!r2.Ok) return "Turned data off but could not turn it back on: " + r2.Output + " (turn it on manually on the phone)";
         return null;
     }

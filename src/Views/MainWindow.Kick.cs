@@ -9,6 +9,7 @@ public partial class MainWindow
 {
     readonly ConsoleTail _cs2Console = new();
     DateTime _lastKickAt = DateTime.MinValue;
+    KickKind _lastKickKind;
     DateTime? _cs2StartedAt, _cs2LogSeenAt;
     long _cs2LogLen = -1;
     bool _condebugHinted, _cs2LogOk, _rejoining;
@@ -22,6 +23,7 @@ public partial class MainWindow
         if (!Steam.Cs2Running)
         {
             _cs2Console.Reset();
+            _consoleServer = null;   // a server from the last session is not where the next one goes
             _cs2StartedAt = _cs2LogSeenAt = null;
             _cs2LogLen = -1;
             _cs2LogOk = false;
@@ -31,16 +33,49 @@ public partial class MainWindow
         var path = Cs2Console.LogPath(_s.Cs2Path ?? Steam.Cs2Path(_s));
         if (path == null) return;
         CheckCondebug(path);
-        var kicked = false;
+        // One disconnect writes several lines, and the first one isn't always the clearest ("kicked", then the ban code):
+        // the strongest of the batch counts, with the furthest the join got.
+        KickKind kind = KickKind.None;
+        string kindLine = null, kindServer = null;
+        int? signOn = null;
         foreach (var line in _cs2Console.ReadNew(path))
         {
-            var joined = Cs2Console.ConnectedServer(line);
-            if (joined != null) _consoleServer = joined;
-            var kind = Cs2Console.Classify(line);
-            if (kind != KickKind.None && !kicked) { kicked = true; OnKicked(kind, line); }
-            else if (Cs2Console.IsDisconnect(line) && _disconnectSamples++ < 40)
+            if (Cs2Console.IsConnectLine(line))
+            {
+                // The menu (loopback) or a Valve relay counts too: a later kick there is not about the last community server.
+                // The kick read before it keeps the server it happened on.
+                _consoleServer = Cs2Console.ConnectedServer(line);
+                if (_consoleServer != null) { kind = KickKind.None; kindLine = null; signOn = null; }
+                continue;
+            }
+            if (Cs2Console.IsNoSteamLogon(line)) { OnNoSteamLogon(line); continue; }
+            var k = Cs2Console.Classify(line);
+            signOn = Cs2Console.SignOnState(line) ?? signOn;
+            if (k != KickKind.None && Cs2Console.Stronger(kind, k) != kind) { kind = k; kindLine = line; kindServer = _consoleServer; }
+            else if (k == KickKind.None && Cs2Console.IsDisconnect(line) && _disconnectSamples++ < 40)
                 Log.Info("CS2 console: " + Cut(line));   // samples to learn the real format
         }
+        if (kind == KickKind.None) return;
+        // Kicked before getting into the game, with no reason given: that's how ban plugins refuse a banned player who joins again.
+        if (kind == KickKind.Kick && signOn is int st && st < 6)
+        {
+            Log.Info($"Kicked while still joining (sign-on state {st}): counted as a ban.");
+            kind = KickKind.Ban;
+        }
+        OnKicked(kind, kindLine, kindServer);
+    }
+
+    DateTime _noSteamLogonAt = DateTime.MinValue;
+
+    /// <summary>The kick the app is there to prevent: said out loud once, never a ban mark or a new-IP offer.</summary>
+    void OnNoSteamLogon(string line)
+    {
+        if ((DateTime.Now - _noSteamLogonAt).TotalSeconds < 20) return;
+        _noSteamLogonAt = DateTime.Now;
+        System.Media.SystemSounds.Hand.Play();
+        Log.Warn("Kicked with \"No Steam logon\": Steam lost its session with Valve (it reconnected on another network, or after a crash). A new IP won't help. Console: " + Cut(line));
+        Diag.Write("kick", new { kind = "no-steam-logon", line, server = _consoleServer });
+        Toast("Kicked with \"No Steam logon\": Steam lost its session. Wait for Steam to reconnect through the phone (Checks), then join again.", Tone.Error);
     }
 
     static string Cut(string line) => line.Length > 220 ? line[..220] + "…" : line;
@@ -73,21 +108,39 @@ public partial class MainWindow
         Toast("To detect kicks and bans, add -condebug -conclearlog to CS2's launch options in Steam (CS2 > Properties).", false);
     }
 
-    void OnKicked(KickKind kind, string line)
+    void OnKicked(KickKind kind, string line, string consoleServer = null)
     {
         var what = kind == KickKind.Ban ? "banned" : "kicked";
-        // The server CS2 was really on (also when joined from the console), if it's in the list.
-        if (_consoleServer != null && _servers.Any(x => x.Key == _consoleServer) && _consoleServer != _s.LastServer)
+        // The server CS2 was really on (also when joined from the console or the game's browser). The last server
+        // joined through the app only stands in if that happened in this CS2 session, never one from days ago.
+        var server = consoleServer ?? _consoleServer
+            ?? (_s.LastServerAt != null && _cs2StartedAt != null && _s.LastServerAt >= _cs2StartedAt ? _s.LastServer : null);
+        var inList = _servers.FirstOrDefault(x => x.Key == server);
+        if (inList != null && server != _s.LastServer)
         {
-            _s.LastServer = _consoleServer;
+            _s.LastServer = server;
             _s.LastServerAt = DateTime.Now;
             SaveSettings();
         }
-        // One kick can write several lines; the raw line always goes to the Log to collect real samples.
-        if ((DateTime.Now - _lastKickAt).TotalSeconds < 20) { Log.Info($"CS2 console ({what}): " + Cut(line)); return; }
+        // One disconnect can come over two reads: within 20 s only a ban after a kick or a timeout still counts.
+        var recent = (DateTime.Now - _lastKickAt).TotalSeconds < 20;
+        if (recent && !(kind == KickKind.Ban && _lastKickKind is KickKind.Kick or KickKind.NoAnswer)) { Log.Info($"CS2 console ({what}): " + Cut(line)); return; }
+        // The app's own IP change or the phone dropping also time the game out: that's not the server, and it doesn't count.
+        if (kind == KickKind.NoAnswer && (_changingIp || _rejoining || _last?.Egress == null)) { Log.Info("CS2 lost the server while the connection was changing. Console: " + Cut(line)); return; }
         _lastKickAt = DateTime.Now;
+        _lastKickKind = kind;
         System.Media.SystemSounds.Hand.Play();
         var acc = ActiveAccount();
+        if (acc == null && !_demo && Steam.ActiveSteamId() != null) { LoadAccounts(); acc = ActiveAccount(); }   // an account Steam logged in to a moment ago
+        if (kind == KickKind.NoAnswer)
+        {
+            Log.Warn($"{server ?? "The server"} stopped answering. Console: " + Cut(line));
+            Diag.Write("kick", new { kind = "no-answer", line, server });
+            Toast(inList == null ? "The server stopped answering. If the phone connection is fine, it may have banned this IP at its firewall: change IP and join again."
+                : $"The server stopped answering. If it banned this IP at its firewall, a new IP gets you back: {_s.HotkeyRejoin}.", false);
+            UpdateRejoinBtn();
+            return;
+        }
         if (kind == KickKind.Steam)
         {
             // VAC or Steam refused the account: no rejoin offer and no server ban mark, a new IP changes nothing.
@@ -96,15 +149,26 @@ public partial class MainWindow
             Toast("Steam or VAC refused the connection. A new IP won't help: check the account.", Tone.Error);
             return;
         }
-        Log.Warn($"You were {what} from {_s.LastServer ?? "the server"}" + (acc != null ? $" on {acc.Name}" : "") + ". Console: " + Cut(line));
-        if (kind == KickKind.Ban && _servers.FirstOrDefault(x => x.Key == _s.LastServer) is ServerItem banned && acc != null) MarkServerBan(acc, banned);
+        Log.Warn($"You were {what} from {server ?? "the server"}" + (acc != null ? $" on {acc.Name}" : "") + ". Console: " + Cut(line));
+        if (kind == KickKind.Ban && server != null)
+        {
+            if (acc == null) Log.Warn($"The ban on {server} wasn't marked: the account Steam is logged in to isn't in Accounts. Log in once with \"Remember me\" so it shows up.");
+            else if (inList != null) MarkServerBan(acc, inList);
+            else
+            {
+                // Not in your list: marked by address, so it counts as soon as you add the server.
+                MarkServerBan(acc, server, null, null);
+                Log.Info($"{server} isn't in your server list. Add it on Servers to rejoin it with the app and see the ban mark there.");
+            }
+        }
         Diag.Write("kick", new { kind = what, line, server = _s.LastServer });
         // A ban is on the IP and on the account: coming back needs both new, so the offer is the switch.
-        Toast(_s.LastServer == null ? $"You were {what} from the server."
+        // The hotkey only goes back to a server in your list: no promise for one that isn't.
+        Toast(inList == null ? $"You were {what} from the server." + (server != null ? " It isn't in your list, so the rejoin hotkey can't take you back: add it on Servers." : "")
             : kind == KickKind.Ban ? $"You were banned from the server. Press {_s.HotkeyRejoin} for a new IP and another account, then rejoin."
             : $"You were {what} from the server. Press {_s.HotkeyRejoin} to change IP and rejoin.", false);
         UpdateRejoinBtn();
-        if (_s.LastServer != null && Dialog.Visibility != Visibility.Visible && !_changingIp && !_rejoining) _ = OfferRejoin(what);
+        if (inList != null && Dialog.Visibility != Visibility.Visible && !_changingIp && !_rejoining) _ = OfferRejoin(what);
     }
 
     async Task OfferRejoin(string what)
@@ -142,17 +206,19 @@ public partial class MainWindow
         return _accounts.FirstOrDefault(a => a.Active);
     }
 
-    void MarkServerBan(AccountItem a, ServerItem s)
+    void MarkServerBan(AccountItem a, ServerItem s) => MarkServerBan(a, s.Key, s.ServerName, s.Network);
+
+    void MarkServerBan(AccountItem a, string key, string name, string network)
     {
         a.Meta.ServerBans ??= new();
-        a.Meta.ServerBans[s.Key] = new ServerBan { At = DateTime.Now, Name = s.ServerName, Network = ServerNetwork.Clean(s.Network) };
+        a.Meta.ServerBans[key] = new ServerBan { At = DateTime.Now, Name = name, Network = ServerNetwork.Clean(network) };
         a.RefreshAll();
         SaveAccounts();
         ApplyServerBans();
         UpdateQuickInfo();
-        var same = _servers.Count(x => x != s && ServerNetwork.Same(s.Key, s.ServerName, s.Network, x.Key, x.ServerName, x.Network));
-        Log.Warn($"{a.Name} marked as banned on {s.Key}" + (same > 0 ? $" and {same} other server(s) of the same network" : "") + ". Switch skips it there.");
-        Diag.Write("server-ban", new { steamId = a.SteamId, server = s.Key, name = s.ServerName });
+        var same = _servers.Count(x => x.Key != key && ServerNetwork.Same(key, name, network, x.Key, x.ServerName, x.Network));
+        Log.Warn($"{a.Name} marked as banned on {key}" + (same > 0 ? $" and {same} other server(s) of the same network" : "") + ". Switch skips it there.");
+        Diag.Write("server-ban", new { steamId = a.SteamId, server = key, name });
     }
 
     /// <summary>On each server row: whether the account you're logged in with is banned there (or on that server's network).</summary>
@@ -258,7 +324,8 @@ public partial class MainWindow
             if (next != null && !await SwitchTo(next, cs2: s == null, ask: false, openWith: steps.OpenWith)) return false;
             if (s == null) return true;
             // Same account on a new IP: Steam has to log in again. If it hasn't within 20 s, restart it (a dialog can't be seen in game).
-            if (ip && next == null && !_demo && Steam.IsRunning && !await WaitSteamReady(20)) return await RestartSteamAndConnect(s, steps.OpenWith);
+            if (ip && next == null && !_demo && Steam.IsRunning && !await WaitSteamReady(20))
+                return !CommandCancelled && await RestartSteamAndConnect(s, steps.OpenWith);
             return await Connect(s, openWith: steps.OpenWith);
         }
         finally { _rejoining = false; UpdateRejoinBtn(); }

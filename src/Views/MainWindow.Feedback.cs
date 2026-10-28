@@ -69,6 +69,11 @@ public partial class MainWindow
         DialogInput.Visibility = inputs >= 1 ? Visibility.Visible : Visibility.Collapsed;
         DialogInput2.Visibility = inputs >= 2 ? Visibility.Visible : Visibility.Collapsed;
         Dialog.Visibility = Visibility.Visible;
+        if (_command != null)
+        {
+            var wait = CommandWait();
+            _dialogTcs.Task.ContinueWith(_ => Dispatcher.BeginInvoke(wait.Dispose));
+        }
         // After layout: a control that was collapsed a moment ago can't take focus yet.
         Dispatcher.BeginInvoke(() => { if (inputs > 0) Keyboard.Focus(DialogInput); else Keyboard.Focus(DialogOk); }, DispatcherPriority.Input);
         return _dialogTcs.Task;

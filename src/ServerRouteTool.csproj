@@ -9,7 +9,7 @@
     <LangVersion>latest</LangVersion>
     <AssemblyName>CS2IPChanger</AssemblyName>
     <RootNamespace>SRT</RootNamespace>
-    <Version>0.1.0-beta.2</Version>
+    <Version>0.1.0-beta.3</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <Product>CS2 IP Changer</Product>
     <ApplicationManifest>app.manifest</ApplicationManifest>

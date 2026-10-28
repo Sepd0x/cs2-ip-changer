@@ -3,8 +3,8 @@ using System.Text.RegularExpressions;
 
 namespace SRT.Core;
 
-/// <summary>Steam = Steam or VAC refused the account (a new IP doesn't help).</summary>
-public enum KickKind { None, Kick, Ban, Steam }
+/// <summary>Steam = Steam or VAC refused the account (a new IP doesn't help). NoAnswer = the server stopped answering (or never did).</summary>
+public enum KickKind { None, Kick, Ban, Steam, NoAnswer }
 
 /// <summary>
 /// Reads CS2's console.log (written with -condebug) and spots a kick or ban from the server.
@@ -37,7 +37,8 @@ public static class Cs2Console
     };
 
     // Steam or VAC said no: it's about the account, so changing the IP and rejoining is no use.
-    static readonly Regex SteamStrong = new(@"NETWORK_DISCONNECT_KICKED_VAC\w*|NETWORK_DISCONNECT_(KICKED_)?VACBANNED|NETWORK_DISCONNECT_STEAM_\w*", O);
+    // STEAM_BANNED is not one of them: it's the server's own ban list refusing the SteamID ("STEAM UserID ... is banned").
+    static readonly Regex SteamStrong = new(@"NETWORK_DISCONNECT_KICKED_VAC\w*|NETWORK_DISCONNECT_(KICKED_)?VACBANNED|NETWORK_DISCONNECT_STEAM_(?!BANNED\b)\w*", O);
 
     // The line is about the connection ending or being refused.
     static readonly Regex Context = new(
@@ -56,6 +57,23 @@ public static class Cs2Console
         new(@"\byou\s+(have\s+been|were|got)\s+kicked\b", O),
     };
 
+    // The connection to the server timed out: it never answered (a ban at its firewall looks like this) or stopped answering.
+    static readonly Regex NoAnswer = new(@"NETWORK_DISCONNECT_(CONNECT_REQUEST_)?TIMEDOUT|NETWORK_DISCONNECT_CONNECTION_FAILURE|Connection failed after \d+ retries", O);
+
+    static readonly Regex SignOn = new(@"Sign-on state:\s*(\d+)", O);
+
+    /// <summary>"Sign-on state: 6 (SIGNONSTATE_FULL)" on a disconnect line: how far the join got (6 = in the game). Null if not on the line.</summary>
+    public static int? SignOnState(string line)
+    {
+        var m = SignOn.Match(line ?? "");
+        return m.Success && int.TryParse(m.Groups[1].Value, out var n) ? n : null;
+    }
+
+    /// <summary>Which of two results of one disconnect counts: a ban over a Steam refusal over a kick over a timeout.</summary>
+    public static KickKind Stronger(KickKind a, KickKind b) => Rank(b) > Rank(a) ? b : a;
+
+    static int Rank(KickKind k) => k switch { KickKind.Ban => 4, KickKind.Steam => 3, KickKind.Kick => 2, KickKind.NoAnswer => 1, _ => 0 };
+
     // Only with a disconnect or reject on the same line.
     static readonly Regex BanWeak = new(@"\b(banned|ban(id|ip)?|banadded)\b", O);
     static readonly Regex KickWeak = new(@"\bkick(ed)?\b", O);
@@ -70,12 +88,23 @@ public static class Cs2Console
         return m.Success ? m.Groups[1].Value : null;
     }
 
+    static readonly Regex AnyConnect = new(@"Connected to '[^']*'", O);
+
+    /// <summary>Any "Connected to '…'": a server, the main menu (loopback) or a Valve relay. CS2 is somewhere else now.</summary>
+    public static bool IsConnectLine(string line) => AnyConnect.IsMatch(line ?? "");
+
+    static readonly Regex NoSteamLogon = new(@"NOSTEAMLOGIN|NOSTEAMTICKET|no steam logon|NETWORK_DISCONNECT_STEAM_LOGON\b", O);
+
+    /// <summary>The "No Steam logon" kick: Steam lost its session (another network, a crash). Not the admin, and a new IP won't help.</summary>
+    public static bool IsNoSteamLogon(string line) => !string.IsNullOrWhiteSpace(line) && NoSteamLogon.IsMatch(line) && !Ignore.Take(3).Any(r => r.IsMatch(line));
+
     public static KickKind Classify(string line)
     {
         if (string.IsNullOrWhiteSpace(line) || Ignore.Any(r => r.IsMatch(line))) return KickKind.None;
         if (SteamStrong.IsMatch(line)) return KickKind.Steam;
         if (BanStrong.Any(r => r.IsMatch(line))) return KickKind.Ban;
         if (KickStrong.Any(r => r.IsMatch(line))) return KickKind.Kick;
+        if (NoAnswer.IsMatch(line)) return KickKind.NoAnswer;
         if (!Context.IsMatch(line)) return KickKind.None;
         if (BanWeak.IsMatch(line)) return KickKind.Ban;
         if (KickWeak.IsMatch(line)) return KickKind.Kick;
