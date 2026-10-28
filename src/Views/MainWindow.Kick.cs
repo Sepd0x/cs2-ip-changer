@@ -99,7 +99,9 @@ public partial class MainWindow
         Log.Warn($"You were {what} from {_s.LastServer ?? "the server"}" + (acc != null ? $" on {acc.Name}" : "") + ". Console: " + Cut(line));
         if (kind == KickKind.Ban && _servers.FirstOrDefault(x => x.Key == _s.LastServer) is ServerItem banned && acc != null) MarkServerBan(acc, banned);
         Diag.Write("kick", new { kind = what, line, server = _s.LastServer });
+        // A ban is on the IP and on the account: coming back needs both new, so the offer is the switch.
         Toast(_s.LastServer == null ? $"You were {what} from the server."
+            : kind == KickKind.Ban ? $"You were banned from the server. Press {_s.HotkeyRejoin} for a new IP and another account, then rejoin."
             : $"You were {what} from the server. Press {_s.HotkeyRejoin} to change IP and rejoin.", false);
         UpdateRejoinBtn();
         if (_s.LastServer != null && Dialog.Visibility != Visibility.Visible && !_changingIp && !_rejoining) _ = OfferRejoin(what);
@@ -107,16 +109,37 @@ public partial class MainWindow
 
     async Task OfferRejoin(string what)
     {
-        if (await Ask($"You were {what}", $"CS2 says you were {what} from {_s.LastServer}. Change IP and rejoin?" + (what == "banned" ? "\n\nIf the ban is on your Steam account, a new IP won't help." : ""), "Change IP and rejoin", "Not now"))
-            await ChangeIpAndRejoin("After the " + (what == "banned" ? "ban" : "kick"));
+        if (what != "banned")
+        {
+            if (await Ask($"You were {what}", $"CS2 says you were {what} from {_s.LastServer}. Change IP and rejoin?", "Change IP and rejoin", "Not now"))
+                await ChangeIpAndRejoin("After the kick");
+            return;
+        }
+        var next = NextQuick(_servers.FirstOrDefault(x => x.Key == _s.LastServer));
+        if (next == null)
+        {
+            Toast($"Banned from {_s.LastServer}. No other account to rejoin with: the rest are skipped, on cooldown or banned there.", false);
+            return;
+        }
+        if (await Ask("You were banned", $"CS2 says you were banned from {_s.LastServer}. The ban is on your IP and on the account, so a new IP alone won't get you back in.\n\nGet a new IP, log in to {next.Name} and rejoin?", "New IP, switch and rejoin", "Not now"))
+            await RejoinAfterBan("After the ban");
     }
+
+    /// <summary>New IP, the next account the server hasn't banned (nor its community), back to the last server.</summary>
+    Task RejoinAfterBan(string from) => RunCommand("Switch and rejoin", "starting…", () => RunSwitch(new SwitchSteps(true, true, true, true), from));
+
+    /// <summary>The account in use has a ban mark on the last server (or its community).</summary>
+    bool BannedOnLast() =>
+        ActiveAccount() is AccountItem a && _servers.FirstOrDefault(x => x.Key == _s.LastServer) is ServerItem s && a.BanFor(s.Key, s.ServerName, s.Network) != null;
 
     // ------------------------------------------------------------ Bans by a server (on the account, not Steam)
 
     AccountItem ActiveAccount()
     {
         var id = _demo ? null : Steam.ActiveSteamId();
-        return _accounts.FirstOrDefault(a => a.SteamId == id) ?? _accounts.FirstOrDefault(a => a.Active);
+        // Steam logged in to an account the list doesn't have yet: not the old one (the next tick reloads the list).
+        if (id != null) return _accounts.FirstOrDefault(a => a.SteamId == id);
+        return _accounts.FirstOrDefault(a => a.Active);
     }
 
     void MarkServerBan(AccountItem a, ServerItem s)
@@ -193,7 +216,7 @@ public partial class MainWindow
     void UpdateRejoinBtn()
     {
         RejoinBtn.IsEnabled = !_changingIp && !_rejoining && _s.LastServer != null && _phone?.Ready == true;
-        RejoinBtn.ToolTip = (_s.LastServer == null ? "Join a server from Servers first. " : $"Changes the IP, then joins {_s.LastServer} again. ")
+        RejoinBtn.ToolTip = (_s.LastServer == null ? "Join a server from Servers first. " : $"Changes the IP, then joins {_s.LastServer} again (with another account if this one is banned there). ")
             + $"Only joins with protection confirmed. In game: {_s.HotkeyRejoin}.";
 
     }
@@ -243,6 +266,14 @@ public partial class MainWindow
 
     async void Rejoin_Click(object sender, RoutedEventArgs e) => await ChangeIpAndRejoin("Button");
 
-    /// <summary>The rejoin hotkey and the button: new IP, same account, back to the last server (with all the usual checks).</summary>
-    Task ChangeIpAndRejoin(string from) => RunCommand("Change IP and rejoin", "starting…", () => RunSwitch(new SwitchSteps(true, false, true, true), from));
+    /// <summary>
+    /// The rejoin hotkey and the button: new IP, same account, back to the last server (with all the usual checks).
+    /// If that account is banned there, the same account would be refused again, so it also switches account.
+    /// </summary>
+    Task ChangeIpAndRejoin(string from)
+    {
+        if (!BannedOnLast()) return RunCommand("Change IP and rejoin", "starting…", () => RunSwitch(new SwitchSteps(true, false, true, true), from));
+        Log.Info($"{from}: {ActiveAccount()?.Name} is banned on {_s.LastServer}, so the rejoin also switches account.");
+        return RejoinAfterBan(from);
+    }
 }

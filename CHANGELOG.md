@@ -2,6 +2,21 @@
 
 Notable changes to this project are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.1.0-beta.2] - 2026-10-28
+
+Fixes from the first beta.1 tests.
+
+### Added
+- Open with CS2: an "As admin" switch for each program. Windows asks first (UAC) and the program gets its own admin rights, never the app's. For programs that don't work without admin.
+
+### Changed
+- After a ban, the app offers a new IP **and** the next account the server (or its community) hasn't banned, then rejoins. A ban is on the IP and the account, so a new IP with the same account only got refused again. The rejoin hotkey does the same when the account in use is marked as banned on the last server.
+- "CS2 only through the phone" now covers CS2's game traffic (UDP: servers, invites, Valve's relays). CS2's web requests over TCP, and programs loaded into the game, use the normal connection again. In Game only mode they had no way out and failed with network errors. Servers in your list stay blocked off the phone on every protocol.
+
+### Fixed
+- A Steam account added or logged in outside the app (Steam's own login, another switcher) now shows up within a few seconds and becomes the account in use. Before, the app kept the old one until it was restarted, so ban marks and Switch acted on the wrong account.
+- Player lists that showed up and then turned "hidden" on the next refresh: lists split over several packets (full servers, long names) are put back together, a late answer from the server's previous reply no longer gets in the way, and an empty answer is asked again once before calling the list hidden.
+
 ## [0.1.0-beta.1] - 2026-10-28
 
 Fixes from a full review of alpha.4: Steam and CS2 no longer run as admin, hotkeys that don't clash with AltGr, Whole PC mode that also covers DNS and IPv6, and a diagnostics export for bug reports.
@@ -114,6 +129,7 @@ First public release, as ServerRouteTool.
 - Restore network, to undo every route and rule in one click.
 - Dark interface in Portuguese.
 
+[0.1.0-beta.2]: ../../releases/tag/v0.1.0-beta.2
 [0.1.0-beta.1]: ../../releases/tag/v0.1.0-beta.1
 [0.1.0-alpha.4]: ../../releases/tag/v0.1.0-alpha.4
 [0.1.0-alpha.3]: ../../releases/tag/v0.1.0-alpha.3

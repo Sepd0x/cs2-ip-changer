@@ -436,5 +436,43 @@ foreach (var k in Enum.GetValues<Tones.Kind>())
 // "--sons": toca os 5 sons (só à mão)
 if (args.Contains("--sons")) foreach (var k in Enum.GetValues<Tones.Kind>()) { Tones.Play(k); Thread.Sleep(900); }
 
+// beta.2: A2S com servidor falso no loopback: desafio, uma resposta repetida que chega atrasada à pergunta seguinte, lista partida em 2 pacotes
+{
+    using var srv = new System.Net.Sockets.UdpClient(new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 0));
+    var port = ((System.Net.IPEndPoint)srv.Client.LocalEndPoint!).Port;
+    byte[] Pkt(params byte[][] parts) => parts.SelectMany(x => x).ToArray();
+    byte[] Str(string t) => System.Text.Encoding.UTF8.GetBytes(t + "\0");
+    byte[] FF = { 0xFF, 0xFF, 0xFF, 0xFF };
+    var info = Pkt(FF, new byte[] { 0x49, 17 }, Str("HvH teste"), Str("de_mirage"), Str("csgo"), Str("CS2"), new byte[] { 0xDA, 0x02, 3, 32, 0 });
+    var players = new List<byte>(FF) { 0x44, 3 };
+    foreach (var (n, sc) in new[] { ("alfa", 10), ("bravo com um nome comprido", 30), ("charlie", 20) })
+    { players.Add(0); players.AddRange(Str(n)); players.AddRange(BitConverter.GetBytes(sc)); players.AddRange(BitConverter.GetBytes(60f)); }
+    var half = players.Count / 2;
+    byte[] Part(int number, IEnumerable<byte> payload) =>
+        Pkt(new byte[] { 0xFE, 0xFF, 0xFF, 0xFF }, BitConverter.GetBytes(7), new byte[] { 2, (byte)number }, BitConverter.GetBytes((short)1248), payload.ToArray());
+    var fakeA2s = Task.Run(async () =>
+    {
+        for (var i = 0; i < 4; i++)
+        {
+            var r = await srv.ReceiveAsync();
+            var b = r.Buffer;
+            if (b[4] == 0x54 && b.Length == 25) await srv.SendAsync(Pkt(FF, new byte[] { 0x41, 1, 2, 3, 4 }), r.RemoteEndPoint);
+            else if (b[4] == 0x54) { await srv.SendAsync(info, r.RemoteEndPoint); await srv.SendAsync(info, r.RemoteEndPoint); }
+            else if (b[4] == 0x55 && b.Skip(5).SequenceEqual(FF)) await srv.SendAsync(Pkt(FF, new byte[] { 0x41, 5, 6, 7, 8 }), r.RemoteEndPoint);
+            else if (b[4] == 0x55) { await srv.SendAsync(Part(1, players.Skip(half)), r.RemoteEndPoint); await srv.SendAsync(Part(0, players.Take(half)), r.RemoteEndPoint); }
+        }
+    });
+    try
+    {
+        var q = await A2S.Query("127.0.0.1", port, "127.0.0.1", 1500);
+        Check("A2S: info depois do desafio", q.Name == "HvH teste" && q.Players == 3 && q.MaxPlayers == 32, $"{q.Name} {q.Players}/{q.MaxPlayers}");
+        Check("A2S: lista partida em 2 pacotes, fora de ordem, com uma resposta atrasada pelo meio", q.PlayerList?.Count == 3 && q.PlayerList[0].Name == "bravo com um nome comprido",
+            q.PlayerList == null ? "nula" : string.Join(", ", q.PlayerList.Select(x => x.Name)));
+    }
+    catch (Exception ex) { Check("A2S com servidor falso", false, ex.Message); }
+    Check("A2S: pacote partido comprimido é recusado",
+        A2S.Split(Pkt(new byte[] { 0xFE, 0xFF, 0xFF, 0xFF }, BitConverter.GetBytes(unchecked((int)0x80000007)), new byte[] { 2, 0, 0, 0, 1 })) == null);
+}
+
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

@@ -40,6 +40,42 @@ public partial class MainWindow
 
     void SaveAccounts() { if (!_demo) Store.Save(Paths.File("accounts.json"), _accMeta); }
 
+    DateTime _loginUsersAt;
+    string _activeSeen;
+
+    /// <summary>
+    /// Every tick: an account added or logged in outside the app (Steam's own login, another switcher) shows up and
+    /// becomes the one in use, so ban marks and Switch don't keep acting on the old one.
+    /// </summary>
+    void WatchSteamAccounts()
+    {
+        if (_demo || _switching || _refreshingAcc) return;
+        DateTime written = default;
+        try { if (Steam.LoginUsersPath is string p && File.Exists(p)) written = File.GetLastWriteTimeUtc(p); } catch { }
+        var active = Steam.ActiveSteamId();
+        var unknown = active != null && !_accounts.Any(a => a.SteamId == active) && !(_accMeta?.TryGetValue(active, out var m) == true && m.Hidden);
+        if (written != _loginUsersAt || unknown)
+        {
+            var first = _loginUsersAt == default;
+            _loginUsersAt = written;
+            if (!first)
+            {
+                var before = _accounts.Select(a => a.SteamId).ToHashSet();
+                LoadAccounts();
+                var added = _accounts.Where(a => !before.Contains(a.SteamId)).ToList();
+                if (added.Count > 0) Toast(added.Count == 1 ? $"New Steam account: {added[0].Name}." : $"{added.Count} new Steam accounts.", true);
+            }
+        }
+        if (active == _activeSeen) return;
+        _activeSeen = active;
+        if (active == null) return;   // Steam closed or logging in: keep the last one shown
+        var changed = false;
+        foreach (var a in _accounts) { var me = a.SteamId == active; if (a.Active != me) { a.Active = me; changed = true; } }
+        if (!changed) return;
+        if (ActiveAccount() is AccountItem now) Log.Info($"Steam is now logged in to {now.Name}.");
+        ApplyAccountFilter();
+    }
+
     void AccFilter_Changed(object sender, RoutedEventArgs e)
     {
         if (_uiLock || !IsLoaded) return;

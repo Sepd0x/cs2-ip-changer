@@ -54,6 +54,8 @@ public sealed class OpenWithItem : Observable
     bool _on = true;
     public string Path { get; set; }
     public bool Enabled { get => _on; set => Set(ref _on, value); }
+    /// <summary>Opened with "Run as administrator": Windows asks (UAC), the app's own admin rights are never passed on.</summary>
+    public bool AsAdmin { get; set; }
     [JsonIgnore] public string Name => System.IO.Path.GetFileNameWithoutExtension(Path);
 }
 

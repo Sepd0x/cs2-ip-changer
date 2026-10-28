@@ -106,6 +106,15 @@ public sealed class Guard
             finally { _gate.Release(); }
         });
 
+    /// <summary>
+    /// cs2.exe's game traffic (UDP: servers, invites, Valve's relays) only through the protected connection.
+    /// TCP stays free: CS2's web requests and what other programs load into the game (over HTTPS) would fail in Game only,
+    /// where only the listed servers and Steam go through the phone. Listed servers stay blocked on any protocol by the kill switch.
+    /// </summary>
+    static Firewall.FwRule Cs2Rule(string cs2, string allow) => new(Firewall.Cs2RuleName, null, cs2, allow,
+        "Managed by CS2 IP Changer. CS2's game traffic (UDP) can only go out through the protected connection: servers not in the list never see your home IP.",
+        Firewall.NET_FW_IP_PROTOCOL_UDP);
+
     async Task<GuardReport> SyncCore(Settings s, List<string> ips, bool force, string distrust, bool cs2Running, string verifiedKey)
     {
         var adapters = Net.Scan();
@@ -135,7 +144,7 @@ public sealed class Guard
             {
                 killOk = Firewall.Verify(Firewall.RuleName, ips, allow);
                 echoOk = Firewall.Verify(Firewall.EchoRuleName, new[] { Net.EchoIp }, candidate?.LocalIp, Environment.ProcessPath);
-                cs2Ok = cs2 != null ? Firewall.Verify(Firewall.Cs2RuleName, null, allow, cs2) : null;
+                cs2Ok = cs2 != null ? Firewall.Verify(Cs2Rule(cs2, allow)) : null;
                 dnsOk = full != null ? Firewall.Verify(full[0]) && Firewall.Verify(full[1]) : null;
                 ipv6Ok = full != null ? Firewall.Verify(full[2]) : null;
             }
@@ -146,7 +155,7 @@ public sealed class Guard
                 Try(() => Firewall.Apply(Firewall.RuleName, ips, null, allow, "Managed by CS2 IP Changer. Servers in the list can only be reached from the local IP of the protected connection."));
                 // Only the app's own IP test: other programs (1.0.0.1 is also a public DNS server) are left alone.
                 Try(() => Firewall.Apply(Firewall.EchoRuleName, new[] { Net.EchoIp }, Environment.ProcessPath, candidate?.LocalIp, "Managed by CS2 IP Changer. Makes sure the app's IP test measures the protected connection."));
-                if (cs2 != null) Try(() => Firewall.Apply(Firewall.Cs2RuleName, null, cs2, allow, "Managed by CS2 IP Changer. CS2 can only go out through the protected connection: servers not in the list never see your home IP."));
+                if (cs2 != null) Try(() => Firewall.Apply(Cs2Rule(cs2, allow)));
                 else Firewall.Remove(Firewall.Cs2RuleName);
                 if (full != null) foreach (var r in full) Try(() => Firewall.Apply(r));
                 else foreach (var n in FullModeRuleNames) Firewall.Remove(n);

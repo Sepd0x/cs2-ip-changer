@@ -29,7 +29,7 @@ public static partial class Steam
     }
 
     public static string Exe => InstallDir() is string d ? Path.Combine(d, "steam.exe") : null;
-    static string LoginUsersPath => InstallDir() is string d ? Path.Combine(d, "config", "loginusers.vdf") : null;
+    public static string LoginUsersPath => InstallDir() is string d ? Path.Combine(d, "config", "loginusers.vdf") : null;
 
     public static List<LocalAccount> ReadAccounts()
     {

@@ -39,14 +39,18 @@ public static class ShellLaunch
     static Guid DispatchIid = new("00020400-0000-0000-C000-000000000046");
     const int SWC_DESKTOP = 8, SWFO_NEEDDISPATCH = 1, SVGIO_BACKGROUND = 0;
 
-    /// <summary>Starts the exe with no arguments. Null if it worked, otherwise the reason. Call it on the UI thread (STA).</summary>
-    public static string Open(string exe) => IsLaunchable(exe, out var why) ? OpenAsUser(exe, "", Path.GetDirectoryName(exe)) : why;
+    /// <summary>
+    /// Starts the exe with no arguments. <paramref name="asAdmin"/>: Explorer asks for "Run as administrator", so Windows shows
+    /// its UAC prompt and the program gets its own admin rights, never the app's. Null if it worked, otherwise the reason. UI thread (STA).
+    /// </summary>
+    public static string Open(string exe, bool asAdmin = false) =>
+        IsLaunchable(exe, out var why) ? OpenAsUser(exe, "", Path.GetDirectoryName(exe), asAdmin ? "runas" : "open") : why;
 
     /// <summary>
     /// Opens a program (with arguments) or a link (steam://, https://) as the signed-in user, through Explorer.
     /// Null if it worked, otherwise the reason. No check on what it opens: the caller decides. Call it on the UI thread (STA).
     /// </summary>
-    public static string OpenAsUser(string fileOrUrl, string args, string workDir)
+    public static string OpenAsUser(string fileOrUrl, string args, string workDir, string verb = "open")
     {
         if (string.IsNullOrWhiteSpace(fileOrUrl)) return "nothing to open";
         try
@@ -59,7 +63,7 @@ public static class ShellLaunch
             if (browser.QueryActiveShellView(out var view) != 0 || view.GetItemObject(SVGIO_BACKGROUND, ref DispatchIid, out var bg) != 0)
                 return "Explorer's desktop isn't ready";
             dynamic app = ((dynamic)bg).Application;
-            app.ShellExecute(fileOrUrl, args ?? "", workDir ?? "", "open", 1);
+            app.ShellExecute(fileOrUrl, args ?? "", workDir ?? "", verb, 1);
             return null;
         }
         catch (Exception ex) { return ex.Message; }

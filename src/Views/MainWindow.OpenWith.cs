@@ -54,8 +54,8 @@ public partial class MainWindow
         foreach (var p in list)
         {
             if (ShellLaunch.IsRunning(p.Path)) continue;
-            var err = ShellLaunch.Open(p.Path);
-            if (err == null) Log.Info($"Opened {p.Name} with CS2, without admin rights.");
+            var err = ShellLaunch.Open(p.Path, p.AsAdmin);
+            if (err == null) Log.Info(p.AsAdmin ? $"Opened {p.Name} with CS2, as administrator (Windows asks first)." : $"Opened {p.Name} with CS2, without admin rights.");
             else Log.Warn($"Couldn't open {p.Name} with CS2: {err}. The app never starts it with its own admin rights.");
         }
     }

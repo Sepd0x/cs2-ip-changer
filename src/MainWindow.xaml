@@ -845,7 +845,7 @@
                                         <CheckBox x:Name="LockCs2Box" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
                                             <StackPanel>
                                                 <TextBlock Text="CS2 only through the phone"/>
-                                                <TextBlock Text="CS2 can only use the phone connection. If the cable drops, CS2 goes offline instead of using your home network." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="CS2's game traffic can only use the phone connection. If the cable drops, CS2 goes offline instead of using your home network. Its web requests (and programs loaded into the game) use the normal connection." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
                                         <CheckBox x:Name="SteamEgressBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
@@ -1062,6 +1062,7 @@
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="*"/>
                                                             <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="Auto"/>
                                                         </Grid.ColumnDefinitions>
                                                         <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Enabled}" Click="OpenWithToggle_Click" ToolTip="{Binding Path}">
                                                             <StackPanel>
@@ -1069,7 +1070,9 @@
                                                                 <TextBlock Text="{Binding Path}" Style="{StaticResource OptSub}" TextTrimming="CharacterEllipsis"/>
                                                             </StackPanel>
                                                         </CheckBox>
-                                                        <Button Grid.Column="1" Style="{StaticResource IconBtn}" Content="&#xE74D;" Click="OpenWithRemove_Click" FontSize="11" ToolTip="Remove" VerticalAlignment="Top"/>
+                                                        <CheckBox Grid.Column="1" IsChecked="{Binding AsAdmin}" Click="OpenWithToggle_Click" Content="As admin" VerticalAlignment="Top" Margin="12,2,8,0"
+                                                                  ToolTip="Opens it with Run as administrator: Windows asks first (UAC). For programs that only work as admin."/>
+                                                        <Button Grid.Column="2" Style="{StaticResource IconBtn}" Content="&#xE74D;" Click="OpenWithRemove_Click" FontSize="11" ToolTip="Remove" VerticalAlignment="Top"/>
                                                     </Grid>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
