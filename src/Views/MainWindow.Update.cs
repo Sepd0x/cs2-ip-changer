@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Windows;
 using SRT.Core;
 
@@ -70,7 +70,7 @@ public partial class MainWindow
                 return;
             }
             // Never installs without the release's own hash; the dev build (DLLs next to the exe) can't replace itself either.
-            if (r.ExeUrl == null || r.ShaUrl == null || !Updater.CanSelfUpdate)
+            if (r.ExeUrl == null || r.ShaUrl == null || r.SigUrl == null || !Updater.CanSelfUpdate)
             {
                 OpenUrl(r.PageUrl);
                 Toast(r.ExeUrl != null && r.ShaUrl == null ? "This release has no .sha256 file, so the app won't install it. Opened the release page."
@@ -119,7 +119,8 @@ public partial class MainWindow
     static void OpenUrl(string url)
     {
         if (ShellLaunch.OpenAsUser(url, "", null) == null) return;
-        try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
+        // No fallback that starts the browser from here: it would run as admin. The link goes to the clipboard instead.
+        try { Clipboard.SetText(url); } catch { }
     }
 
     void CheckUpdates_Click(object sender, RoutedEventArgs e)

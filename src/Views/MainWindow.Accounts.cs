@@ -28,13 +28,13 @@ public partial class MainWindow
         {
             if (!_accMeta.TryGetValue(l.SteamId, out var meta)) _accMeta[l.SteamId] = meta = new AccountMeta();
             if (meta.Hidden) continue;
-            _accounts.Add(new AccountItem(l, meta) { Active = l.SteamId == active, Streamer = _s.StreamerMode });
+            _accounts.Add(new AccountItem(l, meta) { Active = l.SteamId == active, Streamer = HideLogins });
         }
         AccountsEmptyText.Text = Steam.InstallDir() == null
             ? "Steam is not installed on this PC."
             : "No saved accounts found.\nLog in to Steam with \"Remember me\" checked, or use Add account.";
         ApplyAccountFilter();
-        if (_s.StreamerMode) RemaskLog();
+        if (HideLogins) RemaskLog();
         Log.Info($"{_accounts.Count} Steam account(s) on this PC.");
     }
 
@@ -401,7 +401,7 @@ public partial class MainWindow
         _s.SteamSilent = OptSilent.IsChecked == true;
         _s.SteamOffline = OptOffline.IsChecked == true;
         _s.StreamerMode = OptStreamer.IsChecked == true;
-        foreach (var a in _accounts) a.Streamer = _s.StreamerMode;
+        foreach (var a in _accounts) a.Streamer = HideLogins;
         ShowApiKey(false);
         RemaskLog();
         SaveSettings();

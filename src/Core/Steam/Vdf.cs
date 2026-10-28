@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using System.Net.Http;
 using System.Text;
@@ -29,15 +29,17 @@ public sealed class VdfNode
         return ParseBody(text, ref pos);
     }
 
-    static VdfNode ParseBody(string t, ref int p)
+    static VdfNode ParseBody(string t, ref int p, int depth = 0)
     {
+        // A crafted file with thousands of "{" would overflow the stack, and that can't be caught: it would close the app as admin.
+        if (depth > 32) throw new InvalidDataException("VDF nested too deep");
         var node = new VdfNode();
         while (true)
         {
             var key = Token(t, ref p);
             if (key == null || key == "}") return node;
             var val = Token(t, ref p);
-            if (val == "{") node.Items.Add(new(key, ParseBody(t, ref p)));
+            if (val == "{") node.Items.Add(new(key, ParseBody(t, ref p, depth + 1)));
             else if (val != null) node.Items.Add(new(key, val));
             else return node;
         }

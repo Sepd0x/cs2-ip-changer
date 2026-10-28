@@ -27,6 +27,13 @@
     <InformationalVersion>$(Version)+dev</InformationalVersion>
   </PropertyGroup>
 
+  <!-- Recording build (dotnet publish -c Release -p:Recording=true): personal data never reaches the screen, see Core/Recording.cs -->
+  <PropertyGroup Condition="'$(Recording)'=='true'">
+    <DefineConstants>$(DefineConstants);RECORDING</DefineConstants>
+    <AssemblyName>CS2IPChanger-Recording</AssemblyName>
+    <InformationalVersion>$(Version)</InformationalVersion>
+  </PropertyGroup>
+
   <!-- Test build (no UAC prompt) to take screenshots on the dev PC -->
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
     <ApplicationManifest>app.debug.manifest</ApplicationManifest>

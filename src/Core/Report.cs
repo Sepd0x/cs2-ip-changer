@@ -1,4 +1,4 @@
-using System.IO.Compression;
+﻿using System.IO.Compression;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -17,17 +17,19 @@ public static class Report
     /// Creates the zip on the Desktop (or in SRT_Dados if there's no Desktop) and returns its path.
     /// <paramref name="settingsJson"/> already comes without the key and the home IP; every IP in <paramref name="hide"/> becomes "home-ip".
     /// </summary>
-    public static string Export(string now, string settingsJson, string steamDir, string cs2Console, IEnumerable<string> hide, string outDir = null)
+    public static string Export(string now, string settingsJson, string steamDir, string cs2Console, IEnumerable<string> hide, string outDir = null, IEnumerable<string> personal = null)
     {
         var desk = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
         var dir = outDir ?? (!string.IsNullOrEmpty(desk) && Directory.Exists(desk) ? desk : Paths.Data);
         var path = Path.Combine(dir, $"CS2IPChanger-diagnostics-{DateTime.Now:yyyyMMdd-HHmmss}.zip");
         var secrets = (hide ?? Enumerable.Empty<string>()).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().ToList();
+        // Logins, Steam names, players, SSIDs, SteamIDs, e-mails and the Windows user become "(hidden)": the zip says what broke, not who you are.
+        var words = Rec.WordRegex(personal ?? Enumerable.Empty<string>());
 
         string Clean(string text)
         {
             foreach (var ip in secrets) text = Regex.Replace(text, @"(?<![\d.])" + Regex.Escape(ip) + @"(?![\d])", "home-ip");
-            return text;
+            return Rec.ScrubIds(text, words);
         }
 
         using var zip = ZipFile.Open(path, ZipArchiveMode.Create);

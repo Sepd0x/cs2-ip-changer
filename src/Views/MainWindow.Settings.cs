@@ -51,7 +51,8 @@ public partial class MainWindow
             OptCs2.IsChecked = _s.LaunchCs2;
             OptSilent.IsChecked = _s.SteamSilent;
             OptOffline.IsChecked = _s.SteamOffline;
-            OptStreamer.IsChecked = _s.StreamerMode;
+            OptStreamer.IsChecked = HideLogins;
+            OptStreamer.IsEnabled = !Rec.On;
             AccSort.SelectedItem = AccSort.Items.Cast<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == _s.AccountSort) ?? AccSort.Items[0];
         }
         finally { _uiLock = false; }
@@ -128,14 +129,14 @@ public partial class MainWindow
 
     void ShowApiKey(bool show)
     {
-        show &= !_s.StreamerMode;
+        show &= !HideLogins;
         // The two boxes always hold the same key; only one is on screen.
         if (show) ApiKeyBox.Text = ApiKeyPwd.Password; else ApiKeyPwd.Password = ApiKeyBox.Text;
         ApiKeyBox.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         ApiKeyPwd.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
         ApiKeyShowBtn.Content = show ? "Hide" : "Show";
-        ApiKeyShowBtn.IsEnabled = !_s.StreamerMode;
-        ApiKeyShowBtn.ToolTip = _s.StreamerMode ? "Hide logins is on (Accounts): the key stays hidden." : show ? "Hides the key" : "Shows the key";
+        ApiKeyShowBtn.IsEnabled = !HideLogins;
+        ApiKeyShowBtn.ToolTip = HideLogins ? "Hide logins is on (Accounts): the key stays hidden." : show ? "Hides the key" : "Shows the key";
     }
 
     void SwitchSteps_Click(object sender, RoutedEventArgs e)
@@ -169,6 +170,7 @@ public partial class MainWindow
 
     }
 
-    void OpenData_Click(object sender, RoutedEventArgs e) => Process.Start(new ProcessStartInfo(Paths.Data) { UseShellExecute = true });
+    void OpenData_Click(object sender, RoutedEventArgs e) =>
+        ShellLaunch.OpenAsUser(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), $"\"{Paths.Data}\"", null);   // not as admin
     void ApiKeyLink_Click(object sender, RoutedEventArgs e) => OpenUrl("https://steamcommunity.com/dev/apikey");
 }

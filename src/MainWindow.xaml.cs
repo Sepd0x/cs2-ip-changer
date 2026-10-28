@@ -54,6 +54,7 @@ public partial class MainWindow : Window
     public MainWindow(string[] args)
     {
         InitializeComponent();
+        Rec.Install(this, PersonalWords);
         ParseDevArgs(args);
         _justUpdated = args.Contains("--updated");
         ShowVersion();

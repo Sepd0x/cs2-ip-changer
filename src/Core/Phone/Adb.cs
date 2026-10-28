@@ -1,6 +1,8 @@
-using System.IO.Compression;
+﻿using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Net.Http;
+using System.Security.AccessControl;
+using System.Security.Principal;
 
 namespace SRT.Core;
 
@@ -44,13 +46,119 @@ public static class Adb
                     candidates.Add(Path.Combine(d, "platform-tools", "adb.exe"));
         }
         catch { }
-        // The app runs as admin: only an adb.exe signed by Google is ever started.
+        // The app runs as admin: only an adb.exe signed by Google is ever started, and only from a copy in a folder only admins can change.
         foreach (var c in candidates.Where(File.Exists).Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            if (IsGoogleSigned(c)) return c;
+            if (IsGoogleSigned(c))
+            {
+                try { return Secure(c); }
+                catch (Exception ex) { Log.Warn($"ADB found in {Path.GetDirectoryName(c)} but it couldn't be copied to a safe folder ({ex.Message}). Restart the app; if it repeats, export diagnostics."); return null; }
+            }
             if (Skipped.Add(c)) Log.Warn($"Ignored {c}: it is not signed by Google.");
         }
         return null;
+    }
+
+    // ------------------------------------------------------------ The copy that runs
+
+    static readonly string[] AdbFiles = { "adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll" };
+
+    /// <summary>
+    /// adb.exe loads its two DLLs from its own folder, and the folders it comes from (Downloads, SRT_Dados, AppData, PATH) are yours to change.
+    /// Started from there by an app with admin rights, a program of yours could swap a DLL and run as admin. So the three files are copied to
+    /// %ProgramData%\CS2IPChanger\adb, which only admins can change, all three are checked for Google's signature there, and only that copy runs.
+    /// Without admin rights (test build) there is nothing to gain and the file found is used as it is.
+    /// </summary>
+    static string Secure(string adb)
+    {
+        if (!Elevated) return adb;
+        var from = Path.GetDirectoryName(adb)!;
+        var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CS2IPChanger");
+        var dir = Path.Combine(root, "adb");
+        SafeDir(root);
+        SafeDir(dir);
+        foreach (var name in AdbFiles)
+        {
+            var src = Path.Combine(from, name);
+            var dst = Path.Combine(dir, name);
+            if (!File.Exists(src)) continue;
+            if (File.Exists(dst) && Same(src, dst)) continue;
+            var tmp = dst + ".new";
+            File.Copy(src, tmp, true);
+            try { File.Move(tmp, dst, true); }
+            catch (IOException) when (File.Exists(dst)) { File.Delete(tmp); }   // the copy in use (adb server running) stays; it is checked below
+        }
+        var bad = AdbFiles.Select(n => Path.Combine(dir, n)).Where(f => File.Exists(f) && !IsGoogleSigned(f)).ToList();
+        if (bad.Count > 0 || !File.Exists(Path.Combine(dir, "adb.exe")))
+            throw new InvalidDataException(bad.Count > 0 ? "not signed by Google: " + string.Join(", ", bad.Select(Path.GetFileName)) : "adb.exe missing");
+        return Path.Combine(dir, "adb.exe");
+    }
+
+    static bool Elevated
+    {
+        get { try { using var id = WindowsIdentity.GetCurrent(); return new WindowsPrincipal(id).IsInRole(WindowsBuiltInRole.Administrator); } catch { return false; } }
+    }
+
+    static bool Same(string a, string b)
+    {
+        if (new System.IO.FileInfo(a).Length != new System.IO.FileInfo(b).Length) return false;
+        using var sa = File.OpenRead(a);
+        using var sb = File.OpenRead(b);
+        return System.Security.Cryptography.SHA256.HashData(sa).AsSpan().SequenceEqual(System.Security.Cryptography.SHA256.HashData(sb));
+    }
+
+    static readonly SecurityIdentifier Admins = new(WellKnownSidType.BuiltinAdministratorsSid, null);
+    static readonly SecurityIdentifier SystemSid = new(WellKnownSidType.LocalSystemSid, null);
+    static readonly SecurityIdentifier Users = new(WellKnownSidType.BuiltinUsersSid, null);
+    static readonly SecurityIdentifier OwnerRights = new("S-1-3-4");
+    const FileSystemRights WriteRights = FileSystemRights.WriteData | FileSystemRights.AppendData | FileSystemRights.WriteExtendedAttributes
+        | FileSystemRights.WriteAttributes | FileSystemRights.DeleteSubdirectoriesAndFiles | FileSystemRights.Delete
+        | FileSystemRights.ChangePermissions | FileSystemRights.TakeOwnership;
+
+    /// <summary>
+    /// Creates the folder for admins only (Users can read and run). Anyone can create folders in %ProgramData%, so one that already
+    /// exists and isn't like that (made by someone else first, a link, a file with that name) is moved aside and made again.
+    /// </summary>
+    public static void SafeDir(string d)
+    {
+        if (File.Exists(d) || (Directory.Exists(d) && !AdminOnly(d)))
+        {
+            var aside = $"{d}.untrusted-{DateTime.Now:yyyyMMdd-HHmmss}";
+            if (File.Exists(d)) File.Move(d, aside); else Directory.Move(d, aside);
+            Log.Warn($"{d} could be changed by programs without admin rights: moved to {aside} and made again.");
+        }
+        if (Directory.Exists(d)) return;
+        var sec = new DirectorySecurity();
+        sec.SetAccessRuleProtection(true, false);
+        sec.SetOwner(Admins);
+        const InheritanceFlags all = InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit;
+        sec.AddAccessRule(new FileSystemAccessRule(Admins, FileSystemRights.FullControl, all, PropagationFlags.None, AccessControlType.Allow));
+        sec.AddAccessRule(new FileSystemAccessRule(SystemSid, FileSystemRights.FullControl, all, PropagationFlags.None, AccessControlType.Allow));
+        sec.AddAccessRule(new FileSystemAccessRule(Users, FileSystemRights.ReadAndExecute, all, PropagationFlags.None, AccessControlType.Allow));
+        // Whoever owns a file can change its permissions; this takes that away (files copied in keep only read and run for their owner).
+        sec.AddAccessRule(new FileSystemAccessRule(OwnerRights, FileSystemRights.ReadAndExecute, all, PropagationFlags.None, AccessControlType.Allow));
+        new DirectoryInfo(d).Create(sec);
+    }
+
+    /// <summary>Owned by Administrators or SYSTEM, not a link, and nobody else can write, delete or change permissions.</summary>
+    public static bool AdminOnly(string d)
+    {
+        try
+        {
+            var info = new DirectoryInfo(d);
+            if (info.Attributes.HasFlag(FileAttributes.ReparsePoint)) return false;
+            var sec = info.GetAccessControl();
+            var owner = sec.GetOwner(typeof(SecurityIdentifier)) as SecurityIdentifier;
+            if (owner != Admins && owner != SystemSid) return false;
+            foreach (FileSystemAccessRule r in sec.GetAccessRules(true, true, typeof(SecurityIdentifier)))
+            {
+                if (r.AccessControlType != AccessControlType.Allow || (r.FileSystemRights & WriteRights) == 0) continue;
+                var who = r.IdentityReference as SecurityIdentifier;
+                if (who != Admins && who != SystemSid) return false;
+            }
+            return true;
+        }
+        catch { return false; }
     }
 
     static readonly HashSet<string> Skipped = new(StringComparer.OrdinalIgnoreCase);

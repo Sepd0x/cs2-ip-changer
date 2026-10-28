@@ -450,7 +450,7 @@ public partial class MainWindow
             if (h != _homePublic) _homeInfo = await Net.Lookup(h);
         }
         _egressPublic = e;
-        if (h != _homePublic && _s.StreamerMode) { _homePublic = h; RemaskLog(); }
+        if (h != _homePublic && HideLogins) { _homePublic = h; RemaskLog(); }
         _homePublic = h;
         DiagIps(e, h, same);
         ShowIps();

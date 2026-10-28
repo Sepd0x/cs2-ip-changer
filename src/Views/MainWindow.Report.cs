@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using System.Windows;
 using SRT.Core;
@@ -11,6 +11,7 @@ public partial class MainWindow
     async void ExportReport_Click(object sender, RoutedEventArgs e)
     {
         if (_demo) { Toast("Demo: the .zip would go to the Desktop.", true); return; }
+        if (Rec.On) { Toast("Off in the recording build: use the normal app to export diagnostics.", false); return; }
         ShowProgress("Collecting diagnostics…");
         try
         {
@@ -22,9 +23,10 @@ public partial class MainWindow
             var steamDir = Steam.InstallDir();
             var console = Cs2Console.LogPath(_s.Cs2Path ?? Steam.Cs2Path(_s));
             var hide = new[] { _s.LastHomeIp, _homePublic };
-            var path = await Task.Run(() => Report.Export(now, json, steamDir, console, hide));
+            var personal = PersonalWords().Where(w => w != _homeInfo?.Country && w != _egressInfo?.Country).ToList();   // the country helps a bug report
+            var path = await Task.Run(() => Report.Export(now, json, steamDir, console, hide, personal: personal));
             Log.Ok("Diagnostics exported: " + path);
-            Toast($"Diagnostics saved: {path}. Your home IP and API key are left out; check the zip before you post it.", true);
+            Toast($"Diagnostics saved: {path}. Your home IP, API key, logins, Steam names and IDs are left out; check the zip before you post it.", true);
             ShellLaunch.OpenAsUser(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), $"/select,\"{path}\"", null);
         }
         catch (Exception ex) { Log.Error("Export diagnostics: " + ex.Message); Toast("Couldn't export: " + ex.Message, Tone.Error); }

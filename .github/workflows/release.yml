@@ -1,5 +1,7 @@
-# Builds CS2IPChanger.exe when a v* tag is pushed, signs a build provenance attestation for it
-# and attaches the exe and its SHA-256 to the GitHub release of that tag.
+﻿# Builds CS2IPChanger.exe when a v* tag is pushed, signs a build provenance attestation for it
+# and attaches the exe and its SHA-256 to a DRAFT release of that tag. The app only installs an update whose
+# .sha256 is signed with the project's key, which never enters GitHub: on your PC, "node tools/release-key.mjs sign <tag>"
+# checks the exe and its attestation, signs, uploads the .sig and publishes the draft (docs/RELEASING.md).
 #
 # The tag has to match <Version> in src/ServerRouteTool.csproj (tag v0.1.0-alpha.3 for 0.1.0-alpha.3).
 # If the release already exists (drafted by hand with notes), the files are added to it. If not, it is
@@ -82,7 +84,7 @@ jobs:
           if ($existing -contains $tag) {
             gh release upload $tag @files --clobber
           } else {
-            $opts = @('--verify-tag', '--title', "CS2 IP Changer $env:VERSION")
+            $opts = @('--verify-tag', '--draft', '--title', "CS2 IP Changer $env:VERSION")
             $notes = "docs/release-$env:VERSION.md"
             if (Test-Path $notes) { $opts += @('--notes-file', $notes) } else { $opts += '--generate-notes' }
             if ($env:VERSION -like '*-*') { $opts += '--prerelease' }

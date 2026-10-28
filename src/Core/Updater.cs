@@ -1,15 +1,18 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Net.Http;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace SRT.Core;
 
 /// <summary>
-/// Update from the GitHub releases: only installs an exe whose SHA-256 matches the .sha256 file of the same release.
+/// Update from the GitHub releases: only installs an exe whose SHA-256 matches the .sha256 file of the same release,
+/// and only if that .sha256 (with the version) is signed with the project's key (.sha256.sig). The private half of the key stays
+/// off GitHub, so someone who gets into the repo or its releases can't sign an exe of their own (tools/release-key.mjs).
 /// </summary>
-public static class Updater
+public static partial class Updater
 {
     public const string Repo = "Sepd0x/cs2-ip-changer";
     public const string ApiUrl = "https://api.github.com/repos/" + Repo + "/releases";
@@ -17,7 +20,7 @@ public static class Updater
     public const string ExeName = "CS2IPChanger.exe";
 
     /// <summary>A release on GitHub. <see cref="Size"/> is the exe's size in bytes (0 = not known).</summary>
-    public sealed record Release(string Version, string Tag, string PageUrl, string ExeUrl, string ShaUrl, long Size = 0);
+    public sealed record Release(string Version, string Tag, string PageUrl, string ExeUrl, string ShaUrl, long Size = 0, string SigUrl = null);
 
     // ------------------------------------------------------------ Versions (SemVer 2.0)
 
@@ -82,7 +85,7 @@ public static class Updater
             if (r.TryGetProperty("draft", out var d) && d.ValueKind == JsonValueKind.True) continue;
             var tag = Str(r, "tag_name");
             if (!IsValid(tag)) continue;
-            string exe = null, sha = null;
+            string exe = null, sha = null, sig = null;
             long size = 0;
             if (r.TryGetProperty("assets", out var assets) && assets.ValueKind == JsonValueKind.Array)
                 foreach (var a in assets.EnumerateArray())
@@ -96,9 +99,10 @@ public static class Updater
                         if (a.TryGetProperty("size", out var sz) && sz.ValueKind == JsonValueKind.Number && sz.TryGetInt64(out var n)) size = n;
                     }
                     else if (name == ExeName + ".sha256") sha = url;
+                    else if (name == ExeName + ".sha256.sig") sig = url;
                 }
             var page = Str(r, "html_url");
-            var rel = new Release(Clean(tag), tag, IsRepoUrl(page, "/releases/") ? page : ReleasesPage, exe, sha, size);
+            var rel = new Release(Clean(tag), tag, IsRepoUrl(page, "/releases/") ? page : ReleasesPage, exe, sha, size, sig);
             if (best == null || Compare(rel.Version, best.Version) > 0) best = rel;
         }
         return best;
@@ -134,14 +138,34 @@ public static class Updater
 
     public static async Task<Release> Latest(CancellationToken ct = default)
     {
+        if (Rec.On) return null;   // the recording build never replaces itself with the normal one
         using var http = Http(15);
         return PickLatest(await http.GetStringAsync(ApiUrl + "?per_page=50", ct));
+    }
+
+    // ------------------------------------------------------------ The release signature
+
+    /// <summary>What the key signs: "CS2IPChanger &lt;version&gt;\n" followed by the .sha256 file as it is. The version is in it,
+    /// so an old signed release can't come back under a newer tag.</summary>
+    public static byte[] SignedMessage(string version, byte[] shaFile) => [.. Encoding.UTF8.GetBytes($"CS2IPChanger {Clean(version)}\n"), .. shaFile];
+
+    /// <summary>ECDSA P-256 / SHA-256, signature in DER and base64 (what Node's crypto.sign gives). False with no key in the build.</summary>
+    public static bool SignedByProject(string version, byte[] shaFile, string sigBase64, string publicKey = PublicKey)
+    {
+        if (string.IsNullOrWhiteSpace(publicKey) || string.IsNullOrWhiteSpace(sigBase64) || shaFile == null) return false;
+        try
+        {
+            using var ec = ECDsa.Create();
+            ec.ImportSubjectPublicKeyInfo(Convert.FromBase64String(publicKey), out _);
+            return ec.VerifyData(SignedMessage(version, shaFile), Convert.FromBase64String(sigBase64.Trim()), HashAlgorithmName.SHA256, DSASignatureFormat.Rfc3279DerSequence);
+        }
+        catch { return false; }
     }
 
     // ------------------------------------------------------------ Download and swap
 
     /// <summary>Only the single-file exe can replace itself (a dev build has its DLLs next to it).</summary>
-    public static bool CanSelfUpdate =>
+    public static bool CanSelfUpdate => !Rec.On &&
         Environment.ProcessPath != null && !File.Exists(Path.Combine(AppContext.BaseDirectory, "CS2IPChanger.dll"));
 
     static string Dir => Path.GetDirectoryName(Environment.ProcessPath)!;
@@ -158,7 +182,11 @@ public static class Updater
     public static async Task<string> Download(Release r, IProgress<string> progress, CancellationToken ct = default)
     {
         using var http = Http(600);
-        var want = ParseSha256(await http.GetStringAsync(r.ShaUrl, ct))
+        if (r.SigUrl == null) throw new InvalidDataException("the release isn't signed, so nothing was installed");
+        var shaFile = await http.GetByteArrayAsync(r.ShaUrl, ct);
+        if (!SignedByProject(r.Version, shaFile, await http.GetStringAsync(r.SigUrl, ct)))
+            throw new InvalidDataException("the release isn't signed with the project's key, so nothing was installed");
+        var want = ParseSha256(Encoding.UTF8.GetString(shaFile))
             ?? throw new InvalidDataException("the release's .sha256 file has no hash for " + ExeName);
         var part = NewExe + ".part";
         using (var resp = await http.GetAsync(r.ExeUrl, HttpCompletionOption.ResponseHeadersRead, ct))
@@ -207,16 +235,24 @@ public static class Updater
         File.Move(exe, OldExe);   // Windows lets a running exe be renamed, not overwritten
         try { File.Move(NewExe, exe); }
         catch { File.Move(OldExe, exe); throw; }
+        FileStream hold = null;
         try
         {
+            // Checked again in place and held with no write or delete sharing until it has started:
+            // nothing can swap it between the check and the start (that copy runs as admin without a UAC prompt).
+            hold = new FileStream(exe, FileMode.Open, FileAccess.Read, FileShare.Read);
+            if (Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(hold)).ToLowerInvariant() != sha.ToLowerInvariant())
+                throw new InvalidDataException("the downloaded file changed after the check");
             beforeStart?.Invoke();
             Process.Start(new ProcessStartInfo(exe, "--updated") { UseShellExecute = false, WorkingDirectory = Dir });
         }
         catch
         {
+            hold?.Dispose(); hold = null;
             try { File.Move(exe, NewExe, true); File.Move(OldExe, exe); } catch { }
             throw;
         }
+        finally { hold?.Dispose(); }
     }
 
     /// <summary>On start: removes the old exe and leftovers from an update (the old process may take a moment to exit).</summary>

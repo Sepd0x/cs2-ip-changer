@@ -40,6 +40,7 @@ public partial class MainWindow
     void LogCopy_Click(object sender, RoutedEventArgs e)
     {
         var text = string.Join(Environment.NewLine, _log.Reverse().Select(l => $"{l.TimeText}  {l.Text}"));
+        if (Rec.On) text = Rec.Scrub(text, PersonalWords().ToList());   // recording build: what you paste is as clean as the screen
         try { Clipboard.SetText(text); Toast("Log copied.", true); } catch { Toast("Couldn't copy. Try again.", false); }
     }
 
@@ -50,7 +51,7 @@ public partial class MainWindow
     /// <summary>With Hide logins on, the home IP and the account logins show as ••• in the Log page.</summary>
     void MaskLog(LogEntry e)
     {
-        if (_s == null || !_s.StreamerMode) { e.Shown = null; return; }
+        if (_s == null || !HideLogins) { e.Shown = null; return; }
         var text = e.Text ?? "";
         foreach (var ip in new[] { _s.LastHomeIp, _homePublic }.Where(x => !string.IsNullOrEmpty(x)).Distinct())
             text = Regex.Replace(text, @"(?<![\d.])" + Regex.Escape(ip) + @"(?![\d])", "•••");

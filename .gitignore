@@ -1,4 +1,4 @@
-# Build
+﻿# Build
 bin/
 obj/
 publish/
@@ -8,6 +8,9 @@ publish/
 # Build de desenvolvimento e coisas locais (nunca vão para o GitHub)
 src/Privado/
 tests/out*.txt
+# The release signing key never goes in the repo (tools/release-key.mjs)
+*.pem
+*.key
 _antigo/
 SRT_Dados/
 *.zip

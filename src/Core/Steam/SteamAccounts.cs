@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
 using System.Net.Http;
 using System.Text;
@@ -179,9 +179,27 @@ public static partial class Steam
         Launch(extraArgs);
     }
 
+    /// <summary>
+    /// True if loginusers.vdf or its config folder is a link or junction. The Steam path comes from HKCU, which any program of yours
+    /// can change; the app writes and deletes there as admin, so a link would point those writes somewhere else.
+    /// Only these two: a whole Steam folder moved to another drive with a junction is common and stays allowed.
+    /// </summary>
+    static bool Redirected(string path)
+    {
+        try
+        {
+            var full = Path.GetFullPath(path);
+            foreach (var p in new[] { full, Path.GetDirectoryName(full) })
+                if ((File.Exists(p) || Directory.Exists(p)) && File.GetAttributes(p).HasFlag(FileAttributes.ReparsePoint)) return true;
+            return false;
+        }
+        catch { return true; }
+    }
+
     /// <summary>A dated copy before each write (loginusers.vdf.srt-backup-yyyyMMdd-HHmmss); only the 10 newest of those are kept.</summary>
     static void BackupLoginUsers(string path)
     {
+        if (Redirected(path)) throw new IOException("the Steam folder goes through a link or junction; the app only writes to a real folder");
         File.Copy(path, $"{path}.srt-backup-{DateTime.Now:yyyyMMdd-HHmmss}", true);
         try
         {

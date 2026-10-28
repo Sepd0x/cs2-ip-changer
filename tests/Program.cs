@@ -70,7 +70,7 @@ Check("CM de Madrid é da Valve", Net.IsValve("155.133.246.36"));
 Check("CM de Londres é da Valve", Net.IsValve("162.254.196.79"));
 Check("CM de Paris é da Valve", Net.IsValve("185.25.182.20"));
 Check("1.1.1.1 não é da Valve", !Net.IsValve("1.1.1.1"));
-Check("Servidor da lista não é da Valve", !Net.IsValve("38.3.226.237"));
+Check("Servidor da lista não é da Valve", !Net.IsValve("203.0.113.37"));
 Check("IP de teste do bloco", Net.ProbeIp("155.133.224.0/19") == "155.133.224.1", Net.ProbeIp("155.133.224.0/19"));
 var link = Net.ReadSteamLink();
 Check("Ligação do Steam lida", true, link.Connected ? $"{link.Keys.Count} ligação(ões) pela(s) placa(s) {string.Join(", ", link.LocalIps)}" : (Steam.IsRunning ? "Steam aberto mas sem ligação à Valve" : "Steam fechado"));
@@ -303,7 +303,7 @@ Check("Real: timeout é sem resposta, não kick", Cs2Console.Classify("10/27 22:
 Check("Real: sair à mão não é kick", Cs2Console.Classify("10/27 22:46:58 [Client] Disconnected from server: NETWORK_DISCONNECT_DISCONNECT_BY_USER") == KickKind.None);
 Check("Real: mapa local a fechar não é kick", Cs2Console.Classify("10/27 22:18:20 [Server] Disconnect client 'Acc1' from server: NETWORK_DISCONNECT_SHUTDOWN (Server shutdown)") == KickKind.None && Cs2Console.Classify("10/27 22:18:20 [Client] Disconnecting from server: NETWORK_DISCONNECT_LOOPDEACTIVATE") == KickKind.None);
 Check("Real: HOSTSTATE_IDLE não é kick", Cs2Console.Classify("10/27 22:46:27 [Client] Disconnecting from server: NETWORK_DISCONNECT_REQUEST_HOSTSTATE_IDLE") == KickKind.None);
-Check("Real: servidor lido do Connected to", Cs2Console.ConnectedServer("10/27 22:49:23 [Client] CL:  Connected to '38.3.226.244:60004'") == "38.3.226.244:60004" && Cs2Console.ConnectedServer("[Client] CL:  Connected to 'loopback:1'") == null);
+Check("Real: servidor lido do Connected to", Cs2Console.ConnectedServer("10/27 22:49:23 [Client] CL:  Connected to '203.0.113.44:60004'") == "203.0.113.44:60004" && Cs2Console.ConnectedServer("[Client] CL:  Connected to 'loopback:1'") == null);
 
 // alpha.4: marcas de jogadores (o A2S só dá nomes)
 Check("Mesmo nome, maiúsculas e espaços", PlayerMatch.SameName("  Kestrel   x ", "kestrel x"));
@@ -325,22 +325,22 @@ try
 catch (Exception ex) { Env("Perfis por link", false, ex.Message); }
 
 // alpha.4: um ban numa rede conta nos servidores todos dessa rede
-Check("Etiqueta WINDOH", ServerNetwork.Tag("[PT] WINDOH.GG • Competitivo #5 • [ONLY MIRAGE]") == "WINDOH.GG", ServerNetwork.Tag("[PT] WINDOH.GG • Competitivo #5 • [ONLY MIRAGE]") ?? "null");
-Check("Etiqueta Tuga Army", ServerNetwork.Tag("TUGA ARMY | Retakes #2") == "TUGA ARMY" && ServerNetwork.Tag("[PT] Tuga Army 3 - AWP") == "TUGA ARMY");
+Check("Etiqueta EXAMPLE", ServerNetwork.Tag("[EU] EXAMPLE.GG • Competitive #5 • [ONLY MIRAGE]") == "EXAMPLE.GG", ServerNetwork.Tag("[EU] EXAMPLE.GG • Competitive #5 • [ONLY MIRAGE]") ?? "null");
+Check("Etiqueta Other Clan", ServerNetwork.Tag("OTHER CLAN | Retakes #2") == "OTHER CLAN" && ServerNetwork.Tag("[EU] Other Clan 3 - AWP") == "OTHER CLAN");
 Check("Sem etiqueta clara", ServerNetwork.Tag("#1") == null && ServerNetwork.Tag(null) == null && ServerNetwork.Tag("") == null);
-Check("Mesma rede pelo IP (nomes ainda desconhecidos)", ServerNetwork.Same("38.3.226.237:27005", null, null, "38.3.226.237:27001", null, null));
-Check("Mesma rede pelo nome", ServerNetwork.Same("38.3.226.237:27005", "[PT] WINDOH.GG • Competitivo #5", null, "38.3.226.244:60004", "[PT] WINDOH.GG • Retakes #1", null));
-Check("Redes diferentes", !ServerNetwork.Same("38.3.226.237:27005", "[PT] WINDOH.GG • Competitivo #5", null, "203.0.113.10:27015", "TUGA ARMY | Retakes", null));
+Check("Mesma rede pelo IP (nomes ainda desconhecidos)", ServerNetwork.Same("203.0.113.37:27005", null, null, "203.0.113.37:27001", null, null));
+Check("Mesma rede pelo nome", ServerNetwork.Same("203.0.113.37:27005", "[EU] EXAMPLE.GG • Competitive #5", null, "203.0.113.44:60004", "[EU] EXAMPLE.GG • Retakes #1", null));
+Check("Redes diferentes", !ServerNetwork.Same("203.0.113.37:27005", "[EU] EXAMPLE.GG • Competitive #5", null, "203.0.113.10:27015", "OTHER CLAN | Retakes", null));
 
 // beta.1: redes de servidores sem falsos positivos (ponto 8)
 Check("Etiqueta genérica 'Mirage 24/7 | FastDL' dá null", ServerNetwork.Tag("Mirage 24/7 | FastDL") == null, ServerNetwork.Tag("Mirage 24/7 | FastDL") ?? "null");
 Check("Etiquetas genéricas: Retakes, AWP DM", ServerNetwork.Tag("Retakes #3") == null && ServerNetwork.Tag("AWP DM | 128 tick") == null);
-Check("Etiqueta com 24/7 no fim", ServerNetwork.Tag("TUGA ARMY 24/7 | Mirage") == "TUGA ARMY", ServerNetwork.Tag("TUGA ARMY 24/7 | Mirage") ?? "null");
-Check("Redes explícitas iguais contam", ServerNetwork.Same("203.0.113.10:27015", "Retakes #1", "Windoh", "198.51.100.7:27015", "Mirage 24/7", "WINDOH"));
-Check("Redes explícitas diferentes não contam", !ServerNetwork.Same("203.0.113.10:27015", "[PT] WINDOH.GG • Retakes", "Windoh", "203.0.113.10:27016", "[PT] WINDOH.GG • DM", "Outra"));
-Check("IP igual com nomes conhecidos e etiquetas diferentes não conta", !ServerNetwork.Same("203.0.113.10:27015", "TUGA ARMY | Retakes", null, "203.0.113.10:27016", "WINDOH.GG • DM", null));
+Check("Etiqueta com 24/7 no fim", ServerNetwork.Tag("OTHER CLAN 24/7 | Mirage") == "OTHER CLAN", ServerNetwork.Tag("OTHER CLAN 24/7 | Mirage") ?? "null");
+Check("Redes explícitas iguais contam", ServerNetwork.Same("203.0.113.10:27015", "Retakes #1", "Example", "198.51.100.7:27015", "Mirage 24/7", "EXAMPLE"));
+Check("Redes explícitas diferentes não contam", !ServerNetwork.Same("203.0.113.10:27015", "[EU] EXAMPLE.GG • Retakes", "Example", "203.0.113.10:27016", "[EU] EXAMPLE.GG • DM", "Outra"));
+Check("IP igual com nomes conhecidos e etiquetas diferentes não conta", !ServerNetwork.Same("203.0.113.10:27015", "OTHER CLAN | Retakes", null, "203.0.113.10:27016", "EXAMPLE.GG • DM", null));
 Check("IP igual com nomes genéricos conhecidos não conta", !ServerNetwork.Same("203.0.113.10:27015", "Retakes #1", null, "203.0.113.10:27016", "Retakes #2", null));
-Check("Rede à mão contra etiqueta do nome", ServerNetwork.Same("203.0.113.10:27015", "Retakes #1", "windoh.gg", "198.51.100.7:27015", "[PT] WINDOH.GG • Competitivo #5", null));
+Check("Rede à mão contra etiqueta do nome", ServerNetwork.Same("203.0.113.10:27015", "Retakes #1", "example.gg", "198.51.100.7:27015", "[EU] EXAMPLE.GG • Competitive #5", null));
 
 // beta.1: hotkeys sem Ctrl+Alt (AltGr) e configuráveis (ponto 2)
 Check("Hotkey Ctrl+Shift+F9 lida", Hotkey.TryParse("Ctrl+Shift+F9", out var hm, out var hv) && hm == (Hotkey.MOD_CONTROL | Hotkey.MOD_SHIFT) && hv == 0x78, $"mods {hm} vk 0x{hv:X}");
@@ -357,7 +357,7 @@ Check("VAC: KICKED_VACNETABNORMALBEHAVIOR", Cs2Console.Classify("10/29 21:03:11 
     Cs2Console.Classify("10/29 21:03:11 [Client] Disconnected from server: NETWORK_DISCONNECT_KICKED_VACNETABNORMALBEHAVIOR").ToString());
 Check("VAC: VACBANNED", Cs2Console.Classify("[Networking] Netchan 'server' closed unexpectedly: NETWORK_DISCONNECT_KICKED_VACBANNED") == KickKind.Steam
     && Cs2Console.Classify("Disconnect: NETWORK_DISCONNECT_VACBANNED") == KickKind.Steam);
-// beta.3: STEAM_BANNED é a lista de bans do servidor (caso real de 28 out., 38.3.226.237, depois de um KICKBANADDED na mesma comunidade)
+// beta.3: STEAM_BANNED é a lista de bans do servidor (caso real de 28 out., 203.0.113.37, depois de um KICKBANADDED na mesma comunidade)
 Check("Servidor: STEAM_BANNED é ban do servidor", Cs2Console.Classify("10/28 15:53:27 [Client] Disconnected from server: NETWORK_DISCONNECT_STEAM_BANNED") == KickKind.Ban);
 Check("Steam: STEAM_LOGON continua a ser do Steam", Cs2Console.Classify("Disconnect reason: NETWORK_DISCONNECT_STEAM_AUTHINVALID") == KickKind.Steam);
 Check("No Steam logon continua ignorado", Cs2Console.Classify("Disconnect: NETWORK_DISCONNECT_KICKED_NOSTEAMLOGIN") == KickKind.None
@@ -507,7 +507,7 @@ Check("O mais forte: kick ganha a timeout", Cs2Console.Stronger(KickKind.NoAnswe
 // beta.3 (revisão): o servidor atual muda também para o menu e relays; "No Steam logon" é dito; queda e login no mesmo segundo
 Check("Ligação ao menu é linha de ligação", Cs2Console.IsConnectLine("10/28 16:26:59 [Client] CL:  Connected to 'loopback:1'") && Cs2Console.ConnectedServer("[Client] CL:  Connected to 'loopback:1'") == null);
 Check("Ligação a relay da Valve é linha de ligação", Cs2Console.IsConnectLine("[Client] CL:  Connected to '=[A:1:123456:7890]:0'"));
-Check("Ligação a servidor dá o IP", Cs2Console.ConnectedServer("10/28 15:54:33 [Client] CL:  Connected to '38.3.226.237:27010'") == "38.3.226.237:27010");
+Check("Ligação a servidor dá o IP", Cs2Console.ConnectedServer("10/28 15:54:33 [Client] CL:  Connected to '203.0.113.37:27010'") == "203.0.113.37:27010");
 Check("No Steam logon é reconhecido", Cs2Console.IsNoSteamLogon("Disconnect: NETWORK_DISCONNECT_KICKED_NOSTEAMLOGIN") && Cs2Console.IsNoSteamLogon("[Client] Disconnected from server: NETWORK_DISCONNECT_STEAM_LOGON"));
 Check("No Steam logon no chat não conta", !Cs2Console.IsNoSteamLogon("[ALL] Bob: no steam logon again lol"));
 {
@@ -523,6 +523,41 @@ Check("No Steam logon no chat não conta", !Cs2Console.IsNoSteamLogon("[ALL] Bob
     w.Poll(f);
     Check("Steam: queda depois do login fica offline", w.Online == false);
     try { File.Delete(f); } catch { }
+}
+
+// Build de gravação: o filtro do ecrã e o do Export diagnostics
+{
+    var words = new[] { "nightfall", "Telefonica Germany", "Berlin" };
+    Check("Gravação: IP com porta", Rec.Scrub("connect 203.0.113.37:27015 ok") == "connect ••• ok", Rec.Scrub("connect 203.0.113.37:27015 ok"));
+    Check("Gravação: IP meio tapado e gama", Rec.Scrub("198.51.•••.••• e 10.71.0.0/16") == "••• e •••", Rec.Scrub("198.51.•••.••• e 10.71.0.0/16"));
+    Check("Gravação: horas e versões ficam", Rec.Scrub("22:57:01 v0.1.0-beta.3 1:14") == "22:57:01 v0.1.0-beta.3 1:14", Rec.Scrub("22:57:01 v0.1.0-beta.3 1:14"));
+    Check("Gravação: IPv6 e MAC", Rec.Scrub("fe80::1c2d%12 e 2001:db8::1 e AA-BB-CC-DD-EE-FF") == "••• e ••• e •••", Rec.Scrub("fe80::1c2d%12 e 2001:db8::1 e AA-BB-CC-DD-EE-FF"));
+    Check("Gravação: SteamIDs", Rec.Scrub("76561198000000042 [U:1:39734314] STEAM_1:0:123") == "••• ••• •••", Rec.Scrub("76561198000000042 [U:1:39734314] STEAM_1:0:123"));
+    Check("Gravação: utilizador do Windows no caminho", Rec.Scrub(@"C:\Users\Someone\Desktop\x.zip") == @"C:\Users\•••\Desktop\x.zip", Rec.Scrub(@"C:\Users\Someone\Desktop\x.zip"));
+    Check("Gravação: palavras pessoais, sem partir outras", Rec.Scrub("Nightfall · Telefonica Germany · Berlin · nightfallen", words) == "••• · ••• · ••• · nightfallen", Rec.Scrub("Nightfall · Telefonica Germany · Berlin · nightfallen", words));
+    Check("Diagnostics: IDs e nomes saem, IPs ficam", Rec.ScrubIds("nightfall 76561198000000042 em 203.0.113.37:27015", Rec.WordRegex(words)) == "(hidden) (hidden) em 203.0.113.37:27015");
+    Check("Normal: a gravação está desligada", !Rec.On);
+}
+
+// Atualizações assinadas: vetor feito pelo Node (crypto.sign, a mesma conta do tools/release-key.mjs) com uma chave de usar e deitar fora
+{
+    const string spki = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8n0/sCMZ+YIMKwH+sal+4JVe6mnEejn2UCJarJebovmB9pNFjNJ/XBFl/HNI26H8VPlo8PcTP1RiXZfFwyMc7w==";
+    const string sig = "MEUCIQDy5ppbp7adhqmgCALcln0C9hVnoKi0PFA15kKMHZqvyQIgLYqzp8jjG03pnpW5BAFxdw2bTGe+Uw/P+hXW8dPUkmM=";
+    var shaFile = System.Text.Encoding.UTF8.GetBytes(new string('a', 64) + "  CS2IPChanger.exe\n");
+    Check("Assinatura do Node aceite", Updater.SignedByProject("v0.1.0-beta.4", shaFile, sig + "\n", spki));
+    Check("Assinatura de outra versão recusada", !Updater.SignedByProject("0.1.0-beta.5", shaFile, sig, spki));
+    var tampered = (byte[])shaFile.Clone(); tampered[0] = (byte)'b';
+    Check("Assinatura de outro .sha256 recusada", !Updater.SignedByProject("0.1.0-beta.4", tampered, sig, spki));
+    Check("Sem chave nada é aceite", !Updater.SignedByProject("0.1.0-beta.4", shaFile, sig, ""));
+    Check("Assinatura lixo recusada", !Updater.SignedByProject("0.1.0-beta.4", shaFile, "lixo", spki));
+    var relSig = Updater.PickLatest("""
+    [{"tag_name":"v0.1.0-beta.4","draft":false,"html_url":"https://github.com/Sepd0x/cs2-ip-changer/releases/tag/v0.1.0-beta.4",
+      "assets":[{"name":"CS2IPChanger.exe.sha256.sig","browser_download_url":"https://github.com/Sepd0x/cs2-ip-changer/releases/download/v0.1.0-beta.4/CS2IPChanger.exe.sha256.sig"},
+                {"name":"CS2IPChanger.exe.sha256.sig","browser_download_url":"https://evil.example/x.sig"}]}]
+    """);
+    Check(".sig da release lido", relSig?.SigUrl == "https://github.com/Sepd0x/cs2-ip-changer/releases/download/v0.1.0-beta.4/CS2IPChanger.exe.sha256.sig", relSig?.SigUrl);
+    // Sem a chave pública no código, as atualizações não instalam: não sai release sem ela (node tools/release-key.mjs new)
+    Check("Chave pública das atualizações no código", Updater.PublicKey.Length > 0);
 }
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");

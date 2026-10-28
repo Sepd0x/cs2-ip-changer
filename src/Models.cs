@@ -272,7 +272,7 @@ public sealed class AccountItem : Observable
     public string Login => Local.AccountName;
     public string LoginShown => Streamer ? "••••••••" : Login;
     public string Name => Meta.Profile?.Persona ?? Local.PersonaName ?? Login;
-    public string Initial => string.IsNullOrEmpty(Name) ? "?" : Name.Substring(0, 1).ToUpperInvariant();
+    public string Initial => Rec.On || string.IsNullOrEmpty(Name) ? "?" : Name.Substring(0, 1).ToUpperInvariant();
 
     public bool Active { get => _active; set { if (Set(ref _active, value)) { Raise(nameof(CardBorder)); } } }
     public bool Streamer { get => _streamer; set { if (Set(ref _streamer, value)) { Raise(nameof(LoginShown)); Raise(nameof(Tip)); } } }
@@ -289,8 +289,8 @@ public sealed class AccountItem : Observable
 
     public void LoadAvatar()
     {
-        var path = Meta.AvatarPath;
-        if (path == null || !File.Exists(path)) path = Steam.LocalAvatar(SteamId);
+        var path = Rec.On ? null : Meta.AvatarPath;   // recording build: no Steam pictures
+        if (!Rec.On && (path == null || !File.Exists(path))) path = Steam.LocalAvatar(SteamId);
         if (path == null || !File.Exists(path)) { Avatar = null; Raise(nameof(HasAvatar)); return; }
         try
         {

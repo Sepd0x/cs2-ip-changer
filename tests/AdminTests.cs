@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Diagnostics;
 using System.Security.Principal;
 using SRT.Core;
@@ -40,7 +40,7 @@ static class AdminTests
             var admin = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
             Check("Corre como admin", admin);
             if (!admin) return 1;
-            try { await Body(); await OpenWithNotElevated(); }
+            try { await Body(); await OpenWithNotElevated(); AdbFolder(); }
             catch (Exception ex) { Check("Exceção", false, ex.ToString()); }
             finally { await Cleanup(); }
             _out.WriteLine(_fails == 0 ? "TUDO OK" : $"{_fails} FALHA(S)");
@@ -166,6 +166,30 @@ static class AdminTests
             finally { CloseHandle(tok); }
         }
         finally { CloseHandle(h); }
+    }
+
+    // A pasta do adb só para admins: uma criada antes por outro (permissões do ProgramData) é posta de lado e refeita
+    static void AdbFolder()
+    {
+        var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CS2IPChanger-TESTE");
+        try
+        {
+            Directory.CreateDirectory(root);
+            Check("adb: pasta criada à maneira normal não é só de admin", !Adb.AdminOnly(root));
+            Adb.SafeDir(root);
+            Check("adb: refeita só para admins", Adb.AdminOnly(root));
+            Check("adb: a antiga ficou de lado", Directory.GetDirectories(Path.GetDirectoryName(root)!, "CS2IPChanger-TESTE.untrusted-*").Length == 1);
+            Adb.SafeDir(root);
+            Check("adb: a boa fica como está", Directory.GetDirectories(Path.GetDirectoryName(root)!, "CS2IPChanger-TESTE.untrusted-*").Length == 1);
+            var adb = Adb.Find();
+            if (adb != null)
+                Check("adb: corre da cópia segura", adb.StartsWith(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CS2IPChanger", "adb"), StringComparison.OrdinalIgnoreCase)
+                    && Adb.AdminOnly(Path.GetDirectoryName(adb)!), adb);
+        }
+        finally
+        {
+            foreach (var d in Directory.GetDirectories(Path.GetDirectoryName(root)!, "CS2IPChanger-TESTE*")) try { Directory.Delete(d, true); } catch { }
+        }
     }
 
     static async Task Cleanup()

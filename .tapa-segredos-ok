@@ -1,4 +1,7 @@
-linha src/Views/MainWindow.Settings.cs:48  # PasswordBox do WPF a receber a chave da API das settings; não há valor no código
-linha src/Views/MainWindow.Settings.cs:131  # troca entre a caixa escondida e a visível da chave da API; não há valor no código
+linha src/Views/MainWindow.Settings.cs:49  # PasswordBox do WPF a receber a chave da API das settings; não há valor no código
+linha src/Views/MainWindow.Settings.cs:134  # troca entre a caixa escondida e a visível da chave da API; não há valor no código
 ficheiro .github/workflows/*.yml  # os hashes são os commits que fixam as Actions, não segredos
 ficheiro tests/*.cs  # IPs privados e de documentação (RFC 1918 e RFC 5737) de exemplo, e o hash de exemplo do teste do .sha256
+linha tools/release-key.mjs:69  # pede a passphrase da chave de assinatura ao teclado; não há valor no código
+linha tools/release-key.mjs:73  # cifra a chave privada com a passphrase pedida; não há valor no código
+linha tools/release-key.mjs:107  # abre a chave privada com a passphrase pedida; não há valor no código
