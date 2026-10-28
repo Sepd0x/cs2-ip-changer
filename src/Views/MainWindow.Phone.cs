@@ -158,7 +158,7 @@ public partial class MainWindow
         "Without USB debugging everything works except the Change IP button: in that case turn airplane mode on and off manually.",
         "Got it", null);
 
-    async void ChangeIp_Click(object sender, RoutedEventArgs e) => await ChangeIp(confirm: true);
+    async void ChangeIp_Click(object sender, RoutedEventArgs e) => await RunCommand("Change IP", "starting…", () => ChangeIp(confirm: true));
 
     /// <summary>Cycles the phone's data until the carrier gives a new IP. True if the IP really changed (and isn't the home IP).</summary>
     async Task<bool> ChangeIp(bool confirm)
@@ -203,9 +203,9 @@ public partial class MainWindow
                 var err = await Adb.Cycle(_adb, _phone.Serial, method, Math.Clamp(_s.OffSeconds, 1, 60));
                 if (err != null) { Log.Error(err); Toast(err, Tone.Error); return false; }
 
-                ProgressText.Text = $"Attempt {attempt}/{_s.MaxAttempts}: waiting for the mobile network to come back…";
+                ShowProgress($"Attempt {attempt}/{_s.MaxAttempts}: waiting for the mobile network to come back…");
                 got = await WaitForEgressIp(TimeSpan.FromSeconds(50));
-                if (got == null) { ProgressText.Text = "The network hasn't come back yet…"; continue; }
+                if (got == null) { ShowProgress("The network hasn't come back yet…"); continue; }
                 if (got == first) { Log.Info($"The carrier gave back the same IP ({got})."); continue; }
                 // Many admins ban the whole range: optionally keep going until the /16 is different too.
                 if (_s.RequireNew16 && first != null && IpRange.Same16(got, first) && attempt < _s.MaxAttempts)

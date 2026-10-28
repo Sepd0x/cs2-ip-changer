@@ -66,6 +66,8 @@ public partial class MainWindow : Window
 
         _s = _demo ? new Settings() : Store.Load(Paths.File("settings.json"), () => new Settings());
         InitDev();
+        LoadFlags();
+        LoadOpenWith();
         LoadServers();
         _serverView = CollectionViewSourceFor(_servers);
         ServerList.ItemsSource = _serverView;
@@ -93,7 +95,8 @@ public partial class MainWindow : Window
         {
             foreach (var srv in _servers.Where(x => x.IsLast)) srv.Raise(nameof(ServerItem.LastText));
             if (PageLog.IsVisible) UpdateDiagInfo();
-            if (AutoQueryBox.IsChecked == true && PageServers.IsVisible) await QueryServers(true);
+            // Following a player keeps the list fresh on every page, also with the window minimized.
+            if ((AutoQueryBox.IsChecked == true && PageServers.IsVisible) || _flags.Any(f => f.Follow)) await QueryServers(true);
         };
         _secondTimer.Tick += (_, _) =>
         {

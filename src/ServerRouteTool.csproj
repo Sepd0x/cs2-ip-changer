@@ -9,7 +9,7 @@
     <LangVersion>latest</LangVersion>
     <AssemblyName>CS2IPChanger</AssemblyName>
     <RootNamespace>SRT</RootNamespace>
-    <Version>0.1.0-alpha.3</Version>
+    <Version>0.1.0-alpha.4</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <Product>CS2 IP Changer</Product>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -41,6 +41,8 @@
 
   <ItemGroup>
     <Resource Include="app.ico" />
+    <!-- Command sounds: Kenney "Interface Sounds" (CC0), see Assets/Sounds/LICENSE-kenney.txt -->
+    <EmbeddedResource Include="Assets\Sounds\*.wav" LogicalName="Sounds.%(Filename).wav" />
   </ItemGroup>
 
 </Project>

@@ -94,11 +94,11 @@ public partial class MainWindow
 
     // ------------------------------------------------------------ Quick switch
 
-    /// <summary>The next account in the rotation: not skipped, no cooldown or ban, least recently used.</summary>
-    AccountItem NextQuick()
+    /// <summary>The next account in the rotation: not skipped, no cooldown or ban (nor banned by that server), least recently used.</summary>
+    AccountItem NextQuick(ServerItem server = null)
     {
         var active = _accounts.FirstOrDefault(a => a.Active)?.SteamId;
-        return _accounts.Where(a => a.Usable && a.SteamId != active)
+        return _accounts.Where(a => a.Usable && a.SteamId != active && a.BanFor(server?.Key, server?.ServerName) == null)
             .OrderBy(a => a.Meta.LastUsed ?? DateTime.MinValue)
             .ThenBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase)
             .FirstOrDefault();
@@ -106,32 +106,41 @@ public partial class MainWindow
 
     void UpdateQuickInfo()
     {
-        var next = NextQuick();
+        var c = SwitchChoice;
+        var next = c.Account ? NextQuick() : null;
         var pool = _accounts.Count(a => a.Usable);
-        SideQuickLabel.Text = next == null ? "Quick switch" : "Switch to";
+        SideQuickLabel.Text = next == null ? "Switch" : "Switch to";
         SideQuickNext.Text = next?.Name ?? "";
-        SideQuick.IsEnabled = QuickBtn.IsEnabled = next != null;
-        if (next == null) SideQuick.ToolTip = QuickBtn.ToolTip = "No accounts for quick switch: add accounts or clear their cooldown.";
-        var tip = next == null
-            ? "No account available: all are skipped, on cooldown or banned."
-            : $"Closes CS2, logs in to {next.Name} and opens CS2 again.\n{pool} account(s) in the rotation (not skipped, no cooldown or ban).\nShortcut anywhere, even in game: Ctrl+Alt+Q.";
+        // Always clickable: a click that can't run says why, instead of a grey button that doesn't answer.
+        var steps = new List<string>();
+        if (c.Ip) steps.Add("changes the IP");
+        if (c.Account) steps.Add(next == null ? "logs in to the next account (none now: all are skipped, on cooldown or banned)" : $"logs in to {next.Name}");
+        if (c.Rejoin) steps.Add($"joins {_s.LastServer ?? "the last server"} again");
+        var tip = steps.Count == 0 ? "Switch does nothing yet: pick its steps in Settings > Switch."
+            : "Switch " + (steps.Count == 1 ? steps[0] : string.Join(", ", steps.Take(steps.Count - 1)) + " and " + steps[^1]) + " (with the usual checks)."
+              + (c.Account ? $"\n{pool} account(s) in the rotation (not skipped, no cooldown or ban)." : "")
+              + "\nPick the steps in Settings > Switch. Shortcut anywhere, even in game: Ctrl+Alt+Q.";
         QuickBtn.ToolTip = tip;
         SideQuick.ToolTip = tip;
+
+        ApplyServerBans();   // the ban marks on Servers follow the account in use
     }
 
-    async void Quick_Click(object sender, RoutedEventArgs e) => await QuickSwitch();
+    async void Quick_Click(object sender, RoutedEventArgs e) => await QuickSwitch("Switch");
 
-    async Task QuickSwitch()
+    /// <summary>The one switch, with the steps picked in Settings (by default: new IP, next account, back to the last server).</summary>
+    Task QuickSwitch(string from) => RunCommand("Switch", "starting…", () => RunSwitch(SwitchChoice, from));
+
+    /// <summary>The account quick switch would use now (also for Switch), or null with the reason shown.</summary>
+    AccountItem PickQuick(ServerItem server = null)
     {
-        var next = NextQuick();
+        var next = NextQuick(server);
         var skipped = _accounts.Where(a => !a.Usable).Select(a =>
             $"{a.Name} ({(a.Excluded ? "skipped" : a.InCooldown ? "cooldown" : "ban")})").ToList();
         if (skipped.Count > 0) Log.Info("Quick switch skipped: " + string.Join(", ", skipped));
-        if (next == null) { Toast("No accounts for quick switch: all are skipped, on cooldown or banned.", false); return; }
-        if (next.Meta.ExcludeQuick) { Log.Error("Quick switch picked a skipped account; cancelled."); return; }
-        Log.Info($"Quick switch: {next.Name}.");
-        // Explicit request: close CS2 without asking.
-        await SwitchTo(next, cs2: true, ask: false);
+        if (next == null) { Toast(server == null ? "No accounts for quick switch: all are skipped, on cooldown or banned." : $"No account left for {server.Title}: the others are skipped, on cooldown or banned (also by this server's network).", false); return null; }
+        if (next.Meta.ExcludeQuick) { Log.Error("Quick switch picked a skipped account; cancelled."); return null; }
+        return next;
     }
 
     void AccToggleQuick_Click(object sender, RoutedEventArgs e)
@@ -146,12 +155,13 @@ public partial class MainWindow
 
     static AccountItem Acc(object sender) => (sender as FrameworkElement)?.DataContext as AccountItem;
 
-    async void AccSwitch_Click(object sender, RoutedEventArgs e) { if (Acc(sender) is AccountItem a) await SwitchTo(a, OptCs2.IsChecked == true); }
-    async void AccSwitchCs2_Click(object sender, RoutedEventArgs e) { if (Acc(sender) is AccountItem a) await SwitchTo(a, true); }
+    async void AccSwitch_Click(object sender, RoutedEventArgs e) { if (Acc(sender) is AccountItem a) await RunCommand("Log in", $"logging in to {a.Name}…", () => SwitchTo(a, OptCs2.IsChecked == true)); }
+    async void AccSwitchCs2_Click(object sender, RoutedEventArgs e) { if (Acc(sender) is AccountItem a) await RunCommand("Log in", $"logging in to {a.Name}…", () => SwitchTo(a, true)); }
 
-    async Task SwitchTo(AccountItem a, bool cs2, bool ask = true)
+    /// <summary>Logs in to the account (closing CS2 first). True if Steam was started on it.</summary>
+    async Task<bool> SwitchTo(AccountItem a, bool cs2, bool ask = true, bool openWith = true)
     {
-        if (_switching) return;
+        if (_switching) return false;
         _cs2ClosedByAppAt = DateTime.Now; // the switch closes CS2 itself: that exit is not a crash
         if (_demo)
         {
@@ -159,16 +169,17 @@ public partial class MainWindow
             a.Meta.LastUsed = DateTime.Now;
             UpdateQuickInfo();
             Toast($"Demo: logging in to {a.Name}.", true);
-            return;
+            return true;
         }
         if (Steam.Cs2Running)
         {
-            if (ask && !await Ask("CS2 is open", $"CS2 and Steam have to close to log in to {a.Name}. Continue?", "Close and switch")) return;
+            if (ask && !await Ask("CS2 is open", $"CS2 and Steam have to close to log in to {a.Name}. Continue?", "Close and switch")) return false;
             foreach (var p in Process.GetProcessesByName("cs2")) try { p.Kill(true); } catch { }
             for (var i = 0; i < 20 && Steam.Cs2Running; i++) await Task.Delay(150);
         }
         _switching = true;
         a.Busy = true;
+        Step($"logging in to {a.Name}…");
         Toast($"Logging in to {a.Name}…", true);
         try
         {
@@ -180,6 +191,7 @@ public partial class MainWindow
             }
             var args = string.Join(" ", new[] { _s.SteamSilent ? "-silent" : null, cs2 ? "-applaunch 730 -condebug" : null }.Where(x => x != null));
             await Steam.SwitchTo(a.Login, a.SteamId, _s.SteamOffline, args);
+            if (cs2 && openWith) OpenWithCs2();
             a.Meta.LastUsed = DateTime.Now;
             SaveAccounts();
             Log.Ok($"Switched to {a.Name}" + (cs2 ? " (CS2 opening)." : "."));
@@ -190,9 +202,11 @@ public partial class MainWindow
             {
                 var active = Steam.ActiveSteamId();
                 if (active != null) foreach (var x in _accounts) x.Active = x.SteamId == active;
+                ApplyServerBans();
             }));
+            return true;
         }
-        catch (Exception ex) { Log.Error("Account switch: " + ex.Message); Toast(ex.Message, Tone.Error); }
+        catch (Exception ex) { Log.Error("Account switch: " + ex.Message); Toast(ex.Message, Tone.Error); return false; }
         finally { a.Busy = false; _switching = false; UpdateQuickInfo(); }
     }
 
@@ -290,6 +304,17 @@ public partial class MainWindow
         SaveAccounts();
         ApplyAccountFilter();
         Toast(minutes == 0 ? $"Cooldown cleared for {a.Name}." : $"{a.Name}: cooldown until {Fmt.When(a.Meta.CooldownUntil)}.", true);
+    }
+
+    void AccClearBans_Click(object sender, RoutedEventArgs e)
+    {
+        if (Acc(sender) is not AccountItem a || !a.HasServerBans) return;
+        a.Meta.ServerBans = null;
+        a.RefreshAll();
+        SaveAccounts();
+        ApplyServerBans();
+        UpdateQuickInfo();
+        Toast($"Server bans cleared for {a.Name}.", true);
     }
 
     void AccFav_Click(object sender, RoutedEventArgs e)

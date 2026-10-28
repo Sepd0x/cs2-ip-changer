@@ -50,7 +50,7 @@ public partial class MainWindow
     void Max_Click(object sender, RoutedEventArgs e) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
     void Close_Click(object sender, RoutedEventArgs e) => Close();
 
-    // ------------------------------------------------------------ Global hotkeys (Ctrl+Alt+Q = quick switch, Ctrl+Alt+R = change IP and rejoin)
+    // ------------------------------------------------------------ Global hotkeys (Ctrl+Alt+Q = switch, Ctrl+Alt+R = change IP and rejoin)
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     static extern bool RegisterHotKey(IntPtr hWnd, int id, uint modifiers, uint vk);
@@ -75,7 +75,7 @@ public partial class MainWindow
     void RegisterHotkeys()
     {
         if (!RegisterHotKey(_hwnd, HotkeyId, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, (uint)KeyInterop.VirtualKeyFromKey(Key.Q)))
-            Log.Warn("The Ctrl+Alt+Q hotkey is already in use by another program; use the Quick switch button.");
+            Log.Warn("The Ctrl+Alt+Q hotkey is already in use by another program; use the Switch button.");
         if (!RegisterHotKey(_hwnd, RejoinHotkeyId, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, (uint)KeyInterop.VirtualKeyFromKey(Key.R)))
             Log.Warn("The Ctrl+Alt+R hotkey is already in use by another program; use the Change IP and rejoin button.");
         RegisterDevHotkeys();
@@ -94,13 +94,12 @@ public partial class MainWindow
         if (msg == WM_HOTKEY && wParam.ToInt32() == HotkeyId)
         {
             handled = true;
-            Log.Info("Hotkey Ctrl+Alt+Q: quick switch.");
-            _ = QuickSwitch();
+            Log.Info("Hotkey Ctrl+Alt+Q: switch.");
+            _ = QuickSwitch("Hotkey Ctrl+Alt+Q");
         }
         else if (msg == WM_HOTKEY && wParam.ToInt32() == RejoinHotkeyId)
         {
             handled = true;
-            System.Media.SystemSounds.Asterisk.Play();   // heard in game: the key was taken
             _ = ChangeIpAndRejoin("Hotkey Ctrl+Alt+R");
         }
         else if (msg == WM_HOTKEY) OnDevHotkey(wParam.ToInt32(), ref handled);

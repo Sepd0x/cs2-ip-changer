@@ -63,17 +63,23 @@ The phone shares its mobile data with the PC over USB tethering (or its hotspot)
 | Game-only routing | CS2, Steam and the servers on your list go through the phone. Your browser, Discord and downloads stay on your home connection and don't eat your mobile data. You can send the whole PC through the phone instead. |
 | Kill switch | A Windows Firewall rule blocks your listed servers on every adapter except the phone, and `cs2.exe` can only use the phone connection. If the cable comes out, the game loses connection instead of falling back to your home IP. |
 | Change IP | Turns mobile data (or airplane mode) off and on over ADB until the carrier hands you a new IP. Old IPs stay in a list so you can see they really changed. |
-| Change IP and rejoin | When a server kicks or bans you, the app plays a sound and offers to get a new IP and join the last server again (only once protection is confirmed). <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd> does it from inside the game. |
+| Change IP and rejoin | When a server kicks or bans you, the app plays a sound and offers to get a new IP and join the last server again with the same account (only once protection is confirmed). <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd> does it from inside the game. |
 | New range check | Tells you if the new IP is in a new /16 or the same one as before, because some admins ban the whole range. It can keep trying until the range changes. |
 | Live checks | Firewall, routes, the IP servers see next to your home IP, whether the phone is really on mobile data, and whether Steam uses the same connection as the game (otherwise servers kick you with "No Steam logon"). There's a leak test too. |
-| Server list | Paste `IP:port`, `connect IP:port` or `steam://connect/...` links. You see name, map, players and ping, and join with one click. |
-| Account switcher | Switches between the Steam accounts saved on your PC without typing passwords. <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Q</kbd> closes CS2, logs into the next account and opens the game again, even mid-game. Each account shows VAC, game and trade bans and its cooldown. |
+| Server list | Paste `IP:port`, `connect IP:port` or `steam://connect/...` links. You see name, map, players and ping, and join with one click. On a full server the app can wait for a slot and join when one opens. |
+| Players | Click the player count to see who is on a server. Some communities hide the list, and the app shows "hidden" there. |
+| Player flags | Flag a player as Staff or with your own label and color, by name or by Steam profile link so the flag follows name changes. Servers only share names, so a flag without a profile matches anyone with that name. |
+| Follow a player | You get a sound and a notice with Join when a player you follow shows up on another server in your list. Joining them automatically is off by default and always asks while CS2 is open. |
+| Server bans | When CS2's console shows a ban, the account in use gets marked for that server and for the rest of the same community (same IP or the same tag in the name). Joining there with it asks first. |
+| Account switcher | Switches between the Steam accounts saved on your PC without typing passwords. Switch (top bar, Accounts or <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Q</kbd>, even mid-game) gets a new IP, logs into the next account and joins the last server again; in Settings you pick which of those steps it does. Each account shows VAC, game and trade bans and its cooldown, and Switch skips accounts on cooldown or with a ban mark on that server. |
+| Clear feedback | Every command plays a short sound when it's taken and another when it's done or failed, and the top bar shows what it's doing. You hear it in game too. The sounds can be turned off. |
+| Open with CS2 | Programs you pick, like Discord, Spotify or a stats tracker, open when the app opens CS2. They start as you, never with the app's admin rights. |
 | Stream friendly | Hide logins keeps usernames off screen, and your home IP stays masked in the app. |
 | Updates | Once a day at most it checks for a new version and only installs it if the SHA-256 from the release matches. You can turn this off. |
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/screenshots/servers.png" alt="The Servers tab: your server list with name, map, players and ping"></td>
+    <td width="50%"><img src="docs/screenshots/servers.png" alt="The Servers tab: your server list with name, map, players and ping, and the players on one server"></td>
     <td width="50%"><img src="docs/screenshots/accounts.png" alt="The Accounts tab: saved Steam accounts with ban status and cooldowns"></td>
   </tr>
   <tr>
@@ -150,7 +156,7 @@ It never touches the game process or its files. All it changes is Windows routin
 <summary><b>I'm banned on a server. Will this get me back in?</b></summary>
 <br>
 
-Yes. If it's an IP ban, change IP and join again. If they banned your Steam account too, switch to another account (<kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Q</kbd>), change IP and you're back on the server.
+If it's an IP ban, change IP and join again. A ban on your Steam account follows the account, not the IP, so a new IP won't lift it, and your other accounts aren't affected by it. The app marks that account as banned on that server and its network, and Switch won't pick it there.
 </details>
 
 <details>
@@ -226,5 +232,7 @@ Your Steam Web API key stays on your PC, in `SRT_Dados/settings.json`.
 ## License
 
 All rights reserved. You can download the releases and use them. You can't copy, modify or redistribute the code without permission. Details in [LICENSE](LICENSE).
+
+The command sounds are from [Interface Sounds](https://kenney.nl/assets/interface-sounds) by Kenney (CC0).
 
 Not affiliated with Valve. Counter-Strike and Steam are trademarks of Valve Corporation.

@@ -151,32 +151,45 @@ public partial class MainWindow
             var ok = 0;
             await Task.WhenAll(targets.Select(async srv =>
             {
-                if (_last?.RouteOk.TryGetValue(srv.Ip, out var routed) != true || !routed) { srv.PingText = "—"; return; }
                 await gate.WaitAsync();
-                try
-                {
-                    var info = await A2S.Query(srv.Ip, srv.Port, egress.LocalIp);
-                    srv.ServerName = info.Name;
-                    srv.Map = info.Map;
-                    srv.PlayerCount = info.Players;
-                    srv.MaxPlayers = info.MaxPlayers;
-                    srv.PlayersText = info.Bots > 0 ? $"{info.Players}/{info.MaxPlayers} ({info.Bots} bots)" : $"{info.Players}/{info.MaxPlayers}";
-                    srv.PingMs = info.PingMs;
-                    srv.PingText = $"{info.PingMs} ms";
-                    srv.PlayerNames = info.PlayerNames;
-                    Interlocked.Increment(ref ok);
-                }
-                catch
-                {
-                    srv.PingMs = -1;
-                    srv.PingText = "—";
-                    srv.PlayersText = "—";
-                }
+                try { if (await QueryOne(srv, egress)) Interlocked.Increment(ref ok); }
                 finally { gate.Release(); }
             }));
             if (!quiet) Toast($"{ok} of {targets.Count} server(s) responded.", ok > 0);
         }
         finally { _querying = false; }
+        ApplyServerBans();   // the network of a ban is known by name only after the server answers
+        await CheckFollowed();
+    }
+
+    /// <summary>Name, map, players and ping of one server, only through the phone. False if it didn't answer (or isn't routed).</summary>
+    async Task<bool> QueryOne(ServerItem srv, Adapter egress)
+    {
+        if (_last?.RouteOk.TryGetValue(srv.Ip, out var routed) != true || !routed) { srv.PingText = "—"; srv.Players = null; return false; }
+        try
+        {
+            var info = await A2S.Query(srv.Ip, srv.Port, egress.LocalIp);
+            srv.ServerName = info.Name;
+            srv.Map = info.Map;
+            srv.PlayerCount = info.Players;
+            srv.MaxPlayers = info.MaxPlayers;
+            srv.PlayersText = info.Bots > 0 ? $"{info.Players}/{info.MaxPlayers} ({info.Bots} bots)" : $"{info.Players}/{info.MaxPlayers}";
+            srv.PingMs = info.PingMs;
+            srv.PingText = $"{info.PingMs} ms";
+            // Some servers answer the player list only now and then: keep the last one for 2 min instead of flipping to "hidden".
+            if (info.PlayerList != null) { srv.Players = ToRows(srv, info.PlayerList); srv.PlayersAt = DateTime.Now; }
+            else if (info.Players == 0 || DateTime.Now - srv.PlayersAt > TimeSpan.FromMinutes(2)) srv.Players = null;
+            srv.PlayersHidden = info.Players > 0 && srv.Players == null;
+            return true;
+        }
+        catch
+        {
+            srv.PingMs = -1;
+            srv.PingText = "—";
+            srv.PlayersText = "—";
+            srv.Players = null;
+            return false;
+        }
     }
 
     void AutoQuery_Click(object sender, RoutedEventArgs e) { _s.AutoQuery = AutoQueryBox.IsChecked == true; SaveSettings(); }
@@ -220,73 +233,209 @@ public partial class MainWindow
 
     async void SrvConnect_Click(object sender, RoutedEventArgs e)
     {
-        if ((sender as FrameworkElement)?.DataContext is ServerItem s) await Connect(s);
+        if ((sender as FrameworkElement)?.DataContext is ServerItem s) await Join(s);
     }
 
     async void ServerList_DoubleClick(object sender, MouseButtonEventArgs e)
     {
-        if ((e.OriginalSource as FrameworkElement)?.DataContext is ServerItem s) await Connect(s);
+        if (InPlayerList(e.OriginalSource as DependencyObject)) return;
+        if ((e.OriginalSource as FrameworkElement)?.DataContext is ServerItem s) await Join(s);
     }
 
-    async Task Connect(ServerItem s)
+    /// <summary>Join from a button, the list, a notice or a free slot: with the command feedback.</summary>
+    Task Join(ServerItem s, bool fromSlotWait = false) => RunCommand("Join", $"joining {s.Title}…", () => Connect(s, fromSlotWait));
+
+    /// <summary>Joins through the phone after all the checks. True when CS2 was sent to the server (or a slot wait started).</summary>
+    async Task<bool> Connect(ServerItem s, bool fromSlotWait = false, bool openWith = true)
     {
+        Step($"joining {s.Title}…");
         if (!_demo)
         {
-            if (_restored) { Toast("Protection is off since Restore network. Click Run leak test first.", false); return; }
+            if (_restored) { Toast("Protection is off since Restore network. Click Run leak test first.", false); return false; }
             await SyncNow(force: true);
-            if (_distrust || _cDiff.Ok == false) { Toast("Not joining: the phone IP is the same as your home IP.", false); return; }
+            if (_distrust || _cDiff.Ok == false) { Toast("Not joining: the phone IP is the same as your home IP.", false); return false; }
             var fullOk = _last?.Egress != null && _last.EffectiveMode == "all" && _last.FullModeOk;
             if (s.Protected != true && !fullOk)
             {
                 Toast($"Not joining {s.Key}: protection is not confirmed ({s.RouteText}).", false);
-                return;
+                return false;
             }
             // The two known causes of the "No Steam logon" kick: Steam in offline mode, or Steam on a different network than CS2.
             if (Steam.WantsOffline(Steam.ActiveSteamId()) && !await Ask("Steam is in offline mode",
                     "In offline mode Steam does not confirm your account, and the server kicks you with \"No Steam logon\" after a few minutes.\n\n" +
                     "Turn off \"Offline\" in Accounts and log in to the account again.", "Join anyway"))
-                return;
-            if (!await WaitAfterCrash(s)) return;
+                return false;
+            if (ActiveAccount() is AccountItem acc && acc.BanFor(s.Key, s.ServerName) is { } ban && !await Ask($"{acc.Name} was banned here",
+                    (ban.Key == s.Key ? $"{s.Title} banned {acc.Name}" : $"{ban.Value?.Name ?? ban.Key}, on the same network as {s.Title}, banned {acc.Name}")
+                    + $" on {Fmt.When(ban.Value?.At)}. Networks usually share their ban list, and if the ban is on the account, a new IP won't help.\n\nSwitch (Ctrl+Alt+Q) changes the IP and the account together.",
+                    "Join anyway"))
+                return false;
+            if (!await WaitAfterCrash(s)) return false;
+            if (!fromSlotWait && _last?.Egress is Adapter eg && await QueryOne(s, eg) && s.MaxPlayers > 0 && s.PlayerCount >= s.MaxPlayers)
+            {
+                if (!await Ask("Server is full", $"{s.Title} is full ({s.PlayersText}). Wait for a free slot? The app checks every 5 s and joins (or tells you) when one opens.", "Wait for a slot"))
+                    return false;
+                StartSlotWait(s);
+                return true;
+            }
             if (!SteamReady && !await WaitSteamReady(60) && !await Ask("Steam has no session yet",
                     "Steam has not reconnected to Valve yet (for example, after you changed the IP). If you join now, the server kicks you with \"No Steam logon\" after a few minutes.",
                     "Join anyway"))
-                return;
+                return false;
             if (_s.SteamOnEgress && _last?.SteamOnEgress == false && await Ask("Steam is on another network",
                     "CS2 goes through the phone, but Steam is connected through your home network. When Steam reconnects, the server kicks you with \"No Steam logon\".\n\n" +
                     $"Restart Steam through the phone and join {s.Title}?" + (Steam.Cs2Running ? " CS2 closes and opens again." : ""),
                     "Restart and join", "Join anyway"))
-            {
-                await RestartSteamAndConnect(s);
-                return;
-            }
+                return await RestartSteamAndConnect(s, openWith);
         }
-        if (_demo) { Toast($"Demo: joining {s.Title}.", true); MarkLast(s); return; }
+        if (_demo) { Toast($"Demo: joining {s.Title}.", true); MarkLast(s); return true; }
         try
         {
+            if (!Steam.Cs2Running && Steam.Exe is string steam && File.Exists(steam))
+            {
+                // With CS2 closed, a connect sent at launch gets lost while the main menu loads: open CS2, wait for the menu, then connect.
+                if (openWith) OpenWithCs2();
+                var log = Cs2Console.LogPath(_s.Cs2Path ?? Steam.Cs2Path(_s));
+                long from = 0;
+                try { from = log != null && File.Exists(log) ? new FileInfo(log).Length : 0; } catch { }
+                Process.Start(new ProcessStartInfo(steam, "-applaunch 730 -condebug") { UseShellExecute = true });
+                JoinStarted(s);
+                return await ConnectWhenMenuReady(s, log, from);
+            }
             Process.Start(new ProcessStartInfo($"steam://connect/{s.Key}") { UseShellExecute = true });
-            Diag.Write("join", new { server = s.Key, name = s.Title, isProtected = s.Protected, mode = _last?.EffectiveMode, steamOnEgress = _last?.SteamOnEgress, steamIps = _last?.Steam.LocalIps });
-            Log.Ok($"Joining {s.Key} through the phone.");
-            Toast($"Opening {s.Title} in Steam…", true);
-            MarkLast(s);
+            JoinStarted(s);
+            return true;
         }
-        catch (Exception ex) { Toast("Couldn't open Steam: " + ex.Message, Tone.Error); }
+        catch (Exception ex) { Toast("Couldn't open Steam: " + ex.Message, Tone.Error); return false; }
     }
 
-    async Task RestartSteamAndConnect(ServerItem s)
+    void JoinStarted(ServerItem s)
+    {
+        Diag.Write("join", new { server = s.Key, name = s.Title, isProtected = s.Protected, mode = _last?.EffectiveMode, steamOnEgress = _last?.SteamOnEgress, steamIps = _last?.Steam.LocalIps });
+        Log.Ok($"Joining {s.Key} through the phone.");
+        Toast($"Opening {s.Title} in Steam…", true);
+        MarkLast(s);
+    }
+
+    /// <summary>After opening CS2: waits for its main menu (the console shows the menu's "loopback" map), then joins. Up to 2 min.</summary>
+    async Task<bool> ConnectWhenMenuReady(ServerItem s, string log, long from)
+    {
+        ShowProgress($"Opening CS2. It joins {s.Title} when the main menu is ready…");
+        try
+        {
+            var ready = false;
+            for (var i = 0; i < 120 && !ready; i++)
+            {
+                await Task.Delay(1000);
+                if (!Steam.Cs2Running || log == null) continue;
+                try
+                {
+                    using var f = new FileStream(log, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                    if (f.Length < from) from = 0;   // a new console.log
+                    f.Seek(from, SeekOrigin.Begin);
+                    ready = new StreamReader(f).ReadToEnd().Contains("Connected to 'loopback", StringComparison.OrdinalIgnoreCase);
+                }
+                catch { }
+            }
+            if (!Steam.Cs2Running) { Log.Warn($"CS2 didn't open, so {s.Key} wasn't joined."); Toast($"CS2 didn't open, so {s.Title} wasn't joined.", false); return false; }
+            if (_restored || _distrust) { Log.Warn($"Not joining {s.Key}: protection changed while CS2 was opening."); Toast($"Not joining {s.Title}: protection changed while CS2 was opening.", false); return false; }
+            if (ready) await Task.Delay(2000);
+            Process.Start(new ProcessStartInfo($"steam://connect/{s.Key}") { UseShellExecute = true });
+            Log.Info($"CS2 menu {(ready ? "ready" : "not seen after 2 min")}: joining {s.Key}.");
+            return true;
+        }
+        catch (Exception ex) { Log.Error("Join after opening CS2: " + ex.Message); return false; }
+        finally { HideProgress(); }
+    }
+
+    // ------------------------------------------------------------ Full server: wait for a slot
+
+    ServerItem _slotServer;
+    readonly System.Windows.Threading.DispatcherTimer _slotTimer = new() { Interval = TimeSpan.FromSeconds(5) };
+    bool _slotChecking;
+
+    void StartSlotWait(ServerItem s)
+    {
+        _slotServer = s;
+        SlotAutoBox.IsChecked = true;
+        SlotJoinBtn.Visibility = Visibility.Collapsed;
+        SlotText.Text = $"Waiting for a slot on {s.Title} ({s.PlayersText}).";
+        SlotBar.Visibility = Visibility.Visible;
+        Log.Info($"Waiting for a free slot on {s.Key} ({s.PlayersText}).");
+        _slotTimer.Tick -= SlotTick;
+        _slotTimer.Tick += SlotTick;
+        _slotTimer.Start();
+    }
+
+    void StopSlotWait()
+    {
+        _slotTimer.Stop();
+        _slotServer = null;
+        SlotBar.Visibility = Visibility.Collapsed;
+    }
+
+    async void SlotTick(object sender, EventArgs e)
+    {
+        var s = _slotServer;
+        if (s == null || _slotChecking) return;
+        if (!_servers.Contains(s)) { StopSlotWait(); return; }
+        if (_last?.Egress is not Adapter eg) { SlotText.Text = $"Waiting for a slot on {s.Title}: the phone is not connected."; return; }
+        _slotChecking = true;
+        try
+        {
+            if (!await QueryOne(s, eg) || s.MaxPlayers == 0) return;
+            if (s.PlayerCount >= s.MaxPlayers) { SlotText.Text = $"Waiting for a slot on {s.Title} ({s.PlayersText})."; return; }
+            System.Media.SystemSounds.Asterisk.Play();
+            if (SlotAutoBox.IsChecked == true)
+            {
+                StopSlotWait();
+                Log.Ok($"A slot opened on {s.Key} ({s.PlayersText}): joining.");
+                await Join(s, fromSlotWait: true);
+                return;
+            }
+            _slotTimer.Stop();
+            SlotText.Text = $"A slot is free on {s.Title} ({s.PlayersText}).";
+            SlotJoinBtn.Visibility = Visibility.Visible;
+            Log.Ok($"A slot opened on {s.Key} ({s.PlayersText}).");
+            Toast($"A slot is free on {s.Title}. Join from Servers.", Tone.Info);
+        }
+        finally { _slotChecking = false; }
+    }
+
+    async void SlotJoin_Click(object sender, RoutedEventArgs e)
+    {
+        var s = _slotServer;
+        StopSlotWait();
+        if (s != null) await Join(s);
+    }
+
+    void SlotCancel_Click(object sender, RoutedEventArgs e)
+    {
+        if (_slotServer != null) Log.Info($"Stopped waiting for a slot on {_slotServer.Key}.");
+        StopSlotWait();
+    }
+
+    async Task<bool> RestartSteamAndConnect(ServerItem s, bool openWith = true)
     {
         ShowProgress("Restarting Steam through the phone…");
         try
         {
             foreach (var p in Process.GetProcessesByName("cs2")) try { p.Kill(true); } catch { }
             for (var i = 0; i < 20 && Steam.Cs2Running; i++) await Task.Delay(150);
-            // Valve routes already go through the phone: the new Steam connects that way, and CS2 opens and joins the server.
-            await Steam.Restart((_s.SteamSilent ? "-silent " : "") + $"-applaunch 730 -condebug +connect {s.Key}");
+            // Valve routes already go through the phone: the new Steam connects that way, then CS2 opens and joins from its menu.
+            var log = Cs2Console.LogPath(_s.Cs2Path ?? Steam.Cs2Path(_s));
+            long from = 0;
+            try { from = log != null && File.Exists(log) ? new FileInfo(log).Length : 0; } catch { }
+            await Steam.Restart((_s.SteamSilent ? "-silent " : "") + "-applaunch 730 -condebug");
+            if (openWith) OpenWithCs2();
             Diag.Write("steam-restarted", new { server = s.Key });
             Log.Ok($"Steam restarted through the phone; CS2 opens and joins {s.Key}.");
             Toast($"Steam is restarting. CS2 opens and joins {s.Title}.", true);
             MarkLast(s);
+            HideProgress();
+            return await ConnectWhenMenuReady(s, log, from);
         }
-        catch (Exception ex) { Log.Error("Restart Steam: " + ex.Message); Toast(ex.Message, Tone.Error); }
+        catch (Exception ex) { Log.Error("Restart Steam: " + ex.Message); Toast(ex.Message, Tone.Error); return false; }
         finally { HideProgress(); }
     }
 
@@ -322,6 +471,7 @@ public partial class MainWindow
             x.IsLast = x.Key == _s.LastServer;
             x.LastAt = x.IsLast ? _s.LastServerAt : null;
         }
+        ApplyServerBans();
         _serverView.Refresh();
         UpdateRejoinBtn();
     }

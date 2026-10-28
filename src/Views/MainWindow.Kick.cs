@@ -1,10 +1,10 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Windows;
 using SRT.Core;
 
 namespace SRT;
 
-// Kick or ban seen in CS2's console, and "Change IP and rejoin" (button and Ctrl+Alt+R)
+// Kick or ban seen in CS2's console, "Change IP and rejoin" (button and Ctrl+Alt+R) and the switch (new IP, next account, rejoin)
 public partial class MainWindow
 {
     readonly ConsoleTail _cs2Console = new();
@@ -87,7 +87,9 @@ public partial class MainWindow
         if ((DateTime.Now - _lastKickAt).TotalSeconds < 20) { Log.Info($"CS2 console ({what}): " + Cut(line)); return; }
         _lastKickAt = DateTime.Now;
         System.Media.SystemSounds.Hand.Play();
-        Log.Warn($"You were {what} from {_s.LastServer ?? "the server"}. Console: " + Cut(line));
+        var acc = ActiveAccount();
+        Log.Warn($"You were {what} from {_s.LastServer ?? "the server"}" + (acc != null ? $" on {acc.Name}" : "") + ". Console: " + Cut(line));
+        if (kind == KickKind.Ban && _servers.FirstOrDefault(x => x.Key == _s.LastServer) is ServerItem banned && acc != null) MarkServerBan(acc, banned);
         Diag.Write("kick", new { kind = what, line, server = _s.LastServer });
         Toast(_s.LastServer == null ? $"You were {what} from the server."
             : $"You were {what} from the server. Press Ctrl+Alt+R to change IP and rejoin.", false);
@@ -101,34 +103,115 @@ public partial class MainWindow
             await ChangeIpAndRejoin("After the " + (what == "banned" ? "ban" : "kick"));
     }
 
+    // ------------------------------------------------------------ Bans by a server (on the account, not Steam)
+
+    AccountItem ActiveAccount()
+    {
+        var id = _demo ? null : Steam.ActiveSteamId();
+        return _accounts.FirstOrDefault(a => a.SteamId == id) ?? _accounts.FirstOrDefault(a => a.Active);
+    }
+
+    void MarkServerBan(AccountItem a, ServerItem s)
+    {
+        a.Meta.ServerBans ??= new();
+        a.Meta.ServerBans[s.Key] = new ServerBan { At = DateTime.Now, Name = s.ServerName };
+        a.RefreshAll();
+        SaveAccounts();
+        ApplyServerBans();
+        UpdateQuickInfo();
+        var same = _servers.Count(x => x != s && ServerNetwork.Same(s.Key, s.ServerName, x.Key, x.ServerName));
+        Log.Warn($"{a.Name} marked as banned on {s.Key}" + (same > 0 ? $" and {same} other server(s) of the same network" : "") + ". Switch skips it there.");
+        Diag.Write("server-ban", new { steamId = a.SteamId, server = s.Key, name = s.ServerName });
+    }
+
+    /// <summary>On each server row: whether the account you're logged in with is banned there (or on that server's network).</summary>
+    void ApplyServerBans()
+    {
+        var acc = ActiveAccount();
+        foreach (var s in _servers)
+        {
+            var b = acc?.BanFor(s.Key, s.ServerName);
+            s.BannedText = b == null ? null : b.Value.Key == s.Key ? $"Banned here ({acc.Name})" : $"Banned on this network ({acc.Name})";
+        }
+    }
+
+    void SrvMarkBan_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not ServerItem s) return;
+        if (ActiveAccount() is not AccountItem a) { Toast("No Steam account in use right now.", false); return; }
+        MarkServerBan(a, s);
+        Toast($"{a.Name} marked as banned on {s.Title}.", true);
+    }
+
+    void SrvClearBans_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not ServerItem s) return;
+        foreach (var a in _accounts)
+        {
+            if (a.BanFor(s.Key, s.ServerName) is not { } b) continue;
+            a.Meta.ServerBans.Remove(b.Key);
+            if (a.Meta.ServerBans.Count == 0) a.Meta.ServerBans = null;
+            a.RefreshAll();
+        }
+        SaveAccounts();
+        ApplyServerBans();
+        UpdateQuickInfo();
+        Toast($"Ban marks cleared on {s.Title}.", true);
+    }
+
     void UpdateRejoinBtn()
     {
         RejoinBtn.IsEnabled = !_changingIp && !_rejoining && _s.LastServer != null && _phone?.Ready == true;
         RejoinBtn.ToolTip = (_s.LastServer == null ? "Join a server from Servers first. " : $"Changes the IP, then joins {_s.LastServer} again. ")
             + "Only joins with protection confirmed. In game: Ctrl+Alt+R.";
+
     }
 
-    async void Rejoin_Click(object sender, RoutedEventArgs e) => await ChangeIpAndRejoin("Button");
 
-    /// <summary>The normal Change IP, then the normal join to the last server (with all its checks).</summary>
-    async Task ChangeIpAndRejoin(string from)
+    /// <summary>What a switch does. Switch (Ctrl+Alt+Q) takes the steps from Settings; Ctrl+Alt+R is new IP, same account, rejoin.</summary>
+    readonly record struct SwitchSteps(bool Ip, bool Account, bool Rejoin, bool OpenWith);
+
+    SwitchSteps SwitchChoice => new(_s.SwitchIp, _s.SwitchAccount, _s.SwitchRejoin, _s.SwitchOpenWith);
+
+    /// <summary>The normal Change IP, the next account by the quick switch rules, then the normal join to the last server: each step only if asked.</summary>
+    async Task<bool> RunSwitch(SwitchSteps steps, string from)
     {
-        if (_rejoining || _changingIp) return;
-        if (_demo) { Toast("Demo: IP changed, rejoining.", true); return; }
-        var s = _servers.FirstOrDefault(x => x.Key == _s.LastServer);
-        if (s == null)
+        ServerItem s = null;
+        if (steps.Rejoin && (s = _servers.FirstOrDefault(x => x.Key == _s.LastServer)) == null)
         {
-            Toast(_s.LastServer == null ? "No last server yet. Join one from Servers first." : $"The last server ({_s.LastServer}) is no longer in your list.", false);
-            return;
+            var why = _s.LastServer == null ? "No last server yet. Join one from Servers first." : $"The last server ({_s.LastServer}) is no longer in your list.";
+            if (!steps.Ip && !steps.Account) { Toast(why, false); return false; }
+            Log.Info($"{from}: not rejoining. {why}");
         }
+        var ip = steps.Ip;
+        if (ip && steps.Account && !_demo && (_adb == null || _phone?.Ready != true))
+        {
+            ip = false;
+            Log.Info($"{from}: the phone isn't ready to change the IP, so only the account changes.");
+            Toast("Switching the account only: the phone isn't ready to change the IP.", false);
+        }
+        AccountItem next = null;
+        if (steps.Account && (next = PickQuick(s)) == null) return false;
+        if (!ip && next == null && s == null) { Toast("Switch has nothing to do: turn on at least one step in Settings > Switch.", false); return false; }
+        Log.Info($"{from}: " + string.Join(", ", new[] { ip ? "new IP" : null, next != null ? $"log in to {next.Name}" : null, s != null ? $"rejoin {s.Key}" : null }.Where(x => x != null)) + ".");
         _rejoining = true;
         UpdateRejoinBtn();
         try
         {
-            Log.Info($"{from}: change IP and rejoin {s.Key}.");
-            if (!await ChangeIp(confirm: false)) return;
-            await Connect(s);
+            if (ip && _demo) { ShowProgress($"Attempt 1/{_s.MaxAttempts}: turning off the phone's data for {_s.OffSeconds} s…"); await Task.Delay(1500); HideProgress(); }
+            else if (ip && !await ChangeIp(confirm: false)) return false;
+            // A new account restarts Steam through the new IP; Connect waits for its session before joining.
+            if (next != null && !await SwitchTo(next, cs2: s == null, ask: false, openWith: steps.OpenWith)) return false;
+            if (s == null) return true;
+            // Same account on a new IP: Steam has to log in again. If it hasn't within 20 s, restart it (a dialog can't be seen in game).
+            if (ip && next == null && !_demo && Steam.IsRunning && !await WaitSteamReady(20)) return await RestartSteamAndConnect(s, steps.OpenWith);
+            return await Connect(s, openWith: steps.OpenWith);
         }
         finally { _rejoining = false; UpdateRejoinBtn(); }
     }
+
+    async void Rejoin_Click(object sender, RoutedEventArgs e) => await ChangeIpAndRejoin("Button");
+
+    /// <summary>Ctrl+Alt+R and the button: new IP, same account, back to the last server (with all the usual checks).</summary>
+    Task ChangeIpAndRejoin(string from) => RunCommand("Change IP and rejoin", "starting…", () => RunSwitch(new SwitchSteps(true, false, true, true), from));
 }

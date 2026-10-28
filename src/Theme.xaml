@@ -119,6 +119,38 @@
         </Setter>
     </Style>
 
+    <!-- Dialog: the title chip sits on the dimmed page -->
+    <Style x:Key="DialogGroup" TargetType="HeaderedContentControl">
+        <Setter Property="Margin" Value="0,0,0,12"/>
+        <Setter Property="Padding" Value="14,16,14,12"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="HeaderedContentControl">
+                    <Grid>
+                        <Border Margin="0,7,0,0" Background="{StaticResource Surface}" BorderBrush="{StaticResource Edge}" BorderThickness="1">
+                            <Border BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter/>
+                            </Border>
+                        </Border>
+                        <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,0,0,0" Padding="5,0" Height="16">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Color="#050505" Offset="0"/>
+                                    <GradientStop Color="#050505" Offset="0.5"/>
+                                    <GradientStop Color="{StaticResource SurfaceColor}" Offset="0.5"/>
+                                    <GradientStop Color="{StaticResource SurfaceColor}" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <ContentPresenter ContentSource="Header" VerticalAlignment="Center"
+                                              TextElement.FontWeight="SemiBold" TextElement.FontSize="12" TextElement.Foreground="{StaticResource Text}"/>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ============================================================ Tooltip -->
     <Style TargetType="ToolTip">
         <Setter Property="Background" Value="{StaticResource Surface2}"/>

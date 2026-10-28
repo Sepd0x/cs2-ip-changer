@@ -456,9 +456,11 @@ public partial class MainWindow
         Toast("IP copied.", true);
     }
 
-    async void LeakTest_Click(object sender, RoutedEventArgs e)
+    async void LeakTest_Click(object sender, RoutedEventArgs e) => await RunCommand("Leak test", "testing…", LeakTest);
+
+    async Task<bool> LeakTest()
     {
-        if (_demo) { Toast("Test finished: everything protected.", true); return; }
+        if (_demo) { Toast("Test finished: everything protected.", true); return true; }
         LeakBtn.IsEnabled = false;
         _restored = false;
         if (!_tick.IsEnabled) _tick.Start();
@@ -472,12 +474,13 @@ public partial class MainWindow
             {
                 Log.Ok("Leak test: everything confirmed.");
                 Toast(_egressPublic != null ? $"No leaks. Servers see {_egressPublic}." : "No leaks: servers are blocked until you connect the phone.", true);
+                return true;
             }
             else
             {
                 Log.Warn("Leak test failed on: " + string.Join(", ", bad));
                 Toast("Warning: " + string.Join(", ", bad) + ". See Checks.", false);
-
+                return false;
             }
         }
         finally { HideProgress(); LeakBtn.IsEnabled = true; }

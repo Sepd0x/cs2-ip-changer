@@ -41,17 +41,21 @@ public partial class MainWindow
     }
 
     // The progress line takes the place of the hero's buttons, so nothing below moves.
-    void ShowProgress(string text) { ProgressText.Text = text; ProgressPanel.Visibility = Visibility.Visible; ActionRow.Visibility = Visibility.Hidden; }
+    void ShowProgress(string text) { ProgressText.Text = text; ProgressPanel.Visibility = Visibility.Visible; ActionRow.Visibility = Visibility.Hidden; Step(text); }
     void HideProgress() { ProgressPanel.Visibility = Visibility.Collapsed; ActionRow.Visibility = Visibility.Visible; }
 
     TaskCompletionSource<bool> _dialogTcs;
 
     Task<bool> Ask(string title, string text, string ok, string cancel = "Cancel",
- int inputs = 0, bool danger = false, string label1 = null, string label2 = null)
+ int inputs = 0, bool danger = false, string label1 = null, string label2 = null, string color = null)
     {
+        _dialogColor = color;
+        DialogColorLabel.Visibility = DialogColors.Visibility = color != null ? Visibility.Visible : Visibility.Collapsed;
+        if (color != null) BuildColorSwatches();
         _dialogTcs?.TrySetResult(false);
         _dialogTcs = new TaskCompletionSource<bool>();
         if (ToastBox.Visibility == Visibility.Visible) HideToast();   // the dialog says it already
+        if (_command != null) { Sound(Tones.Kind.Ask); Step("waiting for your answer in the app"); }   // in game only the sound gets through
         DialogTitle.Text = title;
         DialogText.Text = text;
         DialogOk.Content = ok;
@@ -70,8 +74,31 @@ public partial class MainWindow
         return _dialogTcs.Task;
     }
 
+    /// <summary>The color picked in the dialog (flags).</summary>
+    string _dialogColor;
+
+    void BuildColorSwatches()
+    {
+        DialogColors.Children.Clear();
+        foreach (var c in PlayerFlag.Colors)
+        {
+            var b = new RadioButton
+            {
+                GroupName = "flagcolor", IsChecked = string.Equals(c, _dialogColor, StringComparison.OrdinalIgnoreCase), Tag = c, Width = 26, Height = 26, Margin = new Thickness(0, 0, 6, 0), Cursor = Cursors.Hand,
+                ToolTip = c, FocusVisualStyle = (Style)FindResource("FocusRing"),
+                Template = (ControlTemplate)System.Windows.Markup.XamlReader.Parse(
+                    "<ControlTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' TargetType='RadioButton'>" +
+                    "<Border x:Name='o' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml' BorderThickness='2' BorderBrush='Transparent' Padding='3'><Border Background='{TemplateBinding Background}'/></Border>" +
+                    "<ControlTemplate.Triggers><Trigger Property='IsChecked' Value='True'><Setter TargetName='o' Property='BorderBrush' Value='#DDDDDD'/></Trigger></ControlTemplate.Triggers></ControlTemplate>"),
+                Background = PlayerFlag.ToBrush(c),
+            };
+            b.Checked += (_, _) => _dialogColor = c;
+            DialogColors.Children.Add(b);
+        }
+    }
+
     void DialogOk_Click(object sender, RoutedEventArgs e) { Dialog.Visibility = Visibility.Collapsed; _dialogTcs?.TrySetResult(true); }
-    void DialogCancel_Click(object sender, RoutedEventArgs e) { Dialog.Visibility = Visibility.Collapsed; _dialogTcs?.TrySetResult(false); }
+    void DialogCancel_Click(object sender, RoutedEventArgs e) { Dialog.Visibility = Visibility.Collapsed; _commandDeclined |= _command != null; _dialogTcs?.TrySetResult(false); }
 
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {

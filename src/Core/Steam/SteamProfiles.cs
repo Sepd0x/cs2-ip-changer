@@ -91,6 +91,64 @@ public static partial class Steam
         return p;
     }
 
+    // ------------------------------------------------------------ Other players (flags)
+
+    /// <summary>Current name and game server of a profile. GameServer is only there when the profile's game details are public.</summary>
+    public sealed record Summary(string Persona, string GameServer);
+
+    /// <summary>SteamID64 from a link, an id or a custom URL name. The custom URL needs the API key or the public XML.</summary>
+    public static async Task<string> ResolveProfile(string input, string apiKey)
+    {
+        var (id, vanity) = PlayerMatch.ParseProfile(input);
+        if (id != null || vanity == null) return id;
+        if (!string.IsNullOrWhiteSpace(apiKey))
+        {
+            try
+            {
+                var json = await Http.GetStringAsync($"https://api.steampowered.com/ISteamUser/ResolveVanityURL/v1/?key={apiKey.Trim()}&vanityurl={Uri.EscapeDataString(vanity)}");
+                using var doc = JsonDocument.Parse(json);
+                var r = doc.RootElement.GetProperty("response");
+                if (r.TryGetProperty("steamid", out var sid)) return sid.GetString();
+            }
+            catch (Exception ex) { Log.Warn("Steam Web API: " + ex.Message); }
+        }
+        var xml = await Http.GetStringAsync($"https://steamcommunity.com/id/{Uri.EscapeDataString(vanity)}/?xml=1");
+        var x = XDocument.Parse(xml).Root;
+        return x?.Element("error") == null ? x?.Element("steamID64")?.Value?.Trim() : null;
+    }
+
+    /// <summary>With a key: one GetPlayerSummaries call for up to 100 profiles. Without: the public XML, one profile at a time.</summary>
+    public static async Task<Dictionary<string, Summary>> FetchSummaries(IReadOnlyCollection<string> ids, string apiKey)
+    {
+        var res = new Dictionary<string, Summary>();
+        if (ids.Count == 0) return res;
+        if (!string.IsNullOrWhiteSpace(apiKey))
+        {
+            foreach (var chunk in ids.Chunk(100))
+            {
+                var json = await Http.GetStringAsync($"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={apiKey.Trim()}&steamids={string.Join(",", chunk)}");
+                using var doc = JsonDocument.Parse(json);
+                foreach (var p in doc.RootElement.GetProperty("response").GetProperty("players").EnumerateArray())
+                {
+                    string S(string n) => p.TryGetProperty(n, out var v) ? v.GetString() : null;
+                    res[S("steamid")] = new Summary(S("personaname"), S("gameserverip"));
+                }
+            }
+            return res;
+        }
+        foreach (var id in ids)
+        {
+            try
+            {
+                var x = XDocument.Parse(await Http.GetStringAsync($"https://steamcommunity.com/profiles/{id}/?xml=1")).Root;
+                if (x == null || x.Element("error") != null) continue;
+                res[id] = new Summary(x.Element("steamID")?.Value?.Trim(), x.Element("inGameServerIP")?.Value?.Trim());
+            }
+            catch { }
+        }
+        return res;
+    }
+
     public static async Task<string> DownloadAvatar(string steamId, string url)
     {
         if (string.IsNullOrEmpty(url)) return null;

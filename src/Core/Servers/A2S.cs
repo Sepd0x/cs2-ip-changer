@@ -5,7 +5,10 @@ using System.Text;
 
 namespace SRT.Core;
 
-public sealed record ServerInfo(string Name, string Map, int Players, int MaxPlayers, int Bots, int PingMs, List<string> PlayerNames);
+public sealed record ServerInfo(string Name, string Map, int Players, int MaxPlayers, int Bots, int PingMs, List<A2SPlayer> PlayerList);
+
+/// <summary>One player from A2S_PLAYER. Servers only give the name, never the SteamID.</summary>
+public sealed record A2SPlayer(string Name, int Score, TimeSpan Time);
 
 /// <summary>Source A2S query (name, map, players), always from the local IP of the protected connection.</summary>
 public static class A2S
@@ -38,15 +41,18 @@ public static class A2S
         o += 2; // appid
         int players = data[o], max = data[o + 1], bots = data[o + 2];
 
-        List<string> names = null;
+        // Null with players > 0: the server doesn't share the list (it ignores the request or answers without names).
+        List<A2SPlayer> names = null;
         if (players > 0)
         {
-            try { names = await QueryPlayers(udp, ep, timeoutMs); } catch { }
+            try { names = await QueryPlayers(udp, ep, timeoutMs); }
+            catch { try { names = await QueryPlayers(udp, ep, timeoutMs * 2); } catch { } }
+            if (names is { Count: 0 }) names = null;
         }
         return new ServerInfo(name, map, players, max, bots, (int)sw.ElapsedMilliseconds, names);
     }
 
-    static async Task<List<string>> QueryPlayers(UdpClient udp, IPEndPoint ep, int timeoutMs)
+    static async Task<List<A2SPlayer>> QueryPlayers(UdpClient udp, IPEndPoint ep, int timeoutMs)
     {
         var req = Header.Concat(new byte[] { 0x55, 0xFF, 0xFF, 0xFF, 0xFF }).ToArray();
         var data = await Exchange(udp, ep, req, timeoutMs);
@@ -70,7 +76,7 @@ public static class A2S
             if (!string.IsNullOrWhiteSpace(n)) list.Add((n, score, t));
         }
         return list.OrderByDescending(p => p.score)
-            .Select(p => $"{p.n}   {p.score} pts · {TimeSpan.FromSeconds(p.t):h\\:mm}").ToList();
+            .Select(p => new A2SPlayer(p.n, p.score, TimeSpan.FromSeconds(float.IsFinite(p.t) && p.t > 0 ? p.t : 0))).ToList();
     }
 
     static async Task<byte[]> Exchange(UdpClient udp, IPEndPoint ep, byte[] req, int timeoutMs)

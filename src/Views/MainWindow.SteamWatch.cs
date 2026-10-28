@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -61,7 +61,7 @@ public partial class MainWindow
                 await Task.Delay(1000);
                 WatchSteamLog();
                 if (SteamReady) { Log.Ok("Steam is ready: you can join without getting kicked."); return true; }
-                ProgressText.Text = $"Waiting for Steam to get a Valve session again… {i} s";
+                ShowProgress($"Waiting for Steam to get a Valve session again… {i} s");
             }
             return false;
         }
@@ -154,7 +154,7 @@ public partial class MainWindow
         {
             while (DateTime.Now < until)
             {
-                ProgressText.Text = $"Waiting for the server to drop the old session… {Fmt.Left(until - DateTime.Now)}";
+                ShowProgress($"Waiting for the server to drop the old session… {Fmt.Left(until - DateTime.Now)}");
                 await Task.Delay(1000);
             }
         }

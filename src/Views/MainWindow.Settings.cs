@@ -30,6 +30,12 @@ public partial class MainWindow
             OffSecondsBox.Text = _s.OffSeconds.ToString();
             AttemptsBox.Text = _s.MaxAttempts.ToString();
             New16Box.IsChecked = _s.RequireNew16;
+            AutoJoinBox.IsChecked = _s.AutoJoinFollowed;
+            SwIpBox.IsChecked = _s.SwitchIp;
+            SwAccountBox.IsChecked = _s.SwitchAccount;
+            SwRejoinBox.IsChecked = _s.SwitchRejoin;
+            SwOpenWithBox.IsChecked = _s.SwitchOpenWith;
+            SoundsBox.IsChecked = _s.CommandSounds;
             CheckUpdatesBox.IsChecked = _s.CheckUpdates;
             KeepOffBox.IsChecked = _s.KeepPcOffPhone;
             LockCs2Box.IsChecked = _s.LockCs2;
@@ -53,6 +59,13 @@ public partial class MainWindow
         if (int.TryParse(OffSecondsBox.Text, out var off)) _s.OffSeconds = Math.Clamp(off, 1, 60);
         if (int.TryParse(AttemptsBox.Text, out var att)) _s.MaxAttempts = Math.Clamp(att, 1, 10);
         _s.RequireNew16 = New16Box.IsChecked == true;
+        _s.AutoJoinFollowed = AutoJoinBox.IsChecked == true;
+        _s.SwitchIp = SwIpBox.IsChecked == true;
+        _s.SwitchAccount = SwAccountBox.IsChecked == true;
+        _s.SwitchRejoin = SwRejoinBox.IsChecked == true;
+        _s.SwitchOpenWith = SwOpenWithBox.IsChecked == true;
+        if (!_s.CommandSounds && SoundsBox.IsChecked == true) Tones.Play(Tones.Kind.Done);   // so you know how they sound
+        _s.CommandSounds = SoundsBox.IsChecked == true;
         _s.KeepPcOffPhone = KeepOffBox.IsChecked == true;
         var guardChanged = _s.LockCs2 != (LockCs2Box.IsChecked == true) || _s.SteamOnEgress != (SteamEgressBox.IsChecked == true);
         _s.LockCs2 = LockCs2Box.IsChecked == true;
@@ -64,6 +77,13 @@ public partial class MainWindow
         OffSecondsBox.Text = _s.OffSeconds.ToString();
         AttemptsBox.Text = _s.MaxAttempts.ToString();
         SaveSettings();
+        UpdateQuickInfo();
+    }
+
+    void SwitchSteps_Click(object sender, RoutedEventArgs e)
+    {
+        NavSettings.IsChecked = true;
+        Dispatcher.BeginInvoke(() => SwitchGroup.BringIntoView(), DispatcherPriority.Loaded);
     }
 
     void SaveSettings() { if (!_demo) Store.Save(Paths.File("settings.json"), _s); }
