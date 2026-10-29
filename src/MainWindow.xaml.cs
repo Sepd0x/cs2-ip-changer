@@ -68,6 +68,7 @@ public partial class MainWindow : Window
 
         _s = _demo ? new Settings() : Store.Load(Paths.File("settings.json"), () => new Settings());
         InitDev();
+        Telemetry.Start(_demo, TelemetryNow);
         LoadFlags();
         LoadOpenWith();
         LoadServers();

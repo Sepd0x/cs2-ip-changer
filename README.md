@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://github.com/Sepd0x/cs2-ip-changer/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/Sepd0x/cs2-ip-changer?include_prereleases&label=release&style=flat-square&labelColor=1b1f24&color=2B74C2"></a>
   <img alt="Windows 10 and 11, 64-bit" src="https://img.shields.io/badge/Windows-10%20%7C%2011%20x64-3A3A3A?style=flat-square&labelColor=1b1f24">
-  <img alt="Telemetry: none" src="https://img.shields.io/badge/telemetry-none-1A7F37?style=flat-square&labelColor=1b1f24">
+  <a href="#telemetry"><img alt="Telemetry: anonymous, beta only" src="https://img.shields.io/badge/telemetry-anonymous%20(beta)-3A3A3A?style=flat-square&labelColor=1b1f24"></a>
   <a href="https://github.com/Sepd0x/cs2-ip-changer/attestations"><img alt="Builds: attested by GitHub Actions" src="https://img.shields.io/badge/builds-attested-3A3A3A?style=flat-square&labelColor=1b1f24"></a>
 </p>
 
@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <sub>Admin is needed for the routes and firewall rules. It never touches the game process or its files. No telemetry, no account. <a href="#check-your-download">Check your download</a>.</sub>
+  <sub>Admin is needed for the routes and firewall rules. It never touches the game process or its files. No account. Anonymous usage stats while in beta (<a href="#telemetry">what is sent</a>). <a href="#check-your-download">Check your download</a>.</sub>
 </p>
 
 <p align="center">
@@ -30,6 +30,8 @@
 </p>
 
 CS2 IP Changer sends CS2 and Steam through your Android phone's mobile data, so community servers see your carrier's IP and not your home IP. If you get IP banned, change the IP from the app and join again. There's a Steam account switcher in it too.
+
+It isn't a VPN: servers see a normal mobile connection from your carrier, so it also works on community servers that block VPNs and datacenter IPs. Your home IP stays out of the server's logs, out of reach of anyone on the server who wants to DDoS or dox you, and off screen when you stream.
 
 > [!WARNING]
 > This is a beta, so expect bugs. If something breaks your connection, **Settings > Restore network** removes every route and firewall rule the app added.
@@ -139,6 +141,13 @@ Found a bug? [Open an issue](https://github.com/Sepd0x/cs2-ip-changer/issues/new
 ## FAQ
 
 <details>
+<summary><b>Is it a VPN? Does it work on servers that block VPNs?</b></summary>
+<br>
+
+No, it isn't a VPN, and yes, it works there. A VPN sends your traffic through a datacenter, and many community servers block datacenter and VPN IP ranges. This app sends CS2 and Steam through your own phone's mobile data, so the server sees an ordinary mobile connection from your carrier, the same as someone playing on a phone hotspot. There's no VPN server in between and no subscription.
+</details>
+
+<details>
 <summary><b>Does the account switcher store my Steam password?</b></summary>
 <br>
 
@@ -240,7 +249,7 @@ Protection stays on, so closing the app can't leak your IP. If you'd rather have
 
 ## Privacy
 
-There's no telemetry and no account. The app only talks to these services:
+There's no account. While the app is in beta it sends anonymous usage stats ([Telemetry](#telemetry)). Besides that, it only talks to these services:
 
 | What for | Service |
 |---|---|
@@ -249,10 +258,30 @@ There's no telemetry and no account. The app only talks to these services:
 | Profiles, avatars and bans of your accounts | steamcommunity.com, Steam's avatar servers and, if you add a key, api.steampowered.com |
 | Downloading ADB (only if you ask) | dl.google.com |
 | Checking for updates (can be turned off) | api.github.com, github.com |
+| Anonymous usage stats (beta, [Telemetry](#telemetry)) | the project's Cloudflare Worker (source in [`worker/stats`](worker/stats)) |
 
 Your Steam Web API key stays on your PC, in `SRT_Dados/settings.json`.
 
 The app measures the phone's IP by asking 1.0.0.1 (Cloudflare's `/cdn-cgi/trace`). A firewall rule keeps the app's own requests to it on the phone connection, and leaves other programs alone. Windows routes can't be set per program, though: while the phone is connected, anything on your PC that talks to 1.0.0.1 (for example, if you use it as your DNS server) goes through the phone too.
+
+## Telemetry
+
+While CS2 IP Changer is in beta, it sends anonymous usage stats so bugs can be found and the parts people use get better. It's always on in the beta. If you don't want that, don't use the beta.
+
+Once when the app has been open for 20 seconds, and then once a day, it sends:
+
+- a random ID made on your PC the first time (not tied to you, your PC, Steam or anything else; it only lets the same install be counted once a day)
+- the app version and the Windows version
+- the mode (Game only, Whole PC while CS2 is open, Whole PC always) and how the phone is connected (USB, hotspot)
+- minutes the app was open
+- how many times each button and hotkey was used, counted by the name of its code (for example `ChangeIp_Click`), never by what's on it
+- a few counters: IP changes that worked, that got the same IP or no network, kicks and bans the app saw, errors in the Log
+- how many servers, accounts, flagged players and "Open with CS2" programs are in your lists (the number only)
+- errors as their type and place in the app's code (for example `NullReferenceException` in `MainWindow.QueryServers`), never their message
+
+It never sends IPs (yours, the phone's or servers'), server names or addresses, Steam accounts, logins, names or IDs, your carrier or city, players' names, file paths or anything you typed.
+
+The server is a Cloudflare Worker whose code is in this repo ([`worker/stats`](worker/stats)). Cloudflare has to see your IP to deliver the request, like with any website, but the Worker never reads it or stores it, and its request logs are off. The stats are stored per day in a database with no IP column ([`schema.sql`](worker/stats/schema.sql)). The recording build sends nothing.
 
 ## License
 

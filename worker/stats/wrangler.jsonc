@@ -1,0 +1,12 @@
+// Anonymous usage stats for CS2 IP Changer, on the project's own Cloudflare account. Deploy: npx wrangler deploy (from this folder).
+{
+  "name": "stats",
+  "main": "src/index.js",
+  "compatibility_date": "2026-06-01",
+  "workers_dev": true,
+  // No request logs: the sender's IP is never written anywhere.
+  "observability": { "enabled": false },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "cs2ipc-stats", "database_id": "4c55f7d0-849d-4e6b-8b46-b8a0b7a9e19f" }
+  ]
+}

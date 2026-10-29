@@ -229,6 +229,7 @@ public partial class MainWindow
             if (got != null && got == home)
             {
                 _distrust = true;
+                Telemetry.Count("ip_home_back");
                 Toast("The phone came back with your home IP. Your servers stay blocked: turn off the phone's Wi-Fi.", Tone.Error);
             }
             else if (got != null && first == null)
@@ -255,9 +256,15 @@ public partial class MainWindow
                 return true;
             }
             else if (got == first)
+            {
+                Telemetry.Count("ip_same");
                 Toast("The carrier kept giving the same IP. Try airplane mode in Settings or wait a few minutes.", false);
+            }
             else
+            {
+                Telemetry.Count("ip_no_network");
                 Toast("The mobile network didn't come back in time. Check the phone.", false);
+            }
             return false;
         }
         finally

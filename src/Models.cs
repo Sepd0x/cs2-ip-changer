@@ -270,7 +270,7 @@ public sealed class AccountItem : Observable
 
     public string SteamId => Local.SteamId;
     public string Login => Local.AccountName;
-    public string LoginShown => Streamer ? "••••••••" : Login;
+    public string LoginShown => Streamer && !Rec.On ? "••••••••" : Login;   // recording build: the login is blurred on screen instead
     public string Name => Meta.Profile?.Persona ?? Local.PersonaName ?? Login;
     public string Initial => Rec.On || string.IsNullOrEmpty(Name) ? "?" : Name.Substring(0, 1).ToUpperInvariant();
 

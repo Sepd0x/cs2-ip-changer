@@ -51,7 +51,7 @@ public partial class MainWindow
     /// <summary>With Hide logins on, the home IP and the account logins show as ••• in the Log page.</summary>
     void MaskLog(LogEntry e)
     {
-        if (_s == null || !HideLogins) { e.Shown = null; return; }
+        if (_s == null || !HideLogins || Rec.On) { e.Shown = null; return; }   // recording build: blurred on screen instead
         var text = e.Text ?? "";
         foreach (var ip in new[] { _s.LastHomeIp, _homePublic }.Where(x => !string.IsNullOrEmpty(x)).Distinct())
             text = Regex.Replace(text, @"(?<![\d.])" + Regex.Escape(ip) + @"(?![\d])", "•••");
@@ -119,12 +119,14 @@ public partial class MainWindow
         if (msg == WM_HOTKEY && wParam.ToInt32() == HotkeyId)
         {
             handled = true;
+            Telemetry.Click("Hotkey_Switch");
             Log.Info($"Hotkey {_s.HotkeySwitch}: switch.");
             _ = QuickSwitch($"Hotkey {_s.HotkeySwitch}");
         }
         else if (msg == WM_HOTKEY && wParam.ToInt32() == RejoinHotkeyId)
         {
             handled = true;
+            Telemetry.Click("Hotkey_Rejoin");
             _ = ChangeIpAndRejoin($"Hotkey {_s.HotkeyRejoin}");
         }
         else if (msg == WM_HOTKEY) OnDevHotkey(wParam.ToInt32(), ref handled);

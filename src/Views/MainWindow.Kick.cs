@@ -149,6 +149,7 @@ public partial class MainWindow
             Toast("Steam or VAC refused the connection. A new IP won't help: check the account.", Tone.Error);
             return;
         }
+        Telemetry.Count(kind == KickKind.Ban ? "ban_seen" : "kick_seen");
         Log.Warn($"You were {what} from {server ?? "the server"}" + (acc != null ? $" on {acc.Name}" : "") + ". Console: " + Cut(line));
         if (kind == KickKind.Ban && server != null)
         {

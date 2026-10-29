@@ -4,7 +4,12 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+## [0.1.0-beta.4] - 2026-10-29
+
+Anonymous usage stats while the app is in beta, a recording build for videos, and signed updates.
+
 ### Added
+- Anonymous usage stats while the app is in beta (README > Telemetry): a random install ID, versions, the mode, minutes open, how often each button and hotkey is used, a few counters and errors as type and place in the code. Never IPs, servers, accounts, names or anything you typed. The server's code is in `worker/stats` and keeps no IP. Settings > Updates says so too.
 - Recording build (`dotnet publish -c Release -p:Recording=true`, exe `CS2IPChanger-Recording.exe`) for videos and streams. Every text in the window, tooltips and menus is filtered before it is drawn: all IPs (the phone's too), MACs, SteamIDs, e-mails, the API key, your Windows user in paths, logins, Steam names, players' names, carrier, city, phone and Wi-Fi names. Hide logins can't be turned off, Steam pictures aren't shown, Copy all is filtered, Export diagnostics is off and it never updates itself. Put it next to the normal exe to use the same data.
 
 ### Security
@@ -174,6 +179,8 @@ First public release, as ServerRouteTool.
 - Restore network, to undo every route and rule in one click.
 - Dark interface in Portuguese.
 
+[Unreleased]: ../../compare/v0.1.0-beta.4...HEAD
+[0.1.0-beta.4]: ../../releases/tag/v0.1.0-beta.4
 [0.1.0-beta.3]: ../../releases/tag/v0.1.0-beta.3
 [0.1.0-beta.2]: ../../releases/tag/v0.1.0-beta.2
 [0.1.0-beta.1]: ../../releases/tag/v0.1.0-beta.1

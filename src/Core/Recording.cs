@@ -1,7 +1,8 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Threading;
 
@@ -45,9 +46,33 @@ public static class Rec
     static string Scrub(string text, Regex wordRx)
     {
         if (string.IsNullOrEmpty(text)) return text;
-        var t = Patterns.Replace(text, Mask);
-        t = V6.Replace(t, m => m.Value.Contains("::") || m.Value.Count(c => c == ':') >= 4 || m.Value.Any(c => char.IsLetter(c) && c != '%') ? Mask : m.Value);
-        return wordRx == null ? t : wordRx.Replace(t, Mask);
+        var sb = new System.Text.StringBuilder();
+        foreach (var (part, hide) in Split(text, wordRx)) sb.Append(hide ? Mask : part);
+        return sb.ToString();
+    }
+
+    /// <summary>The text in pieces, each one personal (hide) or not, in order.</summary>
+    static List<(string Part, bool Hide)> Split(string text, Regex wordRx)
+    {
+        var spans = new List<(int Start, int End)>();
+        foreach (Match m in Patterns.Matches(text)) spans.Add((m.Index, m.Index + m.Length));
+        foreach (Match m in V6.Matches(text))
+            if (m.Value.Contains("::") || m.Value.Count(c => c == ':') >= 4 || m.Value.Any(char.IsLetter)) spans.Add((m.Index, m.Index + m.Length));
+        if (wordRx != null) foreach (Match m in wordRx.Matches(text)) spans.Add((m.Index, m.Index + m.Length));
+        spans.Sort();
+        var parts = new List<(string, bool)>();
+        var at = 0;
+        for (var i = 0; i < spans.Count; i++)
+        {
+            var (start, end) = spans[i];
+            while (i + 1 < spans.Count && spans[i + 1].Start <= end) end = Math.Max(end, spans[++i].End);   // overlapping or touching: one piece
+            start = Math.Max(start, at);
+            if (start > at) parts.Add((text[at..start], false));
+            if (end > start) parts.Add((text[start..end], true));
+            at = Math.Max(at, end);
+        }
+        if (at < text.Length || parts.Count == 0) parts.Add((text[at..], false));
+        return parts;
     }
 
     /// <summary>For Export diagnostics: who you are goes (IDs, logins, names, SSIDs, your Windows user) but the IPs stay, a bug report needs them.</summary>
@@ -67,7 +92,10 @@ public static class Rec
 
     // ------------------------------------------------------------ The filter on screen
 
-    sealed class Seen { public string Original, Shown; public int Sig; public bool Hid; }
+    sealed class Seen { public string Original, Shown; public int Sig; public bool Hid, Built; }
+
+    /// <summary>The censor bar: made-up text of the same shape, blurred, so it looks like an edit and not like the app.</summary>
+    sealed class Censored : TextBlock { }
     static readonly ConditionalWeakTable<DependencyObject, Seen> _seen = new();
     static Func<IEnumerable<string>> _words;
     static Regex _wordRx;
@@ -115,6 +143,7 @@ public static class Rec
 
     static void Visit(DependencyObject d)
     {
+        if (d is Censored) return;
         if (d is TextBlock tb) Filter(tb);
         else if (d is TextBox box) Hide(box);
         var n = VisualTreeHelper.GetChildrenCount(d);
@@ -127,9 +156,28 @@ public static class Rec
         var s = _seen.GetValue(tb, _ => new Seen { Sig = -1 });
         if (text == s.Shown && s.Sig == _sig) return;
         if (text != s.Shown) s.Original = text;
-        var shown = Scrub(s.Original, _wordRx);
-        s.Shown = shown; s.Sig = _sig;
-        if (shown != text) tb.SetCurrentValue(TextBlock.TextProperty, shown);   // keeps the binding: a new value comes back here
+        s.Sig = _sig;
+        var parts = string.IsNullOrEmpty(s.Original) ? null : Split(s.Original, _wordRx);
+        if (parts == null || !parts.Any(p => p.Hide))
+        {
+            if (s.Built) { s.Built = false; tb.SetCurrentValue(TextBlock.TextProperty, s.Original); }   // nothing personal any more: plain text back
+            s.Shown = tb.Text;
+            return;
+        }
+        // Only the content changes, the binding stays: a new value from it comes back here and is cut again.
+        tb.Inlines.Clear();
+        foreach (var (part, hide) in parts) tb.Inlines.Add(hide ? new InlineUIContainer(Censor(part, tb)) { BaselineAlignment = BaselineAlignment.Bottom } : new Run(part));
+        s.Built = true;
+        s.Shown = tb.Text;
+    }
+
+    static UIElement Censor(string real, TextBlock host)
+    {
+        // Same length and kind of characters, never the real ones: even a sharpened frame shows nothing. Same text, same fake (no flicker).
+        var rnd = new Random(StringComparer.Ordinal.GetHashCode(real));
+        var fake = new string(real.Select(c => char.IsDigit(c) ? (char)('0' + rnd.Next(10))
+            : char.IsUpper(c) ? (char)('A' + rnd.Next(26)) : char.IsLetter(c) ? (char)('a' + rnd.Next(26)) : c).ToArray());
+        return new Censored { Text = fake, Effect = new System.Windows.Media.Effects.BlurEffect { Radius = Math.Max(9, host.FontSize * (host.FontWeight.ToOpenTypeWeight() >= 600 ? 1.0 : 0.8)) }, IsHitTestVisible = false };
     }
 
     /// <summary>A TextBox can't show a filtered copy without saving it: its text goes invisible instead.</summary>

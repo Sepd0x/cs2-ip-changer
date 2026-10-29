@@ -14,3 +14,7 @@ tests/out*.txt
 _antigo/
 SRT_Dados/
 *.zip
+
+# Wrangler local state (worker/stats dev runs)
+.wrangler/
+node_modules/

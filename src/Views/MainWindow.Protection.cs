@@ -477,6 +477,7 @@ public partial class MainWindow
     void AddHistory(string ip, Net.IpInfo info, string reason)
     {
         if (_history.Count > 0 && _history[0].Ip == ip) return;
+        if (reason == "trocado") Telemetry.Count("ip_changed");
         var h = new IpHistoryEntry { Time = DateTime.Now, Ip = ip, Isp = info?.Short, Reason = reason };
         _history.Insert(0, h);
         while (_history.Count > 30) _history.RemoveAt(_history.Count - 1);

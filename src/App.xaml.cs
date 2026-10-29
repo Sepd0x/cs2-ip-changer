@@ -30,7 +30,7 @@ public partial class App : Application
             return;
         }
         DispatcherUnhandledException += OnUiError;
-        TaskScheduler.UnobservedTaskException += (_, a) => { Log.Error("Task: " + a.Exception?.GetBaseException().Message); a.SetObserved(); };
+        TaskScheduler.UnobservedTaskException += (_, a) => { Log.Error("Task: " + a.Exception?.GetBaseException().Message); Telemetry.Error(a.Exception); a.SetObserved(); };
         base.OnStartup(e);
         var w = new MainWindow(e.Args);
         MainWindow = w;
@@ -72,6 +72,7 @@ public partial class App : Application
     {
         // An error never closes the app: it goes to the log and the window carries on.
         Log.Error(e.Exception.GetBaseException().Message);
+        Telemetry.Error(e.Exception);
         e.Handled = true;
     }
 }
