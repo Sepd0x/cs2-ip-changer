@@ -4,6 +4,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+## [0.1.0-beta.5] - 2026-10-29
+
 ### Added
 - Regions page: pick where CS2 matchmaking (Premier, Competitive, Casual, Deathmatch, Wingman) can put you. The list of regions comes from Valve (`GetSDRConfig`, app 730), grouped by city and continent, with each region's ping measured through the phone. Turn regions on or off one by one, or use Only this region, Closest 3, your continent only, Allow all or Ping under X ms. Turned-off regions are blocked with one Windows Firewall rule for `cs2.exe` only and only on Valve's relay IPs, so Steam, friends and community servers keep working. The last list is saved for offline use, the rule is rebuilt when Valve changes the list, and it comes back at every start. Allow all and `--restore` remove it. Changes apply at once; CS2 re-measures the regions on its next start.
 - Configs page: copies your CS2 config between your accounts. Binds, crosshair, game settings, video, and HUD, radar and audio can each be copied on their own (the crosshair without the sensitivity, too). Sync modes: from a main account, from the account used before, or latest change wins; it runs when a new account shows up, before the app logs in or opens CS2, or with Sync now, and an account can be left out. Nothing is written while CS2 is open (the copy waits until it closes), the Steam Cloud copy is written the way CS2 does, and every change keeps a backup with Undo last sync. Snapshots save a config under a name and export or import it as a .zip; Compare lists the settings that differ between two accounts or snapshots, with a crosshair preview. Right-click an account for Copy config to and Use as main config.
@@ -230,7 +232,8 @@ First public release, as ServerRouteTool.
 - Restore network, to undo every route and rule in one click.
 - Dark interface in Portuguese.
 
-[Unreleased]: ../../compare/v0.1.0-beta.4...HEAD
+[Unreleased]: ../../compare/v0.1.0-beta.5...HEAD
+[0.1.0-beta.5]: ../../releases/tag/v0.1.0-beta.5
 [0.1.0-beta.4]: ../../releases/tag/v0.1.0-beta.4
 [0.1.0-beta.3]: ../../releases/tag/v0.1.0-beta.3
 [0.1.0-beta.2]: ../../releases/tag/v0.1.0-beta.2
