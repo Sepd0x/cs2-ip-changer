@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sepd0x.github.io/cs2-ip-changer/sitemap.xml

@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CS2 IP Changer: play CS2 on your phone's mobile data, keep your home IP private</title>
+<meta name="description" content="Free Windows app that routes CS2 and Steam through your Android phone's mobile data, so community servers see your carrier's IP and not your home IP. Change IP in one click, kill switch, Steam account switcher.">
+<link rel="canonical" href="https://sepd0x.github.io/cs2-ip-changer/">
+<link rel="icon" href="img/icon.png">
+<meta name="theme-color" content="#141414">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CS2 IP Changer">
+<meta property="og:title" content="CS2 IP Changer">
+<meta property="og:description" content="Route CS2 and Steam through your phone's mobile data. Community servers see your carrier's IP, not your home IP.">
+<meta property="og:url" content="https://sepd0x.github.io/cs2-ip-changer/">
+<meta property="og:image" content="https://sepd0x.github.io/cs2-ip-changer/img/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "CS2 IP Changer",
+  "description": "Routes CS2 and Steam through your Android phone's mobile data, so community servers see your carrier's IP and not your home IP. Change IP over ADB, kill switch and Steam account switcher.",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Windows 10, Windows 11",
+  "url": "https://sepd0x.github.io/cs2-ip-changer/",
+  "downloadUrl": "https://github.com/Sepd0x/cs2-ip-changer/releases/latest",
+  "image": "https://sepd0x.github.io/cs2-ip-changer/img/connection.png",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "Is it a VPN? Does it work on servers that block VPNs?", "acceptedAnswer": { "@type": "Answer", "text": "No, it isn't a VPN, and yes, it works there. A VPN sends your traffic through a datacenter, and many community servers block datacenter and VPN IP ranges. This app sends CS2 and Steam through your own phone's mobile data, so the server sees an ordinary mobile connection from your carrier." } },
+    { "@type": "Question", "name": "Does the account switcher store my Steam password?", "acceptedAnswer": { "@type": "Answer", "text": "No. It uses the logins Steam already saved on your PC. The app never sees your password or your Steam Guard codes." } },
+    { "@type": "Question", "name": "Can this get me VAC banned?", "acceptedAnswer": { "@type": "Answer", "text": "It never touches the game process or its files. All it changes is Windows routing, firewall rules and which Steam account logs in. It also won't hide a cheat from VAC or any other anti-cheat." } },
+    { "@type": "Question", "name": "Will my ping be worse?", "acceptedAnswer": { "@type": "Answer", "text": "Usually, yes. Mobile data adds latency and jitter. A good 4G or 5G signal helps a lot, and the app measures the connection through the phone so you see the ping before you join." } },
+    { "@type": "Question", "name": "My carrier uses CGNAT. Is that a problem?", "acceptedAnswer": { "@type": "Answer", "text": "No. Servers see the shared public IP. Change IP still works; when the carrier gives the same IP back, the app keeps trying." } }
+  ]
+}
+</script>
+<style>
+:root{--bg:#0e0e0f;--panel:#161618;--line:#26262a;--ink:#f0f1f3;--mu:#a1a3a9;--fa:#74767d;--ac:#5ba8f0;--ac2:#2b74c2}
+*{box-sizing:border-box}
+html{color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Segoe UI Variable Text","Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--ac);text-decoration:none}
+a:hover{text-decoration:underline}
+img{max-width:100%;height:auto;display:block}
+code,kbd{font-family:"Cascadia Mono",Consolas,"SFMono-Regular",Menlo,monospace;font-size:.88em}
+kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;background:var(--panel)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+.top{position:relative;border-bottom:1px solid var(--line)}
+.top::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,#4aa3ef,#9b7bea,#d65fc0,#e3a86a,#cfd84a)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+.brand{display:flex;align-items:center;gap:10px;color:var(--ink);font-weight:600}
+.brand img{width:28px;height:28px;border-radius:7px}
+.top nav{display:flex;gap:22px;font-size:.94rem}
+.top nav a{color:var(--mu)}
+.top nav a:hover{color:var(--ink);text-decoration:none}
+.hero{padding:72px 0 40px;text-align:center}
+.hero h1{font-size:clamp(2.1rem,5vw,3.4rem);line-height:1.12;margin:0 auto 18px;max-width:20ch;letter-spacing:-.02em}
+.hero p.lead{color:var(--mu);font-size:clamp(1.05rem,2.2vw,1.22rem);max-width:58ch;margin:0 auto 30px}
+.btn{display:inline-flex;align-items:center;gap:10px;background:var(--ac2);color:#fff;font-weight:600;padding:13px 26px;border-radius:8px;font-size:1.02rem}
+.btn:hover{background:#3584d6;text-decoration:none}
+.btn svg{width:18px;height:18px}
+.meta{color:var(--fa);font-size:.9rem;margin-top:14px}
+.shot{margin:44px auto 0;max-width:980px;border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+section{padding:64px 0;border-top:1px solid var(--line)}
+section h2{font-size:clamp(1.5rem,3vw,2rem);margin:0 0 12px;letter-spacing:-.01em}
+section .sub{color:var(--mu);max-width:64ch;margin:0 0 32px}
+.how img{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px;counter-reset:s}
+.steps div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;color:var(--mu)}
+.steps div::before{counter-increment:s;content:counter(s);display:block;color:var(--ac);font-weight:700;margin-bottom:4px}
+.steps b{color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px 22px}
+.card h3{margin:0 0 6px;font-size:1.05rem}
+.card p{margin:0;color:var(--mu);font-size:.96rem}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:28px}
+.pair figure{margin:0}
+.pair img{border:1px solid var(--line);border-radius:10px}
+.pair figcaption{color:var(--fa);font-size:.9rem;text-align:center;margin-top:8px}
+ol.setup{margin:0;padding-left:1.3em;max-width:72ch}
+ol.setup li{margin:0 0 12px;color:var(--mu)}
+ol.setup li b{color:var(--ink)}
+.note{margin-top:24px;max-width:72ch;color:var(--mu);border-left:3px solid var(--ac2);padding:4px 0 4px 16px}
+details{border:1px solid var(--line);border-radius:10px;background:var(--panel);margin-bottom:10px;max-width:820px}
+summary{cursor:pointer;padding:16px 20px;font-weight:600;list-style:none;position:relative;padding-right:48px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";position:absolute;right:20px;top:13px;color:var(--fa);font-size:1.3rem;font-weight:400}
+details[open] summary::after{content:"\2212"}
+details p{margin:0;padding:0 20px 18px;color:var(--mu)}
+.cta{text-align:center}
+.cta p{color:var(--mu);margin:0 auto 26px;max-width:60ch}
+footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--fa);font-size:.88rem}
+footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between}
+footer a{color:var(--mu)}
+@media (max-width:760px){
+  .top nav a.hide-s{display:none}
+  .steps,.grid,.pair{grid-template-columns:1fr}
+  .hero{padding-top:48px}
+  section{padding:48px 0}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./"><img src="img/icon.png" alt="" width="28" height="28">CS2 IP Changer</a>
+    <nav>
+      <a class="hide-s" href="#how">How it works</a>
+      <a class="hide-s" href="#faq">FAQ</a>
+      <a href="https://github.com/Sepd0x/cs2-ip-changer">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <h1>Play CS2 on your phone's mobile data</h1>
+    <p class="lead">CS2 IP Changer sends CS2 and Steam through your Android phone, so community servers see your carrier's IP and not your home IP. Need a new one? One click, and the app joins the server again.</p>
+    <a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
+      Download for Windows
+    </a>
+    <div class="meta">Free · Windows 10 and 11, 64-bit · Beta · No account</div>
+    <div class="shot"><img src="img/connection.png" alt="The Connection tab: protection status, the IP servers see next to your home IP, phone status and live checks" width="1240" height="800"></div>
+  </div>
+
+  <section id="how">
+    <div class="wrap how">
+      <h2>How it works</h2>
+      <p class="sub">It isn't a VPN. The server sees an ordinary mobile connection from your carrier, so it also works on community servers that block VPNs and datacenter IPs.</p>
+      <img src="img/how-it-works-dark.svg" alt="Your PC sends CS2 and Steam over the USB cable to the phone, which uses mobile data to reach the server. Your home router still carries the browser, Discord and downloads." width="900" height="250">
+      <div class="steps">
+        <div><b>Plug in the phone.</b> USB tethering (or its hotspot) shares the phone's mobile data with the PC.</div>
+        <div><b>Only the game moves.</b> CS2, Steam and your servers go through the phone. The browser, Discord and downloads stay at home.</div>
+        <div><b>Nothing leaks.</b> If the cable comes out, CS2 loses the connection instead of falling back to your home IP.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="wrap">
+      <h2>What it does</h2>
+      <p class="sub">Everything you need to play on community servers from a mobile IP, in one window.</p>
+      <div class="grid">
+        <div class="card"><h3>Change IP</h3><p>Turns mobile data off and on over ADB until the carrier hands you a new IP. It can keep trying until the new IP is in a different range.</p></div>
+        <div class="card"><h3>Change IP and rejoin</h3><p>When a server kicks you, the app plays a sound and offers a new IP and the last server again. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> does it from inside the game.</p></div>
+        <div class="card"><h3>Kill switch</h3><p>A Windows Firewall rule keeps your servers and CS2's game traffic on the phone connection only. No phone, no connection.</p></div>
+        <div class="card"><h3>Steam account switcher</h3><p>Switches between the accounts saved on your PC without typing passwords, shows VAC, game and trade bans, and skips accounts on cooldown.</p></div>
+        <div class="card"><h3>Server list</h3><p>Paste <code>IP:port</code> or <code>steam://connect</code> links and see name, map, players and ping through the phone. On a full server it can wait for a slot.</p></div>
+        <div class="card"><h3>Connection quality</h3><p>Measures ping, jitter and loss through the phone every 30 seconds and tells you when the connection is weak.</p></div>
+        <div class="card"><h3>Live checks</h3><p>Firewall, routes, the IP servers see next to your home IP, and whether Steam uses the same connection as the game. There's a leak test too.</p></div>
+        <div class="card"><h3>Stream friendly</h3><p>Your home IP stays masked in the app, and Hide logins keeps usernames off screen, also in the Log.</p></div>
+      </div>
+      <div class="pair">
+        <figure><img src="img/servers.png" alt="The Servers tab: your server list with name, map, players and ping" width="1240" height="800" loading="lazy"><figcaption>Servers</figcaption></figure>
+        <figure><img src="img/accounts.png" alt="The Accounts tab: saved Steam accounts with ban status and cooldowns" width="1240" height="800" loading="lazy"><figcaption>Accounts</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="setup">
+    <div class="wrap">
+      <h2>Setup</h2>
+      <p class="sub">You need Windows 10 or 11 (64-bit), admin rights and an Android phone with mobile data.</p>
+      <ol class="setup">
+        <li><b>Download <code>CS2IPChanger.exe</code></b> from Releases and put it in a folder only admins can change, like <code>C:\Program Files\CS2 IP Changer</code>.</li>
+        <li><b>Plug the phone in by USB,</b> turn on USB tethering and turn off the phone's Wi-Fi.</li>
+        <li><b>Run the app</b> (it needs admin) and paste the servers you play on into Servers.</li>
+        <li><b>Open Connection.</b> With CS2 and Steam running, every check should be green and the IP servers see must not be your home IP.</li>
+      </ol>
+      <p class="note">To change IP from the PC, also turn on USB debugging on the phone. The app can download Google's ADB for you (about 7 MB). The exe isn't code-signed, so Windows SmartScreen may warn you the first time: More info &gt; Run anyway.</p>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <h2>FAQ</h2>
+      <p class="sub">More answers in the <a href="https://github.com/Sepd0x/cs2-ip-changer#faq">README</a>.</p>
+      <details><summary>Is it a VPN? Does it work on servers that block VPNs?</summary><p>No, it isn't a VPN, and yes, it works there. A VPN sends your traffic through a datacenter, and many community servers block datacenter and VPN IP ranges. This app sends CS2 and Steam through your own phone's mobile data, so the server sees an ordinary mobile connection from your carrier. There's no VPN server in between and no subscription.</p></details>
+      <details><summary>Does the account switcher store my Steam password?</summary><p>No. It uses the logins Steam already saved on your PC (the accounts where you ticked Remember me). The app never sees your password or your Steam Guard codes.</p></details>
+      <details><summary>Can this get me VAC banned?</summary><p>It never touches the game process or its files. All it changes is Windows routing, firewall rules and which Steam account logs in. It also won't hide a cheat from VAC or any other anti-cheat, so don't use it for that.</p></details>
+      <details><summary>Will my ping be worse?</summary><p>Usually, yes. Mobile data adds latency and jitter, so expect a higher ping than at home. A good 4G or 5G signal helps a lot: put the phone near a window and keep it charging. The ping in Servers is measured through the phone, so you see it before you join.</p></details>
+      <details><summary>My carrier uses CGNAT. Is that a problem?</summary><p>No. You share a public IP with other customers and servers see that shared one. Change IP still works, and when the carrier gives you the same IP back, the app keeps trying.</p></details>
+      <details><summary>Why does it need admin?</summary><p>Routes and firewall rules are system settings, and Windows only lets admins change them. That's also why the exe should live in a folder only admins can change.</p></details>
+      <details><summary>Does it send anything about me?</summary><p>While the app is in beta it sends anonymous usage stats: a random install ID, versions, the mode, minutes open and how often each button is used. Never IPs, servers, accounts, names or anything you typed, and the server keeps no IP. The full list is in the <a href="https://github.com/Sepd0x/cs2-ip-changer#telemetry">README</a>.</p></details>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="wrap">
+      <h2>Keep your home IP out of their logs</h2>
+      <p>Free, portable, and every release is built by GitHub Actions from the public source, with signed updates.</p>
+      <a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
+        Download for Windows
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>CS2 IP Changer by Sepd0x. Not affiliated with Valve.</span>
+    <span><a href="https://github.com/Sepd0x/cs2-ip-changer">Source</a> · <a href="https://github.com/Sepd0x/cs2-ip-changer/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose">Report a bug</a></span>
+  </div>
+</footer>
+</body>
+</html>
