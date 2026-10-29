@@ -3,3 +3,9 @@ contact_links:
   - name: Report a security problem (private)
     url: https://github.com/Sepd0x/cs2-ip-changer/security/advisories/new
     about: A way your home IP could leak, or a problem in something that runs as admin. Please don't open a public issue for these.
+  - name: Connection broken or setup help
+    url: https://github.com/Sepd0x/cs2-ip-changer#if-something-goes-wrong
+    about: How to undo the routes and firewall rules, and what to check when the phone or the game won't connect.
+  - name: Questions (FAQ)
+    url: https://github.com/Sepd0x/cs2-ip-changer#faq
+    about: VPNs, VAC, ping, CGNAT, hotspots, regions and what the app sends.

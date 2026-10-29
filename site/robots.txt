@@ -1,3 +1,5 @@
+# Search engines and AI crawlers are welcome. A plain-text summary for language models is at /cs2-ip-changer/llms.txt.
 User-agent: *
 Allow: /
+
 Sitemap: https://sepd0x.github.io/cs2-ip-changer/sitemap.xml

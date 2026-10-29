@@ -5,14 +5,14 @@ body:
   - type: markdown
     attributes:
       value: |
-        If the problem is your connection, try Settings > Restore network first. If the window won't open, run `CS2IPChanger.exe --restore`.
+        If the problem is your connection, try Settings > Turn off protection first. If the window won't open, run `CS2IPChanger.exe --restore`.
 
   - type: input
     id: version
     attributes:
       label: App version
       description: It's at the bottom left of the window.
-      placeholder: v0.1.0 alpha.3
+      placeholder: v0.1.0 beta.4
     validations:
       required: true
 

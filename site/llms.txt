@@ -1,0 +1,41 @@
+# CS2 IP Changer
+
+> Free Windows app (Windows 10 and 11, 64-bit) for Counter-Strike 2 that routes CS2 and Steam through an Android phone's mobile data, so community servers see the carrier's IP and not the player's home IP. It is used as a CS2 IP ban bypass and for home IP protection: after an IP ban on a community server the player changes IP from the app and joins again. It is not a VPN and does not touch the game process, its memory or its files.
+
+Website: https://sepd0x.github.io/cs2-ip-changer/
+Source and downloads: https://github.com/Sepd0x/cs2-ip-changer (releases: https://github.com/Sepd0x/cs2-ip-changer/releases)
+Status: beta (version 0.1.0). Free, no account. Not affiliated with Valve.
+
+## How it works
+
+- The phone shares its mobile data with the PC over USB tethering or its Wi-Fi hotspot. A 4G/5G USB dongle or router also works as the connection.
+- The app adds Windows routes so CS2, Steam and the servers on the user's list go through the phone, and blocks them on the home connection. The browser, Discord and downloads stay on the home connection (Game only mode). The whole PC can go through the phone instead.
+- Kill switch: a Windows Firewall rule blocks the listed servers on every adapter except the phone, and cs2.exe's game traffic (UDP) can only use the phone connection. If the cable comes out, the game loses connection instead of falling back to the home IP.
+- Change IP: turns mobile data (or airplane mode) off and on over ADB until the carrier gives a new IP. It can report whether the new IP is in a new /16 range and keep trying until it is.
+- Needs admin rights (routes and firewall rules are system settings), Windows Firewall on, and an Android phone with mobile data. USB debugging is needed only to change IP from the PC.
+
+## Features
+
+- Change IP and rejoin after a kick or an IP ban, also from inside the game with a hotkey (Ctrl+Shift+F10 by default).
+- Live checks of the firewall, routes, the IP servers see next to the home IP, whether the phone is really on mobile data and whether Steam uses the same connection as the game, plus a leak test.
+- Connection quality: ping, jitter and loss through the phone every 30 seconds.
+- Server list from IP:port or steam://connect links with name, map, players and ping; can wait for a slot on a full server.
+- Steam account switcher for alt accounts: uses the logins Steam already saved, never asks for passwords; shows VAC, game and trade bans and cooldowns; marks server bans per account and community.
+- CS2 config manager: copies binds, crosshair, game settings, video and HUD/radar/audio between accounts, with backups, snapshots and compare.
+- Profiles: changes the Steam name, picture, bio, country, privacy and custom URL of chosen accounts from templates, with preview and restore.
+- Regions: picks where CS2 matchmaking can put the player, with ping per region; turned-off regions are blocked by one Windows Firewall rule for cs2.exe on Valve's relay IPs only.
+- Phone setup: checks the cable, USB driver, USB debugging, tethering and the phone's Wi-Fi, and does each step it can.
+- No phone mode: play on the home connection (not protected) while accounts, configs, profiles and regions keep working.
+
+## What it is not
+
+- Not a VPN or proxy: servers see an ordinary mobile connection from the player's carrier, so it also works on community servers that block VPN and datacenter IPs.
+- Not a cheat and no VAC bypass: it does not hide cheats from any anti-cheat. A ban on a Steam account follows the account; a new IP does not lift it.
+- Mobile data usually means higher ping and jitter than a home connection.
+
+## Docs
+
+- [README](https://raw.githubusercontent.com/Sepd0x/cs2-ip-changer/main/README.md): full feature list, setup, troubleshooting, FAQ, privacy and telemetry
+- [Changelog](https://raw.githubusercontent.com/Sepd0x/cs2-ip-changer/main/CHANGELOG.md): what changed in each version
+- [Security policy](https://github.com/Sepd0x/cs2-ip-changer/blob/main/.github/SECURITY.md): how to report a leak or an admin-rights problem privately
+- [Usage stats server](https://github.com/Sepd0x/cs2-ip-changer/tree/main/worker/stats): source of the anonymous beta telemetry, which stores no IP

@@ -21,12 +21,20 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Install cwebp
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends webp
       - name: Put the site together
         run: |
           mkdir -p _site/img
-          cp site/* _site/
-          cp docs/screenshots/connection.png docs/screenshots/servers.png docs/screenshots/accounts.png _site/img/
+          cp -r site/. _site/
+          cp docs/screenshots/*.png _site/img/
           cp docs/assets/icon.png docs/assets/social-preview.png docs/assets/how-it-works-dark.svg _site/img/
+          # Lossless WebP of each screenshot: same pixels, about a quarter of the size. The PNGs stay as the fallback.
+          for f in _site/img/*.png; do
+            case "$f" in */icon.png|*/social-preview.png) continue ;; esac
+            cwebp -quiet -lossless -z 9 "$f" -o "${f%.png}.webp"
+          done
+          test -f _site/img/connection.webp
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
