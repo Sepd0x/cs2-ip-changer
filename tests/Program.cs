@@ -188,6 +188,19 @@ Check("Rotas da app lidas do disco", gRoutes.Contains("203.0.113.9/32|99|10.0.0.
 Store.Save(owned, new Guard.OwnedState { Routes = new() { "203.0.113.9/32|99|10.0.0.1" }, MetricIf = 42, Boot = DateTime.Now.AddDays(-1) });
 var g2 = (HashSet<string>)typeof(Guard).GetField("_ownedRoutes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(new Guard());
 Check("Rotas de antes de reiniciar o PC ignoradas", g2.Count == 0);
+// beta.5: rotas que o Windows já apagou com a placa (partilha desligada) deixam de ser da app; antes o Log repetia-se a cada 5 s
+Store.Save(owned, new Guard.OwnedState { Routes = new() { "155.133.224.0/19|9999|192.0.2.1", "0.0.0.0/1|9999|192.0.2.1" }, Boot = DateTime.Now.AddMilliseconds(-Environment.TickCount64) });
+var g3 = new Guard();
+var g3Routes = (HashSet<string>)typeof(Guard).GetField("_ownedRoutes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(g3);
+var logged = new List<string>();
+Action<LogEntry> onLog = e => { lock (logged) logged.Add(e.Text); };
+Log.Added += onLog;
+await (Task)typeof(Guard).GetMethod("RemovePrefixRoutes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(g3, new object[] { Net.ValvePrefixes, new List<Adapter>() });
+await (Task)typeof(Guard).GetMethod("RemoveSplitRoutes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(g3, new object[] { new List<Adapter>() });
+Check("Rotas que já não existem saem da lista da app", g3Routes.Count == 0, string.Join(",", g3Routes));
+Log.Added -= onLog;
+Check("...sem a linha \"Steam through the phone turned off\"", !logged.Any(l => l.Contains("turned off")), string.Join(" | ", logged));
+Check("Sem nada aplicado, fechar não mexe na placa do telemóvel", !g3.PcOffPhoneApplied);
 if (ownedBefore == null) File.Move(owned, owned + ".teste-" + DateTime.Now.Ticks); else File.WriteAllText(owned, ownedBefore);
 
 // Kick e ban na consola do CS2 (formato real ainda desconhecido: linhas plausíveis do Source 2)
@@ -559,6 +572,18 @@ Check("No Steam logon no chat não conta", !Cs2Console.IsNoSteamLogon("[ALL] Bob
     // Sem a chave pública no código, as atualizações não instalam: não sai release sem ela (node tools/release-key.mjs new)
     Check("Chave pública das atualizações no código", Updater.PublicKey.Length > 0);
 }
+
+// Regions (beta.5): ver RegionTests.cs
+RegionTests.Run(Check, Env);
+// Configs do CS2 entre contas (pastas temporárias, nunca o Steam deste PC)
+ConfigTests.Run((n, ok, d) => Check(n, ok, d), (n, ok, d) => Env(n, ok, d));
+// Página Profiles (ProfileTests.cs): sem rede, Steam falso
+await ProfileTests.Run(Check, Env);
+// Correções da auditoria do núcleo (CoreTests.cs)
+CoreTests.Run(Check);
+// Phone setup e modo sem telemóvel (PhoneTests.cs), e o "<continente> only" das Regiões
+PhoneTests.Run(Check);
+RegionTests.Continent(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

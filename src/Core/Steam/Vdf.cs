@@ -17,6 +17,8 @@ public sealed class VdfNode
 
     public string Get(string key) => Items.FirstOrDefault(i => i.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Value as string;
 
+    public bool Has(string key) => Items.Any(i => i.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+
     public void Set(string key, string value)
     {
         var i = Items.FindIndex(x => x.Key.Equals(key, StringComparison.OrdinalIgnoreCase));

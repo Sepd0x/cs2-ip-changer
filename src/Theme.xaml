@@ -665,7 +665,10 @@
                 <ControlTemplate TargetType="ContextMenu">
                     <Border Background="{StaticResource Surface2}" BorderBrush="{StaticResource Edge}" BorderThickness="1">
                         <Border BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="2">
-                            <StackPanel IsItemsHost="True"/>
+                            <!-- Many accounts (Copy from an account): the menu scrolls instead of running off the screen -->
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="480">
+                                <StackPanel IsItemsHost="True"/>
+                            </ScrollViewer>
                         </Border>
                     </Border>
                 </ControlTemplate>

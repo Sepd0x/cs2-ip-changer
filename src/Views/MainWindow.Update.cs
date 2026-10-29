@@ -79,7 +79,7 @@ public partial class MainWindow
             }
             HideProgress();
             var size = r.Size > 0 ? $" (about {Math.Max(1, (r.Size + 500_000) / 1_000_000)} MB)" : "";
-            if (!await Ask("Update CS2 IP Changer", $"Download version {r.Version}{size} from GitHub, check its SHA-256 and restart the app?{MobileDataNote()}\n\nProtection stays on while it restarts. If you're in a server, you'll drop for a few seconds while the new version checks the phone's IP.", "Update")) return;
+            if (!await Ask("Update CS2 IP Changer", $"Download version {r.Version}{size} from GitHub, check its SHA-256 and restart the app?{MobileDataNote()}\n\nProtection stays on while it restarts. If you are on a server, you will be disconnected for a few seconds while the new version checks the phone's IP.", "Update")) return;
             ShowProgress("Downloading the update…");
             var sha = await Updater.Download(r, new Progress<string>(t => ProgressText.Text = t));
             Log.Ok($"Update {r.Version} downloaded, SHA-256 matches ({sha[..12]}…). Restarting.");
@@ -91,7 +91,7 @@ public partial class MainWindow
         {
             Log.Error("Update: " + ex.Message);
             Toast("Update failed: " + ex.Message, Tone.Error);
-            if (_closingDone) { _closingDone = false; RegisterHotkeys(); }
+            if (_closingDone) { _closingDone = false; RegisterHotkeys(); App.ReacquireSingleInstance(); }
         }
         finally { HideProgress(); _updating = false; UpdateBtn.IsEnabled = true; }
     }

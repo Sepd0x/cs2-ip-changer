@@ -95,7 +95,7 @@ public partial class MainWindow
         var link = Net.ReadSteamLink();
         var n = Net.ResetLink(link);
         Diag.Write("steam-reset", new { connections = n, total = link.Keys.Count });
-        if (n > 0) Log.Info($"Closed {n} old Steam connection(s). Steam reconnects on the new IP.");
+        if (n > 0) Log.Info($"Closed {Fmt.Count(n, "old Steam connection")}. Steam reconnects on the new IP.");
     }
 
     // ------------------------------------------------------------ How CS2 exits
@@ -137,6 +137,7 @@ public partial class MainWindow
     {
         _cs2Watched.Remove(p);
         p.Dispose();
+        ConfigsCs2Closed();   // queued config copies, and Latest change wins (Configs page)
         var min = (int)(DateTime.Now - start).TotalMinutes;
         var hex = code == null ? "?" : $"0x{(uint)code.Value:X8}";
         var name = code is int c && CrashCodes.TryGetValue((uint)c, out var n) ? n : null;
@@ -165,7 +166,7 @@ public partial class MainWindow
         var until = _cs2CrashAt.Value + AfterCrashWait;
         if (DateTime.Now >= until) return true;
         var wait = await Ask("CS2 crashed on this server recently",
-            $"CS2 crashed at {_cs2CrashAt:HH:mm} on {s.Title}. The server still has that session and, a few minutes later, kicks the account with \"No Steam logon\", even if you already rejoined.\n\n" +
+            $"CS2 crashed at {_cs2CrashAt:HH:mm} on {s.Title}. The server still remembers your old session. If you rejoin now, it kicks you a few minutes later (\"No Steam logon\").\n\n" +
             $"Wait until {until:HH:mm:ss} and join automatically? Another server is fine right away.", "Wait and join", "Join now");
         Diag.Write("wait-after-crash", new { server = s.Key, seconds = (int)(until - DateTime.Now).TotalSeconds, waited = wait });
         if (CommandCancelled) return false;

@@ -7,7 +7,11 @@ namespace SRT;
 
 public sealed partial class Settings
 {
-    public string Mode { get; set; } = "servers";         // "servers" = list only · "all" = whole PC
+    public string Mode { get; set; } = "servers";         // "servers" = list only · "all" = whole PC · "home" = no phone (home connection, no protection)
+    /// <summary>No phone: CS2 and the servers use the home connection, nothing is blocked. Accounts, Configs, Profiles and Regions still work.</summary>
+    [JsonIgnore] public bool NoPhone => Mode == "home";
+    /// <summary>Whole PC through the phone, always or while CS2 is open.</summary>
+    [JsonIgnore] public bool WholePc => !NoPhone && (Mode == "all" || GameMode);
     public string EgressAdapterId { get; set; }           // null = automatic USB phone
     public string EgressSsid { get; set; }                // Wi-Fi adapter: only valid when connected to this hotspot
     public bool LockCs2 { get; set; } = true;             // cs2.exe can only go out through the protected connection
@@ -236,7 +240,7 @@ public sealed class AccountMeta
     public string Tags { get; set; }
     public bool Favorite { get; set; }
     public bool Hidden { get; set; }
-    public bool ExcludeQuick { get; set; }      // skipped: left out of quick switch
+    public bool ExcludeQuick { get; set; }      // skipped: left out of Switch
     public string LastServer { get; set; }      // IP:port of the last server you joined (through the app) with this account
     public string LastServerName { get; set; }
     public DateTime? LastServerAt { get; set; }
@@ -330,13 +334,13 @@ public sealed class AccountItem : Observable
     public string QuickGlyph => "";
     public Brush QuickBrush => Excluded ? Ui.LineStrong : Ui.Muted;
     public string QuickTip => Excluded
-        ? "Skipped in quick switch. Click to include it again."
-        : "In quick switch. Click to skip this account.";
-    public string QuickMenuText => Excluded ? "Include in quick switch" : "Skip in quick switch";
+        ? "Switch skips this account. Click to let Switch use it again."
+        : "Switch can use this account. Click to make Switch skip it.";
+    public string QuickMenuText => Excluded ? "Use in Switch" : "Skip in Switch";
     public bool HasLastServer => Meta.LastServer != null;
     public string LastServerText => Meta.LastServer == null ? null
         : $"Last: {(string.IsNullOrWhiteSpace(Meta.LastServerName) ? Meta.LastServer : Meta.LastServerName)} · {Fmt.Ago(Meta.LastServerAt)}";
-    /// <summary>Eligible for quick switch: not skipped, no cooldown, no VAC/game ban.</summary>
+    /// <summary>Eligible for Switch: not skipped, no cooldown, no VAC/game ban.</summary>
     public bool Usable => !Excluded && !InCooldown && !HasVac && !HasGameBan;
     public string CooldownText => InCooldown ? "Cooldown " + Fmt.Left(Meta.CooldownUntil.Value - DateTime.Now) : null;
     public bool HasServerBans => Meta.ServerBans is { Count: > 0 };
@@ -360,13 +364,13 @@ public sealed class AccountItem : Observable
     {
         get
         {
-            var lines = new List<string> { Name, $"Login: {LoginShown}", $"SteamID64: {SteamId}" };
+            var lines = new List<string> { Name, $"Username: {LoginShown}", $"SteamID64: {SteamId}" };
             if (P != null)
             {
                 lines.Add("");
-                lines.Add(Clean ? "No bans on record on the public profile." : "Bans on record:");
-                if (HasVac) lines.Add($"• {P.VacBans} VAC ban(s)" + (BanAgeText != null ? $", {BanAgeText}" : ""));
-                if (HasGameBan) lines.Add($"• {P.GameBans} game ban(s)");
+                lines.Add(Clean ? "No Steam bans on record on the public profile." : "Bans on record:");
+                if (HasVac) lines.Add($"• {Fmt.Count(P.VacBans, "VAC ban")}" + (BanAgeText != null ? $", {BanAgeText}" : ""));
+                if (HasGameBan) lines.Add($"• {Fmt.Count(P.GameBans, "game ban")}");
                 if (HasTradeBan) lines.Add($"• Trade ban: {P.TradeBan}");
                 if (HasCommunityBan) lines.Add("• Steam Community ban");
                 if (Limited) lines.Add("• Limited account (no 5 USD spent)");
@@ -376,8 +380,8 @@ public sealed class AccountItem : Observable
             }
             else lines.Add("\nNo status yet: click \"Refresh\".");
             if (InCooldown) lines.Add($"\nCooldown set by you until {Fmt.When(Meta.CooldownUntil)}");
-            if (Excluded) lines.Add("Skipped in quick switch.");
-            if (HasServerBans) lines.Add($"Banned on {Meta.ServerBans.Count} server(s) in your list: " + string.Join(", ", Meta.ServerBans.Keys));
+            if (Excluded) lines.Add("Switch skips this account.");
+            if (HasServerBans) lines.Add($"Banned on {Fmt.Count(Meta.ServerBans.Count, "server")} in your list: " + string.Join(", ", Meta.ServerBans.Keys));
             if (Meta.LastServer != null) lines.Add($"Last server: {Meta.LastServerName ?? Meta.LastServer} ({Meta.LastServer}), {Fmt.When(Meta.LastServerAt)}");
             if (HasNote) lines.Add("\nNote: " + Note);
             lines.Add("\nClick Log in to switch. Right-click for more options.");

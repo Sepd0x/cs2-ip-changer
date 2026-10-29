@@ -41,7 +41,4 @@ public static partial class Net
 
     public static Task<ProcResult> DeleteRoute(Route route) =>
         Proc.Run("netsh", $"interface ipv4 delete route prefix={route.Prefix} interface={route.Index} nexthop={route.NextHop} store=active");
-
-    public static Task<ProcResult> SetInterfaceMetric(int index, int metric) =>
-        Proc.Run("netsh", $"interface ipv4 set interface interface={index} metric={metric} store=active");
 }

@@ -21,9 +21,10 @@ public partial class MainWindow
         _uiLock = true;
         try
         {
-            ModeServers.IsChecked = _s.Mode != "all" && !_s.GameMode;
-            ModeGame.IsChecked = _s.Mode != "all" && _s.GameMode;
+            ModeServers.IsChecked = _s.Mode != "all" && !_s.NoPhone && !_s.GameMode;
+            ModeGame.IsChecked = _s.Mode != "all" && !_s.NoPhone && _s.GameMode;
             ModeAll.IsChecked = _s.Mode == "all";
+            ModeHome.IsChecked = _s.NoPhone;
             DefaultPortBox.Text = _s.DefaultPort.ToString();
             AutoQueryBox.IsChecked = _s.AutoQuery;
             MethodCombo.SelectedIndex = _s.ChangeMethod == "airplane" ? 1 : 0;
@@ -136,7 +137,7 @@ public partial class MainWindow
         ApiKeyPwd.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
         ApiKeyShowBtn.Content = show ? "Hide" : "Show";
         ApiKeyShowBtn.IsEnabled = !HideLogins;
-        ApiKeyShowBtn.ToolTip = HideLogins ? "Hide logins is on (Accounts): the key stays hidden." : show ? "Hides the key" : "Shows the key";
+        ApiKeyShowBtn.ToolTip = HideLogins ? "Hide usernames is on (Accounts): the key stays hidden." : show ? "Hides the key" : "Shows the key";
     }
 
     void SwitchSteps_Click(object sender, RoutedEventArgs e)
@@ -149,18 +150,23 @@ public partial class MainWindow
 
     async void Restore_Click(object sender, RoutedEventArgs e)
     {
-        if (!await Ask("Restore network", "This removes the Firewall block, the routes and the \"Whole PC\" mode. The servers in the list will see your home IP until you open the app again. The list stays saved.", "Restore", danger: true)) return;
+        if (!await Ask("Turn off protection?", TurnOffText, "Turn off protection", danger: true)) return;
         if (_demo) return;
         // Stays restored: network changes no longer put the rules back until Run leak test or the next start.
         _restored = true;
         _tick.Stop();
-        var left = await _guard.RestoreAll(_servers.Select(s => s.Ip).Distinct().ToList());
+        // The Regions rule stays: regions don't depend on protection (Allow all on Regions, or --restore, lifts them).
+        var left = await _guard.RestoreAll(_servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: true);
         _last = null; // the old report would redraw "Protected" on the next IP check
-        if (left == null) Toast("Network restored and checked. Protection comes back when you reopen the app or press Run leak test.", true);
+        ShowRegionsStatus();
+        if (left == null) Toast("Protection is off and checked. It comes back when you click Run leak test or open the app again.", true);
         else Toast("Couldn't remove: " + left + ". Restart the PC to clear the routes, or run the app with --restore.", Tone.Error);
         foreach (var s in _servers) { s.Protected = false; s.RouteText = "Off"; }
-        SetHero("bad", "Protection off", "You restored the network. Click Run leak test to protect again.");
+        SetHero("bad", "Protection off", "You turned protection off. Click Run leak test to protect again.");
     }
+
+    const string TurnOffText = "Turns off the kill switch, the routes and the CS2 lock. Until you click Run leak test or open the app again, servers see your home IP. " +
+        "Your servers stay saved, and the regions you turned off stay off (Allow all on Regions lifts them).";
 
     void OpenFirewall_Click(object sender, RoutedEventArgs e)
     {

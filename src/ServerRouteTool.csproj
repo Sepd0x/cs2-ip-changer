@@ -9,7 +9,7 @@
     <LangVersion>latest</LangVersion>
     <AssemblyName>CS2IPChanger</AssemblyName>
     <RootNamespace>SRT</RootNamespace>
-    <Version>0.1.0-beta.4</Version>
+    <Version>0.1.0-beta.5</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <Product>CS2 IP Changer</Product>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -19,6 +19,8 @@
     <DebugType>none</DebugType>
     <!-- The app runs as admin: DOTNET_STARTUP_HOOKS from the user's environment must not load code into it -->
     <StartupHookSupport>false</StartupHookSupport>
+    <!-- Program.Main checks where WPF's native DLLs were unpacked before any WPF type loads (see Program.cs) -->
+    <StartupObject>SRT.Program</StartupObject>
   </PropertyGroup>
 
   <!-- Dev build: only when the Privado/ folder exists (it stays out of git) -->
@@ -47,9 +49,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Include="App.xaml" />
     <Resource Include="app.ico" />
     <!-- Command sounds: Kenney "Interface Sounds" (CC0), see Assets/Sounds/LICENSE-kenney.txt -->
     <EmbeddedResource Include="Assets\Sounds\*.wav" LogicalName="Sounds.%(Filename).wav" />
+  </ItemGroup>
+
+  <!-- Profiles page: DPAPI for the saved Steam sign-ins (Microsoft, part of .NET) -->
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

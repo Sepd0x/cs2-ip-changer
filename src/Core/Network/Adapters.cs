@@ -62,13 +62,17 @@ public static partial class Net
                 IPv4InterfaceProperties v4 = null;
                 try { v4 = props.GetIPv4Properties(); } catch { }
                 if (v4 == null) continue;
-                var local = props.UnicastAddresses
-                    .Where(a => a.Address.AddressFamily == AddressFamily.InterNetwork)
-                    .Select(a => a.Address.ToString()).FirstOrDefault();
+                var addr = props.UnicastAddresses.FirstOrDefault(a => a.Address.AddressFamily == AddressFamily.InterNetwork);
+                var local = addr?.Address.ToString();
                 var gw = props.GatewayAddresses
                     .Where(g => g.Address.AddressFamily == AddressFamily.InterNetwork && !g.Address.Equals(IPAddress.Any))
                     .Select(g => g.Address.ToString()).FirstOrDefault();
                 var desc = ni.Description ?? "";
+                // Save mobile data makes the phone's adapter ignore its default route, and Windows then lists no gateway for it.
+                // The app's routes still need it: the one in the registry (DHCP's, or set by hand) if it is on the adapter's network.
+                if (gw == null && addr != null && ni.OperationalStatus == OperationalStatus.Up &&
+                    (PhonePattern.IsMatch(desc) || PhonePattern.IsMatch(ni.Name) || ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211))
+                    gw = SavedGateway(ni.Id, v4.IsDhcpEnabled, addr.Address, addr.IPv4Mask);
                 list.Add(new Adapter
                 {
                     Index = v4.Index,
@@ -88,6 +92,31 @@ public static partial class Net
         }
         if (list.Any(a => a.IsWifi && a.Up)) FillSsids(list);
         return list.OrderBy(a => a.Index).ToList();
+    }
+
+    /// <summary>The adapter's gateway as Windows keeps it in the registry, only when it is on the adapter's own network.</summary>
+    public static string SavedGateway(string id, bool dhcp, IPAddress local, IPAddress mask)
+    {
+        try
+        {
+            using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\" + id);
+            var value = key?.GetValue(dhcp ? "DhcpDefaultGateway" : "DefaultGateway");
+            var gw = (value is string[] list ? list.FirstOrDefault(g => !string.IsNullOrWhiteSpace(g)) : value as string)?.Trim();
+            return SameNetwork(gw, local, mask) ? gw : null;
+        }
+        catch { return null; }
+    }
+
+    /// <summary>The gateway is another address on the local IP's network (a stale value from another network doesn't count).</summary>
+    public static bool SameNetwork(string gateway, IPAddress local, IPAddress mask)
+    {
+        if (!IPAddress.TryParse(gateway, out var g) || g.AddressFamily != AddressFamily.InterNetwork || local == null || mask == null || g.Equals(local)) return false;
+        var gb = g.GetAddressBytes();
+        var lb = local.GetAddressBytes();
+        var mb = mask.GetAddressBytes();
+        if (lb.Length != 4 || mb.Length != 4 || mb.All(b => b == 0)) return false;
+        for (var i = 0; i < 4; i++) if ((gb[i] & mb[i]) != (lb[i] & mb[i])) return false;
+        return true;
     }
 
     static readonly Regex SsidLine = new(@"^\s*SSID\s*:\s*(.+?)\s*$", RegexOptions.Multiline | RegexOptions.Compiled);

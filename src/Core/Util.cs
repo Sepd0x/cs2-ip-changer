@@ -136,6 +136,7 @@ public static class Proc
     /// <summary>
     /// "netsh" and "powershell" always come from System32. The app runs as admin, and a bare name would make
     /// Windows look in the app's own folder first (often Downloads), where anything could be planted.
+    /// PowerShell modules are loaded by full path too (Guard.AutoMetricArgs).
     /// </summary>
     static string Resolve(string file)
     {
@@ -186,6 +187,9 @@ public static class Fmt
     /// <summary>"27 Oct 21:05": the same on every Windows language, never month/day mix-ups.</summary>
     public static string When(DateTime? t) => t?.ToString("d MMM HH:mm", System.Globalization.CultureInfo.InvariantCulture) ?? "";
 
+    /// <summary>"1 account", "3 accounts": the right word for the number, never "account(s)".</summary>
+    public static string Count(int n, string one, string many = null) => n == 1 ? "1 " + one : $"{n} {many ?? one + "s"}";
+
     public static string Ago(DateTime? t)
     {
         if (t == null) return "never";
@@ -222,7 +226,9 @@ public static class Fmt
             total += char.ToLowerInvariant(m.Groups[2].Value[0]) switch { 'd' => TimeSpan.FromDays(n), 'h' => TimeSpan.FromHours(n), _ => TimeSpan.FromMinutes(n) };
             any = true;
         }
-        if (!any && double.TryParse((text ?? "").Trim(), out var hours)) { total = TimeSpan.FromHours(hours); any = true; }
+        // Like the units above: "1.5" and "1,5" are both an hour and a half, whatever the PC's language (no thousands separator)
+        if (!any && double.TryParse((text ?? "").Trim().Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var hours)
+            && hours > 0 && hours <= 3650 * 24) { total = TimeSpan.FromHours(hours); any = true; }
         return any && total.TotalMinutes >= 1 && total.TotalDays <= 3650 ? total : null;
     }
 }

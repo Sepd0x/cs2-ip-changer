@@ -78,8 +78,8 @@ public partial class MainWindow
         SaveServers();
         ShowLastServer();
         if (n == 0 && ignored.Count == 0) { Toast("Those servers are already in the list.", false); return; }
-        Log.Info($"Added {n} server(s)." + (ignored.Count > 0 ? " Ignored: " + string.Join(", ", ignored) : ""));
-        Toast(n > 0 ? $"{n} server(s) added and protected." + (ignored.Count > 0 ? $" {ignored.Count} ignored." : "") : "No valid IP:port.", n > 0);
+        Log.Info($"Added {Fmt.Count(n, "server")}." + (ignored.Count > 0 ? " Ignored: " + string.Join(", ", ignored) : ""));
+        Toast(n > 0 ? $"{Fmt.Count(n, "server")} added and protected." + (ignored.Count > 0 ? $" {ignored.Count} ignored." : "") : "No valid IP:port.", n > 0);
         _s.DefaultPort = int.TryParse(DefaultPortBox.Text, out var dp) ? dp : 27015;
         SaveSettings();
         await SyncNow(force: true);
@@ -141,8 +141,9 @@ public partial class MainWindow
     async Task QueryServers(bool quiet)
     {
         if (_demo || _querying) return;
-        var egress = _last?.Egress;
-        if (egress == null) { if (!quiet) Toast("Phone disconnected: not querying servers over your home network.", false); return; }
+        // No phone mode: the game uses the home connection, so the servers are asked from there too.
+        var egress = _s.NoPhone && _last?.EffectiveMode == "home" ? HomeAdapter : _last?.Egress;
+        if (egress?.LocalIp == null) { if (!quiet) Toast(_s.NoPhone ? "No connection to ask the servers through." : "Phone disconnected: not querying servers over your home network.", false); return; }
         _querying = true;
         try
         {
@@ -155,7 +156,7 @@ public partial class MainWindow
                 try { if (await QueryOne(srv, egress)) Interlocked.Increment(ref ok); }
                 finally { gate.Release(); }
             }));
-            if (!quiet) Toast($"{ok} of {targets.Count} server(s) responded.", ok > 0);
+            if (!quiet) Toast($"{ok} of {Fmt.Count(targets.Count, "server")} responded.", ok > 0);
         }
         finally { _querying = false; }
         ApplyServerBans();   // the network of a ban is known by name only after the server answers
@@ -165,7 +166,7 @@ public partial class MainWindow
     /// <summary>Name, map, players and ping of one server, only through the phone. False if it didn't answer (or isn't routed).</summary>
     async Task<bool> QueryOne(ServerItem srv, Adapter egress)
     {
-        if (_last?.RouteOk.TryGetValue(srv.Ip, out var routed) != true || !routed) { srv.PingText = "—"; srv.Players = null; return false; }
+        if (!_s.NoPhone && (_last?.RouteOk.TryGetValue(srv.Ip, out var routed) != true || !routed)) { srv.PingText = "—"; srv.Players = null; return false; }
         try
         {
             var info = await A2S.Query(srv.Ip, srv.Port, egress.LocalIp);
@@ -199,7 +200,7 @@ public partial class MainWindow
         var list = SelectedOrAll();
         if (list.Count == 0) return;
         Clipboard.SetText(string.Join("\r\n", list.Select(s => s.Key)));
-        Toast($"{list.Count} server(s) copied.", true);
+        Toast($"{Fmt.Count(list.Count, "server")} copied.", true);
     }
 
     async void RemoveServers_Click(object sender, RoutedEventArgs e)
@@ -212,7 +213,7 @@ public partial class MainWindow
         var gone = sel.Select(s => s.Ip).Where(ip => !still.Contains(ip)).Distinct().ToList();
         // The kill switch stops covering these IPs only after their routes are gone (no leak window for the ones that stay).
         if (!_demo && gone.Count > 0) await _guard.RemoveIps(gone, _s);
-        Log.Info($"Removed {sel.Count} server(s).");
+        Log.Info($"Removed {Fmt.Count(sel.Count, "server")}.");
         await SyncNow(force: true);
         UpdateStatusUi();
     }
@@ -251,19 +252,20 @@ public partial class MainWindow
         Step($"joining {s.Title}…");
         if (!_demo)
         {
-            if (_restored) { Toast("Protection is off since Restore network. Click Run leak test first.", false); return false; }
+            // No phone mode: you chose the home connection, so there is no protection to wait for.
+            if (_restored && !_s.NoPhone) { Toast("Protection is off. Click Run leak test first.", false); return false; }
             await SyncNow(force: true);
-            if (_distrust || _cDiff.Ok == false) { Toast("Not joining: the phone IP is the same as your home IP.", false); return false; }
+            if (!_s.NoPhone && (_distrust || _cDiff.Ok == false)) { Toast("Not joining: the phone IP is the same as your home IP.", false); return false; }
             var fullOk = _last?.Egress != null && _last.EffectiveMode == "all" && _last.FullModeOk;
-            if (s.Protected != true && !fullOk)
+            if (!_s.NoPhone && s.Protected != true && !fullOk)
             {
                 Toast($"Not joining {s.Key}: protection is not confirmed ({s.RouteText}).", false);
                 return false;
             }
             // The two known causes of the "No Steam logon" kick: Steam in offline mode, or Steam on a different network than CS2.
-            if (Steam.WantsOffline(Steam.ActiveSteamId()) && !await Ask("Steam is in offline mode",
+            if (Steam.WantsOffline(Steam.InUseSteamId()) && !await Ask("Steam is in offline mode",
                     "In offline mode Steam does not confirm your account, and the server kicks you with \"No Steam logon\" after a few minutes.\n\n" +
-                    "Turn off \"Offline\" in Accounts and log in to the account again.", "Join anyway"))
+                    "Turn off \"Offline mode\" in Accounts and log in to the account again.", "Join anyway"))
                 return false;
             if (ActiveAccount() is AccountItem acc && acc.BanFor(s.Key, s.ServerName, s.Network) is { } ban && !await Ask($"{acc.Name} was banned here",
                     (ban.Key == s.Key ? $"{s.Title} banned {acc.Name}" : $"{ban.Value?.Name ?? ban.Key}, on the same network as {s.Title}, banned {acc.Name}")
@@ -271,7 +273,7 @@ public partial class MainWindow
                     "Join anyway"))
                 return false;
             if (!await WaitAfterCrash(s)) return false;
-            if (!fromSlotWait && _last?.Egress is Adapter eg && await QueryOne(s, eg) && s.MaxPlayers > 0 && s.PlayerCount >= s.MaxPlayers)
+            if (!fromSlotWait && (_s.NoPhone ? HomeAdapter : _last?.Egress) is Adapter eg && await QueryOne(s, eg) && s.MaxPlayers > 0 && s.PlayerCount >= s.MaxPlayers)
             {
                 if (!await Ask("Server is full", $"{s.Title} is full ({s.PlayersText}). Wait for a free slot? The app checks every 5 s and joins (or tells you) when one opens.", "Wait for a slot"))
                     return false;
@@ -299,6 +301,7 @@ public partial class MainWindow
                 var log = Cs2Console.LogPath(_s.Cs2Path ?? Steam.Cs2Path(_s));
                 long from = 0;
                 try { from = log != null && File.Exists(log) ? new FileInfo(log).Length : 0; } catch { }
+                ConfigsBeforeCs2();
                 Steam.Launch("-applaunch 730 -condebug -conclearlog");
                 JoinStarted(s);
                 return await ConnectWhenMenuReady(s, log, from);
@@ -313,7 +316,7 @@ public partial class MainWindow
     void JoinStarted(ServerItem s)
     {
         Diag.Write("join", new { server = s.Key, name = s.Title, isProtected = s.Protected, mode = _last?.EffectiveMode, steamOnEgress = _last?.SteamOnEgress, steamIps = _last?.Steam.LocalIps });
-        Log.Ok($"Joining {s.Key} through the phone.");
+        Log.Ok(_s.NoPhone ? $"Joining {s.Key} on your home connection (no phone mode)." : $"Joining {s.Key} through the phone.");
         Toast($"Opening {s.Title} in Steam…", true);
         MarkLast(s);
     }
@@ -341,7 +344,7 @@ public partial class MainWindow
                 catch { }
             }
             if (!Steam.Cs2Running) { Log.Warn($"CS2 didn't open, so {s.Key} wasn't joined."); Toast($"CS2 didn't open, so {s.Title} wasn't joined.", false); return false; }
-            if (_restored || _distrust) { Log.Warn($"Not joining {s.Key}: protection changed while CS2 was opening."); Toast($"Not joining {s.Title}: protection changed while CS2 was opening.", false); return false; }
+            if (!_s.NoPhone && (_restored || _distrust)) { Log.Warn($"Not joining {s.Key}: protection changed while CS2 was opening."); Toast($"Not joining {s.Title}: protection changed while CS2 was opening.", false); return false; }
             if (ready) await Task.Delay(2000);
             Steam.OpenUrl($"steam://connect/{s.Key}");
             Log.Info($"CS2 menu {(ready ? "ready" : "not seen after 2 min")}: joining {s.Key}.");
@@ -430,6 +433,7 @@ public partial class MainWindow
             var log = Cs2Console.LogPath(_s.Cs2Path ?? Steam.Cs2Path(_s));
             long from = 0;
             try { from = log != null && File.Exists(log) ? new FileInfo(log).Length : 0; } catch { }
+            ConfigsBeforeCs2();
             await Steam.Restart((_s.SteamSilent ? "-silent " : "") + "-applaunch 730 -condebug -conclearlog");
             if (openWith) OpenWithCs2();
             Diag.Write("steam-restarted", new { server = s.Key });
@@ -450,7 +454,7 @@ public partial class MainWindow
         _s.LastServerAt = DateTime.Now;
         SaveSettings();
         ShowLastServer();
-        var activeId = _demo ? null : Steam.ActiveSteamId();
+        var activeId = _demo ? null : Steam.InUseSteamId();
         var acc = _accounts.FirstOrDefault(a => a.SteamId == activeId) ?? _accounts.FirstOrDefault(a => a.Active);
         if (acc != null)
         {

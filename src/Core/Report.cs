@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 namespace SRT.Core;
 
 /// <summary>
-/// "Export diagnostics" (Log page): a .zip with what a bug report needs. The Steam Web API key and the home IP are
+/// "Save bug report" (Log page): a .zip with what a bug report needs. The Steam Web API key and the home IP are
 /// left out, and Steam's own logs have the external address covered, so the zip can be posted after a look.
 /// </summary>
 public static class Report

@@ -20,6 +20,8 @@ public static class Firewall
     public const string DnsUdpRuleName = "ServerRouteTool v9 - DNS UDP so pela saida";
     public const string DnsTcpRuleName = "ServerRouteTool v9 - DNS TCP so pela saida";
     public const string Ipv6RuleName = "ServerRouteTool v9 - IPv6 bloqueado";
+    // Regions page: cs2.exe can't reach the Valve relays of the regions you turned off (see Regions.cs).
+    public const string RegionsRuleName = "ServerRouteTool v9 - CS2 regioes bloqueadas";
 
     const int NET_FW_RULE_DIR_OUT = 2;
     const int NET_FW_ACTION_BLOCK = 0;
@@ -293,9 +295,23 @@ public static class Firewall
         catch (Exception ex) { Log.Warn($"Remove {name}: " + (ex.InnerException ?? ex).Message); }
     }
 
-    public static void RemoveAll()
+    static readonly string[] ProtectionRules = { RuleName, EchoRuleName, Cs2RuleName, DnsUdpRuleName, DnsTcpRuleName, Ipv6RuleName };
+
+    /// <summary>
+    /// The rules a restore removes. Turn off protection (and closing the app) keep the Regions rule: regions don't depend on the
+    /// phone or on protection, only Allow all lifts them. --restore and tools\restore.cmd are the way out and remove everything.
+    /// </summary>
+    public static string[] RulesToRemove(bool keepRegions) => keepRegions ? ProtectionRules : ProtectionRules.Append(RegionsRuleName).ToArray();
+
+    public static void RemoveAll(bool keepRegions = false)
     {
-        foreach (var n in new[] { RuleName, EchoRuleName, Cs2RuleName, DnsUdpRuleName, DnsTcpRuleName, Ipv6RuleName }) Remove(n);
+        foreach (var n in RulesToRemove(keepRegions)) Remove(n);
+    }
+
+    /// <summary>Only the protection rules (kill switch, IP test, CS2 lock, whole PC): what the no phone mode turns off.</summary>
+    public static void RemoveProtection()
+    {
+        foreach (var n in ProtectionRules) Remove(n);
     }
 
     /// <summary>Names of the app's rules still in the Firewall (current ones and leftovers of an interrupted update).</summary>

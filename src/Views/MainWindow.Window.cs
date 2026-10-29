@@ -21,8 +21,8 @@ public partial class MainWindow
         if (PageNet == null) return;
         var map = new (RadioButton nav, FrameworkElement page, string title)[]
         {
-            (NavNet, PageNet, "Connection"), (NavServers, PageServers, "Servers"), (NavAccounts, PageAccounts, "Accounts"),
-            (NavLog, PageLog, "Log"), (NavSettings, PageSettings, "Settings"),
+            (NavNet, PageNet, "Connection"), (NavServers, PageServers, "Servers"), (NavRegions, PageRegions, "Regions"), (NavAccounts, PageAccounts, "Accounts"),
+            (NavConfigs, PageConfigs, "Configs"), (NavProfiles, PageProfiles, "Profiles"), (NavLog, PageLog, "Log"), (NavSettings, PageSettings, "Settings"),
         };
         foreach (var (nav, page, title) in map)
         {
@@ -35,6 +35,7 @@ public partial class MainWindow
             if (stale.Count > 0) _ = RefreshAccounts(stale);
         }
         if (NavLog.IsChecked == true) UpdateDiagInfo();
+        if (NavConfigs.IsChecked == true) ShowConfigs();
     }
 
     void LogCopy_Click(object sender, RoutedEventArgs e)
@@ -139,9 +140,58 @@ public partial class MainWindow
         base.OnClosed(e);
     }
 
+    /// <summary>
+    /// The app runs as admin, so its folder (the exe, SRT_Dados, adb, the update) must be one only admins can change (README).
+    /// Never blocks the app: an amber item in Checks, a toast and a line in the Log.
+    /// </summary>
+    void CheckAppFolder()
+    {
+#if !DEBUG
+        var dir = Path.TrimEndingDirectorySeparator(Paths.AppDir);
+        if (!Adb.UsersCanWrite(dir) && !Adb.UsersCanWrite(Paths.Data)) return;
+        const string Text = "The app runs as admin from a folder any program can change. Close it and copy CS2IPChanger.exe together with its SRT_Dados folder to C:\\Program Files\\CS2 IP Changer.";
+        _checks.Add(new CheckItem { Title = "App folder", Help = "Programs without admin rights could swap files the app loads as admin.", Ok = null, Waiting = true, Detail = Text });
+        Log.Warn(Text + " (now: " + dir + ")");
+        Toast(Text, false);
+#endif
+    }
+
+    /// <summary>
+    /// The window never opens bigger than the screen's work area (1366x768 at 125% leaves about 590 of height, under MinHeight):
+    /// the pages scroll instead. Before the window is shown, so CenterScreen centres the size that fits.
+    /// </summary>
+    void ClampToWorkArea()
+    {
+        var wa = SystemParameters.WorkArea;
+        (MinWidth, MinHeight, Width, Height) = FitWorkArea(MinWidth, MinHeight, Width, Height, wa.Width, wa.Height);
+    }
+
+    public static (double MinW, double MinH, double W, double H) FitWorkArea(double minW, double minH, double w, double h, double areaW, double areaH) =>
+        (Math.Min(minW, areaW), Math.Min(minH, areaH), Math.Min(w, areaW), Math.Min(h, areaH));
+
     async void OnClosing(object sender, CancelEventArgs e)
     {
-        if (_closingDone || _demo || !_s.CleanupOnExit) return;
+        // Closing mid-run would cut an account off halfway through its changes.
+        if (_profBusy && !_closingDone)
+        {
+            e.Cancel = true;
+            if (!await Ask("Profiles are still changing", "Stop after the current account and close?", "Stop and close")) return;
+            _profCts?.Cancel();
+            while (_profBusy) await Task.Delay(200);
+            Close();
+            return;
+        }
+        if (_closingDone || _demo) return;
+        if (!_s.CleanupOnExit)
+        {
+            if (!_guard.PcOffPhoneApplied) return;
+            e.Cancel = true;
+            _closingDone = true;
+            _tick.Stop();
+            try { await _guard.ReleasePcOffPhone(); } catch { }
+            Close();
+            return;
+        }
         e.Cancel = true;
         // Removing the block with CS2 still in a match would send its next packets out with the home IP.
         if (Steam.Cs2Running && !_restored)
@@ -152,9 +202,16 @@ public partial class MainWindow
             return;
         }
         _closingDone = true;
+        // Same as Restore network: no tick may put the rules back while RestoreAll runs or while the process exits.
+        _restored = true;
+        _tick.Stop();
         ShowProgress("Undoing the routes and the kill switch…");
 
-        try { await _guard.RestoreAll(_servers.Select(s => s.Ip).Distinct().ToList()); } catch { }
+        // A Regions write still running finishes first (10 s at most), so the app doesn't close halfway through it. The Regions rule
+        // itself stays: regions don't depend on protection.
+        var got = await _regionGate.WaitAsync(TimeSpan.FromSeconds(10));
+        try { await _guard.RestoreAll(_servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: true); } catch { }
+        finally { if (got) _regionGate.Release(); }
         Close();
     }
 }

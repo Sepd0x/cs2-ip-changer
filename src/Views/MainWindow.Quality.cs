@@ -53,7 +53,7 @@ public partial class MainWindow
         };
     }
 
-    bool WholePcOn => _s.Mode == "all" || _s.GameMode;
+    bool WholePcOn => _s.WholePc;
 
     void OnQualityChanged(QualityLevel before, LinkQuality q)
     {

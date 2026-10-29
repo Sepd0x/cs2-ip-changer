@@ -126,12 +126,12 @@ public partial class MainWindow
         var recent = (DateTime.Now - _lastKickAt).TotalSeconds < 20;
         if (recent && !(kind == KickKind.Ban && _lastKickKind is KickKind.Kick or KickKind.NoAnswer)) { Log.Info($"CS2 console ({what}): " + Cut(line)); return; }
         // The app's own IP change or the phone dropping also time the game out: that's not the server, and it doesn't count.
-        if (kind == KickKind.NoAnswer && (_changingIp || _rejoining || _last?.Egress == null)) { Log.Info("CS2 lost the server while the connection was changing. Console: " + Cut(line)); return; }
+        if (kind == KickKind.NoAnswer && (_changingIp || _rejoining || (_last?.Egress == null && !_s.NoPhone))) { Log.Info("CS2 lost the server while the connection was changing. Console: " + Cut(line)); return; }
         _lastKickAt = DateTime.Now;
         _lastKickKind = kind;
         System.Media.SystemSounds.Hand.Play();
         var acc = ActiveAccount();
-        if (acc == null && !_demo && Steam.ActiveSteamId() != null) { LoadAccounts(); acc = ActiveAccount(); }   // an account Steam logged in to a moment ago
+        if (acc == null && !_demo && Steam.InUseSteamId() != null) { LoadAccounts(); acc = ActiveAccount(); }   // an account Steam logged in to a moment ago
         if (kind == KickKind.NoAnswer)
         {
             Log.Warn($"{server ?? "The server"} stopped answering. Console: " + Cut(line));
@@ -186,7 +186,7 @@ public partial class MainWindow
             Toast($"Banned from {_s.LastServer}. No other account to rejoin with: the rest are skipped, on cooldown or banned there.", false);
             return;
         }
-        if (await Ask("You were banned", $"CS2 says you were banned from {_s.LastServer}. The ban is on your IP and on the account, so a new IP alone won't get you back in.\n\nGet a new IP, log in to {next.Name} and rejoin?", "New IP, switch and rejoin", "Not now"))
+        if (await Ask("You were banned", $"CS2 says you were banned from {_s.LastServer}. The ban is on your IP and on the account, so a new IP alone is not enough.\n\nGet a new IP, log in to {next.Name} and rejoin?", "Switch and rejoin", "Not now"))
             await RejoinAfterBan("After the ban");
     }
 
@@ -201,7 +201,7 @@ public partial class MainWindow
 
     AccountItem ActiveAccount()
     {
-        var id = _demo ? null : Steam.ActiveSteamId();
+        var id = _demo ? null : Steam.InUseSteamId();
         // Steam logged in to an account the list doesn't have yet: not the old one (the next tick reloads the list).
         if (id != null) return _accounts.FirstOrDefault(a => a.SteamId == id);
         return _accounts.FirstOrDefault(a => a.Active);
@@ -218,7 +218,7 @@ public partial class MainWindow
         ApplyServerBans();
         UpdateQuickInfo();
         var same = _servers.Count(x => x.Key != key && ServerNetwork.Same(key, name, network, x.Key, x.ServerName, x.Network));
-        Log.Warn($"{a.Name} marked as banned on {key}" + (same > 0 ? $" and {same} other server(s) of the same network" : "") + ". Switch skips it there.");
+        Log.Warn($"{a.Name} marked as banned on {key}" + (same > 0 ? $" and {Fmt.Count(same, "other server")} of the same network" : "") + ". Switch skips it there.");
         Diag.Write("server-ban", new { steamId = a.SteamId, server = key, name });
     }
 
@@ -282,8 +282,8 @@ public partial class MainWindow
 
     void UpdateRejoinBtn()
     {
-        RejoinBtn.IsEnabled = !_changingIp && !_rejoining && _s.LastServer != null && _phone?.Ready == true;
-        RejoinBtn.ToolTip = (_s.LastServer == null ? "Join a server from Servers first. " : $"Changes the IP, then joins {_s.LastServer} again (with another account if this one is banned there). ")
+        RejoinBtn.IsEnabled = !_changingIp && !_rejoining && _s.LastServer != null && _phone?.Ready == true && !_s.NoPhone;
+        RejoinBtn.ToolTip = _s.NoPhone ? "Off in the no phone mode: there is no IP to change." : (_s.LastServer == null ? "Join a server from Servers first. " : $"Changes the IP, then joins {_s.LastServer} again (with another account if this one is banned there). ")
             + $"Only joins with protection confirmed. In game: {_s.HotkeyRejoin}.";
 
     }
@@ -305,11 +305,11 @@ public partial class MainWindow
             Log.Info($"{from}: not rejoining. {why}");
         }
         var ip = steps.Ip;
-        if (ip && steps.Account && !_demo && (_adb == null || _phone?.Ready != true))
+        if (ip && steps.Account && !_demo && (_adb == null || _phone?.Ready != true || _s.NoPhone))
         {
             ip = false;
-            Log.Info($"{from}: the phone isn't ready to change the IP, so only the account changes.");
-            Toast("Switching the account only: the phone isn't ready to change the IP.", false);
+            Log.Info(_s.NoPhone ? $"{from}: no phone mode, so only the account changes." : $"{from}: the phone isn't ready to change the IP, so only the account changes.");
+            Toast(_s.NoPhone ? "Switching the account only: no phone mode has no IP to change." : "Switching the account only: the phone isn't ready to change the IP.", false);
         }
         AccountItem next = null;
         if (steps.Account && (next = PickQuick(s)) == null) return false;

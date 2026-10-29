@@ -1,4 +1,5 @@
-// Anonymous usage stats for CS2 IP Changer, on the project's own Cloudflare account. Deploy: npx wrangler deploy (from this folder).
+// Anonymous usage stats for CS2 IP Changer, on the project's own Cloudflare account. Deploy (from this folder): first
+// npx wrangler d1 execute cs2ipc-stats --remote --file=schema.sql (new tables, safe to run again), then npx wrangler deploy.
 {
   "name": "stats",
   "main": "src/index.js",

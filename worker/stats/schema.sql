@@ -8,3 +8,5 @@ CREATE TABLE IF NOT EXISTS counts (day TEXT NOT NULL, id TEXT NOT NULL, name TEX
 CREATE INDEX IF NOT EXISTS counts_day ON counts (day);
 CREATE TABLE IF NOT EXISTS errors (day TEXT NOT NULL, id TEXT NOT NULL, app TEXT NOT NULL, type TEXT NOT NULL, at TEXT NOT NULL, n INTEGER NOT NULL, dev INTEGER NOT NULL DEFAULT 0);
 CREATE INDEX IF NOT EXISTS errors_day ON errors (day);
+-- Rows written each day (src/index.js DAILY_ROWS): a flood of fresh ids can't use up D1's daily writes
+CREATE TABLE IF NOT EXISTS budget (day TEXT PRIMARY KEY, rows INTEGER NOT NULL);

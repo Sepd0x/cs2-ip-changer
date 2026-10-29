@@ -55,6 +55,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         Rec.Install(this, PersonalWords);
+        MarkPublicLists();
+        ClampToWorkArea();   // before ParseDevArgs: a demo --size still wins
         ParseDevArgs(args);
         _justUpdated = args.Contains("--updated");
         ShowVersion();
@@ -83,11 +85,11 @@ public partial class MainWindow : Window
         _checks.Add(_cFirewall = new CheckItem { Title = "Firewall", Help = "Must be on: it enforces the kill switch." });
         _checks.Add(_cKill = new CheckItem { Title = "Kill switch", Help = "Rule that blocks the listed servers on every adapter except the phone." });
         _checks.Add(_cEgress = new CheckItem { Title = "Phone connection", Help = "The phone over a USB cable, which is how the servers are reached." });
-        _checks.Add(_cRoutes = new CheckItem { Title = "Routes", Help = "Confirmed by Windows itself: every IP in the list goes through the phone." });
-        _checks.Add(_cDiff = new CheckItem { Title = "IP differs from home", Help = "If the phone is sharing your home Wi-Fi instead of mobile data, the IP would be the same." });
+        _checks.Add(_cRoutes = new CheckItem { Title = "Servers through the phone", Help = "Windows confirms that every server in your list goes through the phone." });
+        _checks.Add(_cDiff = new CheckItem { Title = "Different from home IP", Help = "If the phone is sharing your home Wi-Fi instead of mobile data, the IP would be the same." });
         _checks.Add(_cPhoneData = new CheckItem { Title = "Mobile data", Help = "With the phone's Wi-Fi on, tethering may carry your home network instead of mobile data. Read through ADB; without ADB, check it yourself." });
         _checks.Add(_cQuality = new CheckItem { Title = "Connection quality", Help = "Ping, jitter and loss through the phone, measured every 30 s. Weak means lag in game: the app warns, and can drop Whole PC to Game only while it lasts (Settings > Protection)." });
-        _checks.Add(_cCs2 = new CheckItem { Title = "CS2 only through the phone", Help = "Firewall rule: cs2.exe's game traffic (UDP) only goes out through the phone. Servers not in the list (game browser, invites) never see your home IP either. Web requests from CS2 use the normal connection." });
+        _checks.Add(_cCs2 = new CheckItem { Title = "CS2 only through the phone", Help = "Firewall rule: cs2.exe's game traffic (UDP) only goes out through the phone. Servers not in the list (game browser, invites) never see your home IP either. Web content that CS2 loads uses the normal connection." });
         _checks.Add(_cSteam = new CheckItem { Title = "Steam through the phone", Help = "steam.exe talks to Valve through the phone, like CS2. If Steam is on another network or reconnects mid-game, the server kicks you with \"No Steam logon\"." });
         _checks.Add(_cPc = new CheckItem { Title = "Rest of the PC", Help = "Where the normal PC traffic goes out (Steam, browser, Discord)." });
 
@@ -134,6 +136,7 @@ public partial class MainWindow : Window
         else
         {
             StartupDev();
+            CheckAppFolder();
             ImportStartupFile();
             LoadAccounts();
             ShowLastServer();

@@ -29,7 +29,9 @@ public static class Rec
         @"|7656119\d{10}|\[U:1:\d+\]|STEAM_[0-5]:[01]:\d+" +                                                 // SteamIDs
         @"|[\w.+-]+@[\w-]+(?:\.[\w-]+)+" +                                                                    // e-mail
         @"|(?<![0-9A-Fa-f])[0-9A-Fa-f]{32}(?![0-9A-Fa-f])" +                                                 // Steam Web API key
+        @"|eyJ[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{6,}" +                                   // Steam sign-in tokens (JWT)
         @"|steamcommunity\.com/(?:id|profiles)/[^\s/]+" +
+        @"|(?<=[\\/]userdata[\\/])\d{3,}|(?<=[\\/]configs[\\/]backups[\\/])\d{3,}" +                   // account folder (id32 = SteamID64 - 76561197960265728)
         @"|(?<=\\Users\\)[^\\/""\r\n]+";                                                                      // Windows user in paths
     static readonly Regex Ids = new(IdPatterns, RegexOptions.Compiled | RegexOptions.IgnoreCase);
     static readonly Regex Patterns = new(
@@ -75,7 +77,7 @@ public static class Rec
         return parts;
     }
 
-    /// <summary>For Export diagnostics: who you are goes (IDs, logins, names, SSIDs, your Windows user) but the IPs stay, a bug report needs them.</summary>
+    /// <summary>For Save bug report: who you are goes (IDs, logins, names, SSIDs, your Windows user) but the IPs stay, a bug report needs them.</summary>
     public static string ScrubIds(string text, Regex wordRx)
     {
         if (string.IsNullOrEmpty(text)) return text;
@@ -91,6 +93,24 @@ public static class Rec
     }
 
     // ------------------------------------------------------------ The filter on screen
+
+    /// <summary>
+    /// Public lists (Valve's regions, the list of countries): your words are not masked there, only IPs and IDs. One blurred row
+    /// among readable ones would give away your country or city. Inherited, so setting it on the list covers its rows and popup.
+    /// </summary>
+    public static readonly DependencyProperty PublicProperty = DependencyProperty.RegisterAttached("Public", typeof(bool), typeof(Rec),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits));
+    public static bool GetPublic(DependencyObject d) => (bool)d.GetValue(PublicProperty);
+    public static void SetPublic(DependencyObject d, bool value) => d.SetValue(PublicProperty, value);
+
+    /// <summary>
+    /// A TextBox whose placeholder (its Tag, a fixed hint written in the XAML) holds a made-up example like "e.g. 1.2.3.4:27015".
+    /// Only that placeholder is shown as is; what is typed in the box is still hidden.
+    /// </summary>
+    public static readonly DependencyProperty ExampleHintProperty = DependencyProperty.RegisterAttached("ExampleHint", typeof(bool), typeof(Rec),
+        new FrameworkPropertyMetadata(false));
+    public static bool GetExampleHint(DependencyObject d) => (bool)d.GetValue(ExampleHintProperty);
+    public static void SetExampleHint(DependencyObject d, bool value) => d.SetValue(ExampleHintProperty, value);
 
     sealed class Seen { public string Original, Shown; public int Sig; public bool Hid, Built; }
 
@@ -153,11 +173,12 @@ public static class Rec
     static void Filter(TextBlock tb)
     {
         var text = tb.Text;
+        if (tb.TemplatedParent is TextBox owner && GetExampleHint(owner) && owner.Tag is string hint && text == hint) return;
         var s = _seen.GetValue(tb, _ => new Seen { Sig = -1 });
         if (text == s.Shown && s.Sig == _sig) return;
         if (text != s.Shown) s.Original = text;
         s.Sig = _sig;
-        var parts = string.IsNullOrEmpty(s.Original) ? null : Split(s.Original, _wordRx);
+        var parts = string.IsNullOrEmpty(s.Original) ? null : Split(s.Original, GetPublic(tb) ? null : _wordRx);
         if (parts == null || !parts.Any(p => p.Hide))
         {
             if (s.Built) { s.Built = false; tb.SetCurrentValue(TextBlock.TextProperty, s.Original); }   // nothing personal any more: plain text back

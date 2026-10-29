@@ -25,6 +25,8 @@ public sealed class GuardReport
     public string PcDefaultName { get; init; }
     public bool PcDefaultIsEgress { get; init; }
     public int PcDefaultIndex { get; init; }
+    /// <summary>The phone's adapter (protected or still being checked), -1 when there is none.</summary>
+    public int PhoneIndex { get; init; } = -1;
     public string Error { get; init; }
     /// <summary>Why the candidate isn't trusted (null = trusted or no candidate).</summary>
     public string DistrustReason { get; init; }
@@ -52,10 +54,13 @@ public sealed class Guard
     readonly SemaphoreSlim _gate = new(1, 1);
     string _fwSignature;
     int _metricAppliedTo = -1;
+    DateTime _metricTriedAt;
     readonly HashSet<string> _ownedRoutes = new(); // "prefix|ifIndex|nexthop"
     static string OwnedFile => Paths.File("owned.json");
     readonly HashSet<string> _warned = new();
     string _lastProblem;
+    /// <summary>The Firewall errors of the last rewrite, so the same failure on every sync is logged once.</summary>
+    string _fwErrors;
 
     static readonly string[] SplitPrefixes = { "0.0.0.0/1", "128.0.0.0/1" };
 
@@ -111,6 +116,39 @@ public sealed class Guard
     /// TCP stays free: CS2's web requests and what other programs load into the game (over HTTPS) would fail in Game only,
     /// where only the listed servers and Steam go through the phone. Listed servers stay blocked on any protocol by the kill switch.
     /// </summary>
+    /// <summary>
+    /// What protection does right now: "home" (no phone: nothing goes through the phone, nothing is blocked), "all" (whole PC,
+    /// always or while CS2 is open) or "servers" (game only). Old settings without "home" keep what they had.
+    /// </summary>
+    public static string ModeFor(string mode, bool gameMode, bool cs2Running) =>
+        mode == "home" ? "home" : mode == "all" || (gameMode && cs2Running) ? "all" : "servers";
+
+    /// <summary>
+    /// Windows sends the rest of the PC through the phone while it shouldn't (game only or no phone): the phone's adapter gets a
+    /// high metric so the home network wins. Only with another connection to fall back on, and only with the option on.
+    /// </summary>
+    public static bool NeedsPcOffPhone(string effectiveMode, bool keepPcOffPhone, int pcDefaultIndex, int phoneIndex, bool hasOtherInternet) =>
+        keepPcOffPhone && effectiveMode is "servers" or "home" && phoneIndex >= 0 && pcDefaultIndex == phoneIndex && hasOtherInternet;
+
+    public enum PcOffPhoneStep { None, Apply, Undo }
+
+    /// <summary>
+    /// What Save mobile data does to the phone's adapter on this sync. Undo with the option off, in Whole PC (the phone is the PC's
+    /// way out) and without another connection (the PC is never left with no default route). Nothing while CS2 has the whole PC in
+    /// game mode (0/1 + 128/1 carry it). Apply when it isn't applied to this adapter yet, or, once a minute at most, when it is but
+    /// Windows still picks the phone or the last try failed.
+    /// </summary>
+    public static PcOffPhoneStep PcOffPhoneNext(bool keepPcOffPhone, string userMode, string effectiveMode, Adapter phone, bool hasOtherInternet,
+        int appliedTo, bool pcOnPhone, double secondsSinceTry)
+    {
+        if (!keepPcOffPhone || userMode == "all" || phone == null || !(phone.IsPhone || phone.IsWifi) || !hasOtherInternet)
+            return appliedTo >= 0 ? PcOffPhoneStep.Undo : PcOffPhoneStep.None;
+        if (effectiveMode == "all") return PcOffPhoneStep.None;
+        if (appliedTo == phone.Index && !pcOnPhone) return PcOffPhoneStep.None;
+        if (secondsSinceTry < 60 && (appliedTo == phone.Index || appliedTo < 0)) return PcOffPhoneStep.None;
+        return PcOffPhoneStep.Apply;
+    }
+
     static Firewall.FwRule Cs2Rule(string cs2, string allow) => new(Firewall.Cs2RuleName, null, cs2, allow,
         "Managed by CS2 IP Changer. CS2's game traffic (UDP) can only go out through the protected connection: servers not in the list never see your home IP.",
         Firewall.NET_FW_IP_PROTOCOL_UDP);
@@ -123,9 +161,12 @@ public sealed class Guard
         if (distrust == null && candidate != null && KeyOf(candidate) != verifiedKey) distrust = WhyUnchecked;
         var egress = distrust != null ? null : candidate;
         if (distrust != null && candidate != null) problem = distrust;
-        if (problem != _lastProblem) { if (problem != null) Log.Warn(problem + " Servers blocked."); _lastProblem = problem; }
+        var mode = ModeFor(s.Mode, s.GameMode, cs2Running);
+        // No phone blocks nothing, so "Servers blocked" would be false there; back on protection the problem is said again.
+        if (mode == "home") _lastProblem = null;
+        else if (problem != _lastProblem) { if (problem != null) Log.Warn(problem + " Servers blocked."); _lastProblem = problem; }
         var fwProblem = Firewall.CheckEnabled();
-        var mode = s.GameMode && cs2Running ? "all" : s.Mode;
+        if (mode == "home") return await HomeMode(s, adapters, candidate, fwProblem, force);
         var cs2 = s.LockCs2 ? Steam.Cs2Path(s) : null;
 
         // 1) Firewall first: there is never a moment when a server is reachable with the home IP.
@@ -152,6 +193,12 @@ public sealed class Guard
             if (force || sig != _fwSignature || !killOk || !echoOk || cs2Ok == false || dnsOk == false || ipv6Ok == false)
             {
                 // Each rule on its own: one failing must not leave the others on an old allowed IP.
+                var errors = new List<string>();
+                void Try(Action a)
+                {
+                    try { a(); }
+                    catch (Exception ex) { errors.Add((ex.InnerException ?? ex).Message); }
+                }
                 Try(() => Firewall.Apply(Firewall.RuleName, ips, null, allow, "Managed by CS2 IP Changer. Servers in the list can only be reached from the local IP of the protected connection."));
                 // Only the app's own IP test: other programs (1.0.0.1 is also a public DNS server) are left alone.
                 Try(() => Firewall.Apply(Firewall.EchoRuleName, new[] { Net.EchoIp }, Environment.ProcessPath, candidate?.LocalIp, "Managed by CS2 IP Changer. Makes sure the app's IP test measures the protected connection."));
@@ -160,9 +207,12 @@ public sealed class Guard
                 if (full != null) foreach (var r in full) Try(() => Firewall.Apply(r));
                 else foreach (var n in FullModeRuleNames) Firewall.Remove(n);
                 _fwSignature = sig;
-                Log.Info(egress == null
-                    ? "Kill switch: servers in the list" + (cs2 != null ? " and CS2" : "") + " blocked (no connection)."
-                    : $"Kill switch: servers in the list" + (cs2 != null ? " and CS2" : "") + $" only go out through \"{egress.Name}\" ({egress.LocalIp}).");
+                // Without admin rights every sync (5 s) fails the same way: one line until it changes, and no "blocked" that isn't true.
+                if (FirewallErrorLine(errors, ref _fwErrors) is string line) { if (errors.Count > 0) Log.Error(line); else Log.Ok(line); }
+                if (errors.Count == 0)
+                    Log.Info(egress == null
+                        ? "Kill switch: servers in the list" + (cs2 != null ? " and CS2" : "") + " blocked (no connection)."
+                        : $"Kill switch: servers in the list" + (cs2 != null ? " and CS2" : "") + $" only go out through \"{egress.Name}\" ({egress.LocalIp}).");
                 ReadBack();
             }
             if (dnsOk == false && _warned.Add("dns")) Log.Warn("Whole PC: the DNS rule was not confirmed, so name lookups may still go to the home router.");
@@ -182,12 +232,7 @@ public sealed class Guard
         if (candidate != null) await EnsureRoutes(new List<string> { Net.EchoIp }, candidate, adapters);
         var routeOk = new Dictionary<string, bool>();
         // Also before the phone is trusted: with the rest of the PC on the home network, the home IP can be read and compared.
-        var offPc = egress ?? candidate;
-        if (offPc != null && s.KeepPcOffPhone && mode == "servers" && (offPc.IsPhone || offPc.IsWifi) && _metricAppliedTo != offPc.Index && HasOtherInternet(adapters, offPc))
-        {
-            var r = await Net.SetInterfaceMetric(offPc.Index, 900);
-            if (r.Ok) { _metricAppliedTo = offPc.Index; SaveOwned(); Log.Info("The PC keeps using the home network; only the game goes through the phone."); }
-        }
+        await KeepPcOffPhone(s, mode, egress ?? candidate, adapters);
         if (egress != null)
         {
             await EnsureRoutes(ips, egress, adapters);
@@ -252,11 +297,120 @@ public sealed class Guard
             PcDefaultName = pc?.Name ?? "—",
             PcDefaultIsEgress = egress != null && pcIdx == egress.Index,
             PcDefaultIndex = pcIdx,
+            PhoneIndex = (egress ?? candidate)?.Index ?? -1,
             SteamRoutesOk = steamRoutesOk,
             Steam = steam,
             SteamOnEgress = steamOnEgress,
             HasHome = adapters.Any(a => a.Up && a.Gateway != null && a.Index != candidate?.Index && !a.IsPhone),
         };
+    }
+
+    /// <summary>
+    /// The phone's adapter ignores its default route (and gets metric 900), so the rest of the PC stays on the home network. The
+    /// metric alone was not enough: on a real PC Windows kept the phone for the rest of the PC whatever its metric. Every mode reaches
+    /// the phone through explicit routes to its gateway, so none needs that default route. Applied again whenever Windows still picks
+    /// the phone (a cable that comes back can keep its interface index but loses the setting); undone as soon as it is not wanted.
+    /// </summary>
+    async Task KeepPcOffPhone(Settings s, string mode, Adapter phone, List<Adapter> adapters)
+    {
+        var other = phone != null && HasOtherInternet(adapters, phone);
+        var onPhone = phone != null && Net.BestInterface("1.1.1.1") == phone.Index;
+        var step = PcOffPhoneNext(s.KeepPcOffPhone, s.Mode, mode, phone, other, _metricAppliedTo, onPhone, (DateTime.Now - _metricTriedAt).TotalSeconds);
+        if (step == PcOffPhoneStep.Undo)
+        {
+            await RestoreMetric();
+            if (s.KeepPcOffPhone && phone != null && !other) Log.Info("No home connection: the rest of the PC goes through the phone again.");
+            return;
+        }
+        if (step != PcOffPhoneStep.Apply) return;
+        if (_metricAppliedTo >= 0 && _metricAppliedTo != phone.Index) await RestoreMetric();
+        _metricTriedAt = DateTime.Now;
+        var r = await Proc.Run("powershell", PcOffPhoneArgs(phone.Index, true), 20000);
+        if (!r.Ok) { if (_warned.Add("metric")) Log.Warn("Couldn't keep the rest of the PC off the phone: " + PsError(r.Output)); return; }
+        _warned.Remove("metric");
+        _metricAppliedTo = phone.Index;
+        SaveOwned();
+        Log.Info(mode == "home" ? "No phone mode: the PC keeps using the home network, not the phone." : "The PC keeps using the home network; only the game goes through the phone.");
+    }
+
+    /// <summary>
+    /// PowerShell's error as one Log line: the first line without the cmdlet name ("Access is denied."), not the five lines of
+    /// position and CategoryInfo that follow it.
+    /// </summary>
+    public static string PsError(string output)
+    {
+        var line = (output ?? "").Split('\n').Select(l => l.Trim()).FirstOrDefault(l => l.Length > 0) ?? "";
+        var i = line.IndexOf(" : ", StringComparison.Ordinal);
+        return i > 0 && line[..i].Contains("-Net", StringComparison.Ordinal) ? line[(i + 3)..] : line;
+    }
+
+    /// <summary>Save mobile data is applied to an adapter right now.</summary>
+    public bool PcOffPhoneApplied => _metricAppliedTo >= 0;
+
+    /// <summary>
+    /// Closing without Clean up on exit: protection stays, but the phone's adapter gets its default route back. Otherwise, once
+    /// the home network is gone, the PC has no internet through the phone until a restart.
+    /// </summary>
+    public Task ReleasePcOffPhone() => Task.Run(async () =>
+    {
+        await _gate.WaitAsync();
+        try { await RestoreMetric(); }
+        finally { _gate.Release(); }
+    });
+
+    async Task RestoreMetric()
+    {
+        if (_metricAppliedTo < 0) return;
+        await Proc.Run("powershell", PcOffPhoneArgs(_metricAppliedTo, false), 20000);
+        _metricAppliedTo = -1;
+        SaveOwned();
+    }
+
+    /// <summary>
+    /// No phone mode: the kill switch, the IP test rule, the CS2 lock, whole PC and every route of the app are taken off, so CS2 and
+    /// the servers use the home connection. The Regions rule is not the guard's and stays. Done again only when something changed.
+    /// </summary>
+    async Task<GuardReport> HomeMode(Settings s, List<Adapter> adapters, Adapter phone, string fwProblem, bool force)
+    {
+        if (force || _fwSignature != "home")
+        {
+            if (fwProblem == null) Firewall.RemoveProtection();
+            await RemoveOurRoutes(new HashSet<string> { Net.EchoIp }, adapters, all: true);
+            if (_fwSignature != "home") Log.Info("No phone mode: the kill switch and the routes are off. CS2 and servers see your home IP.");
+            _fwSignature = "home";
+        }
+        await KeepPcOffPhone(s, "home", phone, adapters);
+        var pcIdx = Net.BestInterface("1.1.1.1");
+        return new GuardReport
+        {
+            Adapters = adapters,
+            FirewallProblem = fwProblem,
+            EffectiveMode = "home",
+            PcDefaultName = adapters.FirstOrDefault(a => a.Index == pcIdx)?.Name ?? "—",
+            PcDefaultIndex = pcIdx,
+            PhoneIndex = phone?.Index ?? -1,
+            Steam = Net.ReadSteamLink(),
+            HasHome = adapters.Any(a => a.Up && a.Gateway != null && !a.IsPhone),
+        };
+    }
+
+    /// <summary>
+    /// Deletes the app's routes: its own (owned.json) and, on a phone adapter, server /32s, whole PC and Valve's blocks.
+    /// <paramref name="all"/>: every /32 on a phone adapter counts as a server route (the list may have changed).
+    /// </summary>
+    async Task RemoveOurRoutes(HashSet<string> serverIps, List<Adapter> adapters, bool all = false)
+    {
+        foreach (var rt in await Net.ListRoutes())
+        {
+            var ours = _ownedRoutes.Contains($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
+            var onPhone = adapters.Any(a => a.Index == rt.Index && a.IsPhone);
+            var serverRoute = rt.Prefix.EndsWith("/32") && (all || serverIps.Contains(rt.Prefix[..^3]));
+            if (ours || (onPhone && (serverRoute || SplitPrefixes.Contains(rt.Prefix) || Net.ValvePrefixes.Contains(rt.Prefix))))
+            {
+                await Net.DeleteRoute(rt);
+                Disown($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
+            }
+        }
     }
 
     static readonly string[] FullModeRuleNames = { Firewall.DnsUdpRuleName, Firewall.DnsTcpRuleName, Firewall.Ipv6RuleName };
@@ -272,10 +426,18 @@ public sealed class Guard
             LocalAddresses: Firewall.AllIpv6),
     };
 
-    static void Try(Action a)
+    /// <summary>
+    /// The Log line for the errors of one Firewall rewrite, or null when it would repeat the last one. The same error on several
+    /// rules is one line ("Access is denied (3 rules)"); the first rewrite that works after errors says so once.
+    /// </summary>
+    public static string FirewallErrorLine(IReadOnlyList<string> errors, ref string last)
     {
-        try { a(); }
-        catch (Exception ex) { Log.Error("Firewall: " + (ex.InnerException ?? ex).Message); }
+        var now = errors.Count == 0 ? null : string.Join("; ", errors.Select(e => (e ?? "").Trim().TrimEnd('.')).GroupBy(e => e)
+            .Select(g => g.Count() > 1 ? $"{g.Key} ({g.Count()} rules)" : g.Key));
+        if (now == last) return null;
+        var had = last != null;
+        last = now;
+        return now != null ? $"Firewall: {now}. The rules were not written." : had ? "Firewall: rules written again." : null;
     }
 
     static bool HasOtherInternet(List<Adapter> adapters, Adapter egress) =>
@@ -329,28 +491,41 @@ public sealed class Guard
             if (r.Ok) { Own($"{pfx}|{via.Index}|{hop}"); added++; }
             else Log.Warn($"Route {pfx}: {r.Output}");
         }
-        if (added > 0) Log.Info($"Steam through the phone: {added} Valve block(s) go through \"{via.Name}\".");
+        if (added > 0) Log.Info($"Steam through the phone: {Fmt.Count(added, "Valve block")} {(added == 1 ? "goes" : "go")} through \"{via.Name}\".");
     }
 
     async Task RemovePrefixRoutes(string[] prefixes, List<Adapter> adapters)
     {
         if (!_ownedRoutes.Any(r => prefixes.Any(p => r.StartsWith(p + "|")))) return;
-        foreach (var rt in await Net.ListRoutes())
+        var routes = await Net.ListRoutes();
+        var removed = false;
+        foreach (var rt in routes)
         {
             if (!prefixes.Contains(rt.Prefix)) continue;
             if (_ownedRoutes.Contains($"{rt.Prefix}|{rt.Index}|{rt.NextHop}") || adapters.Any(a => a.Index == rt.Index && a.IsPhone))
             {
                 await Net.DeleteRoute(rt);
                 Disown($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
+                removed = true;
             }
         }
-        Log.Info("Steam through the phone turned off: Steam goes back to the home network.");
+        // Routes Windows already dropped with their adapter (tethering turned off) are no longer ours, or this ran (and logged) every sync.
+        DisownGone(prefixes, routes);
+        if (removed) Log.Info("Steam through the phone turned off: Steam goes back to the home network.");
+    }
+
+    void DisownGone(string[] prefixes, List<Net.Route> routes)
+    {
+        var present = routes.Select(rt => $"{rt.Prefix}|{rt.Index}|{rt.NextHop}").ToHashSet();
+        foreach (var key in _ownedRoutes.Where(r => prefixes.Any(p => r.StartsWith(p + "|")) && !present.Contains(r)).ToList()) Disown(key);
     }
 
     async Task RemoveSplitRoutes(List<Adapter> adapters)
     {
         if (_ownedRoutes.Count == 0 || !_ownedRoutes.Any(r => r.StartsWith("0.0.0.0/1") || r.StartsWith("128.0.0.0/1"))) return;
-        foreach (var rt in await Net.ListRoutes())
+        var routes = await Net.ListRoutes();
+        DisownGone(SplitPrefixes, routes);
+        foreach (var rt in routes)
         {
             if (!SplitPrefixes.Contains(rt.Prefix)) continue;
             if (_ownedRoutes.Contains($"{rt.Prefix}|{rt.Index}|{rt.NextHop}") || adapters.Any(a => a.Index == rt.Index && a.IsPhone))
@@ -381,8 +556,35 @@ public sealed class Guard
         finally { _gate.Release(); }
     });
 
-    /// <summary>Undoes everything the app created: rules, routes and whole-PC mode. Returns what is left (null = all clean).</summary>
-    public Task<string> RestoreAll(IReadOnlyCollection<string> ips) => Task.Run(async () =>
+    /// <summary>
+    /// PowerShell arguments that keep the rest of the PC off an adapter (on: its default route ignored, metric 900) or give them back
+    /// (off: default route and automatic metric). Active store only, so a restart undoes it too.
+    /// </summary>
+    public static string PcOffPhoneArgs(int index, bool on) => NetTcpIpArgs($"NetTCPIP\\Set-NetIPInterface -InterfaceIndex {index} -AddressFamily IPv4 " +
+        (on ? "-InterfaceMetric 900 -IgnoreDefaultRoutes Enabled" : "-AutomaticMetric Enabled -IgnoreDefaultRoutes Disabled") + " -PolicyStore ActiveStore -ErrorAction Stop");
+
+    /// <summary>
+    /// For --restore: every phone adapter still ignoring its default route (the app's, if owned.json was lost) gets it back.
+    /// </summary>
+    public static string ResetPhonesArgs(IEnumerable<int> indexes) => NetTcpIpArgs($"NetTCPIP\\Get-NetIPInterface -InterfaceIndex {string.Join(",", indexes)} " +
+        "-AddressFamily IPv4 -PolicyStore ActiveStore -ErrorAction SilentlyContinue | Where-Object IgnoreDefaultRoutes -eq 'Enabled' | " +
+        "NetTCPIP\\Set-NetIPInterface -AutomaticMetric Enabled -IgnoreDefaultRoutes Disabled");
+
+    /// <summary>
+    /// NetTCPIP is loaded from System32 by full path and its cmdlets are called by the module name: a module of the same name in
+    /// your Documents (first in PSModulePath) never runs as admin.
+    /// </summary>
+    static string NetTcpIpArgs(string command)
+    {
+        var module = Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "Modules", "NetTCPIP", "NetTCPIP.psd1");
+        return $"-NoProfile -NonInteractive -Command \"Import-Module '{module}'; {command}\"";
+    }
+
+    /// <summary>
+    /// Undoes everything the app created: rules, routes and whole-PC mode. Returns what is left (null = all clean).
+    /// <paramref name="keepRegions"/>: Turn off protection and closing the app leave the Regions rule; --restore removes it too.
+    /// </summary>
+    public Task<string> RestoreAll(IReadOnlyCollection<string> ips, bool keepRegions) => Task.Run(async () =>
     {
         await _gate.WaitAsync();
         try
@@ -398,13 +600,10 @@ public sealed class Guard
             }
             _ownedRoutes.Clear();
             SaveOwned();
-            Firewall.RemoveAll();
-            if (_metricAppliedTo >= 0)
-            {
-                await Proc.Run("powershell", $"-NoProfile -Command \"Set-NetIPInterface -InterfaceIndex {_metricAppliedTo} -AddressFamily IPv4 -AutomaticMetric Enabled -PolicyStore ActiveStore\"", 20000);
-                _metricAppliedTo = -1;
-                SaveOwned();
-            }
+            Firewall.RemoveAll(keepRegions);
+            await RestoreMetric();
+            var phones = adapters.Where(a => a.IsPhone).Select(a => a.Index).ToList();
+            if (!keepRegions && phones.Count > 0) await Proc.Run("powershell", ResetPhonesArgs(phones), 20000);
             _fwSignature = null;
 
             // Reads everything back: the restore only counts if nothing of ours is left.
@@ -416,10 +615,10 @@ public sealed class Guard
                 var serverRoute = rt.Prefix.EndsWith("/32") && set.Contains(rt.Prefix[..^3]);
                 if (onPhone && (serverRoute || SplitPrefixes.Contains(rt.Prefix) || Net.ValvePrefixes.Contains(rt.Prefix))) left.Add("route " + rt.Prefix);
             }
-            left.AddRange(Firewall.Remaining().Select(n => "rule \"" + n + "\""));
+            left.AddRange(Firewall.Remaining().Where(n => !keepRegions || !n.StartsWith(Firewall.RegionsRuleName)).Select(n => "rule \"" + n + "\""));
             if (left.Count == 0) { Log.Ok("Network restored: app rules and routes removed, checked."); return null; }
             var what = string.Join(", ", left.Take(5)) + (left.Count > 5 ? $" and {left.Count - 5} more" : "");
-            Log.Error("Restore network left: " + what + ".");
+            Log.Error("Turn off protection couldn't remove: " + what + ".");
             return what;
         }
         finally { _gate.Release(); }

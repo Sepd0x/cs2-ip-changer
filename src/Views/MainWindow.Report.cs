@@ -5,14 +5,14 @@ using SRT.Core;
 
 namespace SRT;
 
-// Log > Export diagnostics: a .zip for a bug report, without the API key and the home IP
+// Log > Save bug report: a .zip for a bug report, without the API key and the home IP
 public partial class MainWindow
 {
     async void ExportReport_Click(object sender, RoutedEventArgs e)
     {
         if (_demo) { Toast("Demo: the .zip would go to the Desktop.", true); return; }
-        if (Rec.On) { Toast("Off in the recording build: use the normal app to export diagnostics.", false); return; }
-        ShowProgress("Collecting diagnostics…");
+        if (Rec.On) { Toast("Off in the recording build: use the normal app to save a bug report.", false); return; }
+        ShowProgress("Collecting info for the bug report…");
         try
         {
             var now = await BuildReportText();
@@ -25,11 +25,11 @@ public partial class MainWindow
             var hide = new[] { _s.LastHomeIp, _homePublic };
             var personal = PersonalWords().Where(w => w != _homeInfo?.Country && w != _egressInfo?.Country).ToList();   // the country helps a bug report
             var path = await Task.Run(() => Report.Export(now, json, steamDir, console, hide, personal: personal));
-            Log.Ok("Diagnostics exported: " + path);
-            Toast($"Diagnostics saved: {path}. Your home IP, API key, logins, Steam names and IDs are left out; check the zip before you post it.", true);
+            Log.Ok("Bug report saved: " + path);
+            Toast($"Bug report saved: {path}. Your home IP, API key, usernames, Steam names and IDs are left out; check the zip before you post it.", true);
             ShellLaunch.OpenAsUser(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), $"/select,\"{path}\"", null);
         }
-        catch (Exception ex) { Log.Error("Export diagnostics: " + ex.Message); Toast("Couldn't export: " + ex.Message, Tone.Error); }
+        catch (Exception ex) { Log.Error("Save bug report: " + ex.Message); Toast("Couldn't save the bug report: " + ex.Message, Tone.Error); }
         finally { HideProgress(); }
     }
 

@@ -7,8 +7,9 @@ using System.Security.Principal;
 namespace SRT.Core;
 
 /// <param name="WifiConnected">The phone's Wi-Fi is on a network (true), on but on none (false), or the phone doesn't say (null, Android 10 and older).</param>
+/// <param name="WifiUnknown">The Wi-Fi reading didn't come back as a value (an adb error, a timeout, an empty answer): WifiOn says nothing.</param>
 public sealed record PhoneInfo(string Serial, string State, string Model, string Carrier, string NetType, int? Battery, bool WifiOn = false, string WifiSsid = null,
-    bool? WifiConnected = null)
+    bool? WifiConnected = null, bool WifiUnknown = false)
 {
     public bool Ready => State == "device";
 
@@ -52,7 +53,7 @@ public static class Adb
             if (IsGoogleSigned(c))
             {
                 try { return Secure(c); }
-                catch (Exception ex) { Log.Warn($"ADB found in {Path.GetDirectoryName(c)} but it couldn't be copied to a safe folder ({ex.Message}). Restart the app; if it repeats, export diagnostics."); return null; }
+                catch (Exception ex) { Log.Warn($"ADB found in {Path.GetDirectoryName(c)} but it couldn't be copied to a safe folder ({ex.Message}). Restart the app; if it repeats, save a bug report (Log page)."); return null; }
             }
             if (Skipped.Add(c)) Log.Warn($"Ignored {c}: it is not signed by Google.");
         }
@@ -94,7 +95,7 @@ public static class Adb
         return Path.Combine(dir, "adb.exe");
     }
 
-    static bool Elevated
+    internal static bool Elevated
     {
         get { try { using var id = WindowsIdentity.GetCurrent(); return new WindowsPrincipal(id).IsInRole(WindowsBuiltInRole.Administrator); } catch { return false; } }
     }
@@ -159,6 +160,38 @@ public static class Adb
             return true;
         }
         catch { return false; }
+    }
+
+    static readonly SecurityIdentifier TrustedInstaller = new("S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464");
+    static readonly SecurityIdentifier[] Anyone =
+    {
+        Users, new(WellKnownSidType.AuthenticatedUserSid, null), new(WellKnownSidType.WorldSid, null), new(WellKnownSidType.InteractiveSid, null),
+    };
+
+    /// <summary>
+    /// Programs without admin rights can change the folder: a link, owned by someone other than Administrators, SYSTEM or TrustedInstaller
+    /// (the owner can rewrite the permissions), or write rights for Users, Authenticated Users, Everyone, INTERACTIVE or you.
+    /// C:\Program Files\CS2 IP Changer passes (its TrustedInstaller and CREATOR OWNER entries don't count).
+    /// </summary>
+    public static bool UsersCanWrite(string d)
+    {
+        try
+        {
+            var info = new DirectoryInfo(d);
+            if (info.Attributes.HasFlag(FileAttributes.ReparsePoint)) return true;
+            var sec = info.GetAccessControl();
+            var owner = sec.GetOwner(typeof(SecurityIdentifier)) as SecurityIdentifier;
+            if (owner != Admins && owner != SystemSid && owner != TrustedInstaller) return true;
+            using var me = WindowsIdentity.GetCurrent();
+            foreach (FileSystemAccessRule r in sec.GetAccessRules(true, true, typeof(SecurityIdentifier)))
+            {
+                if (r.AccessControlType != AccessControlType.Allow || (r.FileSystemRights & WriteRights) == 0 || r.PropagationFlags.HasFlag(PropagationFlags.InheritOnly)) continue;
+                var who = r.IdentityReference as SecurityIdentifier;
+                if (Anyone.Contains(who) || who == me.User) return true;
+            }
+            return false;
+        }
+        catch { return true; }
     }
 
     static readonly HashSet<string> Skipped = new(StringComparer.OrdinalIgnoreCase);
@@ -259,22 +292,52 @@ public static class Adb
         var all = q.Output.Replace("\r", "").Split('\n');
         var cut = Array.FindIndex(all, l => l.Trim() == "---");
         var lines = (cut >= 0 ? all[..cut] : all).Select(l => l.Trim()).ToArray();
-        var wifiPart = cut >= 0 ? string.Join("\n", all[(cut + 1)..]) : "";
         string L(int i) => i < lines.Length ? lines[i] : null;
         int? battery = null;
         var lv = L(3);
         if (lv != null && int.TryParse(lv.Replace("level:", "").Trim(), out var b)) battery = b;
         var carrier = L(1)?.Split(',').FirstOrDefault(s => !string.IsNullOrWhiteSpace(s));
         var net = L(2)?.Split(',').FirstOrDefault(s => !string.IsNullOrWhiteSpace(s) && s != "Unknown");
-        // Phone Wi-Fi on = tethering shares the home network instead of mobile data.
-        var wl = wifiPart.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).ToArray();
-        var wifiOn = wl.Length > 0 && wl[0] != "0" && wl[0] != "null";
-        string ssid = null;
-        var m = System.Text.RegularExpressions.Regex.Match(wifiPart, "connected to \"?([^\"\r\n]+)\"?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        if (m.Success) ssid = m.Groups[1].Value.Trim();
+        // Not q.Ok: with Wi-Fi off the last grep finds nothing and the shell exits 1, though the answer is right (seen on a Samsung, 29 Oct).
+        // An adb error has no "---", so ParseWifi still gives unknown for it.
+        var (wifiOn, ssid, connected) = ParseWifi(q.Output);
+        return new PhoneInfo(serial, state, L(0), carrier, PrettyNet(net), battery, wifiOn == true, ssid, wifiOn == true ? connected : false, wifiOn == null);
+    }
+
+    /// <summary>
+    /// The Wi-Fi part of the status shell (after "---"): "settings get global wifi_on", then the "connected" line of "cmd wifi status".
+    /// On only for 1 or 2 (Settings.Global.WIFI_ON: on, on in airplane mode), off for 0 or 3. Anything else (an adb error, a timeout,
+    /// an empty answer that leaves the next line first, no "---") is unknown: null, and the caller keeps what it had.
+    /// </summary>
+    public static (bool? On, string Ssid, bool? Connected) ParseWifi(string output)
+    {
+        if (output == null) return (null, null, null);
+        var all = output.Replace("\r", "").Split('\n');
+        var cut = Array.FindIndex(all, l => l.Trim() == "---");
+        if (cut < 0 || cut + 1 >= all.Length) return (null, null, null);
+        var first = all[cut + 1].Trim();
+        bool? on = first switch { "1" or "2" => true, "0" or "3" => false, _ => null };
+        if (on != true) return (on, null, on == false ? false : null);
+        var rest = string.Join("\n", all[(cut + 2)..]);
+        var m = System.Text.RegularExpressions.Regex.Match(rest, "(?<!not )connected to \"?([^\"\r\n]+)\"?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         // "Wifi is not connected": the radio is on (Samsung turns it on by itself to scan), but tethering is still on mobile data.
-        bool? connected = m.Success ? true : wifiPart.Contains("not connected", StringComparison.OrdinalIgnoreCase) ? false : null;
-        return new PhoneInfo(serial, state, L(0), carrier, PrettyNet(net), battery, wifiOn, ssid, wifiOn ? connected : false);
+        bool? connected = m.Success ? true : rest.Contains("not connected", StringComparison.OrdinalIgnoreCase) ? false : null;
+        return (true, m.Success ? m.Groups[1].Value.Trim() : null, connected);
+    }
+
+    /// <summary>
+    /// The Wi-Fi state the app acts on: an unknown reading keeps the one before, and "on" only counts on the second reading in a row
+    /// (one stray answer must not block servers and CS2; the home IP check is still the third barrier). Off counts at once.
+    /// </summary>
+    public static PhoneInfo SteadyWifi(PhoneInfo now, PhoneInfo before, ref int onReads)
+    {
+        if (now?.Ready != true) { onReads = 0; return now; }
+        var wasOn = before?.Ready == true && before.WifiOn;
+        if (now.WifiUnknown)
+            return before?.Ready == true ? now with { WifiOn = before.WifiOn, WifiSsid = before.WifiSsid, WifiConnected = before.WifiConnected } : now;
+        if (!now.WifiOn) { onReads = 0; return now; }
+        onReads++;
+        return wasOn || onReads >= 2 ? now : now with { WifiOn = false, WifiSsid = null, WifiConnected = false };
     }
 
     static string PrettyNet(string t) => t?.ToUpperInvariant() switch

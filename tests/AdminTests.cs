@@ -40,7 +40,7 @@ static class AdminTests
             var admin = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
             Check("Corre como admin", admin);
             if (!admin) return 1;
-            try { await Body(); await OpenWithNotElevated(); AdbFolder(); }
+            try { await Body(); await OpenWithNotElevated(); AdbFolder(); await RegionTests.Admin(Check); }
             catch (Exception ex) { Check("Exceção", false, ex.ToString()); }
             finally { await Cleanup(); }
             _out.WriteLine(_fails == 0 ? "TUDO OK" : $"{_fails} FALHA(S)");
@@ -116,7 +116,7 @@ static class AdminTests
             MetricIf = -1,
             Boot = DateTime.Now.AddMilliseconds(-Environment.TickCount64),
         });
-        var left = await new Guard().RestoreAll(Array.Empty<string>());
+        var left = await new Guard().RestoreAll(Array.Empty<string>(), keepRegions: false);
         var still = (await Net.ListRoutes()).Any(x => x.Prefix == "203.0.113.77/32");
         Check("Restore apaga a rota de uma sessão anterior", !still);
         Check("Restore confirma que não ficou nada", left == null, left ?? "");
