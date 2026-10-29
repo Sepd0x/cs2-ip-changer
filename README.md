@@ -1,6 +1,6 @@
-<p align="center">
+<h1 align="center">
   <img src="docs/assets/banner.png" alt="CS2 IP Changer: route CS2 and Steam through your phone's mobile data" width="900">
-</p>
+</h1>
 
 <p align="center">
   <a href="https://github.com/Sepd0x/cs2-ip-changer/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/Sepd0x/cs2-ip-changer?include_prereleases&label=release&style=flat-square&labelColor=1b1f24&color=2B74C2"></a>
@@ -46,7 +46,7 @@ It isn't a VPN: servers see a normal mobile connection from your carrier, so it 
 ## Who it's for
 
 - You got IP banned on a community server and want back in.
-- You play HvH or other community servers and would rather keep your home IP out of their logs.
+- You play on community servers and would rather keep your home IP out of their logs and ban lists.
 - You switch between alt accounts a lot, or you stream and want your home IP and Steam logins off screen.
 
 ## How it works
