@@ -1,62 +1,86 @@
-<h1 align="center">
-  <img src="docs/assets/banner.png" alt="CS2 IP Changer: CS2 IP ban bypass and home IP protection through your phone's mobile data" width="900">
-</h1>
+<p align="center">
+  <img src="docs/assets/icon.png" alt="" width="72" height="72">
+</p>
+
+<h1 align="center">CS2 IP Changer</h1>
+
+<p align="center">
+  <b>CS2 IP ban bypass and home IP protection for Counter-Strike 2 community servers. Free, for Windows.</b>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/download-button-dark.svg">
+      <img src="docs/assets/download-button-light.svg" alt="Download for Windows" width="284" height="56">
+    </picture>
+  </a>
+</p>
 
 <p align="center">
   <a href="https://github.com/Sepd0x/cs2-ip-changer/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/Sepd0x/cs2-ip-changer?include_prereleases&label=release&style=flat-square&labelColor=1b1f24&color=2B74C2"></a>
   <img alt="Windows 10 and 11, 64-bit" src="https://img.shields.io/badge/Windows-10%20%7C%2011%20x64-3A3A3A?style=flat-square&labelColor=1b1f24">
-  <a href="#telemetry"><img alt="Telemetry: anonymous, beta only" src="https://img.shields.io/badge/telemetry-anonymous%20(beta)-3A3A3A?style=flat-square&labelColor=1b1f24"></a>
   <a href="https://github.com/Sepd0x/cs2-ip-changer/attestations"><img alt="Builds: attested by GitHub Actions" src="https://img.shields.io/badge/builds-attested-3A3A3A?style=flat-square&labelColor=1b1f24"></a>
-  <a href="https://sepd0x.github.io/cs2-ip-changer/"><img alt="Website: sepd0x.github.io/cs2-ip-changer" src="https://img.shields.io/badge/website-sepd0x.github.io-3A3A3A?style=flat-square&labelColor=1b1f24"></a>
-</p>
-
-<p align="center">
-  <a href="https://github.com/Sepd0x/cs2-ip-changer/releases"><img src="docs/assets/download.svg" alt="Download for Windows" width="264"></a>
-</p>
-
-<p align="center">
-  <sub>Admin is needed for the routes and firewall rules. It never touches the game process, its memory or its program files. No account. Anonymous usage stats while in beta (<a href="#telemetry">what is sent</a>). <a href="#check-your-download">Check your download</a>.</sub>
 </p>
 
 <p align="center">
   <a href="https://sepd0x.github.io/cs2-ip-changer/">Website</a>
   &nbsp;·&nbsp;
-  <a href="#how-it-works">How it works</a>
-  &nbsp;·&nbsp;
-  <a href="#what-it-does">Features</a>
-  &nbsp;·&nbsp;
-  <a href="#setup">Setup</a>
+  <a href="https://sepd0x.github.io/cs2-ip-changer/#guides">Guides</a>
   &nbsp;·&nbsp;
   <a href="#faq">FAQ</a>
-  &nbsp;·&nbsp;
-  <a href="#if-something-goes-wrong">Troubleshooting</a>
-  &nbsp;·&nbsp;
-  <a href="CHANGELOG.md">Changelog</a>
 </p>
-
-**CS2 IP ban bypass and home IP protection for Counter-Strike 2 community servers, free for Windows.**
-
-CS2 IP Changer sends CS2 and Steam through your Android phone's mobile data, so community servers see your carrier's IP and not your home IP. If you get IP banned, change the IP from the app and join again. There's a Steam account switcher for your alt accounts in it too, plus a CS2 config manager, a Steam profile editor and a matchmaking region picker.
-
-It isn't a VPN: servers see a normal mobile connection from your carrier, so it also works on community servers that block VPNs and datacenter IPs. Your home IP stays out of the server's logs, out of reach of anyone on the server who wants to DDoS or dox you, and off screen when you stream.
-
-> [!WARNING]
-> This is a beta, so expect bugs. If something breaks your connection, **Settings > Turn off protection** removes the routes and firewall rules of the protection (`CS2IPChanger.exe --restore` removes the region block too).
-
-> [!NOTE]
-> Playing over mobile data usually means higher ping, more jitter and the odd lost packet compared to your home connection, so the game can feel laggier. How much depends on your carrier, the signal where the phone sits and how busy the cell is. In Game only mode the rest of your PC stays on your home connection. The app measures the phone connection every 30 seconds and tells you when it's weak (see [Connection quality](#what-it-does)).
 
 <p align="center">
   <img src="docs/screenshots/connection.png" alt="The Connection page: protection status, the IP servers see next to your home IP, phone status and live checks" width="900">
 </p>
 
-## Who it's for
+CS2 IP Changer sends CS2 and Steam through your Android phone's mobile data, so community servers see your carrier's IP and not your home IP. Got IP banned? Change the IP from the app and join again; after a ban it can also log into the next account that server hasn't banned. It isn't a VPN: servers see an ordinary mobile connection, so it also works on servers that block VPNs and datacenter IPs. In the same app: a Steam account switcher, a CS2 config manager, a Steam profile editor and a matchmaking region picker.
 
-- You got IP banned on a community server and want back in.
-- You play on community servers and would rather keep your home IP out of their logs and ban lists.
-- You switch between alt accounts a lot, or you stream and want your home IP and Steam logins off screen.
-- You play on several accounts and want the same binds, crosshair and settings on all of them.
-- You want CS2 matchmaking to put you only in the regions with the lowest ping.
+> [!WARNING]
+> This is a beta, so expect bugs. If something breaks your connection, **Settings > Turn off protection** removes the routes and firewall rules (`CS2IPChanger.exe --restore` removes the region block too).
+
+## Quick start
+
+You need Windows 10 or 11 (64-bit), admin rights and an Android phone with mobile data.
+
+1. **Download** `CS2IPChanger.exe` from the [latest release](https://github.com/Sepd0x/cs2-ip-changer/releases/latest) and put it in a folder only admins can change, like `C:\Program Files\CS2 IP Changer`.
+2. **Connect the phone.** Plug it in by USB, turn on USB tethering and turn off the phone's Wi-Fi. Stuck? Press **Phone setup** under Phone: it does each step it can and tells you the one thing left.
+3. **Add your servers.** Run the app (it asks for admin) and paste the servers you play on into **Servers**.
+4. **Check.** Open **Connection** with CS2 and Steam running. Every check should be green, and the IP servers see must not be your home IP.
+
+> [!NOTE]
+> The exe isn't code-signed, so Windows SmartScreen may warn you the first time you run it. Click **More info > Run anyway**, or [check your download](#check-your-download) first.
+
+Will your ping be worse? Usually, yes: mobile data has more latency and jitter than a home line. See [the FAQ](#faq) for how to keep it low. More detail on each step in [Setup](#setup).
+
+## Is it safe?
+
+**It keeps its hands off the game.** It never touches the game process, its memory or its program files. It changes Windows routes and firewall rules, and which Steam account logs in. If you use them, the Configs page copies CS2's own config files between your accounts and the Profiles page changes your Steam profiles. It won't hide a cheat from VAC or any other anti-cheat, so don't use it for that.
+
+**Why it needs admin.** Routes and firewall rules are system settings, and Windows only lets admins change them. That's also why the exe should live in a folder only admins can change, not in Downloads.
+
+**Updates are signed.** Once a day at most the app checks for a new version (you can turn this off). It installs one only if the exe matches the release's SHA-256 and that `.sha256` file is signed with the project's own key, which is kept off GitHub. So someone who got into this repo or its releases still couldn't push an exe of their own to your PC.
+
+**No account. Anonymous stats in the beta.** While in beta the app sends anonymous usage stats: versions, your country as two letters, the mode and counters. Never IPs, accounts, names or server addresses. [What is sent](#telemetry).
+
+**Easy to undo.** Settings > Turn off protection removes the routes and firewall rules and checks that they're gone. `CS2IPChanger.exe --restore` removes everything, the region block too. More in [If something goes wrong](#if-something-goes-wrong).
+
+### Check your download
+
+Releases built by GitHub Actions come with a `CS2IPChanger.exe.sha256` file and a build attestation, which shows the exe was built from this repository's code. To check the attestation, install the [GitHub CLI](https://cli.github.com/), sign in once with `gh auth login` and run:
+
+```powershell
+gh attestation verify CS2IPChanger.exe -R Sepd0x/cs2-ip-changer
+```
+
+To check only the hash, put the `.sha256` file next to the exe and run this in PowerShell. It prints `True` if they match:
+
+```powershell
+(Get-FileHash .\CS2IPChanger.exe).Hash -eq (Get-Content .\CS2IPChanger.exe.sha256).Split()[0]
+```
+
+Each release is also scanned on VirusTotal. beta.6: [2 of 70 engines](https://www.virustotal.com/gui/file/8f8f4197b589dd80d6826a703af863c1684949f610e6acf7805102c3860314a2/detection) flag it (Google and Varist, generic "risk" labels), and Microsoft, Kaspersky, ESET, Bitdefender and Avast find nothing. An exe that isn't code-signed, asks for admin and changes firewall rules gets flagged by some engines on heuristics alone. If you see a detection that looks wrong, open an issue.
 
 ## How it works
 
@@ -65,7 +89,7 @@ It isn't a VPN: servers see a normal mobile connection from your carrier, so it 
   <img src="docs/assets/how-it-works-light.svg" alt="Your PC sends CS2 and Steam over the USB cable to the phone, which uses mobile data to reach the server. The server sees the carrier's IP. Your home router still carries the browser, Discord and downloads, but it is blocked for CS2 and your servers." width="100%">
 </picture>
 
-The phone shares its mobile data with the PC over USB tethering (or its hotspot). The app routes CS2, Steam and your servers through it and blocks them on your home connection, so those servers only see the carrier's IP.
+The phone shares its mobile data with the PC over USB tethering (or its hotspot). The app routes CS2, Steam and your servers through it and blocks them on your home connection, so those servers only see the carrier's IP. Your home IP stays out of their logs and ban lists, away from the admins and the plugins they run, and off screen when you stream. Other players never see your IP either way.
 
 ### CS2 IP Changer or a VPN?
 
@@ -78,31 +102,8 @@ The phone shares its mobile data with the PC over USB tethering (or its hotspot)
 | What goes through it | CS2, Steam and your servers, or the whole PC if you pick it | Usually the whole PC |
 | If the connection drops | Windows Firewall kill switch: CS2 loses the connection instead of using your home IP | Depends on the VPN app |
 
-## What it does
-
-| Feature | Details |
-|---|---|
-| Game-only routing | CS2, Steam and the servers on your list go through the phone. Your browser, Discord and downloads stay on your home connection and don't eat your mobile data. You can send the whole PC through the phone instead: IPv4 and DNS go through the phone, and IPv6 is blocked while it's on, so nothing leaves from home. |
-| No phone mode | No phone with you? Pick "No phone: play on your home connection" under What goes through the phone. Nothing is blocked and servers see your home IP, and the app says so in plain words. Accounts, Configs, Profiles and Regions keep working. |
-| Kill switch | A Windows Firewall rule blocks your listed servers on every adapter except the phone, and `cs2.exe`'s game traffic (UDP) can only use the phone connection. If the cable comes out, the game loses connection instead of falling back to your home IP. |
-| Change IP | Turns mobile data (or airplane mode) off and on over ADB until the carrier hands you a new IP. Old IPs stay in a list so you can see they really changed. |
-| Change IP and rejoin | When a server kicks or bans you, the app plays a sound and offers to get a new IP and join the last server again (only once protection is confirmed). After a ban it also logs into the next account that server hasn't banned, because the ban is on the IP and the account. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> does it from inside the game (you can pick another key in Settings > Switch). When Steam or VAC refuses the account instead, the app says so and doesn't offer a new IP, because it wouldn't help. |
-| Connection quality | Every 30 seconds the app pings through the phone and shows ping, jitter and loss in Checks: Good, Fair or Weak. Weak means 150 ms or more, jitter of 40 ms or more, 2 of 8 pings lost, or a 3G/2G network, two measurements in a row. When it's weak the app warns you, and if Whole PC is on it drops to Game only so CS2 doesn't share the phone with your browser, Discord and downloads. It goes back to Whole PC once the connection is fine again and CS2 is closed, never mid-match. You can turn that off in Settings > Protection. |
-| New range check | Tells you if the new IP is in a new /16 or the same one as before, because some admins ban the whole range. It can keep trying until the range changes. |
-| Live checks | Firewall, routes, the IP servers see next to your home IP, whether the phone is really on mobile data, and whether Steam uses the same connection as the game (otherwise servers kick you with "No Steam logon"). There's a leak test too. |
-| Server list | Paste `IP:port`, `connect IP:port` or `steam://connect/...` links. You see name, map, players and ping, and join with one click. On a full server the app can wait for a slot and join when one opens. |
-| Regions | Pick where CS2 matchmaking (Premier, Competitive, Casual, Deathmatch, Wingman) can put you. Each region shows its ping through the phone (your home connection in No phone mode), and you turn regions on or off, or use Only this region, Closest 3, your continent only (Europe only, North America only…, from your lowest ping or your home country), Allow all or Ping under X ms. Turned-off regions are blocked with one Windows Firewall rule for `cs2.exe` only, on Valve's relay IPs only: Steam, friends and community servers aren't touched. The relay list comes from Valve and is saved for when you're offline, and the rule is rebuilt when Valve changes the list. Changes apply at once; CS2 re-measures the regions on its next start. Regions don't depend on the phone or on protection: they stay off until you click Allow all. Blocking too much means long queues or no match. |
-| Players | Click the player count to see who is on a server. Some communities hide the list, and the app shows "hidden" there. |
-| Player flags | Flag a player as Staff or with your own label and color, by name or by Steam profile link so the flag follows name changes. Servers only share names, so a flag without a profile matches anyone with that name. |
-| Follow a player | You get a sound and a notice with Join when a player you follow shows up on another server in your list. Joining them automatically is off by default and always asks while CS2 is open. |
-| Server bans | When CS2's console shows a ban, the account in use gets marked for that server and for the rest of the same community (the same tag in the name, or a community name you set with right-click > Set community name). Generic names like "Retakes" or "Mirage 24/7" don't count, and neither does a shared IP on its own. Joining there with it asks first. |
-| Account switcher | Switches between the Steam accounts saved on your PC without typing passwords. Switch (top bar, Accounts or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F9</kbd>, even mid-game) gets a new IP, logs into the next account and joins the last server again; in Settings you pick which of those steps it does. Each account shows VAC, game and trade bans and its cooldown, and Switch skips accounts on cooldown or with a ban mark on that server. CS2 only opens once Steam is really on the new account; if Steam logs in to another one, the app tells you. |
-| CS2 config manager | The Configs page copies your CS2 config between your accounts: binds, crosshair, the other game settings (sensitivity, viewmodel), video, and HUD, radar and audio, each on its own. Pick a sync mode: from a main account, from the account you used before, or latest change wins. It runs when a new account shows up, before the app logs in or opens CS2, or when you click Sync now. Nothing is written while CS2 is open, every change keeps a backup (Undo last sync puts it back), and an account can be left out. Save a config as a named snapshot, export it as a .zip for another PC, and compare two accounts setting by setting with a crosshair preview. See [CS2 config manager](#cs2-config-manager). |
-| Profiles | Changes the name, picture, real name, bio, country, privacy and custom URL of the accounts you pick, from saved templates, or makes them all look like one account in one click. You see each account now and after before anything is sent, a copy of each profile is kept so Restore original puts it back, and new accounts can get a template on their own. `{name}` and `{n}` work in names; a login never ends up on a profile. Needs a one-time Steam sign-in per account ([what happens to your login](#profiles)). |
-| Clear feedback | Every command plays a short sound when it's taken and another when it's done or failed, and the top bar shows what it's doing. You hear it in game too. The sounds can be turned off. |
-| Open with CS2 | Programs you pick, like Discord, Spotify or a stats tracker, open when the app opens CS2. They start as you, never with the app's admin rights. A program that needs admin gets an As admin switch: Windows asks first (UAC). |
-| Stream friendly | Hide usernames keeps usernames off screen, also in the Log, and your home IP stays masked in the app. The Steam Web API key is hidden unless you click Show. |
-| Updates | Once a day at most it checks for a new version and only installs it if the SHA-256 from the release matches. Before downloading it tells you the size, and warns you when the download would go through the phone's mobile data. You can turn this off. |
+<a id="what-it-does"></a>
+## Features
 
 <table>
   <tr>
@@ -123,91 +124,68 @@ The phone shares its mobile data with the PC over USB tethering (or its hotspot)
   </tr>
 </table>
 
-### CS2 config manager
+Every feature in detail: [docs/FEATURES.md](docs/FEATURES.md).
 
-CS2 keeps each account's settings in `Steam\userdata\<id>\730\local\cfg`: binds in `cs2_user_keys_0_slot0.vcfg`, the crosshair and game settings in `cs2_user_convars_0_slot0.vcfg`, video in `cs2_video.txt`, and HUD, radar and audio in `cs2_machine_convars.vcfg`. The Configs page copies those files between your accounts.
+### Protection
+- **Game-only routing.** CS2, Steam and your servers go through the phone; your browser, Discord and downloads stay at home. Or send the whole PC through it.
+- **Kill switch.** A Windows Firewall rule keeps CS2 and your servers on the phone. If the cable comes out, the game loses connection instead of using your home IP.
+- **Live checks.** Firewall, routes, the IP servers see next to your home IP, mobile data on the phone, Steam on the same connection as the game, and a leak test.
+- **Connection quality.** Ping, jitter and loss through the phone every 30 seconds, with a warning when it's weak.
+- **No phone mode.** Play on your home connection: nothing is blocked and servers see your home IP. Accounts, Configs, Profiles and Regions keep working.
 
-- **Sync modes.** Off (the default), From a main account, From the previous account, or From the account changed last (when CS2 closes, the account you changed last copies its config to the others). Right-click an account > Use as main config is the quick way in.
-- **When.** When a new account shows up on the PC, and right before the app logs in (Log in, Switch) or opens CS2 for a join. Sync now does it by hand. Turn Sync off on an account and the sync never touches it.
-- **Video stays this PC's.** Copying Video copies the resolution and the graphics settings, but each account keeps this PC's refresh rate and monitor, so a 144 Hz screen doesn't end up at 60 Hz.
-- **Crosshair only.** Crosshair and Game settings are separate: you can copy just the crosshair and keep each account's sensitivity, or the other way round.
-- **Never with CS2 open.** CS2 saves its config when it closes and would undo the copy, so the copy waits and goes in when CS2 closes.
-- **Steam Cloud.** Binds and game settings are also kept in Steam Cloud. The app writes the cloud copy too, the same way CS2 does when it saves, so Steam uploads the new one on the next launch. If an account was played on another PC since, Steam may bring that version back, or ask which one to keep. If your settings keep going back, turn off Steam Cloud for CS2 (CS2 > Properties > General).
-- **Backups.** Before it changes an account, the app saves that account's files in `SRT_Dados\configs\backups` (the 20 newest per account). Undo last sync puts back everything the last sync changed, and any backup can be restored on its own.
-- **Snapshots.** Save an account's config under a name, copy it to any accounts later, or export it as a `.zip` to use on another PC. The `.zip` has only the config files and the name, never the account. Video settings from a PC with another graphics card may be redetected by CS2.
-- **Compare.** Pick two accounts or snapshots to see the settings that differ, in words where the app knows them (sensitivity, crosshair, resolution, viewmodel, binds), and a preview of each crosshair.
+### Change IP
+- **Change IP.** Mobile data (or airplane mode) off and on over ADB until the carrier hands you a new IP.
+- **Change IP and rejoin.** After a kick or ban: a new IP and back on the last server, also from inside the game with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd>. After a ban it also logs into the next account that server hasn't banned.
+- **New range check.** Tells you if the new IP is in a new /16, because some admins ban whole ranges, and can keep trying until it is.
 
-Nothing from your configs goes into Save bug report.
+### Servers
+- **Server list.** Paste `IP:port`, `connect` or `steam://connect/` links, see name, map, players and ping, and join in one click. On a full server it waits for a slot.
+- **Players and flags.** See who is on a server and flag players as Staff or with your own label, by name or Steam profile link.
+- **Follow a player.** A sound and a Join notice when someone you follow shows up on another server in your list.
+- **Server bans.** A ban in CS2's console marks that account for the server and its community, and joining there with it asks first.
 
-### Profiles
+### Accounts
+- **Account switcher.** Uses the logins Steam already saved, no passwords. Switch (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F9</kbd>, even mid-game) gets a new IP, logs into the next account and joins the last server again.
+- **Bans and cooldowns.** VAC, game and trade bans and the cooldown of each account. Switch skips accounts on cooldown or marked on that server.
 
-<p align="center">
-  <img src="docs/screenshots/profiles.png" alt="The Profiles page: a template on the left, and each account now and after on the right, with its sign-in" width="900">
-</p>
+### Regions
+- **Pick your matchmaking regions.** Each region with its ping; turn them on or off, or use Only this region, Closest 3, your continent only or Ping under X ms.
+- **Blocks only the relays.** One Windows Firewall rule for `cs2.exe`, on Valve's relay IPs only. Steam, friends and community servers aren't touched.
 
-The Profiles page changes how your Steam accounts look to others. Make a template (name, picture, real name, bio, country, privacy, custom URL), pick the accounts, check the preview and click Apply. The accounts are changed one after another with a pause between them, and each result is shown next to the account in plain words. What you can do with it:
+### Configs and Profiles
+- **CS2 config manager.** Copies binds, crosshair, game settings, video, and HUD, radar and audio between your accounts, each on its own, with backups and Undo. [More](#cs2-config-manager).
+- **Profiles.** Changes the name, picture, bio, country, privacy and custom URL of the accounts you pick, from templates, with a preview first and Restore original. [More](#profiles).
 
-- **Preview**: pick an account under "Make all look like" and every other account gets its name, picture, real name, bio and country. Right-click an account on Accounts > Copy look to… does the same.
-- **Names with numbers**: `nightfall {n}` gives nightfall 1, nightfall 2… in the order of the list. `{name}` is the account's name now, so `{name} | NV` adds a tag. There is no `{login}`, on purpose: a login on a public profile is half of what someone needs to take the account. The app also refuses a name, bio or URL that would show any login saved on your PC.
-- **Copy from an account** (the copy button next to the template) reads that account's look into the template. **From a Steam profile link** in the same menu takes any profile (`steamcommunity.com/id/…`, `/profiles/…` or a SteamID64), like an account you have on another PC: its public name, picture, real name, bio and country. What that profile keeps private stays as it is on each account.
-- **Undo**: before the first change on an account, the app keeps a copy of its profile (name, details, privacy and picture) in `SRT_Dados/profiles/snapshots`, the original and the 5 newest per account. Right-click > Restore original puts it back; Undo the last change goes back one step.
-- **New accounts**: tick "Use this template on new accounts" and an account that shows up later in Steam is offered that look (the app asks you to sign in to it once).
-- **Clear name history** also empties "previously known as". That one is permanent: Steam has no way back, and Restore can't bring them back either. It's off unless you tick it.
-
-Pictures are cropped square and saved again as a new JPG before they're used, so nothing from the original file (photo data like EXIF or GPS) reaches Steam.
-
-**What it keeps on your PC.** All of it is in `SRT_Dados/profiles`: your templates (`templates.json`) and their pictures (`avatars`), the copies for undo (`snapshots`, one folder per account), the encrypted sign-ins (`sessions`) and the list of accounts it has already seen, so it knows when a new one shows up (`known.json`). Nothing of it leaves your PC except what you apply to Steam.
-
-**What happens to my login.** Changing a profile needs a Steam web session for that account, the same one your browser has on steamcommunity.com. When you click Sign in, the app signs in the way Steam's own login page does: you type the password (or scan a QR code with the Steam app and type nothing) and approve Steam Guard. The password goes straight from the box into Steam's encryption key for that sign-in and is wiped from memory right after. It is never saved, never written to the Log and never sent anywhere but Steam. What the app keeps is Steam's sign-in token for that account, encrypted with Windows (DPAPI: only your Windows user can open it) in `SRT_Dados/profiles/sessions`, one file per account that only your Windows user can read. It's never in the Log, in Save bug report or in the usage stats. Steam lists the sign-in under Steam > Settings > Security > Authorized devices as "CS2 IP Changer", where you can end it at any time, and Forget (per account) or Forget all sign-ins deletes the files. For this the app only talks to Steam (steamcommunity.com, login.steampowered.com, api.steampowered.com and Steam's picture servers), over HTTPS. Signing in is off in the recording build, and the Profiles page there hides names and pictures like the Accounts page.
+### Also
+- **Stream friendly.** Hide usernames, your home IP masked in the app, and the Steam Web API key hidden unless you click Show.
+- **Open with CS2.** Discord, Spotify or a stats tracker open with CS2, as you and never with the app's admin rights.
+- **Sounds.** A short sound when a command is taken and another when it's done or failed, in game too. They can be turned off.
 
 ## Setup
 
-You need Windows 10 or 11 (64-bit), admin rights and an Android phone with mobile data.
+The [Quick start](#quick-start) covers the usual case. The details:
 
-1. Download `CS2IPChanger.exe` from [Releases](https://github.com/Sepd0x/cs2-ip-changer/releases) and put it in a folder only admins can change, like `C:\Program Files\CS2 IP Changer`. It runs as admin, so Downloads is a bad place for it. Already used it from another folder? Close it and copy `CS2IPChanger.exe` together with its `SRT_Dados` folder there: copying, not moving, gives the folder the new place's permissions.
-2. Plug the phone in by USB, turn on USB tethering and turn off the phone's Wi-Fi, so it shares mobile data and not your home Wi-Fi. While the phone's Wi-Fi is on, the app keeps your servers and CS2 blocked. Not sure what's missing? Press **Phone setup** under Phone: it checks the cable, the USB driver, USB debugging, tethering, the phone's Wi-Fi and where the rest of the PC goes, does each step it can and tells you the one thing left.
-3. Run the app (it needs admin) and paste the servers you play on into **Servers**.
-4. Open **Connection**. With CS2 and Steam running, every check should be green, and the IP servers see must not be your home IP.
-
-Windows Firewall has to be on. Third-party firewalls that turn it off (some antivirus suites) leave the app without a kill switch, and it says so.
-
-The exe isn't code-signed, so Windows SmartScreen may warn you the first time you run it. Click More info > Run anyway, or [check your download](#check-your-download) first.
-
-To change IP from the PC, also turn on USB debugging on the phone. If ADB isn't installed, the app can download Google's platform-tools for you (about 7 MB).
-
-To spot kicks and bans, CS2 needs the `-condebug -conclearlog` launch options (the second one starts `console.log` fresh each time, so it doesn't grow forever). The app adds both when it opens CS2, and tells you if they're missing when you start the game from Steam.
-
-The hotkeys are <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F9</kbd> for Switch and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> for Change IP and rejoin. Change them in Settings > Switch. The app won't take Ctrl+Alt combinations: on many keyboards that's AltGr, which types @ and €.
-
-The app is portable. Settings, servers and accounts are saved in `SRT_Dados` next to the exe. To uninstall, run `CS2IPChanger.exe --restore` first (it removes the region block too) and then delete the folder, and also `C:\ProgramData\CS2IPChanger` (the Windows files the exe unpacks there; the app removes older versions' folders by itself).
-
-### Check your download
-
-Releases built by GitHub Actions come with a `CS2IPChanger.exe.sha256` file and a build attestation, which shows the exe was built from this repository's code. To check the attestation, install the [GitHub CLI](https://cli.github.com/), sign in once with `gh auth login` and run:
-
-```powershell
-gh attestation verify CS2IPChanger.exe -R Sepd0x/cs2-ip-changer
-```
-
-To check only the hash, put the `.sha256` file next to the exe and run this in PowerShell. It prints `True` if they match:
-
-```powershell
-(Get-FileHash .\CS2IPChanger.exe).Hash -eq (Get-Content .\CS2IPChanger.exe.sha256).Split()[0]
-```
-
-Each release is also scanned on VirusTotal. beta.6: [2 of 70 engines](https://www.virustotal.com/gui/file/8f8f4197b589dd80d6826a703af863c1684949f610e6acf7805102c3860314a2/detection) flag it (Google and Varist, generic "risk" labels), and Microsoft, Kaspersky, ESET, Bitdefender and Avast find nothing. An exe that isn't code-signed, asks for admin and changes firewall rules gets flagged by some engines on heuristics alone. If you see a detection that looks wrong, open an issue.
+- **Where to put the exe.** It runs as admin, so Downloads is a bad place for it. Already used it from another folder? Close it and copy `CS2IPChanger.exe` together with its `SRT_Dados` folder to the new one: copying, not moving, gives the folder the new place's permissions.
+- **The phone's Wi-Fi.** It has to be off, so the phone shares mobile data and not your home Wi-Fi. While it's on, the app keeps your servers and CS2 blocked.
+- **Windows Firewall has to be on.** Third-party firewalls that turn it off (some antivirus suites) leave the app without a kill switch, and it says so.
+- **Change IP from the PC.** Also turn on USB debugging on the phone. If ADB isn't installed, the app can download Google's platform-tools for you (about 7 MB).
+- **Launch options.** To spot kicks and bans, CS2 needs `-condebug -conclearlog` (the second one starts `console.log` fresh each time, so it doesn't grow forever). The app adds both when it opens CS2, and tells you if they're missing when you start the game from Steam.
+- **Hotkeys.** <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F9</kbd> for Switch and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> for Change IP and rejoin. Change them in Settings > Switch. The app won't take Ctrl+Alt combinations: on many keyboards that's AltGr, which types @ and €.
+- **No phone with you?** Pick "No phone: play on your home connection" under What goes through the phone. Nothing is blocked, servers see your home IP, and the app says so. Until a phone has been connected once, CS2 isn't locked, so trying the app without a phone never leaves CS2 unable to connect at home.
+- **Hotspot or a 4G/5G dongle** work too: pick them under Connection > How the PC connects to the phone (see the [FAQ](#faq)).
+- **Portable.** Settings, servers and accounts are saved in `SRT_Dados` next to the exe. To uninstall, run `CS2IPChanger.exe --restore` first (it removes the region block too), then delete the folder and also `C:\ProgramData\CS2IPChanger` (the Windows files the exe unpacks there; the app removes older versions' folders by itself).
 
 ## If something goes wrong
 
 The firewall rules stay in place when you close the app, on purpose, so your IP can't leak while it's closed. To undo everything:
 
-- In the app: Settings > Turn off protection. It removes the routes and rules and checks that they're really gone. Protection stays off until you press Run leak test or open the app again. Regions you turned off stay off: Allow all on Regions lifts them.
-- If the window won't open: run `CS2IPChanger.exe --restore`. It removes everything, the region block too.
-- If you already deleted the app: open [tools/restore.cmd](tools/restore.cmd), click Download raw file, right-click the file and pick Run as administrator, then restart the PC.
+- **In the app:** Settings > Turn off protection. It removes the routes and rules and checks that they're really gone. Protection stays off until you press Run leak test or open the app again. Regions you turned off stay off: Allow all on Regions lifts them.
+- **If the window won't open:** run `CS2IPChanger.exe --restore`. It removes everything, the region block too.
+- **If you already deleted the app:** open [tools/restore.cmd](tools/restore.cmd), click Download raw file, right-click the file and pick Run as administrator, then restart the PC.
 
 Lag, or programs opened with CS2 losing their connection? Look at Connection quality in Checks. If it says Weak, the phone connection is the problem: see [Will my ping be worse?](#faq). In Whole PC mode, programs opened with CS2 go through the phone too, so a new IP cuts their connections: use Game only for them.
 
-Found a bug? [Open an issue](https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose) with the version (bottom left of the window) and the diagnostics (Log page > Save bug report). That saves a .zip on your Desktop with the log, the app's rules and routes, Steam's connection log and CS2's console. Your home IP and API key are left out, but look through it before you post. If you paste the log instead (Copy all), blank out your IPs first.
+Found a bug? [Open an issue](https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose) with the version (bottom left of the window) and the diagnostics (Log page > Save bug report). That saves a .zip on your Desktop with the log, the app's rules and routes, Steam's connection log, CS2's console and the details of any error the app caught. Your home IP, API key, logins, Steam and player names, SteamIDs, Wi-Fi names, emails and your Windows user are hidden in it, but look through it before you post. If you paste the log instead (Copy all), blank out your IPs first.
 
 ## FAQ
 
@@ -270,10 +248,10 @@ No app can stop an admin from banning you. What it does is keep your home IP out
 </details>
 
 <details>
-<summary><b>Why bother hiding my home IP?</b></summary>
+<summary><b>Why bother hiding my home IP? Who can see it?</b></summary>
 <br>
 
-Anyone running a community server can see the IP of every player who joins, and IP bans are tied to it. With the phone's IP, nobody gets your home connection to DDoS it, and after a ban you change IP and keep playing on the same servers.
+The admins of every community server you join can see your IP, and so can the plugins they run on it. Other players can't. IP bans are tied to it, and it's in the server's logs. With the phone's IP, nobody on the server side gets your home connection to DDoS it, and after a ban you change IP and keep playing on the same servers.
 </details>
 
 <details>
@@ -327,6 +305,22 @@ While Whole PC is on, DNS can only leave through the phone and IPv6 is blocked, 
 Protection stays on, so closing the app can't leak your IP. If you'd rather have it turn off, there's a setting for that. Until a phone has been connected once, CS2 isn't locked, so trying the app without a phone never leaves CS2 unable to connect at home.
 </details>
 
+## CS2 config manager
+
+The Configs page copies CS2's config files between your Steam accounts: binds, crosshair, the other game settings (sensitivity, viewmodel), video, and HUD, radar and audio, each on its own. Sync from a main account, from the account you used before, or let the latest change win. It runs when a new account shows up, before the app logs in or opens CS2, or when you click Sync now.
+
+Nothing is written while CS2 is open, every change keeps a backup (Undo last sync puts it back), and an account can be left out. Save a config as a named snapshot, export it as a .zip for another PC, and compare two accounts setting by setting with a crosshair preview. Video keeps this PC's refresh rate and monitor. Steam Cloud, backups and the files it touches: [docs/FEATURES.md](docs/FEATURES.md#cs2-config-manager). Nothing from your configs goes into Save bug report.
+
+## Profiles
+
+<p align="center">
+  <img src="docs/screenshots/profiles.png" alt="The Profiles page: a template on the left, and each account now and after on the right, with its sign-in" width="900">
+</p>
+
+The Profiles page changes how your Steam accounts look to others. Make a template (name, picture, real name, bio, country, privacy, custom URL), pick the accounts, check the preview and click Apply. Or make them all look like one account in one click. `{name}` and `{n}` work in names, and a login never ends up on a profile: there is no `{login}`, and the app refuses a name, bio or URL that would show one. A copy of each profile is kept first, so Restore original puts it back. Pictures are saved again as a new JPG, so no photo data (EXIF, GPS) reaches Steam. Everything it keeps stays on your PC in `SRT_Dados/profiles`. More in [docs/FEATURES.md](docs/FEATURES.md#profiles).
+
+**What happens to my login.** Changing a profile needs a Steam web session for that account, the same one your browser has on steamcommunity.com. When you click Sign in, the app signs in the way Steam's own login page does: you type the password (or scan a QR code with the Steam app and type nothing) and approve Steam Guard. The password goes straight from the box into Steam's encryption key for that sign-in and is wiped from memory right after. It is never saved, never written to the Log and never sent anywhere but Steam. What the app keeps is Steam's sign-in token for that account, encrypted with Windows (DPAPI: only your Windows user can open it) in `SRT_Dados/profiles/sessions`, one file per account that only your Windows user can read. It's never in the Log, in Save bug report or in the usage stats. Steam lists the sign-in under Steam > Settings > Security > Authorized devices as "CS2 IP Changer", where you can end it at any time, and Forget (per account) or Forget all sign-ins deletes the files. For this the app only talks to Steam (steamcommunity.com, login.steampowered.com, api.steampowered.com and Steam's picture servers), over HTTPS. Signing in is off in the recording build, and the Profiles page there hides names and pictures like the Accounts page.
+
 ## Privacy
 
 There's no account. While the app is in beta it sends anonymous usage stats ([Telemetry](#telemetry)). Besides that, it only talks to these services:
@@ -368,10 +362,8 @@ The server is a Cloudflare Worker whose code is in this repo ([`worker/stats`](w
 
 ## License
 
-All rights reserved. You can download the releases and use them. You can't copy, modify or redistribute the code without permission. Details in [LICENSE](LICENSE).
+All rights reserved. The source is public so you can read it and check what the app does. The releases are free to download and use on your own PCs, for personal use. You can't copy, modify or redistribute the code or the exe without permission. That's so nobody can re-upload a changed exe under this name. Details in [LICENSE](LICENSE).
 
 The command sounds are from [Interface Sounds](https://kenney.nl/assets/interface-sounds) by Kenney (CC0).
 
 Not affiliated with Valve. Counter-Strike and Steam are trademarks of Valve Corporation.
-
-<sub>Keywords: CS2 IP changer, CS2 IP ban bypass, Counter-Strike 2 IP ban, change IP in CS2, CS2 IP unban on community servers, hide IP in CS2, protect your home IP from DDoS, play CS2 on mobile data, USB tethering for gaming, CS2 kill switch, Steam account switcher, CS2 alt accounts, CS2 config sync between accounts, Steam profile changer, CS2 region selector, CS2 matchmaking region blocker, CS2 server list with ping.</sub>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 284 56" width="284" height="56" role="img" aria-label="Download for Windows">
+<title>Download for Windows</title>
+<rect x="0.5" y="0.5" width="283" height="55" rx="8" fill="#2b74c2" stroke="#1f5a99"/>
+<g fill="#ffffff">
+<rect x="30" y="18" width="9" height="9" rx="1"/><rect x="41" y="18" width="9" height="9" rx="1"/>
+<rect x="30" y="29" width="9" height="9" rx="1"/><rect x="41" y="29" width="9" height="9" rx="1"/>
+</g>
+<text x="64" textLength="190" lengthAdjust="spacingAndGlyphs" y="34.5" font-family="'Segoe UI Variable Text','Segoe UI',-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif" font-size="18" font-weight="600" fill="#ffffff">Download for Windows</text>
+</svg>

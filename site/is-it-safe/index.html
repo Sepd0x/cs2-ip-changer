@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Is CS2 IP Changer safe? What it changes and how to check it</title>
-<meta name="description" content="What CS2 IP Changer touches on your PC, why it needs admin, how to verify the download (SHA-256 and GitHub build attestation), signed updates, and how to undo everything.">
+<meta name="description" content="What CS2 IP Changer changes on your PC, why it needs admin, how to verify the download (SHA-256, build attestation), signed updates, and how to undo it.">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/">
 <link rel="icon" href="../img/icon.png">
@@ -12,9 +12,9 @@
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="CS2 IP Changer">
 <meta property="og:title" content="Is CS2 IP Changer safe? What it changes and how to check it">
-<meta property="og:description" content="What CS2 IP Changer touches on your PC, why it needs admin, how to verify the download (SHA-256 and GitHub build attestation), signed updates, and how to undo everything.">
+<meta property="og:description" content="What CS2 IP Changer changes on your PC, why it needs admin, how to verify the download (SHA-256, build attestation), signed updates, and how to undo it.">
 <meta property="og:url" content="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/">
-<meta property="og:image" content="https://sepd0x.github.io/cs2-ip-changer/img/social-preview.png">
+<meta property="og:image" content="https://sepd0x.github.io/cs2-ip-changer/img/connection.png">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">
 {
@@ -25,7 +25,7 @@
    "@id": "https://sepd0x.github.io/cs2-ip-changer/is-it-safe/#page",
    "url": "https://sepd0x.github.io/cs2-ip-changer/is-it-safe/",
    "name": "Is CS2 IP Changer safe? What it changes and how to check it",
-   "description": "What CS2 IP Changer touches on your PC, why it needs admin, how to verify the download (SHA-256 and GitHub build attestation), signed updates, and how to undo everything.",
+   "description": "What CS2 IP Changer changes on your PC, why it needs admin, how to verify the download (SHA-256, build attestation), signed updates, and how to undo it.",
    "inLanguage": "en",
    "isPartOf": {
     "@id": "https://sepd0x.github.io/cs2-ip-changer/#website"
@@ -33,7 +33,8 @@
    "about": {
     "@id": "https://sepd0x.github.io/cs2-ip-changer/#app"
    },
-   "dateModified": "2026-10-31"
+   "dateModified": "2026-10-31",
+   "primaryImageOfPage": "https://sepd0x.github.io/cs2-ip-changer/img/connection.png"
   },
   {
    "@type": "BreadcrumbList",
@@ -57,18 +58,18 @@
    "mainEntity": [
     {
      "@type": "Question",
-     "name": "Is it open source?",
+     "name": "Can this get me VAC banned?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "The source is public on GitHub so anyone can read and build it, but the license is All rights reserved during the beta: you can use the releases, not copy or redistribute the code."
+      "text": "It never touches the game process, its memory or its program files. It changes Windows routing and firewall rules and which Steam account logs in. If you use them, the Configs page copies CS2's config files between your accounts and the Profiles page changes your Steam profiles. It also won't hide a cheat from VAC or any other anti-cheat, so don't use it for that."
      }
     },
     {
      "@type": "Question",
-     "name": "Can this get me VAC banned?",
+     "name": "Is it open source?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "It never touches the game process, its memory or its program files. It changes Windows routing and firewall rules and which Steam account logs in."
+      "text": "The source is public on GitHub so anyone can read and build it, but the license is All rights reserved during the beta: you can use the releases, not copy or redistribute the code."
      }
     },
     {
@@ -85,11 +86,13 @@
 }
 </script>
 <style>
-:root{--bg:#0e0e0f;--panel:#161618;--line:#26262a;--ink:#f0f1f3;--mu:#a1a3a9;--fa:#8a8c93;--ac:#5ba8f0;--ac2:#2b74c2;--ok:#6cc070}
+:root{--bg:#0e0e0f;--panel:#151517;--panel2:#1c1c1f;--line:#26262a;--line2:#34343a;--ink:#f0f1f3;--mu:#a1a3a9;--fa:#8a8c93;--ac:#5ba8f0;--ac2:#2b74c2;--tint:rgba(91,168,240,.07)}
 *{box-sizing:border-box}
-html{color-scheme:dark;scroll-behavior:smooth}
+html{color-scheme:dark;scroll-behavior:smooth;font-size:16px}
+@media (min-width:1800px){html{font-size:18px}}
+@media (min-width:2200px){.wrap{max-width:82rem}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Segoe UI Variable Text","Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--bg);color:var(--ink);font:1rem/1.6 "Segoe UI Variable Text","Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
 a{color:var(--ac);text-decoration:none}
 a:hover{text-decoration:underline}
 a:focus-visible,summary:focus-visible{outline:2px solid var(--ac);outline-offset:3px;border-radius:4px}
@@ -97,81 +100,192 @@ img{max-width:100%;height:auto;display:block}
 picture{display:block}
 code,kbd{font-family:"Cascadia Mono",Consolas,"SFMono-Regular",Menlo,monospace;font-size:.88em}
 kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;background:var(--panel)}
+h1,h2,h3{text-wrap:balance}
 .skip{position:absolute;left:-999px;top:8px;background:var(--ac2);color:#fff;padding:8px 14px;border-radius:6px;z-index:10}
 .skip:focus{left:12px}
-.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+.wrap{max-width:72.5rem;margin:0 auto;padding:0 1.25rem}
 .top{position:relative;border-bottom:1px solid var(--line)}
 .top::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,#4aa3ef,#9b7bea,#d65fc0,#e3a86a,#cfd84a)}
-.top .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;height:4rem}
 .brand{display:flex;align-items:center;gap:10px;color:var(--ink);font-weight:600}
 .brand:hover{text-decoration:none}
 .brand img{width:28px;height:28px;border-radius:7px}
-.top nav{display:flex;gap:22px;font-size:.94rem}
+.top nav{display:flex;gap:1.4rem;font-size:.94rem}
 .top nav a{color:var(--mu)}
 .top nav a:hover{color:var(--ink);text-decoration:none}
-.hero{padding:72px 0 40px;text-align:center}
-.eyebrow{color:var(--ac);font-weight:600;font-size:.92rem;letter-spacing:.02em;margin:0 0 14px}
-.hero h1{font-size:clamp(2.1rem,5vw,3.4rem);line-height:1.12;margin:0 auto 18px;max-width:22ch;letter-spacing:-.02em;text-wrap:balance}
-.hero p.lead{color:var(--mu);font-size:clamp(1.05rem,2.2vw,1.22rem);max-width:58ch;margin:0 auto 30px}
-.btn{display:inline-flex;align-items:center;gap:10px;background:var(--ac2);color:#fff;font-weight:600;padding:13px 26px;border-radius:8px;font-size:1.02rem}
+.eyebrow{color:var(--ac);font-weight:600;font-size:.92rem;letter-spacing:.01em;margin:0 0 .8rem}
+.lead{color:var(--mu);font-size:1.1rem;margin:0 0 1.6rem;max-width:62ch}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--ac2);color:#fff;font-weight:600;padding:12px 24px;border-radius:8px;font-size:1rem}
 .btn:hover{background:#3584d6;text-decoration:none}
-.btn svg{width:18px;height:18px}
-.btn2{display:inline-flex;align-items:center;padding:13px 22px;border-radius:8px;border:1px solid var(--line);color:var(--ink);font-weight:600;font-size:1.02rem}
-.btn2:hover{border-color:#3a3a40;text-decoration:none}
-.actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
-.meta{color:var(--fa);font-size:.9rem;margin-top:14px}
-.shot{margin:44px auto 0;max-width:980px;border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.5)}
-section{padding:64px 0;border-top:1px solid var(--line)}
-section h2{font-size:clamp(1.5rem,3vw,2rem);margin:0 0 12px;letter-spacing:-.01em}
-section .sub{color:var(--mu);max-width:64ch;margin:0 0 32px}
-.how img{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px;counter-reset:s}
-.steps div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;color:var(--mu)}
-.steps div::before{counter-increment:s;content:counter(s);display:block;color:var(--ac);font-weight:700;margin-bottom:4px}
-.steps b{color:var(--ink)}
-ul.who{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,1fr);gap:12px 28px;max-width:900px}
-ul.who li{color:var(--mu);padding-left:26px;position:relative}
-ul.who li::before{content:"";position:absolute;left:2px;top:.62em;width:10px;height:6px;border-left:2px solid var(--ok);border-bottom:2px solid var(--ok);transform:rotate(-45deg)}
-.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
-table{width:100%;border-collapse:collapse;min-width:620px;font-size:.96rem}
-th,td{text-align:left;padding:13px 18px;border-bottom:1px solid var(--line);vertical-align:top}
+.btn svg{width:18px;height:18px;flex:none}
+.btn2{display:inline-flex;align-items:center;justify-content:center;padding:12px 20px;border-radius:8px;border:1px solid var(--line2);color:var(--ink);font-weight:600;font-size:1rem}
+.btn2:hover{border-color:#4a4a52;text-decoration:none}
+.actions{display:flex;flex-wrap:wrap;gap:.75rem}
+.req,.safe{color:var(--fa);font-size:.88rem;line-height:1.5;margin:.9rem 0 0}
+.safe{margin-top:.3rem}
+.safe a{color:var(--mu);text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
+.safe a:hover{color:var(--ink)}
+.shot{border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.45);background:var(--panel)}
+section{padding:4.5rem 0}
+section.alt{background:var(--panel);border-block:1px solid var(--line)}
+h2{font-size:clamp(1.45rem,2.6vw,1.9rem);line-height:1.2;letter-spacing:-.012em;margin:0 0 .6rem}
+h3{font-size:1.02rem;line-height:1.35;margin:0 0 .35rem}
+.sub{color:var(--mu);max-width:62ch;margin:0 0 2rem}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}
 tr:last-child>*{border-bottom:0}
-thead th{background:var(--panel);font-weight:600}
-tbody th{font-weight:600;color:var(--ink);width:28%}
+thead th,thead td{background:var(--panel2);font-weight:600}
+tbody th{font-weight:600;color:var(--ink)}
 td{color:var(--mu)}
-td.us{color:var(--ink)}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px 22px}
-.card h3{margin:0 0 6px;font-size:1.05rem}
-.card p{margin:0;color:var(--mu);font-size:.96rem}
-a.card{display:block;color:var(--ink)}a.card:hover{border-color:#3a3a40;text-decoration:none}
-.gallery{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:28px}
-.gallery figure{margin:0}
-.gallery figure.wide{grid-column:1/-1}
-.gallery img{border:1px solid var(--line);border-radius:10px}
-.gallery figcaption{color:var(--fa);font-size:.9rem;text-align:center;margin-top:8px}
-ol.setup{margin:0;padding-left:1.3em;max-width:72ch}
-ol.setup li{margin:0 0 12px;color:var(--mu)}
-ol.setup li b{color:var(--ink)}
-.note{margin-top:24px;max-width:72ch;color:var(--mu);border-left:3px solid var(--ac2);padding:4px 0 4px 16px}
-details{border:1px solid var(--line);border-radius:10px;background:var(--panel);margin-bottom:10px;max-width:820px}
-summary{cursor:pointer;padding:16px 20px;font-weight:600;list-style:none;position:relative;padding-right:48px}
+.us{background:var(--tint);color:var(--ink)}
+#vpn table{table-layout:fixed}#vpn thead td{width:24%}
+thead .us{color:var(--ac)}
+details{border:1px solid var(--line);border-radius:10px;background:var(--panel);margin-bottom:10px}
+summary{cursor:pointer;padding:15px 48px 15px 20px;font-weight:600;list-style:none;position:relative}
 summary::-webkit-details-marker{display:none}
-summary::after{content:"+";position:absolute;right:20px;top:13px;color:var(--fa);font-size:1.3rem;font-weight:400}
+summary::after{content:"+";position:absolute;right:20px;top:12px;color:var(--fa);font-size:1.3rem;font-weight:400}
 details[open] summary::after{content:"\2212"}
 details p{margin:0;padding:0 20px 18px;color:var(--mu)}
-.cta{text-align:center}
-.cta p{color:var(--mu);margin:0 auto 26px;max-width:60ch}
 footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--fa);font-size:.88rem}
 footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between}
 footer a{color:var(--mu)}
+/* home */
+.hero{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:3rem;align-items:center;padding:3rem 1.25rem 4rem}
+.hero h1{font-size:clamp(2rem,4.2vw,2.8rem);line-height:1.1;letter-spacing:-.022em;margin:0 0 1rem}
+.who{padding:2.25rem 0;border-top:1px solid var(--line)}
+.who .wrap{display:grid;grid-template-columns:11rem minmax(0,1fr);gap:1.5rem 2rem;align-items:baseline}
+.who h2{font-size:1rem;color:var(--fa);margin:0}
+.who ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.8rem 2rem;color:var(--mu);font-size:.95rem}
+.who li b{display:block;color:var(--ink);font-weight:600}
+.viewer{position:relative;display:grid;grid-template-columns:minmax(0,17rem) minmax(0,1fr);gap:2.5rem;align-items:start}
+.viewer>input{position:absolute;top:0;left:0;opacity:0;width:1px;height:1px;margin:0}
+.tabs{display:flex;flex-direction:column;gap:4px}
+.tabs label{display:block;padding:.7rem 1rem;border-radius:8px;border:1px solid transparent;cursor:pointer;color:var(--mu);line-height:1.5}
+.tabs label b{display:block;color:var(--mu);font-weight:600}
+.tabs label span{display:none;font-size:.92rem;margin-top:.25rem}
+.tabs label:hover b{color:var(--ink)}
+.views figure{display:none;margin:0}
+.views figcaption{margin-top:.8rem;font-size:.92rem;color:var(--fa)}
+.views figcaption .fd{display:none}
+#pg-connection:checked~.tabs [for=pg-connection],#pg-servers:checked~.tabs [for=pg-servers],#pg-accounts:checked~.tabs [for=pg-accounts],#pg-regions:checked~.tabs [for=pg-regions],#pg-configs:checked~.tabs [for=pg-configs],#pg-profiles:checked~.tabs [for=pg-profiles]{background:var(--panel);border-color:var(--line)}
+#pg-connection:checked~.tabs [for=pg-connection] b,#pg-servers:checked~.tabs [for=pg-servers] b,#pg-accounts:checked~.tabs [for=pg-accounts] b,#pg-regions:checked~.tabs [for=pg-regions] b,#pg-configs:checked~.tabs [for=pg-configs] b,#pg-profiles:checked~.tabs [for=pg-profiles] b{color:var(--ink)}
+#pg-connection:checked~.tabs [for=pg-connection] span,#pg-servers:checked~.tabs [for=pg-servers] span,#pg-accounts:checked~.tabs [for=pg-accounts] span,#pg-regions:checked~.tabs [for=pg-regions] span,#pg-configs:checked~.tabs [for=pg-configs] span,#pg-profiles:checked~.tabs [for=pg-profiles] span{display:block}
+#pg-connection:focus-visible~.tabs [for=pg-connection],#pg-servers:focus-visible~.tabs [for=pg-servers],#pg-accounts:focus-visible~.tabs [for=pg-accounts],#pg-regions:focus-visible~.tabs [for=pg-regions],#pg-configs:focus-visible~.tabs [for=pg-configs],#pg-profiles:focus-visible~.tabs [for=pg-profiles]{outline:2px solid var(--ac);outline-offset:2px}
+#pg-connection:checked~.views .f-connection,#pg-servers:checked~.views .f-servers,#pg-accounts:checked~.views .f-accounts,#pg-regions:checked~.views .f-regions,#pg-configs:checked~.views .f-configs,#pg-profiles:checked~.views .f-profiles{display:block}
+.also{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.75rem 2.5rem;margin-top:3.5rem;padding-top:2.5rem;border-top:1px solid var(--line)}
+.also p{margin:0;color:var(--mu);font-size:.95rem}
+.how-img{display:block;width:100%;max-width:56rem;margin:0 0 2rem}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5rem 2.5rem;counter-reset:s;margin:0;padding:0;list-style:none}
+.steps li{color:var(--mu)}
+.steps li::before{counter-increment:s;content:counter(s);display:block;color:var(--ac);font-weight:700;margin-bottom:.2rem}
+.steps b{display:block;color:var(--ink)}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:3rem 4rem;align-items:start}
+ol.setup{margin:0;padding-left:1.3em}
+ol.setup li{margin:0 0 .7rem;color:var(--mu)}
+ol.setup li b{color:var(--ink)}
+.note{margin:1.2rem 0 0;color:var(--mu);font-size:.95rem}
+dl.trust{margin:0}
+dl.trust dt{font-weight:600;margin-top:1rem}
+dl.trust dt:first-child{margin-top:0}
+dl.trust dd{margin:.15rem 0 0;color:var(--mu);font-size:.95rem}
+ul.guides{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1.25rem 2rem}
+ul.guides a{font-weight:600}
+ul.guides span{display:block;color:var(--fa);font-size:.9rem;line-height:1.45;margin-top:.15rem}
+.faq{max-width:52rem;margin-top:3.5rem}
+.faq .more{color:var(--mu);margin:1.2rem 0 0;font-size:.95rem}
+.cta .wrap{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1.5rem 3rem;align-items:center}
+.cta h2{margin-bottom:.4rem}
+.cta p.lead{margin:0;font-size:1rem}
+@media (max-width:1000px){
+  .hero{grid-template-columns:1fr;gap:2rem;padding-top:2rem;padding-bottom:3rem}
+  .who ul,ul.guides{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .who .wrap{grid-template-columns:1fr}
+  .viewer{grid-template-columns:1fr;gap:1rem}
+  .tabs{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:4px;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs label{flex:none;padding:.4rem .9rem;border-color:var(--line);border-radius:999px}
+  .tabs label span{display:none!important}
+  .views figcaption .fd{display:inline}
+  .also,.split{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cta .wrap{grid-template-columns:1fr}
+}
 @media (max-width:760px){
   .top nav a.hide-s{display:none}
-  .steps,.grid,.gallery,ul.who{grid-template-columns:1fr}
-  .hero{padding-top:48px}
-  section{padding:48px 0}
+  .hero h1{font-size:2rem}
+  .actions>a{flex:1 1 100%}
+  section{padding:2.5rem 0}
+  .who{padding:1.75rem 0}
+  .steps,.split{grid-template-columns:1fr}
+  .who{display:none}
+  .also{grid-template-columns:repeat(2,minmax(0,1fr));gap:1.1rem 1.25rem}
+  .also p{font-size:.88rem;line-height:1.5}
+  .also kbd{padding:0 3px}
+  #setup .sub{display:none}
+  .who ul{gap:.8rem 1.25rem;font-size:.9rem}
+  .steps{gap:1rem}
+  .steps li::before{display:inline;margin-right:.5rem}
+  .steps b{display:inline}
+  .hero{padding-top:1.5rem;gap:1.5rem}
+  .hero-shot{aspect-ratio:560/235}
+  .hero-shot img{width:221.4%;max-width:none;margin:-8.6% 0 0 -17.5%}
+  .sub{margin-bottom:1.4rem}
+  .tbl table{font-size:.88rem}
+  .also{margin-top:2rem;padding-top:1.75rem}
+  .how-img{margin-bottom:1.5rem}
+  ul.guides span{display:none}
+  th,td{padding:10px 12px}
+  .tbl table{min-width:34rem}
+  .faq{margin-top:2.5rem}
 }
-.page{padding-top:56px;padding-bottom:8px}.page h1{font-size:clamp(1.9rem,4.4vw,2.8rem);line-height:1.15;margin:0 0 16px;letter-spacing:-.02em;max-width:26ch;text-wrap:balance}.page .lead{color:var(--mu);font-size:1.12rem;max-width:64ch;margin:0 0 26px}.page .actions{justify-content:flex-start}.crumbs{color:var(--fa);font-size:.9rem;margin:0 0 18px}.crumbs a{color:var(--mu)}.prose{max-width:72ch;color:var(--mu)}.prose h2{color:var(--ink)}.prose p,.prose li{margin:0 0 12px}.prose b,.prose strong{color:var(--ink)}.prose ul,.prose ol{padding-left:1.3em;margin:0 0 12px}.prose h3{color:var(--ink);font-size:1.08rem;margin:26px 0 8px}.page .shot{margin:36px 0 0;max-width:980px}ul.links{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,1fr);gap:12px}ul.links a{display:block;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;color:var(--ink);font-weight:600}ul.links a span{display:block;color:var(--mu);font-weight:400;font-size:.94rem;margin-top:4px}ul.links a:hover{border-color:#3a3a40;text-decoration:none}@media (max-width:760px){ul.links{grid-template-columns:1fr}}
+/* guides */
+.gl{display:grid;grid-template-columns:minmax(0,1fr) 19rem;column-gap:3.5rem;padding-top:2.5rem;padding-bottom:4rem}
+.gl>*{grid-column:1}
+.ghead{padding-bottom:2.5rem}
+.crumbs{color:var(--fa);font-size:.9rem;margin:0 0 1rem}.crumbs a{color:var(--mu)}
+.ghead h1{font-size:clamp(1.9rem,3.6vw,2.6rem);line-height:1.12;letter-spacing:-.02em;margin:0 0 1rem;max-width:24ch}
+.ghead .lead{margin:0}
+.rail{grid-column:2;grid-row:1/span 4}
+.rail-in{position:sticky;top:1.5rem;display:flex;flex-direction:column;gap:1.75rem}
+.rail .btn{width:100%}
+.rail .req{margin-top:.7rem}
+.toc h2{font-size:.82rem;text-transform:uppercase;letter-spacing:.06em;color:var(--fa);margin:0 0 .5rem}
+.toc ul{list-style:none;margin:0;padding:0 0 0 .9rem;border-left:1px solid var(--line)}
+.toc li{margin:.3rem 0;font-size:.92rem;line-height:1.4}
+.toc a{color:var(--mu)}.toc a:hover{color:var(--ink);text-decoration:none}
+.crop{display:block;overflow:hidden;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.crop img{max-width:none}
+.cropcap{display:block;color:var(--fa);font-size:.85rem;margin-top:.5rem}
+.gtext{color:var(--mu)}
+.gtext h2{color:var(--ink);font-size:1.45rem;margin:2.6rem 0 .7rem}
+.gtext h2:first-child{margin-top:0}
+.gtext p,.gtext ul,.gtext ol{max-width:68ch;margin:0 0 .9rem}
+.gtext ul,.gtext ol{padding-left:1.3em}
+.gtext li{margin:0 0 .5rem}
+.gtext b,.gtext strong{color:var(--ink)}
+.gtext .tbl{margin:1.2rem 0 1rem}
+.gfaq,.gmore{border-top:1px solid var(--line);margin-top:3rem;padding:2.5rem 0 0}
+.gfaq h2,.gmore h2{font-size:1.3rem;margin-bottom:1rem}
+.gmore ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem 2rem}
+.gmore a{font-weight:600}
+.gmore span{display:block;color:var(--fa);font-size:.9rem;line-height:1.45;margin-top:.15rem}
+.gmore .end{display:none}
+.gmore .end .btn{width:100%}
+@media (max-width:760px){.gtext .tbl.fit table{min-width:0}}
+@media (max-width:900px){
+  .gl{grid-template-columns:minmax(0,1fr);padding-top:1.75rem;padding-bottom:3rem}
+  .rail{grid-column:1;grid-row:auto;order:1}
+  .ghead{order:0;padding-bottom:1.5rem}.gtext{order:2}.gfaq{order:3}.gmore{order:4}
+  .rail-in{position:static;gap:1.25rem;margin-bottom:2.25rem}
+  .toc{display:none}
+  .gfaq,.gmore{margin-top:2.25rem;padding:2rem 0 0}
+  .gmore .end{display:block;margin-top:2rem}
+}
+@media (max-width:760px){
+  .gmore ul{grid-template-columns:1fr;gap:.8rem}
+  .gmore span{display:inline;margin-left:.4rem}
+  .gtext h2{font-size:1.3rem;margin-top:2rem}
+}
 </style>
 </head>
 <body>
@@ -181,75 +295,66 @@ footer a{color:var(--mu)}
     <a class="brand" href="../"><img src="../img/icon.png" alt="" width="28" height="28">CS2 IP Changer</a>
     <nav aria-label="Main">
       <a class="hide-s" href="../#features">Features</a>
+      <a class="hide-s" href="../#guides">Guides</a>
       <a class="hide-s" href="../is-it-safe/">Is it safe?</a>
-      <a class="hide-s" href="../#faq">FAQ</a>
       <a href="https://github.com/Sepd0x/cs2-ip-changer">GitHub</a>
     </nav>
   </div>
 </header>
 <main id="main">
-  <div class="wrap page">
-    <p class="crumbs"><a href="../">CS2 IP Changer</a> / Is it safe?</p>
-    <p class="eyebrow">Built to be checked</p>
-    <h1>Is CS2 IP Changer safe?</h1>
-    <p class="lead">A tool that asks for admin and changes your network should explain itself. Here is what CS2 IP Changer changes on your PC, what it never touches, and how you can check every release yourself.</p>
-    <div class="actions"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a><a class="btn2" href="https://github.com/Sepd0x/cs2-ip-changer">Source on GitHub</a></div>
-    <div class="meta">Free · Windows 10 and 11, 64-bit · Beta · No account</div>
-    
-  </div>
-  <section aria-labelledby="s0">
-    <div class="wrap prose">
-      <h2 id="s0">What it changes, and what it never touches</h2>
+  <div class="wrap gl">
+    <div class="ghead">
+      <p class="crumbs"><a href="../">CS2 IP Changer</a> / Is it safe?</p>
+      <p class="eyebrow">Built to be checked</p>
+      <h1>Is CS2 IP Changer safe?</h1>
+      <p class="lead">A tool that asks for admin and changes your network should explain itself. Here is what CS2 IP Changer changes on your PC, what it never touches, and how you can check every release yourself.</p>
+    </div>
+    <aside class="rail" aria-label="Download and contents">
+      <div class="rail-in">
+        <div>
+          <a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a>
+          <p class="req">Free beta · Windows 10/11 · Android phone + USB cable or hotspot · uses mobile data · admin</p>
+          <p class="safe">Doesn't touch cs2.exe or its memory. Unsigned, so SmartScreen warns: see <a href="#check-your-download">Check your download</a></p>
+        </div>
+        <nav class="toc" aria-labelledby="toc-h">
+          <h2 id="toc-h">On this page</h2>
+          <ul>
+            <li><a href="#what-it-changes-and-what-it-never-touches">What it changes, and what it never touches</a></li>
+            <li><a href="#check-your-download">Check your download</a></li>
+            <li><a href="#your-data">Your data</a></li>
+            <li><a href="#undo-everything">Undo everything</a></li>
+            <li><a href="#faq">FAQ</a></li>
+          </ul>
+        </nav>
+        <figure style="margin:0"><a class="crop" href="../img/connection.png" style="aspect-ratio:560/330" aria-label="The Connection page: live checks for the firewall, kill switch, routes and the IP servers see (full screenshot)"><picture><source type="image/webp" srcset="../img/connection.webp"><img src="../img/connection.png" alt="The Connection page: live checks for the firewall, kill switch, routes and the IP servers see" width="1240" height="800" loading="lazy" style="width:221.43%;margin:-8.57% 0 0 -118.93%"></picture></a><figcaption class="cropcap">The Connection page of the app</figcaption></figure>
+      </div>
+    </aside>
+    <article class="gtext">
+      <h2 id="what-it-changes-and-what-it-never-touches">What it changes, and what it never touches</h2>
       <ul><li><b>Changes:</b> Windows routes and Windows Firewall rules (all named with the app's prefix), which saved Steam account logs in, and, only if you use those pages, CS2's config files and your Steam profiles.</li><li><b>Never touches:</b> the game process, its memory or its program files. It hides nothing from VAC or any anti-cheat.</li><li><b>Why admin:</b> routes and firewall rules are system settings, and Windows only lets admins change them. Steam, CS2, your browser and the programs it opens for you still run as you, not as admin.</li></ul>
-    </div>
-  </section>
-  <section aria-labelledby="s1">
-    <div class="wrap prose">
-      <h2 id="s1">Check your download</h2>
-      <ul><li>Every release is built by GitHub Actions from the public source and comes with a <b>build attestation</b>. With the GitHub CLI: <code>gh attestation verify CS2IPChanger.exe -R Sepd0x/cs2-ip-changer</code>.</li><li>Each exe has a <b>SHA-256</b> file next to it in the release. In PowerShell: <code>Get-FileHash .\CS2IPChanger.exe</code>, and compare.</li><li><b>Signed updates.</b> The app only installs an update whose SHA-256 is signed with the project's key, which is not on GitHub.</li><li><b>VirusTotal</b> for each release: beta.6 is flagged by <a href="https://www.virustotal.com/gui/file/8f8f4197b589dd80d6826a703af863c1684949f610e6acf7805102c3860314a2/detection">2 of 70 engines</a> (Google and Varist, generic "risk" labels); Microsoft, Kaspersky, ESET, Bitdefender and Avast find nothing.</li><li>The exe isn't code-signed yet, so Windows SmartScreen may warn the first time. More info &gt; Run anyway.</li></ul>
-    </div>
-  </section>
-  <section aria-labelledby="s2">
-    <div class="wrap prose">
-      <h2 id="s2">Your data</h2>
-      <ul><li>No account, and no passwords kept. The account switcher uses the logins Steam already saved.</li><li>While the app is in beta it sends anonymous usage stats once a day: a random install ID, versions, your country, the mode, minutes open and button counts. Never IPs, servers, accounts or names. The server code is public (<a href="https://github.com/Sepd0x/cs2-ip-changer/tree/main/worker/stats">worker/stats</a>).</li><li>Save bug report strips your home IP, logins, names and SteamIDs before you send anything.</li></ul>
-    </div>
-  </section>
-  <section aria-labelledby="s3">
-    <div class="wrap prose">
-      <h2 id="s3">Undo everything</h2>
+      <h2 id="check-your-download">Check your download</h2>
+      <ul><li>Every release is built by GitHub Actions from the public source and comes with a <b>build attestation</b>. With the GitHub CLI: <code>gh attestation verify CS2IPChanger.exe -R Sepd0x/cs2-ip-changer</code>.</li><li>Each exe has a <b>SHA-256</b> file next to it in the release. In PowerShell: <code>Get-FileHash .\CS2IPChanger.exe</code>, and compare.</li><li><b>Signed updates.</b> The app only installs an update whose SHA-256 matches the release and is signed with the project's offline key, with the version inside so an old release can't come back under a new tag. The key isn't on GitHub, so access to the repo alone can't push an exe to installed copies.</li><li><b>VirusTotal</b> for each release: beta.6 is flagged by <a href="https://www.virustotal.com/gui/file/8f8f4197b589dd80d6826a703af863c1684949f610e6acf7805102c3860314a2/detection">2 of 70 engines</a> (Google and Varist, generic "risk" labels); Microsoft, Kaspersky, ESET, Bitdefender and Avast find nothing.</li><li>The exe isn't code-signed, so Windows SmartScreen may warn the first time. More info &gt; Run anyway.</li></ul>
+      <h2 id="your-data">Your data</h2>
+      <ul><li>No account, and no passwords kept. The account switcher uses the logins Steam already saved.</li><li>While the app is in beta it sends anonymous usage stats once when it has been open for 20 seconds, then once a day: a random install ID, versions, your country, the mode, minutes open and button counts. Never IPs, servers, accounts or names. The server code is public (<a href="https://github.com/Sepd0x/cs2-ip-changer/tree/main/worker/stats">worker/stats</a>).</li><li>Save bug report saves a .zip on your Desktop and sends nothing. It leaves out your home IP, API key, logins, names, SteamIDs, e-mails, Wi-Fi names and your Windows user; look through it before you post it.</li></ul>
+      <h2 id="undo-everything">Undo everything</h2>
       <p>Turn off protection (Settings &gt; Maintenance) removes the routes and the kill switch, and Allow all on the Regions page lifts the region block. To remove everything at once, run <code>CS2IPChanger.exe --restore</code> (or <code>tools/restore.cmd</code> from the repo): every route and firewall rule the app made is removed. The app is portable: to uninstall, run <code>--restore</code>, then delete its folder (with <code>SRT_Dados</code> next to the exe) and <code>C:\ProgramData\CS2IPChanger</code>.</p>
-    </div>
-  </section>
-  <section aria-labelledby="faq-h">
-    <div class="wrap">
-      <h2 id="faq-h">FAQ</h2>
+    </article>
+    <section class="gfaq" aria-labelledby="faq">
+      <h2 id="faq">FAQ</h2>
+      <details><summary>Can this get me VAC banned?</summary><p>It never touches the game process, its memory or its program files. It changes Windows routing and firewall rules and which Steam account logs in. If you use them, the Configs page copies CS2's config files between your accounts and the Profiles page changes your Steam profiles. It also won't hide a cheat from VAC or any other anti-cheat, so don't use it for that.</p></details>
       <details><summary>Is it open source?</summary><p>The source is public on GitHub so anyone can read and build it, but the license is All rights reserved during the beta: you can use the releases, not copy or redistribute the code.</p></details>
-      <details><summary>Can this get me VAC banned?</summary><p>It never touches the game process, its memory or its program files. It changes Windows routing and firewall rules and which Steam account logs in.</p></details>
       <details><summary>Why does my antivirus complain?</summary><p>The exe is not code-signed and it changes firewall rules and runs ADB, which some antivirus engines flag on heuristics alone. Check the attestation and SHA-256 above; if a detection looks wrong, open an issue.</p></details>
-    </div>
-  </section>
-  <section aria-labelledby="more-h">
-    <div class="wrap">
-      <h2 id="more-h">More from CS2 IP Changer</h2>
-      <ul class="links">
-          <li><a href="../cs2-region-picker/">CS2 region picker<span>Choose where Premier, Competitive and Casual put you, with the ping of each region.</span></a></li>
-          <li><a href="../copy-cs2-config/">Copy CS2 config<span>Binds, crosshair, sensitivity and video on every account, with backups and undo.</span></a></li>
-          <li><a href="../steam-account-switcher/">Steam account switcher<span>Switch accounts without passwords; bans, cooldowns and server ban marks at a glance.</span></a></li>
-          <li><a href="../steam-profile-editor/">Steam profile editor<span>Name, picture, bio and privacy on many accounts from one template, with undo.</span></a></li>
-          <li><a href="../change-ip-with-phone/">New IP from your phone<span>USB tethering plus mobile data off and on over ADB: a new public IP in one click.</span></a></li>
-          <li><a href="../cs2-ip-ban/">CS2 IP ban: get back in<span>Account bans, IP bans and range bans: what a new IP can and can't fix.</span></a></li>
-          <li><a href="../hide-ip-cs2/">Hide your IP without a VPN<span>Every method compared: VPN, gaming networks, proxies, router restart, mobile data.</span></a></li>
+    </section>
+    <nav class="gmore" aria-labelledby="more-h">
+      <h2 id="more-h">Related guides</h2>
+      <ul>
+        <li><a href="../change-ip-with-phone/">Change IP with your phone</a><span>Setup, game-only routing and a new IP in one click.</span></li>
+        <li><a href="../hide-ip-cs2/">Hide your IP without a VPN</a><span>Who sees your IP, and every method compared.</span></li>
+        <li><a href="../steam-account-switcher/">Steam account switcher</a><span>No passwords, ban marks per server.</span></li>
       </ul>
-    </div>
-  </section>
-  <section class="cta" aria-labelledby="cta-h">
-    <div class="wrap">
-      <h2 id="cta-h">One free app for all of it</h2>
-      <p>New IP from your phone, kill switch, account switcher, region picker, config sync and profiles. Every release is built by GitHub Actions from the public source, with signed updates.</p>
-      <a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a>
-    </div>
-  </section>
+      <div class="end"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a><p class="req">Free beta · Windows 10/11 · Android phone + USB cable or hotspot · uses mobile data · admin</p></div>
+    </nav>
+  </div>
 </main>
 <footer>
   <div class="wrap">

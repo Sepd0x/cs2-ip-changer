@@ -3,20 +3,20 @@
 > Free Windows app (Windows 10 and 11, 64-bit) for Counter-Strike 2 that routes CS2 and Steam through an Android phone's mobile data, so community servers see the carrier's IP and not the player's home IP. It keeps the home IP out of community server logs and ban lists without a VPN (servers see an ordinary mobile connection, so it also works where VPNs are blocked), and after an IP ban on a community server the player changes IP from the app and joins again. It is not a VPN and does not touch the game process, its memory or its files.
 
 Website: https://sepd0x.github.io/cs2-ip-changer/
-Source and downloads: https://github.com/Sepd0x/cs2-ip-changer (releases: https://github.com/Sepd0x/cs2-ip-changer/releases)
-Status: beta (version 0.1.0). Free, no account. Not affiliated with Valve.
+Source and downloads: https://github.com/Sepd0x/cs2-ip-changer (latest release: https://github.com/Sepd0x/cs2-ip-changer/releases/latest)
+Status: beta (0.1.0-beta.6). Free, no account. Not affiliated with Valve.
 
 ## How it works
 
 - The phone shares its mobile data with the PC over USB tethering or its Wi-Fi hotspot. A 4G/5G USB dongle or router also works as the connection.
 - The app adds Windows routes so CS2, Steam and the servers on the user's list go through the phone, and blocks them on the home connection. The browser, Discord and downloads stay on the home connection (Game only mode). The whole PC can go through the phone instead.
-- Kill switch: a Windows Firewall rule blocks the listed servers on every adapter except the phone, and cs2.exe's game traffic (UDP) can only use the phone connection. If the cable comes out, the game loses connection instead of falling back to the home IP.
+- Kill switch: a Windows Firewall rule blocks the listed servers on every adapter except the phone, and cs2.exe's game traffic (UDP) can only use the phone connection. If the cable comes out, the game loses connection instead of falling back to the home IP. Until a phone has been connected once, CS2 is not locked, and in No phone mode nothing is blocked.
 - Change IP: turns mobile data (or airplane mode) off and on over ADB until the carrier gives a new IP. It can report whether the new IP is in a new /16 range and keep trying until it is.
 - Needs admin rights (routes and firewall rules are system settings), Windows Firewall on, and an Android phone with mobile data. USB debugging is needed only to change IP from the PC.
 
 ## Features
 
-- Change IP and rejoin after a kick or an IP ban, also from inside the game with a hotkey (Ctrl+Shift+F10 by default).
+- Change IP and rejoin after a kick or an IP ban, also from inside the game with a hotkey (Ctrl+Shift+F10 by default). After a ban it also logs into the next Steam account that server hasn't banned.
 - Live checks of the firewall, routes, the IP servers see next to the home IP, whether the phone is really on mobile data and whether Steam uses the same connection as the game, plus a leak test.
 - Connection quality: ping, jitter and loss through the phone every 30 seconds.
 - Server list from IP:port or steam://connect links with name, map, players and ping; can wait for a slot on a full server.
@@ -31,18 +31,27 @@ Status: beta (version 0.1.0). Free, no account. Not affiliated with Valve.
 
 - Not a VPN or proxy: servers see an ordinary mobile connection from the player's carrier, so it also works on community servers that block VPN and datacenter IPs.
 - Not a cheat and no VAC bypass: it does not hide cheats from any anti-cheat. A ban on a Steam account follows the account; a new IP does not lift it.
-- Mobile data usually means higher ping and jitter than a home connection.
+- Will ping be worse? Usually, yes: mobile data adds latency and jitter compared with a home connection.
+- Who sees the IP: on community servers joined directly, the server admins and their plugins. Official matchmaking goes through Valve's relays (Steam Datagram Relay).
 
 ## Guides
 
-- [CS2 region picker](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/): Choose where Premier, Competitive and Casual put you.
-- [Copy your CS2 config](https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/): Binds, crosshair and video on every account.
-- [Steam account switcher](https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/): No passwords, with ban marks per server.
-- [Steam profiles in bulk](https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/): Name, picture and privacy on many accounts.
-- [New IP from your phone](https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/): USB tethering and ADB, one click.
-- [CS2 community server IP ban: how it works and how to get back in](https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/): What a new IP can and can't fix.
-- [Hide your home IP from CS2 community servers without a VPN](https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/): every method compared (VPN, gaming networks, proxies, router restart, mobile data).
-- [Is it safe?](https://sepd0x.github.io/cs2-ip-changer/is-it-safe/): What it changes and how to check the download.
+- [Change IP with your phone](https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/): setup from start to finish, game-only routing and a new IP in one click.
+- [CS2 IP ban](https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/): which ban you have (IP, range, SteamID or Valve) and how to get back in.
+- [Hide your IP without a VPN](https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/): who sees your IP, what they can do with it, and every method compared.
+- [Is it safe?](https://sepd0x.github.io/cs2-ip-changer/is-it-safe/): what it changes and how to check the download.
+- [Steam account switcher](https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/): no passwords, ban marks per server.
+- [Copy CS2 settings](https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/): crosshair, binds and video on every account.
+- [CS2 region picker](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/): choose where matchmaking puts you.
+- [Steam profile editor](https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/): name, avatar and privacy on many accounts.
+
+## Safety and privacy
+
+- Releases are built by GitHub Actions from the public source, with a build attestation and a SHA-256 file.
+- Updates install only if the SHA-256 matches and is signed with the project's offline key, which is not on GitHub.
+- The exe is not code-signed, so Windows SmartScreen warns the first time.
+- Anonymous usage stats while in beta: once when the app has been open for 20 seconds, then once a day. Never IPs, servers, accounts or names; the server stores no IP.
+- Save bug report saves a .zip on the Desktop and sends nothing. It leaves out the home IP, API key, logins, names, SteamIDs, e-mails, Wi-Fi names and the Windows user.
 
 ## Docs
 
