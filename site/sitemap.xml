@@ -2,12 +2,40 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/</loc>
-    <lastmod>2026-10-29</lastmod>
+    <lastmod>2026-10-31</lastmod>
     <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/connection.png</image:loc></image:image>
     <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/servers.png</image:loc></image:image>
     <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/accounts.png</image:loc></image:image>
     <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/regions.png</image:loc></image:image>
     <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/configs.png</image:loc></image:image>
     <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/profiles.png</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/</loc>
+    <lastmod>2026-10-31</lastmod>
+  </url>
+  <url>
+    <loc>https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/</loc>
+    <lastmod>2026-10-31</lastmod>
+  </url>
+  <url>
+    <loc>https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/</loc>
+    <lastmod>2026-10-31</lastmod>
+  </url>
+  <url>
+    <loc>https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/</loc>
+    <lastmod>2026-10-31</lastmod>
+  </url>
+  <url>
+    <loc>https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/</loc>
+    <lastmod>2026-10-31</lastmod>
+  </url>
+  <url>
+    <loc>https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/</loc>
+    <lastmod>2026-10-31</lastmod>
+  </url>
+  <url>
+    <loc>https://sepd0x.github.io/cs2-ip-changer/is-it-safe/</loc>
+    <lastmod>2026-10-31</lastmod>
   </url>
 </urlset>

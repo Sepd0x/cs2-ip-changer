@@ -352,6 +352,7 @@ Once when the app has been open for 20 seconds, and then once a day, it sends:
 
 - a random ID made on your PC the first time (not tied to you, your PC, Steam or anything else; it only lets the same install be counted once a day)
 - the app version and the Windows version
+- your country, as two letters (for example `PT`). Cloudflare works it out from the connection the report comes from (with a VPN, it's the VPN's country); the Worker only gets the country, never the IP
 - the mode (Game only, Whole PC while CS2 is open, Whole PC always, No phone) and how the phone is connected (USB, hotspot)
 - minutes the app was open
 - how many times each button and hotkey was used, counted by the name of its code (for example `ChangeIp_Click`), never by what's on it
@@ -359,9 +360,9 @@ Once when the app has been open for 20 seconds, and then once a day, it sends:
 - how many servers, accounts, flagged players and "Open with CS2" programs are in your lists, and how many regions are turned off (the number only)
 - errors as their type and place in the app's code (for example `NullReferenceException` in `MainWindow.QueryServers`), never their message
 
-It never sends IPs (yours, the phone's or servers'), server names or addresses, Steam accounts, logins, names or IDs, your carrier or city, players' names, file paths or anything you typed.
+It never sends IPs (yours, the phone's or servers'), server names or addresses, Steam accounts, logins, names or IDs, your carrier, city or region, players' names, file paths or anything you typed.
 
-The server is a Cloudflare Worker whose code is in this repo ([`worker/stats`](worker/stats)). Cloudflare has to see your IP to deliver the request, like with any website, but the Worker never reads it or stores it, and its request logs are off. The stats are stored per day in a database with no IP column ([`schema.sql`](worker/stats/schema.sql)). The recording build sends nothing.
+The server is a Cloudflare Worker whose code is in this repo ([`worker/stats`](worker/stats)). Cloudflare has to see your IP to deliver the request, like with any website, and gives the Worker only the country; the Worker never reads the IP or stores it, and its request logs are off. The stats are stored per day in a database with no IP column ([`schema.sql`](worker/stats/schema.sql)). The recording build sends nothing.
 
 ## License
 

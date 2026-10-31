@@ -32,6 +32,8 @@ public static class Telemetry
     sealed class State
     {
         public string Id { get; set; }
+        /// <summary>Set by hand in SRT_Dados/telemetry.json on the developer's own PCs, so their reports count as dev and stay out of the numbers.</summary>
+        public bool Mine { get; set; }
         public DateTime LastSent { get; set; }
         public double Minutes { get; set; }
         public Dictionary<string, int> Clicks { get; set; } = new();
@@ -149,7 +151,7 @@ public static class Telemetry
                 body = JsonSerializer.Serialize(new
                 {
                     v = 1, id = _st.Id, app = Updater.Clean(AppInfo.Version.Split('+')[0]), os = Environment.OSVersion.Version.ToString(),
-                    mode, link, minutes, dev = Dev, clicks, counts = all,
+                    mode, link, minutes, dev = Dev || _st.Mine, clicks, counts = all,
                     errors = errors.Select(x => new { type = x.Type, at = x.At, n = x.N }),
                 });
             }

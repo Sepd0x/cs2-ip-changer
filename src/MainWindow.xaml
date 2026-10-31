@@ -1850,7 +1850,7 @@
                                             </StackPanel>
                                         </CheckBox>
                                         <!-- Telemetry (beta): always on, said here and in the README -->
-                                        <TextBlock Text="Beta: the app sends anonymous usage stats once a day (buttons used, errors, versions). Never IPs, servers, accounts or names. Details in the README, under Telemetry." Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,10,0,0"/>
+                                        <TextBlock Text="Beta: the app sends anonymous usage stats once a day (buttons used, errors, versions, country). Never IPs, servers, accounts or names. Details in the README, under Telemetry." Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,10,0,0"/>
                                     </StackPanel>
                                 </HeaderedContentControl>
 

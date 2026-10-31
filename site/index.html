@@ -97,7 +97,7 @@
         { "@type": "Question", "name": "Can I use the phone's Wi-Fi hotspot instead of a cable?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Connect the PC to the hotspot and pick it under Connection > How the PC connects to the phone. The app remembers the network name, and if Windows jumps back to your home router it blocks everything. Change IP works on the hotspot too if the phone is also plugged in by USB with USB debugging on." } },
         { "@type": "Question", "name": "Does forcing a region get me banned?", "acceptedAnswer": { "@type": "Answer", "text": "The Regions page doesn't touch the game, its files or its memory. It adds one outbound Windows Firewall rule that stops cs2.exe from reaching Valve's relays in the regions you turned off, so matchmaking plays elsewhere, the same as a bad connection to those relays would. Still, we can't speak for Valve and can't promise anything about how they treat it. Allow all and --restore remove the rule; Turn off protection and No phone mode leave it on." } },
         { "@type": "Question", "name": "Why does it need admin?", "acceptedAnswer": { "@type": "Answer", "text": "Routes and firewall rules are system settings, and Windows only lets admins change them. That's also why the exe should live in a folder only admins can change." } },
-        { "@type": "Question", "name": "Does it send anything about me?", "acceptedAnswer": { "@type": "Answer", "text": "While the app is in beta it sends anonymous usage stats: a random install ID, versions, the mode, minutes open and how often each button is used. Never IPs, servers, accounts, names or anything you typed, and the server keeps no IP. The full list is in the README." } }
+        { "@type": "Question", "name": "Does it send anything about me?", "acceptedAnswer": { "@type": "Answer", "text": "While the app is in beta it sends anonymous usage stats: a random install ID, versions, your country, the mode, minutes open and how often each button is used. Never IPs, servers, accounts, names or anything you typed, and the server keeps no IP. The full list is in the README." } }
       ]
     }
   ]
@@ -163,6 +163,7 @@ td.us{color:var(--ink)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px 22px}
 .card h3{margin:0 0 6px;font-size:1.05rem}
 .card p{margin:0;color:var(--mu);font-size:.96rem}
+a.card{display:block;color:var(--ink)}a.card:hover{border-color:#3a3a40;text-decoration:none}
 .gallery{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:28px}
 .gallery figure{margin:0}
 .gallery figure.wide{grid-column:1/-1}
@@ -325,6 +326,22 @@ footer a{color:var(--mu)}
     </div>
   </section>
 
+  <section id="guides" aria-labelledby="guides-h">
+    <div class="wrap">
+      <h2 id="guides-h">Guides</h2>
+      <p class="sub">One page for each thing the app does, with the details.</p>
+      <div class="grid">
+        <a class="card" href="cs2-region-picker/"><h3>CS2 region picker</h3><p>Choose where Premier, Competitive and Casual put you.</p></a>
+        <a class="card" href="copy-cs2-config/"><h3>Copy your CS2 config</h3><p>Binds, crosshair and video on every account.</p></a>
+        <a class="card" href="steam-account-switcher/"><h3>Steam account switcher</h3><p>No passwords, with ban marks per server.</p></a>
+        <a class="card" href="steam-profile-editor/"><h3>Steam profiles in bulk</h3><p>Name, picture and privacy on many accounts.</p></a>
+        <a class="card" href="change-ip-with-phone/"><h3>New IP from your phone</h3><p>USB tethering and ADB, one click.</p></a>
+        <a class="card" href="cs2-ip-ban/"><h3>Does CS2 IP ban?</h3><p>What a new IP can and can't fix.</p></a>
+        <a class="card" href="is-it-safe/"><h3>Is it safe?</h3><p>What it changes and how to check the download.</p></a>
+      </div>
+    </div>
+  </section>
+
   <section id="faq" aria-labelledby="faq-h">
     <div class="wrap">
       <h2 id="faq-h">FAQ</h2>
@@ -339,7 +356,7 @@ footer a{color:var(--mu)}
       <details><summary>Can I use the phone's Wi-Fi hotspot instead of a cable?</summary><p>Yes. Connect the PC to the hotspot and pick it under Connection &gt; How the PC connects to the phone. The app remembers the network name, and if Windows jumps back to your home router it blocks everything. Change IP works on the hotspot too if the phone is also plugged in by USB with USB debugging on.</p></details>
       <details><summary>Does forcing a region get me banned?</summary><p>The Regions page doesn't touch the game, its files or its memory. It adds one outbound Windows Firewall rule that stops <code>cs2.exe</code> from reaching Valve's relays in the regions you turned off, so matchmaking plays elsewhere, the same as a bad connection to those relays would. Still, we can't speak for Valve and can't promise anything about how they treat it. Allow all and <code>--restore</code> remove the rule; Turn off protection and No phone mode leave it on.</p></details>
       <details><summary>Why does it need admin?</summary><p>Routes and firewall rules are system settings, and Windows only lets admins change them. That's also why the exe should live in a folder only admins can change.</p></details>
-      <details><summary>Does it send anything about me?</summary><p>While the app is in beta it sends anonymous usage stats: a random install ID, versions, the mode, minutes open and how often each button is used. Never IPs, servers, accounts, names or anything you typed, and the server keeps no IP. The full list is in the <a href="https://github.com/Sepd0x/cs2-ip-changer#telemetry">README</a>.</p></details>
+      <details><summary>Does it send anything about me?</summary><p>While the app is in beta it sends anonymous usage stats: a random install ID, versions, your country, the mode, minutes open and how often each button is used. Never IPs, servers, accounts, names or anything you typed, and the server keeps no IP. The full list is in the <a href="https://github.com/Sepd0x/cs2-ip-changer#telemetry">README</a>.</p></details>
     </div>
   </section>
 

@@ -33,6 +33,16 @@ Status: beta (version 0.1.0). Free, no account. Not affiliated with Valve.
 - Not a cheat and no VAC bypass: it does not hide cheats from any anti-cheat. A ban on a Steam account follows the account; a new IP does not lift it.
 - Mobile data usually means higher ping and jitter than a home connection.
 
+## Guides
+
+- [CS2 region picker](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/): Choose where Premier, Competitive and Casual put you.
+- [Copy your CS2 config](https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/): Binds, crosshair and video on every account.
+- [Steam account switcher](https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/): No passwords, with ban marks per server.
+- [Steam profiles in bulk](https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/): Name, picture and privacy on many accounts.
+- [New IP from your phone](https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/): USB tethering and ADB, one click.
+- [Does CS2 IP ban?](https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/): What a new IP can and can't fix.
+- [Is it safe?](https://sepd0x.github.io/cs2-ip-changer/is-it-safe/): What it changes and how to check the download.
+
 ## Docs
 
 - [README](https://raw.githubusercontent.com/Sepd0x/cs2-ip-changer/main/README.md): full feature list, setup, troubleshooting, FAQ, privacy and telemetry

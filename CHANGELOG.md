@@ -4,6 +4,13 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Changed
+- Usage stats now include the country, as two letters. Cloudflare works it out from the connection and gives the Worker only the country; the Worker still never reads or stores the IP (README > Telemetry).
+- Reports from a PC whose `SRT_Dados/telemetry.json` has `"Mine": true` count as development builds and stay out of the numbers.
+
+### Added
+- Website: guide pages for the region picker, copying your CS2 config, the account switcher, Steam profiles in bulk, changing IP with your phone, CS2 IP bans and "Is it safe?", linked from the home page and the sitemap.
+
 ## [0.1.0-beta.5] - 2026-10-29
 
 ### Added
