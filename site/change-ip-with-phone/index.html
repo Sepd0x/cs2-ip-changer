@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Change your IP with your phone's mobile data (USB tethering + ADB)</title>
+<title>Use your phone's mobile data for CS2 only, not the whole PC</title>
 <meta name="description" content="Get a new public IP on your PC from your Android phone: USB tethering plus mobile data off and on over ADB, in one click. Game-only routing and a kill switch for CS2. Free.">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/">
@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#0e0e0f">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="CS2 IP Changer">
-<meta property="og:title" content="Change your IP with your phone's mobile data (USB tethering + ADB)">
+<meta property="og:title" content="Use your phone's mobile data for CS2 only, not the whole PC">
 <meta property="og:description" content="Get a new public IP on your PC from your Android phone: USB tethering plus mobile data off and on over ADB, in one click. Game-only routing and a kill switch for CS2. Free.">
 <meta property="og:url" content="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/">
 <meta property="og:image" content="https://sepd0x.github.io/cs2-ip-changer/img/connection.png">
@@ -24,7 +24,7 @@
    "@type": "WebPage",
    "@id": "https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/#page",
    "url": "https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/",
-   "name": "Change your IP with your phone's mobile data (USB tethering + ADB)",
+   "name": "Use your phone's mobile data for CS2 only, not the whole PC",
    "description": "Get a new public IP on your PC from your Android phone: USB tethering plus mobile data off and on over ADB, in one click. Game-only routing and a kill switch for CS2. Free.",
    "inLanguage": "en",
    "isPartOf": {
@@ -56,6 +56,14 @@
   {
    "@type": "FAQPage",
    "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "Can Windows send only CS2 through my phone's hotspot?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Not by itself: when you tether a phone, Windows has no setting to pick one app for it. CS2 IP Changer adds the routes for CS2, Steam and your servers, so only they use the phone and the rest of the PC stays on your home internet. You can still send the whole PC through the phone if you want."
+     }
+    },
     {
      "@type": "Question",
      "name": "My carrier uses CGNAT. Is that a problem?",
@@ -192,7 +200,7 @@ footer a{color:var(--mu)}
   <div class="wrap page">
     <p class="crumbs"><a href="../">CS2 IP Changer</a> / New IP from your phone</p>
     <p class="eyebrow">Mobile data IP</p>
-    <h1>Change your IP with your phone's mobile data</h1>
+    <h1>Use your phone's mobile data for CS2 only, and change IP in one click</h1>
     <p class="lead">Turning mobile data off and on usually gets you a new IP from your carrier. CS2 IP Changer does that from the PC over ADB, while your phone shares its connection over USB, and checks that the IP really changed.</p>
     <div class="actions"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a><a class="btn2" href="https://github.com/Sepd0x/cs2-ip-changer">Source on GitHub</a></div>
     <div class="meta">Free · Windows 10 and 11, 64-bit · Beta · No account</div>
@@ -219,6 +227,7 @@ footer a{color:var(--mu)}
   <section aria-labelledby="faq-h">
     <div class="wrap">
       <h2 id="faq-h">FAQ</h2>
+      <details><summary>Can Windows send only CS2 through my phone's hotspot?</summary><p>Not by itself: when you tether a phone, Windows has no setting to pick one app for it. CS2 IP Changer adds the routes for CS2, Steam and your servers, so only they use the phone and the rest of the PC stays on your home internet. You can still send the whole PC through the phone if you want.</p></details>
       <details><summary>My carrier uses CGNAT. Is that a problem?</summary><p>No. You share a public IP with other customers and servers see that shared one. Change IP still works.</p></details>
       <details><summary>Will my ping be worse?</summary><p>Usually, yes. Mobile data adds latency and jitter. The app measures ping, jitter and loss every 30 seconds and tells you when the connection is weak.</p></details>
       <details><summary>Does it work with a 4G or 5G USB dongle?</summary><p>It works as the connection: if the app doesn't pick it on its own, choose it under Connection &gt; How the PC connects to the phone. Change IP needs an Android phone with ADB, though.</p></details>

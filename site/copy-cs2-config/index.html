@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Copy your CS2 config to another account (binds, crosshair, video)</title>
+<title>Copy your CS2 settings and crosshair to your alt account</title>
 <meta name="description" content="Copy CS2 binds, crosshair, sensitivity and video settings between your Steam accounts in one click, with backups and undo. Free Windows app, no console commands.">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/">
@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#0e0e0f">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="CS2 IP Changer">
-<meta property="og:title" content="Copy your CS2 config to another account (binds, crosshair, video)">
+<meta property="og:title" content="Copy your CS2 settings and crosshair to your alt account">
 <meta property="og:description" content="Copy CS2 binds, crosshair, sensitivity and video settings between your Steam accounts in one click, with backups and undo. Free Windows app, no console commands.">
 <meta property="og:url" content="https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/">
 <meta property="og:image" content="https://sepd0x.github.io/cs2-ip-changer/img/configs.png">
@@ -24,7 +24,7 @@
    "@type": "WebPage",
    "@id": "https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/#page",
    "url": "https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/",
-   "name": "Copy your CS2 config to another account (binds, crosshair, video)",
+   "name": "Copy your CS2 settings and crosshair to your alt account",
    "description": "Copy CS2 binds, crosshair, sensitivity and video settings between your Steam accounts in one click, with backups and undo. Free Windows app, no console commands.",
    "inLanguage": "en",
    "isPartOf": {
@@ -56,6 +56,14 @@
   {
    "@type": "FAQPage",
    "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "Can't I just use the crosshair share code?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "The share code only moves the crosshair. Your binds, sensitivity, viewmodel, video, HUD, radar and audio stay behind, and you have to paste it on every account. The Configs page copies all of it, or only the parts you tick, to every account at once."
+     }
+    },
     {
      "@type": "Question",
      "name": "Is copying config files safe for VAC?",
@@ -192,7 +200,7 @@ footer a{color:var(--mu)}
   <div class="wrap page">
     <p class="crumbs"><a href="../">CS2 IP Changer</a> / Copy CS2 config</p>
     <p class="eyebrow">CS2 config manager</p>
-    <h1>Copy your CS2 config to another account</h1>
+    <h1>Copy your CS2 settings and crosshair to your alt account</h1>
     <p class="lead">Got a new account and want your binds, crosshair and video settings on it? The Configs page of CS2 IP Changer copies your CS2 config between the accounts on your PC, one part at a time or all of it, and keeps a backup of everything it changes.</p>
     <div class="actions"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a><a class="btn2" href="https://github.com/Sepd0x/cs2-ip-changer">Source on GitHub</a></div>
     <div class="meta">Free · Windows 10 and 11, 64-bit · Beta · No account</div>
@@ -213,6 +221,7 @@ footer a{color:var(--mu)}
   <section aria-labelledby="faq-h">
     <div class="wrap">
       <h2 id="faq-h">FAQ</h2>
+      <details><summary>Can't I just use the crosshair share code?</summary><p>The share code only moves the crosshair. Your binds, sensitivity, viewmodel, video, HUD, radar and audio stay behind, and you have to paste it on every account. The Configs page copies all of it, or only the parts you tick, to every account at once.</p></details>
       <details><summary>Is copying config files safe for VAC?</summary><p>The app copies the same files CS2 writes when you change a setting. It never touches the game process, its memory or its program files.</p></details>
       <details><summary>My settings keep going back. Why?</summary><p>Steam Cloud. If an account was played on another PC since, Steam may bring that version back or ask which one to keep. If it keeps happening, turn off Steam Cloud for CS2 (CS2 &gt; Properties &gt; General).</p></details>
       <details><summary>Can I move my config to another PC?</summary><p>Yes. Save a snapshot and export it as a .zip. The .zip only has the config files and the name, never the account.</p></details>

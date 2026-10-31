@@ -45,6 +45,7 @@ export const pages = [
       ['Things to know', `<ul><li>Changes apply at once, and CS2 measures the regions again on its next start.</li><li>Blocking too much means long queues or no match at all, and Premier can take longer. Leave a few regions on.</li><li>It works with or without the phone. Regions don't depend on protection: they stay off until you click Allow all.</li></ul>`],
     ],
     faq: [
+      ["How do I force CS2 to only put me in EU servers?", "Open the Regions page and click your continent's shortcut (Europe only in Europe), or Only this region on one region. Every other region is blocked for cs2.exe, so matchmaking can only find you a match where you left regions on. Max Acceptable Matchmaking Ping in CS2's settings only limits the ping; it doesn't pick a region."],
       ['Does forcing a region get me banned?', 'The Regions page doesn\'t touch the game, its files or its memory. It adds one outbound Windows Firewall rule that stops cs2.exe from reaching Valve\'s relays in the regions you turned off, so to the game it looks like a bad connection to those relays. We can\'t speak for Valve and can\'t promise anything about how they treat it.'],
       ['Does it change community servers or my friends list?', 'No. The rule only covers cs2.exe and only Valve\'s relay IPs. Community servers, Steam and friends work as before.'],
       ['How do I undo it?', 'Click Allow all on the Regions page. Running the app with --restore, or tools/restore.cmd, also removes every rule the app made.'],
@@ -52,12 +53,12 @@ export const pages = [
   },
   {
     slug: 'copy-cs2-config',
-    title: 'Copy your CS2 config to another account (binds, crosshair, video)',
+    title: 'Copy your CS2 settings and crosshair to your alt account',
     desc: 'Copy CS2 binds, crosshair, sensitivity and video settings between your Steam accounts in one click, with backups and undo. Free Windows app, no console commands.',
     nav: 'Copy CS2 config',
     blurb: 'Binds, crosshair, sensitivity and video on every account, with backups and undo.',
     eyebrow: 'CS2 config manager',
-    h1: 'Copy your CS2 config to another account',
+    h1: 'Copy your CS2 settings and crosshair to your alt account',
     lead: 'Got a new account and want your binds, crosshair and video settings on it? The Configs page of CS2 IP Changer copies your CS2 config between the accounts on your PC, one part at a time or all of it, and keeps a backup of everything it changes.',
     img: ['configs', 'The Configs page: sync mode, the accounts with their crosshair, copy, compare, snapshots and backups'],
     sections: [
@@ -65,6 +66,7 @@ export const pages = [
       ['What the Configs page does', `<ul><li><b>Pick what to copy:</b> binds, crosshair, the other game settings (sensitivity, viewmodel), video, and HUD, radar and audio, each on its own. You can copy only the crosshair and keep each account's sensitivity.</li><li><b>Sync modes:</b> from a main account, from the account you used before, or latest change wins. It runs when a new account shows up, before the app logs in or opens CS2, or when you click Sync now.</li><li><b>Never with CS2 open.</b> CS2 saves its config when it closes and would undo the copy, so the copy waits until it closes.</li><li><b>Steam Cloud too.</b> The app writes the cloud copy the same way CS2 does, so Steam uploads the new one on the next launch.</li><li><b>Backups and undo.</b> Every change keeps a backup (the 20 newest per account), and Undo last sync puts it all back.</li><li><b>Snapshots and compare.</b> Save a config under a name, export it as a .zip for another PC, and compare two accounts setting by setting with a crosshair preview.</li><li><b>Video stays this PC's.</b> Each account keeps this PC's refresh rate and monitor, so a 144 Hz screen doesn't end up at 60 Hz.</li></ul>`],
     ],
     faq: [
+      ["Can't I just use the crosshair share code?", "The share code only moves the crosshair. Your binds, sensitivity, viewmodel, video, HUD, radar and audio stay behind, and you have to paste it on every account. The Configs page copies all of it, or only the parts you tick, to every account at once."],
       ['Is copying config files safe for VAC?', 'The app copies the same files CS2 writes when you change a setting. It never touches the game process, its memory or its program files.'],
       ['My settings keep going back. Why?', 'Steam Cloud. If an account was played on another PC since, Steam may bring that version back or ask which one to keep. If it keeps happening, turn off Steam Cloud for CS2 (CS2 > Properties > General).'],
       ['Can I move my config to another PC?', 'Yes. Save a snapshot and export it as a .zip. The .zip only has the config files and the name, never the account.'],
@@ -85,6 +87,7 @@ export const pages = [
       ['Made for community servers', `<p>A ban on a community server is usually on your Steam account, your IP, or both. The switcher pairs with the rest of the app: a new IP from your phone's mobile data and the next account that server hasn't banned, in one step.</p>`],
     ],
     faq: [
+      ["How do I switch Steam accounts without typing my password?", "Log in to each account once with Remember me ticked. After that the app switches between them in one click, or with Ctrl+Shift+F9 from inside the game, without asking for a password."],
       ['Does it store my Steam password?', 'No. It uses the logins Steam already saved on your PC. Only the Profiles page asks you to sign in, and then only Steam\'s sign-in token is kept, encrypted with Windows.'],
       ['Will switching get my account banned?', 'Switching only changes which saved account Steam logs in to, the same as picking it in Steam yourself. It never touches the game.'],
       ['Can it skip accounts that are banned on a server?', 'Yes. Accounts marked as banned on a server or its community, and accounts on cooldown, are skipped there. Joining with a marked account asks first.'],
@@ -92,12 +95,12 @@ export const pages = [
   },
   {
     slug: 'steam-profile-editor',
-    title: 'Change several Steam profiles at once: name, picture, bio, privacy',
+    title: 'Change the name and avatar on all your Steam accounts at once',
     desc: 'Bulk edit Steam profiles: name, avatar, real name, bio, country, privacy and custom URL on many accounts from one template, with a preview and restore. Free Windows app.',
     nav: 'Steam profile editor',
     blurb: 'Name, picture, bio and privacy on many accounts from one template, with undo.',
     eyebrow: 'Steam profiles in bulk',
-    h1: 'Change several Steam profiles at once',
+    h1: 'Change the name and avatar on all your Steam accounts at once',
     lead: 'The Profiles page of CS2 IP Changer changes the name, picture, real name, bio, country, privacy and custom URL of the Steam accounts you pick, from templates you save. You see each account now and after before anything is sent.',
     img: ['profiles', 'The Profiles page: a template on the left, and each account now and after on the right, with its sign-in'],
     sections: [
@@ -105,18 +108,19 @@ export const pages = [
       ['Your login stays yours', `<p>Changing a profile needs a Steam web session, like your browser has. You sign in the way Steam's own login page works (password and Steam Guard, or a QR code from the Steam app). The password goes straight into Steam's encryption for that sign-in and is never saved. The app keeps only Steam's sign-in token, encrypted with Windows so only your Windows user can open it, and you can end it any time in Steam > Settings > Security > Authorized devices.</p><p>The app refuses a name, bio or URL that would show a login saved on your PC, and pictures are saved again as a new JPG, so photo data like GPS never reaches Steam.</p>`],
     ],
     faq: [
+      ["Can I change the name on all my Steam accounts at once?", "Steam itself has no way to edit several accounts in one go. The Profiles page does it: pick the accounts, pick a template or one account's look, check the preview and click Apply. The accounts are changed one after another, and Restore original puts each one back."],
       ['Can it clear "previously known as"?', 'Yes, with Clear name history, which is off unless you tick it. That one is permanent: Steam has no way back.'],
       ['Where are my templates kept?', 'On your PC only, in SRT_Dados/profiles. Nothing leaves your PC except what you apply to Steam.'],
     ],
   },
   {
     slug: 'change-ip-with-phone',
-    title: 'Change your IP with your phone\'s mobile data (USB tethering + ADB)',
+    title: "Use your phone's mobile data for CS2 only, not the whole PC",
     desc: 'Get a new public IP on your PC from your Android phone: USB tethering plus mobile data off and on over ADB, in one click. Game-only routing and a kill switch for CS2. Free.',
     nav: 'New IP from your phone',
     blurb: 'USB tethering plus mobile data off and on over ADB: a new public IP in one click.',
     eyebrow: 'Mobile data IP',
-    h1: 'Change your IP with your phone\'s mobile data',
+    h1: "Use your phone's mobile data for CS2 only, and change IP in one click",
     lead: 'Turning mobile data off and on usually gets you a new IP from your carrier. CS2 IP Changer does that from the PC over ADB, while your phone shares its connection over USB, and checks that the IP really changed.',
     img: ['connection', 'The Connection page: protection status, the IP servers see next to your home IP, phone status and live checks'],
     sections: [
@@ -125,6 +129,7 @@ export const pages = [
       ['Not a VPN', `<p>Servers see an ordinary mobile connection from your carrier, like any player on a phone hotspot, not a datacenter IP. That's why it also works on servers that block VPNs. A Windows Firewall kill switch keeps CS2 off your home connection if the cable comes out.</p>`],
     ],
     faq: [
+      ["Can Windows send only CS2 through my phone's hotspot?", "Not by itself: when you tether a phone, Windows has no setting to pick one app for it. CS2 IP Changer adds the routes for CS2, Steam and your servers, so only they use the phone and the rest of the PC stays on your home internet. You can still send the whole PC through the phone if you want."],
       ['My carrier uses CGNAT. Is that a problem?', 'No. You share a public IP with other customers and servers see that shared one. Change IP still works.'],
       ['Will my ping be worse?', 'Usually, yes. Mobile data adds latency and jitter. The app measures ping, jitter and loss every 30 seconds and tells you when the connection is weak.'],
       ['Does it work with a 4G or 5G USB dongle?', 'It works as the connection: if the app doesn\'t pick it on its own, choose it under Connection > How the PC connects to the phone. Change IP needs an Android phone with ADB, though.'],
