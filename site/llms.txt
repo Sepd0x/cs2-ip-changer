@@ -40,7 +40,7 @@ Status: beta (version 0.1.0). Free, no account. Not affiliated with Valve.
 - [Steam account switcher](https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/): No passwords, with ban marks per server.
 - [Steam profiles in bulk](https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/): Name, picture and privacy on many accounts.
 - [New IP from your phone](https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/): USB tethering and ADB, one click.
-- [Does CS2 IP ban?](https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/): What a new IP can and can't fix.
+- [CS2 community server IP ban: how it works and how to get back in](https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/): What a new IP can and can't fix.
 - [Is it safe?](https://sepd0x.github.io/cs2-ip-changer/is-it-safe/): What it changes and how to check the download.
 
 ## Docs
