@@ -1,6 +1,6 @@
 # CS2 IP Changer
 
-> Free Windows app (Windows 10 and 11, 64-bit) for Counter-Strike 2 that routes CS2 and Steam through an Android phone's mobile data, so community servers see the carrier's IP and not the player's home IP. It is used as a CS2 IP ban bypass and for home IP protection: after an IP ban on a community server the player changes IP from the app and joins again. It is not a VPN and does not touch the game process, its memory or its files.
+> Free Windows app (Windows 10 and 11, 64-bit) for Counter-Strike 2 that routes CS2 and Steam through an Android phone's mobile data, so community servers see the carrier's IP and not the player's home IP. It keeps the home IP out of community server logs and ban lists without a VPN (servers see an ordinary mobile connection, so it also works where VPNs are blocked), and after an IP ban on a community server the player changes IP from the app and joins again. It is not a VPN and does not touch the game process, its memory or its files.
 
 Website: https://sepd0x.github.io/cs2-ip-changer/
 Source and downloads: https://github.com/Sepd0x/cs2-ip-changer (releases: https://github.com/Sepd0x/cs2-ip-changer/releases)
@@ -41,6 +41,7 @@ Status: beta (version 0.1.0). Free, no account. Not affiliated with Valve.
 - [Steam profiles in bulk](https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/): Name, picture and privacy on many accounts.
 - [New IP from your phone](https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/): USB tethering and ADB, one click.
 - [CS2 community server IP ban: how it works and how to get back in](https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/): What a new IP can and can't fix.
+- [Hide your home IP from CS2 community servers without a VPN](https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/): every method compared (VPN, gaming networks, proxies, router restart, mobile data).
 - [Is it safe?](https://sepd0x.github.io/cs2-ip-changer/is-it-safe/): What it changes and how to check the download.
 
 ## Docs

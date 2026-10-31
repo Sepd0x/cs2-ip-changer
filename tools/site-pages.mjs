@@ -153,6 +153,33 @@ export const pages = [
     ],
   },
   {
+    slug: 'hide-ip-cs2',
+    title: 'Hide your home IP from CS2 community servers without a VPN',
+    desc: 'Community servers see the IP of every player who joins. How to keep your home IP out of their logs without a VPN: your phone\'s mobile data for CS2 only, with a kill switch. Methods compared.',
+    nav: 'Hide your IP without a VPN',
+    blurb: 'Every method compared: VPN, gaming networks, proxies, router restart, mobile data.',
+    eyebrow: 'Home IP protection',
+    h1: 'Hide your home IP from CS2 community servers, without a VPN',
+    lead: 'Official matchmaking goes through Valve\'s relays, but a community server you join directly sees your IP, like any game server has to. You can\'t hide that an IP is there; you can choose which one it is. Here are the options, and the one that needs no VPN.',
+    img: ['connection', 'The Connection page: protection status, the IP servers see next to your home IP, phone status and live checks'],
+    sections: [
+      ['Why your IP is visible', `<p>CS2 game traffic is UDP, sent straight between your PC and the server. The server needs an address to send packets back, so whoever runs it can see and log it. An IP shows your provider and a rough location, and it is what IP bans and DDoS attacks aim at.</p>`],
+      ['The options, compared', `<div class="tbl"><table><thead><tr><td></td><th scope="col">Server sees</th><th scope="col">Works on servers that block VPNs</th><th scope="col">Cost</th></tr></thead><tbody>
+<tr><th scope="row">Your phone's mobile data (CS2 IP Changer)</th><td class="us">Your carrier's IP, like any player on a hotspot</td><td class="us">Yes: it's an ordinary mobile connection</td><td class="us">Free app, your data plan</td></tr>
+<tr><th scope="row">VPN</th><td>A datacenter IP</td><td>Often blocked</td><td>Usually a subscription</td></tr>
+<tr><th scope="row">Gaming network (GPN)</th><td>The provider's exit IP</td><td>Depends on the provider</td><td>Usually a subscription</td></tr>
+<tr><th scope="row">SOCKS or HTTP proxy</th><td>Your home IP (game traffic is UDP)</td><td>Not useful</td><td>Varies</td></tr>
+<tr><th scope="row">Restarting the router</th><td>A new home IP, still yours</td><td>Yes, but it's still your home line</td><td>Free, if your IP is dynamic</td></tr>
+</tbody></table></div>`],
+      ['How the mobile data method works', `<ol><li>The phone shares its mobile data with the PC over USB tethering or its hotspot.</li><li>CS2 IP Changer sends only CS2, Steam and your servers through the phone. Browser, Discord and downloads stay at home, so they don't use mobile data.</li><li>A Windows Firewall kill switch keeps CS2's game traffic on the phone: if the cable comes out, the game loses the connection instead of falling back to your home IP.</li><li>Live checks show the IP servers see next to your home IP, and a leak test confirms nothing goes out from home.</li></ol><p>Doing it by hand also works: turn on the phone's hotspot and play on it. The app adds what is hard by hand: game-only routing, the kill switch, a new IP in one click, and checks that nothing leaks.</p>`],
+    ],
+    faq: [
+      ['Is it a VPN?', 'No. The server sees an ordinary mobile connection from your carrier, not a datacenter. That\'s also why it works on servers that block VPNs.'],
+      ['Will my ping be worse?', 'Usually a little. Mobile data adds latency and jitter; a good 4G or 5G signal helps. The app measures ping, jitter and loss every 30 seconds.'],
+      ['Does official matchmaking show my IP?', 'Valve\'s matchmaking goes through Steam Datagram Relay, so other players don\'t get your IP there. Community servers you join directly are the ones that see it.'],
+    ],
+  },
+  {
     slug: 'is-it-safe',
     title: 'Is CS2 IP Changer safe? What it changes and how to check it',
     desc: 'What CS2 IP Changer touches on your PC, why it needs admin, how to verify the download (SHA-256 and GitHub build attestation), signed updates, and how to undo everything.',
