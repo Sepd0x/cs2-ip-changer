@@ -69,6 +69,8 @@ public partial class MainWindow : Window
         });
 
         _s = _demo ? new Settings() : Store.Load(Paths.File("settings.json"), () => new Settings());
+        // Before beta.6 there was no PhoneSeen: an IP history means a phone was already checked on this PC
+        if (!_s.PhoneSeen && _s.IpHistory.Count > 0) _s.PhoneSeen = true;
         InitDev();
         Telemetry.Start(_demo, TelemetryNow);
         LoadFlags();
@@ -168,7 +170,7 @@ public partial class MainWindow : Window
         DiagTick();
         WatchCs2Console();
         _ = WatchQuality();
-        if (!_checkingUpdate && _s.CheckUpdates && (_s.LastUpdateCheck == null || (DateTime.Now - _s.LastUpdateCheck.Value).TotalHours >= 24)) _ = CheckForUpdates();
+        if (!_checkingUpdate && _s.CheckUpdates && (_s.LastUpdateCheck == null || Fmt.Stale(_s.LastUpdateCheck.Value, TimeSpan.FromHours(24)))) _ = CheckForUpdates();
         if (!_changingIp && DateTime.Now.Second % 10 < 5) _ = RefreshPhone();
         if (!_changingIp && (DateTime.Now - _lastIpCheck).TotalSeconds > (Steam.Cs2Running ? 15 : 90)) _ = RefreshPublicIps();
     }

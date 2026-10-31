@@ -31,7 +31,7 @@ public partial class MainWindow
         }
         if (NavAccounts.IsChecked == true && !_demo)
         {
-            var stale = _accounts.Where(a => a.Meta.Profile == null || (DateTime.Now - a.Meta.Profile.Checked).TotalHours > 12).ToList();
+            var stale = _accounts.Where(a => a.Meta.Profile == null || Fmt.Stale(a.Meta.Profile.Checked, TimeSpan.FromHours(12))).ToList();
             if (stale.Count > 0) _ = RefreshAccounts(stale);
         }
         if (NavLog.IsChecked == true) UpdateDiagInfo();

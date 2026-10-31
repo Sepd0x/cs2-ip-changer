@@ -153,6 +153,8 @@ static class ConfigTests
             var warns = new List<string>();
             void OnLog(LogEntry e) { if (e.Level == LogLevel.Warn) warns.Add(e.Text); }
             Log.Added += OnLog;
+            // Another line first: the same warning right after the one for D would be counted as a repeat (beta.7)
+            Log.Info("teste: leitura de F");
             try { s3.Read(F); s3.Read(F); } finally { Log.Added -= OnLog; }
             var w = warns.Where(x => x.StartsWith("Config: an account's CS2 config couldn't be read")).ToList();
             check("Configs: leitura recusada fica no Log, sem caminho", w.Count == 1 && w[0].Contains("link or junction") && !w[0].Contains('\\') && !w[0].Contains(F) && !w[0].Contains(Cs2Config.Id32(F)), string.Join(" | ", warns));
@@ -545,8 +547,12 @@ static class ConfigTests
             store.KeepBackups = 2;
             var outs = new List<CfgOutcome>();
             for (var i = 0; i < 4; i++) outs.Add(store.Push(new CfgJob { SourceId = i % 2 == 0 ? null : A, Snapshot = i % 2 == 0 ? ev : null, Target = B, Categories = new() { "binds" } }, "k" + i).Outcome);
-            var kept = store.Backups().Where(b => b.SteamId == B).Select(b => b.SyncId).OrderBy(s => s, StringComparer.Ordinal).ToList();
+            var bkps = store.Backups().Where(b => b.SteamId == B).ToList();
+            var kept = bkps.Where(b => !b.Original).Select(b => b.SyncId).OrderBy(s => s, StringComparer.Ordinal).ToList();
             check("Configs: limite de backups", outs.All(o => o == CfgOutcome.Copied) && kept.SequenceEqual(new[] { "k2", "k3" }), string.Join(",", outs) + " | " + string.Join(",", kept));
+            // H4 (31 out.): o backup mais antigo da conta (a config de antes da app) nunca sai
+            var orig = bkps.Where(b => b.Original).ToList();
+            check("Configs: o original da conta fica para sempre", orig.Count == 1 && bkps.All(x => string.CompareOrdinal(orig[0].Dir, x.Dir) <= 0) && !new[] { "k2", "k3" }.Contains(orig[0].SyncId), string.Join(",", bkps.Select(x => x.SyncId + (x.Original ? "*" : ""))));
 
             // Modos e "não mexer nesta conta"
             var all = new[] { A, B, C };

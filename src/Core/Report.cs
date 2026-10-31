@@ -55,6 +55,7 @@ public static class Report
         AddText("settings.json", settingsJson ?? "");
         AddTail("app/registo.log", Paths.File("registo.log"));
         AddTail("app/registo.log.old", Paths.File("registo.log.old"));
+        AddTail("app/crash.txt", Paths.File("crash.txt"));
         AddTail("app/servers.json", Paths.File("servers.json"));
         AddTail("app/owned.json", Paths.File("owned.json"));
         if (steamDir != null)

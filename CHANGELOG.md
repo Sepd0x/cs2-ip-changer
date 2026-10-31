@@ -4,12 +4,27 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+## [0.1.0-beta.6] - 2026-10-31
+
 ### Changed
 - Usage stats now include the country, as two letters. Cloudflare works it out from the connection and gives the Worker only the country; the Worker still never reads or stores the IP (README > Telemetry).
 - Reports from a PC whose `SRT_Dados/telemetry.json` has `"Mine": true` count as development builds and stay out of the numbers.
 
 ### Added
 - Website: guide pages for the region picker, copying your CS2 config, the account switcher, Steam profiles in bulk, changing IP with your phone, CS2 IP bans and "Is it safe?", linked from the home page and the sitemap.
+- crash.txt in SRT_Dados keeps the details of an error the app caught (once per kind, about 64 KB at most), and Save bug report includes it. If the last session didn't close normally, the Log says so at the next start.
+- The log file keeps about 14 days: older lines go to the .old copy and then away. Settings > Maintenance > Delete log files deletes them now (they hold your home IP, Steam names and servers).
+
+### Fixed
+- Opening the app for the first time without a phone and closing it left CS2 unable to connect at home (the CS2 lock stays after closing). CS2 is now only locked once a phone connection has been checked on that PC.
+- Settings, accounts and lists could go back to the defaults without a word: a file locked for a moment (an antivirus or OneDrive) was read as damaged and then saved over with the defaults. Now a locked file is tried again, and if it still can't be opened the app doesn't save over it until the next start.
+- A power loss right after a save could leave a file empty. Saves are now flushed to the disk before they replace the old file, the file before is kept as `.prev`, and a damaged file is kept as `.broken-…` while the `.prev` copy is loaded.
+- The server list accepted local network addresses (the home router, `192.168.x.x`, `10.x.x.x` and so on). The kill switch then blocked them outside the phone and could cut the PC's DNS. They are refused now, and old lists lose them with a line in the Log. The "Ignored" line shows 20 at most.
+- Configs: after 20 syncs the account's config from before the app ever changed it was gone. The oldest backup of each account is now kept for good, marked Original, and always shown in Backups.
+- A clock change (summer time ending, a big time correction) made the app forget the routes it had added, so Whole PC routes could stay on the phone after going back to Game only. The app now keeps that in UTC.
+- A clock that was once ahead stopped the daily update check and the account refresh until that date came round. A date in the future now counts as due.
+- The same Log line on every tick (a route that keeps failing, an error every few seconds) filled the log file in hours. It is now written once, and the next line says how many times it repeated.
+- The adb server the app started kept running as admin after the app closed, and kept its folder locked. It is now stopped on exit; an adb server the app never used (Android Studio's, say) is left alone.
 
 ## [0.1.0-beta.5] - 2026-10-29
 
@@ -239,7 +254,8 @@ First public release, as ServerRouteTool.
 - Restore network, to undo every route and rule in one click.
 - Dark interface in Portuguese.
 
-[Unreleased]: ../../compare/v0.1.0-beta.5...HEAD
+[Unreleased]: ../../compare/v0.1.0-beta.6...HEAD
+[0.1.0-beta.6]: ../../releases/tag/v0.1.0-beta.6
 [0.1.0-beta.5]: ../../releases/tag/v0.1.0-beta.5
 [0.1.0-beta.4]: ../../releases/tag/v0.1.0-beta.4
 [0.1.0-beta.3]: ../../releases/tag/v0.1.0-beta.3

@@ -54,35 +54,126 @@ public static class Store
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
+    // Files that couldn't be read at start (locked by an antivirus or OneDrive, say): saving over them would replace the
+    // real data with defaults, so they aren't saved until the app restarts.
+    static readonly HashSet<string> Unreadable = new(StringComparer.OrdinalIgnoreCase);
+
     public static T Load<T>(string path, Func<T> fallback)
     {
-        try
+        if (!System.IO.File.Exists(path)) return fallback();
+        // A sharing violation is not corruption: try again for about 2 s before giving up
+        string raw = null;
+        for (var i = 0; raw == null; i++)
         {
-            if (System.IO.File.Exists(path))
+            try { raw = System.IO.File.ReadAllText(path, Encoding.UTF8); }
+            catch (IOException) when (i < 20) { Thread.Sleep(100); }
+            catch (Exception ex)
             {
-                var raw = System.IO.File.ReadAllText(path, Encoding.UTF8).TrimStart('﻿');
-                if (!string.IsNullOrWhiteSpace(raw)) return JsonSerializer.Deserialize<T>(raw, Opt) ?? fallback();
+                lock (Unreadable) Unreadable.Add(path);
+                Log.Warn($"Could not open {Path.GetFileName(path)} ({ex.Message}). Your changes won't be saved over it until the app restarts.");
+                return fallback();
             }
         }
-        catch (Exception ex)
+        lock (Unreadable) Unreadable.Remove(path);
+        if (TryParse(raw, out T value)) return value;
+        // Empty, cut short by a power loss or not JSON: keep the broken file and use the last good copy
+        var name = Path.GetFileName(path);
+        try { System.IO.File.Copy(path, $"{path}.broken-{DateTime.UtcNow:yyyyMMdd-HHmmss}", true); } catch { }
+        try
         {
-            Log.Warn($"Could not read {Path.GetFileName(path)} ({ex.Message}); saved a .bak copy.");
-            try { System.IO.File.Copy(path, path + ".bak", true); } catch { }
+            if (System.IO.File.Exists(path + ".prev") && TryParse(System.IO.File.ReadAllText(path + ".prev", Encoding.UTF8), out value))
+            {
+                Log.Warn($"{name} was damaged (kept as {name}.broken-…); the previous copy was loaded instead.");
+                return value;
+            }
         }
+        catch { }
+        Log.Warn($"{name} was damaged and there is no good copy (kept as {name}.broken-…); starting from the defaults.");
         return fallback();
+    }
+
+    public static bool TryParse<T>(string raw, out T value)
+    {
+        value = default;
+        raw = raw?.TrimStart('﻿');
+        if (string.IsNullOrWhiteSpace(raw?.Replace('\0', ' '))) return false;
+        try { value = JsonSerializer.Deserialize<T>(raw, Opt); return value != null; }
+        catch { return false; }
     }
 
     static readonly object SaveLock = new();
 
+    /// <summary>Writes to a .tmp file flushed to the disk, then swaps it in and keeps the file before as .prev, so a power
+    /// loss leaves either the old or the new file, never an empty one.</summary>
     public static void Save<T>(string path, T value)
     {
         lock (SaveLock)
         {
+            lock (Unreadable) if (Unreadable.Contains(path)) return;
             var tmp = path + ".tmp";
-            System.IO.File.WriteAllText(tmp, JsonSerializer.Serialize(value, Opt), new UTF8Encoding(false));
+            var bytes = new UTF8Encoding(false).GetBytes(JsonSerializer.Serialize(value, Opt));
+            using (var fs = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                fs.Write(bytes, 0, bytes.Length);
+                fs.Flush(true);
+            }
+            if (System.IO.File.Exists(path))
+            {
+                // Only a file that still reads as JSON becomes .prev, so a damaged one never replaces the last good copy
+                var good = false;
+                try { good = TryParse<System.Text.Json.Nodes.JsonNode>(System.IO.File.ReadAllText(path, Encoding.UTF8), out _); } catch { }
+                try
+                {
+                    if (good) { System.IO.File.Replace(tmp, path, path + ".prev", true); return; }
+                }
+                catch (Exception ex) when (ex is IOException or PlatformNotSupportedException or UnauthorizedAccessException) { }
+            }
             System.IO.File.Move(tmp, path, true);
         }
     }
+}
+
+/// <summary>Crash details for bug reports (crash.txt, newest last, about 64 KB), and a marker that tells the next start
+/// whether this one ended normally.</summary>
+public static class Crash
+{
+    static readonly object Lock = new();
+    static readonly HashSet<string> Seen = new();
+    static string Marker => Paths.File("running.flag");
+
+    public static void Write(Exception ex, string where)
+    {
+        if (ex == null) return;
+        try
+        {
+            lock (Lock)
+            {
+                // The same error on every tick is written once per start
+                var key = ex.GetType().FullName + "|" + ex.TargetSite + "|" + ex.GetBaseException().Message;
+                if (!Seen.Add(key)) return;
+                var path = Paths.File("crash.txt");
+                var text = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [{where}] {AppInfo.Version}{Environment.NewLine}{ex}{Environment.NewLine}{Environment.NewLine}";
+                var old = System.IO.File.Exists(path) ? System.IO.File.ReadAllText(path) : "";
+                var all = old + text;
+                if (all.Length > 64_000) all = all[^64_000..];
+                System.IO.File.WriteAllText(path, all);
+            }
+        }
+        catch { }
+    }
+
+    public static void Started()
+    {
+        try
+        {
+            if (System.IO.File.Exists(Marker))
+                Log.Warn("The last session didn't close normally (a crash, a forced close or a power loss). If something looks wrong, Save bug report on the Log page has the details.");
+            System.IO.File.WriteAllText(Marker, DateTime.Now.ToString("O"));
+        }
+        catch { }
+    }
+
+    public static void Ended() { try { System.IO.File.Delete(Marker); } catch { } }
 }
 
 public enum LogLevel { Info, Ok, Warn, Error }
@@ -108,21 +199,75 @@ public static class Log
     public static void Warn(string t) => Write(LogLevel.Warn, t);
     public static void Error(string t) => Write(LogLevel.Error, t);
 
+    // The same line again within a minute (an error on every 5 s tick) is counted, not written again: one line says how many.
+    static string _lastText;
+    static LogLevel _lastLevel;
+    static DateTime _lastAt;
+    static int _repeats;
+    static bool _aged;
+    /// <summary>The log file keeps about this long: older lines go to .old and then away.</summary>
+    public static readonly TimeSpan Keep = TimeSpan.FromDays(14);
+
     static void Write(LogLevel level, string text)
     {
         var e = new LogEntry { Time = DateTime.Now, Level = level, Text = text };
-        try
+        LogEntry repeated = null;
+        lock (Lock)
         {
-            lock (Lock)
+            if (text == _lastText && level == _lastLevel && e.Time - _lastAt < TimeSpan.FromMinutes(1) && e.Time >= _lastAt)
+            {
+                _repeats++;
+                _lastAt = e.Time;
+                return;
+            }
+            if (_repeats > 0) repeated = new LogEntry { Time = e.Time, Level = _lastLevel, Text = $"(the line above repeated {Fmt.Count(_repeats, "more time")})" };
+            _lastText = text; _lastLevel = level; _lastAt = e.Time; _repeats = 0;
+            try
             {
                 var path = Paths.File("registo.log");
+                if (!_aged) { _aged = true; AgeOut(path); }
                 var fi = new FileInfo(path);
                 if (fi.Exists && fi.Length > 2_000_000) System.IO.File.Move(path, path + ".old", true);
-                System.IO.File.AppendAllText(path, $"{e.Time:yyyy-MM-dd HH:mm:ss} [{level}] {text}{Environment.NewLine}");
+                var lines = repeated != null ? Line(repeated) : "";
+                System.IO.File.AppendAllText(path, lines + Line(e));
             }
+            catch { }
+        }
+        if (repeated != null) Added?.Invoke(repeated);
+        Added?.Invoke(e);
+    }
+
+    static string Line(LogEntry e) => $"{e.Time:yyyy-MM-dd HH:mm:ss} [{e.Level}] {e.Text}{Environment.NewLine}";
+
+    /// <summary>Once per start: the file goes to .old when it began more than <see cref="Keep"/> ago, and an .old that old goes away.</summary>
+    public static void AgeOut(string path)
+    {
+        try
+        {
+            var old = path + ".old";
+            if (System.IO.File.Exists(old) && Fmt.Stale(System.IO.File.GetLastWriteTime(old), Keep)) System.IO.File.Delete(old);
+            if (FirstLineAt(path) is DateTime first && Fmt.Stale(first, Keep)) System.IO.File.Move(path, old, true);
         }
         catch { }
-        Added?.Invoke(e);
+    }
+
+    static DateTime? FirstLineAt(string path)
+    {
+        if (!System.IO.File.Exists(path)) return null;
+        using var r = new StreamReader(path);
+        var line = r.ReadLine();
+        return line != null && line.Length >= 19 && DateTime.TryParseExact(line[..19], "yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None, out var t) ? t : null;
+    }
+
+    /// <summary>Settings > Delete log files: the file and its .old, and the crash file.</summary>
+    public static int DeleteFiles()
+    {
+        var n = 0;
+        lock (Lock)
+            foreach (var f in new[] { "registo.log", "registo.log.old", "crash.txt" })
+                try { var p = Paths.File(f); if (System.IO.File.Exists(p)) { System.IO.File.Delete(p); n++; } } catch { }
+        return n;
     }
 }
 
@@ -188,6 +333,9 @@ public static class Fmt
     public static string When(DateTime? t) => t?.ToString("d MMM HH:mm", System.Globalization.CultureInfo.InvariantCulture) ?? "";
 
     /// <summary>"1 account", "3 accounts": the right word for the number, never "account(s)".</summary>
+    /// <summary>Older than <paramref name="age"/>, or in the future (the clock was ahead when it was saved): due again.</summary>
+    public static bool Stale(DateTime at, TimeSpan age) { var d = DateTime.Now - at; return d >= age || d < TimeSpan.Zero; }
+
     public static string Count(int n, string one, string many = null) => n == 1 ? "1 " + one : $"{n} {many ?? one + "s"}";
 
     public static string Ago(DateTime? t)

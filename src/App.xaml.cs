@@ -33,7 +33,10 @@ public partial class App : Application
         // This copy holds the lock, so no other copy runs from the older unpacked folders (the demo touches nothing).
         if (!args.Contains("--demo")) Task.Run(Program.CleanOldUnpacked);
         DispatcherUnhandledException += OnUiError;
-        TaskScheduler.UnobservedTaskException += (_, a) => { Log.Error("Task: " + a.Exception?.GetBaseException().Message); Telemetry.Error(a.Exception); a.SetObserved(); };
+        AppDomain.CurrentDomain.UnhandledException += (_, a) => Crash.Write(a.ExceptionObject as Exception, "fatal");
+        if (!args.Contains("--demo")) Crash.Started();
+        Exit += (_, _) => { Crash.Ended(); Adb.KillOwnServer(); };
+        TaskScheduler.UnobservedTaskException += (_, a) => { Log.Error("Task: " + a.Exception?.GetBaseException().Message); Crash.Write(a.Exception, "task"); Telemetry.Error(a.Exception); a.SetObserved(); };
         base.OnStartup(e);
         var w = new MainWindow(args);
         MainWindow = w;
@@ -92,6 +95,7 @@ public partial class App : Application
     {
         // An error never closes the app: it goes to the log and the window carries on.
         Log.Error(e.Exception.GetBaseException().Message);
+        Crash.Write(e.Exception, "ui");
         Telemetry.Error(e.Exception);
         e.Handled = true;
     }

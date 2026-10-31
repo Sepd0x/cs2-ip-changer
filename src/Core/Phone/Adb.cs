@@ -263,7 +263,16 @@ public static class Adb
         return Find();
     }
 
-    static Task<ProcResult> Run(string adb, string args, int timeout = 12000) => Proc.Run(adb, args, timeout);
+    static string _used;
+    static Task<ProcResult> Run(string adb, string args, int timeout = 12000) { _used = adb; return Proc.Run(adb, args, timeout); }
+
+    /// <summary>On exit: an adb server started by the app runs with its admin rights and keeps the adb folder locked, so it is
+    /// stopped. One the app never talked to (Android Studio's, say) is left alone.</summary>
+    public static void KillOwnServer()
+    {
+        if (_used == null) return;
+        try { Proc.Run(_used, "kill-server", 3000).Wait(4000); } catch { }
+    }
 
     /// <summary>The phone says USB tethering (rndis) is on.</summary>
     public static async Task<bool> TetheringOn(string adb, string serial)

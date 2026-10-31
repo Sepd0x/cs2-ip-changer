@@ -56,6 +56,8 @@ public sealed class CfgBackup
     /// <summary>Paths under 730 that didn't exist before: an undo removes them.</summary>
     public List<string> Created { get; set; } = new();
     [System.Text.Json.Serialization.JsonIgnore] public string Dir { get; set; }
+    /// <summary>The oldest backup of the account: its config from before the app first changed it. Never pruned.</summary>
+    [System.Text.Json.Serialization.JsonIgnore] public bool Original { get; set; }
 }
 
 public sealed class CfgSnapshot
@@ -868,7 +870,9 @@ public sealed class Cs2ConfigStore
         Store.Save(Path.Combine(bdir, "backup.json"), b);
         try
         {
-            foreach (var old in Directory.GetDirectories(Path.GetDirectoryName(bdir)!).OrderByDescending(x => x, StringComparer.Ordinal).Skip(Math.Max(1, KeepBackups)))
+            // The newest ones, plus the oldest: the account's config from before the app ever changed it
+            var dirs = Directory.GetDirectories(Path.GetDirectoryName(bdir)!).OrderByDescending(x => x, StringComparer.Ordinal).ToList();
+            foreach (var old in dirs.Skip(Math.Max(1, KeepBackups)).Take(Math.Max(0, dirs.Count - Math.Max(1, KeepBackups) - 1)))
                 Directory.Delete(old, true);
         }
         catch (Exception ex) { Log.Warn("Could not tidy the old config backups: " + Why(ex)); }
@@ -885,6 +889,7 @@ public sealed class Cs2ConfigStore
             b.Dir = Path.GetDirectoryName(f);
             list.Add(b);
         }
+        foreach (var g in list.GroupBy(b => b.SteamId)) g.MinBy(b => b.Dir, StringComparer.Ordinal)!.Original = true;
         return list.OrderByDescending(b => b.At).ToList();
     }
 

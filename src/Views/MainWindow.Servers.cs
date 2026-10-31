@@ -32,6 +32,9 @@ public partial class MainWindow
             AddDefaultServers(defaults);
             list = defaults.Select(d => new ServerItem { Ip = d.Ip, Port = d.Port }).ToList();
         }
+        // Lists from before beta.6 could hold local addresses; they go, and the Log says so
+        var local = list.Count(s => s.Ip != null && !ValidIp(s.Ip));
+        if (local > 0) Log.Warn($"Removed {Fmt.Count(local, "address", "addresses")} from the server list: local network addresses can't be game servers.");
         foreach (var s in list.Where(s => ValidIp(s.Ip) && s.Port is >= 1 and <= 65535).GroupBy(s => s.Key).Select(g => g.First()))
         {
             s.PlayersText = "—"; s.PingText = "—"; s.Map = "—";
@@ -44,13 +47,19 @@ public partial class MainWindow
 
     void SaveServers() { if (!_demo) Store.Save(Paths.File("servers.json"), _servers.ToList()); }
 
-    static bool ValidIp(string ip)
+    /// <summary>A public IPv4 a game server can have. Local network addresses (the home router, the phone, a LAN) are refused:
+    /// the kill switch would block them on every adapter except the phone and route them through it, which can cut the PC's DNS.</summary>
+    public static bool ValidIp(string ip)
     {
         if (ip == null) return false;
         var p = ip.Split('.');
         if (p.Length != 4 || !p.All(x => int.TryParse(x, out var n) && n is >= 0 and <= 255)) return false;
-        var first = int.Parse(p[0]);
-        return first != 0 && first != 127 && first < 224;
+        int a = int.Parse(p[0]), b = int.Parse(p[1]);
+        if (a == 0 || a == 127 || a >= 224) return false;
+        if (a == 10 || (a == 172 && b is >= 16 and <= 31) || (a == 192 && b == 168)) return false;   // private networks
+        if ((a == 100 && b is >= 64 and <= 127) || (a == 169 && b == 254)) return false;              // carrier NAT, link-local
+        if (a == 198 && b is 18 or 19) return false;                                                   // benchmarking
+        return ip != Net.EchoIp;                                                                       // the app's own IP test
     }
 
     int ParseInto(string text, out List<string> ignored)
@@ -78,7 +87,7 @@ public partial class MainWindow
         SaveServers();
         ShowLastServer();
         if (n == 0 && ignored.Count == 0) { Toast("Those servers are already in the list.", false); return; }
-        Log.Info($"Added {Fmt.Count(n, "server")}." + (ignored.Count > 0 ? " Ignored: " + string.Join(", ", ignored) : ""));
+        Log.Info($"Added {Fmt.Count(n, "server")}." + (ignored.Count > 0 ? " Ignored (not a public IP:port): " + string.Join(", ", ignored.Take(20)) + (ignored.Count > 20 ? $" and {ignored.Count - 20} more" : "") : ""));
         Toast(n > 0 ? $"{Fmt.Count(n, "server")} added and protected." + (ignored.Count > 0 ? $" {ignored.Count} ignored." : "") : "No valid IP:port.", n > 0);
         _s.DefaultPort = int.TryParse(DefaultPortBox.Text, out var dp) ? dp : 27015;
         SaveSettings();

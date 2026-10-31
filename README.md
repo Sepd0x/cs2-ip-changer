@@ -322,7 +322,7 @@ While Whole PC is on, DNS can only leave through the phone and IPv6 is blocked, 
 <summary><b>What happens when I close the app?</b></summary>
 <br>
 
-Protection stays on, so closing the app can't leak your IP. If you'd rather have it turn off, there's a setting for that.
+Protection stays on, so closing the app can't leak your IP. If you'd rather have it turn off, there's a setting for that. Until a phone has been connected once, CS2 isn't locked, so trying the app without a phone never leaves CS2 unable to connect at home.
 </details>
 
 ## Privacy

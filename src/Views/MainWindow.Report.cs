@@ -8,6 +8,14 @@ namespace SRT;
 // Log > Save bug report: a .zip for a bug report, without the API key and the home IP
 public partial class MainWindow
 {
+    async void DeleteLogs_Click(object sender, RoutedEventArgs e)
+    {
+        if (!await Ask("Delete log files", "Deletes registo.log, its older copy and crash.txt from SRT_Dados. They hold your home IP, Steam names and servers. Save bug report won't have them afterwards.", "Delete")) return;
+        var n = Log.DeleteFiles();
+        LogClear_Click(sender, e);
+        Toast(n > 0 ? "Log files deleted." : "There were no log files.", true);
+    }
+
     async void ExportReport_Click(object sender, RoutedEventArgs e)
     {
         if (_demo) { Toast("Demo: the .zip would go to the Desktop.", true); return; }

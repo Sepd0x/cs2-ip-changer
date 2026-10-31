@@ -73,13 +73,15 @@ public sealed class Guard
         public DateTime Boot { get; set; }
     }
 
-    static DateTime BootTime => DateTime.Now.AddMilliseconds(-Environment.TickCount64);
+    // In UTC: a clock change (summer time, a big NTP correction) must not look like a restart
+    static DateTime BootTime => DateTime.UtcNow.AddMilliseconds(-Environment.TickCount64);
 
     public Guard()
     {
         var st = Store.Load(OwnedFile, () => new OwnedState());
         // From before a restart: Windows already dropped those routes, and the interface index may now be another adapter.
-        if (Math.Abs((st.Boot - BootTime).TotalMinutes) > 2) return;
+        // ToUniversalTime: files from before beta.7 kept the boot time in local time
+        if (Math.Abs((st.Boot.ToUniversalTime() - BootTime).TotalMinutes) > 2) return;
         foreach (var r in st.Routes ?? new()) _ownedRoutes.Add(r);
         _metricAppliedTo = st.MetricIf;
     }
@@ -167,7 +169,7 @@ public sealed class Guard
         else if (problem != _lastProblem) { if (problem != null) Log.Warn(problem + " Servers blocked."); _lastProblem = problem; }
         var fwProblem = Firewall.CheckEnabled();
         if (mode == "home") return await HomeMode(s, adapters, candidate, fwProblem, force);
-        var cs2 = s.LockCs2 ? Steam.Cs2Path(s) : null;
+        var cs2 = s.LockCs2 && (s.PhoneSeen || egress != null) ? Steam.Cs2Path(s) : null;
 
         // 1) Firewall first: there is never a moment when a server is reachable with the home IP.
         var killOk = false;

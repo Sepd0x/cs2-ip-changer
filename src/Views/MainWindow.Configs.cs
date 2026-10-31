@@ -240,7 +240,9 @@ public partial class MainWindow
 
             CfgSnapList.ItemsSource = snaps.Select(s => new CfgSnapshotRow(s)).ToList();
             CfgSnapEmpty.Visibility = snaps.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-            var backups = Cfg.Backups().Take(60).Select(b => new CfgBackupRow(b, CfgName(b.SteamId))).ToList();
+            // The 60 newest, and each account's original (its config from before the app changed it) even when older
+            var allBackups = Cfg.Backups();
+            var backups = allBackups.Take(60).Concat(allBackups.Skip(60).Where(b => b.Original)).Select(b => new CfgBackupRow(b, CfgName(b.SteamId))).ToList();
             CfgBackupList.ItemsSource = backups;
             CfgBackupEmpty.Visibility = backups.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             CfgUndoBtn.IsEnabled = Cfg.CanUndo;   // nothing to put back: greyed out like Sync now
@@ -623,7 +625,7 @@ public sealed class CfgBackupRow
         Backup = b;
         Account = account;
         When = Fmt.When(b.At);
-        Detail = MainWindow.CfgReasonText(b.Reason) + (b.From != null ? $" · from {b.From}" : "") + (b.Files.Count > 0 ? " · " + N(b.Files.Count, "file") : " · " + N(b.Created.Count, "new file"));
+        Detail = (b.Original ? "Original · " : "") + MainWindow.CfgReasonText(b.Reason) + (b.From != null ? $" · from {b.From}" : "") + (b.Files.Count > 0 ? " · " + N(b.Files.Count, "file") : " · " + N(b.Created.Count, "new file"));
     }
     static string N(int n, string what) => n == 1 ? $"1 {what}" : $"{n} {what}s";
     public CfgBackup Backup { get; }

@@ -15,6 +15,9 @@ public sealed partial class Settings
     public string EgressAdapterId { get; set; }           // null = automatic USB phone
     public string EgressSsid { get; set; }                // Wi-Fi adapter: only valid when connected to this hotspot
     public bool LockCs2 { get; set; } = true;             // cs2.exe can only go out through the protected connection
+    /// <summary>A phone connection was checked at least once. Until then cs2.exe isn't locked, so trying the app without a phone
+    /// (and closing it) never leaves CS2 unable to connect at home.</summary>
+    public bool PhoneSeen { get; set; }
     public bool GameMode { get; set; } = true;            // CS2 open = whole PC through the phone connection
     public bool SteamOnEgress { get; set; } = true;       // Steam talks to Valve through the same connection as CS2
     public string Cs2Path { get; set; }

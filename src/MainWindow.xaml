@@ -1748,6 +1748,7 @@
                                         <WrapPanel VerticalAlignment="Top">
                                             <Button Click="OpenData_Click" Margin="0,0,6,6" Content="Open data folder" ToolTip="Opens the SRT_Dados folder, next to the .exe"/>
                                             <Button Click="UnhideAll_Click" Margin="0,0,6,6" Content="Show hidden accounts" ToolTip="Brings back the accounts you hid from the Accounts list"/>
+                                            <Button Click="DeleteLogs_Click" Margin="0,0,6,6" Content="Delete log files" ToolTip="Deletes the log files in SRT_Dados (they hold your home IP, Steam names and servers). The log keeps about 14 days on its own."/>
                                         </WrapPanel>
                                         <Button Grid.Column="1" Style="{StaticResource Danger}" Click="Restore_Click" Margin="24,0,0,6" VerticalAlignment="Top" Content="Turn off protection"
                                                 ToolTip="Removes the kill switch, the routes and the CS2 lock. Use it if your internet stops working. Your servers stay saved, and regions you turned off stay off (Allow all on Regions lifts them)."/>

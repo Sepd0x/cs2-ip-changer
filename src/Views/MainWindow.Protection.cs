@@ -179,6 +179,7 @@ public partial class MainWindow
             : rep.EgressProblem ?? "Waiting for the phone";
         _cCs2.Ok = !_s.LockCs2 ? null : rep.Cs2LockOk;
         _cCs2.Detail = !_s.LockCs2 ? "Turned off in Settings"
+            : !_s.PhoneSeen && rep.Egress == null ? "Not locked yet: CS2 is locked to the phone once you've connected one"
             : rep.Cs2LockOk == null ? "Couldn't find cs2.exe (open CS2 once)"
             : rep.Cs2LockOk == true ? (rep.Egress != null ? "CS2 only goes out through the phone" : "CS2 blocked until you connect the phone") : "Rule not confirmed";
         _cRoutes.Ok = n == 0 || waiting ? null : rep.Egress != null && routesOk == n;
@@ -510,6 +511,7 @@ public partial class MainWindow
                 if (verified != null && !changed) Log.Ok($"Phone connection checked: servers see {e}.");
                 _verifiedKey = verified;
                 changed = true;
+                if (verified != null && !_s.PhoneSeen) { _s.PhoneSeen = true; SaveSettings(); }
             }
             if (changed) _ = SyncNow(force: true);
         }

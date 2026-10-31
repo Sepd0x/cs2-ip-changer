@@ -275,5 +275,77 @@ static class CoreTests
                 try { Directory.Delete(root, true); } catch { }
             }
         }
+            // H2/H3 (31 out.): gravar e ler sem perder dados
+        {
+            var dir = Path.Combine(Path.GetTempPath(), "srt-store-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(dir);
+            try
+            {
+                var f = Path.Combine(dir, "s.json");
+                Store.Save(f, new Dictionary<string, int> { ["v"] = 1 });
+                Store.Save(f, new Dictionary<string, int> { ["v"] = 2 });
+                var prev = Store.Load(f + ".prev", () => new Dictionary<string, int>());
+                check("Gravar: a versão anterior fica em .prev", prev.TryGetValue("v", out var pv) && pv == 1 && !File.Exists(f + ".tmp"), string.Join(",", prev));
+                // Falta de luz: o ficheiro fica com zeros
+                File.WriteAllText(f, new string((char)0, 64));
+                var back = Store.Load(f, () => new Dictionary<string, int>());
+                check("Ler: ficheiro estragado usa a cópia anterior", back.TryGetValue("v", out var bv) && bv == 1 && Directory.GetFiles(dir, "s.json.broken-*").Length == 1, string.Join(",", back));
+                // Estragado e sem cópia: valores por defeito, mas o estragado fica guardado
+                var g = Path.Combine(dir, "g.json");
+                File.WriteAllText(g, "");
+                var def = Store.Load(g, () => new Dictionary<string, int> { ["d"] = 9 });
+                check("Ler: vazio e sem cópia dá os valores por defeito", def.ContainsKey("d") && Directory.GetFiles(dir, "g.json.broken-*").Length == 1);
+                // Um .prev só nasce de um ficheiro bom
+                Store.Save(g, new Dictionary<string, int> { ["v"] = 3 });
+                check("Gravar: um ficheiro estragado não passa a .prev", !File.Exists(g + ".prev") && Store.Load(g, () => new Dictionary<string, int>())["v"] == 3);
+                // Trancado (antivírus, OneDrive): não é lixo, e não se grava por cima
+                var h = Path.Combine(dir, "h.json");
+                Store.Save(h, new Dictionary<string, int> { ["real"] = 7 });
+                Dictionary<string, int> got;
+                using (new FileStream(h, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+                    got = Store.Load(h, () => new Dictionary<string, int> { ["d"] = 0 });
+                Store.Save(h, got);
+                var after = Store.Load(h, () => new Dictionary<string, int>());
+                check("Ler: ficheiro trancado não é gravado por cima com os valores por defeito", got.ContainsKey("d") && after.TryGetValue("real", out var r) && r == 7, string.Join(",", after));
+            }
+            finally { try { Directory.Delete(dir, true); } catch { } }
+        }
+
+        // beta.7 (31 out.): relógio, log e crashes
+        {
+            check("Relógio: idade negativa conta como vencida", Fmt.Stale(DateTime.Now.AddDays(3), TimeSpan.FromHours(24)) && Fmt.Stale(DateTime.Now.AddHours(-25), TimeSpan.FromHours(24)) && !Fmt.Stale(DateTime.Now.AddHours(-1), TimeSpan.FromHours(24)));
+            var seen = new List<string>();
+            void On(LogEntry e) { lock (seen) seen.Add(e.Text); }
+            Log.Added += On;
+            var tag = Guid.NewGuid().ToString("N")[..8];
+            Log.Info("repetida " + tag); Log.Info("repetida " + tag); Log.Info("repetida " + tag); Log.Info("outra " + tag);
+            Log.Added -= On;
+            List<string> mine;
+            lock (seen) mine = seen.Where(t => t.Contains(tag) || t.StartsWith("(the line above")).ToList();
+            check("Log: linha repetida escrita uma vez, com a contagem", mine.SequenceEqual(new[] { "repetida " + tag, "(the line above repeated 2 more times)", "outra " + tag }), string.Join(" | ", mine));
+            var dir = Path.Combine(Path.GetTempPath(), "srt-log-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(dir);
+            try
+            {
+                var f = Path.Combine(dir, "registo.log");
+                File.WriteAllText(f, DateTime.Now.AddDays(-20).ToString("yyyy-MM-dd HH:mm:ss") + " [Info] velha" + Environment.NewLine);
+                File.WriteAllText(f + ".old", "x");
+                File.SetLastWriteTime(f + ".old", DateTime.Now.AddDays(-30));
+                Log.AgeOut(f);
+                check("Log: mais de 14 dias passa a .old e o .old antigo sai", !File.Exists(f) && File.Exists(f + ".old") && File.ReadAllText(f + ".old").Contains("velha"));
+                File.WriteAllText(f, DateTime.Now.AddDays(-2).ToString("yyyy-MM-dd HH:mm:ss") + " [Info] nova" + Environment.NewLine);
+                Log.AgeOut(f);
+                check("Log: com menos de 14 dias fica", File.Exists(f));
+            }
+            finally { try { Directory.Delete(dir, true); } catch { } }
+        }
+
+        // H5 (31 out.): a lista de servidores só aceita IPs públicos
+        {
+            var refused = new[] { "192.168.1.1", "10.0.0.5", "172.16.0.1", "172.31.255.1", "100.64.0.1", "169.254.1.1", "198.18.0.1", "1.0.0.1", "127.0.0.1", "0.1.2.3", "224.0.0.1" };
+            var allowed = new[] { "185.53.1.10", "172.15.0.1", "172.32.0.1", "100.63.0.1", "8.8.8.8" };
+            check("Servidores: endereços da rede local recusados", refused.All(ip => !MainWindow.ValidIp(ip)), string.Join(",", refused.Where(MainWindow.ValidIp)));
+            check("Servidores: IPs públicos aceites", allowed.All(MainWindow.ValidIp), string.Join(",", allowed.Where(ip => !MainWindow.ValidIp(ip))));
+        }
     }
 }
