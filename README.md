@@ -195,6 +195,8 @@ To check only the hash, put the `.sha256` file next to the exe and run this in P
 (Get-FileHash .\CS2IPChanger.exe).Hash -eq (Get-Content .\CS2IPChanger.exe.sha256).Split()[0]
 ```
 
+Each release is also scanned on VirusTotal. beta.6: [2 of 70 engines](https://www.virustotal.com/gui/file/8f8f4197b589dd80d6826a703af863c1684949f610e6acf7805102c3860314a2/detection) flag it (Google and Varist, generic "risk" labels), and Microsoft, Kaspersky, ESET, Bitdefender and Avast find nothing. An exe that isn't code-signed, asks for admin and changes firewall rules gets flagged by some engines on heuristics alone. If you see a detection that looks wrong, open an issue.
+
 ## If something goes wrong
 
 The firewall rules stay in place when you close the app, on purpose, so your IP can't leak while it's closed. To undo everything:

@@ -206,7 +206,7 @@ footer a{color:var(--mu)}
   <section aria-labelledby="s1">
     <div class="wrap prose">
       <h2 id="s1">Check your download</h2>
-      <ul><li>Every release is built by GitHub Actions from the public source and comes with a <b>build attestation</b>. With the GitHub CLI: <code>gh attestation verify CS2IPChanger.exe -R Sepd0x/cs2-ip-changer</code>.</li><li>Each exe has a <b>SHA-256</b> file next to it in the release. In PowerShell: <code>Get-FileHash .\CS2IPChanger.exe</code>, and compare.</li><li><b>Signed updates.</b> The app only installs an update whose SHA-256 is signed with the project's key, which is not on GitHub.</li><li>The exe isn't code-signed yet, so Windows SmartScreen may warn the first time. More info &gt; Run anyway.</li></ul>
+      <ul><li>Every release is built by GitHub Actions from the public source and comes with a <b>build attestation</b>. With the GitHub CLI: <code>gh attestation verify CS2IPChanger.exe -R Sepd0x/cs2-ip-changer</code>.</li><li>Each exe has a <b>SHA-256</b> file next to it in the release. In PowerShell: <code>Get-FileHash .\CS2IPChanger.exe</code>, and compare.</li><li><b>Signed updates.</b> The app only installs an update whose SHA-256 is signed with the project's key, which is not on GitHub.</li><li><b>VirusTotal</b> for each release: beta.6 is flagged by <a href="https://www.virustotal.com/gui/file/8f8f4197b589dd80d6826a703af863c1684949f610e6acf7805102c3860314a2/detection">2 of 70 engines</a> (Google and Varist, generic "risk" labels); Microsoft, Kaspersky, ESET, Bitdefender and Avast find nothing.</li><li>The exe isn't code-signed yet, so Windows SmartScreen may warn the first time. More info &gt; Run anyway.</li></ul>
     </div>
   </section>
   <section aria-labelledby="s2">

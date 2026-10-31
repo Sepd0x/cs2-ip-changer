@@ -22,4 +22,6 @@ If you have beta.4 or beta.5, the app offers this update by itself and checks it
 ### Check the download
 `CS2IPChanger.exe.sha256` has the exe's SHA-256 and `CS2IPChanger.exe.sha256.sig` its signature. The build attestation proves it came from this repo's workflow: `gh attestation verify CS2IPChanger.exe -R Sepd0x/cs2-ip-changer`.
 
+VirusTotal: [2 of 70 engines](https://www.virustotal.com/gui/file/8f8f4197b589dd80d6826a703af863c1684949f610e6acf7805102c3860314a2/detection) (Google and Varist, generic "risk" labels); Microsoft, Kaspersky, ESET, Bitdefender and Avast find nothing.
+
 Full list in `CHANGELOG.md`.
