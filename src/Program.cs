@@ -10,7 +10,7 @@ namespace SRT;
 /// never checks them again on the next start. The app runs as admin, so before any WPF type is touched it makes sure they come from
 /// %ProgramData%\CS2IPChanger\net (admins only); if not, it starts itself again with the host pointed there. The same second start
 /// drops the runtime variables (CORECLR_PROFILER...) that would load a DLL into it, and as admin it never starts from a folder
-/// programs without admin rights can change.
+/// programs without admin rights can change: there it only offers to install itself in Program Files (Core/Installer.cs).
 /// </summary>
 public static class Program
 {
@@ -20,24 +20,42 @@ public static class Program
     [STAThread]
     static int Main(string[] args)
     {
+        // The app's own P/Invokes (kernel32, iphlpapi, wintrust, winmm...) only load from System32, never a copy planted next to the exe.
+        // First thing, so LockDllSearch's own call goes through it too. .NET's CoreLib doesn't use this resolver and looks in the exe's
+        // folder first (by full path) before and after Main: that is why the folder check below exists.
+        NativeLibrary.SetDllImportResolver(typeof(Program).Assembly, (name, _, _) => SystemDll(name));
         // Windows looks for a DLL loaded by name (UMPDC, WindowsCodecs, DEVOBJ, ncrypt...) in the exe's folder and the current folder
         // first. From here on only System32 counts. What the host loaded before Main isn't covered: that is what the folder check is for.
-        LockDllSearch();
-        // The app's own P/Invokes (iphlpapi, wintrust, winmm...) only load from System32, never a copy planted next to the exe
-        NativeLibrary.SetDllImportResolver(typeof(Program).Assembly, (name, _, _) => SystemDll(name));
-#if !DEBUG
-        // As admin from a folder any program can change (Downloads, Desktop): a DLL put next to the exe would run as admin on the next
-        // start, before any check here. So the app doesn't start there. --restore still works: it's the way out before deleting the folder.
-        if (Adb.Elevated && !args.Any(a => a.Equals("--restore", StringComparison.OrdinalIgnoreCase)) && FolderProblem(Paths.AppDir, Paths.Data) is string why)
+        var locked = LockDllSearch();
+        // As admin, a search Windows wouldn't lock is the same hole as the folder below: the app doesn't start. --restore still works.
+        // No Log line here: it would write as admin into SRT_Dados before the folder check below.
+        if (DllSearchProblem(locked, Adb.Elevated, args) is string dllWhy)
         {
-            MessageBoxW(IntPtr.Zero, why, "CS2 IP Changer", 0x10);
+            MessageBoxW(IntPtr.Zero, dllWhy, "CS2 IP Changer", 0x10);
             return 1;
         }
+        // As admin from a folder any program can change (Downloads, Desktop): a DLL put next to the exe would run as admin on the next
+        // start, before any check here. So the app doesn't run there, and writes nothing next to it (not even the log). It offers to
+        // install itself in Program Files instead: this process only copies itself to an admin-only folder and starts that copy, which
+        // shows the Install window (Core/Installer.cs). Nothing of the app's window ever loads from here. --restore still works: it's
+        // the way out before deleting the folder.
+        string folderWhy = null;
+        var appDirUnsafe = false;
+#if !DEBUG
+        if (Adb.Elevated && !args.Any(a => a.Equals("--restore", StringComparison.OrdinalIgnoreCase))) folderWhy = FolderProblem(Paths.AppDir, Paths.Data);
+        appDirUnsafe = Adb.Elevated && Adb.UsersCanWrite(Paths.AppDir);   // --restore from Downloads too
 #endif
+        var staged = Installer.SameDir(Paths.AppDir, Installer.StageDir);
+        if (folderWhy != null || staged || appDirUnsafe) Paths.ReadOnly = true;
         // Single file (no path for the assembly), as admin, and the DLLs came out somewhere else
 #pragma warning disable IL3000
         var singleFile = string.IsNullOrEmpty(typeof(Program).Assembly.Location);
 #pragma warning restore IL3000
+        if (folderWhy != null && (staged || appDirUnsafe))
+        {
+            if (staged || !Installer.Offer(Paths.AppDir)) { MessageBoxW(IntPtr.Zero, folderWhy, "CS2 IP Changer", 0x10); return 1; }
+            return StageInstall(singleFile, folderWhy);
+        }
         var moveNet = singleFile && Adb.Elevated && !NativeDirSafe(SafeBase);
         // CORECLR_PROFILER and the like come from your user environment even into an elevated app and load a DLL into it.
         var runtimeVars = Adb.Elevated ? RuntimeVars(Environment.GetEnvironmentVariables().Keys.Cast<string>()) : new List<string>();
@@ -47,7 +65,7 @@ public static class Program
             if (args.Contains(Moved))
             {
                 var what = moveNet ? "unpack its files to a folder only admins can change" : "start without the runtime variables " + string.Join(", ", runtimeVars);
-                Log.Error($"The app couldn't {what}. It didn't start.");
+                if (folderWhy == null) Log.Error($"The app couldn't {what}. It didn't start.");
                 MessageBoxW(IntPtr.Zero, $"CS2 IP Changer couldn't {what}, so it didn't start. Restart the PC and try again.", "CS2 IP Changer", 0x10);
                 return 1;
             }
@@ -63,19 +81,53 @@ public static class Program
                     Adb.SafeDir(SafeBase);
                     psi.Environment[ExtractBaseVar] = SafeBase;
                 }
-                if (runtimeVars.Count > 0)
+                if (runtimeVars.Count > 0 && folderWhy == null)
                     Log.Warn($"Your environment sets {string.Join(", ", runtimeVars)}, which can load code into .NET apps. The app started again without them; if you didn't set them, remove them in Windows' environment variables.");
-                Process.Start(psi)?.Dispose();
+                // Started again by its path: from a folder others can change (--restore there), held and checked to be the running
+                // file first, so nothing swapped in is what starts
+                using (appDirUnsafe ? Installer.OpenSelf() : null) Process.Start(psi)?.Dispose();
                 return 0;
             }
             catch (Exception ex)
             {
-                Log.Error("The app couldn't restart from a safe folder: " + ex.Message);
+                if (folderWhy == null) Log.Error("The app couldn't restart from a safe folder: " + ex.Message);
                 MessageBoxW(IntPtr.Zero, "CS2 IP Changer couldn't restart from a folder only admins can change: " + ex.Message, "CS2 IP Changer", 0x10);
                 return 1;
             }
         }
-        return RunApp();
+        if (staged) return Installer.StagedSource(args, Paths.AppDir) is string from ? RunInstall(from) : 1;
+        return folderWhy != null ? RunFolderProblem(folderWhy) : RunApp();
+    }
+
+    /// <summary>
+    /// Install, step 1, in the copy started from Downloads: no window here (WPF must not load next to this exe). It copies the running
+    /// exe, held and checked, to the admin-only <see cref="Installer.StageDir"/> and starts that copy, which shows the Install window.
+    /// </summary>
+    static int StageInstall(bool singleFile, string why)
+    {
+        try
+        {
+            string exe;
+            using (var self = Installer.OpenSelf()) exe = Installer.Stage(self);
+            var psi = new ProcessStartInfo(exe) { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(exe)! };
+            psi.ArgumentList.Add(Installer.FromArg);
+            psi.ArgumentList.Add(Paths.AppDir);
+            foreach (var k in RuntimeVars(psi.Environment.Keys)) psi.Environment.Remove(k);
+            if (singleFile)
+            {
+                Adb.SafeDir(Path.GetDirectoryName(SafeBase)!);
+                Adb.SafeDir(SafeBase);
+                psi.Environment[ExtractBaseVar] = SafeBase;
+            }
+            Process.Start(psi)?.Dispose();
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            MessageBoxW(IntPtr.Zero, Installer.StageBusy() ? "The Install window of CS2 IP Changer is already open. Look for it in the taskbar."
+                : why + "\n\n(The Install window couldn't open: " + ex.Message + ")", "CS2 IP Changer", 0x10);
+            return 1;
+        }
     }
 
     // Separate method: WPF's assemblies only load when this runs, after the check.
@@ -85,6 +137,87 @@ public static class Program
         var app = new App();
         app.InitializeComponent();
         return app.Run();
+    }
+
+    /// <summary>The app's styles for a window without the App (the Install window and the data folder message).</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    static void Styles()
+    {
+        var app = new System.Windows.Application { ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown };
+        app.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary
+            { Source = new Uri($"pack://application:,,,/{typeof(Program).Assembly.GetName().Name};component/Theme.xaml") });
+    }
+
+    /// <summary>The exe's folder is fine but SRT_Dados next to it isn't (moved instead of copied): the reason in the app's own window.</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    static int RunFolderProblem(string why)
+    {
+        Styles();
+        NoticeWindow.Ask("CS2 IP Changer can't start here", why, "Close", problem: true);
+        return 1;
+    }
+
+    /// <summary>Install, step 2, in the staged copy (admin-only folder): the Install window. Only this runs; the app itself doesn't start.</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    static int RunInstall(string from)
+    {
+        Styles();
+        return InstallWindow(from, Installer.Target).ShowAndWait() ? 0 : 1;
+    }
+
+    internal static NoticeWindow InstallWindow(string from, string target)
+    {
+        var keep = Directory.Exists(Path.Combine(target, "SRT_Dados")) && Directory.Exists(Path.Combine(from, "SRT_Dados"));
+        return new NoticeWindow("Install CS2 IP Changer", InstallText(from, target, keep, Installer.InstalledVersion(target), AppInfo.Version), "Install", "Close", action: async w =>
+        {
+            w.Working = true;
+            w.Say($"Copying to {target}…");
+            Installer.Result r;
+            try { r = await Task.Run(() => Installer.Install(from, target, AppInfo.Version)); }
+            catch (Exception ex)
+            {
+                w.Working = false;
+                w.Accepted = false;
+                w.Say("Couldn't install: " + ex.Message, bad: true);
+                return;
+            }
+            if (r.DataError != null)
+            {
+                // The exe is in place, but the app would start without your settings: it isn't started, the message says what to do
+                w.Working = false;
+                w.Finish();
+                w.Say($"CS2IPChanger.exe is installed, but SRT_Dados wasn't copied: {r.DataError} Then start {r.Exe}.", bad: true);
+                return;
+            }
+            var note = (r.ExeKept != null ? $"Version {r.ExeKept} was already there and stays. " : "")
+                + (r.DataKept ? "The SRT_Dados already there was kept. " : "")
+                + (r.Skipped > 0 ? $"Left out {Fmt.Count(r.Skipped, "file")} from SRT_Dados (links, files kept online by OneDrive, or in use). " : "");
+            try { Installer.Start(r.Exe); }
+            catch (Exception ex)
+            {
+                w.Working = false;
+                w.Finish();
+                w.Say($"{note}Installed, but couldn't start it ({ex.Message}). Start {r.Exe} yourself.", bad: true);
+                return;
+            }
+            w.Say(note + "Starting the app from there…");
+            await Task.Delay(note.Length > 0 ? 3000 : 800);
+            w.Working = false;
+            w.Close();
+        });
+    }
+
+    /// <summary>What the Install window says: why the app doesn't run from <paramref name="from"/> and exactly what Install does.</summary>
+    public static string InstallText(string from, string target, bool keepData, string installed = null, string version = null)
+    {
+        var keepExe = Installer.KeepExe(installed, version);
+        return $"CS2 IP Changer runs as admin, and programs without admin rights can change the folder it was started from:\n{from}\n\n"
+            + "A file put next to the app there could run with admin rights, so the app doesn't run from it.\n\n"
+            + (installed == null ? $"Install copies CS2IPChanger.exe to {target}, where only admins can change files, "
+                : keepExe ? $"Version {installed} is already in {target}, the same or newer than this one, so Install keeps it, "
+                : $"Install replaces version {installed} in {target} (only admins can change files there) with this one, ")
+            + (keepData ? "keeps the SRT_Dados that is already there (the one in that folder isn't copied), " : "copies your SRT_Dados folder too if there is one there, ")
+            + "and starts the app from there. Nothing in that folder is moved or deleted, so you can delete that copy afterwards.";
     }
 
     /// <summary>The DLL from System32, or nothing (then .NET's own search runs, for a name System32 doesn't have).</summary>
@@ -109,6 +242,15 @@ public static class Program
         var ok = SetDefaultDllDirectories(System32 | UserDirs);
         return SetDllDirectoryW("") && ok;
     }
+
+    /// <summary>
+    /// Why the app won't start after <see cref="LockDllSearch"/> (null = it can): as admin, a DLL search Windows wouldn't lock lets a
+    /// DLL next to the exe or in the current folder run with admin rights. Without admin, or for --restore, it carries on.
+    /// </summary>
+    public static string DllSearchProblem(bool locked, bool elevated, IEnumerable<string> args) =>
+        locked || !elevated || args.Any(a => a.Equals("--restore", StringComparison.OrdinalIgnoreCase)) ? null
+            : "Windows wouldn't limit where CS2 IP Changer loads its DLLs from, so a file next to the app could run with admin rights. "
+              + "The app didn't start.\n\nRestart the PC and try again. To undo the app's network changes, run CS2IPChanger.exe --restore.";
 
     /// <summary>
     /// The variables of the .NET runtime (CORECLR_, COR_, COMPlus_, DOTNET_): a profiler DLL, a diagnostics port, another GC or JIT.

@@ -22,6 +22,10 @@ public partial class MainWindow
 
     void Toast(string text, Tone tone)
     {
+        // What the notification said stays in the Log after it fades
+        Log.Notice(tone switch { Tone.Ok => LogLevel.Ok, Tone.Error => LogLevel.Error, Tone.Info => LogLevel.Info, _ => LogLevel.Warn }, text);
+        // The window is in the notification area: what a tray command or the tick has to say comes as a Windows notification.
+        if (!IsVisible && tone != Tone.Info) _tray?.Balloon(tone == Tone.Error ? "CS2 IP Changer: problem" : "CS2 IP Changer", text);
         ToastText.Text = text;
         ToastIcon.Text = tone switch { Tone.Ok => "", Tone.Error => "", Tone.Info => "", _ => "" };
         ToastIcon.Foreground = tone switch { Tone.Ok => Ui.Good, Tone.Error => Ui.Bad, Tone.Info => Ui.Muted, _ => Ui.Warn };
@@ -90,6 +94,9 @@ public partial class MainWindow
     Task<bool> Ask(string title, string text, string ok, string cancel = "Cancel",
  int inputs = 0, bool danger = false, string label1 = null, string label2 = null, string color = null)
     {
+        // A command stopped with Cancel asks nothing more: its next question counts as a "no"
+        if (_command != null && CommandCancelled) { _dialogCancelClicked = false; return Task.FromResult(false); }
+        if (!IsVisible && _tray != null) ShowFromTray();   // a question from a tray command needs the window
         _dialogColor = color;
         DialogColorLabel.Visibility = DialogColors.Visibility = color != null ? Visibility.Visible : Visibility.Collapsed;
         if (color != null) BuildColorSwatches();

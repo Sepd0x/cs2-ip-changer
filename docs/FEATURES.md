@@ -36,6 +36,8 @@ The short version is in the [README](../README.md#features). This page has the d
 
 **Change IP and rejoin.** When a server kicks or bans you, the app plays a sound and offers to get a new IP and join the last server again (only once protection is confirmed). After a ban it also logs into the next account that server hasn't banned, because the ban is on the IP and the account. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> does it from inside the game (you can pick another key in Settings > New IP + next account). When Steam or VAC refuses the account instead, the app says so and doesn't offer a new IP, because it wouldn't help.
 
+**Kick, ban or something else.** CS2 only gets a reason code from the server, so the app reads that code and what the server said in the half minute before (ban plugins like CS2-SimpleAdmin say the length, VPN blockers say "VPN/Proxy detected"). A ban, with its length if the server said it (the ban mark on that account ends with it), and a VPN or proxy block offer New IP + next account. A kick (AFK, vote, admin) offers a plain rejoin with the same account and IP. A full server, a reserved slot, a timeout or a lost connection say what happened and offer nothing. A map change or leaving yourself say nothing. On Valve's matchmaking servers nothing is shown or counted.
+
 **New range check.** Tells you if the new IP is in a new /16 or the same one as before, because some admins ban the whole range. Settings > Keep changing until the IP is in a new range makes it keep trying until the range changes.
 
 ## Servers
@@ -138,8 +140,17 @@ For this the app only talks to Steam (steamcommunity.com, login.steampowered.com
 
 **Open with CS2.** Programs you pick, like Discord, Spotify or a stats tracker, open when the app opens CS2. They start as you, never with the app's admin rights. A program that needs admin gets an As admin switch: Windows asks first (UAC).
 
-**Stream friendly.** Hide usernames keeps usernames off screen, also in the Log, and your home IP stays masked in the app. The Steam Web API key is hidden unless you click Show.
+**Stream friendly.** Hide usernames keeps usernames off screen, also in the Log, and your home IP stays masked in the app. The Steam Web API key is hidden unless you click Show. While OBS Studio or Streamlabs is open, Hide usernames turns on by itself (Settings > Steam).
+
+**In the background.** An icon next to the clock shows the protection state when you point at it; click it to open the app, right-click it for New IP + next account, Change IP, Regions, Turn off protection and Quit. While the window is hidden, the app's notices come as Windows notifications. In Settings > Background and data, all off until you turn them on:
+- **Close to the notification area**: the X hides the window and protection carries on.
+- **Start with Windows**: a scheduled task named "CS2 IP Changer" opens the app in the notification area when you sign in, with its admin rights and without a UAC prompt each time. Only the copy in `C:\Program Files\CS2 IP Changer` can do this.
+- **Mobile data warning**: the Phone box on Connection counts what went through the phone's adapter since the app opened and this month, and the app warns once a month at the GB you pick. It counts everything on that adapter, not only CS2, and your carrier's count can differ a little.
+
+**Remove everything and quit.** Settings > Undo and maintenance. Removes every rule and route the app made (the region block too), the Start with Windows task and `C:\ProgramData\CS2IPChanger`, stops the phone tool and closes. What it leaves (`SRT_Dados` and the app) and how to delete it is in the message.
+
+**CS2 friend code.** Each account's menu on Accounts can copy its CS2 friend code, for Friends > Add a friend in CS2.
 
 **Updates.** Once a day at most it checks for a new version. It only installs it if the exe matches the SHA-256 from the release and that `.sha256` file is signed with the project's own key, which is kept off GitHub. Before downloading it tells you the size, and warns you when the download would go through the phone's mobile data. You can turn this off.
 
-**Save bug report.** On the Log page. It saves a .zip on your Desktop for an issue, with your home IP, API key, logins, Steam and player names, SteamIDs, Wi-Fi names, emails and your Windows user hidden. Details in [If something goes wrong](../README.md#if-something-goes-wrong).
+**Save bug report.** On the Log page. It saves a .zip on your Desktop for an issue, with your current and last home IP, API key, logins, Steam and player names, SteamIDs, Wi-Fi names, emails and your Windows user hidden. Details in [If something goes wrong](../README.md#if-something-goes-wrong).

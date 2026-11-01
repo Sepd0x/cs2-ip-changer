@@ -115,17 +115,19 @@ public static partial class Updater
         Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttps && u.Host == "github.com"
         && u.AbsolutePath.StartsWith("/" + Repo + under, StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>"&lt;sha256&gt;  CS2IPChanger.exe" (sha256sum format, also with "*"). Null if there's no valid hash for the file.</summary>
+    /// <summary>
+    /// "&lt;sha256&gt;  CS2IPChanger.exe" (sha256sum format, also with "*"), and nothing else in the file. Null otherwise.
+    /// A file with more lines is refused: tools/release-key.mjs only signs the exact line the Release workflow writes, and a second
+    /// line could carry another hash past it.
+    /// </summary>
     public static string ParseSha256(string text, string fileName = ExeName)
     {
-        foreach (var raw in (text ?? "").Replace("﻿", "").Split('\n'))
-        {
-            var m = Regex.Match(raw.Trim(), @"^([0-9a-fA-F]{64})(?:\s+\*?(.+))?$");
-            if (!m.Success) continue;
-            var name = m.Groups[2].Success ? Path.GetFileName(m.Groups[2].Value.Trim()) : null;
-            if (name == null || name.Equals(fileName, StringComparison.OrdinalIgnoreCase)) return m.Groups[1].Value.ToLowerInvariant();
-        }
-        return null;
+        var lines = (text ?? "").Replace("﻿", "").Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).ToList();
+        if (lines.Count != 1) return null;
+        var m = Regex.Match(lines[0], @"^([0-9a-fA-F]{64})(?:\s+\*?(.+))?$");
+        if (!m.Success) return null;
+        var name = m.Groups[2].Success ? Path.GetFileName(m.Groups[2].Value.Trim()) : null;
+        return name == null || name.Equals(fileName, StringComparison.OrdinalIgnoreCase) ? m.Groups[1].Value.ToLowerInvariant() : null;
     }
 
     static HttpClient Http(int timeoutSec)

@@ -32,18 +32,22 @@ public static class Report
             return Rec.ScrubIds(text, words);
         }
 
-        using var zip = ZipFile.Open(path, ZipArchiveMode.Create);
+        // Built in memory and written by handle (SafeFile): the Desktop is a folder other programs can change.
+        using var ms = new MemoryStream();
+        var zip = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true);
         void AddText(string name, string text)
         {
             using var w = new StreamWriter(zip.CreateEntry(name, CompressionLevel.Optimal).Open(), new UTF8Encoding(false));
             w.Write(Clean(text));
         }
-        void AddTail(string name, string file, bool hideExternal = false)
+        // Steam's and CS2's logs are in folders other programs can change: read only as themselves, never through a link
+        // (a file only admins can read must not end up in a zip on your Desktop).
+        void AddTail(string name, string file, bool hideExternal = false, bool outside = false)
         {
             try
             {
                 if (file == null || !File.Exists(file)) return;
-                using var fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using var fs = outside ? SafeFile.OpenRead(file) : new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
                 if (fs.Length > TailBytes) fs.Seek(-TailBytes, SeekOrigin.End);
                 var text = new StreamReader(fs, Encoding.UTF8).ReadToEnd();
                 AddText(name, hideExternal ? ExternalAddr.Replace(text, "external address = '(hidden)'") : text);
@@ -62,9 +66,11 @@ public static class Report
         {
             var logs = Path.Combine(steamDir, "logs");
             if (Directory.Exists(logs))
-                foreach (var f in Directory.GetFiles(logs, "connection_log*.txt")) AddTail("steam/" + Path.GetFileName(f), f, true);
+                foreach (var f in Directory.GetFiles(logs, "connection_log*.txt")) AddTail("steam/" + Path.GetFileName(f), f, true, outside: true);
         }
-        AddTail("cs2/console.log", cs2Console);
+        AddTail("cs2/console.log", cs2Console, outside: true);
+        zip.Dispose();
+        SafeFile.Write(path, ms.ToArray());
         return path;
     }
 }

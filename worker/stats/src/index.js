@@ -1,6 +1,7 @@
 // Anonymous usage stats for CS2 IP Changer (beta). README > Telemetry says what the app sends.
 //
-// What is kept: a random install ID made on the PC, the app and Windows versions, the mode, how the phone is connected,
+// What is kept: a random ID made on the PC (since beta.8 new every day, so it never links one day to the next; before beta.8 it
+// was fixed per install), the app and Windows versions, the mode, how the phone is connected,
 // minutes the app was open, the country (two letters, from Cloudflare), how many times each button or hotkey was used, a few counters (IP changes, kicks, bans marked,
 // list sizes: servers, accounts, flagged players, "Open with CS2" programs and turned-off regions) and errors as type + code location. Never kept: the sender's IP (Cloudflare needs it to deliver the
 // request and works out the country from it; this code only gets the country, never the IP), and nothing the app doesn't send (no IPs, servers, accounts, names). Logs are off (wrangler.jsonc).
@@ -17,21 +18,51 @@ const NAME = /^[A-Za-z0-9_]{1,48}$/;
 const WORD = /^[a-z0-9_.-]{1,24}$/;
 const LOCATION = /^[A-Za-z0-9_.<>`|+-]{1,120}$/;
 const COUNTRY = /^[A-Z][A-Z0-9]$/;   // ISO 3166 (PT, BR, US…), or Cloudflare's XX (unknown) and T1 (Tor)
+// Minutes in one report: what one day can hold. The app sends the minutes since its last report, and since it also reports at close
+// that is under a day; more is someone inflating the numbers.
+const MAX_MINUTES = 24 * 60;
+
+/**
+ * The body, read up to max bytes and no further. Content-Length can be missing (chunked) or wrong, and request.text() would
+ * first take the whole thing into memory. Null when it is too big.
+ */
+export async function readCapped(request, max) {
+  if (!request.body) return '';
+  const reader = request.body.getReader();
+  const parts = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > max) { try { await reader.cancel(); } catch { /* gone already */ } return null; }
+    parts.push(value);
+  }
+  const all = new Uint8Array(size);
+  let at = 0;
+  for (const p of parts) { all.set(p, at); at += p.byteLength; }
+  return new TextDecoder('utf-8', { fatal: true }).decode(all);
+}
+
+const plain = (o) => o !== null && typeof o === 'object' && !Array.isArray(o);
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (request.method !== 'POST' || url.pathname !== '/v1') return new Response('CS2 IP Changer stats. See the README.', { status: 404 });
+    // Only JSON: a web page can't send that to another site without asking first (CORS preflight, which this Worker never
+    // allows), so a page someone visits can't make their browser send made-up reports. The app sends application/json.
+    if (!/^application\/json\s*(;|$)/i.test(request.headers.get('content-type') || '')) return new Response('json only', { status: 415 });
     const len = Number(request.headers.get('content-length') || 0);
     if (len > MAX_BODY) return new Response('too big', { status: 413 });
     let b;
     try {
-      const text = await request.text();
-      if (text.length > MAX_BODY) return new Response('too big', { status: 413 });
+      const text = await readCapped(request, MAX_BODY);
+      if (text === null) return new Response('too big', { status: 413 });
       b = JSON.parse(text);
     } catch { return new Response('bad json', { status: 400 }); }
 
-    if (!b || b.v !== 1 || !ID.test(b.id) || !VERSION.test(b.app)) return new Response('bad', { status: 400 });
+    if (!plain(b) || b.v !== 1 || !ID.test(b.id) || !VERSION.test(b.app)) return new Response('bad', { status: 400 });
     const now = Date.now();
     const day = new Date(now).toISOString().slice(0, 10);
     const dev = b.dev === true ? 1 : 0;
@@ -45,11 +76,11 @@ export default {
     const int = (x, max) => (Number.isInteger(x) && x >= 0 && x <= max ? x : null);
     const stmts = [
       env.DB.prepare('INSERT INTO pings (day, ts, id, app, os, mode, link, minutes, country, dev) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-        .bind(day, now, b.id, b.app, word(b.os), word(b.mode), word(b.link), int(b.minutes, 60 * 24 * 31), cc, dev),
+        .bind(day, now, b.id, b.app, word(b.os), word(b.mode), word(b.link), int(b.minutes, MAX_MINUTES), cc, dev),
     ];
     // Caps a little above what the app sends (about 130 buttons, a few counters, at most 30 errors)
     for (const [table, obj, max, cap] of [['clicks', b.clicks, 100000, 150], ['counts', b.counts, 1000000, 40]]) {
-      if (!obj || typeof obj !== 'object') continue;
+      if (!plain(obj)) continue;
       for (const [name, n] of Object.entries(obj).slice(0, cap))
         if (NAME.test(name) && int(n, max) !== null)
           stmts.push(env.DB.prepare(`INSERT INTO ${table} (day, id, name, n, dev) VALUES (?, ?, ?, ?, ?)`).bind(day, b.id, name, n, dev));

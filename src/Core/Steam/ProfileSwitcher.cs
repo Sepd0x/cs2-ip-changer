@@ -444,40 +444,113 @@ public sealed record SessionInfo(string SteamId, DateTime Saved, DateTime Expire
 
 /// <summary>
 /// One file per account with its refresh token, encrypted with DPAPI (this Windows user only, plus the app's own entropy and
-/// the SteamID, so a file copied onto another account's name doesn't open). The file and its folder only let this Windows
-/// user in (no inherited access): the app runs as admin, and nothing else on the PC needs to read them.
+/// the SteamID, so a file copied onto another account's name doesn't open). As admin, the file and its folder only let
+/// Administrators and SYSTEM in (no inherited access): a program of yours without admin rights runs as your Windows user, so with
+/// your user in the ACL it could read the file and open it with your DPAPI key (beta.8 and before did that, see
+/// <see cref="Secure"/>). Without admin rights (test build) there is nothing above the user, and only the user is let in.
 /// No password, no access token and no cookie is ever written.
 /// </summary>
 public sealed class SessionStore
 {
     readonly string _dir;
+    bool _secured;
     public SessionStore(string dir = null) { _dir = dir ?? ProfilePaths.Sessions; }
 
     static byte[] Entropy(string steamId) => SHA256.HashData(Encoding.UTF8.GetBytes("CS2IPChanger/ProfileSession/v1/" + steamId));
     string FileOf(string steamId) => Path.Combine(_dir, Valid(steamId) + ".bin");
-    static string Valid(string steamId) => Regex.IsMatch(steamId ?? "", @"^7656119\d{10}$") ? steamId : throw new ArgumentException("not a SteamID64");
+    static string Valid(string steamId) => Regex.IsMatch(steamId ?? "", @"^7656119\d{10}\z") ? steamId : throw new ArgumentException("not a SteamID64");
 
     static SecurityIdentifier Me => WindowsIdentity.GetCurrent().User;
+    static readonly SecurityIdentifier Admins = new(WellKnownSidType.BuiltinAdministratorsSid, null), SystemSid = new(WellKnownSidType.LocalSystemSid, null);
+    static SecurityIdentifier Owner => Adb.Elevated ? Admins : Me;
+    static SecurityIdentifier[] Allowed => Adb.Elevated ? [Admins, SystemSid] : [Me];
 
-    /// <summary>Only this user, full control, nothing inherited from the folder above.</summary>
+    /// <summary>Administrators and SYSTEM (as admin) or this user, full control, nothing inherited from the folder above.</summary>
     static FileSecurity FileAcl()
     {
         var s = new FileSecurity();
         s.SetAccessRuleProtection(true, false);
-        s.SetOwner(Me);
-        s.AddAccessRule(new FileSystemAccessRule(Me, FileSystemRights.FullControl, AccessControlType.Allow));
+        s.SetOwner(Owner);
+        foreach (var who in Allowed) s.AddAccessRule(new FileSystemAccessRule(who, FileSystemRights.FullControl, AccessControlType.Allow));
         return s;
+    }
+
+    static DirectorySecurity DirAcl()
+    {
+        var sec = new DirectorySecurity();
+        sec.SetAccessRuleProtection(true, false);
+        sec.SetOwner(Owner);
+        foreach (var who in Allowed)
+            sec.AddAccessRule(new FileSystemAccessRule(who, FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
+        return sec;
+    }
+
+    /// <summary>The folder has exactly the ACL above: the right owner, nothing inherited, nobody else allowed in.</summary>
+    public static bool Locked(string dir)
+    {
+        try
+        {
+            var info = new DirectoryInfo(dir);
+            if (info.Attributes.HasFlag(FileAttributes.ReparsePoint)) return false;
+            var sec = info.GetAccessControl();
+            if (!sec.AreAccessRulesProtected || !Owner.Equals(sec.GetOwner(typeof(SecurityIdentifier)))) return false;
+            return sec.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>()
+                .All(r => r.AccessControlType == AccessControlType.Deny || Allowed.Contains((SecurityIdentifier)r.IdentityReference));
+        }
+        catch { return false; }
     }
 
     void EnsureDir()
     {
         if (ProfilePaths.Redirected(_dir)) throw new IOException("the app's data folder goes through a link or junction; sign-ins are only saved in a real folder");
-        var d = new DirectoryInfo(_dir);
-        var sec = new DirectorySecurity();
-        sec.SetAccessRuleProtection(true, false);
-        sec.SetOwner(Me);
-        sec.AddAccessRule(new FileSystemAccessRule(Me, FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
-        if (!d.Exists) d.Create(sec); else d.SetAccessControl(sec);
+        Secure();
+        if (!Directory.Exists(_dir)) new DirectoryInfo(_dir).Create(DirAcl());
+        if (!Locked(_dir)) throw new UnauthorizedAccessException("the sign-ins folder could be changed by someone else; nothing was saved");
+    }
+
+    /// <summary>
+    /// Once per start: a sessions folder from beta.8 or before (your Windows user had full control of it, so programs without admin
+    /// rights could read it, or swap it for a link between the app's checks and its writes) is never reused. It is moved aside as a
+    /// whole, a new locked one is made, the sign-ins that still open for their own account are written into it, and the old folder is
+    /// deleted without going through any link inside it.
+    /// </summary>
+    void Secure()
+    {
+        if (_secured) return;
+        _secured = true;
+        if (!Directory.Exists(_dir) || Locked(_dir) || ProfilePaths.Redirected(_dir)) return;
+        var old = _dir + ".old-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
+        Directory.Move(_dir, old);
+        new DirectoryInfo(_dir).Create(DirAcl());
+        var kept = 0;
+        foreach (var f in Directory.GetFiles(old, "*.bin"))
+        {
+            var id = Path.GetFileNameWithoutExtension(f);
+            if (!Regex.IsMatch(id, @"^7656119\d{10}\z") || new FileInfo(f).Attributes.HasFlag(FileAttributes.ReparsePoint)) continue;
+            try
+            {
+                var blob = File.ReadAllBytes(f);
+                var plain = ProtectedData.Unprotect(blob, Entropy(id), DataProtectionScope.CurrentUser);
+                try { if (JsonSerializer.Deserialize<Saved>(plain)?.SteamId != id) continue; }
+                finally { CryptographicOperations.ZeroMemory(plain); }
+                WriteBlob(FileOf(id), blob);
+                kept++;
+            }
+            catch { }   // another user's, damaged or not ours: left behind with the old folder
+        }
+        // The old folder is still yours to change: only its own files are deleted, each as itself (SafeFile), never a subfolder,
+        // which a program of yours could swap for a link mid-way.
+        var left = false;
+        try
+        {
+            using var held = SafeFile.Hold(old);
+            foreach (var f in Directory.GetFiles(held.Real)) left |= !SafeFile.Delete(held.Real, Path.GetFileName(f));
+            left |= Directory.GetDirectories(held.Real).Length > 0;
+        }
+        catch { left = true; }
+        if (!left) { try { Directory.Delete(old); } catch { left = true; } }
+        if (left) Log.Warn($"Couldn't delete all of {old}; delete it yourself (it may hold saved Steam sign-ins).");
+        Log.Info($"Saved Steam sign-ins: the folder is now for admins only ({Fmt.Count(kept, "sign-in")} kept).");
     }
 
     public void Save(string steamId, string refreshToken)
@@ -490,7 +563,11 @@ public sealed class SessionStore
         byte[] blob;
         try { blob = ProtectedData.Protect(plain, Entropy(steamId), DataProtectionScope.CurrentUser); }
         finally { CryptographicOperations.ZeroMemory(plain); }
-        var path = FileOf(steamId);
+        WriteBlob(FileOf(steamId), blob);
+    }
+
+    static void WriteBlob(string path, byte[] blob)
+    {
         var tmp = path + ".tmp";
         if (File.Exists(tmp)) File.Delete(tmp);
         // Created with its ACL already on: there is no moment where the file exists with the folder's default access.
@@ -505,6 +582,7 @@ public sealed class SessionStore
     Saved Read(string steamId)
     {
         var path = FileOf(steamId);
+        try { Secure(); } catch (Exception ex) { Log.Warn("Saved Steam sign-ins: couldn't lock the folder for admins only: " + ex.Message); }
         if (!File.Exists(path) || ProfilePaths.Redirected(_dir)) return null;
         byte[] plain = null;
         try
@@ -549,9 +627,13 @@ public sealed class SessionStore
         return n;
     }
 
-    public IEnumerable<string> Accounts() => Directory.Exists(_dir) && !ProfilePaths.Redirected(_dir)
-        ? Directory.GetFiles(_dir, "*.bin").Select(Path.GetFileNameWithoutExtension).Where(x => Regex.IsMatch(x, @"^7656119\d{10}$"))
-        : Enumerable.Empty<string>();
+    public IEnumerable<string> Accounts()
+    {
+        try { Secure(); } catch (Exception ex) { Log.Warn("Saved Steam sign-ins: couldn't lock the folder for admins only: " + ex.Message); }
+        return Directory.Exists(_dir) && !ProfilePaths.Redirected(_dir)
+            ? Directory.GetFiles(_dir, "*.bin").Select(Path.GetFileNameWithoutExtension).Where(x => Regex.IsMatch(x, @"^7656119\d{10}\z"))
+            : Enumerable.Empty<string>();
+    }
 }
 
 // ------------------------------------------------------------ Copies for undo

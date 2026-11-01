@@ -50,6 +50,17 @@ CS2 IP Changer sends CS2 and Steam through your Android phone's mobile data, so 
 
 It isn't a VPN: servers see an ordinary mobile connection, so it also works on servers that block VPNs and datacenter IPs. In the same app: a Steam account switcher, a CS2 config manager, a Steam profile editor and a matchmaking region picker.
 
+## What it solves
+
+| Your problem | What the app does |
+|---|---|
+| I got IP banned on a CS2 community server | **Change IP** turns the phone's mobile data off and on until the carrier gives a new IP, and can rejoin with the next account that server hasn't banned (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F9</kbd>). |
+| The server blocks my VPN | Servers see an ordinary mobile IP from your carrier, not a datacenter. No VPN server in between. |
+| I don't want servers to see my home IP | Only CS2 and Steam go through the phone, with a firewall kill switch: if the phone drops, CS2 is blocked instead of falling back to your home connection. |
+| I have several Steam accounts | Account switcher with VAC, game and trade bans, cooldowns and ban marks per server. |
+| I want the same binds and crosshair on every account | Configs copies CS2's own config files between your accounts, with backups. |
+| Matchmaking puts me on far regions | Regions blocks the Valve relays you don't want, from a map. |
+
 > [!WARNING]
 > This is a beta, so expect bugs. If something breaks your connection, **Turn off protection** (on Connection, or in Settings > Undo and maintenance) removes the routes and firewall rules (`CS2IPChanger.exe --restore` removes the region block too).
 
@@ -57,7 +68,7 @@ It isn't a VPN: servers see an ordinary mobile connection, so it also works on s
 
 You need Windows 10 or 11 (64-bit), admin rights and an Android phone with mobile data.
 
-1. **Download** `CS2IPChanger.exe` (about 66 MB) from the [latest release](https://github.com/Sepd0x/cs2-ip-changer/releases/latest) and put it in a folder only admins can change, like `C:\Program Files\CS2 IP Changer`. Run from Downloads or the Desktop, it doesn't start and tells you to move it.
+1. **Download** `CS2IPChanger.exe` (about 66 MB) from the [latest release](https://github.com/Sepd0x/cs2-ip-changer/releases/latest) and put it in a folder only admins can change, like `C:\Program Files\CS2 IP Changer`. Started from Downloads or the Desktop, the app itself doesn't run there: it opens a window that offers to install it in that folder (Install copies the exe and your `SRT_Dados` and starts it from there; nothing is moved).
 2. **Connect the phone.** Plug it in by USB, turn on USB tethering and turn off the phone's Wi-Fi.
 3. **Open the app** (it asks for admin). On first start it says **Not protected yet** and points you to **Phone setup** (under Phone), which does each step it can and tells you the one thing left. Then paste the servers you play on into **Servers**.
 4. **Check.** Open **Connection** with CS2 and Steam running. Every check should be green, and the IP servers see must not be your home IP.
@@ -75,9 +86,11 @@ More detail on each step in [Setup](#setup).
 
 **Updates are signed.** Once a day at most the app checks for a new version (you can turn this off). It installs one only if the exe matches the release's SHA-256 and that `.sha256` file is signed with the project's own key, which is kept off GitHub. So someone who got into this repo or its releases still couldn't push an exe of their own to your PC.
 
-**No account. Anonymous stats in the beta.** While in beta the app sends anonymous usage stats: versions, your country as two letters, the mode and counters. Never IPs, accounts, names or server addresses. [What is sent](#telemetry).
+**No account. Anonymous usage stats, required to use the app.** At the first start the beta shows what it sends once a day (Accept or Quit): a random ID that is new every day, versions, your country as two letters, the mode and counters. Never IPs, accounts, names or server addresses. Nothing is sent before you accept, and Quit closes the app without changing anything. [What is sent](#telemetry).
 
 **Easy to undo.** Turn off protection removes the routes and firewall rules and checks that they're gone. `CS2IPChanger.exe --restore` removes everything, the region block too. More in [If something goes wrong](#if-something-goes-wrong).
+
+**Everything it does with admin rights, and why an antivirus may flag it**, is listed in [Privacy and security](docs/PRIVACY-AND-SECURITY.md): each Windows function it calls, each service it talks to and what each one gets, and the known limits.
 
 ### Check your download
 
@@ -155,6 +168,7 @@ Every feature in detail: [docs/FEATURES.md](docs/FEATURES.md).
 ### Change IP
 - **Change IP.** Mobile data (or airplane mode) off and on over ADB until the carrier hands you a new IP.
 - **Change IP and rejoin.** After a kick or ban: a new IP and back on the last server, also from inside the game with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd>. After a ban it also logs into the next account that server hasn't banned.
+- **Knows a kick from a ban.** On community servers the app reads why CS2 left: a ban (with its length when the server says it), a VPN or proxy block, a kick (AFK, vote, admin), a full server, a timeout, a map change or you leaving. Only a ban or a VPN block offers New IP + next account; a kick offers a rejoin; a timeout says it was the connection. Valve's matchmaking servers are left alone.
 - **New range check.** Tells you if the new IP is in a new /16, because some admins ban whole ranges, and can keep trying until it is.
 
 <br clear="right">
@@ -209,6 +223,10 @@ Every feature in detail: [docs/FEATURES.md](docs/FEATURES.md).
 - **Stream friendly.** Hide usernames, your home IP masked in the app, and the Steam Web API key hidden unless you click Show.
 - **Open with CS2.** Discord, Spotify or a stats tracker open with CS2, as you and never with the app's admin rights.
 - **Sounds.** A short sound when a command is taken and another when it's done or failed, in game too. They can be turned off.
+- **In the background.** An icon next to the clock with New IP + next account, Change IP, Regions, Turn off protection and Quit. The X can hide the window there, and the installed copy can start with Windows, in the notification area and without a UAC prompt each time (both off until you turn them on).
+- **Mobile data counter.** What went through the phone this session and this month, with a warning at the limit you pick.
+- **Hide usernames while you stream.** It turns on by itself while OBS or Streamlabs is open.
+- **CS2 friend code.** Copy any account's friend code from its menu.
 
 ## Setup
 
@@ -226,7 +244,7 @@ The [Quick start](#quick-start) covers the usual case.
 - **Hotkeys.** <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F9</kbd> for New IP + next account and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> for Change IP and rejoin. Change them in Settings > New IP + next account. The app won't take Ctrl+Alt combinations: on many keyboards that's AltGr, which types @ and €.
 - **No phone with you?** Pick "No phone: play on your home connection" under What goes through the phone. Nothing is blocked, servers see your home IP, and the app says so. Until a phone has been connected once, CS2 isn't locked, so trying the app without a phone never leaves CS2 unable to connect at home.
 - **Hotspot or a 4G/5G dongle** work too: pick them under Connection > How the PC connects to the phone (see the [FAQ](#faq)).
-- **Portable.** Settings, servers and accounts are saved in `SRT_Dados` next to the exe. To uninstall, run `CS2IPChanger.exe --restore` first (it removes the region block too), then delete the folder and also `C:\ProgramData\CS2IPChanger` (the Windows files the exe unpacks there; the app removes older versions' folders by itself).
+- **Portable.** Settings, servers and accounts are saved in `SRT_Dados` next to the exe. To uninstall, click **Remove everything and quit** in Settings > Undo and maintenance: it removes the rules and routes (the region block too), the Start with Windows task and `C:\ProgramData\CS2IPChanger`, then tells you what is left (`SRT_Dados` and the exe) to delete yourself. Without the window, `CS2IPChanger.exe --restore` removes the rules, routes and task; then delete the folder and `C:\ProgramData\CS2IPChanger`.
 </details>
 
 ## If something goes wrong
@@ -244,7 +262,7 @@ Found a bug? [Open an issue](https://github.com/Sepd0x/cs2-ip-changer/issues/new
 <details>
 <summary><b>What is in the bug report</b></summary>
 
-Save bug report saves a .zip on your Desktop with the log, the app's rules and routes, Steam's connection log, CS2's console and the details of any error the app caught. Your home IP, API key, logins, Steam and player names, SteamIDs, Wi-Fi names, emails and your Windows user are hidden in it, but look through it before you post. If you paste the log instead (Copy all), blank out your IPs first.
+Save bug report saves a .zip on your Desktop with the log, the app's rules and routes, Steam's connection log, CS2's console and the details of any error the app caught. Your current and last home IP, API key, logins, Steam and player names, SteamIDs, Wi-Fi names, emails and your Windows user are hidden in it, but look through it before you post (older log lines can still hold an older home IP). If you paste the log instead (Copy all), blank out your IPs first.
 </details>
 
 ## FAQ
@@ -262,6 +280,24 @@ Usually, yes. Mobile data adds latency and jitter, and some cells drop packets w
 No. It uses the logins Steam already saved on your PC (the accounts where you ticked Remember me). To switch, it tells Steam which saved account to log into and restarts Steam, the same way other Steam account switchers work. Switching never asks for your password or your Steam Guard codes.
 
 The only place you type a password is Sign in on the Profiles page, and only if you want the app to change a profile. Even there it's used once and never saved: the app keeps an encrypted Steam sign-in token instead ([what happens to your login](docs/FEATURES.md#what-happens-to-my-login)). You can also sign in with a QR code from the Steam app and type nothing.
+
+**How do I change my IP in CS2?**<br>
+Connect an Android phone by USB with tethering on, then click Change IP (or press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> in game to change it and rejoin). The phone's mobile data goes off and on (4 seconds by default) until the carrier hands out a new IP. Restarting your home router also changes the IP with many providers, but it can take hours and every device in the house drops.
+
+**Does it need root, or an app on the phone?**<br>
+No root and nothing to install on the phone. Change IP uses ADB with USB debugging on (Google's official tool, which the app can download). Without ADB, protection still works; you change the IP by hand with airplane mode.
+
+**Does it work with an iPhone?**<br>
+The protection does: an iPhone's USB tethering shows up in Windows like an Android one. Change IP from the PC needs ADB, which only Android has, so on an iPhone you switch airplane mode on and off yourself.
+
+**Is it malware? Why does my antivirus flag it?**<br>
+It runs as admin, changes network settings and isn't code-signed, which is what some heuristics look for. Every release is built by GitHub Actions from this source and attested, and [Privacy and security](docs/PRIVACY-AND-SECURITY.md) lists every Windows function it uses with admin rights and why. [Check your download](#check-your-download) before you run it.
+
+**Can it run in the background or start with Windows?**<br>
+Yes. Settings > Background and data: the X can hide the window next to the clock, and the copy installed in `C:\Program Files\CS2 IP Changer` can start with Windows, in the notification area, without a UAC prompt each time. Both are off until you turn them on.
+
+**How much mobile data does it use?**<br>
+CS2 itself uses little next to a download, but Steam's downloads also go through the phone while it's connected. The Phone box on the Connection page counts what went through the phone this session and this month, and Settings > Background and data warns you at a limit you pick.
 
 <details>
 <summary><b>Bans</b> (4 questions)</summary>
@@ -320,7 +356,7 @@ Protection stays on, so closing the app can't leak your IP. If you'd rather have
 
 ## Privacy
 
-There's no account. While the app is in beta it sends anonymous usage stats ([Telemetry](#telemetry)). Besides that, it only talks to the services below. Your Steam Web API key stays on your PC, in `SRT_Dados/settings.json`. The Profiles sign-ins stay on your PC too, encrypted, in `SRT_Dados/profiles/sessions`.
+There's no account. While the app is in beta it sends anonymous usage stats, which are required to use it ([Telemetry](#telemetry)). Besides that, it only talks to the services below. The full list, with what each service receives and what the app does with admin rights, is in [Privacy and security](docs/PRIVACY-AND-SECURITY.md). Your Steam Web API key stays on your PC, encrypted for your Windows user, in `SRT_Dados/settings.json`. The Profiles sign-ins stay on your PC too, encrypted, in `SRT_Dados/profiles/sessions`.
 
 <details>
 <summary><b>The services it talks to, and what for</b></summary>
@@ -328,36 +364,38 @@ There's no account. While the app is in beta it sends anonymous usage stats ([Te
 | What for | Service |
 |---|---|
 | Your public IP (home and phone) | api.ipify.org, ipv4.icanhazip.com, checkip.amazonaws.com, 1.0.0.1 (Cloudflare) |
-| Carrier and city of an IP | ipwho.is (over HTTPS), asked about each IP only through that IP's own connection (home through home, the phone through the phone), so it never sees both from one place |
+| Carrier and city of an IP | ipwho.is (over HTTPS). It receives each IP the app looks up: your home IP and the phone's IP. Each one is asked only through its own connection (home through home, the phone through the phone), so it never sees both coming from one place |
 | Profiles, avatars and bans of your accounts, and the public profile of a link you paste in Profiles | steamcommunity.com, Steam's avatar servers and, if you add a key, api.steampowered.com |
 | Regions: Valve's relay list (at every start, and every hour while regions are off) | api.steampowered.com (`GetSDRConfig`, no key), plus pings to Valve's relays through the phone (your home connection in No phone mode) |
 | Changing your profiles (only accounts you sign in to on the Profiles page) | steamcommunity.com, login.steampowered.com, api.steampowered.com and Steam's avatar servers |
 | Downloading ADB (only if you ask) | dl.google.com |
 | Checking for updates (can be turned off) | api.github.com, github.com |
-| Anonymous usage stats (beta, [Telemetry](#telemetry)) | the project's Cloudflare Worker (source in [`worker/stats`](worker/stats)) |
+| Anonymous usage stats, required to use the app (beta, [Telemetry](#telemetry)) | the project's Cloudflare Worker (source in [`worker/stats`](worker/stats)) |
 
 The app measures the phone's IP by asking 1.0.0.1 (Cloudflare's `/cdn-cgi/trace`). A firewall rule keeps the app's own requests to it on the phone connection, and leaves other programs alone. Windows routes can't be set per program, though: while the phone is connected, anything on your PC that talks to 1.0.0.1 (for example, if you use it as your DNS server) goes through the phone too.
 </details>
 
 ## Telemetry
 
-While CS2 IP Changer is in beta, it sends anonymous usage stats so bugs can be found and the parts people use get better. It's always on in the beta. If you don't want that, don't use the beta.
+While CS2 IP Changer is in beta, it sends anonymous usage stats so bugs can be found and the parts people use get better. They are required to use the app: at the first start, before the app opens, a notice lists what is sent, with Accept and Quit. Until you accept, nothing is sent and no ID is made. Quit (or Escape) closes the app without changing anything on your PC. Right after an update from inside the app, Quit also turns off the protection the version before left on, so your servers aren't left blocked without the app (not while CS2 is open). Accept is saved and the notice doesn't show again.
+
+The stats are anonymous: the ID is random and new every day, never made from your PC or from you, so the ID never links one day's report to the next. List sizes go in rough bands, not exact numbers, for the same reason. It isn't tied to your name, PC, Steam or anything else.
 
 It never sends IPs (yours, the phone's or servers'), server names or addresses, Steam accounts, logins, names or IDs, your carrier, city or region, players' names, file paths or anything you typed.
 
 <details>
 <summary><b>What it sends, and where it goes</b></summary>
 
-Once when the app has been open for 20 seconds, and then once a day, it sends:
+Once when the app has been open for 20 seconds, when you close it (if it was open for 10 minutes or more since the last report), and once a day if it stays open, it sends:
 
-- a random ID made on your PC the first time (not tied to you, your PC, Steam or anything else; it only lets the same install be counted once a day)
+- a random ID that is new every day (UTC). It stays the same for that day, so restarting the app doesn't count twice, and is then replaced in `SRT_Dados/telemetry.json` and never sent again. It isn't made from your PC, Windows, Steam or you
 - the app version and the Windows version
 - your country, as two letters (for example `PT`). Cloudflare works it out from the connection the report comes from (with a VPN, it's the VPN's country); the Worker only gets the country, never the IP
 - the mode (Game only, Whole PC while CS2 is open, Whole PC always, No phone) and how the phone is connected (USB, hotspot)
 - minutes the app was open
 - how many times each button and hotkey was used, counted by the name of its code (for example `ChangeIp_Click`), never by what's on it
-- a few counters: IP changes that worked, that got the same IP or no network, kicks and bans the app saw, errors in the Log, and where Phone setup stopped (the step's name, like `phone_setup_tetheroff`)
-- how many servers, accounts, flagged players and "Open with CS2" programs are in your lists, and how many regions are turned off (the number only)
+- a few counters: IP changes that worked, that got the same IP or no network, kicks, bans and VPN blocks the app saw, errors in the Log, and where Phone setup stopped (the step's name, like `phone_setup_tetheroff`)
+- how many servers, accounts, flagged players and "Open with CS2" programs are in your lists, and how many regions are turned off, in rough bands (0, 1, 2 to 5, 6 to 20, 21 to 100, more), never the exact number
 - errors as their type and place in the app's code (for example `NullReferenceException` in `MainWindow.QueryServers`), never their message
 
 The server is a Cloudflare Worker whose code is in this repo ([`worker/stats`](worker/stats)). Cloudflare has to see your IP to deliver the request, like with any website, and gives the Worker only the country; the Worker never reads the IP or stores it, and its request logs are off. The stats are stored per day in a database with no IP column ([`schema.sql`](worker/stats/schema.sql)). The recording build sends nothing.
@@ -370,3 +408,5 @@ All rights reserved. The source is public so you can read it and check what the 
 The command sounds are from [Interface Sounds](https://kenney.nl/assets/interface-sounds) by Kenney (CC0).
 
 Not affiliated with Valve. Counter-Strike and Steam are trademarks of Valve Corporation.
+
+If the app is useful to you, a star on GitHub helps other players find it.

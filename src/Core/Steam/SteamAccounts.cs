@@ -51,7 +51,9 @@ public static partial class Steam
         var list = new List<LocalAccount>();
         foreach (var (id, v) in root.Items)
         {
-            if (v is not VdfNode n) continue;
+            // Only real SteamID64s: the ID becomes a file name (avatars) and part of URLs, and loginusers.vdf is in a folder any program
+            // of yours can change.
+            if (v is not VdfNode n || !Regex.IsMatch(id, @"^7656119\d{10}\z")) continue;
             long.TryParse(n.Get("timestamp"), out var ts);
             list.Add(new LocalAccount(id, n.Get("AccountName"), n.Get("PersonaName"), n.Get("MostRecent") == "1" || n.Get("AutoLogin") == "1", ts));
         }
@@ -165,6 +167,64 @@ public static partial class Steam
         return File.Exists(p) ? p : null;
     }
 
+    /// <summary>
+    /// The CS2 friend code of an account ("SUCVS-FADA"), what CS2 shows under Friends > Add a friend. Made from the SteamID alone:
+    /// the account number's nibbles mixed with bits of an MD5 of "CSGO" and that number, then written in a 32-letter alphabet
+    /// without I, O, 0 and 1. Null for anything that isn't a SteamID64.
+    /// </summary>
+    public static string Cs2FriendCode(string steamId64)
+    {
+        if (!Regex.IsMatch(steamId64 ?? "", @"^7656119\d{10}\z") || !ulong.TryParse(steamId64, out var id)) return null;
+        // Hash: MD5 of the 64-bit number "CSGO" << 32 | account ID (little-endian), first 4 bytes.
+        var h = BitConverter.ToUInt32(System.Security.Cryptography.MD5.HashData(BitConverter.GetBytes((id & 0xFFFFFFFF) | 0x4353474F00000000UL)), 0);
+        ulong r = 0;
+        for (var i = 0; i < 8; i++)
+        {
+            var nibble = (uint)(id & 0xF);
+            id >>= 4;
+            var a = ((uint)r << 4) | nibble;
+            r = ((r >> 28) << 32) | a;
+            var b = ((uint)r << 1) | ((h >> i) & 1);
+            r = ((r >> 31) << 32) | b;
+        }
+        r = System.Buffers.Binary.BinaryPrimitives.ReverseEndianness(r);
+        const string Alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        var sb = new StringBuilder();
+        for (var i = 0; i < 13; i++)
+        {
+            if (i is 4 or 9) sb.Append('-');
+            sb.Append(Alphabet[(int)(r & 31)]);
+            r >>= 5;
+        }
+        var code = sb.ToString();
+        return code.StartsWith("AAAA-") ? code[5..] : code;
+    }
+
+    /// <summary>
+    /// The exe a running process was started from, with the least access Windows has (PROCESS_QUERY_LIMITED_INFORMATION): the app
+    /// never opens cs2.exe in a way that could read its memory (Process.MainModule asks for PROCESS_VM_READ). Null if it can't.
+    /// </summary>
+    public static string ImagePath(int pid)
+    {
+        var h = OpenProcess(QueryLimitedInformation, false, pid);
+        if (h == IntPtr.Zero) return null;
+        try
+        {
+            var sb = new StringBuilder(1024);
+            var n = sb.Capacity;
+            return QueryFullProcessImageNameW(h, 0, sb, ref n) ? sb.ToString(0, n) : null;
+        }
+        finally { CloseHandle(h); }
+    }
+
+    const uint QueryLimitedInformation = 0x1000;
+    [DllImport("kernel32.dll", SetLastError = true)]
+    static extern IntPtr OpenProcess(uint access, bool inherit, int pid);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    static extern bool QueryFullProcessImageNameW(IntPtr process, uint flags, StringBuilder name, ref int size);
+    [DllImport("kernel32.dll")]
+    static extern bool CloseHandle(IntPtr h);
+
     /// <summary>Path to cs2.exe: the saved one, the one from the running process, or searched in the Steam libraries.</summary>
     public static string Cs2Path(SRT.Settings s)
     {
@@ -173,7 +233,7 @@ public static partial class Steam
         try
         {
             foreach (var p in Process.GetProcessesByName("cs2"))
-                try { found ??= p.MainModule?.FileName; } catch { }
+                using (p) found ??= ImagePath(p.Id);
         }
         catch { }
         if (found == null && InstallDir() is string dir)

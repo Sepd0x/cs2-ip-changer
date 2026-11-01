@@ -25,7 +25,7 @@ public partial class MainWindow
         {
             var now = await BuildReportText();
             var copy = JsonSerializer.Deserialize<Settings>(JsonSerializer.Serialize(_s));
-            copy.SteamApiKey = null;
+            copy.ForgetApiKey();
             copy.LastHomeIp = null;
             var json = JsonSerializer.Serialize(copy, new JsonSerializerOptions { WriteIndented = true });
             var steamDir = Steam.InstallDir();

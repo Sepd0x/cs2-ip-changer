@@ -92,6 +92,14 @@ static class CoreTests
 
         // F50: a ligação confirmada perde a confiança quando desaparece ou muda (volta a ser medida)
         {
+            // beta.8 (relatório de 1 nov.: o aviso saía 3 s depois do pedido, e o Windows só via o telemóvel aos 5 s)
+            var asked = new DateTime(2026, 11, 1, 18, 22, 20, DateTimeKind.Utc);
+            check("Partilha USB: sem aviso logo depois do pedido", !MainWindow.TetherHintDue(asked, asked.AddSeconds(1), asked.AddSeconds(3)));
+            // revisão: ligada no próprio telemóvel (sem pedido da app), a meio de uma partida (leituras de 2 em 2 s)
+            check("Partilha USB: sem aviso 4 s depois de faltar, sem pedido", !MainWindow.TetherHintDue(DateTime.MinValue, asked, asked.AddSeconds(4)));
+            check("Partilha USB: o pedido mais recente conta", !MainWindow.TetherHintDue(asked.AddSeconds(20), asked, asked.AddSeconds(40)));
+            check("Partilha USB: aviso quando dura", MainWindow.TetherHintDue(asked, asked.AddSeconds(2), asked.AddSeconds(40))
+                && MainWindow.TetherHintDue(DateTime.MinValue, asked, asked.AddSeconds(31)));
             check("Confiança: mesma ligação continua", MainWindow.TrustAfter("7|192.168.42.10", "7|192.168.42.10") == "7|192.168.42.10");
             check("Confiança: ligação desaparece e perde-a", MainWindow.TrustAfter("7|192.168.42.10", null) == null);
             check("Confiança: outra ligação não a herda", MainWindow.TrustAfter("7|192.168.42.10", "9|192.168.42.10") == null);
@@ -337,6 +345,24 @@ static class CoreTests
             List<string> mine;
             lock (seen) mine = seen.Where(t => t.Contains(tag) || t.StartsWith("(the line above")).ToList();
             check("Log: linha repetida escrita uma vez, com a contagem", mine.SequenceEqual(new[] { "repetida " + tag, "(the line above repeated 2 more times)", "outra " + tag }), string.Join(" | ", mine));
+
+            // beta.8: uma notificação também fica no Log, sem duplicar a linha que o código acabou de escrever
+            Log.Added += On;
+            Log.Warn("linha do código " + tag); Log.Notice(LogLevel.Warn, "notificação logo a seguir " + tag);
+            Thread.Sleep(1100);
+            Log.Notice(LogLevel.Ok, "notificação sozinha " + tag);
+            Log.Added -= On;
+            lock (seen) mine = seen.Where(t => t.Contains(tag) && (t.StartsWith("linha do") || t.StartsWith("notifica"))).ToList();
+            check("Log: notificação sozinha fica no Log; a que vem logo depois de uma linha do código não duplica",
+                mine.SequenceEqual(new[] { "linha do código " + tag, "notificação sozinha " + tag }), string.Join(" | ", mine));
+            // revisão: uma linha de outra thread (a sincronização, o Steam) não apaga a notificação desta
+            Thread.Sleep(1100);
+            Log.Added += On;
+            var other = new Thread(() => Log.Info("de outra thread " + tag));
+            other.Start(); other.Join();
+            Log.Notice(LogLevel.Warn, "notificação depois de outra thread " + tag);
+            Log.Added -= On;
+            lock (seen) check("Log: uma linha de outra thread não apaga a notificação", seen.Contains("notificação depois de outra thread " + tag));
             var dir = Path.Combine(Path.GetTempPath(), "srt-log-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(dir);
             try
@@ -360,6 +386,92 @@ static class CoreTests
             var allowed = new[] { "185.53.1.10", "172.15.0.1", "172.32.0.1", "100.63.0.1", "8.8.8.8" };
             check("Servidores: endereços da rede local recusados", refused.All(ip => !MainWindow.ValidIp(ip)), string.Join(",", refused.Where(MainWindow.ValidIp)));
             check("Servidores: IPs públicos aceites", allowed.All(MainWindow.ValidIp), string.Join(",", allowed.Where(ip => !MainWindow.ValidIp(ip))));
+        }
+
+        // beta.8 (1 nov., lag no 4G): o resumo de rede que o CS2 escreve ao sair de um servidor. Formato real do console.log
+        // do outro PC do Rafael (bug report de 1 nov. 18:56); só os números e o IP são inventados.
+        {
+            var excerto = """
+                11/01 18:40:51 [Client] Disconnected from server: NETWORK_DISCONNECT_TIMEDOUT
+                11/01 18:40:51 [VProf] -- Performance report --
+                11/01 18:40:51 [VProf] FPS: Avg=85.2, P1=78.8
+                11/01 18:40:51 [Client] Source2 engine networking summary.  1268 seconds.
+                11/01 18:40:51 [Client]     UPSTREAM (client->server):
+                11/01 18:40:51 [Client]         Bandwidth . . . . . . . : Total:27211.4kb   Reliable:71.2kb   Voice:0.0kb
+                11/01 18:40:51 [Client]           Kb/sec. . . . . . . . : Avg:21.5   P95:32.3   P99:34.4
+                11/01 18:40:51 [Client]         Tick messages . . . . . : 81120 total
+                11/01 18:40:51 [Client]           Arrived on time . . . : 31233 (38.5%)   402 (0.5%) below desired recv margin
+                11/01 18:40:51 [Client]           Corrected/smoothed. . : 47049 (58.0%)   0 (0.0%) dropped   47049 (58.0%) late
+                11/01 18:40:51 [Client]           Missed. . . . . . . . : 2838 (3.5%)   0 (0.0%) dropped   1298 (1.6%) late   1540 (1.9%) non-network
+                11/01 18:40:51 [Client]         Tick miss rate. . . . . : 317 measurement intervals   140 (44.2%) net-perfect   0 (0.0%) perfect
+                11/01 18:40:51 [Client]         Receive margin (ms) . . : P1:-17   P5:3   P25:41   P50:53   P75:63   P95:76
+                11/01 18:40:51 [Client]           Misdelivered lifetime : 0 (0.00%)    0 (0.00%) dropped    0 (0.00%) out of order
+                11/01 18:40:51 [Client]           Jitter (ms) . . . . . : P50:13   P99:19
+                11/01 18:40:51 [Client]         Packets
+                11/01 18:40:51 [Client]           Jitter, 1-sec max (ms): P50:19   P95:19
+                11/01 18:40:51 [Client]         Network ping (ms) . . . : P5:30   P50:37   P95:52
+                11/01 18:40:51 [Client]     DOWNSTREAM (server->client):
+                11/01 18:40:51 [Client]         Tick messages . . . . . : 81090 total
+                11/01 18:40:51 [Client]           Corrected/smoothed. . : 1 (0.0%)   1 (0.0%) dropped   0 (0.0%) late
+                11/01 18:40:51 [Client]           Missed. . . . . . . . : 3892 (4.8%)   0 (0.0%) dropped   2027 (2.5%) late   1865 (2.3%) non-network
+                11/01 18:40:51 [Client]           Misdelivered lifetime : 1 (0.01%)    1 (0.01%) dropped    0 (0.00%) out of order
+                11/01 18:40:51 [Client]           Jitter (ms) . . . . . : P50:6   P99:19
+                11/01 18:40:51 [Client]           Jitter, 1-sec max (ms): P50:19   P95:19
+                11/01 18:40:51 [Localization System] CLocalize::CompileString failed to localize: '#GenericConfirmText_Label'
+                11/01 18:40:51 [Client] Disconnecting from server: NETWORK_DISCONNECT_TIMEDOUT
+                """.Split('\n').Select(l => l.TrimEnd('\r')).ToList();
+            var reader = new NetReportReader();
+            var got = excerto.Select(reader.Feed).Where(r => r != null).ToList();
+            var r = got.FirstOrDefault();
+            var fresh = new NetReportReader();
+            check("Rede CS2: um resumo lido, na 1.ª linha [Client] depois do bloco (a de outro canal no meio é saltada)", got.Count == 1
+                && excerto.FindIndex(l => fresh.Feed(l) != null) == excerto.FindIndex(l => l.Contains("Disconnecting from server")), got.Count.ToString());
+            // revisão: uma linha de outro canal entre UPSTREAM e DOWNSTREAM não corta o resumo
+            var meio = excerto.ToList();
+            meio.Insert(meio.FindIndex(l => l.Contains("DOWNSTREAM")), "11/01 18:40:51 [Localization System] CLocalize::CompileString failed to localize: '#X'");
+            var inteiro = meio.Select(new NetReportReader().Feed).FirstOrDefault(x => x != null);
+            check("Rede CS2: linha de outro canal no meio não corta", inteiro?.DownMissedLate == 2.5 && inteiro.JitterDown == 6, $"{inteiro?.DownMissedLate}/{inteiro?.JitterDown}");
+            // revisão: CS2 fechado logo a seguir ao resumo (sai de uma partida para o Windows): Flush dá-o e recomeça
+            var semFim = new NetReportReader();
+            foreach (var l in excerto.TakeWhile(l => !l.Contains("[Localization System]"))) semFim.Feed(l);
+            var flushed = semFim.Flush();
+            check("Rede CS2: Flush dá o resumo pendente e recomeça", flushed?.PingP50 == 37 && semFim.Flush() == null
+                && semFim.Feed("11/01 19:00:00 [Client] Disconnecting from server: NETWORK_DISCONNECT_EXITING") == null);
+            check("Rede CS2: segundos com separador de milhares", new NetReportReader() is var mil
+                && mil.Feed("11/01 18:40:51 [Client] Source2 engine networking summary.  1,268 seconds.") == null
+                && mil.Feed("11/01 18:40:51 [Client]         Network ping (ms) . . . : P5:30   P50:37   P95:52") == null
+                && mil.Flush()?.Seconds == 1268);
+            check("Rede CS2: ping, jitter de subida e de descida", r?.PingP50 == 37 && r.PingP95 == 52 && r.JitterUp == 13 && r.JitterDown == 6 && r.Seconds == 1268,
+                $"{r?.PingP50}/{r?.PingP95}/{r?.JitterUp}/{r?.JitterDown}/{r?.Seconds}");
+            check("Rede CS2: mensagens atrasadas e perdidas", r?.UpLate == 58.0 && r.UpMissedLate == 1.6 && r.DownMissedLate == 2.5 && r.Dropped == 1,
+                $"{r?.UpLate}/{r?.UpMissedLate}/{r?.DownMissedLate}/{r?.Dropped}");
+            var line = r?.Line("phone IP 203.0.113.7", "198.51.100.20:27015") ?? "";
+            check("Rede CS2: linha do Log curta com o IP do telemóvel", line == "CS2 network after 21 min on 198.51.100.20:27015 (phone IP 203.0.113.7): ping 37 ms (P95 52), "
+                + "jitter 13 ms up, 6 ms down, your messages late 58.0%, lost late 1.6%, server ticks lost late 2.5%, 1 packet dropped.", line);
+            check("Rede CS2: esta partida conta como lag", r?.Laggy == true);
+            check("Rede CS2: partida limpa não conta como lag, nem com um pacote perdido", !new NetReport { PingP50 = 30, JitterUp = 3, UpLate = 4, UpMissedLate = 0.1, DownMissedLate = 0.3, Dropped = 1 }.Laggy);
+            // Sem resumo inteiro (CS2 fechou a meio) ou linhas soltas: nada
+            var partial = new NetReportReader();
+            check("Rede CS2: resumo sem números não dá linha",
+                partial.Feed("11/01 18:40:51 [Client] Source2 engine networking summary.  3 seconds.") == null
+                && partial.Feed("11/01 18:40:51 [Client]     UPSTREAM (client->server):") == null
+                && partial.Feed("11/01 18:40:51 [Client] Disconnecting from server: NETWORK_DISCONNECT_EXITING") == null);
+            check("Rede CS2: linhas de jogo normais ignoradas", new NetReportReader().Feed("11/01 18:34:32 [Client] 2.3% server ticks missed due to network (0 dropped, 6 late)") == null);
+        }
+
+        // beta.8: "Keep changing until the connection is good" (a decisão, sem rede)
+        {
+            var good = new LinkQuality(10, 0, 38, 6, "LTE");
+            var jittery = new LinkQuality(10, 0, 37, 31, "LTE");
+            var lossy = new LinkQuality(10, 3, 40, 5, "LTE");
+            var silent = new LinkQuality(10, 10, 0, 0, "LTE");
+            check("Ligação boa: jitter baixo fica", !Quality.ChangeAgain(good, 0));
+            check("Ligação boa: jitter de 20 ms ou mais muda outra vez", Quality.ChangeAgain(jittery, 0) && Quality.ChangeAgain(jittery with { JitterMs = Quality.GoodJitterMs }, 2)
+                && !Quality.ChangeAgain(jittery with { JitterMs = Quality.GoodJitterMs - 1 }, 0));
+            check("Ligação boa: perda ou sem resposta muda outra vez", Quality.ChangeAgain(lossy, 0) && Quality.ChangeAgain(silent, 0));
+            check("Ligação boa: no máximo 3 vezes", !Quality.ChangeAgain(jittery, Quality.GoodRetries) && Quality.GoodRetries == 3);
+            check("Ligação boa: sem medição não muda", !Quality.ChangeAgain(null, 0) && !Quality.ChangeAgain(new LinkQuality(0, 0, 0, 0, null), 0));
+            check("Ligação boa: desligada por defeito", !new Settings().RequireGoodLink);
         }
     }
 }

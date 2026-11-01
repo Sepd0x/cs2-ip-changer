@@ -26,16 +26,74 @@ public sealed partial class Settings
     public int OffSeconds { get; set; } = 4;
     public int MaxAttempts { get; set; } = 3;
     public bool RequireNew16 { get; set; }               // Change IP keeps trying until the /16 differs from the IP before
+    public bool RequireGoodLink { get; set; }            // Change IP keeps trying while the new connection's jitter is too high
     public bool CheckUpdates { get; set; } = true;
+    /// <summary>
+    /// The anonymous usage stats notice was accepted (App.StatsGate, before the app opens). False until then: nothing is sent and
+    /// no ID is made. Settings from beta.7 and the beta.8 tests (UsageStats) don't have it, so they see the notice once.
+    /// </summary>
+    public bool StatsAccepted { get; set; }
     public DateTime? LastUpdateCheck { get; set; }
     public string UpdateLatest { get; set; }              // highest version seen on GitHub at the last check
-    public string SteamApiKey { get; set; }
+    /// <summary>The Steam Web API key, in memory only. settings.json keeps it encrypted for this Windows user (SteamApiKeySealed).</summary>
+    [JsonIgnore]
+    public string SteamApiKey
+    {
+        get => _apiKey;
+        set { _apiKey = value; if (value != null) { ApiKeyLost = false; _unreadable = null; } }   // a key pasted here replaces a lost one
+    }
+    string _apiKey, _unreadable, _sealed, _sealedFor;
+
+    /// <summary>
+    /// The key encrypted with DPAPI (Secret.Seal). From another Windows user or PC it can't be read: the key is then empty,
+    /// <see cref="ApiKeyLost"/> says so, and the encrypted text is kept as it is (it still works for its own user) until a key is pasted.
+    /// </summary>
+    public string SteamApiKeySealed
+    {
+        get
+        {
+            if (_apiKey == null) return _unreadable;
+            if (_sealed != null && _sealedFor == _apiKey) return _sealed;
+            try { _sealed = Secret.Seal(_apiKey, "SteamApiKey"); _sealedFor = _apiKey; }
+            catch (Exception ex) { Log.Warn("Couldn't encrypt the Steam Web API key (" + ex.Message + "); the one saved before stays."); }
+            return _sealed;
+        }
+        set
+        {
+            if (ApiKeyMigrated || string.IsNullOrEmpty(value)) return;   // the plain key of an older version wins: it's the one that reads
+            var key = Secret.Open(value, "SteamApiKey");
+            if (key != null) { SteamApiKey = key; _sealed = value; _sealedFor = key; }
+            else { _apiKey = null; _unreadable = value; ApiKeyLost = true; }
+        }
+    }
+    /// <summary>beta.7 and before kept the key in plain text under "SteamApiKey": read once (the next save encrypts it), never written.</summary>
+    [JsonPropertyName("SteamApiKey")]
+    public string SteamApiKeyPlain
+    {
+        get => null;
+        set { if (!string.IsNullOrWhiteSpace(value) && _apiKey == null) { SteamApiKey = value.Trim(); ApiKeyMigrated = true; } }
+    }
+    /// <summary>No key at all, not even one that can't be read here: bug reports and diagnostics leave it out this way.</summary>
+    public void ForgetApiKey() { _apiKey = _unreadable = _sealed = _sealedFor = null; ApiKeyLost = false; }
+    [JsonIgnore] public bool ApiKeyLost { get; private set; }
+    [JsonIgnore] public bool ApiKeyMigrated { get; private set; }
     public bool LaunchCs2 { get; set; }
     public bool SteamSilent { get; set; }
     public bool SteamOffline { get; set; }
     public bool StreamerMode { get; set; }
+    /// <summary>Hide usernames also turns on by itself while OBS or Streamlabs is open.</summary>
+    public bool AutoStreamer { get; set; } = true;
     public bool AutoQuery { get; set; } = true;
     public bool CleanupOnExit { get; set; }
+    /// <summary>The window's X hides it in the notification area; the app keeps running (Quit is in the icon's menu).</summary>
+    public bool CloseToTray { get; set; }
+    /// <summary>The "still running in the notification area" notice was shown once.</summary>
+    public bool TrayHinted { get; set; }
+    /// <summary>Mobile data counted through the phone's adapter this month ("2026-11"), and the warning (GB a month, 0 = off).</summary>
+    public string DataMonth { get; set; }
+    public long DataMonthBytes { get; set; }
+    public double DataWarnGb { get; set; }
+    public string DataWarnedMonth { get; set; }
     /// <summary>The close question (keep protection or turn it off) was answered once: the answer is CleanupOnExit, changed in Settings.</summary>
     public bool CloseAsked { get; set; }
     public int DefaultPort { get; set; } = 27015;
@@ -278,6 +336,10 @@ public sealed class ServerBan
     public DateTime At { get; set; }
     public string Name { get; set; }
     public string Network { get; set; }
+    /// <summary>End of a timed ban the server said in the console (null: permanent, or the length wasn't said).</summary>
+    public DateTime? Until { get; set; }
+    /// <summary>A timed ban that has ended: it no longer counts, and the next look at the list drops it.</summary>
+    public bool Over => Until is DateTime u && u <= DateTime.Now;
 }
 
 public sealed class AccountItem : Observable
@@ -369,16 +431,27 @@ public sealed class AccountItem : Observable
     public bool HasServerBans => Meta.ServerBans is { Count: > 0 };
     public string ServerBansText => !HasServerBans ? null : Meta.ServerBans.Count == 1 ? "banned on 1 server" : $"banned on {Meta.ServerBans.Count} servers";
     /// <summary>The ban that covers this server: on it, or on another server of the same network (see <see cref="ServerNetwork.Same"/>). Null if none.</summary>
+    /// <summary>Drops timed bans that have ended. True when one went.</summary>
+    public bool DropEndedBans()
+    {
+        if (Meta.ServerBans == null) return false;
+        var over = Meta.ServerBans.Where(b => b.Value?.Over == true).Select(b => b.Key).ToList();
+        foreach (var k in over) Meta.ServerBans.Remove(k);
+        if (Meta.ServerBans.Count == 0) Meta.ServerBans = null;
+        if (over.Count > 0) RefreshAll();
+        return over.Count > 0;
+    }
+
     public KeyValuePair<string, ServerBan>? BanFor(string key, string name, string network)
     {
         if (key == null || Meta.ServerBans == null) return null;
-        if (Meta.ServerBans.TryGetValue(key, out var direct)) return new(key, direct);
+        if (Meta.ServerBans.TryGetValue(key, out var direct) && direct?.Over != true) return new(key, direct);
         foreach (var b in Meta.ServerBans)
-            if (ServerNetwork.Same(b.Key, b.Value?.Name, b.Value?.Network, key, name, network)) return b;
+            if (b.Value?.Over != true && ServerNetwork.Same(b.Key, b.Value?.Name, b.Value?.Network, key, name, network)) return b;
         return null;
     }
     public string ServerBansTip => !HasServerBans ? null
-        : "Banned by these servers (not a Steam ban):\n" + string.Join("\n", Meta.ServerBans.OrderByDescending(b => b.Value?.At).Select(b => $"• {b.Value?.Name ?? b.Key} ({b.Key}), {Fmt.When(b.Value?.At)}"))
+        : "Banned by these servers (not a Steam ban):\n" + string.Join("\n", Meta.ServerBans.OrderByDescending(b => b.Value?.At).Select(b => $"• {b.Value?.Name ?? b.Key} ({b.Key}), {Fmt.When(b.Value?.At)}" + (b.Value?.Until is DateTime u ? $", until {u:g}" : "")))
           + "\nIt also counts on servers of the same community (same name tag, or the community name you set on Servers). New IP + next account skips this account there. Right-click > Clear server bans to undo.";
 
     public Brush CardBorder => Active ? Ui.Accent : Ui.Line;

@@ -151,10 +151,22 @@ public static partial class Steam
 
     public static async Task<string> DownloadAvatar(string steamId, string url)
     {
-        if (string.IsNullOrEmpty(url)) return null;
+        if (string.IsNullOrEmpty(url) || !Regex.IsMatch(steamId ?? "", @"^7656119\d{10}\z") || !AvatarUrl(url)) return null;
         var path = Path.Combine(Paths.Avatars, steamId + ".jpg");
-        var bytes = await Http.GetByteArrayAsync(url);
+        using var r = await Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+        r.EnsureSuccessStatusCode();
+        if (r.Content.Headers.ContentLength > MaxAvatar) return null;
+        var bytes = await r.Content.ReadAsByteArrayAsync();
+        if (bytes.Length > MaxAvatar) return null;
         await File.WriteAllBytesAsync(path, bytes);
         return path;
     }
+
+    const int MaxAvatar = 2 * 1024 * 1024;
+
+    /// <summary>Steam's picture servers only, over https (the link comes from the profile page).</summary>
+    public static bool AvatarUrl(string url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttps && u.IsDefaultPort && string.IsNullOrEmpty(u.UserInfo)
+        && (u.Host.Equals("steamstatic.com", StringComparison.OrdinalIgnoreCase) || u.Host.EndsWith(".steamstatic.com", StringComparison.OrdinalIgnoreCase)
+            || u.Host.Equals("steamcdn-a.akamaihd.net", StringComparison.OrdinalIgnoreCase));
 }

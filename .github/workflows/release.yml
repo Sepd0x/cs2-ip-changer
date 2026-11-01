@@ -83,6 +83,9 @@ jobs:
           $files = 'out/CS2IPChanger.exe', 'out/CS2IPChanger.exe.sha256'
           $existing = gh release list --limit 100 --json tagName --jq '.[].tagName'
           if ($existing -contains $tag) {
+            # Only a draft gets new files: a published exe is never replaced (people may have downloaded it already).
+            $draft = gh release view $tag --json isDraft --jq '.isDraft'
+            if ($draft -ne 'true') { throw "Release $tag is already published; its exe is not replaced. Make a new tag." }
             gh release upload $tag @files --clobber
           } else {
             $opts = @('--verify-tag', '--draft', '--title', "CS2 IP Changer $env:VERSION")

@@ -231,7 +231,7 @@ public partial class MainWindow
         var held = n == 0 || rep.KillSwitchOk ? "warn" : "bad";
         var cs2Off = _s.LockCs2 && rep.Cs2LockOk == false;
         if (rep.FirewallProblem != null)
-            SetHero("bad", "Windows Firewall is off", rep.FirewallProblem + ". Without the Firewall there is no kill switch; turn it on in Windows Security > Firewall.");
+            SetHero("bad", "Windows Firewall is off", rep.FirewallProblem + ". " + FirewallHint("there is no kill switch"));
         else if (rep.DistrustReason == Guard.WhyUnchecked)
             SetHero(held, "Checking the phone's IP…", $"{Blocked(rep)} stay blocked until the app confirms the phone's public IP is not your home IP.");
         else if (rep.DistrustReason == WhyNoHome)
@@ -333,7 +333,7 @@ public partial class MainWindow
         EgressDetail.Visibility = Visibility.Collapsed;
         PcRouteText.Text = $"Everything stays on: {rep.PcDefaultName}";
         if (rep.FirewallProblem != null)
-            SetHero("bad", "Windows Firewall is off", rep.FirewallProblem + ". Without it the Regions block does nothing; turn it on in Windows Security > Firewall.");
+            SetHero("bad", "Windows Firewall is off", rep.FirewallProblem + ". " + FirewallHint("the Regions block does nothing"));
         else
             SetHero("warn", "Not protected · no phone",
                 "You picked No phone: CS2 and every server see your home IP, and nothing is blocked. Accounts, Configs, Profiles and Regions work as usual. Pick another option under What goes through the phone to protect again.");
@@ -403,6 +403,7 @@ public partial class MainWindow
         SideDot.Fill = fg;
         // The top bar repeats the page state (only "Protected · …" gets shortened).
         SideState.Text = kind == "good" ? side : title;
+        if (_tray != null) _tray.Tip = TrayTip(SideState.Text);
     }
 
     void FillEgressCombo(List<Adapter> adapters)
@@ -570,7 +571,7 @@ public partial class MainWindow
         }
         if (h != null)
         {
-            if (h != _homePublic) _homeInfo = await Net.Lookup(h, homeIf);
+            if (LookUpHome(h, _homePublic, cached: false)) _homeInfo = await Net.Lookup(h, homeIf);
             _homeCached = false;
             if (_s.LastHomeIp != h) { _s.LastHomeIp = h; SaveSettings(); }
         }
@@ -578,7 +579,7 @@ public partial class MainWindow
         {
             h = _s.LastHomeIp;
             _homeCached = true;
-            if (h != _homePublic) _homeInfo = await Net.Lookup(h, homeIf);
+            if (!LookUpHome(h, _homePublic, cached: true) && h != _homePublic) _homeInfo = null;
         }
         _egressPublic = e;
         if (h != _homePublic && HideLogins) { _homePublic = h; RemaskLog(); }
@@ -586,6 +587,30 @@ public partial class MainWindow
         DiagIps(e, h, same);
         ShowIps();
         UpdateStatusUi();
+    }
+
+    /// <summary>
+    /// ipwho.is is only asked about a home IP measured just now, through the home connection. The last one saved (shown when the
+    /// home IP can't be measured) may be from another network, a laptop elsewhere: asking about it from here would tell ipwho.is both.
+    /// </summary>
+    public static bool LookUpHome(string ip, string shown, bool cached) => !cached && ip != shown;
+
+    List<string> _otherFirewalls;
+
+    /// <summary>What to do with Windows Firewall off. The other firewalls are asked once (WMI, off the UI thread); until then the plain text.</summary>
+    string FirewallHint(string without)
+    {
+        if (_otherFirewalls == null)
+        {
+            _otherFirewalls = new();
+            _ = Task.Run(Firewall.OtherFirewalls).ContinueWith(t =>
+            {
+                if (t.Result.Count == 0) return;
+                Log.Info("Firewall programs Windows Security knows about: " + string.Join(", ", t.Result) + ".");
+                Dispatcher.BeginInvoke(() => { _otherFirewalls = t.Result; _ = SyncNow(); });
+            }, TaskContinuationOptions.OnlyOnRanToCompletion);
+        }
+        return Firewall.OffHint(_otherFirewalls, without);
     }
 
     void ShowIps()

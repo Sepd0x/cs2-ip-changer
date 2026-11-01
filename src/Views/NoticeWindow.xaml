@@ -1,0 +1,32 @@
+<Window x:Class="SRT.NoticeWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="CS2 IP Changer" Width="520" SizeToContent="Height" WindowStyle="None" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen" Background="{StaticResource Bg}" Foreground="{StaticResource Text}"
+        FontFamily="{StaticResource UiFont}" FontSize="12" TextOptions.TextFormattingMode="Ideal" UseLayoutRounding="True" SnapsToDevicePixels="True"
+        MouseLeftButtonDown="Drag">
+    <!-- The app's own message window, in place of Windows' message boxes (see Program.cs and App.xaml.cs) -->
+    <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Edge}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="3"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Border x:Name="TopBar" Background="{StaticResource TopLine}"/>
+            <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Margin="14,14,14,6" Padding="18,20,18,16">
+                <HeaderedContentControl.Header>
+                    <TextBlock x:Name="Heading" Text="CS2 IP Changer"/>
+                </HeaderedContentControl.Header>
+                <StackPanel>
+                    <TextBlock x:Name="Body" TextWrapping="Wrap" LineHeight="19"/>
+                    <TextBlock x:Name="Status" TextWrapping="Wrap" Margin="0,12,0,0" Visibility="Collapsed" Foreground="{StaticResource Faint}"/>
+                    <ProgressBar x:Name="Busy" IsIndeterminate="True" Margin="0,8,0,0" Visibility="Collapsed"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                        <Button x:Name="OtherBtn" Content="Close" Click="Other_Click" IsCancel="True" Visibility="Collapsed"/>
+                        <Button x:Name="OkBtn" Style="{StaticResource Primary}" Content="OK" Margin="0" Click="Ok_Click" IsDefault="True"/>
+                    </StackPanel>
+                </StackPanel>
+            </HeaderedContentControl>
+        </Grid>
+    </Border>
+</Window>

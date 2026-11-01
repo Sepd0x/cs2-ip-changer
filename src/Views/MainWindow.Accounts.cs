@@ -404,6 +404,12 @@ public partial class MainWindow
     }
 
     void AccCopyId_Click(object sender, RoutedEventArgs e) { if (Acc(sender) is AccountItem a) { Clipboard.SetText(a.SteamId); Toast("SteamID64 copied.", true); } }
+    void AccCopyFriendCode_Click(object sender, RoutedEventArgs e)
+    {
+        if (Acc(sender) is not AccountItem a || Steam.Cs2FriendCode(a.SteamId) is not string code) return;
+        Clipboard.SetText(code);
+        Toast($"CS2 friend code copied ({code}). In CS2: Friends > Add a friend.", true);
+    }
     void AccCopyLogin_Click(object sender, RoutedEventArgs e) { if (Acc(sender) is AccountItem a) { Clipboard.SetText(a.Login ?? ""); Toast("Username copied.", true); } }
 
     async void AccCooldown_Click(object sender, RoutedEventArgs e)

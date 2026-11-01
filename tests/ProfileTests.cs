@@ -191,14 +191,21 @@ static class ProfileTests
             var raw = File.ReadAllBytes(file);
             Check("Perfis: token ida e volta (DPAPI)", store.Token(Id1) == tok && store.Info(Id1)?.Valid == true, "");
             Check("Perfis: o ficheiro não tem o token em claro", !Encoding.Latin1.GetString(raw).Contains("eyJ") && !Encoding.Latin1.GetString(raw).Contains(Id1), "");
+            // Como admin: só Administradores e SYSTEM (um programa teu sem admin corre como o teu utilizador e podia abrir o DPAPI).
+            // Sem admin (build de teste): só este utilizador.
             var me = WindowsIdentity.GetCurrent().User;
+            var admin = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
+            var allowed = admin
+                ? new[] { new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null), new SecurityIdentifier(WellKnownSidType.LocalSystemSid, null) }
+                : new[] { me };
             var acl = new FileInfo(file).GetAccessControl();
             var rules = acl.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().ToList();
-            Check("Perfis: ficheiro só para este utilizador, sem herança", acl.AreAccessRulesProtected && rules.Count == 1 && rules[0].IdentityReference.Equals(me) && rules[0].AccessControlType == AccessControlType.Allow,
+            Check("Perfis: ficheiro só para admins (ou só este utilizador sem admin), sem herança", acl.AreAccessRulesProtected && rules.Count == allowed.Length
+                && rules.All(r => allowed.Contains((SecurityIdentifier)r.IdentityReference) && r.AccessControlType == AccessControlType.Allow) && (!admin || !rules.Any(r => r.IdentityReference.Equals(me))),
                 string.Join(", ", rules.Select(r => r.IdentityReference + ":" + r.FileSystemRights + (r.IsInherited ? "(herdada)" : ""))));
             var dacl = new DirectoryInfo(dir).GetAccessControl();
             var drules = dacl.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().ToList();
-            Check("Perfis: pasta só para este utilizador", dacl.AreAccessRulesProtected && drules.All(r => r.IdentityReference.Equals(me)), string.Join(", ", drules.Select(r => r.IdentityReference.ToString())));
+            Check("Perfis: pasta só para admins (ou só este utilizador sem admin)", dacl.AreAccessRulesProtected && drules.All(r => allowed.Contains((SecurityIdentifier)r.IdentityReference)), string.Join(", ", drules.Select(r => r.IdentityReference.ToString())));
             File.Copy(file, Path.Combine(dir, Id2 + ".bin"));
             Check("Perfis: ficheiro copiado para outra conta não abre", store.Token(Id2) == null, "");
             var wrong = false;
@@ -211,6 +218,46 @@ static class ProfileTests
             var bad = false;
             try { store.Save("../../x", tok); } catch (ArgumentException) { bad = true; }
             Check("Perfis: SteamID inválido não vira caminho", bad, "");
+
+            // Pasta da beta.8 (dono e acesso total do teu utilizador): é posta de lado, refeita só para admins com as sessões que abrem,
+            // e a antiga apagada sem passar por links
+            if (admin)
+            {
+                var odir = Path.Combine(tmp, "sessions-b8");
+                new SessionStore(odir).Save(Id1, tok);
+                var dsec = new DirectorySecurity();
+                dsec.SetAccessRuleProtection(true, false);
+                dsec.SetOwner(me);
+                dsec.AddAccessRule(new FileSystemAccessRule(me, FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
+                new DirectoryInfo(odir).SetAccessControl(dsec);
+                var fsec = new FileSecurity();
+                fsec.SetAccessRuleProtection(true, false);
+                fsec.SetOwner(me);
+                fsec.AddAccessRule(new FileSystemAccessRule(me, FileSystemRights.FullControl, AccessControlType.Allow));
+                new FileInfo(Path.Combine(odir, Id1 + ".bin")).SetAccessControl(fsec);
+                File.WriteAllText(Path.Combine(odir, Id2 + ".bin"), "posto por outro programa");
+                var lockedBefore = SessionStore.Locked(odir);
+                var moved = new SessionStore(odir);
+                var got = moved.Token(Id1);
+                var frules = new FileInfo(Path.Combine(odir, Id1 + ".bin")).GetAccessControl().GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>().ToList();
+                Check("Perfis: pasta da beta.8 passa a só de admins e a sessão continua", !lockedBefore && got == tok && SessionStore.Locked(odir) && !frules.Any(r => r.IdentityReference.Equals(me)),
+                    string.Join(", ", frules.Select(r => r.IdentityReference.ToString())));
+                Check("Perfis: o que não abre fica de fora e a pasta antiga sai", !File.Exists(Path.Combine(odir, Id2 + ".bin")) && !Directory.GetDirectories(tmp, "sessions-b8.old-*").Any(), "");
+
+                // Uma subpasta posta lá (podia virar junção a meio): a app não entra nela nem apaga o que está do outro lado
+                var odir2 = Path.Combine(tmp, "sessions-b8b");
+                Directory.CreateDirectory(odir2);
+                new DirectoryInfo(odir2).SetAccessControl(dsec);
+                var alvo = Path.Combine(tmp, "alvo-b8b");
+                Directory.CreateDirectory(alvo);
+                File.WriteAllText(Path.Combine(alvo, "importante.txt"), "fica");
+                var mk = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe"),
+                    $"/c mklink /J \"{Path.Combine(odir2, "sub")}\" \"{alvo}\"") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true });
+                mk.WaitForExit(10000);
+                _ = new SessionStore(odir2).Accounts().ToList();
+                Check("Perfis: pasta antiga com subpasta: nada do outro lado é apagado, a nova fica trancada",
+                    File.Exists(Path.Combine(alvo, "importante.txt")) && SessionStore.Locked(odir2) && Directory.GetDirectories(tmp, "sessions-b8b.old-*").Length == 1, "");
+            }
         }
 
         // ---------------- O token nunca chega ao ecrã de gravação, ao Export diagnostics nem ao Log

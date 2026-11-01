@@ -53,7 +53,9 @@ public partial class MainWindow
     {
         if (ip == null) return false;
         var p = ip.Split('.');
-        if (p.Length != 4 || !p.All(x => int.TryParse(x, out var n) && n is >= 0 and <= 255)) return false;
+        // Digits only, 1 to 3 of them, no leading zero: int.TryParse also takes " 1" and "+1" (a space would split the netsh argument
+        // it goes into), and "010" is read as 8 by some Windows tools.
+        if (p.Length != 4 || !p.All(x => x.Length is >= 1 and <= 3 && x.All(char.IsAsciiDigit) && (x.Length == 1 || x[0] != '0') && int.Parse(x) <= 255)) return false;
         int a = int.Parse(p[0]), b = int.Parse(p[1]);
         if (a == 0 || a == 127 || a >= 224) return false;
         if (a == 10 || (a == 172 && b is >= 16 and <= 31) || (a == 192 && b == 168)) return false;   // private networks
@@ -333,7 +335,7 @@ public partial class MainWindow
     /// <summary>After opening CS2: waits for its main menu (the console shows the menu's "loopback" map), then joins. Up to 2 min.</summary>
     async Task<bool> ConnectWhenMenuReady(ServerItem s, string log, long from)
     {
-        ShowProgress($"Opening CS2. It joins {s.Title} when the main menu is ready…");
+        ShowProgress($"Opening CS2. It joins {s.Title} when the main menu is ready. Cancel at the top stops the join…");
         using var wait = CommandWait();
         try
         {

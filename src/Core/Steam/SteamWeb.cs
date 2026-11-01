@@ -361,7 +361,7 @@ public sealed class PublicLook
 /// </summary>
 public static class ProfileLink
 {
-    static readonly Regex Id64 = new(@"^7656119\d{10}$", RegexOptions.Compiled);
+    static readonly Regex Id64 = new(@"^7656119\d{10}\z", RegexOptions.Compiled);
     static readonly Regex PathRx = new(@"^/(id|profiles)/([^/]+)/?$", RegexOptions.Compiled);
     static readonly Regex Vanity = new(@"^[A-Za-z0-9_-]{2,32}$", RegexOptions.Compiled);
 

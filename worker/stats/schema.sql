@@ -1,4 +1,5 @@
 -- Anonymous usage stats (worker/stats). No IP column: the Worker never reads the sender's address, only the country Cloudflare works out.
+-- id: random, made on the PC. Since beta.8 it is new every day (one id = one install on one day); before beta.8 it was fixed per install.
 -- A database made before the country column needs it once: ALTER TABLE pings ADD COLUMN country TEXT;
 CREATE TABLE IF NOT EXISTS pings (day TEXT NOT NULL, ts INTEGER NOT NULL, id TEXT NOT NULL, app TEXT NOT NULL, os TEXT, mode TEXT, link TEXT, minutes INTEGER, dev INTEGER NOT NULL DEFAULT 0, country TEXT);
 CREATE INDEX IF NOT EXISTS pings_id_ts ON pings (id, ts);

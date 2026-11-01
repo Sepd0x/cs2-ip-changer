@@ -37,7 +37,24 @@ public partial class MainWindow
     {
         var cts = _commandCts;
         _commandWaiting++;
-        return new Scope(() => { if (_commandCts == cts && _commandWaiting > 0) _commandWaiting--; });
+        ShowCancel();
+        return new Scope(() => { if (_commandCts == cts && _commandWaiting > 0) _commandWaiting--; ShowCancel(); });
+    }
+
+    /// <summary>Cancel shows in the top bar only while the running command is waiting, never during an IP change or an account switch.</summary>
+    void ShowCancel() => ActivityCancel.Visibility = _command != null && _commandWaiting > 0 && !_changingIp && !_switching && !CommandCancelled
+        ? Visibility.Visible : Visibility.Collapsed;
+
+    void ActivityCancel_Click(object sender, MouseButtonEventArgs e)
+    {
+        e.Handled = true;   // the pill itself opens the Log
+        if (_command == null || _commandWaiting <= 0 || _changingIp || _switching) return;
+        Log.Info($"{_command} cancelled while {_commandStep ?? "waiting"}.");
+        _commandDeclined = true;   // ends quietly, like a "no" in a dialog
+        _commandCts?.Cancel();
+        if (Dialog.Visibility == Visibility.Visible) { Dialog.Visibility = Visibility.Collapsed; _dialogTcs?.TrySetResult(false); }
+        ShowCancel();
+        Toast("Cancelled. Nothing else was started.", Tone.Info);
     }
 
     sealed class Scope(Action end) : IDisposable { public void Dispose() => end(); }
@@ -101,6 +118,7 @@ public partial class MainWindow
         var name = _command;
         var declined = !ok && _commandDeclined;
         _command = _commandStep = null;
+        ShowCancel();
         ActivitySpin.BeginAnimation(System.Windows.Media.RotateTransform.AngleProperty, null);
         ActivityLine.Visibility = Visibility.Collapsed;
         if (declined)

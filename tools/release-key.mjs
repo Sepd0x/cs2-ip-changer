@@ -93,12 +93,13 @@ async function sign() {
   if (gh(['release', 'download', tag, '-p', EXE, '-p', `${EXE}.sha256`, '-D', dir], { quiet: true }).status !== 0) fail('download failed');
   const exe = path.join(dir, EXE);
   const shaFile = fs.readFileSync(path.join(dir, `${EXE}.sha256`));
-  const listed = shaFile.toString('utf8').match(/^([0-9a-fA-F]{64})/m)?.[1]?.toLowerCase();
   const actual = crypto.createHash('sha256').update(fs.readFileSync(exe)).digest('hex');
-  if (listed !== actual) fail(`the exe's SHA-256 (${actual}) is not the one in the .sha256 (${listed})`);
+  // Only the exact line the Release workflow writes is signed. A file with more lines (or another name) could carry a second
+  // hash that this check never looked at and the app would use.
+  if (shaFile.toString('utf8') !== `${actual}  ${EXE}\n`) fail(`the .sha256 is not exactly "${actual}  ${EXE}" (the exe's SHA-256) on one line:\n${shaFile.toString('utf8')}`);
 
-  console.log('Checking that the exe was built by this repo\'s Release workflow (attestation)…');
-  const att = gh(['attestation', 'verify', exe, '--signer-workflow', `${REPO}/.github/workflows/release.yml`], { quiet: true });
+  console.log('Checking that the exe was built by this repo\'s Release workflow, from this tag (attestation)…');
+  const att = gh(['attestation', 'verify', exe, '--signer-workflow', `${REPO}/.github/workflows/release.yml`, '--source-ref', `refs/tags/${tag}`], { quiet: true });
   if (att.status !== 0) fail('the attestation does not check out:\n' + (att.stderr || att.stdout));
 
   const keyFile = path.resolve(opt('--key') ?? DEFAULT_KEY);

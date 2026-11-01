@@ -58,6 +58,7 @@ public partial class MainWindow : Window
         MarkPublicLists();
         ClampToWorkArea();   // before ParseDevArgs: a demo --size still wins
         ParseDevArgs(args);
+        StartHiddenIfAsked(args);
         _justUpdated = args.Contains("--updated");
         ShowVersion();
 
@@ -71,8 +72,22 @@ public partial class MainWindow : Window
         _s = _demo ? new Settings() : Store.Load(Paths.File("settings.json"), () => new Settings());
         // Before beta.6 there was no PhoneSeen: an IP history means a phone was already checked on this PC
         if (!_s.PhoneSeen && _s.IpHistory.Count > 0) _s.PhoneSeen = true;
+        // beta.7 and before kept the Steam Web API key in plain text: saved twice, so the .prev copy loses it too
+        if (_s.ApiKeyMigrated)
+        {
+            try { SaveSettings(); SaveSettings(); Log.Info("Your Steam Web API key is now saved encrypted for your Windows user."); }
+            catch (Exception ex) { Log.Warn("Couldn't save the Steam Web API key encrypted yet (" + ex.Message + "); the app tries again at the next save."); }
+        }
+        if (_s.ApiKeyLost) Log.Warn("The Steam Web API key in settings.json was saved by another Windows user or on another PC and can't be read here. Paste it again in Settings > Steam.");
         InitDev();
-        Telemetry.Start(_demo, TelemetryNow);
+        if (App.StatsJustAccepted && !_demo && !_s.StatsAccepted)
+        {
+            _s.StatsAccepted = true;
+            Log.Info("Anonymous usage stats accepted. README > Telemetry lists what is sent.");
+            try { SaveSettings(); }
+            catch (Exception ex) { Log.Warn("Couldn't save that the usage stats notice was accepted (" + ex.Message + "); it shows again at the next start."); }
+        }
+        Telemetry.Start(_demo, TelemetryNow, _s.StatsAccepted);
         LoadFlags();
         LoadOpenWith();
         LoadServers();
@@ -123,7 +138,7 @@ public partial class MainWindow : Window
             MaxBtn.Content = WindowState == WindowState.Maximized ? "" : "";
         };
         Closing += OnClosing;
-        ContentRendered += async (_, _) => await Startup();
+        if (!_startHidden) ContentRendered += async (_, _) => await Startup();   // hidden (--tray): Startup runs when it's loaded
     }
 
     static ICollectionView CollectionViewSourceFor(ObservableCollection<ServerItem> src)
@@ -142,6 +157,7 @@ public partial class MainWindow : Window
         {
             StartupDev();
             ImportStartupFile();
+            WatchStreaming();   // OBS already open: usernames hidden before the list shows them
             LoadAccounts();
             ShowLastServer();
             WatchSteamLog();
@@ -159,6 +175,8 @@ public partial class MainWindow : Window
             if (_servers.Count > 0) _ = QueryServers(true);
             AfterUpdateStart();
             _ = CheckForUpdates();
+            _ = ShowAutostart();
+            ShowData();
         }
         _secondTimer.Start();
         AfterStartupDev();
@@ -171,6 +189,8 @@ public partial class MainWindow : Window
         await SyncNow();
         DiagTick();
         WatchCs2Console();
+        CountData();
+        WatchStreaming();
         _ = WatchQuality();
         if (!_checkingUpdate && _s.CheckUpdates && (_s.LastUpdateCheck == null || Fmt.Stale(_s.LastUpdateCheck.Value, TimeSpan.FromHours(24)))) _ = CheckForUpdates();
         if (!_changingIp && DateTime.Now.Second % 10 < 5) _ = RefreshPhone();

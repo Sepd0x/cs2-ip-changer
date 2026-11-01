@@ -118,6 +118,8 @@ public partial class MainWindow
         _hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
         System.Windows.Interop.HwndSource.FromHwnd(_hwnd)?.AddHook(WndProc);
         RegisterHotkeys();
+        StartTray();
+        ListenForShow();
     }
 
     void RegisterHotkeys()
@@ -169,6 +171,9 @@ public partial class MainWindow
     protected override void OnClosed(EventArgs e)
     {
         UnregisterHotkeys();
+        _tray?.Dispose();
+        _tray = null;
+        if (!_demo && _s.DataMonthBytes > 0) { try { SaveSettings(); } catch { } }   // the data counted since the last save
         base.OnClosed(e);
     }
 
@@ -187,11 +192,18 @@ public partial class MainWindow
 
     async void OnClosing(object sender, CancelEventArgs e)
     {
+        // Settings > Background and data: the X only hides the window; Quit in the icon's menu closes the app.
+        if (GoesToTray(_s?.CloseToTray == true, _tray != null, _quitting, _sessionEnding, _closingDone, _demo))
+        {
+            e.Cancel = true;
+            HideToTray();
+            return;
+        }
         // Closing mid-run would cut an account off halfway through its changes.
         if (_profBusy && !_closingDone)
         {
             e.Cancel = true;
-            if (!await Ask("Profiles are still changing", "Stop after the current account and close?", "Stop and close")) return;
+            if (!await Ask("Profiles are still changing", "Stop after the current account and close?", "Stop and close")) { _quitting = false; return; }
             _profCts?.Cancel();
             while (_profBusy) await Task.Delay(200);
             Close();
@@ -214,7 +226,7 @@ public partial class MainWindow
                     "Keep and close", "Turn off and close");
             }
             finally { _closeAsking = false; }
-            if (!keep && !_dialogCancelClicked) return;   // Escape, or another question came up: the app stays open
+            if (!keep && !_dialogCancelClicked) { _quitting = false; return; }   // Escape, or another question came up: the app stays open
             _s.CloseAsked = true;
             _s.CleanupOnExit = !keep;
             _uiLock = true;
@@ -238,7 +250,7 @@ public partial class MainWindow
         // Removing the block with CS2 still in a match would send its next packets out with the home IP.
         if (Steam.Cs2Running && !_restored)
         {
-            if (!await Ask("CS2 is still open", "Turning protection off now would send CS2's traffic through your home connection. Close CS2 first, or close the app and keep protection on this time.", "Keep protection and close")) return;
+            if (!await Ask("CS2 is still open", "Turning protection off now would send CS2's traffic through your home connection. Close CS2 first, or close the app and keep protection on this time.", "Keep protection and close")) { _quitting = false; return; }
             _closingDone = true;
             Close();
             return;

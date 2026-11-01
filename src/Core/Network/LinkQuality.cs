@@ -45,6 +45,19 @@ public static class Quality
         return last == QualityLevel.Bad ? (current == QualityLevel.Unknown ? QualityLevel.Fair : current) : last;
     }
 
+    /// <summary>"Keep changing until the connection is good": jitter at or over this changes the IP again.</summary>
+    public const int GoodJitterMs = 20;
+    /// <summary>Changes made for a bad connection, at most, on one Change IP.</summary>
+    public const int GoodRetries = 3;
+
+    /// <summary>
+    /// After a new IP: change again when the connection measured on it has jitter of <see cref="GoodJitterMs"/> ms or more,
+    /// or loses 20% of the pings or more (no answer at all included), at most <see cref="GoodRetries"/> times.
+    /// No measurement changes nothing.
+    /// </summary>
+    public static bool ChangeAgain(LinkQuality q, int retried) =>
+        q != null && q.Sent > 0 && retried < GoodRetries && (q.JitterMs >= GoodJitterMs || q.LossPct >= 20);
+
     /// <summary>Pings <paramref name="ip"/> <paramref name="count"/> times, 200 ms apart. Average and jitter come from the answers only.</summary>
     public static async Task<LinkQuality> Measure(string ip, string netType, int count = 8, int timeoutMs = 1000)
     {

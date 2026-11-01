@@ -704,19 +704,14 @@ public sealed class Cs2ConfigStore
         return Path.Combine(real, id, "730");
     }
 
-    static void WriteAtomic(string path, string text)
-    {
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        var tmp = path + ".srt-tmp";
-        if (File.Exists(tmp)) File.Delete(tmp);   // a leftover (or something put there) is never opened
-        try
-        {
-            using (var fs = new FileStream(tmp, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-            using (var w = new StreamWriter(fs, new UTF8Encoding(false))) w.Write(text);
-            File.Move(tmp, path, true);
-        }
-        catch { try { File.Delete(tmp); } catch { } throw; }
-    }
+    /// <summary>The app's own folders (snapshots): the folder is resolved once, the file written by handle (SafeFile).</summary>
+    static void WriteAtomic(string path, string text) => SafeFile.Write(path, new UTF8Encoding(false).GetBytes(text));
+
+    /// <summary>
+    /// Steam's userdata, which programs without admin rights can change: written by handle under 730's real path from Pin (SafeFile),
+    /// so a folder emptied and turned into a link after Pin can't take the write somewhere else.
+    /// </summary>
+    static void WriteHeld(string real730, string rel, string text) => SafeFile.Write(real730, rel, new UTF8Encoding(false).GetBytes(text));
 
     static bool ReadOnly(string path) => File.Exists(path) && File.GetAttributes(path).HasFlag(FileAttributes.ReadOnly);
 
@@ -792,7 +787,7 @@ public sealed class Cs2ConfigStore
             catch (IOException ex) { return new CfgResult(CfgOutcome.Failed, job.Target, cats, Why(ex)); }
             Backup(job.Target, dir, plan.Keys, job.Reason, fromLabel, syncId, real);
             var wrote = new List<string>();
-            try { foreach (var (rel, text) in plan) { WriteAtomic(Path.Combine(dir, rel), text); wrote.Add(rel); } }
+            try { foreach (var (rel, text) in plan) { WriteHeld(real, rel, text); wrote.Add(rel); } }
             finally
             {
                 // Also after a write that failed half-way: what did go in is the app's, and Undo can take it back.
@@ -910,9 +905,10 @@ public sealed class Cs2ConfigStore
         {
             var real = Pin(b.SteamId, rels, held);
             Backup(b.SteamId, dir, rels.Where(r => File.Exists(Path.Combine(dir, r))), "restore", null, syncId, real);
-            foreach (var (rel, text) in saved) WriteAtomic(Path.Combine(dir, rel), text);
-            // Files the copy created didn't exist before it: the account goes back to CS2's defaults there.
-            foreach (var rel in b.Created.Where(Safe)) { try { File.Delete(Path.Combine(dir, rel)); } catch { } }
+            foreach (var (rel, text) in saved) WriteHeld(real, rel, text);
+            // Files the copy created didn't exist before it: the account goes back to CS2's defaults there (deleted as themselves,
+            // only in 730's real folder).
+            foreach (var rel in b.Created.Where(Safe)) { try { SafeFile.Delete(real, rel); } catch { } }
         }
         finally { foreach (var h in held) h.Dispose(); }
         // What the restore wrote is the app's, not a change made in game (Latest change wins).
@@ -1034,9 +1030,9 @@ public sealed class Cs2ConfigStore
     public void ExportSnapshot(string name, string zipPath)
     {
         var s = FindSnapshot(name) ?? throw new FileNotFoundException("No snapshot called " + name);
-        var tmp = zipPath + ".srt-tmp";
-        if (File.Exists(tmp)) File.Delete(tmp);
-        using (var zip = ZipFile.Open(tmp, ZipArchiveMode.Create))
+        // Built in memory and written by handle (SafeFile): the folder you pick (Desktop, Downloads) is one other programs can change.
+        using var ms = new MemoryStream();
+        using (var zip = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
         {
             void Add(string entry, string text)
             {
@@ -1047,7 +1043,7 @@ public sealed class Cs2ConfigStore
             foreach (var p in Enum.GetValues<CfgPart>())
                 if (ReadOwn(Path.Combine(s.Dir, Cs2Config.SnapshotFile(p))) is string t) Add(Cs2Config.SnapshotFile(p), t);
         }
-        File.Move(tmp, zipPath, true);
+        SafeFile.Write(zipPath, ms.ToArray());
     }
 
     /// <summary>Reads a snapshot .zip (only the known files, each small and readable as KeyValues). Returns the name it got here.</summary>

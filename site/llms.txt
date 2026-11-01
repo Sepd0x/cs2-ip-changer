@@ -4,7 +4,7 @@
 
 Website: https://sepd0x.github.io/cs2-ip-changer/
 Source and downloads: https://github.com/Sepd0x/cs2-ip-changer (latest release: https://github.com/Sepd0x/cs2-ip-changer/releases/latest)
-Status: beta (0.1.0-beta.7). Free, no account. Not affiliated with Valve.
+Status: beta (0.1.0-beta.8). Free, no account. Not affiliated with Valve.
 
 ## How it works
 
@@ -20,7 +20,7 @@ Status: beta (0.1.0-beta.7). Free, no account. Not affiliated with Valve.
 - Live checks of Windows Firewall, routes, the IP servers see next to the home IP, whether the phone is really on mobile data and whether Steam uses the same connection as the game, plus a leak test.
 - Connection quality: ping, jitter and loss through the phone every 30 seconds.
 - Server list from IP:port or steam://connect links with name, map, players and ping; can wait for a slot on a full server.
-- Steam account switcher for alt accounts: uses the logins Steam already saved, never asks for passwords; shows VAC, game and trade bans and cooldowns; marks server bans per account and community. New IP + next account (Ctrl+Shift+F9) gets a new IP, logs into the next account in rotation and rejoins the last server.
+- Steam account switcher for alt accounts: uses the logins Steam already saved, switching never asks for passwords (only the optional Profiles sign-in does, and it keeps an encrypted sign-in token, never the password); shows VAC, game and trade bans and cooldowns; marks server bans per account and community. New IP + next account (Ctrl+Shift+F9) gets a new IP, logs into the next account in rotation and rejoins the last server.
 - CS2 config manager: copies binds, crosshair, game settings, video and HUD/radar/audio between accounts, with backups, snapshots and compare.
 - Profiles: changes the Steam name, picture, bio, country, privacy and custom URL of chosen accounts from templates, with preview and restore.
 - Regions: picks where CS2 matchmaking can put the player, with ping per region; turned-off regions are blocked by one Windows Firewall rule for cs2.exe on Valve's relay IPs only.
@@ -50,12 +50,15 @@ Status: beta (0.1.0-beta.7). Free, no account. Not affiliated with Valve.
 - Releases are built by GitHub Actions from the public source, with a build attestation and a SHA-256 file.
 - Updates install only if the SHA-256 matches and is signed with the project's offline key, which is not on GitHub.
 - The exe is not code-signed, so Windows SmartScreen warns the first time.
-- Anonymous usage stats while in beta: once when the app has been open for 20 seconds, then once a day. Never IPs, servers, accounts or names; the server stores no IP.
-- Save bug report saves a .zip on the Desktop and sends nothing. It leaves out the home IP, API key, logins, names, SteamIDs, e-mails, Wi-Fi names and the Windows user.
+- Anonymous usage stats in the beta, required to use the app: the first start shows what is sent, with Accept and Quit (Quit closes the app without changing anything). Once when the app has been open for 20 seconds, when it closes, and once a day, with a random ID that is new every day and never made from the PC or the user: versions, country, mode, how the phone is connected, minutes open, button counts, a few counters, list sizes and errors. Nothing is sent and no ID is made before Accept. Never IPs, servers, accounts or names; the server stores no IP.
+- Save bug report saves a .zip on the Desktop and sends nothing. It leaves out the current and last home IP, API key, logins, names, SteamIDs, e-mails, Wi-Fi names and the Windows user.
+- Third parties: ipwho.is receives the home IP and the phone's IP when the app shows their carrier and city (each asked only through its own connection); ipify, icanhazip, Amazon and Cloudflare see the IP they measure; Steam, Google (ADB download) and GitHub (updates) get normal requests.
+- It never opens CS2's memory and never injects into the game: it changes Windows routes and firewall rules, and which Steam account logs in.
 
 ## Docs
 
 - [README](https://raw.githubusercontent.com/Sepd0x/cs2-ip-changer/main/README.md): full feature list, setup, troubleshooting, FAQ, privacy and telemetry
+- [Privacy and security](https://raw.githubusercontent.com/Sepd0x/cs2-ip-changer/main/docs/PRIVACY-AND-SECURITY.md): every service and what it receives, what the app does with admin rights, why an antivirus may flag it, known limits
 - [Changelog](https://raw.githubusercontent.com/Sepd0x/cs2-ip-changer/main/CHANGELOG.md): what changed in each version
 - [Security policy](https://github.com/Sepd0x/cs2-ip-changer/blob/main/.github/SECURITY.md): how to report a leak or an admin-rights problem privately
-- [Usage stats server](https://github.com/Sepd0x/cs2-ip-changer/tree/main/worker/stats): source of the anonymous beta telemetry, which stores no IP
+- [Usage stats server](https://github.com/Sepd0x/cs2-ip-changer/tree/main/worker/stats): source of the anonymous beta telemetry (a random ID, new every day), which stores no IP

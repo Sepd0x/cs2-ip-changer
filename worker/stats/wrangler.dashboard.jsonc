@@ -1,0 +1,19 @@
+// The stats page (src/dashboard.js), a second Worker on the same database. Only for the person who runs the project:
+// Cloudflare Access in front of all of it, and the Worker checks the Access token too. Steps: publish/dashboard-passos.md
+// (outside the repo). Deploy from this folder: npx wrangler deploy -c wrangler.dashboard.jsonc
+// Secrets (wrangler secret put NAME -c wrangler.dashboard.jsonc): TEAM_DOMAIN, POLICY_AUD, DASHBOARD_EMAIL, GITHUB_TOKEN,
+// and optionally EXCLUDE_IDS (old fixed install IDs of your own PCs).
+{
+  "name": "stats-dashboard",
+  "main": "src/dashboard.js",
+  "compatibility_date": "2026-06-01",
+  "workers_dev": true,
+  // Preview URLs would be other addresses for the same code, outside the Access application
+  "preview_urls": false,
+  // No request logs
+  "observability": { "enabled": false, "logs": { "enabled": false, "invocation_logs": false } },
+  "vars": { "GITHUB_REPO": "Sepd0x/cs2-ip-changer" },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "cs2ipc-stats", "database_id": "4c55f7d0-849d-4e6b-8b46-b8a0b7a9e19f" }
+  ]
+}

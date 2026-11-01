@@ -37,7 +37,39 @@ public static class Firewall
     public sealed record FwRule(string Name, IReadOnlyCollection<string> RemoteIps, string Program, string AllowLocalIp, string Description,
         int Protocol = NET_FW_IP_PROTOCOL_ANY, string RemotePorts = null, string LocalAddresses = null);
 
-    static object Policy() => Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwPolicy2", true));
+    // Windows Firewall's COM classes by their fixed CLSIDs (HNetCfg.FwPolicy2, HNetCfg.FWRule): a name (ProgID) is looked up in
+    // the registry, where your own part (HKCU\Software\Classes) can be changed by any program of yours.
+    public static readonly Guid PolicyClsid = new("E2B3C97F-6AE1-41AC-817A-F6F92166D7DD"), RuleClsid = new("2C5BC43E-3369-4C33-AB0C-BE9469677AF4");
+
+    /// <summary>
+    /// Firewalls of other programs (antivirus suites) that Windows Security knows about: WMI root\SecurityCenter2, FirewallProduct.
+    /// Read only when Windows Firewall is off, to say which one took over. Empty when Windows can't say (Windows Server has no
+    /// SecurityCenter2).
+    /// </summary>
+    public static List<string> OtherFirewalls()
+    {
+        var names = new List<string>();
+        try
+        {
+            dynamic locator = Activator.CreateInstance(Type.GetTypeFromCLSID(new Guid("76A64158-CB41-11D1-8B02-00600806D9B6"), true)!);   // WbemScripting.SWbemLocator
+            dynamic wmi = locator.ConnectServer(".", @"root\SecurityCenter2");
+            foreach (dynamic p in wmi.ExecQuery("SELECT displayName FROM FirewallProduct")) names.Add((string)p.displayName);
+        }
+        catch { }
+        return names;
+    }
+
+    /// <summary>What to do when Windows Firewall is off: with another program's firewall in charge, say which one.</summary>
+    public static string OffHint(IEnumerable<string> products, string without)
+    {
+        var others = (products ?? []).Where(p => !string.IsNullOrWhiteSpace(p) && !p.Contains("Windows", StringComparison.OrdinalIgnoreCase) && !p.Contains("Microsoft Defender", StringComparison.OrdinalIgnoreCase))
+            .Select(p => p.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (others.Count == 0) return $"Without the Firewall {without}; turn it on in Windows Security > Firewall.";
+        var who = others.Count == 1 ? others[0] : string.Join(" and ", others);
+        return $"{who} turned it off and runs its own firewall. Without Windows Firewall {without}: in {others[0].Split(' ')[0]}, let Windows Firewall be on (or uninstall that firewall), then turn it on in Windows Security > Firewall.";
+    }
+
+    static object Policy() => Activator.CreateInstance(Type.GetTypeFromCLSID(PolicyClsid, true)!);
 
     static object Get(object o, string name, params object[] args) =>
         o.GetType().InvokeMember(name, BindingFlags.GetProperty, null, o, args);
@@ -118,7 +150,7 @@ public static class Firewall
 
         // A unique temporary name: if the rename at the end ever fails, that rule keeps blocking until the next Apply.
         var temp = $"{name} (updating {Guid.NewGuid():N})"[..(name.Length + 20)] + ")";
-        var rule = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FWRule", true));
+        var rule = Activator.CreateInstance(Type.GetTypeFromCLSID(RuleClsid, true)!);
         SetP(rule, "Name", temp);
         SetP(rule, "Description", r.Description);
         SetP(rule, "Grouping", "ServerRouteTool");

@@ -65,14 +65,15 @@ public partial class MainWindow
         if (info?.Ready == true && _last != null && _last.Candidate == null && !(_last.Adapters?.Any(a => a.IsPhone && a.Up && a.LocalIp != null) ?? false)
             && string.IsNullOrEmpty(_s.EgressSsid) && await Adb.TetheringOn(_adb, info.Serial))
         {
-            if (!_tetherHinted)
+            _tetherMissingSince ??= DateTime.UtcNow;
+            if (!_tetherHinted && TetherHintDue(_tetherAskedAt, _tetherMissingSince.Value, DateTime.UtcNow))
             {
                 _tetherHinted = true;
                 Log.Warn("The phone has USB tethering on, but Windows doesn't see it. Unplug the cable and plug it back in, or turn tethering off and on.");
                 Toast("Windows doesn't see the phone's USB tethering. Unplug the cable and plug it back in.", false);
             }
         }
-        else _tetherHinted = false;
+        else { _tetherHinted = false; _tetherMissingSince = null; }
 
         if (PhoneWifiOn != wifiBefore)
         {
@@ -229,17 +230,25 @@ public partial class MainWindow
     }
 
     /// <summary>
-    /// Asks the phone for USB tethering (rndis) and waits up to 15 s for Windows to add the phone's adapter. Returns that adapter,
+    /// Asks the phone for USB tethering (rndis) and waits up to 30 s for Windows to add the phone's adapter. Returns that adapter,
     /// or null with what to do by hand. ADB stays connected on the phones tried (Android 15); if it drops, it comes back on its own.
     /// </summary>
     async Task<(Adapter Adapter, string Why)> TurnOnTethering(Action<string> report)
     {
+        // Asking again while it's on resets the phone's USB link and drops the connection for up to a minute: only ask when Windows
+        // doesn't see it. The phone has to say tethering is on too, so a USB modem or another phone isn't taken for this one.
+        if (Net.PickEgress(await Task.Run(Net.Scan), null, null) is Adapter on && await Adb.TetheringOn(_adb, _phone.Serial))
+        {
+            Log.Info($"USB tethering is already on (Windows sees the phone as {on.Name}).");
+            return (on, null);
+        }
         // Changing the USB mode resets the phone's USB link, so adb often reports an error even when it worked (Android 15):
         // what counts is Windows seeing the phone below, not adb's answer.
+        _tetherAskedAt = DateTime.UtcNow;
         var r = await Adb.EnableUsbTether(_adb, _phone.Serial);
         Log.Info("USB tethering request: " + (r.Ok ? "sent" : "sent (adb dropped while the phone switched its USB mode)"));
         var sw = Stopwatch.StartNew();
-        while (sw.Elapsed < TimeSpan.FromSeconds(15))
+        while (sw.Elapsed < TetherWait)
         {
             await Task.Delay(1000);
             report?.Invoke($"Turning on USB tethering: waiting for Windows to see the phone ({(int)sw.Elapsed.TotalSeconds} s)…");
@@ -252,10 +261,23 @@ public partial class MainWindow
                 return (phone, null);
             }
         }
-        Log.Warn("USB tethering: the phone took the request, but Windows didn't add its adapter within 15 s.");
+        Log.Warn($"USB tethering: the phone took the request, but Windows didn't add its adapter within {TetherWait.TotalSeconds:0} s.");
         await SyncNow(force: true);
-        return (null, "Windows didn't see the phone's tethering within 15 s. " + PhoneSetup.Advice(PhoneStep.TetherOff));
+        return (null, $"Windows didn't see the phone's tethering within {TetherWait.TotalSeconds:0} s. " + PhoneSetup.Advice(PhoneStep.TetherOff));
     }
+
+    /// <summary>Windows can take 20 s or more to add the phone's adapter after the USB mode changes.</summary>
+    static readonly TimeSpan TetherWait = TimeSpan.FromSeconds(30);
+    DateTime _tetherAskedAt = DateTime.MinValue;
+
+    /// <summary>
+    /// "Tethering on, but Windows doesn't see it" is only said when it lasts: the phone has been missing for longer than Windows
+    /// may take to add it, counted from the first check that missed it or from the app's last request, whichever came later.
+    /// Tethering turned on in the phone's own settings, or a cable plugged back in, gets the same time as a request.
+    /// </summary>
+    public static bool TetherHintDue(DateTime askedAt, DateTime missingSince, DateTime now) =>
+        now - (askedAt > missingSince ? askedAt : missingSince) > TetherWait;
+    DateTime? _tetherMissingSince;
 
     // ------------------------------------------------------------ Phone setup: does each step it can, says the one thing left
 
@@ -300,7 +322,7 @@ public partial class MainWindow
         await RefreshPhone();
         Telemetry.Count("phone_setup_" + PhoneSetup.Key(step));
         var samsung = st?.Usb.Vendor == "Samsung" || _phone?.Model?.StartsWith("SM-", StringComparison.OrdinalIgnoreCase) == true;
-        var last = step == PhoneStep.Done ? "Ready. The app checks the phone's IP, then servers see it instead of your home IP."
+        var last = step == PhoneStep.Done ? "Ready. The app checks the phone's IP, then servers see it instead of your home IP.\n\nFor less lag in game: " + NetReport.Tips(_last?.Egress?.IsWifi == true)
             : "Left for you: " + (whyFor == step && why != null ? why : PhoneSetup.Advice(step, st?.Usb.Problem, samsung));
         if (_s.NoPhone) last += "\n\nYou picked No phone under What goes through the phone, so the app isn't using the phone right now.";
         Log.Info(step == PhoneStep.Done ? "Phone setup: done." : "Phone setup: stopped at " + PhoneSetup.Key(step) + ".");
@@ -445,6 +467,7 @@ public partial class MainWindow
         var method = _s.ChangeMethod == "airplane" ? Adb.Method.Airplane : Adb.Method.MobileData;
         var first = _egressPublic;
         string got = null;
+        var goodRetries = 0;
         _ipChangedAt = DateTime.Now.AddTicks(-(DateTime.Now.Ticks % TimeSpan.TicksPerSecond));
         Diag.Write("change-ip", new { from = first });
         try
@@ -456,22 +479,36 @@ public partial class MainWindow
                 await TurnPhoneWifiOff();
                 await Task.Delay(3000);
             }
-            for (var attempt = 1; attempt <= Math.Max(1, _s.MaxAttempts); attempt++)
+            // A connection too jittery to keep adds an attempt (Quality.GoodRetries at most), so it never uses up the attempts for a new IP
+            var max = Math.Max(1, _s.MaxAttempts);
+            for (var attempt = 1; attempt <= max + goodRetries; attempt++)
             {
-                ShowProgress($"Attempt {attempt}/{_s.MaxAttempts}: phone data off for {_s.OffSeconds} s…");
+                var of = max + goodRetries;
+                ShowProgress($"Attempt {attempt}/{of}: phone data off for {_s.OffSeconds} s…");
                 var err = await Adb.Cycle(_adb, _phone.Serial, method, Math.Clamp(_s.OffSeconds, 1, 60));
                 if (err != null) { Log.Error(err); Toast(err, Tone.Error); return false; }
 
-                ShowProgress($"Attempt {attempt}/{_s.MaxAttempts}: waiting for the mobile network…");
+                ShowProgress($"Attempt {attempt}/{of}: waiting for the mobile network…");
                 got = await WaitForEgressIp(TimeSpan.FromSeconds(50));
                 if (got == null) { ShowProgress("The network hasn't come back yet…"); continue; }
                 if (got == first) { Log.Info($"The carrier gave back the same IP ({got})."); continue; }
                 // Many admins ban the whole range: optionally keep going until the /16 is new, against every earlier IP
                 // (the same list the range note after the change uses).
-                if (_s.RequireNew16 && attempt < _s.MaxAttempts && IpRange.FirstSame16(got, _history.Select(h => h.Ip).Append(first).Where(x => x != null)) is string seen)
+                if (_s.RequireNew16 && attempt < of && IpRange.FirstSame16(got, _history.Select(h => h.Ip).Append(first).Where(x => x != null)) is string seen)
                 {
                     Log.Info($"New IP {got} is in the same range as {seen}: trying again.");
                     continue;
+                }
+                // On mobile data the lag is upload jitter, and another IP can land on another cell: measured like the Quality check
+                if (_s.RequireGoodLink && await MeasureNewLink(got, attempt, of) is LinkQuality q)
+                {
+                    if (Quality.ChangeAgain(q, goodRetries))
+                    {
+                        goodRetries++;
+                        Log.Info($"New IP {got}: {q.Text}. Jitter of {Quality.GoodJitterMs} ms or more, or 2 of 10 pings lost: trying again ({goodRetries}/{Quality.GoodRetries}).");
+                        continue;
+                    }
+                    Log.Info($"New IP {got}: {q.Text}.");
                 }
                 break;
             }
@@ -531,6 +568,24 @@ public partial class MainWindow
             // Measures the new connection: only a confirmed IP that isn't the home one lifts the block.
             await RefreshPublicIps();
         }
+    }
+
+    /// <summary>
+    /// "Keep changing until the connection is good": 10 pings to the IP test address, only through the phone. Null when the test
+    /// route isn't on the phone (the home connection would be measured instead), so nothing is decided on it.
+    /// </summary>
+    async Task<LinkQuality> MeasureNewLink(string ip, int attempt, int of)
+    {
+        ShowProgress($"Attempt {attempt}/{of}: checking the connection on {ip}…");
+        await Task.Delay(3000);   // the first seconds after data comes back are always rough
+        var egress = Net.PickEgress(await Task.Run(Net.Scan), _s.EgressAdapterId, _s.EgressSsid);
+        if (egress != null && Net.BestInterface(Net.EchoIp) != egress.Index) await SyncNow(force: true);
+        if (egress == null || Net.BestInterface(Net.EchoIp) != egress.Index)
+        {
+            Log.Info($"New IP {ip}: the connection check was skipped (the test route isn't on the phone right now).");
+            return null;
+        }
+        return await Quality.Measure(Net.EchoIp, _phone?.Ready == true ? _phone.NetType : null, count: 10);
     }
 
     /// <summary>Whether the new IP's /16 shows up in the previous IPs (call before adding it to the history).</summary>

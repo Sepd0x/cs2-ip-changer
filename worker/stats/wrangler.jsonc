@@ -5,8 +5,10 @@
   "main": "src/index.js",
   "compatibility_date": "2026-06-01",
   "workers_dev": true,
+  // No preview URLs: other addresses for the same code that write to the same database
+  "preview_urls": false,
   // No request logs: the sender's IP is never written anywhere.
-  "observability": { "enabled": false },
+  "observability": { "enabled": false, "logs": { "enabled": false, "invocation_logs": false } },
   "d1_databases": [
     { "binding": "DB", "database_name": "cs2ipc-stats", "database_id": "4c55f7d0-849d-4e6b-8b46-b8a0b7a9e19f" }
   ]

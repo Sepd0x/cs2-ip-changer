@@ -31,6 +31,7 @@ public partial class MainWindow
             OffSecondsBox.Text = _s.OffSeconds.ToString();
             AttemptsBox.Text = _s.MaxAttempts.ToString();
             New16Box.IsChecked = _s.RequireNew16;
+            GoodLinkBox.IsChecked = _s.RequireGoodLink;
             AutoJoinBox.IsChecked = _s.AutoJoinFollowed;
             SwIpBox.IsChecked = _s.SwitchIp;
             SwAccountBox.IsChecked = _s.SwitchAccount;
@@ -46,9 +47,13 @@ public partial class MainWindow
             AutoModeBox.IsChecked = _s.AutoModeByQuality;
             ApplyDevSettings();
             CleanupBox.IsChecked = _s.CleanupOnExit;
+            CloseToTrayBox.IsChecked = _s.CloseToTray;
+            AutoStreamerBox.IsChecked = _s.AutoStreamer;
+            DataWarnBox.Text = _s.DataWarnGb > 0 ? _s.DataWarnGb.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) : "0";
             ApiKeyBox.Text = _s.SteamApiKey ?? "";
             ApiKeyPwd.Password = _s.SteamApiKey ?? "";
             ShowApiKey(false);
+            ApiKeyLostText.Visibility = _s.ApiKeyLost && _s.SteamApiKey == null ? Visibility.Visible : Visibility.Collapsed;
             OptCs2.IsChecked = _s.LaunchCs2;
             OptSilent.IsChecked = _s.SteamSilent;
             OptOffline.IsChecked = _s.SteamOffline;
@@ -66,6 +71,7 @@ public partial class MainWindow
         if (int.TryParse(OffSecondsBox.Text, out var off)) _s.OffSeconds = Math.Clamp(off, 1, 60);
         if (int.TryParse(AttemptsBox.Text, out var att)) _s.MaxAttempts = Math.Clamp(att, 1, 10);
         _s.RequireNew16 = New16Box.IsChecked == true;
+        _s.RequireGoodLink = GoodLinkBox.IsChecked == true;
         _s.AutoJoinFollowed = AutoJoinBox.IsChecked == true;
         _s.SwitchIp = SwIpBox.IsChecked == true;
         _s.SwitchAccount = SwAccountBox.IsChecked == true;
@@ -83,6 +89,7 @@ public partial class MainWindow
         _s.CleanupOnExit = CleanupBox.IsChecked == true;
         var key = ApiKeyBox.Visibility == Visibility.Visible ? ApiKeyBox.Text : ApiKeyPwd.Password;
         _s.SteamApiKey = string.IsNullOrWhiteSpace(key) ? null : key.Trim();
+        if (_s.SteamApiKey != null) ApiKeyLostText.Visibility = Visibility.Collapsed;
         OffSecondsBox.Text = _s.OffSeconds.ToString();
         AttemptsBox.Text = _s.MaxAttempts.ToString();
         SaveSettings();
@@ -171,10 +178,22 @@ public partial class MainWindow
 
     void OpenFirewall_Click(object sender, RoutedEventArgs e)
     {
-        try { Process.Start(new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "wf.msc")) { UseShellExecute = true }); }
+        try { Process.Start(FirewallConsole()); }
         catch (Exception ex) { Toast("Couldn't open the Firewall: " + ex.Message, Tone.Error); }
         Toast("In Outbound Rules, look for 'ServerRouteTool v9 - kill switch'.", true);
 
+    }
+
+    /// <summary>
+    /// mmc.exe from System32 with wf.msc, never "open wf.msc" through the shell: as admin, the shell looks up what opens a .msc
+    /// file in your own registry too (HKCU\Software\Classes), which any program of yours can change, and it would run as admin.
+    /// </summary>
+    public static ProcessStartInfo FirewallConsole()
+    {
+        var sys = Environment.SystemDirectory;
+        var psi = new ProcessStartInfo(Path.Combine(sys, "mmc.exe")) { UseShellExecute = false };
+        psi.ArgumentList.Add(Path.Combine(sys, "wf.msc"));
+        return psi;
     }
 
     void OpenData_Click(object sender, RoutedEventArgs e) =>

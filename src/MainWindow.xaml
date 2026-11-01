@@ -32,6 +32,7 @@
                         <MenuItem Header="Open in Leetify" Tag="&#xE9D9;" Click="AccLeetify_Click"/>
                         <MenuItem Header="Open in csstats.gg" Tag="&#xE9D2;" Click="AccCsstats_Click"/>
                         <MenuItem Header="Copy SteamID64" Tag="&#xE8C8;" Click="AccCopyId_Click"/>
+                        <MenuItem Header="Copy CS2 friend code" Tag="&#xE8C8;" Click="AccCopyFriendCode_Click"/>
                         <MenuItem Header="Copy username" Tag="&#xE8C8;" Click="AccCopyLogin_Click"/>
                         <MenuItem Header="Change profile…" Tag="&#xE77B;" Click="AccChangeProfile_Click"/>
                         <MenuItem Header="Copy look to…" Tag="&#xE8B9;" Click="AccCopyLook_Click"/>
@@ -358,6 +359,10 @@
                                     Visibility="Collapsed" WindowChrome.IsHitTestVisibleInChrome="True" Cursor="Hand" MouseLeftButtonUp="Activity_Click"
                                     ToolTip="{Binding Text, ElementName=ActivityText}">
                                 <DockPanel>
+                                    <!-- while the command only waits (CS2's menu, Steam, an answer): stop it without starting another -->
+                                    <TextBlock x:Name="ActivityCancel" DockPanel.Dock="Right" Text="Cancel" Margin="10,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold"
+                                               Foreground="{StaticResource Accent}" Visibility="Collapsed" Cursor="Hand" MouseLeftButtonUp="ActivityCancel_Click"
+                                               ToolTip="Stops what the app is waiting for. Nothing that already happened is undone."/>
                                     <TextBlock x:Name="ActivityIcon" DockPanel.Dock="Left" Style="{StaticResource Icon}" Text="&#xE895;" FontSize="12" Foreground="{StaticResource Accent}"
                                                VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
                                         <TextBlock.RenderTransform><RotateTransform x:Name="ActivitySpin"/></TextBlock.RenderTransform>
@@ -516,6 +521,8 @@
                                         <ComboBox x:Name="EgressCombo" SelectionChanged="EgressCombo_Changed" MaxWidth="420" HorizontalAlignment="Left" MinWidth="280"
                                                   ToolTip="USB cable (recommended) or the phone's Wi-Fi hotspot. A USB 4G/5G dongle or router also works."/>
                                         <TextBlock x:Name="EgressDetail" Text="" Visibility="Collapsed" Foreground="{StaticResource Faint}" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                                        <TextBlock x:Name="DataUsage" Text="" Visibility="Collapsed" Foreground="{StaticResource Faint}" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0" Background="Transparent"
+                                                   ToolTip="Everything that went through the phone's adapter (CS2, Steam and, in Whole PC, the rest of the PC), counted by Windows. Your carrier's count can differ a little. Warning: Settings > Background and data."/>
                                     </StackPanel>
                                 </HeaderedContentControl>
 
@@ -1692,6 +1699,8 @@
                                             <Button Click="UnhideAll_Click" Margin="0,0,6,6" Content="Show hidden accounts" ToolTip="Brings back the accounts you hid from the Accounts list"/>
                                             <Button Click="OpenFirewall_Click" Margin="0,0,6,6" Content="Open Windows Firewall" ToolTip="The app's rules are under Outbound Rules, named 'ServerRouteTool'."/>
                                             <Button Click="DeleteLogs_Click" Margin="0,0,6,6" Content="Delete log files" ToolTip="Deletes the log files in SRT_Dados (they hold your home IP, Steam names and servers). The log keeps about 14 days on its own."/>
+                                            <Button Click="RemoveAll_Click" Margin="0,0,6,6" Content="Remove everything and quit"
+                                                    ToolTip="Removes every rule and route the app made (Regions too), the Start with Windows task and C:\ProgramData\CS2IPChanger, stops the phone tool and closes. SRT_Dados and the app stay; it asks first and says how to delete them."/>
                                         </WrapPanel>
                                         <Button Grid.Column="1" Style="{StaticResource Danger}" Click="Restore_Click" Margin="24,0,0,6" VerticalAlignment="Top" Content="Turn off protection"
                                                 ToolTip="Removes the kill switch, the routes and the CS2 lock. Use it if your internet stops working. Your servers stay saved, and regions you turned off stay off (Allow all on Regions lifts them)."/>
@@ -1770,6 +1779,13 @@
                                             <TextBlock Text="Many admins ban a whole range (the first two numbers of the IP, like 198.51.x.x). Uses the attempts above." Style="{StaticResource OptSub}"/>
                                         </StackPanel>
                                     </CheckBox>
+                                    <CheckBox x:Name="GoodLinkBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,12,0,0"
+                                              ToolTip="On mobile data the lag in CS2 is mostly jitter: the ping is fine, but your moves reach the server late. Another IP can land on another cell. After each new IP the app pings for about 2 s, as in Checks > Connection quality, and changes again when jitter is 20 ms or more (or 2 of the 10 pings are lost), 3 more changes at most, on top of the attempts. Each check adds 5 to 15 s to Change IP.">
+                                        <StackPanel>
+                                            <TextBlock Text="Keep changing until the connection is good"/>
+                                            <TextBlock Text="Changes again while jitter is 20 ms or more: up to 3 more changes than the attempts above." Style="{StaticResource OptSub}"/>
+                                        </StackPanel>
+                                    </CheckBox>
                                     </StackPanel>
                                 </HeaderedContentControl>
 
@@ -1835,12 +1851,15 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
                                 <HeaderedContentControl Style="{StaticResource Group}" Header="Steam">
                                     <StackPanel>
                                         <TextBlock Text="Steam Web API key (optional)"/>
-                                        <TextBlock Text="With it, bans come from the official API. It stays on this PC only." Style="{StaticResource OptSub}" Margin="0,1,0,8"/>
+                                        <TextBlock Text="With it, bans come from the official API. It stays on this PC, encrypted for your Windows user." Style="{StaticResource OptSub}" Margin="0,1,0,8"/>
+                                        <TextBlock x:Name="ApiKeyLostText" Visibility="Collapsed" Foreground="{StaticResource Warn}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                                   Text="The saved key was encrypted by another Windows user or on another PC, so it can't be read here. Paste it again."/>
                                         <Grid MaxWidth="560" HorizontalAlignment="Left">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" MinWidth="200"/>
@@ -1853,6 +1872,13 @@
                                             <Button x:Name="ApiKeyShowBtn" Grid.Column="1" Margin="6,0,0,0" Click="ApiKeyShow_Click" Content="Show" ToolTipService.ShowOnDisabled="True" ToolTip="Shows the key"/>
                                             <Button Grid.Column="2" Margin="6,0,0,0" Click="ApiKeyLink_Click" Content="Get key" ToolTip="Opens steamcommunity.com/dev/apikey"/>
                                         </Grid>
+                                        <CheckBox x:Name="AutoStreamerBox" Style="{StaticResource Switch}" Click="AutoStreamer_Click" Margin="0,12,0,0"
+                                                  ToolTip="While OBS Studio or Streamlabs is running, the app hides usernames, your home IP in the Log page and the API key, as Hide usernames on the Accounts page does. They show again when it closes.">
+                                            <StackPanel>
+                                                <TextBlock Text="Hide usernames while OBS or Streamlabs is open"/>
+                                                <TextBlock Text="So a login or your home IP never ends up on a stream." Style="{StaticResource OptSub}"/>
+                                            </StackPanel>
+                                        </CheckBox>
                                     </StackPanel>
                                 </HeaderedContentControl>
 
@@ -1925,12 +1951,38 @@
                                                 <TextBlock Text="Once a day, on GitHub. Nothing installs without your OK and a matching SHA-256." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
-                                        <!-- Telemetry (beta): always on, said here and in the README -->
-                                        <TextBlock Text="Beta: the app sends anonymous usage stats once a day (buttons used, errors, versions, country). Never IPs, servers, accounts or names. Details in the README, under Telemetry." Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,10,0,0"/>
+                                        <!-- Telemetry (beta): required, accepted once before the app opens (App.StatsGate), README > Telemetry -->
+                                        <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,12,0,0" Background="Transparent"
+                                                   Text="Anonymous usage stats, required while the app is in beta: once a day, with a random ID that is new every day. Never IPs, servers, accounts or names."
+                                                   ToolTip="Sent: the app and Windows versions, your country as two letters, the mode, how the phone is connected, minutes open, how often each button and hotkey is used, a few counters, how long your lists are, and errors as their type and place in the code. Details in the README, under Telemetry."/>
                                     </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="3" Style="{StaticResource Group}" Header="Open with CS2">
+                                <HeaderedContentControl Grid.Row="3" Style="{StaticResource Group}" Header="Background and data">
+                                    <StackPanel>
+                                        <CheckBox x:Name="StartWithWindowsBox" Style="{StaticResource Switch}" Click="StartWithWindows_Click" Margin="0,0,0,12" ToolTipService.ShowOnDisabled="True"
+                                                  ToolTip="A scheduled task named 'CS2 IP Changer' opens the app in the notification area when you sign in, with its admin rights and without the UAC prompt each time. Only for the copy installed in C:\Program Files\CS2 IP Changer. Turning this off, Remove everything and --restore delete the task.">
+                                            <StackPanel>
+                                                <TextBlock Text="Start with Windows"/>
+                                                <TextBlock Text="Opens in the notification area when you sign in, without the UAC prompt." Style="{StaticResource OptSub}"/>
+                                                <TextBlock x:Name="AutostartHint" Visibility="Collapsed" Style="{StaticResource OptSub}" Foreground="{StaticResource Warn}"
+                                                           Text="Only for the installed copy: start the app from Downloads and click Install."/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                        <CheckBox x:Name="CloseToTrayBox" Style="{StaticResource Switch}" Click="CloseToTray_Click" Margin="0,0,0,12"
+                                                  ToolTip="The X hides the window and the app keeps protecting from the notification area (next to the clock). Click the icon to open it; right-click it for New IP, Change IP, Regions, Turn off protection and Quit.">
+                                            <StackPanel>
+                                                <TextBlock Text="Close to the notification area"/>
+                                                <TextBlock Text="The X hides the window. Quit is in the icon's menu." Style="{StaticResource OptSub}"/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                        <TextBlock Text="Mobile data warning (GB a month, 0 = off)" Style="{StaticResource Key}" Margin="0,0,0,5"/>
+                                        <TextBox x:Name="DataWarnBox" Width="90" HorizontalAlignment="Left" Height="28" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" LostFocus="DataWarn_Changed"
+                                                 ToolTip="The app counts what goes through the phone's adapter (shown under Phone on the Connection page) and warns once a month when it passes this."/>
+                                    </StackPanel>
+                                </HeaderedContentControl>
+
+                                <HeaderedContentControl Grid.Row="4" Style="{StaticResource Group}" Header="Open with CS2">
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,0,0,10" Background="Transparent"
                                                    ToolTip="Like Discord, Spotify or a stats tracker. They open as you, without the app's admin rights, and only if they aren't running yet."
@@ -1963,7 +2015,7 @@
                                     </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="4" Style="{StaticResource Group}" Header="How it works" VerticalAlignment="Top">
+                                <HeaderedContentControl Grid.Row="5" Style="{StaticResource Group}" Header="How it works" VerticalAlignment="Top">
                                     <TextBlock Style="{StaticResource Sub}" LineHeight="19" MaxWidth="640" HorizontalAlignment="Left">
                                         The phone shares its mobile data with the PC, over a USB cable or the Wi-Fi hotspot. The app sends the game through it: servers see the carrier IP, not your home IP.<LineBreak/><LineBreak/>
                                         If the connection drops, the block stops those servers instead of letting your IP through.<LineBreak/><LineBreak/>

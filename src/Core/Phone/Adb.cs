@@ -85,12 +85,16 @@ public static class Adb
             if (!File.Exists(src)) continue;
             if (File.Exists(dst) && Same(src, dst)) continue;
             var tmp = dst + ".new";
-            File.Copy(src, tmp, true);
+            // The source folder is yours to change: read as itself, never through a link (a file only admins can read must not be
+            // copied into a folder everyone can read).
+            using (var from1 = SafeFile.OpenRead(src))
+            using (var to = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None)) from1.CopyTo(to);
             try { File.Move(tmp, dst, true); }
             catch (IOException) when (File.Exists(dst)) { File.Delete(tmp); }   // the copy in use (adb server running) stays; it is checked below
         }
         if (!AdminOnly(root) || !AdminOnly(dir)) throw new UnauthorizedAccessException(dir + " can be changed by programs without admin rights");
         var bad = AdbFiles.Select(n => Path.Combine(dir, n)).Where(f => File.Exists(f) && !IsGoogleSigned(f)).ToList();
+        foreach (var f in bad) { try { File.Delete(f); } catch { } }   // not left behind where everyone can read it
         if (bad.Count > 0 || !File.Exists(Path.Combine(dir, "adb.exe")))
             throw new InvalidDataException(bad.Count > 0 ? "not signed by Google: " + string.Join(", ", bad.Select(Path.GetFileName)) : "adb.exe missing");
         return Path.Combine(dir, "adb.exe");
@@ -231,9 +235,26 @@ public static class Adb
         {
             if (!Trust.Verify(path)) return false;
 #pragma warning disable SYSLIB0057
-            var cert = System.Security.Cryptography.X509Certificates.X509Certificate.CreateFromSignedFile(path);
+            using var cert = new System.Security.Cryptography.X509Certificates.X509Certificate2(
+                System.Security.Cryptography.X509Certificates.X509Certificate.CreateFromSignedFile(path));
 #pragma warning restore SYSLIB0057
-            return System.Text.RegularExpressions.Regex.IsMatch(cert.Subject, @"(^|,\s*)O=Google LLC(,|$)");
+            return IsGoogleSubject(cert.SubjectName);
+        }
+        catch { return false; }
+    }
+
+    /// <summary>
+    /// The signer's name, read field by field: exactly one Organization, "Google LLC", and one Country, "US". A text match on the
+    /// whole name would also take a quoted value that only contains it, such as OU="x, O=Google LLC".
+    /// </summary>
+    public static bool IsGoogleSubject(System.Security.Cryptography.X509Certificates.X500DistinguishedName name)
+    {
+        try
+        {
+            var rdns = name.EnumerateRelativeDistinguishedNames().ToList();
+            if (rdns.Count == 0 || rdns.Any(r => r.HasMultipleElements)) return false;
+            List<string> Values(string oid) => rdns.Where(r => r.GetSingleElementType().Value == oid).Select(r => r.GetSingleElementValue()).ToList();
+            return Values("2.5.4.10") is ["Google LLC"] && Values("2.5.4.6") is ["US"];
         }
         catch { return false; }
     }
@@ -328,6 +349,14 @@ public static class Adb
     {
         if (_used == null) return;
         try { Run(_used, "kill-server", 3000).Wait(4000); } catch { }
+    }
+
+    /// <summary>Remove everything: the adb server of the app's own copy stops, also one left from an earlier start (it holds that folder).</summary>
+    public static void StopServer()
+    {
+        KillOwnServer();
+        var copy = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CS2IPChanger", "adb", "adb.exe");
+        if (File.Exists(copy)) { try { Run(copy, "kill-server", 3000).Wait(4000); } catch { } }
     }
 
     /// <summary>The phone says USB tethering (rndis) is on.</summary>

@@ -12,9 +12,8 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         var args = e.Args.Where(a => a != Program.Moved).ToArray();   // Program.Main's own marker, not an option
-        Paths.Ensure();
         // Before the single-instance lock: it's the way out when a stuck copy holds the lock and its window won't open.
-        if (args.Any(a => a.Equals("--restore", StringComparison.OrdinalIgnoreCase))) { RestoreAndExit(); return; }
+        if (args.Any(a => a.Equals("--restore", StringComparison.OrdinalIgnoreCase))) { Paths.Ensure(); RestoreAndExit(); return; }
         // One instance only: two would fight over the same Firewall rules (the demo touches nothing).
         var first = true;
         if (!args.Contains("--demo")) _single = new Mutex(true, InstanceName, out first);
@@ -26,12 +25,28 @@ public partial class App : Application
         }
         if (!first)
         {
-            MessageBox.Show("CS2 IP Changer is already running. Close it first.","CS2 IP Changer", MessageBoxButton.OK, MessageBoxImage.Information);
+            // The copy that runs (maybe only in the notification area) brings its window back; the message only if it can't.
+            // Not for an update or the sign-in task (--tray): those start a copy while one already runs, nobody asked for the window.
+            if (args.Contains(Autostart.TrayArg)) { Shutdown(); return; }
+            if (!args.Contains("--updated") && ShowRunning()) { Shutdown(); return; }
+            AlreadyRunningWindow().ShowAndWait();
             Shutdown();
             return;
         }
+        // The usage stats notice, before the app makes a folder, a rule or a route: Quit (or Escape) leaves the PC as it was.
+        // The notice would become the app's MainWindow and closing it would end the app, so the main window decides that again below.
+        var updated = args.Contains("--updated");
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        if (!StatsGate(args, () => StatsNoticeWindow(updated).ShowAndWait(), Paths.File("settings.json")))
+        {
+            if (updated) UndoAfterUpdateQuit();
+            Shutdown();
+            return;
+        }
+        ShutdownMode = ShutdownMode.OnMainWindowClose;
+        Paths.Ensure();
         // This copy holds the lock, so no other copy runs from the older unpacked folders (the demo touches nothing).
-        if (!args.Contains("--demo")) Task.Run(Program.CleanOldUnpacked);
+        if (!args.Contains("--demo")) Task.Run(() => { Program.CleanOldUnpacked(); Installer.CleanStage(); });
         DispatcherUnhandledException += OnUiError;
         AppDomain.CurrentDomain.UnhandledException += (_, a) => Crash.Write(a.ExceptionObject as Exception, "fatal");
         if (!args.Contains("--demo")) Crash.Started();
@@ -42,6 +57,29 @@ public partial class App : Application
         MainWindow = w;
         w.Show();
     }
+
+    /// <summary>Set by a second start: the running copy shows its window (MainWindow.ListenForShow).</summary>
+    public const string ShowEventName = @"Local\CS2IPChanger.Show";
+
+    static bool ShowRunning()
+    {
+        try
+        {
+            if (!EventWaitHandle.TryOpenExisting(ShowEventName, out var ev)) return false;
+            using (ev)
+            {
+                // Only the running copy may come to the front (not any process).
+                var me = System.Diagnostics.Process.GetCurrentProcess();
+                foreach (var p in System.Diagnostics.Process.GetProcessesByName(me.ProcessName))
+                    using (p) if (p.Id != me.Id) AllowSetForegroundWindow(p.Id);
+                return ev.Set();
+            }
+        }
+        catch { return false; }
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    static extern bool AllowSetForegroundWindow(int processId);
 
     static bool _released;
 
@@ -81,15 +119,102 @@ public partial class App : Application
             left = new Guard().RestoreAll(servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: false).GetAwaiter().GetResult();
         }
         catch (Exception ex) { left = ex.Message; }
+        // Start with Windows goes too: --restore is the way out, the task would start the app (and its rules) again at sign-in.
+        // Off the UI thread: Proc.Run's awaits would come back to this thread, which is blocked waiting here.
+        try { if (Task.Run(Autostart.TurnOff).GetAwaiter().GetResult() is string task) left = left == null ? task : left + "; " + task; }
+        catch (Exception ex) { left = (left == null ? "" : left + "; ") + ex.Message; }
         var running = false;
         try { if (Mutex.TryOpenExisting(InstanceName, out var other)) { running = true; other.Dispose(); } } catch (UnauthorizedAccessException) { running = true; }
-        MessageBox.Show((left == null
-                ? "Network restored: the Firewall rules and routes from CS2 IP Changer are gone."
-                : "Couldn't remove: " + left + ".\nRestart the PC to clear routes. Rules can be removed in Windows Firewall > Outbound Rules (names start with ServerRouteTool v9).")
-                + (running ? "\n\nAnother copy of the app is still running: close it, or it puts the rules back." : ""),
-            "CS2 IP Changer", MessageBoxButton.OK, left == null && !running ? MessageBoxImage.Information : MessageBoxImage.Warning);
+        RestoredWindow(left, running).ShowAndWait();
         Shutdown();
     }
+
+    /// <summary>Accept at the notice in this start: the main window saves it with the rest of the settings.</summary>
+    public static bool StatsJustAccepted { get; private set; }
+
+    /// <summary>
+    /// True when the app can go on: the usage stats notice was accepted before (settings.json, read only) or is now.
+    /// Quit or Escape returns false before anything is made, changed or sent. The demo and the recording build send nothing,
+    /// so they don't ask.
+    /// </summary>
+    public static bool StatsGate(string[] args, Func<bool> ask, string settingsFile)
+    {
+        if (args.Contains("--demo") || Rec.On || StatsAcceptedIn(settingsFile)) return true;
+        if (!ask()) return false;
+        StatsJustAccepted = true;
+        return true;
+    }
+
+    /// <summary>
+    /// "StatsAccepted": true in settings.json, read the way Store.Load reads it (a file locked for a moment is tried again for
+    /// about 2 s, a damaged one falls back to .prev) but only read: nothing is written, not even the .broken copy.
+    /// A missing or unreadable file is "not yet".
+    /// </summary>
+    public static bool StatsAcceptedIn(string settingsFile)
+    {
+        if (!System.IO.File.Exists(settingsFile)) return false;
+        string raw = null;
+        for (var i = 0; raw == null; i++)
+        {
+            try { raw = System.IO.File.ReadAllText(settingsFile); }
+            catch (System.IO.IOException) when (i < 20) { Thread.Sleep(100); }
+            catch { return false; }
+        }
+        if (Accepted(raw) is bool b) return b;
+        try { return System.IO.File.Exists(settingsFile + ".prev") && Accepted(System.IO.File.ReadAllText(settingsFile + ".prev")) == true; }
+        catch { return false; }
+
+        // null: not JSON (damaged)
+        static bool? Accepted(string json)
+        {
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(json.TrimStart('﻿'));
+                return doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object
+                    && doc.RootElement.TryGetProperty(nameof(Settings.StatsAccepted), out var v) && v.ValueKind == System.Text.Json.JsonValueKind.True;
+            }
+            catch { return null; }
+        }
+    }
+
+    internal static NoticeWindow StatsNoticeWindow(bool updated = false) =>
+        new(Telemetry.NoticeTitle, Telemetry.NoticeText + (updated ? "\n\n" + Telemetry.NoticeAfterUpdate : ""), "Accept", "Quit");
+
+    /// <summary>
+    /// Quit at the notice right after an update: the version before left its protection on for this copy to take over. With no
+    /// app left to turn it off, it's undone like Turn off protection (the Regions rule stays, as it does there).
+    /// Not while CS2 runs: it would carry on with your home IP.
+    /// </summary>
+    static void UndoAfterUpdateQuit()
+    {
+        if (Steam.Cs2Running) return;
+        try
+        {
+            Paths.Ensure();
+            var servers = Store.Load<List<ServerItem>>(Paths.File("servers.json"), () => new());
+            var left = new Guard().RestoreAll(servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: true).GetAwaiter().GetResult();
+            Log.Info("Usage stats notice: Quit after an update. " + (left == null ? "The protection the version before left on was turned off." : "Couldn't remove: " + left));
+        }
+        catch (Exception ex) { Log.Warn("Quit after an update: couldn't turn off the protection the version before left on: " + ex.Message); }
+    }
+
+    // The app's own windows for these two messages (NoticeWindow), not Windows' message box. The demo screenshots use them too.
+    internal static NoticeWindow AlreadyRunningWindow() =>
+        new("CS2 IP Changer is already running", "Close the copy that is open first (look in the taskbar), then start the app again.", "Close");
+
+    internal static NoticeWindow RestoredWindow(string left, bool running)
+    {
+        var (title, text) = RestoredText(left, running);
+        return new(title, text, "Close", problem: left != null || running);
+    }
+
+    /// <summary>--restore's result: what is left (null = all clean) and whether another copy still runs.</summary>
+    public static (string Title, string Text) RestoredText(string left, bool running) =>
+        (left == null && !running ? "Network restored" : "Network not fully restored",
+            (left == null
+                ? "The Firewall rules and routes from CS2 IP Changer are gone."
+                : "Couldn't remove: " + left + ".\n\nRestart the PC to clear routes. Rules can be removed in Windows Firewall > Outbound Rules (names start with ServerRouteTool v9).")
+            + (running ? "\n\nAnother copy of the app is still running: close it, or it puts the rules back." : ""));
 
     static void OnUiError(object sender, DispatcherUnhandledExceptionEventArgs e)
     {

@@ -242,7 +242,7 @@ foreach (var l in new[] {
     "[SM] Banned player \"Bob\" (minutes: 30)",
     "Connected to 203.0.113.10:27015",
     "" })
-    Check("Não é kick: " + (l == "" ? "(vazia)" : l), Cs2Console.Classify(l) == KickKind.None, Cs2Console.Classify(l).ToString());
+    Check("Não é kick: " + (l == "" ? "(vazia)" : l), !Cs2Console.Acts(Cs2Console.Classify(l)), Cs2Console.Classify(l).ToString());
 Check("Saída normal fica como amostra", Cs2Console.IsDisconnect("Disconnect: NETWORK_DISCONNECT_DISCONNECT_BY_USER"));
 Check("Chat não fica como amostra", !Cs2Console.IsDisconnect("[ALL] Bob: disconnect lol"));
 Check("Caminho do console.log", Cs2Console.LogPath(@"D:\SteamLibrary\steamapps\common\Counter-Strike Global Offensive\game\bin\win64\cs2.exe")
@@ -293,7 +293,10 @@ Check(".sha256 normal", Updater.ParseSha256(H + "  CS2IPChanger.exe\n") == H);
 Check(".sha256 em maiúsculas e com *", Updater.ParseSha256(H.ToUpperInvariant() + " *CS2IPChanger.exe\r\n") == H);
 Check(".sha256 só com o hash", Updater.ParseSha256(H) == H);
 Check(".sha256 de outro ficheiro", Updater.ParseSha256(H + "  outro.exe") == null);
-Check(".sha256 com várias linhas", Updater.ParseSha256(new string('a', 64) + "  outro.zip\n" + H + "  CS2IPChanger.exe\n") == H);
+// Segunda linha com outro hash: o release-key.mjs verificava a 1.ª e a app usava a do exe (achado H1 da beta.8)
+Check(".sha256 com várias linhas é recusado", Updater.ParseSha256(new string('a', 64) + "  outro.zip\n" + H + "  CS2IPChanger.exe\n") == null);
+Check(".sha256 com o exe duas vezes é recusado", Updater.ParseSha256(H + "  CS2IPChanger.exe\n" + new string('b', 64) + "  CS2IPChanger.exe\n") == null);
+Check(".sha256 com BOM e linhas em branco", Updater.ParseSha256("﻿\n" + H + "  CS2IPChanger.exe\r\n\r\n") == H);
 Check(".sha256 curto ou lixo", Updater.ParseSha256(H[..63] + "  CS2IPChanger.exe") == null && Updater.ParseSha256("") == null && Updater.ParseSha256(null) == null);
 
 var relJson = """
@@ -319,9 +322,9 @@ Check("Real: ban KICKBANADDED (Netchan)", Cs2Console.Classify("10/27 22:49:25 [N
 Check("Real: ban KICKBANADDED (fase de ligação)", Cs2Console.Classify("10/27 22:49:25 [Client] Disconnection during connection phase. Sign-on state: 5 (SIGNONSTATE_SPAWN). Disconnect reason: NETWORK_DISCONNECT_KICKBANADDED.") == KickKind.Ban);
 // beta.3: o timeout deixou de ser "nada": é "sem resposta" (oferece novo IP), nunca kick nem ban
 Check("Real: timeout é sem resposta, não kick", Cs2Console.Classify("10/27 22:22:28 [Client] Disconnected from server: NETWORK_DISCONNECT_TIMEDOUT") == KickKind.NoAnswer);
-Check("Real: sair à mão não é kick", Cs2Console.Classify("10/27 22:46:58 [Client] Disconnected from server: NETWORK_DISCONNECT_DISCONNECT_BY_USER") == KickKind.None);
-Check("Real: mapa local a fechar não é kick", Cs2Console.Classify("10/27 22:18:20 [Server] Disconnect client 'Acc1' from server: NETWORK_DISCONNECT_SHUTDOWN (Server shutdown)") == KickKind.None && Cs2Console.Classify("10/27 22:18:20 [Client] Disconnecting from server: NETWORK_DISCONNECT_LOOPDEACTIVATE") == KickKind.None);
-Check("Real: HOSTSTATE_IDLE não é kick", Cs2Console.Classify("10/27 22:46:27 [Client] Disconnecting from server: NETWORK_DISCONNECT_REQUEST_HOSTSTATE_IDLE") == KickKind.None);
+Check("Real: sair à mão não é kick", Cs2Console.Classify("10/27 22:46:58 [Client] Disconnected from server: NETWORK_DISCONNECT_DISCONNECT_BY_USER") == KickKind.Quit);
+Check("Real: mapa local a fechar não é kick", Cs2Console.Classify("10/27 22:18:20 [Server] Disconnect client 'Acc1' from server: NETWORK_DISCONNECT_SHUTDOWN (Server shutdown)") == KickKind.Quit && Cs2Console.Classify("10/27 22:18:20 [Client] Disconnecting from server: NETWORK_DISCONNECT_LOOPDEACTIVATE") == KickKind.MapChange);
+Check("Real: HOSTSTATE_IDLE não é kick", Cs2Console.Classify("10/27 22:46:27 [Client] Disconnecting from server: NETWORK_DISCONNECT_REQUEST_HOSTSTATE_IDLE") == KickKind.Quit);
 Check("Real: servidor lido do Connected to", Cs2Console.ConnectedServer("10/27 22:49:23 [Client] CL:  Connected to '203.0.113.44:60004'") == "203.0.113.44:60004" && Cs2Console.ConnectedServer("[Client] CL:  Connected to 'loopback:1'") == null);
 
 // alpha.4: marcas de jogadores (o A2S só dá nomes)
@@ -516,8 +519,8 @@ if (args.Contains("--sons")) foreach (var k in Enum.GetValues<Tones.Kind>()) { T
 Check("Timeout: TIMEDOUT é sem resposta", Cs2Console.Classify("10/28 17:02:11 [Client] Disconnected from server: NETWORK_DISCONNECT_TIMEDOUT") == KickKind.NoAnswer);
 Check("Timeout: pedido de ligação sem resposta", Cs2Console.Classify("Disconnect reason: NETWORK_DISCONNECT_CONNECT_REQUEST_TIMEDOUT") == KickKind.NoAnswer);
 Check("Timeout: 'Connection failed after 4 retries'", Cs2Console.Classify("Connection failed after 4 retries.") == KickKind.NoAnswer);
-Check("Sair pelo menu não é nada", Cs2Console.Classify("[Client] Disconnected from server: NETWORK_DISCONNECT_DISCONNECT_BY_USER") == KickKind.None);
-Check("Mudança de mapa não é nada", Cs2Console.Classify("[Client] Disconnecting from server: NETWORK_DISCONNECT_LOOPDEACTIVATE") == KickKind.None);
+Check("Sair pelo menu não é nada", Cs2Console.Classify("[Client] Disconnected from server: NETWORK_DISCONNECT_DISCONNECT_BY_USER") == KickKind.Quit);
+Check("Mudança de mapa não é nada", Cs2Console.Classify("[Client] Disconnecting from server: NETWORK_DISCONNECT_LOOPDEACTIVATE") == KickKind.MapChange);
 Check("Sign-on lido da linha real", Cs2Console.SignOnState("10/28 14:56:43 [Client] Disconnection during connection phase. Sign-on state: 6 (SIGNONSTATE_FULL). Disconnect reason: NETWORK_DISCONNECT_KICKBANADDED.") == 6
     && Cs2Console.SignOnState("[Client] Disconnected from server: NETWORK_DISCONNECT_KICKED") == null);
 Check("O mais forte: ban ganha a kick", Cs2Console.Stronger(KickKind.Kick, KickKind.Ban) == KickKind.Ban && Cs2Console.Stronger(KickKind.Ban, KickKind.Kick) == KickKind.Ban);
@@ -592,6 +595,11 @@ SecurityTests.Run(Check);
 // Phone setup e modo sem telemóvel (PhoneTests.cs), e o "<continente> only" das Regiões
 PhoneTests.Run(Check);
 RegionTests.Continent(Check);
+// Auditoria do que a beta.8 não cobriu e "viver em segundo plano" (AuditTests.cs)
+AuditTests.Run(Check);
+BackgroundTests.Run(Check);
+// beta.8 parte 4: kicks e bans por tipo, só em comunitários; estatísticas ao fechar (Part4Tests.cs)
+Part4Tests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

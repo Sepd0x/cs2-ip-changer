@@ -1,3 +1,4 @@
+using System.Windows;
 using SRT.Core;
 
 namespace SRT;
@@ -6,7 +7,34 @@ namespace SRT;
 public partial class MainWindow
 {
     /// <summary>Hide logins from Accounts, or the recording build (always on there, the switch is locked).</summary>
-    bool HideLogins => Rec.On || _s?.StreamerMode == true;
+    bool HideLogins => Rec.On || _s?.StreamerMode == true || (_s?.AutoStreamer == true && _streamAppOpen);
+
+    bool _streamAppOpen;
+
+    /// <summary>Every tick: OBS or Streamlabs opened or closed changes Hide usernames (Settings > Steam).</summary>
+    void WatchStreaming()
+    {
+        var open = _s.AutoStreamer && Streaming.AppOpenNow();
+        if (open == _streamAppOpen) return;
+        _streamAppOpen = open;
+        ApplyHideLogins();
+        if (!_s.StreamerMode) Log.Info(open ? "A streaming program is open: usernames, your home IP and the API key are hidden." : "The streaming program closed: usernames show again.");
+    }
+
+    void ApplyHideLogins()
+    {
+        foreach (var a in _accounts) a.Streamer = HideLogins;
+        ShowApiKey(false);
+        RemaskLog();
+    }
+
+    void AutoStreamer_Click(object sender, RoutedEventArgs e)
+    {
+        if (_uiLock) return;
+        _s.AutoStreamer = AutoStreamerBox.IsChecked == true;
+        SaveSettings();
+        WatchStreaming();
+    }
 
     /// <summary>
     /// Valve's regions and the country list are public: the home country or city stays readable there (see Rec.Public).

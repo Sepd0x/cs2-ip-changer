@@ -38,8 +38,15 @@ public static class Paths
     public static readonly string Avatars = Path.Combine(Data, "avatars");
     public static string File(string name) => Path.Combine(Data, name);
 
+    /// <summary>
+    /// Nothing is written to SRT_Dados (Program.Main: as admin next to an exe that others can change, like --restore from Downloads,
+    /// and in the Install copy). The log stays in memory and every write through <see cref="NoLink"/> fails.
+    /// </summary>
+    public static bool ReadOnly { get; set; }
+
     public static void Ensure()
     {
+        if (ReadOnly) return;
         Directory.CreateDirectory(Data);
         Directory.CreateDirectory(Avatars);
     }
@@ -51,6 +58,7 @@ public static class Paths
     /// </summary>
     public static string NoLink(string path, string top = null)
     {
+        if (ReadOnly) throw new IOException("This copy of the app writes nothing in its folder.");
         var full = Path.GetFullPath(path);
         var root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(top ?? AppDir));
         for (var d = Path.GetDirectoryName(full); d != null && d.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase); d = Path.GetDirectoryName(d))
@@ -245,6 +253,26 @@ public static class Log
     public static void Warn(string t) => Write(LogLevel.Warn, t);
     public static void Error(string t) => Write(LogLevel.Error, t);
 
+    /// <summary>
+    /// A notification in the app goes to the log too, unless the code that showed it has just written its own line (on the same thread,
+    /// in the last second, usually with more detail) or the same text went in the last few seconds. A line from another thread
+    /// (the sync, the Steam watcher) doesn't count.
+    /// </summary>
+    public static void Notice(LogLevel level, string t)
+    {
+        var now = DateTime.Now;
+        if (now - _wroteHere is var mine && mine >= TimeSpan.Zero && mine < TimeSpan.FromSeconds(1)) return;
+        lock (Lock)
+        {
+            var since = now - _lastAt;
+            if (t == _lastText && since >= TimeSpan.Zero && since < TimeSpan.FromSeconds(5)) return;
+        }
+        Write(level, t);
+    }
+
+    /// <summary>When this thread last wrote a line (a repeat counted instead of written counts too: the line is in the log).</summary>
+    [ThreadStatic] static DateTime _wroteHere;
+
     // The same line again within a minute (an error on every 5 s tick) is counted, not written again: one line says how many.
     static string _lastText;
     static LogLevel _lastLevel;
@@ -258,6 +286,8 @@ public static class Log
     {
         var e = new LogEntry { Time = DateTime.Now, Level = level, Text = text };
         LogEntry repeated = null;
+        _wroteHere = e.Time;
+        if (Paths.ReadOnly) { Added?.Invoke(e); return; }   // nothing goes to the log file then
         lock (Lock)
         {
             if (text == _lastText && level == _lastLevel && e.Time - _lastAt < TimeSpan.FromMinutes(1) && e.Time >= _lastAt)
@@ -374,6 +404,28 @@ public static class Proc
     }
 }
 
+/// <summary>A streaming program is open: Hide usernames turns on by itself (Settings > Steam), so a login never reaches a stream.</summary>
+public static class Streaming
+{
+    // OBS Studio (64 and 32 bit) and Streamlabs Desktop. XSplit's process names aren't confirmed yet, so it isn't listed.
+    static readonly string[] Names = { "obs64", "obs32", "obs", "Streamlabs OBS", "Streamlabs Desktop" };
+
+    public static bool AppOpen(IEnumerable<string> processNames) =>
+        processNames?.Any(p => Names.Contains(p?.Trim(), StringComparer.OrdinalIgnoreCase)) == true;
+
+    /// <summary>Checks the running processes by name only (no handle to any of them).</summary>
+    public static bool AppOpenNow()
+    {
+        try
+        {
+            var ps = Process.GetProcesses();
+            try { return AppOpen(ps.Select(p => p.ProcessName)); }
+            finally { foreach (var p in ps) p.Dispose(); }
+        }
+        catch { return false; }
+    }
+}
+
 public static class Fmt
 {
     /// <summary>"27 Oct 21:05": the same on every Windows language, never month/day mix-ups.</summary>
@@ -425,5 +477,29 @@ public static class Fmt
         if (!any && double.TryParse((text ?? "").Trim().Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var hours)
             && hours > 0 && hours <= 3650 * 24) { total = TimeSpan.FromHours(hours); any = true; }
         return any && total.TotalMinutes >= 1 && total.TotalDays <= 3650 ? total : null;
+    }
+}
+
+/// <summary>
+/// Small secrets in the JSON files (the Steam Web API key): encrypted with DPAPI for this Windows user, as base64. Another Windows
+/// user or another PC can't read them back; then <see cref="Open"/> gives null.
+/// </summary>
+public static class Secret
+{
+    static byte[] Entropy(string purpose) => System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes("CS2IPChanger/Secret/v1/" + purpose));
+
+    public static string Seal(string plain, string purpose)
+    {
+        if (string.IsNullOrEmpty(plain)) return null;
+        var bytes = Encoding.UTF8.GetBytes(plain);
+        try { return Convert.ToBase64String(System.Security.Cryptography.ProtectedData.Protect(bytes, Entropy(purpose), System.Security.Cryptography.DataProtectionScope.CurrentUser)); }
+        finally { System.Security.Cryptography.CryptographicOperations.ZeroMemory(bytes); }
+    }
+
+    public static string Open(string sealedText, string purpose)
+    {
+        if (string.IsNullOrEmpty(sealedText)) return null;
+        try { return Encoding.UTF8.GetString(System.Security.Cryptography.ProtectedData.Unprotect(Convert.FromBase64String(sealedText), Entropy(purpose), System.Security.Cryptography.DataProtectionScope.CurrentUser)); }
+        catch { return null; }   // another Windows user's, another PC's, damaged or not base64
     }
 }
