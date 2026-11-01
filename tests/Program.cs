@@ -186,7 +186,11 @@ Store.Save(owned, new Guard.OwnedState { Routes = new() { "203.0.113.9/32|99|10.
 var g = new Guard();
 var gRoutes = (HashSet<string>)typeof(Guard).GetField("_ownedRoutes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(g);
 var gMetric = (int)typeof(Guard).GetField("_metricAppliedTo", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(g);
-Check("Rotas da app lidas do disco", gRoutes.Contains("203.0.113.9/32|99|10.0.0.1") && gMetric == 42);
+// Como admin (o runner do GitHub) a pasta dos testes é do utilizador, e o owned.json de lá não conta (G2, 31 out.)
+var ownedIgnored = new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent()).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator)
+    && Adb.UsersCanWrite(Paths.Data);
+if (ownedIgnored) Check("Rotas da app: owned.json de pasta do utilizador ignorado como admin", gRoutes.Count == 0 && gMetric == -1);
+else Check("Rotas da app lidas do disco", gRoutes.Contains("203.0.113.9/32|99|10.0.0.1") && gMetric == 42);
 Store.Save(owned, new Guard.OwnedState { Routes = new() { "203.0.113.9/32|99|10.0.0.1" }, MetricIf = 42, Boot = DateTime.Now.AddDays(-1) });
 var g2 = (HashSet<string>)typeof(Guard).GetField("_ownedRoutes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(new Guard());
 Check("Rotas de antes de reiniciar o PC ignoradas", g2.Count == 0);
