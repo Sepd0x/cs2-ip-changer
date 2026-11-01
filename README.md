@@ -99,7 +99,7 @@ To check only the hash, put the `.sha256` file next to the exe and run this in P
 ```
 </details>
 
-Each release is also scanned on VirusTotal. beta.6: [2 of 70 engines](https://www.virustotal.com/gui/file/8f8f4197b589dd80d6826a703af863c1684949f610e6acf7805102c3860314a2/detection) flag it, with generic "risk" labels.
+Each release is also scanned on VirusTotal. beta.7: [0 of 70 engines](https://www.virustotal.com/gui/file/4ce3332f0aab6a605221e90a0246fb31615f94c91429398889e7ec5997d347e8/detection) flag it.
 
 <details>
 <summary><b>Which engines, and why some flag it</b></summary>

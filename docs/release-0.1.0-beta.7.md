@@ -34,4 +34,6 @@ If your copy runs from Downloads, the Desktop or another folder like them, the u
 ### Check the download
 `CS2IPChanger.exe.sha256` has the exe's SHA-256 and `CS2IPChanger.exe.sha256.sig` its signature. The build attestation proves it came from this repo's workflow: `gh attestation verify CS2IPChanger.exe -R Sepd0x/cs2-ip-changer`.
 
+VirusTotal: [0 of 70 engines](https://www.virustotal.com/gui/file/4ce3332f0aab6a605221e90a0246fb31615f94c91429398889e7ec5997d347e8/detection) flag it.
+
 Full list in `CHANGELOG.md`.
