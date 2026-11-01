@@ -8,7 +8,7 @@
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/">
 <link rel="icon" href="../img/icon.png">
-<meta name="theme-color" content="#0e0e0f">
+<meta name="theme-color" content="#0e0e0e">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="CS2 IP Changer">
 <meta property="og:title" content="Is CS2 IP Changer safe? What it changes and how to check it">
@@ -16,6 +16,8 @@
 <meta property="og:url" content="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/">
 <meta property="og:image" content="https://sepd0x.github.io/cs2-ip-changer/img/connection.png">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="preload" href="../fonts/funnel-sans.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
 <script type="application/ld+json">
 {
  "@context": "https://schema.org",
@@ -33,7 +35,7 @@
    "about": {
     "@id": "https://sepd0x.github.io/cs2-ip-changer/#app"
    },
-   "dateModified": "2026-10-31",
+   "dateModified": "2026-11-01",
    "primaryImageOfPage": "https://sepd0x.github.io/cs2-ip-changer/img/connection.png"
   },
   {
@@ -86,205 +88,216 @@
 }
 </script>
 <style>
-:root{--bg:#0e0e0f;--panel:#151517;--panel2:#1c1c1f;--line:#26262a;--line2:#34343a;--ink:#f0f1f3;--mu:#a1a3a9;--fa:#8a8c93;--ac:#5ba8f0;--ac2:#2b74c2;--tint:rgba(91,168,240,.07)}
+@font-face{font-family:"Funnel Sans";src:url(../fonts/funnel-sans.woff2) format("woff2");font-weight:300 800;font-style:normal;font-display:swap}
+@font-face{font-family:"Funnel Display";src:url(../fonts/funnel-display.woff2) format("woff2");font-weight:300 800;font-style:normal;font-display:swap}
+@font-face{font-family:"Fragment Mono";src:url(../fonts/fragment-mono.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
+:root{--bg:#0e0e0e;--bg2:#171717;--bg3:#1d1d1d;--line:#2a2a2a;--line2:#383838;--ink:#e4e4e4;--ink2:#adadad;--ink3:#888888;--sand:#2b74c2;--sand-hi:#3a84d4;--on-sand:#ffffff;--plate:#121212;--area:rgba(91,168,240,.05);--area-line:rgba(91,168,240,.16);--glow:rgba(91,168,240,.10);--route:#5ba8f0;--accent:#5ba8f0;--route-soft:rgba(91,168,240,.22);--shadow:rgba(0,0,0,.55);
+  --sans:"Funnel Sans","Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --disp:"Funnel Display","Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:"Fragment Mono","Cascadia Mono",Consolas,ui-monospace,"SFMono-Regular",Menlo,monospace}
 *{box-sizing:border-box}
-html{color-scheme:dark;scroll-behavior:smooth;font-size:16px}
+html{color-scheme:dark;scroll-behavior:smooth;font-size:16px;-webkit-text-size-adjust:100%}
 @media (min-width:1800px){html{font-size:18px}}
 @media (min-width:2200px){.wrap{max-width:82rem}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-body{margin:0;background:var(--bg);color:var(--ink);font:1rem/1.6 "Segoe UI Variable Text","Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
-a{color:var(--ac);text-decoration:none}
-a:hover{text-decoration:underline}
-a:focus-visible,summary:focus-visible{outline:2px solid var(--ac);outline-offset:3px;border-radius:4px}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.6 var(--sans);-webkit-font-smoothing:antialiased}
+main{overflow-x:clip}
+a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--line2);text-decoration-thickness:1px;text-underline-offset:.22em}
+a:hover{text-decoration-color:var(--sand)}
+:focus-visible{outline:2px solid var(--sand);outline-offset:3px;border-radius:2px}
 img{max-width:100%;height:auto;display:block}
 picture{display:block}
-code,kbd{font-family:"Cascadia Mono",Consolas,"SFMono-Regular",Menlo,monospace;font-size:.88em}
-kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;background:var(--panel)}
+code,kbd{font-family:var(--mono);font-size:.86em}
+code{color:var(--ink)}
+kbd{border:1px solid var(--line2);border-bottom-width:2px;border-radius:3px;padding:0 .35em;background:var(--bg3);color:var(--ink);font-size:.8em}
 h1,h2,h3{text-wrap:balance}
-.skip{position:absolute;left:-999px;top:8px;background:var(--ac2);color:#fff;padding:8px 14px;border-radius:6px;z-index:10}
+.skip{position:absolute;left:-999px;top:8px;background:var(--sand);color:var(--on-sand);padding:8px 14px;border-radius:5px;z-index:10}
 .skip:focus{left:12px}
 .wrap{max-width:72.5rem;margin:0 auto;padding:0 1.25rem}
-.top{position:relative;border-bottom:1px solid var(--line)}
-.top::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,#4aa3ef,#9b7bea,#d65fc0,#e3a86a,#cfd84a)}
-.top .wrap{display:flex;align-items:center;justify-content:space-between;height:4rem}
-.brand{display:flex;align-items:center;gap:10px;color:var(--ink);font-weight:600}
-.brand:hover{text-decoration:none}
-.brand img{width:28px;height:28px;border-radius:7px}
-.top nav{display:flex;gap:1.4rem;font-size:.94rem}
-.top nav a{color:var(--mu)}
-.top nav a:hover{color:var(--ink);text-decoration:none}
-.eyebrow{color:var(--ac);font-weight:600;font-size:.92rem;letter-spacing:.01em;margin:0 0 .8rem}
-.lead{color:var(--mu);font-size:1.1rem;margin:0 0 1.6rem;max-width:62ch}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--ac2);color:#fff;font-weight:600;padding:12px 24px;border-radius:8px;font-size:1rem}
-.btn:hover{background:#3584d6;text-decoration:none}
+.top{border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:1rem;height:4rem}
+.brand{display:flex;align-items:center;gap:10px;color:var(--ink);font:600 1rem/1 var(--disp);letter-spacing:-.01em;text-decoration:none;white-space:nowrap}
+.brand img{width:28px;height:28px;border-radius:6px}
+.top nav{display:flex;align-items:center;gap:1.4rem;font-size:.94rem}
+.top nav a:not(.btn){color:var(--ink2);text-decoration:none}
+.top nav a:not(.btn):hover{color:var(--ink)}
+.eyebrow{font:400 .75rem/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:0 0 1rem}
+.lead{color:var(--ink2);font-size:1.1rem;line-height:1.55;margin:0 0 1.75rem;max-width:62ch}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--sand);color:var(--on-sand);font:600 1rem/1.2 var(--sans);padding:.9rem 1.35rem;border:0;border-radius:6px;text-decoration:none;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 1px 0 rgba(0,0,0,.4),0 10px 30px -12px var(--glow);transition:background-color .15s}
+.btn:hover{background:var(--sand-hi)}
+.btn:active{transform:translateY(1px)}
 .btn svg{width:18px;height:18px;flex:none}
-.btn2{display:inline-flex;align-items:center;justify-content:center;padding:12px 20px;border-radius:8px;border:1px solid var(--line2);color:var(--ink);font-weight:600;font-size:1rem}
-.btn2:hover{border-color:#4a4a52;text-decoration:none}
-.actions{display:flex;flex-wrap:wrap;gap:.75rem}
-.req,.safe{color:var(--fa);font-size:.88rem;line-height:1.5;margin:.9rem 0 0}
-.safe{margin-top:.3rem}
-.safe a{color:var(--mu);text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:3px}
+.btn-s{padding:.55rem .85rem;font-size:.9rem;border-radius:5px}
+.link{color:var(--ink2);font-weight:500}
+.link:hover{color:var(--ink)}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:1rem 1.6rem}
+.checks{list-style:none;margin:1.5rem 0 0;padding:0;display:flex;flex-wrap:wrap;gap:.4rem 1.15rem;font-size:.9rem;line-height:1.5;color:var(--ink2)}
+.checks li{display:inline-flex;align-items:center;gap:.5rem}
+.checks li::before{content:"";width:.4rem;height:.4rem;background:var(--sand);flex:none}
+.checks a{color:var(--ink2)}
+.checks a:hover{color:var(--ink)}
+.req,.safe{color:var(--ink3);font-size:.88rem;line-height:1.5;margin:.8rem 0 0}
+.req{font:400 .78rem/1.65 var(--mono);margin-top:.45rem}
+.safe a{color:var(--ink2)}
 .safe a:hover{color:var(--ink)}
-.shot{border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.45);background:var(--panel)}
-section{padding:4.5rem 0}
-section.alt{background:var(--panel);border-block:1px solid var(--line)}
-h2{font-size:clamp(1.45rem,2.6vw,1.9rem);line-height:1.2;letter-spacing:-.012em;margin:0 0 .6rem}
-h3{font-size:1.02rem;line-height:1.35;margin:0 0 .35rem}
-.sub{color:var(--mu);max-width:62ch;margin:0 0 2rem}
-.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.shot{border-radius:10px;overflow:hidden;background:var(--bg2);box-shadow:0 0 0 1px var(--line2),0 30px 70px -30px var(--shadow)}
+section{padding:4.5rem 0;border-top:1px solid var(--line)}
+h2{font:500 clamp(1.65rem,2.9vw,2.3rem)/1.1 var(--disp);letter-spacing:-.025em;margin:0 0 .7rem}
+h3{font:500 1.06rem/1.35 var(--disp);letter-spacing:-.01em;margin:0 0 .35rem}
+.sub{color:var(--ink2);max-width:62ch;margin:0 0 2.25rem}
+.tbl{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:.95rem}
-th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}
-tr:last-child>*{border-bottom:0}
-thead th,thead td{background:var(--panel2);font-weight:600}
-tbody th{font-weight:600;color:var(--ink)}
-td{color:var(--mu)}
-.us{background:var(--tint);color:var(--ink)}
+th,td{text-align:left;padding:1rem 1.25rem 1rem 0;border-bottom:1px solid var(--line);vertical-align:top}
+thead th,thead td{font:400 .72rem/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);padding-bottom:.85rem}
+tbody th{font-weight:500;color:var(--ink)}
+td{color:var(--ink2)}
+.us{padding-left:1.25rem;background:linear-gradient(90deg,rgba(91,168,240,.075),transparent 90%)}
+td.us{color:var(--ink)}
+thead .us{color:var(--accent);box-shadow:inset 0 2px 0 var(--sand)}
 #vpn table{table-layout:fixed}#vpn thead td{width:24%}
-thead .us{color:var(--ac)}
-details{border:1px solid var(--line);border-radius:10px;background:var(--panel);margin-bottom:10px}
-summary{cursor:pointer;padding:15px 48px 15px 20px;font-weight:600;list-style:none;position:relative}
+details{border-top:1px solid var(--line)}
+details:last-of-type{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;list-style:none;padding:1rem 2.5rem 1rem 0;position:relative;font:500 1.06rem/1.4 var(--disp);letter-spacing:-.005em}
 summary::-webkit-details-marker{display:none}
-summary::after{content:"+";position:absolute;right:20px;top:12px;color:var(--fa);font-size:1.3rem;font-weight:400}
-details[open] summary::after{content:"\2212"}
-details p{margin:0;padding:0 20px 18px;color:var(--mu)}
-footer{border-top:1px solid var(--line);padding:28px 0 40px;color:var(--fa);font-size:.88rem}
+summary::before,summary::after{content:"";position:absolute;right:.4rem;top:50%;width:12px;height:1.5px;background:var(--ink3);transition:transform .25s}
+summary::before{transform:rotate(90deg)}
+details[open] summary::before{transform:rotate(0)}
+summary:hover{color:var(--accent)}
+details p{margin:0;padding:0 0 1.25rem;color:var(--ink2);max-width:66ch}
+footer{border-top:1px solid var(--line);padding:2rem 0 2.5rem;color:var(--ink3);font-size:.86rem}
 footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between}
-footer a{color:var(--mu)}
-/* home */
-.hero{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:3rem;align-items:center;padding:3rem 1.25rem 4rem}
-.hero h1{font-size:clamp(2rem,4.2vw,2.8rem);line-height:1.1;letter-spacing:-.022em;margin:0 0 1rem}
-.who{padding:2.25rem 0;border-top:1px solid var(--line)}
-.who .wrap{display:grid;grid-template-columns:11rem minmax(0,1fr);gap:1.5rem 2rem;align-items:baseline}
-.who h2{font-size:1rem;color:var(--fa);margin:0}
-.who ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.8rem 2rem;color:var(--mu);font-size:.95rem}
-.who li b{display:block;color:var(--ink);font-weight:600}
-.viewer{position:relative;display:grid;grid-template-columns:minmax(0,17rem) minmax(0,1fr);gap:2.5rem;align-items:start}
-.viewer>input{position:absolute;top:0;left:0;opacity:0;width:1px;height:1px;margin:0}
-.tabs{display:flex;flex-direction:column;gap:4px}
-.tabs label{display:block;padding:.7rem 1rem;border-radius:8px;border:1px solid transparent;cursor:pointer;color:var(--mu);line-height:1.5}
-.tabs label b{display:block;color:var(--mu);font-weight:600}
-.tabs label span{display:none;font-size:.92rem;margin-top:.25rem}
-.tabs label:hover b{color:var(--ink)}
-.views figure{display:none;margin:0}
-.views figcaption{margin-top:.8rem;font-size:.92rem;color:var(--fa)}
-.views figcaption .fd{display:none}
-#pg-connection:checked~.tabs [for=pg-connection],#pg-servers:checked~.tabs [for=pg-servers],#pg-accounts:checked~.tabs [for=pg-accounts],#pg-regions:checked~.tabs [for=pg-regions],#pg-configs:checked~.tabs [for=pg-configs],#pg-profiles:checked~.tabs [for=pg-profiles]{background:var(--panel);border-color:var(--line)}
-#pg-connection:checked~.tabs [for=pg-connection] b,#pg-servers:checked~.tabs [for=pg-servers] b,#pg-accounts:checked~.tabs [for=pg-accounts] b,#pg-regions:checked~.tabs [for=pg-regions] b,#pg-configs:checked~.tabs [for=pg-configs] b,#pg-profiles:checked~.tabs [for=pg-profiles] b{color:var(--ink)}
-#pg-connection:checked~.tabs [for=pg-connection] span,#pg-servers:checked~.tabs [for=pg-servers] span,#pg-accounts:checked~.tabs [for=pg-accounts] span,#pg-regions:checked~.tabs [for=pg-regions] span,#pg-configs:checked~.tabs [for=pg-configs] span,#pg-profiles:checked~.tabs [for=pg-profiles] span{display:block}
-#pg-connection:focus-visible~.tabs [for=pg-connection],#pg-servers:focus-visible~.tabs [for=pg-servers],#pg-accounts:focus-visible~.tabs [for=pg-accounts],#pg-regions:focus-visible~.tabs [for=pg-regions],#pg-configs:focus-visible~.tabs [for=pg-configs],#pg-profiles:focus-visible~.tabs [for=pg-profiles]{outline:2px solid var(--ac);outline-offset:2px}
-#pg-connection:checked~.views .f-connection,#pg-servers:checked~.views .f-servers,#pg-accounts:checked~.views .f-accounts,#pg-regions:checked~.views .f-regions,#pg-configs:checked~.views .f-configs,#pg-profiles:checked~.views .f-profiles{display:block}
-.also{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.75rem 2.5rem;margin-top:3.5rem;padding-top:2.5rem;border-top:1px solid var(--line)}
-.also p{margin:0;color:var(--mu);font-size:.95rem}
-.how-img{display:block;width:100%;max-width:56rem;margin:0 0 2rem}
-.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5rem 2.5rem;counter-reset:s;margin:0;padding:0;list-style:none}
-.steps li{color:var(--mu)}
-.steps li::before{counter-increment:s;content:counter(s);display:block;color:var(--ac);font-weight:700;margin-bottom:.2rem}
-.steps b{display:block;color:var(--ink)}
-.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:3rem 4rem;align-items:start}
-ol.setup{margin:0;padding-left:1.3em}
-ol.setup li{margin:0 0 .7rem;color:var(--mu)}
-ol.setup li b{color:var(--ink)}
-.note{margin:1.2rem 0 0;color:var(--mu);font-size:.95rem}
-dl.trust{margin:0}
-dl.trust dt{font-weight:600;margin-top:1rem}
-dl.trust dt:first-child{margin-top:0}
-dl.trust dd{margin:.15rem 0 0;color:var(--mu);font-size:.95rem}
-ul.guides{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1.25rem 2rem}
-ul.guides a{font-weight:600}
-ul.guides span{display:block;color:var(--fa);font-size:.9rem;line-height:1.45;margin-top:.15rem}
-.faq{max-width:52rem;margin-top:3.5rem}
-.faq .more{color:var(--mu);margin:1.2rem 0 0;font-size:.95rem}
-.cta .wrap{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1.5rem 3rem;align-items:center}
-.cta h2{margin-bottom:.4rem}
-.cta p.lead{margin:0;font-size:1rem}
+footer a{color:var(--ink2);text-decoration:none}
+footer a:hover{color:var(--ink)}
 @media (max-width:1000px){
-  .hero{grid-template-columns:1fr;gap:2rem;padding-top:2rem;padding-bottom:3rem}
+  .hero{grid-template-columns:1fr;gap:2.25rem;padding-top:2.25rem;padding-bottom:3rem}
+  .hero-copy{padding-top:0}
+  .hero-scene{max-width:44rem;padding-bottom:6rem}
   .who ul,ul.guides{grid-template-columns:repeat(2,minmax(0,1fr))}
   .who .wrap{grid-template-columns:1fr}
   .viewer{grid-template-columns:1fr;gap:1rem}
-  .tabs{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:4px;scrollbar-width:none}
+  .tabs{flex-direction:row;overflow-x:auto;gap:.4rem;border-top:0;padding-bottom:4px;scrollbar-width:none}
   .tabs::-webkit-scrollbar{display:none}
-  .tabs label{flex:none;padding:.4rem .9rem;border-color:var(--line);border-radius:999px}
+  .tabs label{flex:none;padding:.4rem .9rem;border:1px solid var(--line);border-radius:999px}
+  .tabs label::before{display:none}
+  .tabs label b{font-size:.95rem}
   .tabs label span{display:none!important}
-  .views figcaption .fd{display:inline}
+  #pg-connection:checked~.tabs [for=pg-connection],#pg-servers:checked~.tabs [for=pg-servers],#pg-accounts:checked~.tabs [for=pg-accounts],#pg-regions:checked~.tabs [for=pg-regions],#pg-configs:checked~.tabs [for=pg-configs],#pg-profiles:checked~.tabs [for=pg-profiles]{border-color:var(--sand);background:rgba(91,168,240,.1)}
+  .views figcaption .fd{display:inline;color:var(--ink2)}
   .also,.split{grid-template-columns:repeat(2,minmax(0,1fr))}
   .cta .wrap{grid-template-columns:1fr}
 }
 @media (max-width:760px){
+  .top .wrap{height:3.5rem}
+  .top nav{gap:1.1rem}
   .top nav a.hide-s{display:none}
-  .hero h1{font-size:2rem}
-  .actions>a{flex:1 1 100%}
+  .hero{padding-top:1.75rem;gap:1.75rem}
+  .hero h1{font-size:clamp(2.1rem,9.6vw,2.6rem);line-height:1.03;margin-bottom:1rem}
+  .lead{font-size:1.04rem}
+  .get-desk{display:none}
+  .get-phone{display:flex;flex-direction:column;align-items:stretch;gap:.75rem}
+  .get-note{margin:0;font-size:.95rem;color:var(--ink)}
+  .copyrow{display:flex;align-items:stretch;border:1px solid var(--line2);border-radius:7px;overflow:hidden;background:var(--bg2)}
+  .copyrow .url{flex:1;min-width:0;padding:.85rem .8rem;font-size:.8rem;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-self:center}
+  .copyrow .btn{display:none;border-radius:0;padding:.85rem 1rem;flex:none;box-shadow:none}
+  .js .copyrow .btn{display:inline-flex}
+  .get-phone .link{font-size:.92rem;align-self:flex-start}
+  .checks{font-size:.86rem;gap:.35rem 1rem;margin-top:1.25rem}
+  .req{font-size:.74rem}
+  .hero-scene{padding-bottom:0}
+  .hero-scene::before,.float-app{display:none}
+  .radar-head{font-size:.66rem;padding-bottom:.6rem}
+  .radar-plate{aspect-ratio:360/498;--mx:24%;--my:15%}
+  .topo{background-image:url(../assets/topo-phone.svg)}
+  .r-desk{display:none}
+  .r-phone{display:block}
+  .phone-app{display:block;position:relative;z-index:3;margin:-2.5rem .75rem 0;border-radius:8px;overflow:hidden;box-shadow:0 0 0 1px var(--line2),0 24px 50px -16px rgba(0,0,0,.75)}
   section{padding:2.5rem 0}
-  .who{padding:1.75rem 0}
-  .steps,.split{grid-template-columns:1fr}
   .who{display:none}
-  .also{grid-template-columns:repeat(2,minmax(0,1fr));gap:1.1rem 1.25rem}
+  .sub{margin-bottom:1.5rem}
+  #setup .sub{display:none}
+  .shot{border-radius:7px}
+  .also{grid-template-columns:repeat(2,minmax(0,1fr));gap:1.1rem 1.25rem;margin-top:2.25rem}
   .also p{font-size:.88rem;line-height:1.5}
   .also kbd{padding:0 3px}
-  #setup .sub{display:none}
-  .who ul{gap:.8rem 1.25rem;font-size:.9rem}
+  .how-img{margin-bottom:1.75rem}
+  .how-img .how-d{display:none}
+  .how-img .how-p{display:block}
+  .steps,.split{grid-template-columns:1fr}
   .steps{gap:1rem}
-  .steps li::before{display:inline;margin-right:.5rem}
+  .steps li::before{display:inline;margin:0 .5rem 0 0}
   .steps b{display:inline}
-  .hero{padding-top:1.5rem;gap:1.5rem}
-  .hero-shot{aspect-ratio:560/235}
-  .hero-shot img{width:221.4%;max-width:none;margin:-8.6% 0 0 -17.5%}
-  .sub{margin-bottom:1.4rem}
-  .tbl table{font-size:.88rem}
-  .also{margin-top:2rem;padding-top:1.75rem}
-  .how-img{margin-bottom:1.5rem}
+  ul.guides{gap:1rem 1.25rem}
   ul.guides span{display:none}
-  th,td{padding:10px 12px}
-  .tbl table{min-width:34rem}
-  .faq{margin-top:2.5rem}
+  .faq{margin-top:2.75rem}
+  summary{font-size:1rem}
+  /* tables: one block per row, each cell with its column's name */
+  .tbl{overflow:visible}
+  .tbl table,.tbl tbody,.tbl tr,.tbl th,.tbl td{display:block;width:auto}
+  .tbl thead{display:none}
+  .tbl tr{border-top:1px solid var(--line);padding:.75rem 0}
+  .tbl tr:last-child{border-bottom:1px solid var(--line)}
+  .tbl th,.tbl td{border:0;padding:0}
+  .tbl tbody th{padding-bottom:.45rem;font-size:.95rem}
+  .tbl td{font-size:.9rem;line-height:1.45;padding:0 0 .55rem}
+  .tbl td:last-child{padding-bottom:0}
+  .tbl td.us{padding-left:.7rem;box-shadow:inset 2px 0 0 var(--sand);background:none}
+  .tbl td[data-label]::before{content:attr(data-label);display:block;font:400 .64rem/1.6 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+  .tbl td.us[data-label]::before{color:var(--accent)}
+  #vpn tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:.9rem}
+  #vpn tbody th{grid-column:1/-1}
+  #vpn td{padding-bottom:0}
 }
-/* guides */
-.gl{display:grid;grid-template-columns:minmax(0,1fr) 19rem;column-gap:3.5rem;padding-top:2.5rem;padding-bottom:4rem}
+body{border-top:2px solid transparent;border-image:linear-gradient(90deg,#3bb4e5,#c64fc6 50%,#d8e03a) 1}/* guides */
+.gl{display:grid;grid-template-columns:minmax(0,1fr) 19rem;column-gap:3.5rem;padding-top:2.75rem;padding-bottom:4.5rem}
 .gl>*{grid-column:1}
 .ghead{padding-bottom:2.5rem}
-.crumbs{color:var(--fa);font-size:.9rem;margin:0 0 1rem}.crumbs a{color:var(--mu)}
-.ghead h1{font-size:clamp(1.9rem,3.6vw,2.6rem);line-height:1.12;letter-spacing:-.02em;margin:0 0 1rem;max-width:24ch}
+.crumbs{font:400 .75rem/1.4 var(--mono);letter-spacing:.06em;color:var(--ink3);margin:0 0 1.4rem}.crumbs a{color:var(--ink2);text-decoration:none}.crumbs a:hover{color:var(--ink)}
+.ghead h1{font:500 clamp(2rem,3.7vw,2.75rem)/1.06 var(--disp);letter-spacing:-.03em;margin:0 0 1.1rem;max-width:24ch}
 .ghead .lead{margin:0}
 .rail{grid-column:2;grid-row:1/span 4}
-.rail-in{position:sticky;top:1.5rem;display:flex;flex-direction:column;gap:1.75rem}
+.rail-in{position:sticky;top:1.5rem;display:flex;flex-direction:column;gap:1.9rem}
 .rail .btn{width:100%}
-.rail .req{margin-top:.7rem}
-.toc h2{font-size:.82rem;text-transform:uppercase;letter-spacing:.06em;color:var(--fa);margin:0 0 .5rem}
+.rail .checks{margin-top:1.1rem;font-size:.86rem;gap:.35rem 1rem}
+.toc h2{font:400 .72rem/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:0 0 .6rem}
 .toc ul{list-style:none;margin:0;padding:0 0 0 .9rem;border-left:1px solid var(--line)}
-.toc li{margin:.3rem 0;font-size:.92rem;line-height:1.4}
-.toc a{color:var(--mu)}.toc a:hover{color:var(--ink);text-decoration:none}
-.crop{display:block;overflow:hidden;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.toc li{margin:.35rem 0;font-size:.92rem;line-height:1.4}
+.toc a{color:var(--ink2);text-decoration:none}.toc a:hover{color:var(--ink)}
+.crop{display:block;overflow:hidden;border-radius:8px;background:var(--bg2);box-shadow:0 0 0 1px var(--line2),0 24px 50px -24px var(--shadow)}
 .crop img{max-width:none}
-.cropcap{display:block;color:var(--fa);font-size:.85rem;margin-top:.5rem}
-.gtext{color:var(--mu)}
-.gtext h2{color:var(--ink);font-size:1.45rem;margin:2.6rem 0 .7rem}
+.cropcap{display:block;color:var(--ink3);font-size:.85rem;margin-top:.6rem}
+.gtext{color:var(--ink2)}
+.gtext h2{color:var(--ink);font-size:clamp(1.4rem,2.3vw,1.7rem);margin:2.75rem 0 .8rem}
 .gtext h2:first-child{margin-top:0}
 .gtext p,.gtext ul,.gtext ol{max-width:68ch;margin:0 0 .9rem}
 .gtext ul,.gtext ol{padding-left:1.3em}
 .gtext li{margin:0 0 .5rem}
-.gtext b,.gtext strong{color:var(--ink)}
+.gtext li::marker{color:var(--ink3)}
+.gtext ol li::marker{font-family:var(--mono);font-size:.85em}
+.gtext b,.gtext strong{color:var(--ink);font-weight:500}
 .gtext .tbl{margin:1.2rem 0 1rem}
+@media (min-width:761px){.gtext td.us{padding-left:0;background:none;font-weight:500}}
 .gfaq,.gmore{border-top:1px solid var(--line);margin-top:3rem;padding:2.5rem 0 0}
-.gfaq h2,.gmore h2{font-size:1.3rem;margin-bottom:1rem}
+.gfaq h2,.gmore h2{font-size:clamp(1.4rem,2.3vw,1.7rem);margin-bottom:1.1rem}
+.gfaq{max-width:calc(68ch + 2.5rem)}
 .gmore ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem 2rem}
-.gmore a{font-weight:600}
-.gmore span{display:block;color:var(--fa);font-size:.9rem;line-height:1.45;margin-top:.15rem}
+.gmore li{border-top:1px solid var(--line);padding-top:.8rem}
+.gmore a{font:500 1.04rem/1.35 var(--disp);text-decoration:none}
+.gmore a:hover{color:var(--sand-hi)}
+.gmore span{display:block;color:var(--ink3);font-size:.9rem;line-height:1.45;margin-top:.2rem}
 .gmore .end{display:none}
 .gmore .end .btn{width:100%}
-@media (max-width:760px){.gtext .tbl.fit table{min-width:0}}
 @media (max-width:900px){
   .gl{grid-template-columns:minmax(0,1fr);padding-top:1.75rem;padding-bottom:3rem}
   .rail{grid-column:1;grid-row:auto;order:1}
   .ghead{order:0;padding-bottom:1.5rem}.gtext{order:2}.gfaq{order:3}.gmore{order:4}
-  .rail-in{position:static;gap:1.25rem;margin-bottom:2.25rem}
+  .rail-in{position:static;gap:1.4rem;margin-bottom:2.5rem}
   .toc{display:none}
   .gfaq,.gmore{margin-top:2.25rem;padding:2rem 0 0}
   .gmore .end{display:block;margin-top:2rem}
 }
 @media (max-width:760px){
   .gmore ul{grid-template-columns:1fr;gap:.8rem}
-  .gmore span{display:inline;margin-left:.4rem}
-  .gtext h2{font-size:1.3rem;margin-top:2rem}
+  .gtext h2{margin-top:2.1rem}
 }
 </style>
 </head>
@@ -298,6 +311,7 @@ ul.guides span{display:block;color:var(--fa);font-size:.9rem;line-height:1.45;ma
       <a class="hide-s" href="../#guides">Guides</a>
       <a class="hide-s" href="../is-it-safe/">Is it safe?</a>
       <a href="https://github.com/Sepd0x/cs2-ip-changer">GitHub</a>
+      <a class="btn btn-s" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Download</a>
     </nav>
   </div>
 </header>
@@ -313,8 +327,9 @@ ul.guides span{display:block;color:var(--fa);font-size:.9rem;line-height:1.45;ma
       <div class="rail-in">
         <div>
           <a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a>
-          <p class="req">Free beta · Windows 10/11 · Android phone + USB cable or hotspot · uses mobile data · admin</p>
-          <p class="safe">Doesn't touch cs2.exe or its memory. Unsigned, so SmartScreen warns: see <a href="#check-your-download">Check your download</a></p>
+          <ul class="checks" aria-label="At a glance"><li>Free</li><li>Public source</li><li>No account</li><li>Doesn't touch cs2.exe</li><li>Signed updates</li><li><a href="https://www.virustotal.com/gui/file/8f8f4197b589dd80d6826a703af863c1684949f610e6acf7805102c3860314a2/detection">VirusTotal report</a></li></ul>
+          <p class="safe">Not code-signed, so SmartScreen warns the first time: <a href="#check-your-download">check your download</a></p>
+          <p class="req">Beta · Windows 10/11 · Android phone + USB cable or hotspot · uses mobile data · admin</p>
         </div>
         <nav class="toc" aria-labelledby="toc-h">
           <h2 id="toc-h">On this page</h2>
@@ -326,7 +341,7 @@ ul.guides span{display:block;color:var(--fa);font-size:.9rem;line-height:1.45;ma
             <li><a href="#faq">FAQ</a></li>
           </ul>
         </nav>
-        <figure style="margin:0"><a class="crop" href="../img/connection.png" style="aspect-ratio:560/330" aria-label="The Connection page: live checks for the firewall, kill switch, routes and the IP servers see (full screenshot)"><picture><source type="image/webp" srcset="../img/connection.webp"><img src="../img/connection.png" alt="The Connection page: live checks for the firewall, kill switch, routes and the IP servers see" width="1240" height="800" loading="lazy" style="width:221.43%;margin:-8.57% 0 0 -118.93%"></picture></a><figcaption class="cropcap">The Connection page of the app</figcaption></figure>
+        <figure style="margin:0"><a class="crop" href="../img/connection.png" style="aspect-ratio:569/322" aria-label="The Connection page: live checks for Windows Firewall, Block if the phone drops, the routes and the IP servers see (full screenshot)"><picture><source type="image/webp" srcset="../img/connection.webp"><img src="../img/connection.png" alt="The Connection page: live checks for Windows Firewall, Block if the phone drops, the routes and the IP servers see" width="1240" height="800" loading="lazy" style="width:217.93%;margin:-7.73% 0 0 -115.99%"></picture></a><figcaption class="cropcap">The Connection page of the app</figcaption></figure>
       </div>
     </aside>
     <article class="gtext">
@@ -337,7 +352,7 @@ ul.guides span{display:block;color:var(--fa);font-size:.9rem;line-height:1.45;ma
       <h2 id="your-data">Your data</h2>
       <ul><li>No account, and no passwords kept. The account switcher uses the logins Steam already saved.</li><li>While the app is in beta it sends anonymous usage stats once when it has been open for 20 seconds, then once a day: a random install ID, versions, your country, the mode, minutes open and button counts. Never IPs, servers, accounts or names. The server code is public (<a href="https://github.com/Sepd0x/cs2-ip-changer/tree/main/worker/stats">worker/stats</a>).</li><li>Save bug report saves a .zip on your Desktop and sends nothing. It leaves out your home IP, API key, logins, names, SteamIDs, e-mails, Wi-Fi names and your Windows user; look through it before you post it.</li></ul>
       <h2 id="undo-everything">Undo everything</h2>
-      <p>Turn off protection (Settings &gt; Maintenance) removes the routes and the kill switch, and Allow all on the Regions page lifts the region block. To remove everything at once, run <code>CS2IPChanger.exe --restore</code> (or <code>tools/restore.cmd</code> from the repo): every route and firewall rule the app made is removed. The app is portable: to uninstall, run <code>--restore</code>, then delete its folder (with <code>SRT_Dados</code> next to the exe) and <code>C:\ProgramData\CS2IPChanger</code>.</p>
+      <p>Turn off protection (on the Connection page, or Settings &gt; Undo and maintenance) removes the routes and the kill switch, and Allow all (block off) on the Regions page lifts the region block. To remove everything at once, run <code>CS2IPChanger.exe --restore</code> (or <code>tools/restore.cmd</code> from the repo): every route and firewall rule the app made is removed. The app is portable: to uninstall, run <code>--restore</code>, then delete its folder (with <code>SRT_Dados</code> next to the exe) and <code>C:\ProgramData\CS2IPChanger</code>.</p>
     </article>
     <section class="gfaq" aria-labelledby="faq">
       <h2 id="faq">FAQ</h2>

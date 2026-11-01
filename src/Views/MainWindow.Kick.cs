@@ -183,7 +183,7 @@ public partial class MainWindow
         var next = NextQuick(_servers.FirstOrDefault(x => x.Key == _s.LastServer));
         if (next == null)
         {
-            Toast($"Banned from {_s.LastServer}. No other account to rejoin with: the rest are skipped, on cooldown or banned there.", false);
+            Toast($"Banned from {_s.LastServer}. No other account to rejoin with: the rest are out of rotation, on cooldown or banned there.", false);
             return;
         }
         if (await Ask("You were banned", $"CS2 says you were banned from {_s.LastServer}. The ban is on your IP and on the account, so a new IP alone is not enough.\n\nGet a new IP, log in to {next.Name} and rejoin?", "Switch and rejoin", "Not now"))
@@ -218,7 +218,7 @@ public partial class MainWindow
         ApplyServerBans();
         UpdateQuickInfo();
         var same = _servers.Count(x => x.Key != key && ServerNetwork.Same(key, name, network, x.Key, x.ServerName, x.Network));
-        Log.Warn($"{a.Name} marked as banned on {key}" + (same > 0 ? $" and {Fmt.Count(same, "other server")} of the same network" : "") + ". Switch skips it there.");
+        Log.Warn($"{a.Name} marked as banned on {key}" + (same > 0 ? $" and {Fmt.Count(same, "other server")} of the same network" : "") + ". New IP + next account skips it there.");
         Diag.Write("server-ban", new { steamId = a.SteamId, server = key, name });
     }
 
@@ -265,7 +265,7 @@ public partial class MainWindow
         DialogInput.Text = s.Network ?? "";
         DialogInput.Tag = known.Count > 0 ? "E.g. " + string.Join(", ", known.Take(3)) : "E.g. EXAMPLE.GG, MY COMMUNITY";
         var guess = ServerNetwork.Tag(s.ServerName);
-        if (!await Ask($"Community of {s.Title}", "Servers with the same community name share ban marks: a ban on one counts on all of them, and Switch skips that account there.\n\n"
+        if (!await Ask($"Community of {s.Title}", "Servers with the same community name share ban marks: a ban on one counts on all of them, and New IP + next account skips that account there.\n\n"
                 + (guess != null ? $"Empty: the app uses the tag from the server name ({guess})." : "Empty: the app guesses from the server name (none found for this one)."),
                 "Save", "Cancel", inputs: 1, label1: "Community name")) return;
         s.Network = ServerNetwork.Clean(DialogInput.Text);
@@ -285,7 +285,17 @@ public partial class MainWindow
         RejoinBtn.IsEnabled = !_changingIp && !_rejoining && _s.LastServer != null && _phone?.Ready == true && !_s.NoPhone;
         RejoinBtn.ToolTip = _s.NoPhone ? "Off in the no phone mode: there is no IP to change." : (_s.LastServer == null ? "Join a server from Servers first. " : $"Changes the IP, then joins {_s.LastServer} again (with another account if this one is banned there). ")
             + $"Only joins with protection confirmed. In game: {_s.HotkeyRejoin}.";
-
+        // After a kick the way back is the rejoin: with a last server it is the primary, and its hotkey shows under it.
+        var rejoinFirst = _s.LastServer != null && !_s.NoPhone;
+        var want = rejoinFirst ? "Primary" : "Btn";
+        if (!Equals(RejoinBtn.Tag, want))
+        {
+            RejoinBtn.Tag = want;
+            RejoinBtn.Style = (Style)FindResource(want);
+            ChangeIpBtn.Style = (Style)FindResource(rejoinFirst ? "Btn" : "Primary");
+        }
+        RejoinHotkeyKeys.Text = _s.HotkeyRejoin;
+        RejoinHotkeyHint.Visibility = _s.NoPhone ? Visibility.Collapsed : Visibility.Visible;
     }
 
 
@@ -313,13 +323,13 @@ public partial class MainWindow
         }
         AccountItem next = null;
         if (steps.Account && (next = PickQuick(s)) == null) return false;
-        if (!ip && next == null && s == null) { Toast("Switch has nothing to do: turn on at least one step in Settings > Switch.", false); return false; }
+        if (!ip && next == null && s == null) { Toast("New IP + next account has nothing to do: turn on at least one step in Settings > New IP + next account.", false); return false; }
         Log.Info($"{from}: " + string.Join(", ", new[] { ip ? "new IP" : null, next != null ? $"log in to {next.Name}" : null, s != null ? $"rejoin {s.Key}" : null }.Where(x => x != null)) + ".");
         _rejoining = true;
         UpdateRejoinBtn();
         try
         {
-            if (ip && _demo) { ShowProgress($"Attempt 1/{_s.MaxAttempts}: turning off the phone's data for {_s.OffSeconds} s…"); await Task.Delay(1500); HideProgress(); }
+            if (ip && _demo) { ShowProgress($"Attempt 1/{_s.MaxAttempts}: phone data off for {_s.OffSeconds} s…"); await Task.Delay(1500); HideProgress(); }
             else if (ip && !await ChangeIp(confirm: false)) return false;
             // A new account restarts Steam through the new IP; Connect waits for its session before joining.
             if (next != null && !await SwitchTo(next, cs2: s == null, ask: false, openWith: steps.OpenWith)) return false;

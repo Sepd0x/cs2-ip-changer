@@ -177,9 +177,12 @@ public partial class MainWindow
             : rep.DistrustReason == WhySame ? "Blocked: same IP as your home IP"
             : rep.DistrustReason == WhyNoHome ? "Blocked: your home IP hasn't been measured yet"
             : rep.EgressProblem ?? "Waiting for the phone";
-        _cCs2.Ok = !_s.LockCs2 ? null : rep.Cs2LockOk;
+        // The square comes from the same branch as the text: never green next to "Not locked yet".
+        var notLockedYet = _s.LockCs2 && !PhoneKnown && rep.Egress == null;
+        _cCs2.Ok = !_s.LockCs2 || notLockedYet ? null : rep.Cs2LockOk;
+        _cCs2.Waiting = notLockedYet;
         _cCs2.Detail = !_s.LockCs2 ? "Turned off in Settings"
-            : !_s.PhoneSeen && rep.Egress == null ? "Not locked yet: CS2 is locked to the phone once you've connected one"
+            : notLockedYet ? "Not locked yet: CS2 is locked to the phone once you've connected one"
             : rep.Cs2LockOk == null ? "Couldn't find cs2.exe (open CS2 once)"
             : rep.Cs2LockOk == true ? (rep.Egress != null ? "CS2 only goes out through the phone" : "CS2 blocked until you connect the phone") : "Rule not confirmed";
         _cRoutes.Ok = n == 0 || waiting ? null : rep.Egress != null && routesOk == n;
@@ -240,6 +243,9 @@ public partial class MainWindow
         else if (rep.Distrusted || same)
             SetHero(held, "Your IP is the same as your home IP",
                 $"{Blocked(rep)} are blocked until the IP is different. The phone is sharing your home Wi-Fi, or the PC went back to the router. Turn off the phone's Wi-Fi under Phone.");
+        else if (rep.Egress == null && !PhoneKnown)
+            SetHero("warn", "Not protected yet",
+                "If you open CS2 now, servers see your home IP. Set up the phone first: Phone setup below walks you through it.");
         else if (rep.Egress == null && rep.EgressProblem != null)
             SetHero(held, "You left the phone's network", rep.EgressProblem + $" {Blocked(rep)} are blocked until you are back on the hotspot.");
         else if (rep.Egress == null)
@@ -254,11 +260,11 @@ public partial class MainWindow
         else if (rep.EffectiveMode == "all" && !rep.FullModeOk)
             SetHero(held, "Whole PC hasn't switched over", FullModeProblem(rep) + "." + (n > 0 && rep.KillSwitchOk ? " Servers on your Servers page are still protected." : "") + " Check the Log.");
         else if (n == 0)
-            SetHero("idle", "Ready", "The phone is connected. Add servers on the Servers page, or pick \"Whole PC\" under What goes through the phone.");
+            SetHero("idle", "Ready", _s.GameMode
+                ? "The phone is connected. While CS2 is open, the whole PC goes through the phone and every server sees its IP."
+                : "The phone is connected. Add servers on the Servers page, or pick \"Whole PC\" under What goes through the phone.");
         else if (rep.KillSwitchOk && routesOk == n && !cs2Off)
-            SetHero("good", "Protected", _s.LockCs2 && rep.Cs2LockOk == null
-                ? "Servers on your Servers page only see the phone's IP. CS2 itself gets locked once you open it."
-                : "Servers on your Servers page only see the phone's IP. If the phone disconnects, they are blocked.");
+            SetHero("good", "Protected", ProtectedText(rep));
         else if (!rep.KillSwitchOk)
             SetHero("bad", "Protection incomplete", "The firewall block was not confirmed, so servers on your Servers page could see your home IP. Check the Log.");
         else
@@ -267,10 +273,25 @@ public partial class MainWindow
         ShowIps();
         UpdatePhoneCheck();
         PhoneNotInUse();
+        UpdateTurnOff();
         ServerCount.Text = _servers.Count == 0 ? "" : $"{_servers.Count} {(_servers.Count == 1 ? "server" : "servers")} on {n} {(n == 1 ? "IP" : "IPs")}";
         ServersEmpty.Visibility = _servers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         QueryBtn.IsEnabled = CopyBtn.IsEnabled = ServerSearch.IsEnabled = _servers.Count > 0;
         ServerHeader.Visibility = _servers.Count == 0 ? Visibility.Hidden : Visibility.Visible;
+    }
+
+    /// <summary>
+    /// Something the app put in place would stay after it closes: the block on your servers or the CS2 lock. On a first start
+    /// (nothing armed yet), after Turn off protection and in No phone mode there is nothing to turn off.
+    /// </summary>
+    bool ProtectionArmed => !_restored && _last != null && _last.EffectiveMode != "home"
+        && ((_servers.Count > 0 && _last.KillSwitchOk) || (_s.LockCs2 && _last.Cs2LockOk == true));
+
+    /// <summary>Turn off protection shows only while there is protection to turn off; after it, the leak test is the way back and says so.</summary>
+    void UpdateTurnOff()
+    {
+        TurnOffBtn.Visibility = ProtectionArmed ? Visibility.Visible : Visibility.Collapsed;
+        LeakBtn.Content = _restored ? "Turn protection back on" : "Run leak test";
     }
 
     /// <summary>No phone mode with the phone plugged in: the Phone box says it isn't used instead of "Ready to change IP".</summary>
@@ -319,6 +340,7 @@ public partial class MainWindow
         ShowIps();
         UpdatePhoneCheck();
         PhoneNotInUse();
+        UpdateTurnOff();
         ServerCount.Text = _servers.Count == 0 ? "" : $"{_servers.Count} {(_servers.Count == 1 ? "server" : "servers")} on {n} {(n == 1 ? "IP" : "IPs")}";
         ServersEmpty.Visibility = _servers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         QueryBtn.IsEnabled = CopyBtn.IsEnabled = ServerSearch.IsEnabled = _servers.Count > 0;
@@ -336,11 +358,36 @@ public partial class MainWindow
         return char.ToUpperInvariant(text[0]) + text[1..];
     }
 
+    /// <summary>
+    /// A phone connection was checked on this PC. Until then the CS2 lock isn't armed (Guard), so nothing is protected yet.
+    /// A phone connected now, or an IP history, counts as seen too (the same rule as the settings migration).
+    /// </summary>
+    bool PhoneKnown => _s.PhoneSeen || _last?.Egress != null || _history.Count > 0;
+
+    /// <summary>The "Protected" line, for the mode you picked: Whole PC while CS2 is open covers every server, Game only your list.</summary>
+    string ProtectedText(GuardReport rep)
+    {
+        var cs2Later = _s.LockCs2 && rep.Cs2LockOk == null;
+        if (_s.GameMode)
+            return "While CS2 is open, every server sees the phone's IP, not only your list. "
+                + (cs2Later ? "CS2 itself gets locked once you open it." : $"If the phone drops, {Blocked(rep, lower: true)} are blocked.");
+        return cs2Later
+            ? "Servers on your Servers page only see the phone's IP. CS2 itself gets locked once you open it."
+            : "Servers on your Servers page only see the phone's IP. If the phone disconnects, they are blocked.";
+    }
+
     /// <summary>What the kill switch holds back right now: CS2 is only named when its own rule is on.</summary>
     string Blocked(GuardReport rep, bool lower = false) => _s.LockCs2 && rep.Cs2LockOk == true ? (lower ? "servers" : "Servers") + " and CS2" : lower ? "your servers" : "Your servers";
 
+    /// <summary>The Status box as the protection state wants it; an IP change in progress is drawn over it (ShowProgress).</summary>
+    (string Kind, string Title, string Sub) _heroWanted = ("idle", "Checking the connection…", "One moment.");
+    string _changingTitle;
+
     void SetHero(string kind, string title, string sub)
     {
+        _heroWanted = (kind, title, sub);
+        if (_changingTitle != null)
+            (kind, title, sub) = ("warn", _changingTitle, "Mobile data goes off and on until the carrier gives a new IP. If you are on a server, you will drop.");
         var (fg, bg, glyph, side) = kind switch
         {
             "good" => (Ui.Good, Ui.GoodSoft, "", "Protected"),
@@ -518,12 +565,12 @@ public partial class MainWindow
 
         if (e != _egressPublic && e != null && !same)
         {
-            _egressInfo = await Net.Lookup(e);
+            _egressInfo = await Net.Lookup(e, candidate?.Index ?? -1, candidate?.LocalIp);
             AddHistory(e, _egressInfo, "detetado");
         }
         if (h != null)
         {
-            if (h != _homePublic) _homeInfo = await Net.Lookup(h);
+            if (h != _homePublic) _homeInfo = await Net.Lookup(h, homeIf);
             _homeCached = false;
             if (_s.LastHomeIp != h) { _s.LastHomeIp = h; SaveSettings(); }
         }
@@ -531,7 +578,7 @@ public partial class MainWindow
         {
             h = _s.LastHomeIp;
             _homeCached = true;
-            if (h != _homePublic) _homeInfo = await Net.Lookup(h);
+            if (h != _homePublic) _homeInfo = await Net.Lookup(h, homeIf);
         }
         _egressPublic = e;
         if (h != _homePublic && HideLogins) { _homePublic = h; RemaskLog(); }
@@ -546,14 +593,15 @@ public partial class MainWindow
         var inUse = _last?.Egress != null;
         var isHome = _egressPublic != null && _egressPublic == _homePublic;
         EgressIp.Text = _egressPublic == null ? "—" : isHome && !_reveal ? Fmt.MaskIp(_egressPublic) : _egressPublic;
-        EgressIp.Foreground = inUse ? Ui.Text : Ui.Faint;
+        // Mid-change the IP shown is the old one (faint); a new one is green for two seconds, next to the toast that announces it.
+        EgressIp.Foreground = !inUse || _changingTitle != null ? Ui.Faint : DateTime.Now < _ipFlashUntil ? Ui.Good : Ui.Text;
         EgressIsp.Text = _egressPublic == null ? (_last?.Candidate != null ? "Checking the IP through the phone…" : "No phone connection")
             : !inUse ? "Not in use: servers are blocked"
             : _egressInfo?.Short ?? "";
         HomeIp.Text = _homePublic == null ? "—" : _reveal ? _homePublic : Fmt.MaskIp(_homePublic);
         HomeIsp.Text = _homePublic == null ? "No home network detected"
             : (_homeInfo?.Short ?? "") + (_homeCached ? "  ·  last confirmed" : "");
-        SideIp.Text = inUse ? _egressPublic ?? "" : "";
+        SideIp.Text = inUse && _changingTitle == null ? _egressPublic ?? "" : "";
         if (_s.NoPhone && _last?.EffectiveMode == "home")
         {
             // No phone: servers see the home IP, so that is what the first box shows (hidden like the home box).
@@ -565,10 +613,27 @@ public partial class MainWindow
         RevealBtn.Visibility = _homePublic == null ? Visibility.Collapsed : Visibility.Visible;
     }
 
+    DateTime _ipFlashUntil;
+    DispatcherTimer _ipFlashTimer;
+
+    /// <summary>The new IP in Status turns green for two seconds after a change.</summary>
+    void FlashNewIp()
+    {
+        _ipFlashUntil = DateTime.Now.AddSeconds(2);
+        if (_ipFlashTimer == null)
+        {
+            _ipFlashTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2.1) };
+            _ipFlashTimer.Tick += (_, _) => { _ipFlashTimer.Stop(); ShowIps(); };
+        }
+        _ipFlashTimer.Stop();
+        _ipFlashTimer.Start();
+        ShowIps();
+    }
+
     void AddHistory(string ip, Net.IpInfo info, string reason)
     {
         if (_history.Count > 0 && _history[0].Ip == ip) return;
-        if (reason == "trocado") Telemetry.Count("ip_changed");
+        if (reason == "trocado") { Telemetry.Count("ip_changed"); FlashNewIp(); }
         var h = new IpHistoryEntry { Time = DateTime.Now, Ip = ip, Isp = info?.Short, Reason = reason };
         _history.Insert(0, h);
         while (_history.Count > 30) _history.RemoveAt(_history.Count - 1);

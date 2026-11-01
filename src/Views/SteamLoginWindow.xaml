@@ -5,22 +5,7 @@
         WindowStartupLocation="CenterOwner" Background="{StaticResource Bg}" Foreground="{StaticResource Text}"
         FontFamily="{StaticResource UiFont}" FontSize="12" TextOptions.TextFormattingMode="Ideal" UseLayoutRounding="True" SnapsToDevicePixels="True"
         MouseLeftButtonDown="Drag">
-    <!-- Same as the main window's Key and OptSub (they live in MainWindow.xaml, not in Theme.xaml) -->
-    <Window.Resources>
-        <Style x:Key="Key" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource Faint}"/>
-            <Setter Property="FontSize" Value="11.5"/>
-            <Setter Property="Margin" Value="0,0,0,3"/>
-        </Style>
-        <Style x:Key="OptSub" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Foreground" Value="{StaticResource Faint}"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
-            <Setter Property="Margin" Value="0,1,0,0"/>
-            <Setter Property="MaxWidth" Value="640"/>
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-        </Style>
-    </Window.Resources>
+    <!-- Key and OptSub come from Theme.xaml, the same as the main window -->
     <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Edge}" BorderThickness="1">
         <Grid>
             <Grid.RowDefinitions>
@@ -60,10 +45,19 @@
                                    TextAlignment="Center" Margin="0,8,0,0" MaxWidth="360"/>
                     </StackPanel>
 
-                    <TextBlock x:Name="Status" TextWrapping="Wrap" Foreground="{StaticResource Faint}" Margin="0,12,0,0" MinHeight="16"/>
+                    <!-- No empty band under the fields: the status line only takes room once it says something -->
+                    <TextBlock x:Name="Status" TextWrapping="Wrap" Foreground="{StaticResource Faint}" Margin="0,12,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <Trigger Property="Text" Value=""><Setter Property="Visibility" Value="Collapsed"/></Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                     <ProgressBar x:Name="Busy" IsIndeterminate="True" Margin="0,6,0,0" Visibility="Hidden"/>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
                         <Button x:Name="CancelBtn" Content="Cancel" Click="Cancel_Click"/>
                         <Button x:Name="GoBtn" Style="{StaticResource Primary}" Content="Sign in" Margin="0" Click="Go_Click" IsDefault="True"/>
                     </StackPanel>

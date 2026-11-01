@@ -12,6 +12,17 @@ public partial class MainWindow
     DateTime _profilesAt = DateTime.MinValue;
     ServerItem _followServer;
 
+    /// <summary>The players under an open server row: as many columns of about 210 px as fit, so the chips fill the row.</summary>
+    void PlayerGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.Primitives.UniformGrid g || g.ActualWidth <= 0) return;
+        var cols = PlayerColumns(g.ActualWidth);
+        if (g.Columns != cols) g.Columns = cols;
+    }
+
+    /// <summary>Columns of player chips for a width: 210 px each plus the 6 px gap, at least one.</summary>
+    public static int PlayerColumns(double width) => Math.Max(1, (int)((width + 6) / 216));
+
     void LoadFlags()
     {
         if (!_demo) foreach (var f in Store.Load(Paths.File("flags.json"), () => new List<PlayerFlag>()).Where(f => !string.IsNullOrWhiteSpace(f.Name))) _flags.Add(f);

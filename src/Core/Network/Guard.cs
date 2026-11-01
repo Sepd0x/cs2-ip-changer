@@ -56,7 +56,7 @@ public sealed class Guard
     int _metricAppliedTo = -1;
     DateTime _metricTriedAt;
     readonly HashSet<string> _ownedRoutes = new(); // "prefix|ifIndex|nexthop"
-    static string OwnedFile => Paths.File("owned.json");
+    readonly string _ownedFile;
     readonly HashSet<string> _warned = new();
     string _lastProblem;
     /// <summary>The Firewall errors of the last rewrite, so the same failure on every sync is logged once.</summary>
@@ -76,19 +76,64 @@ public sealed class Guard
     // In UTC: a clock change (summer time, a big NTP correction) must not look like a restart
     static DateTime BootTime => DateTime.UtcNow.AddMilliseconds(-Environment.TickCount64);
 
-    public Guard()
+    public Guard() : this(Paths.File("owned.json")) { }
+
+    /// <summary>With owned.json somewhere else (the admin tests use an admin-only folder).</summary>
+    public Guard(string ownedFile)
     {
-        var st = Store.Load(OwnedFile, () => new OwnedState());
+        _ownedFile = ownedFile;
+        var st = LoadOwned(ownedFile);
         // From before a restart: Windows already dropped those routes, and the interface index may now be another adapter.
         // ToUniversalTime: files from before beta.7 kept the boot time in local time
-        if (Math.Abs((st.Boot.ToUniversalTime() - BootTime).TotalMinutes) > 2) return;
-        foreach (var r in st.Routes ?? new()) _ownedRoutes.Add(r);
+        if (st == null || Math.Abs((st.Boot.ToUniversalTime() - BootTime).TotalMinutes) > 2) return;
+        foreach (var r in st.Routes) _ownedRoutes.Add(r);
         _metricAppliedTo = st.MetricIf;
+    }
+
+    /// <summary>
+    /// owned.json decides which routes the app deletes as admin and which adapter gets its automatic metric back. Read only when no
+    /// program without admin rights could have written it (not a link, in a folder only admins change), and only what it holds that
+    /// looks like the app's own: anything else is left out. Without it, the restore still finds the app's routes on the phone.
+    /// </summary>
+    static OwnedState LoadOwned(string file)
+    {
+        try
+        {
+            Paths.NoLink(file);
+            if (Adb.Elevated && Adb.UsersCanWrite(Path.GetDirectoryName(Path.GetFullPath(file))!)) throw new UnauthorizedAccessException(Path.GetDirectoryName(file) + " can be changed by programs without admin rights");
+        }
+        catch (Exception ex) { Log.Warn("owned.json was not read: " + ex.Message); return null; }
+        var st = Trusted(Store.Load(file, () => new OwnedState()), out var dropped);
+        if (dropped > 0) Log.Warn($"owned.json: {Fmt.Count(dropped, "entry", "entries")} that the app never writes left out.");
+        return st;
+    }
+
+    /// <summary>
+    /// Only routes shaped like the app's: "prefix|interface|gateway" with a server /32, a whole-PC half or one of Valve's blocks,
+    /// a real interface index and an IPv4 gateway. The metric adapter only as a real index.
+    /// </summary>
+    public static OwnedState Trusted(OwnedState st, out int dropped)
+    {
+        var routes = (st?.Routes ?? new()).Where(r => r != null).Distinct().ToList();
+        var ok = routes.Where(OwnedRouteShape).ToList();
+        dropped = routes.Count - ok.Count + (st?.MetricIf < -1 ? 1 : 0);
+        return new OwnedState { Routes = ok, MetricIf = st?.MetricIf > 0 ? st.MetricIf : -1, Boot = st?.Boot ?? default };
+    }
+
+    static bool OwnedRouteShape(string key)
+    {
+        var p = key.Split('|');
+        if (p.Length != 3 || !int.TryParse(p[1], System.Globalization.NumberStyles.None, null, out var idx) || idx <= 0) return false;
+        if (!System.Net.IPAddress.TryParse(p[2], out var gw) || gw.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork || p[2] != gw.ToString()) return false;
+        if (SplitPrefixes.Contains(p[0]) || Net.ValvePrefixes.Contains(p[0])) return true;
+        var host = p[0].EndsWith("/32") ? p[0][..^3] : null;
+        return host != null && System.Net.IPAddress.TryParse(host, out var a) && a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && host == a.ToString()
+            && !System.Net.IPAddress.Any.Equals(a);
     }
 
     void SaveOwned()
     {
-        try { Store.Save(OwnedFile, new OwnedState { Routes = _ownedRoutes.ToList(), MetricIf = _metricAppliedTo, Boot = BootTime }); }
+        try { Store.Save(_ownedFile, new OwnedState { Routes = _ownedRoutes.ToList(), MetricIf = _metricAppliedTo, Boot = BootTime }); }
         catch (Exception ex) { Log.Warn("Could not save owned.json: " + ex.Message); }
     }
     void Own(string key) { if (_ownedRoutes.Add(key)) SaveOwned(); }

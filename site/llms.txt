@@ -10,17 +10,17 @@ Status: beta (0.1.0-beta.6). Free, no account. Not affiliated with Valve.
 
 - The phone shares its mobile data with the PC over USB tethering or its Wi-Fi hotspot. A 4G/5G USB dongle or router also works as the connection.
 - The app adds Windows routes so CS2, Steam and the servers on the user's list go through the phone, and blocks them on the home connection. The browser, Discord and downloads stay on the home connection (Game only mode). The whole PC can go through the phone instead.
-- Kill switch: a Windows Firewall rule blocks the listed servers on every adapter except the phone, and cs2.exe's game traffic (UDP) can only use the phone connection. If the cable comes out, the game loses connection instead of falling back to the home IP. Until a phone has been connected once, CS2 is not locked, and in No phone mode nothing is blocked.
+- Kill switch (shown in the app's Checks as "Block if the phone drops"): a Windows Firewall rule blocks the listed servers on every adapter except the phone, and cs2.exe's game traffic (UDP) can only use the phone connection. If the cable comes out, the game loses connection instead of falling back to the home IP. Until a phone has been connected once, CS2 is not locked, and in No phone mode nothing is blocked.
 - Change IP: turns mobile data (or airplane mode) off and on over ADB until the carrier gives a new IP. It can report whether the new IP is in a new /16 range and keep trying until it is.
 - Needs admin rights (routes and firewall rules are system settings), Windows Firewall on, and an Android phone with mobile data. USB debugging is needed only to change IP from the PC.
 
 ## Features
 
 - Change IP and rejoin after a kick or an IP ban, also from inside the game with a hotkey (Ctrl+Shift+F10 by default). After a ban it also logs into the next Steam account that server hasn't banned.
-- Live checks of the firewall, routes, the IP servers see next to the home IP, whether the phone is really on mobile data and whether Steam uses the same connection as the game, plus a leak test.
+- Live checks of Windows Firewall, routes, the IP servers see next to the home IP, whether the phone is really on mobile data and whether Steam uses the same connection as the game, plus a leak test.
 - Connection quality: ping, jitter and loss through the phone every 30 seconds.
 - Server list from IP:port or steam://connect links with name, map, players and ping; can wait for a slot on a full server.
-- Steam account switcher for alt accounts: uses the logins Steam already saved, never asks for passwords; shows VAC, game and trade bans and cooldowns; marks server bans per account and community.
+- Steam account switcher for alt accounts: uses the logins Steam already saved, never asks for passwords; shows VAC, game and trade bans and cooldowns; marks server bans per account and community. New IP + next account (Ctrl+Shift+F9) gets a new IP, logs into the next account in rotation and rejoins the last server.
 - CS2 config manager: copies binds, crosshair, game settings, video and HUD/radar/audio between accounts, with backups, snapshots and compare.
 - Profiles: changes the Steam name, picture, bio, country, privacy and custom URL of chosen accounts from templates, with preview and restore.
 - Regions: picks where CS2 matchmaking can put the player, with ping per region; turned-off regions are blocked by one Windows Firewall rule for cs2.exe on Valve's relay IPs only.

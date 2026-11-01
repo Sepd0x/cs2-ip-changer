@@ -89,6 +89,7 @@ public static class Adb
             try { File.Move(tmp, dst, true); }
             catch (IOException) when (File.Exists(dst)) { File.Delete(tmp); }   // the copy in use (adb server running) stays; it is checked below
         }
+        if (!AdminOnly(root) || !AdminOnly(dir)) throw new UnauthorizedAccessException(dir + " can be changed by programs without admin rights");
         var bad = AdbFiles.Select(n => Path.Combine(dir, n)).Where(f => File.Exists(f) && !IsGoogleSigned(f)).ToList();
         if (bad.Count > 0 || !File.Exists(Path.Combine(dir, "adb.exe")))
             throw new InvalidDataException(bad.Count > 0 ? "not signed by Google: " + string.Join(", ", bad.Select(Path.GetFileName)) : "adb.exe missing");
@@ -119,16 +120,43 @@ public static class Adb
     /// <summary>
     /// Creates the folder for admins only (Users can read and run). Anyone can create folders in %ProgramData%, so one that already
     /// exists and isn't like that (made by someone else first, a link, a file with that name) is moved aside and made again.
+    /// The folder is created with its permissions in one step, and never adopted: one that another program made in between (after
+    /// the move) fails here instead of being used.
     /// </summary>
     public static void SafeDir(string d)
     {
-        if (File.Exists(d) || (Directory.Exists(d) && !AdminOnly(d)))
+        if (File.Exists(d) || Paths.IsLink(d) || (Directory.Exists(d) && !AdminOnly(d)))
         {
             var aside = $"{d}.untrusted-{DateTime.Now:yyyyMMdd-HHmmss}";
             if (File.Exists(d)) File.Move(d, aside); else Directory.Move(d, aside);
             Log.Warn($"{d} could be changed by programs without admin rights: moved to {aside} and made again.");
         }
-        if (Directory.Exists(d)) return;
+        else if (Directory.Exists(d)) return;
+        CreateAdminOnly(d);
+        if (!AdminOnly(d)) throw new UnauthorizedAccessException(d + " can be changed by programs without admin rights");
+    }
+
+    /// <summary>CreateDirectory with the admin-only permissions in the same call; fails if anything already has that name.</summary>
+    public static void CreateAdminOnly(string d)
+    {
+        var sd = AdminOnlySecurity().GetSecurityDescriptorBinaryForm();
+        var h = GCHandle.Alloc(sd, GCHandleType.Pinned);
+        try
+        {
+            var sa = new SecurityAttributes { Length = Marshal.SizeOf<SecurityAttributes>(), Descriptor = h.AddrOfPinnedObject() };
+            if (!CreateDirectoryW(d, ref sa)) throw new IOException($"Couldn't create {d}", Marshal.GetHRForLastWin32Error());
+        }
+        finally { h.Free(); }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct SecurityAttributes { public int Length; public IntPtr Descriptor; public bool Inherit; }
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    static extern bool CreateDirectoryW(string path, ref SecurityAttributes sa);
+
+    static DirectorySecurity AdminOnlySecurity()
+    {
         var sec = new DirectorySecurity();
         sec.SetAccessRuleProtection(true, false);
         sec.SetOwner(Admins);
@@ -138,7 +166,7 @@ public static class Adb
         sec.AddAccessRule(new FileSystemAccessRule(Users, FileSystemRights.ReadAndExecute, all, PropagationFlags.None, AccessControlType.Allow));
         // Whoever owns a file can change its permissions; this takes that away (files copied in keep only read and run for their owner).
         sec.AddAccessRule(new FileSystemAccessRule(OwnerRights, FileSystemRights.ReadAndExecute, all, PropagationFlags.None, AccessControlType.Allow));
-        new DirectoryInfo(d).Create(sec);
+        return sec;
     }
 
     /// <summary>Owned by Administrators or SYSTEM, not a link, and nobody else can write, delete or change permissions.</summary>
@@ -250,7 +278,7 @@ public static class Adb
     /// <summary>Downloads Google's official platform-tools into the app folder (~7 MB).</summary>
     public static async Task<string> Download(IProgress<string> progress)
     {
-        var zip = Path.Combine(Paths.Data, "platform-tools.zip");
+        var zip = Paths.NoLink(Path.Combine(Paths.Data, "platform-tools.zip"));
         using (var http = new HttpClient { Timeout = TimeSpan.FromMinutes(3) })
         {
             progress?.Report("Downloading ADB from Google…");
@@ -258,20 +286,48 @@ public static class Adb
             await File.WriteAllBytesAsync(zip, bytes);
         }
         progress?.Report("Extracting…");
-        await Task.Run(() => ZipFile.ExtractToDirectory(zip, Paths.Data, true));
-        try { File.Delete(zip); } catch { }
+        await Task.Run(() => Extract(zip, Paths.Data));
+        try { File.Delete(Paths.NoLink(zip)); } catch { }
         return Find();
     }
 
+    /// <summary>
+    /// Like ZipFile.ExtractToDirectory with overwrite, but every file (and every folder on its way) is checked for links first:
+    /// as admin, a junction in place of platform-tools, or a link in place of adb.exe, would otherwise write somewhere else.
+    /// </summary>
+    public static void Extract(string zip, string to)
+    {
+        var root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(to));
+        using var archive = ZipFile.OpenRead(zip);
+        foreach (var e in archive.Entries)
+        {
+            var dest = Path.GetFullPath(Path.Combine(root, e.FullName));
+            if (!dest.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) throw new IOException(e.FullName + " points outside the folder");
+            Paths.NoLink(dest, root);
+            if (e.FullName.EndsWith('/') || e.FullName.EndsWith('\\')) { Directory.CreateDirectory(dest); continue; }
+            Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
+            Paths.NoLink(dest, root);   // the folders just made, too
+            e.ExtractToFile(dest, true);
+        }
+    }
+
     static string _used;
-    static Task<ProcResult> Run(string adb, string args, int timeout = 12000) { _used = adb; return Proc.Run(adb, args, timeout); }
+    static Task<ProcResult> Run(string adb, string args, int timeout = 12000)
+    {
+        // The copy in %ProgramData%\CS2IPChanger\adb was checked when it was made; adb runs every few seconds, so the folder is checked
+        // again each time (programs without admin rights must not have been able to swap a DLL since).
+        if (Elevated && !AdminOnly(Path.GetDirectoryName(adb)!))
+            return Task.FromResult(new ProcResult(-1, "The ADB folder can be changed by programs without admin rights, so adb didn't run. Restart the app."));
+        _used = adb;
+        return Proc.Run(adb, args, timeout);
+    }
 
     /// <summary>On exit: an adb server started by the app runs with its admin rights and keeps the adb folder locked, so it is
     /// stopped. One the app never talked to (Android Studio's, say) is left alone.</summary>
     public static void KillOwnServer()
     {
         if (_used == null) return;
-        try { Proc.Run(_used, "kill-server", 3000).Wait(4000); } catch { }
+        try { Run(_used, "kill-server", 3000).Wait(4000); } catch { }
     }
 
     /// <summary>The phone says USB tethering (rndis) is on.</summary>

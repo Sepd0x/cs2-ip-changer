@@ -67,7 +67,11 @@ public static partial class Net
             var trace = await http.GetStringAsync($"https://{EchoIp}/cdn-cgi/trace", ct);
             var line = trace.Split('\n').FirstOrDefault(l => l.StartsWith("ip="));
             var ip = line?[3..].Trim();
-            return IPAddress.TryParse(ip, out var a) && a.AddressFamily == AddressFamily.InterNetwork ? ip : null;
+            if (!IPAddress.TryParse(ip, out var a) || a.AddressFamily != AddressFamily.InterNetwork) return null;
+            // The country Cloudflare saw: what the phone's line shows when ipwho.is can't be asked through the phone
+            if (CountryOf(trace.Split('\n').FirstOrDefault(l => l.StartsWith("loc="))?[4..].Trim()) is string country)
+                lock (InfoCache) TraceCountry[ip] = country;
+            return ip;
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
         catch { return null; }
@@ -113,16 +117,32 @@ public static partial class Net
     }
 
     static readonly Dictionary<string, IpInfo> InfoCache = new();
+    static readonly Dictionary<string, string> TraceCountry = new();
 
-    public static async Task<IpInfo> Lookup(string ip)
+    /// <summary>"PT" to "Portugal" (the name ipwho.is uses); null for anything that isn't a country code.</summary>
+    public static string CountryOf(string code)
+    {
+        if (code == null || !Regex.IsMatch(code, "^[A-Z]{2}$") || code is "XX" or "T1") return null;
+        try { return new System.Globalization.RegionInfo(code).EnglishName; }
+        catch { return null; }
+    }
+
+    /// <summary>
+    /// ISP, city and country of an IP (ipwho.is), asked only through the connection that IP belongs to (<paramref name="viaIf"/>):
+    /// the phone's IP through the phone, the home IP through home. Asked through home, ipwho.is would see both IPs from the same
+    /// place and could tie the phone's IP to your home IP. When Windows wouldn't send the request through that connection (the phone
+    /// only carries the game), nothing is asked: the phone's line shows the country Cloudflare saw in the IP test, or nothing.
+    /// </summary>
+    public static async Task<IpInfo> Lookup(string ip, int viaIf, string bindLocalIp = null)
     {
         if (ip == null) return null;
+        IpInfo Fallback() { lock (InfoCache) return TraceCountry.TryGetValue(ip, out var country) ? new IpInfo(null, null, country, false, false) : null; }
         lock (InfoCache) if (InfoCache.TryGetValue(ip, out var c)) return c;
+        if (viaIf <= 0) return Fallback();
         try
         {
             // HTTPS only: the home IP and the phone's IP don't travel in the clear.
-            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(6) };
-            http.DefaultRequestHeaders.UserAgent.ParseAdd("CS2IPChanger/0.1");
+            using var http = ClientVia(viaIf, bindLocalIp, 6);
             var json = await http.GetStringAsync($"https://ipwho.is/{ip}");
             using var doc = JsonDocument.Parse(json);
             var r = doc.RootElement;
@@ -134,6 +154,6 @@ public static partial class Net
             lock (InfoCache) InfoCache[ip] = info;
             return info;
         }
-        catch { return null; }
+        catch { return Fallback(); }
     }
 }

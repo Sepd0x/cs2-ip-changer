@@ -8,7 +8,9 @@ namespace SRT;
 /// <summary>
 /// Entry point. The single-file exe unpacks WPF's native DLLs to %TEMP%\.net, which any program of yours can change, and the host
 /// never checks them again on the next start. The app runs as admin, so before any WPF type is touched it makes sure they come from
-/// %ProgramData%\CS2IPChanger\net (admins only); if not, it starts itself again with the host pointed there.
+/// %ProgramData%\CS2IPChanger\net (admins only); if not, it starts itself again with the host pointed there. The same second start
+/// drops the runtime variables (CORECLR_PROFILER...) that would load a DLL into it, and as admin it never starts from a folder
+/// programs without admin rights can change.
 /// </summary>
 public static class Program
 {
@@ -18,29 +20,51 @@ public static class Program
     [STAThread]
     static int Main(string[] args)
     {
+        // Windows looks for a DLL loaded by name (UMPDC, WindowsCodecs, DEVOBJ, ncrypt...) in the exe's folder and the current folder
+        // first. From here on only System32 counts. What the host loaded before Main isn't covered: that is what the folder check is for.
+        LockDllSearch();
         // The app's own P/Invokes (iphlpapi, wintrust, winmm...) only load from System32, never a copy planted next to the exe
         NativeLibrary.SetDllImportResolver(typeof(Program).Assembly, (name, _, _) => SystemDll(name));
+#if !DEBUG
+        // As admin from a folder any program can change (Downloads, Desktop): a DLL put next to the exe would run as admin on the next
+        // start, before any check here. So the app doesn't start there. --restore still works: it's the way out before deleting the folder.
+        if (Adb.Elevated && !args.Any(a => a.Equals("--restore", StringComparison.OrdinalIgnoreCase)) && FolderProblem(Paths.AppDir, Paths.Data) is string why)
+        {
+            MessageBoxW(IntPtr.Zero, why, "CS2 IP Changer", 0x10);
+            return 1;
+        }
+#endif
         // Single file (no path for the assembly), as admin, and the DLLs came out somewhere else
 #pragma warning disable IL3000
         var singleFile = string.IsNullOrEmpty(typeof(Program).Assembly.Location);
 #pragma warning restore IL3000
-        if (singleFile && Adb.Elevated && !NativeDirSafe(SafeBase))
+        var moveNet = singleFile && Adb.Elevated && !NativeDirSafe(SafeBase);
+        // CORECLR_PROFILER and the like come from your user environment even into an elevated app and load a DLL into it.
+        var runtimeVars = Adb.Elevated ? RuntimeVars(Environment.GetEnvironmentVariables().Keys.Cast<string>()) : new List<string>();
+        if (moveNet || runtimeVars.Count > 0)
         {
-            // The second start still isn't admin-only: don't loop and don't load the DLLs.
+            // The second start still isn't safe: don't loop and don't load the DLLs.
             if (args.Contains(Moved))
             {
-                Log.Error("The WPF files couldn't be unpacked to a folder only admins can change (" + SafeBase + "). The app didn't start.");
-                MessageBoxW(IntPtr.Zero, "CS2 IP Changer couldn't unpack its files to a folder only admins can change, so it didn't start. Restart the PC and try again.", "CS2 IP Changer", 0x10);
+                var what = moveNet ? "unpack its files to a folder only admins can change" : "start without the runtime variables " + string.Join(", ", runtimeVars);
+                Log.Error($"The app couldn't {what}. It didn't start.");
+                MessageBoxW(IntPtr.Zero, $"CS2 IP Changer couldn't {what}, so it didn't start. Restart the PC and try again.", "CS2 IP Changer", 0x10);
                 return 1;
             }
             try
             {
-                Adb.SafeDir(Path.GetDirectoryName(SafeBase)!);
-                Adb.SafeDir(SafeBase);
                 var psi = new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false, WorkingDirectory = Environment.CurrentDirectory };
                 foreach (var a in args) psi.ArgumentList.Add(a);
                 psi.ArgumentList.Add(Moved);
-                psi.Environment["DOTNET_BUNDLE_EXTRACT_BASE_DIR"] = SafeBase;
+                foreach (var k in RuntimeVars(psi.Environment.Keys)) psi.Environment.Remove(k);
+                if (singleFile)
+                {
+                    Adb.SafeDir(Path.GetDirectoryName(SafeBase)!);
+                    Adb.SafeDir(SafeBase);
+                    psi.Environment[ExtractBaseVar] = SafeBase;
+                }
+                if (runtimeVars.Count > 0)
+                    Log.Warn($"Your environment sets {string.Join(", ", runtimeVars)}, which can load code into .NET apps. The app started again without them; if you didn't set them, remove them in Windows' environment variables.");
                 Process.Start(psi)?.Dispose();
                 return 0;
             }
@@ -72,6 +96,43 @@ public static class Program
     }
 
     static string SafeBase => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CS2IPChanger", "net");
+
+    const string ExtractBaseVar = "DOTNET_BUNDLE_EXTRACT_BASE_DIR";
+
+    /// <summary>
+    /// DLLs loaded by name come only from System32 (and folders added on purpose, none today); never the exe's folder, the current
+    /// folder or PATH. DLLs loaded by full path (WPF's, from the admin-only unpack folder) still find their neighbours.
+    /// </summary>
+    public static bool LockDllSearch()
+    {
+        const uint System32 = 0x800, UserDirs = 0x400;   // LOAD_LIBRARY_SEARCH_SYSTEM32 | LOAD_LIBRARY_SEARCH_USER_DIRS
+        var ok = SetDefaultDllDirectories(System32 | UserDirs);
+        return SetDllDirectoryW("") && ok;
+    }
+
+    /// <summary>
+    /// The variables of the .NET runtime (CORECLR_, COR_, COMPlus_, DOTNET_): a profiler DLL, a diagnostics port, another GC or JIT.
+    /// The app needs none of them; only the unpack folder it sets itself is left.
+    /// </summary>
+    public static List<string> RuntimeVars(IEnumerable<string> names) => names
+        .Where(n => n != null && !n.Equals(ExtractBaseVar, StringComparison.OrdinalIgnoreCase)
+            && new[] { "CORECLR_", "COR_", "COMPlus_", "DOTNET_" }.Any(p => n.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
+        .ToList();
+
+    /// <summary>
+    /// Why the app can't run as admin from here (null = it can): the exe's folder, or the SRT_Dados next to it, can be changed by
+    /// programs without admin rights.
+    /// </summary>
+    public static string FolderProblem(string appDir, string dataDir)
+    {
+        appDir = Path.TrimEndingDirectorySeparator(Path.GetFullPath(appDir));
+        const string Fix = "Close this, create the folder C:\\Program Files\\CS2 IP Changer, copy CS2IPChanger.exe into it (and your SRT_Dados folder, if you have one: copy it, don't move it) and start the app from there.";
+        if (Adb.UsersCanWrite(appDir))
+            return $"CS2 IP Changer runs as admin, and this folder can be changed by programs without admin rights:\n{appDir}\n\nA file put next to the app there would run with admin rights, so the app doesn't start from it.\n\n{Fix}";
+        if ((Directory.Exists(dataDir) || File.Exists(dataDir)) && Adb.UsersCanWrite(dataDir))
+            return $"CS2 IP Changer runs as admin, and its data folder can be changed by programs without admin rights:\n{dataDir}\n\nThis happens when SRT_Dados is moved instead of copied. Close this, copy SRT_Dados to another place, delete the one here and copy it back, then start the app again.";
+        return null;
+    }
 
     /// <summary>
     /// The folders the host unpacked to (NATIVE_DLL_SEARCH_DIRECTORIES, apart from the exe's own folder) sit under <paramref name="safeBase"/>
@@ -181,4 +242,10 @@ public static class Program
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     static extern int MessageBoxW(IntPtr hWnd, string text, string caption, uint type);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    static extern bool SetDefaultDllDirectories(uint flags);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    static extern bool SetDllDirectoryW(string path);
 }

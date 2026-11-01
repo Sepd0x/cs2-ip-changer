@@ -43,6 +43,51 @@ public static class Paths
         Directory.CreateDirectory(Data);
         Directory.CreateDirectory(Avatars);
     }
+
+    /// <summary>
+    /// The app writes, moves and deletes here as admin: a junction or link on the way (SRT_Dados, platform-tools, the file itself)
+    /// would send that somewhere else, and a hard link would change another file. Throws instead. Folders are checked from
+    /// <paramref name="top"/> (the exe's folder, checked at start) down.
+    /// </summary>
+    public static string NoLink(string path, string top = null)
+    {
+        var full = Path.GetFullPath(path);
+        var root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(top ?? AppDir));
+        for (var d = Path.GetDirectoryName(full); d != null && d.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase); d = Path.GetDirectoryName(d))
+            if (IsLink(d)) throw new IOException($"{d} is a link, so nothing is written through it.");
+        if (IsLink(full) || HardLinks(full) > 1) throw new IOException($"{full} is a link, so nothing is written through it.");
+        return full;
+    }
+
+    /// <summary>A junction or symbolic link (also one whose target is gone); a path that doesn't exist isn't one.</summary>
+    public static bool IsLink(string path)
+    {
+        try { return System.IO.File.GetAttributes(path).HasFlag(FileAttributes.ReparsePoint); }
+        catch (FileNotFoundException) { return false; }
+        catch (DirectoryNotFoundException) { return false; }
+        catch { return true; }
+    }
+
+    static int HardLinks(string file)
+    {
+        try
+        {
+            if (!System.IO.File.Exists(file)) return 0;
+            using var h = System.IO.File.OpenHandle(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            return GetFileInformationByHandle(h, out var info) ? (int)info.Links : 0;
+        }
+        catch (IOException) { return 0; }   // held by an antivirus for a moment: the folder checks above still hold
+    }
+
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    struct FileInformation
+    {
+        // FILETIMEs as two DWORDs each: a long here would be aligned to 8 and move every field after it
+        public uint Attributes, CreatedLow, CreatedHigh, AccessedLow, AccessedHigh, WrittenLow, WrittenHigh, Volume, SizeHigh, SizeLow, Links, IndexHigh, IndexLow;
+    }
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
+    static extern bool GetFileInformationByHandle(Microsoft.Win32.SafeHandles.SafeFileHandle file, out FileInformation info);
 }
 
 public static class Store
@@ -110,6 +155,7 @@ public static class Store
         lock (SaveLock)
         {
             lock (Unreadable) if (Unreadable.Contains(path)) return;
+            foreach (var f in new[] { path, path + ".tmp", path + ".prev" }) Paths.NoLink(f);
             var tmp = path + ".tmp";
             var bytes = new UTF8Encoding(false).GetBytes(JsonSerializer.Serialize(value, Opt));
             using (var fs = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None))
@@ -151,7 +197,7 @@ public static class Crash
                 // The same error on every tick is written once per start
                 var key = ex.GetType().FullName + "|" + ex.TargetSite + "|" + ex.GetBaseException().Message;
                 if (!Seen.Add(key)) return;
-                var path = Paths.File("crash.txt");
+                var path = Paths.NoLink(Paths.File("crash.txt"));
                 var text = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [{where}] {AppInfo.Version}{Environment.NewLine}{ex}{Environment.NewLine}{Environment.NewLine}";
                 var old = System.IO.File.Exists(path) ? System.IO.File.ReadAllText(path) : "";
                 var all = old + text;
@@ -168,12 +214,12 @@ public static class Crash
         {
             if (System.IO.File.Exists(Marker))
                 Log.Warn("The last session didn't close normally (a crash, a forced close or a power loss). If something looks wrong, Save bug report on the Log page has the details.");
-            System.IO.File.WriteAllText(Marker, DateTime.Now.ToString("O"));
+            System.IO.File.WriteAllText(Paths.NoLink(Marker), DateTime.Now.ToString("O"));
         }
         catch { }
     }
 
-    public static void Ended() { try { System.IO.File.Delete(Marker); } catch { } }
+    public static void Ended() { try { System.IO.File.Delete(Paths.NoLink(Marker)); } catch { } }
 }
 
 public enum LogLevel { Info, Ok, Warn, Error }
@@ -224,7 +270,8 @@ public static class Log
             _lastText = text; _lastLevel = level; _lastAt = e.Time; _repeats = 0;
             try
             {
-                var path = Paths.File("registo.log");
+                var path = Paths.NoLink(Paths.File("registo.log"));
+                Paths.NoLink(path + ".old");
                 if (!_aged) { _aged = true; AgeOut(path); }
                 var fi = new FileInfo(path);
                 if (fi.Exists && fi.Length > 2_000_000) System.IO.File.Move(path, path + ".old", true);
@@ -266,7 +313,7 @@ public static class Log
         var n = 0;
         lock (Lock)
             foreach (var f in new[] { "registo.log", "registo.log.old", "crash.txt" })
-                try { var p = Paths.File(f); if (System.IO.File.Exists(p)) { System.IO.File.Delete(p); n++; } } catch { }
+                try { var p = Paths.NoLink(Paths.File(f)); if (System.IO.File.Exists(p)) { System.IO.File.Delete(p); n++; } } catch { }
         return n;
     }
 }

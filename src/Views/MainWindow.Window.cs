@@ -64,6 +64,34 @@ public partial class MainWindow
     /// <summary>After Hide logins changes, or a new home IP or account list is known.</summary>
     void RemaskLog() { foreach (var e in _log) MaskLog(e); }
 
+    // ------------------------------------------------------------ Connection: when the last group of a column reaches the bottom
+
+    void NetLayout_Changed(object sender, SizeChangedEventArgs e) => FitNetColumns();
+
+    /// <summary>
+    /// The last group of each Connection column stretches to the bottom only when that closes a small gap (both columns then end
+    /// on one line) or the window is wide. At 1240 a short Previous IPs would otherwise be a tall empty frame.
+    /// </summary>
+    void FitNetColumns()
+    {
+        if (NetLeft == null || NetRight == null || PageNet.ViewportHeight <= 0) return;
+        static double Natural(Grid col) => col.Children.OfType<FrameworkElement>().Sum(c => c.DesiredSize.Height);
+        var left = Natural(NetLeft);
+        var right = Natural(NetRight);
+        var page = Math.Max(PageNet.ViewportHeight, Math.Max(left, right));
+        var wide = ActualWidth >= 1600;
+        Stretch(ModeGroup, StretchLast(wide, page - left));
+        Stretch(HistoryGroup, StretchLast(wide, page - right));
+        static void Stretch(FrameworkElement g, bool on)
+        {
+            var want = on ? VerticalAlignment.Stretch : VerticalAlignment.Top;
+            if (g.VerticalAlignment != want) g.VerticalAlignment = want;
+        }
+    }
+
+    /// <summary>Stretch the last group of a column: always on a wide window, else only over a gap of 120 px or less.</summary>
+    public static bool StretchLast(bool wide, double gap) => wide || gap <= 120;
+
     void SideStatus_Click(object sender, MouseButtonEventArgs e) => NavNet.IsChecked = true;
     void Min_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
     void Max_Click(object sender, RoutedEventArgs e) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
@@ -86,6 +114,7 @@ public partial class MainWindow
     {
         base.OnSourceInitialized(e);
         if (_demo) return;
+        if (Application.Current != null) Application.Current.SessionEnding += (_, _) => _sessionEnding = true;
         _hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
         System.Windows.Interop.HwndSource.FromHwnd(_hwnd)?.AddHook(WndProc);
         RegisterHotkeys();
@@ -93,7 +122,7 @@ public partial class MainWindow
 
     void RegisterHotkeys()
     {
-        RegisterOne(HotkeyId, _s.HotkeySwitch, "the Switch button");
+        RegisterOne(HotkeyId, _s.HotkeySwitch, "the New IP + next account button");
         RegisterOne(RejoinHotkeyId, _s.HotkeyRejoin, "the Change IP and rejoin button");
         RegisterDevHotkeys();
     }
@@ -102,9 +131,9 @@ public partial class MainWindow
     {
         if (_hwnd == IntPtr.Zero) return;
         if (!Hotkey.TryParse(text, out var mods, out var vk))
-            Log.Warn($"The hotkey \"{text}\" can't be used (pick another one in Settings > Switch); use {instead}.");
+            Log.Warn($"The hotkey \"{text}\" can't be used (pick another one in Settings > New IP + next account); use {instead}.");
         else if (!RegisterHotKey(_hwnd, id, mods | MOD_NOREPEAT, vk))
-            Log.Warn($"The {text} hotkey is already in use by another program; pick another one in Settings > Switch, or use {instead}.");
+            Log.Warn($"The {text} hotkey is already in use by another program; pick another one in Settings > New IP + next account, or use {instead}.");
     }
 
     void UnregisterHotkeys()
@@ -134,26 +163,13 @@ public partial class MainWindow
         return IntPtr.Zero;
     }
 
+    /// <summary>Windows is shutting down or signing out: closing goes through without questions.</summary>
+    bool _sessionEnding, _closeAsking;
+
     protected override void OnClosed(EventArgs e)
     {
         UnregisterHotkeys();
         base.OnClosed(e);
-    }
-
-    /// <summary>
-    /// The app runs as admin, so its folder (the exe, SRT_Dados, adb, the update) must be one only admins can change (README).
-    /// Never blocks the app: an amber item in Checks, a toast and a line in the Log.
-    /// </summary>
-    void CheckAppFolder()
-    {
-#if !DEBUG
-        var dir = Path.TrimEndingDirectorySeparator(Paths.AppDir);
-        if (!Adb.UsersCanWrite(dir) && !Adb.UsersCanWrite(Paths.Data)) return;
-        const string Text = "The app runs as admin from a folder any program can change. Close it and copy CS2IPChanger.exe together with its SRT_Dados folder to C:\\Program Files\\CS2 IP Changer.";
-        _checks.Add(new CheckItem { Title = "App folder", Help = "Programs without admin rights could swap files the app loads as admin.", Ok = null, Waiting = true, Detail = Text });
-        Log.Warn(Text + " (now: " + dir + ")");
-        Toast(Text, false);
-#endif
     }
 
     /// <summary>
@@ -182,6 +198,32 @@ public partial class MainWindow
             return;
         }
         if (_closingDone || _demo) return;
+        // The first close with protection on asks once what to do with it, and the answer is kept (Settings > Protection).
+        // Never for a Windows shutdown or sign-out (nothing may hold that up); an update sets _closingDone before it closes.
+        if (_closeAsking) { e.Cancel = true; return; }   // the question is already on screen
+        if (!_s.CleanupOnExit && !_s.CloseAsked && !_sessionEnding && ProtectionArmed)
+        {
+            e.Cancel = true;
+            _closeAsking = true;
+            bool keep;
+            try
+            {
+                keep = await Ask("Close the app",
+                    $"{Blocked(_last)} stay blocked outside the phone after you close the app. Without the phone they can't connect until you open the app again and turn protection off.\n\n" +
+                    "The app remembers your answer. To change it: Settings > Protection > Turn off protection when closing the app.",
+                    "Keep and close", "Turn off and close");
+            }
+            finally { _closeAsking = false; }
+            if (!keep && !_dialogCancelClicked) return;   // Escape, or another question came up: the app stays open
+            _s.CloseAsked = true;
+            _s.CleanupOnExit = !keep;
+            _uiLock = true;
+            try { CleanupBox.IsChecked = _s.CleanupOnExit; } finally { _uiLock = false; }
+            SaveSettings();
+            Log.Info(keep ? "Closing: protection stays on after the app closes (asked once)." : "Closing: protection is turned off when the app closes (asked once).");
+            Close();
+            return;
+        }
         if (!_s.CleanupOnExit)
         {
             if (!_guard.PcOffPhoneApplied) return;

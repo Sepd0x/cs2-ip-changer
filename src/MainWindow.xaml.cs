@@ -46,7 +46,7 @@ public partial class MainWindow : Window
 
     bool _demo = false;   // only the development build turns it on (--demo)
 
-    CheckItem _cFirewall, _cKill, _cEgress, _cRoutes, _cDiff, _cPhoneData, _cQuality, _cCs2, _cSteam, _cPc;
+    CheckItem _cFirewall, _cKill, _cEgress, _cRoutes, _cDiff, _cPhoneData, _cQuality, _cCs2, _cSteam, _cPc, _cRegions;
     string _steamPath;
 
     static readonly Regex ServerRegex = new(@"(?<![\d.])(\d{1,3}(?:\.\d{1,3}){3})(?!\d|\.\d)(?:[ \t]*[:,; \t][ \t]*(\d+)(?!\d|\.\d))?", RegexOptions.Compiled);
@@ -84,16 +84,19 @@ public partial class MainWindow : Window
         Checks.ItemsSource = _checks;
         foreach (var h in _s.IpHistory.OrderByDescending(h => h.Time).Take(30)) _history.Add(h);
 
-        _checks.Add(_cFirewall = new CheckItem { Title = "Firewall", Help = "Must be on: it enforces the kill switch." });
-        _checks.Add(_cKill = new CheckItem { Title = "Kill switch", Help = "Rule that blocks the listed servers on every adapter except the phone." });
+        // The three rows that decide whether you are protected come first.
         _checks.Add(_cEgress = new CheckItem { Title = "Phone connection", Help = "The phone over a USB cable, which is how the servers are reached." });
         _checks.Add(_cRoutes = new CheckItem { Title = "Servers through the phone", Help = "Windows confirms that every server in your list goes through the phone." });
-        _checks.Add(_cDiff = new CheckItem { Title = "Different from home IP", Help = "If the phone is sharing your home Wi-Fi instead of mobile data, the IP would be the same." });
+        _checks.Add(_cCs2 = new CheckItem { Title = "CS2 only through the phone", Help = "Firewall rule: cs2.exe's game traffic (UDP) only goes out through the phone. Servers not in the list (game browser, invites) never see your home IP either. Web content that CS2 loads uses the normal connection." });
+        _checks.Add(_cKill = new CheckItem { Title = "Block if the phone drops", Help = "The kill switch: a Firewall rule that blocks the listed servers on every adapter except the phone, so a dropped phone never falls back to your home IP." });
+        _checks.Add(_cFirewall = new CheckItem { Title = "Windows Firewall", Help = "Must be on: it enforces the block." });
+        _checks.Add(_cDiff = new CheckItem { Title = "Phone IP is not your home IP", Help = "If the phone is sharing your home Wi-Fi instead of mobile data, the IP would be the same." });
         _checks.Add(_cPhoneData = new CheckItem { Title = "Mobile data", Help = "With the phone's Wi-Fi on, tethering may carry your home network instead of mobile data. Read through ADB; without ADB, check it yourself." });
         _checks.Add(_cQuality = new CheckItem { Title = "Connection quality", Help = "Ping, jitter and loss through the phone, measured every 30 s. Weak means lag in game: the app warns, and can drop Whole PC to Game only while it lasts (Settings > Protection)." });
-        _checks.Add(_cCs2 = new CheckItem { Title = "CS2 only through the phone", Help = "Firewall rule: cs2.exe's game traffic (UDP) only goes out through the phone. Servers not in the list (game browser, invites) never see your home IP either. Web content that CS2 loads uses the normal connection." });
         _checks.Add(_cSteam = new CheckItem { Title = "Steam through the phone", Help = "steam.exe talks to Valve through the phone, like CS2. If Steam is on another network or reconnects mid-game, the server kicks you with \"No Steam logon\"." });
-        _checks.Add(_cPc = new CheckItem { Title = "Rest of the PC", Help = "Where the normal PC traffic goes out (Steam, browser, Discord)." });
+        _checks.Add(_cPc = new CheckItem { Title = "Other apps", Help = "Where the rest of the PC's traffic goes out (browser, Discord, downloads)." });
+        _checks.Add(_cRegions = new CheckItem { Title = "Matchmaking regions", Help = "Regions you turned off on the Regions page stay blocked for CS2 matchmaking until you allow them again (Allow all). Turning protection off, closing the app and No phone mode don't change them." });
+        UpdateRegionsCheck();
 
         ApplySettingsToUi();
         UpdateHistoryEmpty();
@@ -138,7 +141,6 @@ public partial class MainWindow : Window
         else
         {
             StartupDev();
-            CheckAppFolder();
             ImportStartupFile();
             LoadAccounts();
             ShowLastServer();

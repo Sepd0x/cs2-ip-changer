@@ -110,16 +110,28 @@ static class AdminTests
         if (wifi == null) { Check("Placa com gateway para o teste da rota", false); return; }
         var add = await Net.AddRoute("203.0.113.77/32", wifi);
         Check("Rota de teste criada", add.Ok, add.Output?.Trim());
-        Store.Save(Paths.File("owned.json"), new Guard.OwnedState
+        var owned = new Guard.OwnedState
         {
             Routes = new() { $"203.0.113.77/32|{wifi.Index}|{wifi.Gateway}" },
             MetricIf = -1,
             Boot = DateTime.Now.AddMilliseconds(-Environment.TickCount64),
-        });
-        var left = await new Guard().RestoreAll(Array.Empty<string>(), keepRegions: false);
-        var still = (await Net.ListRoutes()).Any(x => x.Prefix == "203.0.113.77/32");
-        Check("Restore apaga a rota de uma sessão anterior", !still);
-        Check("Restore confirma que não ficou nada", left == null, left ?? "");
+        };
+        // G2 (31 out.): um owned.json numa pasta que qualquer programa muda (a dos testes, em C:\dev) não manda apagar nada
+        Store.Save(Paths.File("owned.json"), owned);
+        await new Guard().RestoreAll(Array.Empty<string>(), keepRegions: false);
+        Check("owned.json de pasta do utilizador ignorado: a rota fica", (await Net.ListRoutes()).Any(x => x.Prefix == "203.0.113.77/32"));
+        // Numa pasta só de admins (como Program Files) vale
+        var safe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CS2IPChanger-TESTE-owned");
+        try
+        {
+            Adb.SafeDir(safe);
+            Store.Save(Path.Combine(safe, "owned.json"), owned);
+            var left = await new Guard(Path.Combine(safe, "owned.json")).RestoreAll(Array.Empty<string>(), keepRegions: false);
+            var still = (await Net.ListRoutes()).Any(x => x.Prefix == "203.0.113.77/32");
+            Check("Restore apaga a rota de uma sessão anterior (owned.json só de admins)", !still);
+            Check("Restore confirma que não ficou nada", left == null, left ?? "");
+        }
+        finally { foreach (var d in Directory.GetDirectories(Path.GetDirectoryName(safe)!, "CS2IPChanger-TESTE-owned*")) try { Directory.Delete(d, true); } catch { } }
     }
 
     // alpha.4: "Open with CS2" abre o programa sem os direitos de admin da app (o Bloco de Notas, fechado no fim)
@@ -181,6 +193,15 @@ static class AdminTests
             Check("adb: a antiga ficou de lado", Directory.GetDirectories(Path.GetDirectoryName(root)!, "CS2IPChanger-TESTE.untrusted-*").Length == 1);
             Adb.SafeDir(root);
             Check("adb: a boa fica como está", Directory.GetDirectories(Path.GetDirectoryName(root)!, "CS2IPChanger-TESTE.untrusted-*").Length == 1);
+            // G3 (31 out.): a pasta nasce com as permissões na mesma chamada e nunca adota uma que outro programa criou entretanto
+            var raced = root + "-corrida";
+            Directory.CreateDirectory(raced);
+            var adopted = false;
+            try { Adb.CreateAdminOnly(raced); adopted = true; } catch { }
+            Check("adb: pasta criada por outro entre o pôr de lado e o criar não é adotada", !adopted && !Adb.AdminOnly(raced));
+            var fresh = root + "-nova";
+            Adb.CreateAdminOnly(fresh);
+            Check("adb: pasta nova nasce só de admins", Adb.AdminOnly(fresh));
             var adb = Adb.Find();
             if (adb != null)
                 Check("adb: corre da cópia segura", adb.StartsWith(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CS2IPChanger", "adb"), StringComparison.OrdinalIgnoreCase)

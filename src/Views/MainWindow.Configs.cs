@@ -177,6 +177,18 @@ public partial class MainWindow
 
     // ------------------------------------------------------------ The page
 
+    static readonly System.Text.RegularExpressions.Regex CfgResultTime = new(@"^(\d{1,2} [A-Za-z]{3} \d{2}:\d{2}) · (.+)$", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    /// <summary>The last sync line, with its time in mono like every other absolute time on the page.</summary>
+    void ShowCfgResult(string text)
+    {
+        CfgResult.Inlines.Clear();
+        var m = CfgResultTime.Match(text ?? "");
+        if (!m.Success) { CfgResult.Text = text; return; }
+        CfgResult.Inlines.Add(new System.Windows.Documents.Run(m.Groups[1].Value) { FontFamily = (FontFamily)FindResource("Mono") });
+        CfgResult.Inlines.Add(new System.Windows.Documents.Run(" · " + m.Groups[2].Value));
+    }
+
     void ShowConfigs()
     {
         _cfgLoading = true;
@@ -190,8 +202,7 @@ public partial class MainWindow
             CfgMainBox.IsEnabled = _s.ConfigMode == "main";
             // Sync Off: the When boxes and Sync now do nothing, so they show as disabled. The ticks stay saved for the next mode.
             var syncOn = _s.ConfigMode != "off";
-            CfgOnNewBox.IsEnabled = CfgOnLoginBox.IsEnabled = CfgSyncNowBtn.IsEnabled = syncOn;
-            CfgSyncNowBtn.Style = (Style)FindResource(syncOn ? "Primary" : "Btn");   // with Off, Copy is the one to press
+            CfgOnNewBox.IsEnabled = CfgOnLoginBox.IsEnabled = CfgSyncNowBtn.IsEnabled = syncOn;   // one primary on the page: Copy
             CfgWhenLabel.Opacity = syncOn ? 1 : 0.5;
 
             var accounts = _accounts.OrderByDescending(a => a.SteamId == _s.ConfigMainId).ThenBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
@@ -236,7 +247,7 @@ public partial class MainWindow
             // No accounts: nothing to copy to or save, so the buttons don't look like they'd do something.
             var any = _cfgRows.Count > 0;
             CfgCopyBtn.IsEnabled = CfgToAllBtn.IsEnabled = CfgToNoneBtn.IsEnabled = CfgSnapSaveBtn.IsEnabled = any;
-            CfgCopyHint.Text = any ? "Copies what is ticked in Sync > What to copy. Each account gets a backup first." : "No accounts to copy to yet.";
+            CfgCopyHint.Text = any ? "Each account gets a backup first (Backups, on the right)." : "No accounts to copy to yet.";
 
             CfgSnapList.ItemsSource = snaps.Select(s => new CfgSnapshotRow(s)).ToList();
             CfgSnapEmpty.Visibility = snaps.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -246,7 +257,7 @@ public partial class MainWindow
             CfgBackupList.ItemsSource = backups;
             CfgBackupEmpty.Visibility = backups.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             CfgUndoBtn.IsEnabled = Cfg.CanUndo;   // nothing to put back: greyed out like Sync now
-            CfgResult.Text = Cfg.State.LastResult ?? (_s.ConfigMode == "off" ? "Sync is off. To copy once, use Copy." : "No sync yet.");
+            ShowCfgResult(Cfg.State.LastResult ?? (_s.ConfigMode == "off" ? "Sync is off. To copy once, use Copy." : "No sync yet."));
         }
         catch (Exception ex) { Log.Warn("Configs page: " + Cs2ConfigStore.Why(ex)); }
         finally { _cfgLoading = false; }
@@ -612,10 +623,15 @@ public sealed class CfgSnapshotRow
     {
         Name = s.Name;
         var parts = s.Parts.Select(p => p switch { "Keys" => "binds", "Convars" => "game and crosshair", "Video" => "video", "Machine" => "HUD and audio", _ => p });
-        Detail = $"{Fmt.When(s.Created)} · {string.Join(", ", parts)}" + (s.From == "imported" ? " · imported" : "");
+        When = Fmt.When(s.Created);
+        What = string.Join(", ", parts) + (s.From == "imported" ? " · imported" : "");
+        Detail = $"{When} · {What}";
     }
     public string Name { get; }
     public string Detail { get; }
+    /// <summary>The time on its own, so the row shows it in mono like Backups and Previous IPs.</summary>
+    public string When { get; }
+    public string What { get; }
 }
 
 public sealed class CfgBackupRow

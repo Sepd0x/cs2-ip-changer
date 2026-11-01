@@ -262,7 +262,7 @@ public partial class MainWindow
         if (!_demo)
         {
             // No phone mode: you chose the home connection, so there is no protection to wait for.
-            if (_restored && !_s.NoPhone) { Toast("Protection is off. Click Run leak test first.", false); return false; }
+            if (_restored && !_s.NoPhone) { Toast("Protection is off. Click Turn protection back on (Connection) first.", false); return false; }
             await SyncNow(force: true);
             if (!_s.NoPhone && (_distrust || _cDiff.Ok == false)) { Toast("Not joining: the phone IP is the same as your home IP.", false); return false; }
             var fullOk = _last?.Egress != null && _last.EffectiveMode == "all" && _last.FullModeOk;
@@ -278,7 +278,7 @@ public partial class MainWindow
                 return false;
             if (ActiveAccount() is AccountItem acc && acc.BanFor(s.Key, s.ServerName, s.Network) is { } ban && !await Ask($"{acc.Name} was banned here",
                     (ban.Key == s.Key ? $"{s.Title} banned {acc.Name}" : $"{ban.Value?.Name ?? ban.Key}, on the same network as {s.Title}, banned {acc.Name}")
-                    + $" on {Fmt.When(ban.Value?.At)}. Networks usually share their ban list, and if the ban is on the account, a new IP won't help.\n\nSwitch ({_s.HotkeySwitch}) changes the IP and the account together.",
+                    + $" on {Fmt.When(ban.Value?.At)}. Networks usually share their ban list, and if the ban is on the account, a new IP won't help.\n\nNew IP + next account ({_s.HotkeySwitch}) changes the IP and the account together.",
                     "Join anyway"))
                 return false;
             if (!await WaitAfterCrash(s)) return false;

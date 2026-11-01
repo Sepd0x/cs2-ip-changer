@@ -143,6 +143,20 @@ static class CoreTests
             check("Janela: ecrã grande sem mudança", big == (1020, 660, 1240, 800));
         }
 
+        // Ronda visual 2: regras de layout e textos pequenos da página Connection e Servers
+        {
+            check("Connection: último grupo estica num buraco pequeno", MainWindow.StretchLast(false, 80) && MainWindow.StretchLast(false, 0));
+            check("Connection: último grupo não estica num buraco grande", !MainWindow.StretchLast(false, 300));
+            check("Connection: janela larga estica sempre", MainWindow.StretchLast(true, 600));
+            check("Servidores: colunas de jogadores", MainWindow.PlayerColumns(880) == 4 && MainWindow.PlayerColumns(100) == 1 && MainWindow.PlayerColumns(650) == 3,
+                $"{MainWindow.PlayerColumns(880)} {MainWindow.PlayerColumns(100)} {MainWindow.PlayerColumns(650)}");
+            check("Checks: regiões todas permitidas", MainWindow.RegionsCheckText(30, 0) == "All 30 allowed" && MainWindow.RegionsCheckText(0, 0) == "All allowed");
+            check("Checks: regiões bloqueadas", MainWindow.RegionsCheckText(30, 22) == "8 of 30 allowed (Regions page)" && MainWindow.RegionsCheckText(0, 3) == "3 turned off (Regions page)");
+            var h = new IpHistoryEntry { Isp = "Telefonica Germany · Berlin · Germany" };
+            check("IPs anteriores: sem o país", h.IspShort == "Telefonica Germany · Berlin" && new IpHistoryEntry { Isp = "ISP · Germany" }.IspShort == "ISP · Germany"
+                && new IpHistoryEntry().IspShort == null, h.IspShort);
+        }
+
         // F17: o loginusers.vdf escreve-se pela pasta presa e pelo próprio handle (pastas temporárias, nunca o Steam deste PC)
         {
             var root = Path.Combine(Path.GetTempPath(), "srt-core-steam-" + Guid.NewGuid().ToString("N"));

@@ -182,40 +182,47 @@ public partial class MainWindow
         var c = SwitchChoice;
         var next = c.Account ? NextQuick() : null;
         var pool = _accounts.Count(a => a.Usable);
-        SideQuickLabel.Text = next == null ? "Switch" : "Switch to";
-        SideQuickNext.Text = next?.Name ?? "";
+        // Named for what it does: a new IP first, then the account (or only one of them, if Settings leaves out a step).
+        var who = c.Account ? next?.Name ?? "next account" : null;
+        var head = c.Ip && who != null ? "New IP + " : c.Ip ? "New IP" : who != null ? "Log in to " : "Switch";
+        SideQuickLabel.Text = head.TrimEnd();
+        SideQuickNext.Text = who ?? "";
+        SideQuickNext.Margin = new Thickness(who == null ? 0 : 4, 0, 0, 0);
         // Shorter than the top bar: at the minimum width (1020) a longer name pushes the "On login:" row onto two lines. The tooltip has it whole.
-        QuickBtn.Content = next == null ? "Switch" : "Switch to " + (next.Name.Length > 10 ? next.Name.Substring(0, 9) + "…" : next.Name);
+        QuickBtn.Content = head + (who == null ? "" : who.Length > 10 ? who.Substring(0, 9) + "…" : who);
+        // With fewer than two accounts there is nothing to rotate to: the command isn't offered.
+        var offered = !c.Account || _accounts.Count >= 2;
+        SideQuick.Visibility = QuickBtn.Visibility = offered ? Visibility.Visible : Visibility.Collapsed;
         // Always clickable: a click that can't run says why, instead of a grey button that doesn't answer.
         var steps = new List<string>();
         if (c.Ip) steps.Add("changes the IP");
-        if (c.Account) steps.Add(next == null ? "logs in to the next account (none now: all are skipped, on cooldown or banned)" : $"logs in to {next.Name}");
+        if (c.Account) steps.Add(next == null ? "logs in to the next account (none now: all are out of rotation, on cooldown or banned)" : $"logs in to {next.Name}");
         if (c.Rejoin) steps.Add($"joins {_s.LastServer ?? "the last server"} again");
-        var tip = steps.Count == 0 ? "Switch does nothing yet: pick its steps in Settings > Switch."
-            : "Switch " + (steps.Count == 1 ? steps[0] : string.Join(", ", steps.Take(steps.Count - 1)) + " and " + steps[^1]) + " (with the usual checks)."
-              + (c.Account ? $"\n{Fmt.Count(pool, "account")} in the rotation (not skipped, no cooldown or ban)." : "")
-              + $"\nPick the steps in Settings > Switch. Shortcut anywhere, even in game: {_s.HotkeySwitch}.";
+        var tip = steps.Count == 0 ? "This button does nothing yet: pick its steps in Settings > New IP + next account."
+            : "In order, it " + (steps.Count == 1 ? steps[0] : string.Join(", ", steps.Take(steps.Count - 1)) + " and " + steps[^1]) + " (with the usual checks)."
+              + (c.Account ? $"\n{Fmt.Count(pool, "account")} in the rotation (no cooldown or ban)." : "")
+              + $"\nPick the steps in Settings > New IP + next account. Shortcut anywhere, even in game: {_s.HotkeySwitch}.";
         QuickBtn.ToolTip = tip;
         SideQuick.ToolTip = tip;
 
         ApplyServerBans();   // the ban marks on Servers follow the account in use
     }
 
-    async void Quick_Click(object sender, RoutedEventArgs e) => await QuickSwitch("Switch");
+    async void Quick_Click(object sender, RoutedEventArgs e) => await QuickSwitch("New IP + next account");
 
     /// <summary>The one switch, with the steps picked in Settings (by default: new IP, next account, back to the last server).</summary>
-    Task QuickSwitch(string from) => RunCommand("Switch", "starting…", () => RunSwitch(SwitchChoice, from));
+    Task QuickSwitch(string from) => RunCommand("New IP + next account", "starting…", () => RunSwitch(SwitchChoice, from));
 
     /// <summary>The account quick switch would use now (also for Switch), or null with the reason shown.</summary>
     AccountItem PickQuick(ServerItem server = null)
     {
-        if (_accounts.Count < 2) { Toast("Switch needs at least 2 saved accounts. Add one on Accounts.", false); return null; }
+        if (_accounts.Count < 2) { Toast("New IP + next account needs at least 2 saved accounts. Add one on Accounts.", false); return null; }
         var next = NextQuick(server);
         var skipped = _accounts.Where(a => !a.Usable).Select(a =>
-            $"{a.Name} ({(a.Excluded ? "skipped" : a.InCooldown ? "cooldown" : "ban")})").ToList();
-        if (skipped.Count > 0) Log.Info("Switch left out: " + string.Join(", ", skipped));
-        if (next == null) { Toast(server == null ? "No account for Switch: all are skipped, on cooldown or banned." : $"No account left for {server.Title}: the others are skipped, on cooldown or banned (also by this server's network).", false); return null; }
-        if (next.Meta.ExcludeQuick) { Log.Error("Switch picked a skipped account; cancelled."); return null; }
+            $"{a.Name} ({(a.Excluded ? "not in rotation" : a.InCooldown ? "cooldown" : "ban")})").ToList();
+        if (skipped.Count > 0) Log.Info("Left out of the rotation: " + string.Join(", ", skipped));
+        if (next == null) { Toast(server == null ? "No account to switch to: all are out of rotation, on cooldown or banned." : $"No account left for {server.Title}: the others are out of rotation, on cooldown or banned (also by this server's network).", false); return null; }
+        if (next.Meta.ExcludeQuick) { Log.Error("Picked an account that is not in rotation; cancelled."); return null; }
         return next;
     }
 
@@ -226,7 +233,7 @@ public partial class MainWindow
         a.RefreshAll();
         SaveAccounts();
         ApplyAccountFilter();
-        Toast(a.Excluded ? $"Switch will skip {a.Name} now." : $"Switch can use {a.Name} again.", true);
+        Toast(a.Excluded ? $"{a.Name} is out of the rotation now." : $"{a.Name} is back in the rotation.", true);
     }
 
     static AccountItem Acc(object sender) => (sender as FrameworkElement)?.DataContext as AccountItem;

@@ -46,7 +46,7 @@ public sealed class ProfileRow : Observable
     public bool SignedIn { get => _signedIn; set { if (Set(ref _signedIn, value)) { Raise(nameof(SessionBrush)); Raise(nameof(SignInText)); } } }
     public string Session { get => _session; set => Set(ref _session, value); }
     public Brush SessionBrush => SignedIn ? Ui.Good : Ui.Faint;
-    public string SignInText => SignedIn ? "Forget" : "Sign in";
+    public string SignInText => SignedIn ? "Sign out" : "Sign in";
 
     public string After { get => _after; set { if (Set(ref _after, value)) Raise(nameof(AfterInitial)); } }
     public string AfterDetail { get => _afterDetail; set => Set(ref _afterDetail, value); }

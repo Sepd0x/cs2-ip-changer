@@ -3,6 +3,8 @@ using SRT.Core;
 
 // "--admin <ficheiro>": testes que precisam de admin (só regras e rotas de teste), ver AdminTests.cs
 if (args.Length > 1 && args[0] == "--admin") Environment.Exit(await AdminTests.Run(args[1]));
+// "--dll-search <nome>": processo à parte do teste da pesquisa de DLLs (SecurityTests.cs)
+if (args.Length > 1 && args[0] == "--dll-search") return SecurityTests.DllSearchChild(args[1]);
 
 // "--a2s <ip> <porta> <ip local>": pergunta a um servidor real (pelo telemóvel) e mostra os jogadores
 if (args.Length > 3 && args[0] == "--a2s")
@@ -424,7 +426,7 @@ using (var z = System.IO.Compression.ZipFile.OpenRead(rZip))
 // beta.1: o ipwho.is responde por HTTPS (precisa de rede)
 try
 {
-    var info = await Net.Lookup("1.1.1.1");
+    var info = await Net.Lookup("1.1.1.1", Net.BestInterface("1.1.1.1"));   // pela ligação que o Windows usa (G5)
     Env("Operadora por HTTPS (ipwho.is)", info?.Isp != null, info?.Short ?? "sem resposta");
 }
 catch (Exception ex) { Env("Operadora por HTTPS (ipwho.is)", false, ex.Message); }
@@ -581,6 +583,8 @@ ConfigTests.Run((n, ok, d) => Check(n, ok, d), (n, ok, d) => Env(n, ok, d));
 await ProfileTests.Run(Check, Env);
 // Correções da auditoria do núcleo (CoreTests.cs)
 CoreTests.Run(Check);
+// Análise de segurança da beta.6, G1 a G5 (SecurityTests.cs)
+SecurityTests.Run(Check);
 // Phone setup e modo sem telemóvel (PhoneTests.cs), e o "<continente> only" das Regiões
 PhoneTests.Run(Check);
 RegionTests.Continent(Check);

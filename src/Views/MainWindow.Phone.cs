@@ -29,7 +29,7 @@ public partial class MainWindow
         _adb ??= Adb.Find();
         if (_adb == null)
         {
-            SetPhone(Ui.Faint, "Phone tool (ADB) not installed", "Needed for the Change IP button. Free, from Google, about 7 MB.");
+            SetPhone(Ui.Faint, "Phone tool not installed", "ADB, free from Google, about 7 MB. Phone setup installs it for you.");
             AdbInstallBtn.Visibility = Visibility.Visible;
             return;
         }
@@ -37,7 +37,7 @@ public partial class MainWindow
         // One stray Wi-Fi answer (an adb error, a timeout) neither flips the block nor lifts it: see Adb.SteadyWifi.
         var info = Adb.SteadyWifi(await Adb.Status(_adb), _phone, ref _wifiOnReads);
         var wifiBefore = PhoneWifiOn;
-        _phone = info;
+        _phone = info;   // SetPhone below redraws the buttons for it (PhoneFirstRun)
         DiagPhone(info);
         if (info == null) SetPhone(Ui.Bad, "ADB failed to start", "Try reinstalling ADB.");
         else if (info.State == "none")
@@ -98,13 +98,26 @@ public partial class MainWindow
     /// <summary>"Mobile data" check: the phone shares its data and not the home Wi-Fi.</summary>
     void UpdatePhoneCheck()
     {
+        PhoneFirstRun();
         // Change IP only makes sense with the phone ready on ADB (and not in the no phone mode).
         ChangeIpBtn.IsEnabled = !_changingIp && _phone?.Ready == true && !_s.NoPhone;
         ChangeIpBtn.ToolTip = _s.NoPhone ? "Off in the no phone mode: pick another option under What goes through the phone."
             : "Turns the phone's mobile data off and on until the carrier gives a new IP. Needs the phone set up over ADB. If you are on a server, you will drop.";
         UpdateRejoinBtn();
+        UpdateDataCheck();
+    }
+
+    /// <summary>The Mobile data row of Checks. While an IP change runs it says the data is off (or coming back), never green.</summary>
+    void UpdateDataCheck()
+    {
         var egress = _last?.Egress;
-        if (_s.NoPhone)
+        if (_changingData != null && !_s.NoPhone)
+        {
+            _cPhoneData.Ok = null;
+            _cPhoneData.Waiting = false;
+            _cPhoneData.Detail = _changingData;
+        }
+        else if (_s.NoPhone)
         {
             _cPhoneData.Ok = null;
             _cPhoneData.Waiting = false;
@@ -153,6 +166,28 @@ public partial class MainWindow
         PhoneDot.Fill = dot;
         PhoneState.Text = state;
         PhoneDetail.Text = detail;
+        PhoneFirstRun();
+    }
+
+    /// <summary>
+    /// Until a phone has been seen once, Phone setup is the one button to press: it goes first, as the only primary, and the single
+    /// steps it does by itself (install ADB, USB tethering) stay hidden. After that the buttons are back as before.
+    /// </summary>
+    void PhoneFirstRun()
+    {
+        var first = !PhoneKnown && !_s.NoPhone;
+        AdbInstallHost.Visibility = first ? Visibility.Collapsed : Visibility.Visible;
+        // USB tethering can only be asked of a phone ADB sees: while it isn't found the button would only fail.
+        TetherHost.Visibility = first || _phone?.Ready != true ? Visibility.Collapsed : Visibility.Visible;
+        PhoneSetupBtn.Style = (Style)FindResource(first ? "Primary" : typeof(Button));
+        WifiOffBtn.Style = (Style)FindResource(first ? typeof(Button) : "Primary");
+        var at = PhoneButtons.Children.IndexOf(PhoneSetupBtn);
+        var want = first ? 0 : PhoneButtons.Children.Count - 1;
+        if (at != want)
+        {
+            PhoneButtons.Children.Remove(PhoneSetupBtn);
+            PhoneButtons.Children.Insert(want, PhoneSetupBtn);
+        }
     }
 
     async void AdbInstall_Click(object sender, RoutedEventArgs e)
@@ -423,11 +458,11 @@ public partial class MainWindow
             }
             for (var attempt = 1; attempt <= Math.Max(1, _s.MaxAttempts); attempt++)
             {
-                ShowProgress($"Attempt {attempt}/{_s.MaxAttempts}: turning off the phone's data for {_s.OffSeconds} s…");
+                ShowProgress($"Attempt {attempt}/{_s.MaxAttempts}: phone data off for {_s.OffSeconds} s…");
                 var err = await Adb.Cycle(_adb, _phone.Serial, method, Math.Clamp(_s.OffSeconds, 1, 60));
                 if (err != null) { Log.Error(err); Toast(err, Tone.Error); return false; }
 
-                ShowProgress($"Attempt {attempt}/{_s.MaxAttempts}: waiting for the mobile network to come back…");
+                ShowProgress($"Attempt {attempt}/{_s.MaxAttempts}: waiting for the mobile network…");
                 got = await WaitForEgressIp(TimeSpan.FromSeconds(50));
                 if (got == null) { ShowProgress("The network hasn't come back yet…"); continue; }
                 if (got == first) { Log.Info($"The carrier gave back the same IP ({got})."); continue; }
@@ -454,7 +489,7 @@ public partial class MainWindow
             {
                 var range = RangeNote(got, out var sameRange);
                 _egressPublic = got;
-                _egressInfo = await Net.Lookup(got);
+                _egressInfo = await PhoneIpInfo(got);
                 AddHistory(got, _egressInfo, "trocado");
                 ResetQuality();
                 Log.Ok($"Mobile data back on: {got} (the IP before wasn't known, so it can't be compared). {range}");
@@ -465,7 +500,7 @@ public partial class MainWindow
             {
                 var range = RangeNote(got, out var sameRange);
                 _egressPublic = got;
-                _egressInfo = await Net.Lookup(got);
+                _egressInfo = await PhoneIpInfo(got);
                 AddHistory(got, _egressInfo, "trocado");
                 ResetQuality();
                 if (sameRange) Log.Warn($"IP changed: {first} → {got}. {range}");
@@ -508,6 +543,13 @@ public partial class MainWindow
         same = seen != null;
         return !same ? $"New range ({r}.x.x)."
             : $"Same range ({r}.x.x) as {seen}. If the server banned that range, change again" + (_s.RequireNew16 ? "." : " or turn on \"Keep changing until the IP is in a new range\" in Settings.");
+    }
+
+    /// <summary>The new IP's ISP and country, asked through the phone and never through home (see Net.Lookup).</summary>
+    async Task<Net.IpInfo> PhoneIpInfo(string ip)
+    {
+        var egress = Net.PickEgress(await Task.Run(Net.Scan), _s.EgressAdapterId, _s.EgressSsid);
+        return await Net.Lookup(ip, egress?.Index ?? -1, egress?.LocalIp);
     }
 
     async Task<string> WaitForEgressIp(TimeSpan max)

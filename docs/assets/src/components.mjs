@@ -1,4 +1,5 @@
 // Generates the README's SVG pieces in docs/assets (a light and a dark version of each where it matters).
+// The framed screenshots and crops come from tools/readme-shots.py, not from here.
 // Run with: node docs/assets/src/components.mjs
 // Colors come from src/Theme.xaml so the README looks like the app.
 import fs from 'node:fs';
@@ -77,4 +78,83 @@ ${node(352, 156, 196, 'Home router', 'everything else')}
 for (const [name, t] of Object.entries(themes)) {
   write(`how-it-works-${name}.svg`, route(t));
 }
+
+// ------------------------------------------------------------------ how it works, phone width (the README shows it below 600 px)
+// One file for both themes: the colours switch with prefers-color-scheme inside the SVG, like the wide pair does with <picture>.
+// Drawn at 320 wide so it shows at about 1:1 in GitHub's 309 to 343 px phone column; no text under 13 px.
+function routeMobile() {
+  const d = themes.dark, l = themes.light;
+  const W = 320, X = 16, NW = 288, NH = 60, CX = 160;
+  const node = (y, title, sub, cls = '', subCls = 'mu', mono = false) => `
+<g>
+<rect class="node ${cls}" x="${X}" y="${y}" width="${NW}" height="${NH}" rx="9"/>
+<text class="tx" x="${X + 18}" y="${y + 26}" font-family="${FONT}" font-size="17" font-weight="600">${esc(title)}</text>
+<text class="${subCls}" x="${X + 18}" y="${y + 46}" font-family="${mono ? MONO : FONT}" font-size="14">${esc(sub)}</text>
+</g>`;
+  const A = `M${CX} 76 V132`, B = `M${CX} 192 V248`;
+  const pkt = (path, begin) => `<circle class="pkt" r="4"><animateMotion dur="1.4s" begin="${begin}" repeatCount="indefinite" path="${path}"/></circle>`;
+  const H = 438;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Your PC sends CS2 and Steam over USB or the hotspot to the phone, which uses 4G or 5G to reach the CS2 server. The server sees the carrier's IP. Your home router still carries everything else, but it is blocked for CS2 and your servers.">
+<style>
+.bg{fill:${d.panel};stroke:${d.line}}
+.node{fill:${d.node};stroke:${d.line};stroke-width:1}
+.node.on{stroke:${d.accent};stroke-width:1.5}
+.node.home{fill:${d.panel};stroke:${d.strong};stroke-dasharray:5 5}
+.tx{fill:${d.text}}
+.mu{fill:${d.muted}}
+.ac{fill:${d.accent}}
+.wire{stroke:${d.accent};stroke-width:2}
+.pkt{fill:${d.accent}}
+.rule{stroke:${d.line};stroke-dasharray:2 4}
+.x circle{fill:${d.panel};stroke:${d.bad}}
+.x path{stroke:${d.bad}}
+@media (prefers-color-scheme: light){
+.bg{fill:${l.panel};stroke:${l.line}}
+.node{fill:${l.node};stroke:${l.line}}
+.node.on{stroke:${l.accent}}
+.node.home{fill:${l.panel};stroke:${l.strong}}
+.tx{fill:${l.text}}
+.mu{fill:${l.muted}}
+.ac{fill:${l.accent}}
+.wire{stroke:${l.accent}}
+.pkt{fill:${l.accent}}
+.rule{stroke:${l.line}}
+.x circle{fill:${l.panel};stroke:${l.bad}}
+.x path{stroke:${l.bad}}
+}
+@media (prefers-reduced-motion: reduce){.pkt{display:none}}
+</style>
+<rect class="bg" x=".5" y=".5" width="${W - 1}" height="${H - 1}" rx="12"/>
+<path class="wire" d="${A}"/>
+<path class="wire" d="${B}"/>
+<text class="mu" x="${CX + 14}" y="109" font-family="${FONT}" font-size="13.5">USB or hotspot</text>
+<text class="mu" x="${CX + 14}" y="225" font-family="${FONT}" font-size="13.5">4G / 5G</text>
+${pkt(A, '0s')}${pkt(A, '-0.7s')}${pkt(B, '-0.35s')}${pkt(B, '-1.05s')}
+${node(16, 'Your PC', 'CS2 and Steam')}
+${node(132, 'Phone', 'mobile data', 'on')}
+${node(248, 'CS2 server', 'sees 198.51.100.23', '', 'ac', true)}
+<path class="rule" d="M${X} 326 H${X + NW}"/>
+<g>
+<rect class="node home" x="${X}" y="344" width="${NW}" height="78" rx="9"/>
+<text class="tx" x="${X + 18}" y="370" font-family="${FONT}" font-size="17" font-weight="600">Home router</text>
+<text class="mu" x="${X + 18}" y="390" font-family="${FONT}" font-size="14">everything else</text>
+<g class="x" transform="translate(${X + 26} 405)"><circle r="7.5" stroke-width="1.5"/><path d="M-3 -3 L3 3 M3 -3 L-3 3" stroke-width="1.8" stroke-linecap="round"/></g>
+<text class="mu" x="${X + 40}" y="410" font-family="${FONT}" font-size="14">blocked for CS2 and your servers</text>
+</g>
+</svg>`;
+}
+write('how-it-works-mobile.svg', routeMobile());
+
+// ------------------------------------------------------------------ the app's top line, first thing in the README
+// 888:8 drawn without keeping the ratio, so the README can cap it with height="4": 4 px on a desktop, about 3 px on a phone.
+// One slow glint every 9 s; none with reduced motion. Delete the .sweep rect for a still line.
+write('line-sweep.svg', `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 888 8" width="888" height="8" preserveAspectRatio="none">
+<style>@media (prefers-reduced-motion: reduce){.sweep{display:none}}</style>
+<defs>
+<linearGradient id="skeet" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#3BB4E5"/><stop offset=".5" stop-color="#C64FC6"/><stop offset="1" stop-color="#D8E03A"/></linearGradient>
+<linearGradient id="glint" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+</defs>
+<rect width="888" height="8" fill="url(#skeet)"/>
+<rect class="sweep" x="-220" y="0" width="220" height="8" fill="url(#glint)"><animate attributeName="x" values="-220;888;888" keyTimes="0;.5;1" dur="9s" repeatCount="indefinite"/></rect>
+</svg>`);
 console.log('written to', out.pathname);

@@ -345,8 +345,26 @@ public partial class MainWindow
 
     // ------------------------------------------------------------ Status
 
+    /// <summary>The Regions block in Checks: it outlives protection and closing the app, so Connection says it is on.</summary>
+    void UpdateRegionsCheck()
+    {
+        if (_cRegions == null) return;
+        var total = _regions.Count;
+        var off = total > 0 ? _regions.Count(r => !r.Allowed) : _s.BlockedRegions.Count;
+        _cRegions.Detail = RegionsCheckText(total, off);
+        _cRegions.Ok = null;
+        _cRegions.Waiting = off > 0;   // grey when every region is allowed, amber while some are blocked
+    }
+
+    /// <summary>"8 of 30 allowed", "All 30 allowed"; before Valve's list is read, the count turned off.</summary>
+    public static string RegionsCheckText(int total, int off) =>
+        off == 0 ? (total > 0 ? $"All {total} allowed" : "All allowed")
+        : total > 0 ? $"{total - off} of {total} allowed (Regions page)"
+        : $"{off} turned off (Regions page)";
+
     void ShowRegionsStatus()
     {
+        UpdateRegionsCheck();
         if (RegionsStatus == null) return;
         // Nothing to act on until Valve's list is here (the buttons would only answer "No regions yet"). The demo fills the page itself.
         RegionsClosestBtn.IsEnabled = RegionsContinentBtn.IsEnabled = RegionsAllowAllBtn.IsEnabled = RegionsUnderBtn.IsEnabled = _regionInfos != null || (_demo && _sdr != null);

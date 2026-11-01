@@ -12,9 +12,9 @@
     <Color x:Key="Top3">#D8E03A</Color>
 
     <!-- ============================================================ Base (same for all three colors) -->
-    <Color x:Key="BgColor">#121212</Color>
+    <Color x:Key="BgColor">#0E0E0E</Color>
     <Color x:Key="SurfaceColor">#171717</Color>
-    <SolidColorBrush x:Key="Bg" Color="#121212"/>
+    <SolidColorBrush x:Key="Bg" Color="#0E0E0E"/>
     <SolidColorBrush x:Key="Side" Color="#0B0B0B"/>
     <SolidColorBrush x:Key="Surface" Color="#171717"/>
     <SolidColorBrush x:Key="Surface2" Color="#1D1D1D"/>
@@ -23,7 +23,7 @@
     <SolidColorBrush x:Key="Line" Color="#2A2A2A"/>
     <SolidColorBrush x:Key="LineStrong" Color="#383838"/>
     <SolidColorBrush x:Key="Text" Color="#DDDDDD"/>
-    <SolidColorBrush x:Key="Muted" Color="#9B9B9B"/>
+    <SolidColorBrush x:Key="Muted" Color="#ADADAD"/>
     <SolidColorBrush x:Key="Faint" Color="#888888"/>
     <SolidColorBrush x:Key="Good" Color="#7CC95A"/>
     <SolidColorBrush x:Key="GoodSoft" Color="#1E7CC95A"/>
@@ -31,6 +31,7 @@
     <SolidColorBrush x:Key="WarnSoft" Color="#1EE3BF4B"/>
     <SolidColorBrush x:Key="Bad" Color="#F05A4F"/>
     <SolidColorBrush x:Key="BadSoft" Color="#22F05A4F"/>
+    <SolidColorBrush x:Key="BadDim" Color="#8CF05A4F"/>
     <SolidColorBrush x:Key="Info" Color="#E8E8E8"/>
     <SolidColorBrush x:Key="InfoSoft" Color="#10FFFFFF"/>
 
@@ -86,6 +87,25 @@
         <Setter Property="Foreground" Value="{StaticResource Muted}"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
     </Style>
+    <!-- Labels, hints and tags: here once, so the main window and the Steam sign-in window share them -->
+    <Style x:Key="Tag" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Margin" Value="0,0,10,3"/>
+        <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+    </Style>
+    <Style x:Key="Key" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource Faint}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Margin" Value="0,0,0,3"/>
+    </Style>
+    <Style x:Key="OptSub" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Faint}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="Margin" Value="0,1,0,0"/>
+        <Setter Property="MaxWidth" Value="640"/>
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+    </Style>
 
     <!-- ============================================================ Group box: the title sits on the line -->
     <Style x:Key="Group" TargetType="HeaderedContentControl">
@@ -128,16 +148,16 @@
             <Setter.Value>
                 <ControlTemplate TargetType="HeaderedContentControl">
                     <Grid>
-                        <Border Margin="0,7,0,0" Background="{StaticResource Surface}" BorderBrush="{StaticResource Edge}" BorderThickness="1">
-                            <Border BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="{TemplateBinding Padding}">
+                        <Border Margin="0,7,0,0" Background="{StaticResource Surface}" BorderBrush="#000000" BorderThickness="1">
+                            <Border BorderBrush="{StaticResource LineStrong}" BorderThickness="1" Padding="{TemplateBinding Padding}">
                                 <ContentPresenter/>
                             </Border>
                         </Border>
                         <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,0,0,0" Padding="5,0" Height="16">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                    <GradientStop Color="#050505" Offset="0"/>
-                                    <GradientStop Color="#050505" Offset="0.5"/>
+                                    <GradientStop Color="#040404" Offset="0"/>
+                                    <GradientStop Color="#040404" Offset="0.5"/>
                                     <GradientStop Color="{StaticResource SurfaceColor}" Offset="0.5"/>
                                     <GradientStop Color="{StaticResource SurfaceColor}" Offset="1"/>
                                 </LinearGradientBrush>
@@ -193,7 +213,8 @@
         <Setter Property="Background" Value="{StaticResource BtnFill}"/>
         <Setter Property="Foreground" Value="{StaticResource Text}"/>
         <Setter Property="BorderBrush" Value="{StaticResource LineStrong}"/>
-        <Setter Property="Padding" Value="14,6"/>
+        <Setter Property="Padding" Value="14,0"/>
+        <Setter Property="MinHeight" Value="28"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="Margin" Value="0,0,6,0"/>
@@ -241,6 +262,7 @@
 
     <Style x:Key="Ghost" TargetType="Button" BasedOn="{StaticResource Btn}">
         <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+        <Setter Property="MinHeight" Value="0"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -262,6 +284,81 @@
 
     <Style x:Key="Danger" TargetType="Button" BasedOn="{StaticResource Btn}">
         <Setter Property="Foreground" Value="{StaticResource Bad}"/>
+        <Style.Triggers>
+            <!-- Disabled: grey, so it doesn't read as an active dark red button -->
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{StaticResource Faint}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- The Primary recipe in red: the confirm button of a dialog that undoes or deletes something -->
+    <Style x:Key="DangerStrong" TargetType="Button" BasedOn="{StaticResource Btn}">
+        <Setter Property="Foreground" Value="{StaticResource Bad}"/>
+        <Setter Property="Background" Value="{StaticResource BadSoft}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BadDim}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{StaticResource Faint}"/>
+                <Setter Property="Background" Value="{StaticResource BtnFill}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource LineStrong}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- In-row actions (Join, Log in, Restore, Sign in, Update): the compact height -->
+    <Style x:Key="RowBtn" TargetType="Button" BasedOn="{StaticResource Btn}">
+        <Setter Property="MinHeight" Value="24"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Padding" Value="12,0"/>
+    </Style>
+    <Style x:Key="RowPrimary" TargetType="Button" BasedOn="{StaticResource Primary}">
+        <Setter Property="MinHeight" Value="24"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Padding" Value="12,0"/>
+    </Style>
+
+    <!-- A secondary in-row action: plain text, framed only while its row is hovered or selected -->
+    <Style x:Key="RowGhost" TargetType="Button" BasedOn="{StaticResource RowBtn}">
+        <Setter Property="Foreground" Value="{StaticResource Faint}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="o" BorderBrush="Transparent" BorderThickness="1">
+                        <Border x:Name="b" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                        </Border>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                            <Setter TargetName="o" Property="BorderBrush" Value="{StaticResource Edge}"/>
+                            <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource LineStrong}"/>
+                            <Setter TargetName="b" Property="Background" Value="{StaticResource BtnFill}"/>
+                            <Setter Property="Foreground" Value="{StaticResource Text}"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                            <Setter TargetName="o" Property="BorderBrush" Value="{StaticResource Edge}"/>
+                            <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource LineStrong}"/>
+                            <Setter TargetName="b" Property="Background" Value="{StaticResource BtnFill}"/>
+                            <Setter Property="Foreground" Value="{StaticResource Text}"/>
+                        </DataTrigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="o" Property="BorderBrush" Value="{StaticResource Edge}"/>
+                            <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource LineStrong}"/>
+                            <Setter TargetName="b" Property="Background" Value="{StaticResource BtnFillHover}"/>
+                            <Setter Property="Foreground" Value="{StaticResource Text}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="b" Property="Background" Value="{StaticResource Surface}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="b" Property="Opacity" Value="0.45"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <Style x:Key="IconBtn" TargetType="Button" BasedOn="{StaticResource Ghost}">
@@ -270,12 +367,13 @@
         <Setter Property="Height" Value="28"/>
         <Setter Property="Margin" Value="2,0"/>
         <Setter Property="FontFamily" Value="{StaticResource Icons}"/>
-        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="MinHeight" Value="0"/>
     </Style>
 
     <Style x:Key="Chrome" TargetType="Button">
         <Setter Property="Width" Value="42"/>
-        <Setter Property="Height" Value="30"/>
+        <Setter Property="Height" Value="44"/>
         <Setter Property="Foreground" Value="{StaticResource Faint}"/>
         <Setter Property="FontFamily" Value="{StaticResource Icons}"/>
         <Setter Property="FontSize" Value="9"/>
@@ -290,6 +388,14 @@
                             <Setter TargetName="b" Property="Background" Value="{StaticResource Surface3}"/>
                             <Setter Property="Foreground" Value="{StaticResource Text}"/>
                         </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Property="Tag" Value="close"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="b" Property="Background" Value="{StaticResource BadSoft}"/>
+                            <Setter Property="Foreground" Value="{StaticResource Bad}"/>
+                        </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -300,7 +406,7 @@
     <Style x:Key="Nav" TargetType="RadioButton">
         <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
         <Setter Property="Foreground" Value="{StaticResource Faint}"/>
-        <Setter Property="FontSize" Value="10.5"/>
+        <Setter Property="FontSize" Value="11"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="GroupName" Value="nav"/>
         <Setter Property="Height" Value="62"/>
@@ -310,16 +416,21 @@
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
                     <Border x:Name="b" Background="Transparent" BorderBrush="Transparent" BorderThickness="0,1,0,1">
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock x:Name="ic" Text="{TemplateBinding Tag}" Style="{StaticResource Icon}" FontSize="19" HorizontalAlignment="Center"/>
-                            <ContentPresenter Margin="0,6,0,0" HorizontalAlignment="Center"/>
-                        </StackPanel>
+                        <Grid>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock x:Name="ic" Text="{TemplateBinding Tag}" Style="{StaticResource Icon}" FontSize="20" HorizontalAlignment="Center"/>
+                                <ContentPresenter Margin="0,6,0,0" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            <!-- the active tab: a 2 px accent bar on the left edge -->
+                            <Border x:Name="bar" Width="2" Height="28" HorizontalAlignment="Left" VerticalAlignment="Center" Background="{StaticResource Accent}" Visibility="Collapsed"/>
+                        </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+                            <Setter Property="Foreground" Value="{StaticResource Text}"/>
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="bar" Property="Visibility" Value="Visible"/>
                             <Setter TargetName="b" Property="Background" Value="{StaticResource Bg}"/>
                             <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource Line}"/>
                             <Setter Property="Foreground" Value="{StaticResource Text}"/>
@@ -401,7 +512,7 @@
         </Setter>
     </Style>
 
-    <!-- Choice (radio) with the same square -->
+    <!-- Choice (radio): the same 13 px square as the checkbox, with a 5 px square inside when picked -->
     <Style x:Key="Choice" TargetType="RadioButton">
         <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
         <Setter Property="Foreground" Value="{StaticResource Text}"/>
@@ -418,22 +529,22 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Grid VerticalAlignment="Top" Margin="0,2,0,0">
-                            <Ellipse x:Name="box" Width="13" Height="13" Stroke="{StaticResource LineStrong}" StrokeThickness="1" Fill="{StaticResource BoxFill}"/>
-                            <Ellipse x:Name="dot" Width="7" Height="7" Fill="{StaticResource AccentFill}" Visibility="Collapsed"/>
+                            <Border x:Name="box" Width="13" Height="13" BorderBrush="{StaticResource LineStrong}" BorderThickness="1" Background="{StaticResource BoxFill}"/>
+                            <Border x:Name="dot" Width="5" Height="5" Background="{StaticResource AccentFill}" Visibility="Collapsed"/>
                         </Grid>
                         <ContentPresenter Grid.Column="1" Margin="9,0,0,0" VerticalAlignment="Center"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="dot" Property="Visibility" Value="Visible"/>
-                            <Setter TargetName="box" Property="Stroke" Value="{StaticResource AccentFill}"/>
+                            <Setter TargetName="box" Property="BorderBrush" Value="{StaticResource AccentFill}"/>
                         </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsMouseOver" Value="True"/>
                                 <Condition Property="IsChecked" Value="False"/>
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="box" Property="Stroke" Value="{StaticResource LineStrong}"/>
+                            <Setter TargetName="box" Property="BorderBrush" Value="{StaticResource Muted}"/>
                         </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -536,11 +647,14 @@
                         <ContentPresenter Margin="10,0,28,0" VerticalAlignment="Center" IsHitTestVisible="False"
                                           Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"/>
                         <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" AllowsTransparency="True" Focusable="False">
+                            <!-- The same double frame as the context menu, so every popup matches -->
                             <Border Background="{StaticResource Surface2}" BorderBrush="{StaticResource Edge}" BorderThickness="1"
                                     MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" MaxHeight="320">
-                                <ScrollViewer>
-                                    <ItemsPresenter/>
-                                </ScrollViewer>
+                                <Border BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="2">
+                                    <ScrollViewer>
+                                        <ItemsPresenter/>
+                                    </ScrollViewer>
+                                </Border>
                             </Border>
                         </Popup>
                     </Grid>
@@ -636,15 +750,20 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
-                    <Border x:Name="b" Background="Transparent" Padding="8,4">
-                        <ContentPresenter/>
-                    </Border>
+                    <Grid>
+                        <Border x:Name="b" Background="Transparent" Padding="8,4">
+                            <ContentPresenter/>
+                        </Border>
+                        <Border x:Name="bar" Width="2" HorizontalAlignment="Left" Background="{StaticResource Accent}" Visibility="Collapsed"/>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="b" Property="Background" Value="{StaticResource Surface2}"/>
+                            <Setter TargetName="b" Property="Background" Value="{StaticResource Surface3}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="b" Property="Background" Value="{StaticResource AccentSoft}"/>
+                            <Setter TargetName="bar" Property="Visibility" Value="Visible"/>
+                            <Setter Property="Foreground" Value="{StaticResource Accent}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -710,7 +829,7 @@
 
     <Style TargetType="ProgressBar">
         <Setter Property="Height" Value="3"/>
-        <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+        <Setter Property="Foreground" Value="{StaticResource AccentFill}"/>
         <Setter Property="Background" Value="{StaticResource Surface3}"/>
         <Setter Property="BorderThickness" Value="0"/>
     </Style>

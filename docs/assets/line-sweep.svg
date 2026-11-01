@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 888 8" width="888" height="8" preserveAspectRatio="none">
+<style>@media (prefers-reduced-motion: reduce){.sweep{display:none}}</style>
+<defs>
+<linearGradient id="skeet" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#3BB4E5"/><stop offset=".5" stop-color="#C64FC6"/><stop offset="1" stop-color="#D8E03A"/></linearGradient>
+<linearGradient id="glint" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+</defs>
+<rect width="888" height="8" fill="url(#skeet)"/>
+<rect class="sweep" x="-220" y="0" width="220" height="8" fill="url(#glint)"><animate attributeName="x" values="-220;888;888" keyTimes="0;.5;1" dur="9s" repeatCount="indefinite"/></rect>
+</svg>

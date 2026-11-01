@@ -372,7 +372,7 @@ public partial class MainWindow
     void UpdatePreview(bool keepResults = false)
     {
         if (!_profReady) return;
-        // Nothing to pick, nothing to change: same as Configs with no accounts. "Forget all sign-ins" stays on: it also deletes sign-ins of accounts Steam no longer lists.
+        // Nothing to pick, nothing to change: same as Configs with no accounts. "Sign out of all" stays on: it also deletes sign-ins of accounts Steam no longer lists.
         var any = _profRows.Count > 0;
         IdentSource.IsEnabled = ProfIdentBtn.IsEnabled = ProfRestoreBtn.IsEnabled = any;
         if (!_profBusy) ProfApplyBtn.IsEnabled = any;   // while a run goes the button is Stop and is handled by its own click
@@ -464,23 +464,23 @@ public partial class MainWindow
 
     async Task ForgetSession(ProfileRow r)
     {
-        if (!await Ask("Forget sign-in", $"Delete the saved sign-in for {r.Name}? The app can't change this profile again until you sign in.\n\nTo end it on Steam's side too: Steam > Settings > Security > Authorized devices (named {SteamAuth.DeviceName}).", "Forget")) return;
+        if (!await Ask($"Sign out of {r.Name}", $"Delete the saved sign-in for {r.Name}? The app can't change this profile again until you sign in.\n\nTo end it on Steam's side too: Steam > Settings > Security > Authorized devices (named {SteamAuth.DeviceName}).", "Sign out")) return;
         if (!_demo) _sessions.Forget(r.SteamId); else _demoSigned.Remove(r.SteamId);
         _profExpired.Remove(r.SteamId);
         RefreshSession(r);
-        Log.Info($"Profiles: sign-in for {r.Name} forgotten.");
+        Log.Info($"Profiles: signed out of {r.Name} (sign-in deleted).");
         UpdatePreview();
     }
 
     async void ProfForgetAll_Click(object sender, RoutedEventArgs e)
     {
-        if (!await Ask("Forget all sign-ins", $"Delete every sign-in the app saved for the Profiles page?\n\nTo end them on Steam's side too: Steam > Settings > Security > Authorized devices (named {SteamAuth.DeviceName}).", "Forget all", danger: true)) return;
+        if (!await Ask("Sign out of all", $"Delete every sign-in the app saved for the Profiles page?\n\nTo end them on Steam's side too: Steam > Settings > Security > Authorized devices (named {SteamAuth.DeviceName}).", "Sign out of all", danger: true)) return;
         var n = _demo ? _demoSigned.Count : _sessions.ForgetAll();
         _demoSigned.Clear();
         _profExpired.Clear();
         foreach (var r in _profRows) RefreshSession(r);
-        Log.Info($"Profiles: {Fmt.Count(n, "sign-in")} forgotten.");
-        Toast($"{Fmt.Count(n, "sign-in")} forgotten.", true);
+        Log.Info($"Profiles: signed out, {Fmt.Count(n, "sign-in")} deleted.");
+        Toast($"Signed out: {Fmt.Count(n, "sign-in")} deleted.", true);
         UpdatePreview();
     }
 
@@ -502,7 +502,12 @@ public partial class MainWindow
                    + (ready < picked.Count ? $"\n{Fmt.Count(picked.Count - ready, "picked account")} {(picked.Count - ready == 1 ? "is" : "are")} skipped (the reason is in the list)." : "")
                    + (clear ? "\n\nName history will be cleared on each one. That can't be undone, not even by Restore." : "");
         if (!await Ask("Change profiles", text, "Apply", danger: clear)) return;
-        await RunProfileJobs(jobs, picked);
+        try { await RunProfileJobs(jobs, picked); }
+        finally
+        {
+            // Can't be undone, so it never carries over to the next Apply by accident.
+            if (ProfClearNames.IsChecked == true) { ProfClearNames.IsChecked = false; UpdatePreview(keepResults: true); }
+        }
     }
 
     bool SignedIn(string steamId) => _profRows.FirstOrDefault(r => r.SteamId == steamId)?.SignedIn == true;
@@ -518,7 +523,7 @@ public partial class MainWindow
         {
             var row = Of(res.SteamId);
             if (row != null) { row.Step = null; row.Result = res.Message; row.Ok = res.Ok ? true : res.Skipped ? null : false; }
-            // Steam refused the saved sign-in: the row says so and asks for a new one (the file stays until Forget).
+            // Steam refused the saved sign-in: the row says so and asks for a new one (the file stays until Sign out).
             if (res.Expired && row != null) { _profExpired.Add(res.SteamId); RefreshSession(row); }
             var line = $"Profiles: {res.Shown}: {Secrets.Clean(res.Message)}";
             if (res.Ok) Log.Ok(line); else Log.Warn(line);

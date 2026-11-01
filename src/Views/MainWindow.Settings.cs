@@ -113,7 +113,7 @@ public partial class MainWindow
         }
         if (string.Equals(text, rejoin ? _s.HotkeySwitch : _s.HotkeyRejoin, StringComparison.OrdinalIgnoreCase))
         {
-            Toast($"{text} is already the {(rejoin ? "Switch" : "rejoin")} hotkey.", false);
+            Toast($"{text} is already the {(rejoin ? "New IP + next account" : "rejoin")} hotkey.", false);
             return;
         }
         box.Text = text;
@@ -121,7 +121,7 @@ public partial class MainWindow
         SaveSettings();
         UpdateQuickInfo();
         UpdateRejoinBtn();
-        Log.Info($"{(rejoin ? "Change IP and rejoin" : "Switch")} hotkey: {text}.");
+        Log.Info($"{(rejoin ? "Change IP and rejoin" : "New IP + next account")} hotkey: {text}.");
     }
 
     // ------------------------------------------------------------ Steam Web API key: hidden unless you ask (never while Hide logins is on)
@@ -159,13 +159,14 @@ public partial class MainWindow
         var left = await _guard.RestoreAll(_servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: true);
         _last = null; // the old report would redraw "Protected" on the next IP check
         ShowRegionsStatus();
-        if (left == null) Toast("Protection is off and checked. It comes back when you click Run leak test or open the app again.", true);
+        if (left == null) Toast("Protection is off and checked. It comes back when you click Turn protection back on or open the app again.", true);
         else Toast("Couldn't remove: " + left + ". Restart the PC to clear the routes, or run the app with --restore.", Tone.Error);
         foreach (var s in _servers) { s.Protected = false; s.RouteText = "Off"; }
-        SetHero("bad", "Protection off", "You turned protection off. Click Run leak test to protect again.");
+        SetHero("bad", "Protection off", "You turned protection off. Click Turn protection back on to protect again.");
+        UpdateTurnOff();
     }
 
-    const string TurnOffText = "Turns off the kill switch, the routes and the CS2 lock. Until you click Run leak test or open the app again, servers see your home IP. " +
+    const string TurnOffText = "Turns off the kill switch, the routes and the CS2 lock. Until you click Turn protection back on (in Status, where Run leak test was) or open the app again, servers see your home IP. " +
         "Your servers stay saved, and the regions you turned off stay off (Allow all on Regions lifts them).";
 
     void OpenFirewall_Click(object sender, RoutedEventArgs e)

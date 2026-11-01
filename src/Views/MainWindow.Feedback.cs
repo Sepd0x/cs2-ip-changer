@@ -25,6 +25,8 @@ public partial class MainWindow
         ToastText.Text = text;
         ToastIcon.Text = tone switch { Tone.Ok => "", Tone.Error => "", Tone.Info => "", _ => "" };
         ToastIcon.Foreground = tone switch { Tone.Ok => Ui.Good, Tone.Error => Ui.Bad, Tone.Info => Ui.Muted, _ => Ui.Warn };
+        // The strip on top: the brand line, red for an error.
+        ToastStrip.Background = tone == Tone.Error ? Ui.Bad : (Brush)FindResource("TopLine");
         ToastBox.Visibility = Visibility.Visible;
         ToastBox.BeginAnimation(OpacityProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(160)));
         _toastTimer.Stop();
@@ -40,9 +42,48 @@ public partial class MainWindow
         ToastBox.BeginAnimation(OpacityProperty, a);
     }
 
+    static readonly Regex AttemptLine = new(@"^Attempt (\d+)/(\d+): (.+)$");
+
     // The progress line takes the place of the hero's buttons, so nothing below moves.
-    void ShowProgress(string text) { ProgressText.Text = text; ProgressPanel.Visibility = Visibility.Visible; ActionRow.Visibility = Visibility.Hidden; Step(text); }
-    void HideProgress() { ProgressPanel.Visibility = Visibility.Collapsed; ActionRow.Visibility = Visibility.Visible; }
+    // An IP change ("Attempt 1/3: …") also turns the Status title into "Changing IP… attempt 1/3", so the line under it stays short.
+    void ShowProgress(string text)
+    {
+        var m = AttemptLine.Match(text ?? "");
+        if (m.Success)
+        {
+            var title = $"Changing IP… attempt {m.Groups[1].Value}/{m.Groups[2].Value}";
+            var rest = m.Groups[3].Value;
+            ProgressText.Text = char.ToUpperInvariant(rest[0]) + rest[1..];
+            // The Mobile data check follows the change: off for N s, then coming back.
+            _changingData = rest.Contains(" off ", StringComparison.OrdinalIgnoreCase) ? $"Off for {_s.OffSeconds} s" : "Coming back on…";
+            if (title != _changingTitle)
+            {
+                _changingTitle = title;
+                SetHero(_heroWanted.Kind, _heroWanted.Title, _heroWanted.Sub);
+                ShowIps();
+            }
+            UpdateDataCheck();
+        }
+        else ProgressText.Text = text;
+        ProgressPanel.Visibility = Visibility.Visible;
+        ActionRow.Visibility = Visibility.Hidden;
+        Step(text);
+    }
+
+    void HideProgress()
+    {
+        ProgressPanel.Visibility = Visibility.Collapsed;
+        ActionRow.Visibility = Visibility.Visible;
+        if (_changingTitle == null) return;
+        _changingTitle = null;
+        _changingData = null;
+        SetHero(_heroWanted.Kind, _heroWanted.Title, _heroWanted.Sub);
+        ShowIps();
+        UpdateDataCheck();
+    }
+
+    /// <summary>What the Mobile data check says while an IP change runs (null otherwise).</summary>
+    string _changingData;
 
     TaskCompletionSource<bool> _dialogTcs;
 
@@ -54,12 +95,13 @@ public partial class MainWindow
         if (color != null) BuildColorSwatches();
         _dialogTcs?.TrySetResult(false);
         _dialogTcs = new TaskCompletionSource<bool>();
+        _dialogCancelClicked = false;
         if (ToastBox.Visibility == Visibility.Visible) HideToast();   // the dialog says it already
         if (_command != null) { Sound(Tones.Kind.Ask); Step("waiting for your answer in the app"); }   // in game only the sound gets through
         DialogTitle.Text = title;
         DialogText.Text = text;
         DialogOk.Content = ok;
-        DialogOk.Style = (Style)FindResource(danger ? "Danger" : "Primary");
+        DialogOk.Style = (Style)FindResource(danger ? "DangerStrong" : "Primary");
         DialogLabel1.Text = label1;
         DialogLabel2.Text = label2;
         DialogLabel1.Visibility = inputs >= 1 && label1 != null ? Visibility.Visible : Visibility.Collapsed;
@@ -78,6 +120,12 @@ public partial class MainWindow
         Dispatcher.BeginInvoke(() => { if (inputs > 0) Keyboard.Focus(DialogInput); else Keyboard.Focus(DialogOk); }, DispatcherPriority.Input);
         return _dialogTcs.Task;
     }
+
+    /// <summary>
+    /// The last dialog's second button was clicked. False after Escape or when another dialog took its place, so a question
+    /// whose two buttons both act (closing the app) can tell "no answer" from its second answer.
+    /// </summary>
+    bool _dialogCancelClicked;
 
     /// <summary>The color picked in the dialog (flags).</summary>
     string _dialogColor;
@@ -103,7 +151,7 @@ public partial class MainWindow
     }
 
     void DialogOk_Click(object sender, RoutedEventArgs e) { Dialog.Visibility = Visibility.Collapsed; _dialogTcs?.TrySetResult(true); }
-    void DialogCancel_Click(object sender, RoutedEventArgs e) { Dialog.Visibility = Visibility.Collapsed; _commandDeclined |= _command != null; _dialogTcs?.TrySetResult(false); }
+    void DialogCancel_Click(object sender, RoutedEventArgs e) { _dialogCancelClicked = sender == DialogCancel; Dialog.Visibility = Visibility.Collapsed; _commandDeclined |= _command != null; _dialogTcs?.TrySetResult(false); }
 
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {

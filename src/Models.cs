@@ -36,6 +36,8 @@ public sealed partial class Settings
     public bool StreamerMode { get; set; }
     public bool AutoQuery { get; set; } = true;
     public bool CleanupOnExit { get; set; }
+    /// <summary>The close question (keep protection or turn it off) was answered once: the answer is CleanupOnExit, changed in Settings.</summary>
+    public bool CloseAsked { get; set; }
     public int DefaultPort { get; set; } = 27015;
     public bool LegacyCleaned { get; set; }
     public string LastHomeIp { get; set; }
@@ -76,6 +78,8 @@ public sealed class IpHistoryEntry
     public string Reason { get; set; }
     [JsonIgnore] public string TimeText => Time.ToString(Time.Date == DateTime.Today ? "HH:mm" : "d MMM", System.Globalization.CultureInfo.InvariantCulture);
     [JsonIgnore] public string ReasonText => Reason switch { "trocado" => "changed", "detetado" => "at startup", _ => Reason };
+    /// <summary>"ISP · City · Country" without the country, so the city still fits at the smallest window (the tooltip has it all).</summary>
+    [JsonIgnore] public string IspShort => Isp?.Split(" · ") is { Length: >= 3 } p ? string.Join(" · ", p[..^1]) : Isp;
 }
 
 public sealed class CheckItem : Observable
@@ -83,12 +87,14 @@ public sealed class CheckItem : Observable
     bool? _ok; bool _waiting; string _detail;
     public string Title { get; init; }
     public string Help { get; init; }
-    public bool? Ok { get => _ok; set { if (Set(ref _ok, value)) { Raise(nameof(Glyph)); Raise(nameof(Brush)); } } }
+    public bool? Ok { get => _ok; set { if (Set(ref _ok, value)) { Raise(nameof(Glyph)); Raise(nameof(Brush)); Raise(nameof(DetailBrush)); } } }
     public string Detail { get => _detail; set => Set(ref _detail, value); }
     /// <summary>Not OK yet, but safe: blocked while waiting for the phone (amber, not red).</summary>
-    public bool Waiting { get => _waiting; set { if (Set(ref _waiting, value)) Raise(nameof(Brush)); } }
+    public bool Waiting { get => _waiting; set { if (Set(ref _waiting, value)) { Raise(nameof(Brush)); Raise(nameof(DetailBrush)); } } }
     public string Glyph => Ok switch { true => "", false => "", _ => "" };
     public Brush Brush => Waiting ? Ui.Warn : Ok switch { true => Ui.Good, false => Ui.Bad, _ => Ui.Faint };
+    /// <summary>The detail text is coloured only for a warning or an error; OK and waiting rows stay quiet.</summary>
+    public Brush DetailBrush => Waiting ? Ui.Warn : Ok == false ? Ui.Bad : Ui.Muted;
 }
 
 // ------------------------------------------------------------ Servers
@@ -130,9 +136,10 @@ public sealed class ServerItem : Observable
     [JsonIgnore] public int PingMs { get => _pingMs; set { if (Set(ref _pingMs, value)) Raise(nameof(PingBrush)); } }
     [JsonIgnore] public Brush PingBrush => PingMs < 0 ? Ui.Faint : PingMs < 60 ? Ui.Good : PingMs < 120 ? Ui.Warn : Ui.Bad;
     [JsonIgnore] public string RouteText { get => _route; set => Set(ref _route, value); }
-    [JsonIgnore] public bool? Protected { get => _protected; set { if (Set(ref _protected, value)) { Raise(nameof(RouteBrush)); Raise(nameof(RouteBg)); } } }
+    [JsonIgnore] public bool? Protected { get => _protected; set { if (Set(ref _protected, value)) { Raise(nameof(RouteBrush)); Raise(nameof(RouteBg)); Raise(nameof(RouteTextBrush)); } } }
     [JsonIgnore] public Brush RouteBrush => Protected switch { true => Ui.Good, false => Ui.Bad, _ => Ui.Warn };
     [JsonIgnore] public Brush RouteBg => Protected switch { true => Ui.GoodSoft, false => Ui.BadSoft, _ => Ui.WarnSoft };
+    [JsonIgnore] public Brush RouteTextBrush => Protected switch { true => Ui.Faint, false => Ui.Bad, _ => Ui.Warn };
     /// <summary>Who is on the server now (A2S). Null when the server didn't answer.</summary>
     [JsonIgnore] public List<PlayerRow> Players
     {
@@ -189,7 +196,7 @@ public sealed class PlayerFlag : Observable
     public string Name { get; set; }                     // the name seen on the server, or the profile name when added by link
     public string SteamId { get; set; }
     public string Label { get => _label; set { if (Set(ref _label, value)) Raise(nameof(Title)); } }
-    public string Color { get => _color; set { if (Set(ref _color, value)) Raise(nameof(Brush)); } }
+    public string Color { get => _color; set { if (Set(ref _color, value)) { Raise(nameof(Brush)); Raise(nameof(SoftBrush)); } } }
     public bool Follow { get => _follow; set => Set(ref _follow, value); }
     public string Persona { get => _persona; set { if (Set(ref _persona, value)) { Raise(nameof(Title)); Raise(nameof(Detail)); } } }   // current Steam name (from the profile)
     public DateTime Added { get; set; }
@@ -201,6 +208,16 @@ public sealed class PlayerFlag : Observable
     [JsonIgnore] public string Title => $"{Shown} · {Label}";
     [JsonIgnore] public string Detail => SteamId == null ? "Matched by name only" : Persona != null && !PlayerMatch.SameName(Persona, Name) ? $"SteamID {SteamId} · was {Name}" : $"SteamID {SteamId}";
     [JsonIgnore] public Brush Brush => ToBrush(Color);
+    [JsonIgnore] public Brush SoftBrush
+    {
+        get
+        {
+            if (Brush is not SolidColorBrush b) return null;
+            var soft = new SolidColorBrush(System.Windows.Media.Color.FromArgb(0x22, b.Color.R, b.Color.G, b.Color.B));
+            soft.Freeze();
+            return soft;
+        }
+    }
 
     public bool Matches(string playerName) => PlayerMatch.SameName(playerName, Name) || PlayerMatch.SameName(playerName, Persona);
 
@@ -222,13 +239,14 @@ public sealed class PlayerRow : Observable
     public PlayerFlag Flag { get => _flag; set { _flag = value; RaiseFlag(); } }
     public bool HasFlag => Flag != null;
     public Brush FlagBrush => Flag?.Brush;
+    public Brush FlagSoftBrush => Flag?.SoftBrush;
     public string FlagLabel => Flag?.Label;
     public string TimeText => $"{(int)Time.TotalHours}:{Time.Minutes:00}";
     public string FlagMenuText => Flag == null ? "Custom flag…" : "Edit flag…";
     public string FollowMenuText => Flag?.Follow == true ? "Stop following" : "Follow this player";
     public void RaiseFlag()
     {
-        foreach (var n in new[] { nameof(Flag), nameof(HasFlag), nameof(FlagBrush), nameof(FlagLabel), nameof(Tip), nameof(FlagMenuText), nameof(FollowMenuText) }) Raise(n);
+        foreach (var n in new[] { nameof(Flag), nameof(HasFlag), nameof(FlagBrush), nameof(FlagSoftBrush), nameof(FlagLabel), nameof(Tip), nameof(FlagMenuText), nameof(FollowMenuText) }) Raise(n);
     }
     public string Tip => Flag == null
         ? $"{Name}\n{Score} pts · {TimeText} on the server\nRight-click to flag this player."
@@ -336,10 +354,12 @@ public sealed class AccountItem : Observable
     public bool Excluded => Meta.ExcludeQuick;
     public string QuickGlyph => "";
     public Brush QuickBrush => Excluded ? Ui.LineStrong : Ui.Muted;
+    /// <summary>New IP + next account can pick this account (the "In rotation" box on the card).</summary>
+    public bool InRotation => !Excluded;
     public string QuickTip => Excluded
-        ? "Switch skips this account. Click to let Switch use it again."
-        : "Switch can use this account. Click to make Switch skip it.";
-    public string QuickMenuText => Excluded ? "Use in Switch" : "Skip in Switch";
+        ? "Not in rotation: New IP + next account never picks this account. Tick to put it back."
+        : "In rotation: New IP + next account can pick this account. Untick to leave it out.";
+    public string QuickMenuText => Excluded ? "Put back in rotation" : "Take out of rotation";
     public bool HasLastServer => Meta.LastServer != null;
     public string LastServerText => Meta.LastServer == null ? null
         : $"Last: {(string.IsNullOrWhiteSpace(Meta.LastServerName) ? Meta.LastServer : Meta.LastServerName)} · {Fmt.Ago(Meta.LastServerAt)}";
@@ -359,7 +379,7 @@ public sealed class AccountItem : Observable
     }
     public string ServerBansTip => !HasServerBans ? null
         : "Banned by these servers (not a Steam ban):\n" + string.Join("\n", Meta.ServerBans.OrderByDescending(b => b.Value?.At).Select(b => $"• {b.Value?.Name ?? b.Key} ({b.Key}), {Fmt.When(b.Value?.At)}"))
-          + "\nIt also counts on servers of the same community (same name tag, or the community name you set on Servers). Switch skips this account there. Right-click > Clear server bans to undo.";
+          + "\nIt also counts on servers of the same community (same name tag, or the community name you set on Servers). New IP + next account skips this account there. Right-click > Clear server bans to undo.";
 
     public Brush CardBorder => Active ? Ui.Accent : Ui.Line;
 
@@ -383,7 +403,7 @@ public sealed class AccountItem : Observable
             }
             else lines.Add("\nNo status yet: click \"Refresh\".");
             if (InCooldown) lines.Add($"\nCooldown set by you until {Fmt.When(Meta.CooldownUntil)}");
-            if (Excluded) lines.Add("Switch skips this account.");
+            if (Excluded) lines.Add("Not in rotation: New IP + next account never picks it.");
             if (HasServerBans) lines.Add($"Banned on {Fmt.Count(Meta.ServerBans.Count, "server")} in your list: " + string.Join(", ", Meta.ServerBans.Keys));
             if (Meta.LastServer != null) lines.Add($"Last server: {Meta.LastServerName ?? Meta.LastServer} ({Meta.LastServer}), {Fmt.When(Meta.LastServerAt)}");
             if (HasNote) lines.Add("\nNote: " + Note);
@@ -399,7 +419,7 @@ public sealed class AccountItem : Observable
             nameof(Name), nameof(Initial), nameof(Checked), nameof(HasVac), nameof(HasGameBan), nameof(HasTradeBan), nameof(HasCommunityBan),
             nameof(Limited), nameof(Private), nameof(Clean), nameof(VacText), nameof(GameBanText), nameof(BanAgeText), nameof(LevelText),
             nameof(HoursText), nameof(HasLevel), nameof(HasHours), nameof(InCooldown), nameof(CooldownText), nameof(Tip), nameof(Note),
-            nameof(HasNote), nameof(Tags), nameof(HasTags), nameof(StarGlyph), nameof(Favorite), nameof(Excluded), nameof(Usable), nameof(QuickGlyph), nameof(QuickBrush), nameof(QuickTip), nameof(QuickMenuText),
+            nameof(HasNote), nameof(Tags), nameof(HasTags), nameof(StarGlyph), nameof(Favorite), nameof(Excluded), nameof(InRotation), nameof(Usable), nameof(QuickGlyph), nameof(QuickBrush), nameof(QuickTip), nameof(QuickMenuText),
             nameof(HasLastServer), nameof(LastServerText), nameof(HasServerBans), nameof(ServerBansText), nameof(ServerBansTip),
         }) Raise(n);
     }
