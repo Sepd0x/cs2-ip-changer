@@ -5,7 +5,8 @@
 #
 # The tag has to match <Version> in src/ServerRouteTool.csproj (tag v0.1.0-alpha.3 for 0.1.0-alpha.3).
 # If the release already exists (drafted by hand with notes), the files are added to it. If not, it is
-# created with docs/release-<version>.md as notes when that file exists. A version with a "-" is a prerelease.
+# created with docs/release-<version>.md as notes when that file exists. Betas are not marked as
+# prereleases: published, the newest one is Latest, so releases/latest (the Download links) points to it.
 #
 # Third-party actions are pinned to a commit. The comment next to each one says which tag it is.
 
@@ -87,6 +88,5 @@ jobs:
             $opts = @('--verify-tag', '--draft', '--title', "CS2 IP Changer $env:VERSION")
             $notes = "docs/release-$env:VERSION.md"
             if (Test-Path $notes) { $opts += @('--notes-file', $notes) } else { $opts += '--generate-notes' }
-            if ($env:VERSION -like '*-*') { $opts += '--prerelease' }
             gh release create $tag @files @opts
           }
