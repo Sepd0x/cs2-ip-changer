@@ -4,6 +4,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+## [0.1.0-beta.7] - 2026-11-01
+
 ### Security
 - Run as admin, the app no longer starts from a folder that programs without admin rights can change (Downloads, the Desktop, a folder you made yourself). A DLL put next to the exe there would run with admin rights. It says what to do instead: copy `CS2IPChanger.exe` to `C:\Program Files\CS2 IP Changer` and start it from there. `--restore` still works from anywhere. Until now the app only warned.
 - DLLs that Windows loads by name (`UMPDC.dll`, `WindowsCodecs.dll`, `DEVOBJ.dll`, `ncrypt.dll` and the like) now only come from System32, never from the exe's folder, the current folder or PATH. Limit: what Windows and .NET load before the app's own code runs isn't covered (a planted `CS2IPChanger.runtimeconfig.dev.json`, for example, is read before that), which is why the folder itself has to be one only admins can change.
@@ -286,7 +288,8 @@ First public release, as ServerRouteTool.
 - Restore network, to undo every route and rule in one click.
 - Dark interface in Portuguese.
 
-[Unreleased]: ../../compare/v0.1.0-beta.6...HEAD
+[Unreleased]: ../../compare/v0.1.0-beta.7...HEAD
+[0.1.0-beta.7]: ../../releases/tag/v0.1.0-beta.7
 [0.1.0-beta.6]: ../../releases/tag/v0.1.0-beta.6
 [0.1.0-beta.5]: ../../releases/tag/v0.1.0-beta.5
 [0.1.0-beta.4]: ../../releases/tag/v0.1.0-beta.4
