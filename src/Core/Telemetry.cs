@@ -7,6 +7,9 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace SRT.Core;
@@ -43,6 +46,14 @@ public static class Telemetry
         public Dictionary<string, int> Clicks { get; set; } = new();
         public Dictionary<string, int> Counts { get; set; } = new();
         public Dictionary<string, ErrorItem> Errors { get; set; } = new();
+        /// <summary>beta.9. Clicks on the screens: "screen|kind|col,row" (kind c, d dead, r rage) to how many. Goes out without the ID's day link: the server adds them up.</summary>
+        public Dictionary<string, int> Heat { get; set; } = new();
+        /// <summary>beta.9. Minutes with each screen open and the window on screen (not in the tray).</summary>
+        public Dictionary<string, double> Screens { get; set; } = new();
+        /// <summary>beta.9. Moves between screens, "from>to".</summary>
+        public Dictionary<string, int> Paths { get; set; } = new();
+        /// <summary>beta.9. The day (UTC) the stats were first on here. Only its band goes out (AgeBand), never the date.</summary>
+        public string FirstDay { get; set; }
     }
     public sealed class ErrorItem { public string Type { get; set; } public string At { get; set; } public int N { get; set; } }
 
@@ -58,16 +69,19 @@ public static class Telemetry
     static string _file;
     static bool _hooked;
     static DispatcherTimer _hourly, _first;
+#if PRIVADO
+    static DispatcherTimer _devLive;
+#endif
 
     public const string NoticeTitle = "Anonymous usage stats";
 
     /// <summary>The notice at the first start (Accept or Quit). README > Telemetry has the same list.</summary>
     public const string NoticeText =
         "While CS2 IP Changer is in beta, using it means it sends anonymous usage stats when it opens and closes, so bugs get found and fixed:\n\n"
-        + "•  a random ID that is new every day, never made from your PC or from you, so it never links one day to the next\n"
+        + "•  a random ID that is new every day, never made from your PC or from you, and how long ago the app was set up, only in rough bands (this week, 2 to 4 weeks…)\n"
         + "•  the app and Windows versions, and your country as two letters\n"
-        + "•  the mode, how the phone is connected and minutes the app was open\n"
-        + "•  how often each button and hotkey is used, a few counters (IP changes, kicks seen) and how long your lists are, in rough bands\n"
+        + "•  the mode, how the phone is connected, minutes the app was open and on each screen, and every few minutes while it's open what is on (screen, CS2 open, protection on)\n"
+        + "•  how often each button and hotkey is used, where on each screen you click (a coarse grid, added up with everyone's), a few counters (IP changes, kicks seen) and how long your lists are, in rough bands\n"
         + "•  errors, as their type and place in the app's code\n\n"
         + "Never IPs, servers, accounts, Steam names or IDs, your carrier or anything you type.\n\n"
         + "Quit closes the app without changing anything on your PC.";
@@ -129,6 +143,8 @@ public static class Telemetry
         if (_on) return;
         _st = Store.Load(File_, () => new State());
         _st.Clicks ??= new(); _st.Counts ??= new(); _st.Errors ??= new();
+        _st.Heat ??= new(); _st.Screens ??= new(); _st.Paths ??= new();
+        _st.FirstDay ??= DateTime.UtcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
         _since = DateTime.UtcNow;
         _on = true;
         if (NewDay(_st, DateTime.UtcNow)) Save(newDay: true);
@@ -137,6 +153,10 @@ public static class Telemetry
             _hooked = true;
             EventManager.RegisterClassHandler(typeof(ButtonBase), ButtonBase.ClickEvent, new RoutedEventHandler(OnClick));
             EventManager.RegisterClassHandler(typeof(MenuItem), MenuItem.ClickEvent, new RoutedEventHandler(OnClick));
+            EventManager.RegisterClassHandler(typeof(Window), UIElement.PreviewMouseLeftButtonDownEvent, new MouseButtonEventHandler(MouseDown), true);
+            // The live signal: every 5 minutes while the app is open, and once half a minute after the start
+            _live = new DispatcherTimer { Interval = TimeSpan.FromMinutes(5) };
+            _live.Tick += (_, _) => { if (_live.Interval != TimeSpan.FromMinutes(5)) _live.Interval = TimeSpan.FromMinutes(5); _ = SendLive(); };
             Log.Added += e => { if (e.Level == LogLevel.Error) Count("log_error"); };
             if (Application.Current != null) Application.Current.Exit += (_, _) => SendAtExit();
             _hourly = new DispatcherTimer { Interval = TimeSpan.FromHours(1) };
@@ -144,9 +164,135 @@ public static class Telemetry
             // The first report waits until the window has loaded its lists (and never slows the start).
             _first = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
             _first.Tick += (_, _) => { _first.Stop(); _ = Send(); };
+#if PRIVADO
+            // Dev build only: a report every 10 minutes (the server's limit per ID), so a test session shows up while it runs.
+            _devLive = new DispatcherTimer { Interval = TimeSpan.FromMinutes(10.5) };
+            _devLive.Tick += (_, _) => { bool nd; lock (Gate) nd = _st != null && NewDay(_st, DateTime.UtcNow); Save(nd); bool go; lock (Gate) go = _st != null && SendAtClose(_st.LastSent, DateTime.UtcNow, _st.Minutes, _st.Clicks.Count, _st.Counts.Count); if (go) _ = Send(); };
+            _devLive.Start();
+#endif
         }
         _hourly.Start();
+        _live.Interval = TimeSpan.FromSeconds(30);
+        _live.Start();
         _first.Start();
+    }
+
+    // ------------------------------------------------------------------ beta.9: screens, heat map, live signal
+
+    /// <summary>Width of the side bar (MainWindow.xaml): the heat map grid covers the rest of the window, as in the dashboard's ui-map.js.</summary>
+    public const double SideBar = 80;
+    public const int Cols = 24, Rows = 16;
+    static readonly Regex ScreenId = new("^[a-z]{1,12}$", RegexOptions.Compiled);
+    static string _screen;
+    static DateTime _screenSince;
+    static readonly List<(DateTime T, string Cell)> _recent = new();
+    static Func<(string Screen, bool Cs2, bool Prot, bool Tray)> _liveNow;
+    static DispatcherTimer _live;
+
+    /// <summary>The grid cell ("col,row") of a click at x, y in a window of w by h, or null on the side bar or outside.</summary>
+    public static string Cell(double x, double y, double w, double h)
+    {
+        if (w <= SideBar || h <= 0 || x < SideBar || x >= w || y < 0 || y >= h) return null;
+        var c = Math.Clamp((int)((x - SideBar) / (w - SideBar) * Cols), 0, Cols - 1);
+        var r = Math.Clamp((int)(y / h * Rows), 0, Rows - 1);
+        return $"{c},{r}";
+    }
+
+    /// <summary>A rage click: this one and 2 more in the same cell within the last second.</summary>
+    public static bool IsRage(IEnumerable<(DateTime T, string Cell)> recent, DateTime now, string cell) =>
+        recent.Count(x => x.Cell == cell && now - x.T <= TimeSpan.FromSeconds(1)) >= 2;
+
+    /// <summary>The install's age in days, in bands: 0, 1, 2-3, 4-6, 7-13, 14-29, 30+. Never the day itself.</summary>
+    public static string AgeBand(int days) =>
+        days <= 0 ? "0" : days == 1 ? "1" : days <= 3 ? "2-3" : days <= 6 ? "4-6" : days <= 13 ? "7-13" : days <= 29 ? "14-29" : "30+";
+
+    /// <summary>The screen now open (Nav_Checked), or null when the window is in the tray. Counts its minutes and the move.</summary>
+    public static void Screen(string id)
+    {
+        if (!_on || (id != null && !ScreenId.IsMatch(id))) return;
+        Save();
+        lock (Gate)
+        {
+            if (_st == null) return;
+            if (_screen != null && id != null && _screen != id) { var k = _screen + ">" + id; _st.Paths[k] = _st.Paths.GetValueOrDefault(k) + 1; }
+            if (id != null || _screen != null) _screen = id ?? _screen;
+            _visible = id != null;
+            _screenSince = DateTime.UtcNow;
+        }
+    }
+    static bool _visible;
+
+    /// <summary>What the live signal says besides the mode and the link (MainWindow.TelemetryLive).</summary>
+    public static void LiveFrom(Func<(string, bool, bool, bool)> now) => _liveNow = now;
+
+    /// <summary>A click anywhere in the main window: its cell on the screen open, and whether it was dead or rage.</summary>
+    public static void MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (!_on || sender is not Window w || !ReferenceEquals(w, Application.Current?.MainWindow) || w.Content is not FrameworkElement root) return;
+        try
+        {
+            var p = e.GetPosition(root);
+            var cell = Cell(p.X, p.Y, root.ActualWidth, root.ActualHeight);
+            string screen;
+            lock (Gate) screen = _screen;
+            if (cell == null || screen == null) return;
+            var now = DateTime.UtcNow;
+            bool rage;
+            lock (Gate)
+            {
+                _recent.RemoveAll(x => now - x.T > TimeSpan.FromSeconds(1));
+                rage = IsRage(_recent, now, cell) && !_recent.Any(x => x.Cell == "!" + cell);
+                _recent.Add((now, cell));
+                if (rage) _recent.Add((now, "!" + cell));   // one rage per burst
+            }
+            AddHeat(screen, "c", cell);
+            if (!Interactive(e.OriginalSource as DependencyObject, w)) AddHeat(screen, "d", cell);
+            if (rage) AddHeat(screen, "r", cell);
+        }
+        catch { }
+    }
+
+    static void AddHeat(string screen, string kind, string cell)
+    {
+        lock (Gate)
+        {
+            if (_st == null) return;
+            var k = $"{screen}|{kind}|{cell}";
+            if (!_st.Heat.ContainsKey(k) && _st.Heat.Count >= 600) return;
+            _st.Heat[k] = _st.Heat.GetValueOrDefault(k) + 1;
+        }
+    }
+
+    /// <summary>Something under the click that does something (a button, a box to type in, a list row, a scroll bar). A disabled button doesn't count: that click is dead.</summary>
+    static bool Interactive(DependencyObject d, Window stop)
+    {
+        for (var i = 0; d != null && i < 60 && !ReferenceEquals(d, stop); i++)
+        {
+            if (d is UIElement { IsEnabled: false }) return false;
+            if (d is ButtonBase or MenuItem or TextBoxBase or PasswordBox or ComboBox or ComboBoxItem or ListBoxItem or DataGridRow or DataGridCell
+                or ScrollBar or Thumb or Slider or Hyperlink or Expander or TabItem) return true;
+            d = d is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d);
+        }
+        return false;
+    }
+
+    static async Task SendLive()
+    {
+        if (!_on || _liveNow == null) return;
+        try
+        {
+            (string screen, bool cs2, bool prot, bool tray) = _liveNow();
+            (string mode, string link, _) = _now != null ? _now() : (null, null, null);
+            string id;
+            lock (Gate) { if (_st == null) return; NewDay(_st, DateTime.UtcNow); id = _st.Id; }
+            var body = JsonSerializer.Serialize(new
+            {
+                v = 1, id, app = Updater.Clean(AppInfo.Version.Split('+')[0]), mode, link,
+                screen = screen != null && ScreenId.IsMatch(screen) ? screen : null, cs2, prot, tray, dev = Dev || _st.Mine,
+            });
+            await Post(body, TimeSpan.FromSeconds(8), Url + "/live");
+        }
+        catch { }
     }
 
     public static void Click(string name) => Add(s => s.Clicks, name);
@@ -204,6 +350,8 @@ public static class Telemetry
             if (_st == null) return;
             var now = DateTime.UtcNow;
             _st.Minutes += (now - _since).TotalMinutes;
+            if (_visible && _screen != null && _screenSince != default) _st.Screens[_screen] = _st.Screens.GetValueOrDefault(_screen) + (now - _screenSince).TotalMinutes;
+            _screenSince = now;
             _since = now;
             try { Write(File_, _st, newDay); }
             catch (Exception ex) { Log.Warn("Could not save telemetry.json: " + ex.Message); }
@@ -234,7 +382,8 @@ public static class Telemetry
     /// <summary>Same as worker/stats MAX_MINUTES.</summary>
     public const int MaxMinutes = 24 * 60;
 
-    sealed record Snapshot(string Body, Dictionary<string, int> Clicks, Dictionary<string, int> Counts, List<ErrorItem> Errors, int Minutes);
+    sealed record Snapshot(string Body, Dictionary<string, int> Clicks, Dictionary<string, int> Counts, List<ErrorItem> Errors, int Minutes,
+        Dictionary<string, int> Heat = null, Dictionary<string, int> Screens = null, Dictionary<string, int> Paths = null);
 
     /// <summary>On the window's thread (the mode and list sizes come from it): today's ID, the minutes so far and the body.</summary>
     static Snapshot Build()
@@ -256,22 +405,29 @@ public static class Telemetry
             var minutes = (int)Math.Round(_st.Minutes);
             var all = new Dictionary<string, int>(counts);
             foreach (var (k, v) in sizes ?? new()) all[k] = Band(v);
+            // beta.9: the server takes 300 heat cells, 12 screens and 60 moves a report; the rest waits for the next one
+            var heat = _st.Heat.OrderByDescending(x => x.Value).Take(300).ToDictionary(x => x.Key, x => x.Value);
+            var screens = _st.Screens.Where(x => x.Value >= 1).Take(12).ToDictionary(x => x.Key, x => (int)Math.Min(MaxMinutes, Math.Floor(x.Value)));
+            var paths = _st.Paths.Take(60).ToDictionary(x => x.Key, x => x.Value);
+            var first = DateTime.TryParse(_st.FirstDay, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AdjustToUniversal, out var fd) ? fd : DateTime.UtcNow;
             var body = JsonSerializer.Serialize(new
             {
                 v = 1, id = _st.Id, app = Updater.Clean(AppInfo.Version.Split('+')[0]), os = Environment.OSVersion.Version.ToString(),
                 mode, link, minutes, dev = Dev || _st.Mine, clicks, counts = all,
                 errors = errors.Select(x => new { type = x.Type, at = x.At, n = x.N }),
+                heat = heat.Select(x => { var k = x.Key.Split('|'); return new object[] { k[0], k[1], k[2], x.Value }; }),
+                screens, paths, age = AgeBand((int)(DateTime.UtcNow.Date - first.Date).TotalDays),
             });
-            return new Snapshot(body, clicks, counts, errors, minutes);
+            return new Snapshot(body, clicks, counts, errors, minutes, heat, screens, paths);
         }
     }
 
     /// <summary>No await comes back to the window's thread, so the close can wait for it.</summary>
-    static async Task<bool> Post(string body, TimeSpan timeout)
+    static async Task<bool> Post(string body, TimeSpan timeout, string url = null)
     {
         using var http = new HttpClient { Timeout = timeout };
         http.DefaultRequestHeaders.UserAgent.ParseAdd("CS2IPChanger");
-        using var resp = await http.PostAsync(Url, new StringContent(body, Encoding.UTF8, "application/json")).ConfigureAwait(false);
+        using var resp = await http.PostAsync(url ?? Url, new StringContent(body, Encoding.UTF8, "application/json")).ConfigureAwait(false);
         return resp.IsSuccessStatusCode;   // otherwise kept for the next try
     }
 
@@ -284,6 +440,9 @@ public static class Telemetry
             foreach (var (k, v) in s.Counts) { _st.Counts[k] -= v; if (_st.Counts[k] <= 0) _st.Counts.Remove(k); }
             foreach (var x in s.Errors) { var key = x.Type + "@" + x.At; if (_st.Errors.TryGetValue(key, out var e) && (e.N -= x.N) <= 0) _st.Errors.Remove(key); }
             _st.Minutes = Math.Max(0, _st.Minutes - s.Minutes);
+            foreach (var (k, v) in s.Heat ?? new()) if (_st.Heat.TryGetValue(k, out var h) && (_st.Heat[k] = h - v) <= 0) _st.Heat.Remove(k);
+            foreach (var (k, v) in s.Screens ?? new()) if (_st.Screens.TryGetValue(k, out var m) && (_st.Screens[k] = m - v) < 1e-9) _st.Screens.Remove(k);
+            foreach (var (k, v) in s.Paths ?? new()) if (_st.Paths.TryGetValue(k, out var p) && (_st.Paths[k] = p - v) <= 0) _st.Paths.Remove(k);
             _st.LastSent = DateTime.UtcNow;
             try { Store.Save(File_, _st); } catch { }
         }

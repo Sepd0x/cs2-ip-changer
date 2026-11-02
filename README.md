@@ -379,7 +379,7 @@ The app measures the phone's IP by asking 1.0.0.1 (Cloudflare's `/cdn-cgi/trace`
 
 While CS2 IP Changer is in beta, it sends anonymous usage stats so bugs can be found and the parts people use get better. They are required to use the app: at the first start, before the app opens, a notice lists what is sent, with Accept and Quit. Until you accept, nothing is sent and no ID is made. Quit (or Escape) closes the app without changing anything on your PC. Right after an update from inside the app, Quit also turns off the protection the version before left on, so your servers aren't left blocked without the app (not while CS2 is open). Accept is saved and the notice doesn't show again.
 
-The stats are anonymous: the ID is random and new every day, never made from your PC or from you, so the ID never links one day's report to the next. List sizes go in rough bands, not exact numbers, for the same reason. It isn't tied to your name, PC, Steam or anything else.
+The stats are anonymous: the ID is random and new every day, never made from your PC or from you. Each report also says how long ago the app was set up, only in rough bands (the same day, 1 day, 2 to 3, 4 to 6, 7 to 13, 14 to 29, 30 or more), so it can be seen whether people keep using it; that never gives the date or links the daily IDs. List sizes go in rough bands, not exact numbers, for the same reason. It isn't tied to your name, PC, Steam or anything else.
 
 It never sends IPs (yours, the phone's or servers'), server names or addresses, Steam accounts, logins, names or IDs, your carrier, city or region, players' names, file paths or anything you typed.
 
@@ -397,6 +397,11 @@ Once when the app has been open for 20 seconds, when you close it (if it was ope
 - a few counters: IP changes that worked, that got the same IP or no network, kicks, bans and VPN blocks the app saw, errors in the Log, where Phone setup stopped (the step's name, like `phone_setup_tetheroff`), and `first_start` on the day you accept this notice (so new users can be counted)
 - how many servers, accounts, flagged players and "Open with CS2" programs are in your lists, and how many regions are turned off, in rough bands (0, 1, 2 to 5, 6 to 20, 21 to 100, more), never the exact number
 - errors as their type and place in the app's code (for example `NullReferenceException` in `MainWindow.QueryServers`), never their message
+- minutes with each screen open (Connection, Servers…) while the window is on screen, and how often people go from one screen to another
+- where on each screen you click, as a cell of a coarse 24 by 16 grid (not the exact point), whether that click hit nothing that does something, and quick repeated clicks in the same place. The server adds these up for everyone, with no ID, so they show where the app confuses people
+- how long ago the app was set up, in the bands above
+
+While the app is open, every 5 minutes it also sends a short signal: today's ID, the app version, the mode, how the phone is connected, the screen open (or that it's in the tray), whether CS2 is open and whether protection is on. The server keeps one line per ID, written over each time, and the stats page only counts them ("3 using it now").
 
 The server is a Cloudflare Worker whose code is in this repo ([`worker/stats`](worker/stats)). Cloudflare has to see your IP to deliver the request, like with any website, and gives the Worker only the country; the Worker never reads the IP or stores it, and its request logs are off. The stats are stored per day in a database with no IP column ([`schema.sql`](worker/stats/schema.sql)). The recording build sends nothing.
 </details>

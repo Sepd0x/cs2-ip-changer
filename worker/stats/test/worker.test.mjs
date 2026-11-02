@@ -82,6 +82,51 @@ test('ingest: anything but POST /v1 is 404, also /dashboard (the page is its own
     assert.equal((await ingest.fetch(r, { DB: fakeD1() })).status, 404);
 });
 
+test('ingest beta.9: heat map added up without the ID, junk cells dropped', async () => {
+  const DB = fakeD1();
+  const heat = [['connection', 'c', '3,5', 4], ['connection', 'd', '23,15', 1], ['servers', 'r', '10,2', 2],
+    ['connection', 'c', '24,0', 1], ['connection', 'x', '1,1', 1], ['Bad', 'c', '1,1', 1], ['connection', 'c', '1,1', 0], ['connection', 'c', '1,1']];
+  assert.equal((await ingest.fetch(post(report({ heat })), { DB })).status, 204);
+  assert.equal((await ingest.fetch(post(report({ id: ID(2), heat: [['connection', 'c', '3,5', 6]] })), { DB })).status, 204);
+  const rows = DB.raw.prepare('SELECT screen, kind, cell, n FROM heat ORDER BY screen, kind, cell').all().map((r) => `${r.screen}|${r.kind}|${r.cell}|${r.n}`);
+  assert.deepEqual(rows, ['connection|c|3,5|10', 'connection|d|23,15|1', 'servers|r|10,2|2']);
+  const cols = DB.raw.prepare('PRAGMA table_info(heat)').all().map((c) => c.name);
+  assert.ok(!cols.includes('id'), 'no install ID in the heat map');
+});
+
+test('ingest beta.9: screens, paths and age go in as counters; odd ones dropped', async () => {
+  const DB = fakeD1();
+  const res = await ingest.fetch(post(report({ screens: { connection: 30, servers: 5, Bad: 3, log: 2000 }, paths: { 'connection>servers': 3, 'servers>servers': 1, 'a>b>c': 1, 'connection>Log': 1 }, age: '7-13' })), { DB });
+  assert.equal(res.status, 204);
+  const names = DB.raw.prepare("SELECT name, n FROM counts WHERE name LIKE 'scr_%' OR name LIKE 'path_%' OR name LIKE 'age_%' ORDER BY name").all().map((r) => `${r.name}=${r.n}`);
+  assert.deepEqual(names, ['age_7_13=1', 'path_connection_servers=3', 'scr_connection=30', 'scr_servers=5']);
+  assert.equal((await ingest.fetch(post(report({ id: ID(3), age: '8' })), { DB })).status, 204);
+  assert.equal(DB.raw.prepare("SELECT COUNT(*) n FROM counts WHERE id = ? AND name LIKE 'age_%'").get(ID(3)).n, 0);
+});
+
+test('ingest beta.9: a hosting network is marked and its clicks stay out of the heat map', async () => {
+  const DB = fakeD1();
+  await ingest.fetch(post(report({ heat: [['connection', 'c', '1,1', 3]] }), { cf: { country: 'US', asn: 16509 } }), { DB });
+  await ingest.fetch(post(report({ id: ID(2) }), { cf: { country: 'PT', asn: 2860 } }), { DB });
+  assert.equal(DB.raw.prepare("SELECT COUNT(*) n FROM counts WHERE name = 'net_dc'").get().n, 1);
+  assert.equal(DB.raw.prepare('SELECT COUNT(*) n FROM heat').get().n, 0);
+});
+
+test('ingest beta.9: the live signal keeps one row per ID, at most every 4 minutes', async () => {
+  const DB = fakeD1();
+  const livePost = (b) => { const r = post(b); return new Request('https://stats.example.workers.dev/v1/live', r); };
+  const sig = { v: 1, id: ID(1), app: '0.1.0-beta.9', mode: 'cs2open', link: 'usb', screen: 'connection', cs2: true, prot: true, tray: false, dev: false };
+  assert.equal((await ingest.fetch(livePost(sig), { DB })).status, 204);
+  assert.equal((await ingest.fetch(livePost({ ...sig, screen: 'servers' }), { DB })).status, 429);
+  DB.raw.prepare('UPDATE live SET ts = ts - 300000').run();
+  assert.equal((await ingest.fetch(livePost({ ...sig, screen: 'servers', ip: '203.0.113.7' }), { DB })).status, 204);
+  const rows = DB.raw.prepare('SELECT * FROM live').all();
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].screen, 'servers');
+  assert.ok(!JSON.stringify(rows).includes('203.0.113.7'));
+  assert.equal((await ingest.fetch(livePost({ ...sig, id: 'nope' }), { DB })).status, 400);
+});
+
 // ------------------------------------------------------------------ Access
 
 const TEAM = 'https://example-team.cloudflareaccess.com';
@@ -243,12 +288,21 @@ test('dashboard: GitHub numbers, and a missing permission is said on the page', 
   assert.ok(gh.problems.some((p) => p.includes('/traffic/clones') && p.includes('403')));
   resetGithubCache();
   assert.ok((await github({}, globalThis.fetch, Date.now())).problems[0].includes('GITHUB_TOKEN'));
+  resetGithubCache();
+  assert.ok((await github({ GITHUB_TOKEN: ' \n ' }, globalThis.fetch, Date.now())).problems[0].includes('GITHUB_TOKEN'));
 });
 
-test('dashboard: the whole page with a good token shows the numbers', async () => {
+test('dashboard: a token pasted with a BOM, spaces or a line break still works', async () => {
+  let auth;
+  globalThis.fetch = async (url, init) => { auth = init.headers.authorization; return Response.json({ stargazers_count: 1 }); };
+  await github({ GITHUB_TOKEN: '\uFEFF github_pat_x \r\n' }, globalThis.fetch, Date.now());
+  assert.equal(auth, 'Bearer github_pat_x');
+});
+
+test('dashboard: the old page (/classic) with a good token shows the numbers', async () => {
   const DB = fakeD1();
   seed(DB, Date.now());
-  const res = await dashboard.fetch(get('/dashboard?days=7', await jwt(claims())), { ...env0(), DB, EXCLUDE_IDS: ID(0xe) });
+  const res = await dashboard.fetch(get('/classic?days=7', await jwt(claims())), { ...env0(), DB, EXCLUDE_IDS: ID(0xe) });
   const html = await res.text();
   assert.equal(res.status, 200);
   assert.ok(html.includes('<b>7 days</b>'));
@@ -264,4 +318,64 @@ test('dashboard: versions in order, names from the code readable', () => {
   assert.equal(readable('Tray_open'), 'Tray: open');
   assert.equal(readable('ip_changed'), 'IP changed');
   assert.equal(readable('vpn_seen'), 'VPN seen');
+});
+
+// ------------------------------------------------------------------ beta.9: the new dashboard and its API
+
+test('dashboard beta.9: page, scripts and captures are served with a strict CSP, all behind Access', async () => {
+  const token = await jwt(claims());
+  const env = { ...env0(), DB: fakeD1() };
+  for (const [path, type] of [['/dashboard', 'text/html'], ['/d/app.js', 'text/javascript'], ['/d/real.js', 'text/javascript'], ['/d/style.css', 'text/css'], ['/ui/connection.png', 'image/png']]) {
+    const res = await dashboard.fetch(get(path, token), env);
+    assert.equal(res.status, 200, path);
+    assert.ok(res.headers.get('content-type').startsWith(type), path);
+    assert.match(res.headers.get('content-security-policy'), /script-src 'self';/);
+    assert.equal((await dashboard.fetch(get(path), env)).status, 403, `${path} without Access`);
+  }
+  assert.equal((await dashboard.fetch(get('/d/../src/index.js', token), env)).status, 404);
+  assert.equal((await dashboard.fetch(get('/api/summary'), env)).status, 403);
+  assert.equal((await dashboard.fetch(get('/api/live'), env)).status, 403);
+});
+
+test('dashboard beta.9: summary keeps the scanners apart, no install ID leaves, dev only with ?dev=1', async () => {
+  const DB = fakeD1();
+  const token = await jwt(claims());
+  const env = { ...env0(), DB };
+  const at = (id, over, cf) => ingest.fetch(post(report({ id: ID(id), ...over }), { cf }), { DB });
+  await at(1, { minutes: 20, clicks: { ChangeIp_Click: 2 }, counts: { accounts: 2, ip_changed: 1 }, screens: { connection: 15 }, paths: { 'connection>servers': 2 }, age: '0', heat: [['connection', 'c', '1,4', 2], ['connection', 'd', '10,10', 1]] }, { country: 'PT' });
+  await at(2, { minutes: 0, clicks: {}, counts: { accounts: 0 } }, { country: 'US', asn: 16509 });
+  await at(3, { minutes: 0, clicks: {}, counts: { accounts: 0 } }, { country: 'BR' });
+  await at(4, { minutes: 9, dev: true, counts: { accounts: 5 } }, { country: 'PT' });
+  const s = await (await dashboard.fetch(get('/api/summary?period=7', token), env)).json();
+  assert.equal(s.days.at(-1).users, 1);
+  assert.equal(s.automated, 2);
+  assert.equal(s.automatedDc, 1);
+  assert.deepEqual(s.countries, [{ k: 'PT', n: 1 }]);
+  assert.equal(s.buttons.ChangeIp_Click.n, 2);
+  assert.equal(s.screens.connection.minutes, 15);
+  assert.deepEqual(s.paths, [{ from: 'connection', to: 'servers', n: 2 }]);
+  assert.deepEqual(s.heat.connection.c, [[1, 4, 2]]);
+  assert.deepEqual(s.age, [{ band: '0', n: 1 }]);
+  assert.ok(!JSON.stringify(s).includes(ID(1)), 'no install ID in the answer');
+  const d = await (await dashboard.fetch(get('/api/summary?period=7&dev=1', token), env)).json();
+  assert.equal(d.days.at(-1).users, 1);
+  assert.equal(d.automated, 0);
+  const odd = await (await dashboard.fetch(get("/api/summary?period=5&version=x'%20OR%201=1", token), env)).json();
+  assert.equal(odd.period, 7);
+  assert.equal(odd.filters.version, 'all', 'an odd filter falls back to all, never goes into the SQL');
+  const other = await (await dashboard.fetch(get('/api/summary?period=7&version=0.1.0-beta.7', token), env)).json();
+  assert.equal(other.days.at(-1).users, 0, 'a version filter keeps only that version');
+});
+
+test('dashboard beta.9: live is only counts of the last 6 minutes', async () => {
+  const DB = fakeD1();
+  const token = await jwt(claims());
+  const sig = (id, over) => ingest.fetch(new Request('https://x/v1/live', post({ v: 1, id: ID(id), app: '0.1.0-beta.9', mode: 'cs2open', link: 'usb', screen: 'connection', cs2: true, prot: true, tray: false, dev: false, ...over })), { DB });
+  await sig(1); await sig(2, { cs2: false, tray: true }); await sig(3);
+  DB.raw.prepare('UPDATE live SET ts = ts - 3600000 WHERE id = ?').run(ID(3));
+  const l = await (await dashboard.fetch(get('/api/live', token), { ...env0(), DB })).json();
+  assert.equal(l.now, 2);
+  assert.equal(l.inGame, 1);
+  assert.deepEqual(l.byScreen, [{ k: 'connection', n: 1 }, { k: 'tray', n: 1 }]);
+  assert.ok(!JSON.stringify(l).includes(ID(1)));
 });

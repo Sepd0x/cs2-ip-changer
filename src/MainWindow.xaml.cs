@@ -88,6 +88,7 @@ public partial class MainWindow : Window
             catch (Exception ex) { Log.Warn("Couldn't save that the usage stats notice was accepted (" + ex.Message + "); it shows again at the next start."); }
         }
         Telemetry.Start(_demo, TelemetryNow, _s.StatsAccepted);
+        TelemetryHook();
         // The day the notice was accepted: the dashboard's "new users" (also once for someone coming from beta.7, who sees it once)
         if (App.StatsJustAccepted && !_demo) Telemetry.Count("first_start");
         LoadFlags();

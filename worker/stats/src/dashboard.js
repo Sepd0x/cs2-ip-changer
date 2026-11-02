@@ -4,6 +4,8 @@
 // GitHub numbers come from the API with a read-only token (secret GITHUB_TOKEN). No scripts and no outside files on the page.
 
 import { verifyAccess } from './access.js';
+import { params, summary, live } from './api.js';
+import { ASSETS } from './assets.js';
 
 const REPO = /^[A-Za-z0-9_.-]{1,100}\/[A-Za-z0-9_.-]{1,100}$/;
 const DAYS = [7, 30, 90];
@@ -50,7 +52,20 @@ export default {
     if (!gate.ok) return text('Forbidden', 403);
     if (request.method !== 'GET' && request.method !== 'HEAD') return text('Method not allowed', 405);
     if (url.pathname === '/') return new Response(null, { status: 302, headers: { location: '/dashboard' } });
-    if (url.pathname !== '/dashboard') return text('Not found', 404);
+    // beta.9: the new dashboard (worker/stats/dashboard, packed into assets.js) and its JSON. The old page stays at /classic.
+    const now0 = Date.now();
+    if (url.pathname === '/api/summary' || url.pathname === '/api/live') {
+      const p = params(url);
+      try {
+        const data = url.pathname === '/api/live' ? await live(env.DB, { dev: p.dev, now: now0 }) : await summary(env.DB, { ...p, now: now0 });
+        return json(data);
+      } catch (e) { return json({ error: String(e?.message || e) }, 500); }
+    }
+    if (url.pathname === '/api/github') return json(await github(env, fetch, now0));
+    const asset = url.pathname === '/dashboard' ? ASSETS['index.html'] : url.pathname.startsWith('/d/') ? ASSETS[url.pathname.slice(3)]
+      : url.pathname.startsWith('/ui/') ? ASSETS[url.pathname.slice(1)] : null;
+    if (asset) return serveAsset(request, asset);
+    if (url.pathname !== '/classic') return text('Not found', 404);
     const days = DAYS.includes(Number(url.searchParams.get('days'))) ? Number(url.searchParams.get('days')) : 30;
     const now = Date.now();
     const [stats, gh] = await Promise.all([
@@ -71,6 +86,19 @@ export default {
 };
 
 const text = (body, status) => new Response(body, { status, headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } });
+const SAFE = { 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer', 'x-frame-options': 'DENY', 'cache-control': 'no-store' };
+const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8', ...SAFE } });
+
+/** A file of the new dashboard. Scripts only from here, no inline ones, nothing from outside. */
+function serveAsset(request, a) {
+  const body = a.b64 ? Uint8Array.from(atob(a.body), (c) => c.charCodeAt(0)) : a.body;
+  return new Response(request.method === 'HEAD' ? null : body, {
+    headers: {
+      'content-type': a.type, ...SAFE,
+      'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+    },
+  });
+}
 
 /** Old fixed install IDs of the developer's PCs (before beta.8), as a secret: comma or space separated. */
 export function excludeIds(s) {
@@ -134,12 +162,14 @@ export function resetGithubCache() { ghCache = { at: 0, data: null }; }
 export async function github(env, fetchFn, now) {
   if (ghCache.data && now - ghCache.at < 600_000) return ghCache.data;
   const repo = REPO.test(env.GITHUB_REPO || '') ? env.GITHUB_REPO : 'Sepd0x/cs2-ip-changer';
-  if (!env.GITHUB_TOKEN) return { repo, problems: ['No GITHUB_TOKEN secret: GitHub numbers are off.'] };
+  // A token pasted from the clipboard can bring a BOM, spaces or a line break with it: GitHub then says 401
+  const token = String(env.GITHUB_TOKEN || '').replace(/^\uFEFF/, '').trim();
+  if (!token) return { repo, problems: ['No GITHUB_TOKEN secret: GitHub numbers are off.'] };
   const problems = [];
   const get = async (path) => {
     try {
       const res = await fetchFn(`https://api.github.com/repos/${repo}${path}`, {
-        headers: { authorization: `Bearer ${env.GITHUB_TOKEN}`, accept: 'application/vnd.github+json', 'user-agent': 'cs2ipc-stats-dashboard', 'x-github-api-version': '2022-11-28' },
+        headers: { authorization: `Bearer ${token}`, accept: 'application/vnd.github+json', 'user-agent': 'cs2ipc-stats-dashboard', 'x-github-api-version': '2022-11-28' },
       });
       if (!res.ok) { problems.push(`${path || '/'}: GitHub said ${res.status}`); return null; }
       return await res.json();

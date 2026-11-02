@@ -29,6 +29,7 @@ public partial class MainWindow
             page.Visibility = nav.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
             if (nav.IsChecked == true) PageTitle.Text = title;
         }
+        if (IsVisible) Telemetry.Screen(TelemetryScreen());
         if (NavAccounts.IsChecked == true && !_demo)
         {
             var stale = _accounts.Where(a => a.Meta.Profile == null || Fmt.Stale(a.Meta.Profile.Checked, TimeSpan.FromHours(12))).ToList();

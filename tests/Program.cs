@@ -602,6 +602,8 @@ BackgroundTests.Run(Check);
 Part4Tests.Run(Check);
 // beta.8 parte 5: remover sem passos à mão, as duas escolhas, Aplicações instaladas (Part5Tests.cs)
 Part5Tests.Run(Check);
+// beta.9: mapa de calor, cliques de raiva, idade em bandas (Beta9Tests.cs)
+Beta9Tests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

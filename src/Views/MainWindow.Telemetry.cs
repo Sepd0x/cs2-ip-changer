@@ -2,7 +2,8 @@
 
 namespace SRT;
 
-// What the daily stats need from the window (README > Telemetry): the mode, how the phone is connected and list sizes. Nothing else.
+// What the stats need from the window (README > Telemetry): the mode, how the phone is connected, list sizes, the screen open,
+// and for the live signal whether CS2 is open, protection is on and the window is in the tray. Nothing else.
 public partial class MainWindow
 {
     (string, string, Dictionary<string, int>) TelemetryNow()
@@ -19,5 +20,22 @@ public partial class MainWindow
             ["regions_blocked"] = _s?.BlockedRegions?.Count ?? 0,
         };
         return (mode, link, sizes);
+    }
+
+    /// <summary>The screen's id in the stats, the same as the dashboard's ui-map.js.</summary>
+    string TelemetryScreen() =>
+        NavNet.IsChecked == true ? "connection" : NavServers.IsChecked == true ? "servers" : NavRegions.IsChecked == true ? "regions"
+        : NavAccounts.IsChecked == true ? "accounts" : NavConfigs.IsChecked == true ? "configs" : NavProfiles.IsChecked == true ? "profiles"
+        : NavLog.IsChecked == true ? "log" : NavSettings.IsChecked == true ? "settings" : null;
+
+    (string, bool, bool, bool) TelemetryLive() =>
+        (TelemetryScreen(), Steam.Cs2Running, _heroWanted.Item1 == "good", !IsVisible || WindowState == System.Windows.WindowState.Minimized);
+
+    /// <summary>After Telemetry.Start: the screen open now, and the tray (no screen) when the window hides.</summary>
+    void TelemetryHook()
+    {
+        Telemetry.LiveFrom(TelemetryLive);
+        Telemetry.Screen(TelemetryScreen());
+        IsVisibleChanged += (_, _) => Telemetry.Screen(IsVisible ? TelemetryScreen() : null);
     }
 }

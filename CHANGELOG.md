@@ -4,6 +4,10 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Changed
+- The usage stats say a bit more, to see what in the app works and what confuses people: minutes on each screen, moves between screens, where on each screen people click (a coarse grid, added up for everyone with no ID) and clicks that hit nothing, how long ago the app was set up (in rough bands), and every 5 minutes while the app is open a short signal with what is on. Still never IPs, servers, accounts, names or anything you type. [Telemetry](README.md#telemetry) has the full list.
+- Reports from online virus scanners (they run the exe in a sandbox and accept the notice by themselves) are now told apart from people in the stats.
+
 ## [0.1.0-beta.8] - 2026-11-01
 
 ### Security
