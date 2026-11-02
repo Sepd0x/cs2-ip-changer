@@ -147,7 +147,7 @@ For this the app only talks to Steam (steamcommunity.com, login.steampowered.com
 - **Start with Windows**: a scheduled task named "CS2 IP Changer" opens the app in the notification area when you sign in, with its admin rights and without a UAC prompt each time. Only the copy in `C:\Program Files\CS2 IP Changer` can do this.
 - **Mobile data warning**: the Phone box on Connection counts what went through the phone's adapter since the app opened and this month, and the app warns once a month at the GB you pick. It counts everything on that adapter, not only CS2, and your carrier's count can differ a little.
 
-**Remove everything and quit.** Settings > Undo and maintenance. Removes every rule and route the app made (the region block too), the Start with Windows task and `C:\ProgramData\CS2IPChanger`, stops the phone tool and closes. What it leaves (`SRT_Dados` and the app) and how to delete it is in the message.
+**Remove CS2 IP Changer.** At the bottom of Settings, or Uninstall in Windows Settings > Installed apps (the installed copy is listed there). Removes every rule and route the app made (the region block too), the Start with Windows task, `C:\ProgramData\CS2IPChanger` and the app itself, and stops the phone tool. You pick: keep `SRT_Dados` (settings and accounts, so installing again brings them back) or delete it too. Files the app still uses go a few seconds after it closes; only a file Windows still holds waits for the next restart.
 
 **CS2 friend code.** Each account's menu on Accounts can copy its CS2 friend code, for Friends > Add a friend in CS2.
 

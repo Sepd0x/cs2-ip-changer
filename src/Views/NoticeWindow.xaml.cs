@@ -1,3 +1,4 @@
+using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -25,7 +26,10 @@ public partial class NoticeWindow : Window
         base.OnClosing(e);
     }
 
-    public NoticeWindow(string title, string text, string ok = "OK", string other = null, bool problem = false, Func<NoticeWindow, Task> action = null)
+    /// <param name="choices">Options to pick one of, each "title\nwhat it means"; the first is picked at the start (<see cref="Choice"/>).</param>
+    /// <param name="danger">The main button in red: it deletes something.</param>
+    public NoticeWindow(string title, string text, string ok = "OK", string other = null, bool problem = false, Func<NoticeWindow, Task> action = null,
+        string[] choices = null, bool danger = false)
     {
         InitializeComponent();
         Title = Heading.Text = title;
@@ -35,8 +39,24 @@ public partial class NoticeWindow : Window
         OtherBtn.Visibility = other == null ? Visibility.Collapsed : Visibility.Visible;
         OkBtn.IsCancel = other == null;   // with one button, Escape closes too
         if (problem) Heading.Foreground = (Brush)FindResource("Bad");
+        if (danger) OkBtn.Style = (Style)FindResource("DangerStrong");
         _action = action;
+        for (var i = 0; i < (choices?.Length ?? 0); i++)
+        {
+            var parts = choices[i].Split('\n', 2);
+            var content = new StackPanel();
+            content.Children.Add(new TextBlock { Text = parts[0] });
+            if (parts.Length > 1) content.Children.Add(new TextBlock { Text = parts[1], Style = (Style)FindResource("OptSub") });
+            var n = i;
+            var rb = new RadioButton { Style = (Style)FindResource("Choice"), GroupName = "notice", Content = content, IsChecked = i == 0 };
+            rb.Checked += (_, _) => Choice = n;
+            ChoiceList.Children.Add(rb);
+        }
+        ChoiceList.Visibility = choices?.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
+
+    /// <summary>The option picked (0 = the first).</summary>
+    public int Choice { get; private set; }
 
     /// <summary>Shows it on its own (no main window yet) and waits; true when the main button was clicked.</summary>
     public static bool Ask(string title, string text, string ok = "OK", string other = null, bool problem = false) =>

@@ -59,7 +59,9 @@ Heuristics look at what a program can do, not why. Every sensitive thing the app
 | `Process.Kill` on `cs2.exe`, `steam.exe` | Closes CS2 or Steam when you switch account or restart Steam through the phone. It asks first |
 | Registry `HKCU\Software\Valve\Steam` (`AutoLoginUser`, `RememberPassword`) | Switches the Steam account, the same keys Steam's login screen sets |
 | `schtasks` (scheduled task "CS2 IP Changer") | Start with Windows, only if you turn it on and only for the installed copy |
-| `MoveFileEx` (delete at restart) | Remove everything and quit: files still in use are deleted at the next restart |
+| `powershell.exe` (System32), once, after Remove | Waits for the app to close, then deletes the files it still used, one by one (never a folder with what is in it) |
+| `MoveFileEx` (delete at restart) | Remove: only a file Windows still holds after that is deleted at the next restart |
+| Registry `HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\CS2IPChanger` | The installed copy's entry in Windows Settings > Installed apps. Remove deletes it |
 | `Shell_NotifyIcon` | The icon next to the clock |
 | `RegisterHotKey` | Your hotkeys. Not a keyboard hook and not a keylogger |
 | WMI `root\SecurityCenter2` (read) | Only when Windows Firewall is off: which antivirus firewall took over, to tell you |

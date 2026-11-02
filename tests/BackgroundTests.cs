@@ -72,6 +72,24 @@ static class BackgroundTests
             check("Bandeja: Turn off só com a proteção ligada, Change IP só com telemóvel",
                 !menu.First(l => l.Key == "off").Enabled && !menu.First(l => l.Key == "changeip").Enabled
                 && MainWindow.TrayLayout("x", true, true).Where(l => l.Key is "off" or "changeip").All(l => l.Enabled));
+            // Parte 5: o menu escuro. Linha do estado cinzenta e sem comando, Open a negrito, separadores, cinzentos sem telemóvel e sem proteção
+            {
+                var ran = new List<string>();
+                var items = MainWindow.TrayItems("Protected", armed: false, phone: false, ran.Add);
+                var flags = items.Select(Tray.MenuFlags).ToList();
+                check("Bandeja escura: estado cinzento, Open a negrito, 2 separadores",
+                    flags[0] == (Tray.MfGrayed, false) && items[0].Run == null && flags[2] == (Tray.MfString, true)
+                    && flags.Count(f => f.Flags == Tray.MfSeparator) == 2 && flags.Count(f => f.Default) == 1);
+                check("Bandeja escura: Change IP e Turn off cinzentos quando não servem",
+                    flags[items.FindIndex(i => i.Text == "Change IP")].Flags == Tray.MfGrayed && flags[items.FindIndex(i => i.Text == "Turn off protection")].Flags == Tray.MfGrayed
+                    && MainWindow.TrayItems("x", true, true, _ => { }).Where(i => i.Text is "Change IP" or "Turn off protection").All(i => Tray.MenuFlags(i).Flags == Tray.MfString));
+                items.First(i => i.Text == "Quit").Run();
+                items.First(i => i.Text == "Regions").Run();
+                check("Bandeja escura: cada linha corre o seu comando", ran.SequenceEqual(new[] { "quit", "regions" }), string.Join(",", ran));
+                check("Bandeja escura: modo escuro só no Windows 10 1903 ou mais novo (antes o número 135 era outra função)",
+                    Tray.DarkMenusSupported(new Version(10, 0, 18362)) && Tray.DarkMenusSupported(new Version(10, 0, 26100)) && !Tray.DarkMenusSupported(new Version(10, 0, 17763)) && !Tray.DarkMenusSupported(new Version(6, 3, 9600)));
+                check("Bandeja escura: liga neste Windows sem rebentar", Tray.DarkMenus() == Tray.DarkMenusSupported(Environment.OSVersion.Version));
+            }
             // O ícone a sério (fica um instante na área de notificação): o Windows aceita-o, a dica muda e sai no Dispose
             if (!ci)
             {
@@ -116,33 +134,6 @@ static class BackgroundTests
             check("Concorrência: código de amigo só de SteamID64, sem I, O, 0 nem 1",
                 Steam.Cs2FriendCode("abc") == null && Steam.Cs2FriendCode("76561197960287930\n") == null && Steam.Cs2FriendCode("") == null && Steam.Cs2FriendCode(null) == null && Steam.Cs2FriendCode("123") == null
                 && other != null && System.Text.RegularExpressions.Regex.IsMatch(other, "^([A-HJ-NP-Z2-9]{4}-)?[A-HJ-NP-Z2-9]{5}-[A-HJ-NP-Z2-9]{4}$"), other ?? "null");
-        }
-
-        // Remover tudo: a pasta do ProgramData sai sem seguir links; o que está em uso fica para o reinício
-        {
-            var root = Path.Combine(tmp, "CS2IPChanger");
-            try { Adb.CreateAdminOnly(root); } catch { Directory.CreateDirectory(root); }
-            var outside = Path.Combine(tmp, "fora");
-            Directory.CreateDirectory(outside);
-            File.WriteAllText(Path.Combine(outside, "fica.txt"), "x");
-            Directory.CreateDirectory(Path.Combine(root, "adb"));
-            File.WriteAllText(Path.Combine(root, "adb", "adb.exe"), "x");
-            var j = Path.Combine(root, "ligacao");
-            var p = Process.Start(new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe"), $"/c mklink /J \"{j}\" \"{outside}\"") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true });
-            p.WaitForExit(10000);
-            var madeJunction = Directory.Exists(j);
-            var busy = Path.Combine(root, "net", "x", "wpfgfx.dll");
-            Directory.CreateDirectory(Path.GetDirectoryName(busy)!);
-            var later = new List<string>();
-            int n;
-            using (new FileStream(busy, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
-                n = Uninstall.RemoveData(root, path => { later.Add(path); return true; });
-            check("Remover tudo: junção removida, o alvo fica", madeJunction && !Directory.Exists(j) && File.Exists(Path.Combine(outside, "fica.txt")));
-            check("Remover tudo: o que está em uso fica para o reinício, depois do que tem dentro",
-                n > 0 && later.Contains(busy) && !File.Exists(Path.Combine(root, "adb", "adb.exe")) && later.IndexOf(busy) < later.IndexOf(root) && later.Last() == root, string.Join(" | ", later));
-            check("Remover tudo: pasta que não existe dá 0", Uninstall.RemoveData(Path.Combine(tmp, "nada"), _ => true) == 0);
-            var text = Uninstall.Text(@"C:\Program Files\CS2 IP Changer\SRT_Dados", true);
-            check("Remover tudo: diz o que fica e como apagar", text.Contains("SRT_Dados") && text.Contains("What stays") && text.Contains(@"C:\Program Files\CS2 IP Changer") && text.Contains("Start with Windows"));
         }
     }
 }

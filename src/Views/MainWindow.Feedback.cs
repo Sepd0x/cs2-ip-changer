@@ -91,8 +91,10 @@ public partial class MainWindow
 
     TaskCompletionSource<bool> _dialogTcs;
 
+    /// <param name="choices">Options to pick one of, each "title\nwhat it means" (Remove: keep settings or delete everything); the first is
+    /// picked at the start, the answer is in <see cref="_dialogChoice"/>.</param>
     Task<bool> Ask(string title, string text, string ok, string cancel = "Cancel",
- int inputs = 0, bool danger = false, string label1 = null, string label2 = null, string color = null)
+ int inputs = 0, bool danger = false, string label1 = null, string label2 = null, string color = null, string[] choices = null)
     {
         // A command stopped with Cancel asks nothing more: its next question counts as a "no"
         if (_command != null && CommandCancelled) { _dialogCancelClicked = false; return Task.FromResult(false); }
@@ -100,6 +102,7 @@ public partial class MainWindow
         _dialogColor = color;
         DialogColorLabel.Visibility = DialogColors.Visibility = color != null ? Visibility.Visible : Visibility.Collapsed;
         if (color != null) BuildColorSwatches();
+        BuildChoices(choices);
         _dialogTcs?.TrySetResult(false);
         _dialogTcs = new TaskCompletionSource<bool>();
         _dialogCancelClicked = false;
@@ -136,6 +139,27 @@ public partial class MainWindow
 
     /// <summary>The color picked in the dialog (flags).</summary>
     string _dialogColor;
+
+    /// <summary>The option picked in the dialog (0 = the first).</summary>
+    int _dialogChoice;
+
+    void BuildChoices(string[] choices)
+    {
+        _dialogChoice = 0;
+        DialogChoices.Children.Clear();
+        for (var i = 0; i < (choices?.Length ?? 0); i++)
+        {
+            var parts = choices[i].Split('\n', 2);
+            var content = new StackPanel();
+            content.Children.Add(new TextBlock { Text = parts[0], Foreground = (Brush)FindResource("Text") });
+            if (parts.Length > 1) content.Children.Add(new TextBlock { Text = parts[1], Style = (Style)FindResource("OptSub") });
+            var n = i;
+            var rb = new RadioButton { Style = (Style)FindResource("Choice"), GroupName = "dialogchoice", Content = content, IsChecked = i == 0 };
+            rb.Checked += (_, _) => _dialogChoice = n;
+            DialogChoices.Children.Add(rb);
+        }
+        DialogChoices.Visibility = choices?.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
 
     void BuildColorSwatches()
     {

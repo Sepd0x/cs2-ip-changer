@@ -812,6 +812,10 @@
                             <Setter TargetName="b" Property="Background" Value="{StaticResource Surface3}"/>
                             <Setter Property="Foreground" Value="{StaticResource Text}"/>
                         </Trigger>
+                        <!-- Greyed: can't be used now (Turn off protection with protection off, Change IP without a phone) -->
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="b" Property="Opacity" Value="0.4"/>
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

@@ -93,7 +93,10 @@ public partial class MainWindow
     // Narrow window: "Make all look like" moves under the picks instead of being cut.
     void ProfBar_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        var narrow = ProfBarLeft.DesiredSize.Width + ProfBarRight.DesiredSize.Width > ProfBar.ActualWidth;
+        // The room is the column's, minus the group's padding and edge: ProfBar itself takes the width of what it holds when that
+        // doesn't fit (it is then cut off on the right, as Preview was at the smallest window size)
+        var room = PageProfiles.ColumnDefinitions[2].ActualWidth - 30;
+        var narrow = ProfBarLeft.DesiredSize.Width + ProfBarRight.DesiredSize.Width > room;
         Grid.SetRow(ProfBarRight, narrow ? 1 : 0);
         Grid.SetColumn(ProfBarRight, narrow ? 0 : 2);
         Grid.SetColumnSpan(ProfBarRight, narrow ? 3 : 1);

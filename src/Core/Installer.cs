@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Win32;
 using Microsoft.Win32.SafeHandles;
 
 namespace SRT.Core;
@@ -155,6 +156,60 @@ public static class Installer
             throw new IOException($"{data} goes through a link, or where it really is couldn't be confirmed (a folder synced by OneDrive does this), so it wasn't copied. Copy it to {toData} yourself.");
         Directory.Move(partial, toData);
         return (files, skipped, false);
+    }
+
+    // ------------------------------------------------------------ Windows Settings > Installed apps
+
+    /// <summary>The app's entry in Installed apps (and the old Programs and Features), only for the copy in <see cref="Target"/>.</summary>
+    public const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\CS2IPChanger";
+
+    /// <summary>What the entry says: name, version, publisher, icon, size, folder, and Uninstall opens the app's own question.</summary>
+    public static List<(string Name, object Value, RegistryValueKind Kind)> UninstallEntry(string exe, string version, long bytes, DateTime installed) =>
+    [
+        ("DisplayName", "CS2 IP Changer", RegistryValueKind.String),
+        ("DisplayVersion", version, RegistryValueKind.String),
+        ("Publisher", "Sepd0x", RegistryValueKind.String),
+        ("DisplayIcon", exe + ",0", RegistryValueKind.String),
+        ("InstallLocation", Path.GetDirectoryName(exe)!, RegistryValueKind.String),
+        ("UninstallString", $"\"{exe}\" {Uninstall.Arg}", RegistryValueKind.String),
+        ("EstimatedSize", (int)Math.Min(int.MaxValue, (bytes + 1023) / 1024), RegistryValueKind.DWord),   // in KB
+        ("NoModify", 1, RegistryValueKind.DWord),
+        ("NoRepair", 1, RegistryValueKind.DWord),
+        ("URLInfoAbout", "https://github.com/" + Updater.Repo, RegistryValueKind.String),
+        ("InstallDate", installed.ToString("yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture), RegistryValueKind.String),
+    ];
+
+    /// <summary>
+    /// At each start of the installed copy: writes the entry when it is missing or says another version (after an Install or an
+    /// update). Any other copy writes nothing. Null = fine (or nothing to do); otherwise why it couldn't be written.
+    /// </summary>
+    public static string KeepRegistered(string exe, string version, RegistryKey root = null, string key = UninstallKey, string target = null)
+    {
+        if (exe == null || version == null || !SameDir(Path.GetDirectoryName(exe)!, target ?? Target)) return null;
+        try
+        {
+            using var hk = root == null ? RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64) : null;
+            using var k = (root ?? hk).CreateSubKey(key, true);
+            if (k.GetValue("DisplayVersion") as string == version && k.GetValue("UninstallString") as string == $"\"{exe}\" {Uninstall.Arg}") return null;
+            // The install date stays the first one (an update isn't a new install)
+            var date = DateTime.TryParseExact(k.GetValue("InstallDate") as string, "yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.None, out var d) ? d : DateTime.Today;
+            foreach (var (name, value, kind) in UninstallEntry(exe, version, new FileInfo(exe).Length, date)) k.SetValue(name, value, kind);
+            return null;
+        }
+        catch (Exception ex) { return ex.Message; }
+    }
+
+    /// <summary>Remove: the entry goes (nothing happens when there is none). Null = fine.</summary>
+    public static string Unregister(RegistryKey root = null, string key = UninstallKey)
+    {
+        try
+        {
+            using var hk = root == null ? RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64) : null;
+            (root ?? hk).DeleteSubKeyTree(key, false);
+            return null;
+        }
+        catch (Exception ex) { return ex.Message; }
     }
 
     /// <summary>Starts the installed copy. It inherits this process's admin rights and its environment, already without the runtime variables.</summary>

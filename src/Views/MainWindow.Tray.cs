@@ -38,8 +38,12 @@ public partial class MainWindow
         ("Quit", "quit", true),
     ];
 
-    IReadOnlyList<Tray.Item> TrayMenu() => TrayLayout(SideState.Text, ProtectionArmed, !_s.NoPhone).Select(l => l.Text == null ? new Tray.Item(null)
-        : new Tray.Item(l.Text, l.Key == "state" ? null : () => TrayCommand(l.Key), l.Enabled, l.Key == "open")).ToList();
+    /// <summary>Built each time the menu opens, from the state of that moment. The state line has no command, so it is greyed.</summary>
+    public static List<Tray.Item> TrayItems(string state, bool armed, bool phone, Action<string> command) =>
+        TrayLayout(state, armed, phone).Select(l => l.Text == null ? new Tray.Item(null)
+            : new Tray.Item(l.Text, l.Key == "state" ? null : () => command(l.Key), l.Enabled, l.Key == "open")).ToList();
+
+    IReadOnlyList<Tray.Item> TrayMenu() => TrayItems(SideState.Text, ProtectionArmed, !_s.NoPhone, TrayCommand);
 
     void TrayCommand(string key)
     {
@@ -193,38 +197,50 @@ public partial class MainWindow
         SaveSettings();
     }
 
-    // ------------------------------------------------------------ Remove everything and quit
+
+    // ------------------------------------------------------------ Remove everything and quit (also Uninstall in Windows Settings)
+
+    bool _removing;
 
     async void RemoveAll_Click(object sender, RoutedEventArgs e)
     {
-        if (_demo) return;
+        if (_demo || _removing) return;
+        if (!IsVisible) ShowFromTray();
         if (Steam.Cs2Running) { Toast("Close CS2 first: removing the block now would send CS2's traffic through your home connection.", Tone.Warn); return; }
-        var installed = Autostart.Allowed(Environment.ProcessPath);
-        if (!await Ask("Remove everything and quit?", Uninstall.Text(Paths.Data, installed), "Remove and quit", danger: true)) return;
-        _closingDone = true;
-        _restored = true;
+        if (!await Ask(Uninstall.Title, Uninstall.Text(), "Remove", danger: true, choices: Uninstall.Choices(Paths.Data, Autostart.Allowed(Environment.ProcessPath)))) return;
+        var everything = _dialogChoice == 1;
+        _removing = _closingDone = _restored = true;
         _tick.Stop();
         ShowProgress("Removing the rules, routes, task and the app's files…");
         var got = await _regionGate.WaitAsync(TimeSpan.FromSeconds(10));
-        string left, task;
-        int later;
-        try
+        Uninstall.Outcome o;
+        try { o = await Uninstall.Run(everything, () => _guard.RestoreAll(_servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: false)); }
+        catch (Exception ex)
         {
-            left = await _guard.RestoreAll(_servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: false);
-            task = await Autostart.TurnOff();
-            later = await Task.Run(() => { Adb.StopServer(); return Uninstall.RemoveData(); });
+            // Never left half-way with the window stuck: say it, and the app closes (opening it again puts its protection back)
+            Log.Error("Remove stopped: " + ex.Message);
+            HideProgress();
+            new NoticeWindow("Not everything was removed", "Remove stopped: " + ex.Message + "\n\nOpen the app and try again, or run CS2IPChanger.exe --restore.", "Close", problem: true) { Owner = this }.ShowAndWait();
+            Close();
+            return;
         }
         finally { if (got) _regionGate.Release(); }
-        Log.Info("Remove everything: " + (left == null ? "rules and routes gone" : "couldn't remove " + left) + "; task " + (task ?? "gone") +
-            "; " + (later < 0 ? Uninstall.Root + " left alone (others can change it)" : later > 0 ? $"{later} files in {Uninstall.Root} go at the next restart" : Uninstall.Root + " gone") + ".");
-        var problem = left != null || task != null || later < 0;
-        var text = (left == null ? "The Firewall rules and routes are gone." : "Couldn't remove: " + left + ". Restart the PC to clear routes, or run the app with --restore.")
-            + (task == null ? "" : "\n\n" + task)
-            + (later < 0 ? $"\n\n{Uninstall.Root} was left alone: programs without admin rights can change it. Delete it yourself." :
-                later > 0 ? $"\n\nSome files in {Uninstall.Root} are in use by this copy: Windows deletes them at the next restart." : "")
-            + $"\n\nStill here: {Paths.Data} and the app itself. " + (installed ? $"Delete the folder {Installer.Target} to remove them." : "Delete the SRT_Dados folder and CS2IPChanger.exe to remove them.");
+        Log.Info(Uninstall.LogLine(o));
         HideProgress();
-        new NoticeWindow(problem ? "Not everything was removed" : "Everything was removed", text, "Close", problem: problem).ShowAndWait();
+        var (title, text, problem) = Uninstall.Result(o, Paths.Data);
+        new NoticeWindow(title, text, "Close", problem: problem) { Owner = this }.ShowAndWait();
         Close();
+    }
+
+    /// <summary>Uninstall in Windows Settings while the app runs: the copy started by Windows asks this one to open the same question.</summary>
+    void ListenForUninstall()
+    {
+        try
+        {
+            var ev = new EventWaitHandle(false, EventResetMode.AutoReset, App.UninstallEventName, out var created);
+            if (!created) { ev.Dispose(); return; }   // made by someone else first: not used (it could open the question at any moment)
+            ThreadPool.RegisterWaitForSingleObject(ev, (_, _) => Dispatcher.BeginInvoke(() => RemoveAll_Click(this, new RoutedEventArgs())), null, -1, false);
+        }
+        catch { }
     }
 }

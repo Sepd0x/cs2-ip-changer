@@ -23,16 +23,21 @@ public partial class App : Application
             try { first = _single.WaitOne(10000); }
             catch (AbandonedMutexException) { first = true; }
         }
+        var uninstall = args.Contains(Uninstall.Arg);
         if (!first)
         {
             // The copy that runs (maybe only in the notification area) brings its window back; the message only if it can't.
             // Not for an update or the sign-in task (--tray): those start a copy while one already runs, nobody asked for the window.
             if (args.Contains(Autostart.TrayArg)) { Shutdown(); return; }
+            // Uninstall in Windows Settings while the app runs: the running copy opens the Remove question
+            if (uninstall && Signal(UninstallEventName)) { Shutdown(); return; }
             if (!args.Contains("--updated") && ShowRunning()) { Shutdown(); return; }
             AlreadyRunningWindow().ShowAndWait();
             Shutdown();
             return;
         }
+        // Uninstall in Windows Settings, no copy running: only the Remove question, without the main window (nothing is set up first)
+        if (uninstall) { UninstallAndExit(); return; }
         // The usage stats notice, before the app makes a folder, a rule or a route: Quit (or Escape) leaves the PC as it was.
         // The notice would become the app's MainWindow and closing it would end the app, so the main window decides that again below.
         var updated = args.Contains("--updated");
@@ -46,7 +51,13 @@ public partial class App : Application
         ShutdownMode = ShutdownMode.OnMainWindowClose;
         Paths.Ensure();
         // This copy holds the lock, so no other copy runs from the older unpacked folders (the demo touches nothing).
-        if (!args.Contains("--demo")) Task.Run(() => { Program.CleanOldUnpacked(); Installer.CleanStage(); });
+        // The installed copy keeps its entry in Windows Settings > Installed apps (after an Install or an update: the version)
+        if (!args.Contains("--demo")) Task.Run(() =>
+        {
+            Program.CleanOldUnpacked();
+            Installer.CleanStage();
+            if (Installer.KeepRegistered(Environment.ProcessPath, Updater.Clean(AppInfo.Version)) is string why) Log.Warn("The entry in Windows Settings > Installed apps couldn't be written: " + why);
+        });
         DispatcherUnhandledException += OnUiError;
         AppDomain.CurrentDomain.UnhandledException += (_, a) => Crash.Write(a.ExceptionObject as Exception, "fatal");
         if (!args.Contains("--demo")) Crash.Started();
@@ -61,11 +72,16 @@ public partial class App : Application
     /// <summary>Set by a second start: the running copy shows its window (MainWindow.ListenForShow).</summary>
     public const string ShowEventName = @"Local\CS2IPChanger.Show";
 
-    static bool ShowRunning()
+    /// <summary>Set by Uninstall in Windows Settings while a copy runs: that copy opens the Remove question (MainWindow.ListenForUninstall).</summary>
+    public const string UninstallEventName = @"Local\CS2IPChanger.Uninstall";
+
+    static bool ShowRunning() => Signal(ShowEventName);
+
+    static bool Signal(string name)
     {
         try
         {
-            if (!EventWaitHandle.TryOpenExisting(ShowEventName, out var ev)) return false;
+            if (!EventWaitHandle.TryOpenExisting(name, out var ev)) return false;
             using (ev)
             {
                 // Only the running copy may come to the front (not any process).
@@ -126,6 +142,40 @@ public partial class App : Application
         var running = false;
         try { if (Mutex.TryOpenExisting(InstanceName, out var other)) { running = true; other.Dispose(); } } catch (UnauthorizedAccessException) { running = true; }
         RestoredWindow(left, running).ShowAndWait();
+        Shutdown();
+    }
+
+    /// <summary>
+    /// "CS2IPChanger.exe --uninstall" (Uninstall in Windows Settings > Installed apps) with no copy running: the same question as
+    /// Settings > Remove everything, then the same removal, without opening the main window or setting anything up first.
+    /// </summary>
+    void UninstallAndExit()
+    {
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        if (Steam.Cs2Running)
+        {
+            new NoticeWindow("Close CS2 first", "Removing the app's block now would send CS2's traffic through your home connection. Close CS2, then click Uninstall again.", "Close", problem: true).ShowAndWait();
+            Shutdown();
+            return;
+        }
+        Uninstall.Outcome o = null;
+        var ask = new NoticeWindow(Uninstall.Title, Uninstall.Text(), "Remove", "Cancel", choices: Uninstall.Choices(Paths.Data, Autostart.Allowed(Environment.ProcessPath)), danger: true,
+            action: async w =>
+            {
+                w.Working = true;
+                w.Say("Removing the rules, routes, task and the app's files…");
+                var servers = Store.Load<List<ServerItem>>(Paths.File("servers.json"), () => new());
+                o = await Uninstall.Run(w.Choice == 1, () => new Guard().RestoreAll(servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: false));
+                Log.Info(Uninstall.LogLine(o));
+                w.Working = false;
+                w.Close();
+            });
+        ask.ShowAndWait();
+        if (o != null)
+        {
+            var (title, text, problem) = Uninstall.Result(o, Paths.Data);
+            new NoticeWindow(title, text, "Close", problem: problem).ShowAndWait();
+        }
         Shutdown();
     }
 

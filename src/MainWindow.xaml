@@ -922,7 +922,7 @@
                             </Grid.RowDefinitions>
                             <Grid Margin="0,0,0,10">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="200"/>
+                                    <ColumnDefinition Width="180"/>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
@@ -941,7 +941,7 @@
                                 </StackPanel>
                                 <TextBlock x:Name="AccCount" Grid.Column="2" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" Foreground="{StaticResource Faint}" VerticalAlignment="Center" HorizontalAlignment="Right"
                                            TextTrimming="CharacterEllipsis" Margin="12,0,12,0"/>
-                                <ComboBox x:Name="AccSort" Grid.Column="3" Width="160" SelectionChanged="AccFilter_Changed" ToolTip="Order (favorites always come first)">
+                                <ComboBox x:Name="AccSort" Grid.Column="3" Width="150" SelectionChanged="AccFilter_Changed" ToolTip="Order (favorites always come first)">
                                     <ComboBoxItem Content="Most recent" Tag="recent"/>
                                     <ComboBoxItem Content="Name" Tag="name"/>
                                     <ComboBoxItem Content="No Steam bans first" Tag="clean"/>
@@ -1331,7 +1331,7 @@
                     </Grid>
 
                     <!-- ======================================== Page: Profiles (MainWindow.Profiles.cs) -->
-                    <Grid x:Name="PageProfiles" Grid.Row="1" Margin="16,0,16,18" Visibility="Collapsed" Loaded="ProfilesPage_Loaded">
+                    <Grid x:Name="PageProfiles" Grid.Row="1" Margin="16,0,16,18" Visibility="Collapsed" Loaded="ProfilesPage_Loaded" SizeChanged="ProfBar_SizeChanged">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="0.4*" MinWidth="260" MaxWidth="320"/>
                             <ColumnDefinition Width="12"/>
@@ -1469,14 +1469,14 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
-                                    <StackPanel x:Name="ProfBarLeft" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <StackPanel x:Name="ProfBarLeft" Orientation="Horizontal" VerticalAlignment="Center" SizeChanged="ProfBar_SizeChanged">
                                         <TextBlock Text="Pick:" Foreground="{StaticResource Faint}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                                         <Button Style="{StaticResource Ghost}" Content="All" Padding="8,3" Click="ProfSelAll_Click"/>
                                         <Button Style="{StaticResource Ghost}" Content="Signed in" Padding="8,3" Click="ProfSelSigned_Click" ToolTip="Pick only the accounts the app can change now"/>
                                         <Button Style="{StaticResource Ghost}" Content="None" Padding="8,3" Click="ProfSelNone_Click"/>
                                         <TextBlock x:Name="ProfCount" Foreground="{StaticResource Faint}" VerticalAlignment="Center" Margin="8,0,16,0"/>
                                     </StackPanel>
-                                    <StackPanel x:Name="ProfBarRight" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <StackPanel x:Name="ProfBarRight" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" SizeChanged="ProfBar_SizeChanged">
                                         <TextBlock Text="Make the others look like" Foreground="{StaticResource Faint}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                         <ComboBox x:Name="IdentSource" Width="140" ToolTip="The account whose look the others get"/>
                                         <Button x:Name="ProfIdentBtn" Content="Preview" Click="ProfIdentical_Click" Margin="6,0,0,0"
@@ -1681,6 +1681,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
+                            <!-- Left: what you change most (protection, Change IP, the New IP + next account command) -->
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -1688,25 +1689,7 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <HeaderedContentControl Style="{StaticResource Group}" Header="Undo and maintenance">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <WrapPanel VerticalAlignment="Top">
-                                            <Button Click="OpenData_Click" Margin="0,0,6,6" Content="Open data folder" ToolTip="Opens the SRT_Dados folder, next to the .exe"/>
-                                            <Button Click="UnhideAll_Click" Margin="0,0,6,6" Content="Show hidden accounts" ToolTip="Brings back the accounts you hid from the Accounts list"/>
-                                            <Button Click="OpenFirewall_Click" Margin="0,0,6,6" Content="Open Windows Firewall" ToolTip="The app's rules are under Outbound Rules, named 'ServerRouteTool'."/>
-                                            <Button Click="DeleteLogs_Click" Margin="0,0,6,6" Content="Delete log files" ToolTip="Deletes the log files in SRT_Dados (they hold your home IP, Steam names and servers). The log keeps about 14 days on its own."/>
-                                            <Button Click="RemoveAll_Click" Margin="0,0,6,6" Content="Remove everything and quit"
-                                                    ToolTip="Removes every rule and route the app made (Regions too), the Start with Windows task and C:\ProgramData\CS2IPChanger, stops the phone tool and closes. SRT_Dados and the app stay; it asks first and says how to delete them."/>
-                                        </WrapPanel>
-                                        <Button Grid.Column="1" Style="{StaticResource Danger}" Click="Restore_Click" Margin="24,0,0,6" VerticalAlignment="Top" Content="Turn off protection"
-                                                ToolTip="Removes the kill switch, the routes and the CS2 lock. Use it if your internet stops working. Your servers stay saved, and regions you turned off stay off (Allow all on Regions lifts them)."/>
-                                    </Grid>
-                                </HeaderedContentControl>
-                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Protection">
+                                <HeaderedContentControl Style="{StaticResource Group}" Header="Protection">
                                     <StackPanel x:Name="ProtectionOptions">
                                         <CheckBox x:Name="LockCs2Box" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12"
                                                   ToolTip="CS2 game traffic only goes through the phone. If the phone disconnects, CS2 goes offline instead of using your home network. Web content that CS2 or its add-ons load still uses your normal connection.">
@@ -1744,7 +1727,7 @@
                                     </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="2" Style="{StaticResource Group}" Header="Change IP">
+                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Change IP">
                                     <StackPanel>
                                     <Grid MaxWidth="560" HorizontalAlignment="Left">
                                         <Grid.ColumnDefinitions>
@@ -1789,100 +1772,7 @@
                                     </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="3" Style="{StaticResource Group}" Header="Player flags" VerticalAlignment="Top">
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,0,0,10" Background="Transparent"
-                                                   ToolTip="Servers only show player names. A flag with only a name marks anyone who uses that name. With the player's Steam profile the flag stays on them after a name change, and it can show which server they are on if their game details are public. A Steam Web API key makes this check faster."
-                                                   Text="A flag with only a name marks anyone who uses that name. Add their Steam profile to keep it after a name change."/>
-                                        <TextBlock x:Name="FlagsEmpty" Text="No flags yet. Right-click a player in Servers, or add one by profile link." Style="{StaticResource Sub}" Margin="0,0,0,8"/>
-                                        <ItemsControl x:Name="FlagList" MaxWidth="620" HorizontalAlignment="Left">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Grid Margin="0,0,0,8">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <Button Grid.Column="1" Click="FlagEdit_Click" Cursor="Hand" VerticalAlignment="Center" Margin="0,0,12,0" ToolTip="Colour: click to change it">
-                                                            <Button.Template>
-                                                                <ControlTemplate TargetType="Button">
-                                                                    <Border Background="Transparent" Padding="0,4">
-                                                                        <Border x:Name="sw" Width="16" Height="8" Background="{Binding Brush}" BorderBrush="{StaticResource Edge}" BorderThickness="1"/>
-                                                                    </Border>
-                                                                    <ControlTemplate.Triggers>
-                                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                                            <Setter TargetName="sw" Property="BorderBrush" Value="{StaticResource Text}"/>
-                                                                        </Trigger>
-                                                                    </ControlTemplate.Triggers>
-                                                                </ControlTemplate>
-                                                            </Button.Template>
-                                                        </Button>
-                                                        <StackPanel Margin="0,0,10,0">
-                                                            <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis"/>
-                                                            <TextBlock Text="{Binding Detail}" Foreground="{StaticResource Faint}" FontSize="11" TextTrimming="CharacterEllipsis"/>
-                                                        </StackPanel>
-                                                        <CheckBox Grid.Column="2" Style="{StaticResource Switch}" Content="Follow" IsChecked="{Binding Follow}" Click="FlagFollow_Click" VerticalAlignment="Center" Margin="0,0,10,0"
-                                                                  ToolTip="Tells you when this player shows up on another server in your list"/>
-                                                        <Button Grid.Column="3" Style="{StaticResource IconBtn}" Content="&#xE70F;" Click="FlagEdit_Click" ToolTip="Edit"/>
-                                                        <Button Grid.Column="4" Style="{StaticResource IconBtn}" Content="&#xE74D;" Click="FlagRemove_Click" ToolTip="Remove flag"/>
-                                                    </Grid>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                        <Button HorizontalAlignment="Left" Margin="0,2,0,12" Content="Add by profile link" Click="FlagAdd_Click"
-                                                ToolTip="Paste a steamcommunity.com link or a SteamID64"/>
-                                        <CheckBox x:Name="AutoJoinBox" Style="{StaticResource Switch}" Click="SettingChanged">
-                                            <StackPanel>
-                                                <TextBlock Text="Join automatically when a followed player moves"/>
-                                                <TextBlock Text="Only servers in your list, with the usual checks. If CS2 is open, the app asks first." Style="{StaticResource OptSub}"/>
-                                            </StackPanel>
-                                        </CheckBox>
-                                    </StackPanel>
-                                </HeaderedContentControl>
-
-                            </Grid>
-
-                            <Grid Grid.Column="2">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
-                                <HeaderedContentControl Style="{StaticResource Group}" Header="Steam">
-                                    <StackPanel>
-                                        <TextBlock Text="Steam Web API key (optional)"/>
-                                        <TextBlock Text="With it, bans come from the official API. It stays on this PC, encrypted for your Windows user." Style="{StaticResource OptSub}" Margin="0,1,0,8"/>
-                                        <TextBlock x:Name="ApiKeyLostText" Visibility="Collapsed" Foreground="{StaticResource Warn}" TextWrapping="Wrap" Margin="0,0,0,8"
-                                                   Text="The saved key was encrypted by another Windows user or on another PC, so it can't be read here. Paste it again."/>
-                                        <Grid MaxWidth="560" HorizontalAlignment="Left">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" MinWidth="200"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <PasswordBox x:Name="ApiKeyPwd" Height="28" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" LostFocus="SettingChanged"
-                                                         ToolTip="Works without a key too. Hidden so it doesn't show on stream or in screenshots."/>
-                                            <TextBox x:Name="ApiKeyBox" Height="28" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" LostFocus="SettingChanged" Tag="Works without a key too" Visibility="Collapsed"/>
-                                            <Button x:Name="ApiKeyShowBtn" Grid.Column="1" Margin="6,0,0,0" Click="ApiKeyShow_Click" Content="Show" ToolTipService.ShowOnDisabled="True" ToolTip="Shows the key"/>
-                                            <Button Grid.Column="2" Margin="6,0,0,0" Click="ApiKeyLink_Click" Content="Get key" ToolTip="Opens steamcommunity.com/dev/apikey"/>
-                                        </Grid>
-                                        <CheckBox x:Name="AutoStreamerBox" Style="{StaticResource Switch}" Click="AutoStreamer_Click" Margin="0,12,0,0"
-                                                  ToolTip="While OBS Studio or Streamlabs is running, the app hides usernames, your home IP in the Log page and the API key, as Hide usernames on the Accounts page does. They show again when it closes.">
-                                            <StackPanel>
-                                                <TextBlock Text="Hide usernames while OBS or Streamlabs is open"/>
-                                                <TextBlock Text="So a login or your home IP never ends up on a stream." Style="{StaticResource OptSub}"/>
-                                            </StackPanel>
-                                        </CheckBox>
-                                    </StackPanel>
-                                </HeaderedContentControl>
-
-                                <HeaderedContentControl x:Name="SwitchGroup" Grid.Row="1" Style="{StaticResource Group}" Header="New IP + next account">
+                                <HeaderedContentControl Grid.Row="2" x:Name="SwitchGroup" Style="{StaticResource Group}" Header="New IP + next account">
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource OptSub}" Margin="0,0,0,10" Background="Transparent"
                                                    ToolTip="The steps ticked under Steps, in order. Both hotkeys work in game. The Change IP and rejoin hotkey is separate: it changes the IP and rejoins with the same account, or with the next one if that account is banned on the last server."
@@ -1937,28 +1827,34 @@
                                         <CheckBox x:Name="SwOpenWithBox" Style="{StaticResource Switch}" Click="SettingChanged">
                                             <StackPanel>
                                                 <TextBlock Text="Open your CS2 programs"/>
-                                                <TextBlock Text="The programs listed in Open with CS2, below. Only when this command opens CS2." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="The programs listed under Open with CS2. Only when this command opens CS2." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
                                     </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="2" Style="{StaticResource Group}" Header="Updates">
-                                    <StackPanel>
-                                        <CheckBox x:Name="CheckUpdatesBox" Style="{StaticResource Switch}" Click="CheckUpdates_Click">
-                                            <StackPanel>
-                                                <TextBlock Text="Check for updates"/>
-                                                <TextBlock Text="Once a day, on GitHub. Nothing installs without your OK and a matching SHA-256." Style="{StaticResource OptSub}"/>
-                                            </StackPanel>
-                                        </CheckBox>
-                                        <!-- Telemetry (beta): required, accepted once before the app opens (App.StatsGate), README > Telemetry -->
-                                        <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,12,0,0" Background="Transparent"
-                                                   Text="Anonymous usage stats, required while the app is in beta: once a day, with a random ID that is new every day. Never IPs, servers, accounts or names."
-                                                   ToolTip="Sent: the app and Windows versions, your country as two letters, the mode, how the phone is connected, minutes open, how often each button and hotkey is used, a few counters, how long your lists are, and errors as their type and place in the code. Details in the README, under Telemetry."/>
-                                    </StackPanel>
+                                <HeaderedContentControl Grid.Row="3" Style="{StaticResource Group}" Header="How it works" VerticalAlignment="Top">
+                                    <TextBlock Style="{StaticResource Sub}" LineHeight="19" MaxWidth="640" HorizontalAlignment="Left">
+                                        The phone shares its mobile data with the PC, over a USB cable or the Wi-Fi hotspot. The app sends the game through it: servers see the carrier IP, not your home IP.<LineBreak/><LineBreak/>
+                                        If the connection drops, the block stops those servers instead of letting your IP through.<LineBreak/><LineBreak/>
+                                        Change IP turns data off and on until a new IP comes. A USB 4G/5G dongle or router also works.<LineBreak/><LineBreak/>
+                                        <Run Foreground="{StaticResource Faint}">Other people on the same carrier can use the same IP at the same time.</Run>
+                                    </TextBlock>
                                 </HeaderedContentControl>
+                            </Grid>
 
-                                <HeaderedContentControl Grid.Row="3" Style="{StaticResource Group}" Header="Background and data">
+                            <!-- Right: the app in the background, flags and programs, Steam, updates; maintenance and Remove last -->
+                            <Grid Grid.Column="2">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <HeaderedContentControl Style="{StaticResource Group}" Header="Background and data">
                                     <StackPanel>
                                         <CheckBox x:Name="StartWithWindowsBox" Style="{StaticResource Switch}" Click="StartWithWindows_Click" Margin="0,0,0,12" ToolTipService.ShowOnDisabled="True"
                                                   ToolTip="A scheduled task named 'CS2 IP Changer' opens the app in the notification area when you sign in, with its admin rights and without the UAC prompt each time. Only for the copy installed in C:\Program Files\CS2 IP Changer. Turning this off, Remove everything and --restore delete the task.">
@@ -1982,7 +1878,61 @@
                                     </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="4" Style="{StaticResource Group}" Header="Open with CS2">
+                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Player flags">
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,0,0,10" Background="Transparent"
+                                                   ToolTip="Servers only show player names. A flag with only a name marks anyone who uses that name. With the player's Steam profile the flag stays on them after a name change, and it can show which server they are on if their game details are public. A Steam Web API key makes this check faster."
+                                                   Text="A flag with only a name marks anyone who uses that name. Add their Steam profile to keep it after a name change."/>
+                                        <TextBlock x:Name="FlagsEmpty" Text="No flags yet. Right-click a player in Servers, or add one by profile link." Style="{StaticResource Sub}" Margin="0,0,0,8"/>
+                                        <ItemsControl x:Name="FlagList" MaxWidth="620" HorizontalAlignment="Left">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Margin="0,0,0,8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Button Grid.Column="1" Click="FlagEdit_Click" Cursor="Hand" VerticalAlignment="Center" Margin="0,0,12,0" ToolTip="Colour: click to change it">
+                                                            <Button.Template>
+                                                                <ControlTemplate TargetType="Button">
+                                                                    <Border Background="Transparent" Padding="0,4">
+                                                                        <Border x:Name="sw" Width="16" Height="8" Background="{Binding Brush}" BorderBrush="{StaticResource Edge}" BorderThickness="1"/>
+                                                                    </Border>
+                                                                    <ControlTemplate.Triggers>
+                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                            <Setter TargetName="sw" Property="BorderBrush" Value="{StaticResource Text}"/>
+                                                                        </Trigger>
+                                                                    </ControlTemplate.Triggers>
+                                                                </ControlTemplate>
+                                                            </Button.Template>
+                                                        </Button>
+                                                        <StackPanel Margin="0,0,10,0">
+                                                            <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Text="{Binding Detail}" Foreground="{StaticResource Faint}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                                        </StackPanel>
+                                                        <CheckBox Grid.Column="2" Style="{StaticResource Switch}" Content="Follow" IsChecked="{Binding Follow}" Click="FlagFollow_Click" VerticalAlignment="Center" Margin="0,0,10,0"
+                                                                  ToolTip="Tells you when this player shows up on another server in your list"/>
+                                                        <Button Grid.Column="3" Style="{StaticResource IconBtn}" Content="&#xE70F;" Click="FlagEdit_Click" ToolTip="Edit"/>
+                                                        <Button Grid.Column="4" Style="{StaticResource IconBtn}" Content="&#xE74D;" Click="FlagRemove_Click" ToolTip="Remove flag"/>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <Button HorizontalAlignment="Left" Margin="0,2,0,12" Content="Add by profile link" Click="FlagAdd_Click"
+                                                ToolTip="Paste a steamcommunity.com link or a SteamID64"/>
+                                        <CheckBox x:Name="AutoJoinBox" Style="{StaticResource Switch}" Click="SettingChanged">
+                                            <StackPanel>
+                                                <TextBlock Text="Join automatically when a followed player moves"/>
+                                                <TextBlock Text="Only servers in your list, with the usual checks. If CS2 is open, the app asks first." Style="{StaticResource OptSub}"/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                    </StackPanel>
+                                </HeaderedContentControl>
+
+                                <HeaderedContentControl Grid.Row="2" Style="{StaticResource Group}" Header="Open with CS2">
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,0,0,10" Background="Transparent"
                                                    ToolTip="Like Discord, Spotify or a stats tracker. They open as you, without the app's admin rights, and only if they aren't running yet."
@@ -2015,13 +1965,65 @@
                                     </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="5" Style="{StaticResource Group}" Header="How it works" VerticalAlignment="Top">
-                                    <TextBlock Style="{StaticResource Sub}" LineHeight="19" MaxWidth="640" HorizontalAlignment="Left">
-                                        The phone shares its mobile data with the PC, over a USB cable or the Wi-Fi hotspot. The app sends the game through it: servers see the carrier IP, not your home IP.<LineBreak/><LineBreak/>
-                                        If the connection drops, the block stops those servers instead of letting your IP through.<LineBreak/><LineBreak/>
-                                        Change IP turns data off and on until a new IP comes. A USB 4G/5G dongle or router also works.<LineBreak/><LineBreak/>
-                                        <Run Foreground="{StaticResource Faint}">Other people on the same carrier can use the same IP at the same time.</Run>
-                                    </TextBlock>
+                                <HeaderedContentControl Grid.Row="3" Style="{StaticResource Group}" Header="Steam">
+                                    <StackPanel>
+                                        <TextBlock Text="Steam Web API key (optional)"/>
+                                        <TextBlock Text="With it, bans come from the official API. It stays on this PC, encrypted for your Windows user." Style="{StaticResource OptSub}" Margin="0,1,0,8"/>
+                                        <TextBlock x:Name="ApiKeyLostText" Visibility="Collapsed" Foreground="{StaticResource Warn}" TextWrapping="Wrap" Margin="0,0,0,8"
+                                                   Text="The saved key was encrypted by another Windows user or on another PC, so it can't be read here. Paste it again."/>
+                                        <Grid MaxWidth="560" HorizontalAlignment="Left">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" MinWidth="200"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <PasswordBox x:Name="ApiKeyPwd" Height="28" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" LostFocus="SettingChanged"
+                                                         ToolTip="Works without a key too. Hidden so it doesn't show on stream or in screenshots."/>
+                                            <TextBox x:Name="ApiKeyBox" Height="28" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" LostFocus="SettingChanged" Tag="Works without a key too" Visibility="Collapsed"/>
+                                            <Button x:Name="ApiKeyShowBtn" Grid.Column="1" Margin="6,0,0,0" Click="ApiKeyShow_Click" Content="Show" ToolTipService.ShowOnDisabled="True" ToolTip="Shows the key"/>
+                                            <Button Grid.Column="2" Margin="6,0,0,0" Click="ApiKeyLink_Click" Content="Get key" ToolTip="Opens steamcommunity.com/dev/apikey"/>
+                                        </Grid>
+                                        <CheckBox x:Name="AutoStreamerBox" Style="{StaticResource Switch}" Click="AutoStreamer_Click" Margin="0,12,0,0"
+                                                  ToolTip="While OBS Studio or Streamlabs is running, the app hides usernames, your home IP in the Log page and the API key, as Hide usernames on the Accounts page does. They show again when it closes.">
+                                            <StackPanel>
+                                                <TextBlock Text="Hide usernames while OBS or Streamlabs is open"/>
+                                                <TextBlock Text="So a login or your home IP never ends up on a stream." Style="{StaticResource OptSub}"/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                    </StackPanel>
+                                </HeaderedContentControl>
+
+                                <HeaderedContentControl Grid.Row="4" Style="{StaticResource Group}" Header="Updates">
+                                    <StackPanel>
+                                        <CheckBox x:Name="CheckUpdatesBox" Style="{StaticResource Switch}" Click="CheckUpdates_Click">
+                                            <StackPanel>
+                                                <TextBlock Text="Check for updates"/>
+                                                <TextBlock Text="Once a day, on GitHub. Nothing installs without your OK and a matching SHA-256." Style="{StaticResource OptSub}"/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                        <!-- Telemetry (beta): required, accepted once before the app opens (App.StatsGate), README > Telemetry -->
+                                        <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,12,0,0" Background="Transparent"
+                                                   Text="Anonymous usage stats, required while the app is in beta: once a day, with a random ID that is new every day. Never IPs, servers, accounts or names."
+                                                   ToolTip="Sent: the app and Windows versions, your country as two letters, the mode, how the phone is connected, minutes open, how often each button and hotkey is used, a few counters, how long your lists are, and errors as their type and place in the code. Details in the README, under Telemetry."/>
+                                    </StackPanel>
+                                </HeaderedContentControl>
+
+                                <HeaderedContentControl Grid.Row="5" Style="{StaticResource Group}" Header="Maintenance">
+                                    <UniformGrid Columns="2" MaxWidth="420" HorizontalAlignment="Left">
+                                        <Button Click="OpenData_Click" Margin="0,0,6,6" Content="Open data folder" ToolTip="Opens the SRT_Dados folder, next to the .exe"/>
+                                        <Button Click="OpenFirewall_Click" Margin="0,0,0,6" Content="Open Windows Firewall" ToolTip="The app's rules are under Outbound Rules, named 'ServerRouteTool'."/>
+                                        <Button Click="UnhideAll_Click" Margin="0,0,6,0" Content="Show hidden accounts" ToolTip="Brings back the accounts you hid from the Accounts list"/>
+                                        <Button Click="DeleteLogs_Click" Margin="0" Content="Delete log files" ToolTip="Deletes the log files in SRT_Dados (they hold your home IP, Steam names and servers). The log keeps about 14 days on its own."/>
+                                    </UniformGrid>
+                                </HeaderedContentControl>
+
+                                <HeaderedContentControl Grid.Row="6" Style="{StaticResource Group}" Header="Remove the app" VerticalAlignment="Top">
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,0,0,10"
+                                                   Text="Removes the rules, routes and task the app made, then the app itself. You choose whether your settings and accounts stay."/>
+                                        <Button Style="{StaticResource Danger}" HorizontalAlignment="Left" Click="RemoveAll_Click" Content="Remove CS2 IP Changer"
+                                                ToolTip="Asks first. Also in Windows Settings > Apps > Installed apps, for the copy in C:\Program Files\CS2 IP Changer."/>
+                                    </StackPanel>
                                 </HeaderedContentControl>
                             </Grid>
                         </Grid>
@@ -2052,6 +2054,7 @@
                     </HeaderedContentControl.Header>
                     <StackPanel>
                         <TextBlock x:Name="DialogText" Style="{StaticResource Sub}" LineHeight="19"/>
+                        <StackPanel x:Name="DialogChoices" Margin="0,14,0,0" Visibility="Collapsed"/>
                         <TextBlock x:Name="DialogLabel1" Style="{StaticResource Key}" Margin="0,14,0,4" Visibility="Collapsed"/>
                         <TextBox x:Name="DialogInput" Margin="0,4,0,0" Visibility="Collapsed"/>
                         <TextBlock x:Name="DialogLabel2" Style="{StaticResource Key}" Margin="0,10,0,4" Visibility="Collapsed"/>

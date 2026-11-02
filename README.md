@@ -62,7 +62,7 @@ It isn't a VPN: servers see an ordinary mobile connection, so it also works on s
 | Matchmaking puts me on far regions | Regions blocks the Valve relays you don't want, from a map. |
 
 > [!WARNING]
-> This is a beta, so expect bugs. If something breaks your connection, **Turn off protection** (on Connection, or in Settings > Undo and maintenance) removes the routes and firewall rules (`CS2IPChanger.exe --restore` removes the region block too).
+> This is a beta, so expect bugs. If something breaks your connection, **Turn off protection** (on Connection, or in the icon's menu next to the clock) removes the routes and firewall rules (`CS2IPChanger.exe --restore` removes the region block too).
 
 ## Quick start
 
@@ -244,14 +244,14 @@ The [Quick start](#quick-start) covers the usual case.
 - **Hotkeys.** <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F9</kbd> for New IP + next account and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> for Change IP and rejoin. Change them in Settings > New IP + next account. The app won't take Ctrl+Alt combinations: on many keyboards that's AltGr, which types @ and €.
 - **No phone with you?** Pick "No phone: play on your home connection" under What goes through the phone. Nothing is blocked, servers see your home IP, and the app says so. Until a phone has been connected once, CS2 isn't locked, so trying the app without a phone never leaves CS2 unable to connect at home.
 - **Hotspot or a 4G/5G dongle** work too: pick them under Connection > How the PC connects to the phone (see the [FAQ](#faq)).
-- **Portable.** Settings, servers and accounts are saved in `SRT_Dados` next to the exe. To uninstall, click **Remove everything and quit** in Settings > Undo and maintenance: it removes the rules and routes (the region block too), the Start with Windows task and `C:\ProgramData\CS2IPChanger`, then tells you what is left (`SRT_Dados` and the exe) to delete yourself. Without the window, `CS2IPChanger.exe --restore` removes the rules, routes and task; then delete the folder and `C:\ProgramData\CS2IPChanger`.
+- **Portable.** Settings, servers and accounts are saved in `SRT_Dados` next to the exe. To uninstall, use Uninstall in Windows Settings > Installed apps, or **Remove CS2 IP Changer** at the bottom of Settings: it removes the rules and routes (the region block too), the Start with Windows task, `C:\ProgramData\CS2IPChanger` and the app, and you pick whether `SRT_Dados` (settings and accounts) stays. Without the window, `CS2IPChanger.exe --restore` removes the rules, routes and task; then delete the folder and `C:\ProgramData\CS2IPChanger`.
 </details>
 
 ## If something goes wrong
 
 The firewall rules stay in place when you close the app, on purpose, so your IP can't leak while it's closed. To undo everything:
 
-- **In the app:** Turn off protection, on Connection or in Settings > Undo and maintenance. It removes the routes and rules and checks that they're really gone. Protection stays off until you press Run leak test or open the app again. Regions you turned off stay off: Allow all (block off) on Regions lifts them.
+- **In the app:** Turn off protection, on Connection or in the icon's menu next to the clock. It removes the routes and rules and checks that they're really gone. Protection stays off until you press Run leak test or open the app again. Regions you turned off stay off: Allow all (block off) on Regions lifts them.
 - **If the window won't open:** run `CS2IPChanger.exe --restore`. It removes everything, the region block too.
 - **If you already deleted the app:** open [tools/restore.cmd](tools/restore.cmd), click Download raw file, right-click the file and pick Run as administrator, then restart the PC.
 
@@ -394,7 +394,7 @@ Once when the app has been open for 20 seconds, when you close it (if it was ope
 - the mode (Game only, Whole PC while CS2 is open, Whole PC always, No phone) and how the phone is connected (USB, hotspot)
 - minutes the app was open
 - how many times each button and hotkey was used, counted by the name of its code (for example `ChangeIp_Click`), never by what's on it
-- a few counters: IP changes that worked, that got the same IP or no network, kicks, bans and VPN blocks the app saw, errors in the Log, and where Phone setup stopped (the step's name, like `phone_setup_tetheroff`)
+- a few counters: IP changes that worked, that got the same IP or no network, kicks, bans and VPN blocks the app saw, errors in the Log, where Phone setup stopped (the step's name, like `phone_setup_tetheroff`), and `first_start` on the day you accept this notice (so new users can be counted)
 - how many servers, accounts, flagged players and "Open with CS2" programs are in your lists, and how many regions are turned off, in rough bands (0, 1, 2 to 5, 6 to 20, 21 to 100, more), never the exact number
 - errors as their type and place in the app's code (for example `NullReferenceException` in `MainWindow.QueryServers`), never their message
 

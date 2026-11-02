@@ -5,11 +5,11 @@ namespace SRT.Core;
 
 /// <summary>
 /// The icon in the notification area (next to the clock) and its menu. Windows' own Shell_NotifyIcon and popup menu on a hidden
-/// window of the app: no Windows Forms, nothing new to ship.
+/// window of the app: no Windows Forms, nothing new to ship. The menu is dark, like the app (<see cref="DarkMenus"/>).
 /// </summary>
 public sealed class Tray : IDisposable
 {
-    /// <summary>A menu line. Text null = separator. Bold = what a click on the icon does.</summary>
+    /// <summary>A menu line. Text null = separator. Bold = what a click on the icon does. No Run = greyed (the state line on top).</summary>
     public sealed record Item(string Text, Action Run = null, bool Enabled = true, bool Bold = false);
 
     readonly HwndSource _win;
@@ -29,6 +29,7 @@ public sealed class Tray : IDisposable
     {
         _menu = menu;
         _open = open;
+        DarkMenus();
         // A hidden top-level window (not message-only: those never get "TaskbarCreated" when Explorer restarts).
         _win = new HwndSource(new HwndSourceParameters("CS2IPChangerTray") { Width = 0, Height = 0, WindowStyle = 0 });
         _win.AddHook(WndProc);
@@ -108,7 +109,13 @@ public sealed class Tray : IDisposable
         return IntPtr.Zero;
     }
 
-    void ShowMenu()
+    /// <summary>Menu flags of each line: what Windows draws (greyed, separator) and which line is the default (bold).</summary>
+    public static (uint Flags, bool Default) MenuFlags(Item it) =>
+        it.Text == null ? (MfSeparator, false) : (MfString | (it.Enabled && it.Run != null ? 0 : MfGrayed), it.Bold && it.Run != null);
+
+    /// <summary>Opens the menu at the pointer. Windows places it (above the taskbar, on the right screen, at its DPI) and closes it on a
+    /// click elsewhere, Escape or a command; the arrows and Enter work as in any Windows menu.</summary>
+    public void ShowMenu()
     {
         var items = _menu?.Invoke() ?? [];
         var m = CreatePopupMenu();
@@ -117,10 +124,9 @@ public sealed class Tray : IDisposable
         {
             for (var i = 0; i < items.Count; i++)
             {
-                var it = items[i];
-                if (it.Text == null) { AppendMenuW(m, MfSeparator, UIntPtr.Zero, null); continue; }
-                AppendMenuW(m, MfString | (it.Enabled && it.Run != null ? 0 : MfGrayed), (UIntPtr)(uint)(i + 1), it.Text);
-                if (it.Bold) SetMenuDefaultItem(m, (uint)(i + 1), 0);
+                var (flags, isDefault) = MenuFlags(items[i]);
+                AppendMenuW(m, flags, flags == MfSeparator ? UIntPtr.Zero : (UIntPtr)(uint)(i + 1), items[i].Text);
+                if (isDefault) SetMenuDefaultItem(m, (uint)(i + 1), 0);
             }
             GetCursorPos(out var pt);
             // Without this the menu stays open when you click somewhere else (documented Windows behaviour for tray menus).
@@ -132,6 +138,31 @@ public sealed class Tray : IDisposable
         }
         finally { DestroyMenu(m); }
     }
+
+    /// <summary>
+    /// Windows' menus of this app drawn dark, like the app (Windows 10 1903 and later; on older ones they stay light). Windows has no
+    /// documented switch for this: SetPreferredAppMode and FlushMenuThemes are uxtheme.dll's, found by number, as Notepad++, Explorer's
+    /// own tray menus and many apps use. A missing or different function only leaves the menu light.
+    /// </summary>
+    public static bool DarkMenus()
+    {
+        if (!DarkMenusSupported(Environment.OSVersion.Version)) return false;
+        try
+        {
+            var ux = LoadLibraryExW("uxtheme.dll", IntPtr.Zero, LoadLibrarySearchSystem32);
+            if (ux == IntPtr.Zero) return false;
+            var setMode = GetProcAddress(ux, (IntPtr)135);   // SetPreferredAppMode
+            var flush = GetProcAddress(ux, (IntPtr)136);     // FlushMenuThemes
+            if (setMode == IntPtr.Zero || flush == IntPtr.Zero) return false;
+            Marshal.GetDelegateForFunctionPointer<SetPreferredAppModeFn>(setMode)(ForceDark);
+            Marshal.GetDelegateForFunctionPointer<FlushMenuThemesFn>(flush)();
+            return true;
+        }
+        catch { return false; }
+    }
+
+    /// <summary>SetPreferredAppMode is number 135 from Windows 10 1903 (build 18362); before, 135 was another function.</summary>
+    public static bool DarkMenusSupported(Version os) => os.Major > 10 || (os.Major == 10 && os.Build >= 18362);
 
     public void Dispose()
     {
@@ -147,9 +178,16 @@ public sealed class Tray : IDisposable
     const uint NifMessage = 1, NifIcon = 2, NifTip = 4, NifInfo = 0x10;
     const uint NiifInfo = 1, NiifLargeIcon = 0x20;
     const int WmLButtonUp = 0x202, WmLButtonDblClk = 0x203, WmRButtonUp = 0x205;
-    const uint MfString = 0, MfGrayed = 1, MfSeparator = 0x800;
+    public const uint MfString = 0, MfGrayed = 1, MfSeparator = 0x800;
     const uint TpmRightButton = 2, TpmNoNotify = 0x80, TpmReturnCmd = 0x100;
     const uint MsgFltAllow = 1;
+    const int ForceDark = 2;
+    const uint LoadLibrarySearchSystem32 = 0x800;
+
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+    delegate int SetPreferredAppModeFn(int mode);
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+    delegate void FlushMenuThemesFn();
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     struct NotifyIconData
@@ -201,4 +239,8 @@ public sealed class Tray : IDisposable
     static extern bool SetForegroundWindow(IntPtr hwnd);
     [DllImport("user32.dll")]
     static extern bool PostMessageW(IntPtr hwnd, uint msg, IntPtr w, IntPtr l);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    static extern IntPtr LoadLibraryExW(string name, IntPtr file, uint flags);
+    [DllImport("kernel32.dll", CharSet = CharSet.Ansi)]
+    static extern IntPtr GetProcAddress(IntPtr module, IntPtr ordinal);
 }

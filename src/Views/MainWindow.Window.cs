@@ -120,6 +120,7 @@ public partial class MainWindow
         RegisterHotkeys();
         StartTray();
         ListenForShow();
+        ListenForUninstall();
     }
 
     void RegisterHotkeys()
@@ -190,6 +191,16 @@ public partial class MainWindow
     public static (double MinW, double MinH, double W, double H) FitWorkArea(double minW, double minH, double w, double h, double areaW, double areaH) =>
         (Math.Min(minW, areaW), Math.Min(minH, areaH), Math.Min(w, areaW), Math.Min(h, areaH));
 
+    /// <summary>
+    /// Before a question in OnClosing (e.Cancel already set): with the window hidden in the notification area (Quit in the icon's
+    /// menu), the question has to show it, and WPF refuses Show while the window is still closing. Letting the Closing event end first
+    /// fixes that; with the window on screen nothing waits.
+    /// </summary>
+    async Task AfterCancelledClose()
+    {
+        if (!IsVisible) await System.Windows.Threading.Dispatcher.Yield();
+    }
+
     async void OnClosing(object sender, CancelEventArgs e)
     {
         // Settings > Background and data: the X only hides the window; Quit in the icon's menu closes the app.
@@ -203,6 +214,7 @@ public partial class MainWindow
         if (_profBusy && !_closingDone)
         {
             e.Cancel = true;
+            await AfterCancelledClose();
             if (!await Ask("Profiles are still changing", "Stop after the current account and close?", "Stop and close")) { _quitting = false; return; }
             _profCts?.Cancel();
             while (_profBusy) await Task.Delay(200);
@@ -220,6 +232,7 @@ public partial class MainWindow
             bool keep;
             try
             {
+                await AfterCancelledClose();
                 keep = await Ask("Close the app",
                     $"{Blocked(_last)} stay blocked outside the phone after you close the app. Without the phone they can't connect until you open the app again and turn protection off.\n\n" +
                     "The app remembers your answer. To change it: Settings > Protection > Turn off protection when closing the app.",
@@ -250,6 +263,7 @@ public partial class MainWindow
         // Removing the block with CS2 still in a match would send its next packets out with the home IP.
         if (Steam.Cs2Running && !_restored)
         {
+            await AfterCancelledClose();
             if (!await Ask("CS2 is still open", "Turning protection off now would send CS2's traffic through your home connection. Close CS2 first, or close the app and keep protection on this time.", "Keep protection and close")) { _quitting = false; return; }
             _closingDone = true;
             Close();

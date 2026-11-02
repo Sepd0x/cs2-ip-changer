@@ -3,7 +3,7 @@ import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { fakeD1 } from './d1.mjs';
 import ingest, { readCapped } from '../src/index.js';
-import dashboard, { collect, page, github, excludeIds, resetGithubCache } from '../src/dashboard.js';
+import dashboard, { collect, page, github, excludeIds, resetGithubCache, compareVersions, readable } from '../src/dashboard.js';
 import { verifyAccess, resetAccessCache } from '../src/access.js';
 
 const ID = (n) => n.toString(16).padStart(32, '0');
@@ -195,7 +195,7 @@ function seed(DB, now) {
   const click = (d, id, name, n, dev = 0) => DB.raw.prepare('INSERT INTO clicks (day, id, name, n, dev) VALUES (?,?,?,?,?)').run(d, id, name, n, dev);
   click(day(0), ID(0xa), 'ChangeIp_Click', 5); click(day(0), ID(0xb), 'ChangeIp_Click', 2); click(day(0), ID(0xb), 'Rejoin_Click', 1); click(day(0), ID(0xd), 'Rejoin_Click', 99, 1);
   const count = (d, id, name, n) => DB.raw.prepare('INSERT INTO counts (day, id, name, n, dev) VALUES (?,?,?,?,0)').run(d, id, name, n);
-  count(day(0), ID(0xa), 'ip_changed', 4); count(day(0), ID(0xb), 'ip_changed', 1); count(day(0), ID(0xa), 'servers', 6); count(day(0), ID(0xb), 'servers', 6); count(day(1), ID(0xc), 'servers', 0);
+  count(day(0), ID(0xa), 'ip_changed', 4); count(day(0), ID(0xb), 'ip_changed', 1); count(day(0), ID(0xb), 'first_start', 1); count(day(0), ID(0xb), 'first_start', 1); count(day(0), ID(0xa), 'servers', 6); count(day(0), ID(0xb), 'servers', 6); count(day(1), ID(0xc), 'servers', 0);   // first_start twice in a day: still one new user
   DB.raw.prepare('INSERT INTO errors (day, id, app, type, at, n, dev) VALUES (?,?,?,?,?,?,0)').run(day(0), ID(0xa), '0.1.0-beta.8', 'NullReferenceException', 'MainWindow.<b>Query', 3);
 }
 
@@ -208,14 +208,17 @@ test('dashboard: the numbers come out right from a test database', async () => {
   assert.equal(s.minutes, 30 + 10 + 1440);             // C capped at a day
   assert.equal(s.avgMinutes, Math.round(1480 / 3));
   assert.equal(s.perDay.length, 7);
-  assert.deepEqual(s.perDay.at(-1), { day: '2026-11-01', n: 2, minutes: 40 });
-  assert.deepEqual(s.perDay.at(-2), { day: '2026-10-31', n: 1, minutes: 1440 });
+  assert.deepEqual(s.perDay.at(-1), { day: '2026-11-01', n: 2, minutes: 40, fresh: 1 });
+  assert.equal(s.newUsers, 1);                         // first_start: B accepted the notice today
+  assert.equal(s.newest, '0.1.0-beta.8');
+  assert.equal(s.newestDays, 2);
+  assert.deepEqual(s.perDay.at(-2), { day: '2026-10-31', n: 1, minutes: 1440, fresh: 0 });
   assert.equal(s.perDay[0].n, 0);
   assert.deepEqual(s.versions.map((r) => [r.name, r.n]), [['0.1.0-beta.8', 2], ['0.1.0-beta.7', 1]]);
   assert.deepEqual(s.countries.map((r) => [r.name, r.n]), [['US', 2], ['PT', 1]]);
   assert.deepEqual(s.modes.map((r) => [r.name, r.n]), [['cs2open', 2], ['game', 1]]);
   assert.deepEqual(s.clicks.map((r) => [r.name, r.n]), [['ChangeIp_Click', 7], ['Rejoin_Click', 1]]);
-  assert.deepEqual(s.counts.map((r) => [r.name, r.n]), [['ip_changed', 5]]);          // list sizes are not summed as counters
+  assert.deepEqual(s.counts.map((r) => [r.name, r.n]), [['ip_changed', 5]]);          // list sizes and first_start are not summed as counters
   assert.deepEqual(s.sizes.find((z) => z.name === 'servers').bands, [{ band: '0', days: 1 }, { band: '6-20', days: 2 }]);
   assert.equal(s.errors[0].n, 3);
   const html = page({ days: 7, stats: s, gh: { problems: [] }, now, email: EMAIL });
@@ -249,6 +252,16 @@ test('dashboard: the whole page with a good token shows the numbers', async () =
   const html = await res.text();
   assert.equal(res.status, 200);
   assert.ok(html.includes('<b>7 days</b>'));
-  assert.match(html, /Install-days<\/div><div class="tv">3</);
-  assert.ok(html.includes('ChangeIp_Click'));
+  assert.match(html, /Users per day<\/div><div class="tv">0.4</);   // 3 users in 7 days
+  assert.ok(html.includes('>Change IP<') && html.includes('title="ChangeIp_Click"'), 'button names readable, the code name on hover');
+  assert.match(html, /New users<\/div><div class="tv">1</);
+});
+
+test('dashboard: versions in order, names from the code readable', () => {
+  assert.deepEqual(['0.1.0', '0.1.0-beta.10', '0.1.0-alpha.4', '0.1.0-beta.9', '0.1.0-beta.8+dev'].sort(compareVersions),
+    ['0.1.0-alpha.4', '0.1.0-beta.8+dev', '0.1.0-beta.9', '0.1.0-beta.10', '0.1.0']);
+  assert.equal(readable('ChangeIp_Click'), 'Change IP');
+  assert.equal(readable('Tray_open'), 'Tray: open');
+  assert.equal(readable('ip_changed'), 'IP changed');
+  assert.equal(readable('vpn_seen'), 'VPN seen');
 });

@@ -600,6 +600,8 @@ AuditTests.Run(Check);
 BackgroundTests.Run(Check);
 // beta.8 parte 4: kicks e bans por tipo, só em comunitários; estatísticas ao fechar (Part4Tests.cs)
 Part4Tests.Run(Check);
+// beta.8 parte 5: remover sem passos à mão, as duas escolhas, Aplicações instaladas (Part5Tests.cs)
+Part5Tests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;
