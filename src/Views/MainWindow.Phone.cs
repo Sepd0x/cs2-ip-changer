@@ -507,16 +507,33 @@ public partial class MainWindow
             }
             // A connection too jittery to keep adds an attempt (Quality.GoodRetries at most), so it never uses up the attempts for a new IP
             var max = Math.Max(1, _s.MaxAttempts);
+            var afterBadLink = false;   // the last attempt's new IP was too jittery to keep: this one looks for another cell
             for (var attempt = 1; attempt <= max + goodRetries; attempt++)
             {
                 var of = max + goodRetries;
                 tries = attempt;
-                ShowProgress($"Attempt {attempt}/{of}: phone data off for {_s.OffSeconds} s…");
-                var err = await Adb.Cycle(_adb, _phone.Serial, method, Math.Clamp(_s.OffSeconds, 1, 60));
+                var how = Quality.MethodFor(method, afterBadLink, hotspot);
+                afterBadLink = false;
+                ShowProgress(how != method ? $"Attempt {attempt}/{of}: airplane mode for {_s.OffSeconds} s, so the phone looks for another cell…"
+                    : $"Attempt {attempt}/{of}: phone data off for {_s.OffSeconds} s…");
+                var err = await Adb.Cycle(_adb, _phone.Serial, how, Math.Clamp(_s.OffSeconds, 1, 60));
+                // A phone that refuses airplane mode was left as it was: the retry goes the usual way
+                if (err != null && how != method && err.StartsWith(Adb.Refused))
+                {
+                    Log.Info("The phone refused airplane mode: trying again with " + (method == Adb.Method.Airplane ? "airplane mode." : "mobile data off and on."));
+                    how = method;
+                    err = await Adb.Cycle(_adb, _phone.Serial, how, Math.Clamp(_s.OffSeconds, 1, 60));
+                }
                 if (err != null) { Log.Error(err); Toast(err, Tone.Error); return false; }
 
                 ShowProgress($"Attempt {attempt}/{of}: waiting for the mobile network…");
                 got = await WaitForEgressIp(TimeSpan.FromSeconds(50));
+                // Some phones drop USB tethering in airplane mode: turned back on once (only asked when Windows no longer sees the phone).
+                if (got == null && how == Adb.Method.Airplane && !hotspot)
+                {
+                    var (back, _) = await TurnOnTethering(ShowProgress);
+                    if (back != null) got = await WaitForEgressIp(TimeSpan.FromSeconds(30));
+                }
                 if (got == null) { ShowProgress("The network hasn't come back yet…"); continue; }
                 if (got == first) { Log.Info($"The carrier gave back the same IP ({got})."); continue; }
                 // Many admins ban the whole range: optionally keep going until the /16 is new, against every earlier IP
@@ -533,7 +550,9 @@ public partial class MainWindow
                     if (Quality.ChangeAgain(q, goodRetries))
                     {
                         goodRetries++;
-                        Log.Info($"New IP {got}: {q.Text}. Jitter of {Quality.GoodJitterMs} ms or more, or 2 of 10 pings lost: trying again ({goodRetries}/{Quality.GoodRetries}).");
+                        afterBadLink = true;
+                        Log.Info($"New IP {got}: {q.Text}. Jitter of {Quality.GoodJitterMs} ms or more, or 2 of 10 pings lost: trying again ({goodRetries}/{Quality.GoodRetries})"
+                            + (hotspot ? "." : " with airplane mode, so the phone looks for another cell."));
                         continue;
                     }
                     Log.Info($"New IP {got}: {q.Text}.");

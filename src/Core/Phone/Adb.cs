@@ -448,6 +448,9 @@ public static class Adb
 
     public enum Method { MobileData, Airplane }
 
+    /// <summary>The start of <see cref="Cycle"/>'s answer when the phone refused to turn data off (nothing changed on the phone).</summary>
+    public const string Refused = "The phone refused the command: ";
+
     /// <summary>Turns the phone's data connection off and on again. USB tethering stays on.</summary>
     public static async Task<string> Cycle(string adb, string serial, Method method, int offSeconds)
     {
@@ -467,7 +470,7 @@ public static class Adb
         {
             // On some Android versions "svc data" is not available: try airplane mode.
             if (method == Method.MobileData) return await Cycle(adb, serial, Method.Airplane, offSeconds);
-            return "The phone refused the command: " + r1.Output;
+            return Refused + r1.Output;
         }
         await Task.Delay(TimeSpan.FromSeconds(offSeconds));
         // Turning data or airplane mode off can drop USB tethering, and ADB with it, for a few seconds: keep trying for about 20 s.

@@ -16,6 +16,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Profiles: the web sign-in line and its button share one place. "Signed in · 187 d left" is grey when all is well and amber when it runs out in less than 14 days or has run out; on the row under the pointer it turns into Sign out. Sign in stays in view.
 - Log: show all, warnings and errors, or errors only, and search the Log. Copy all still copies everything.
 - Settings > Protection: the two options for when protection turns on or off by itself sit together under "Start and close".
+- Change IP with "Keep changing until the connection is good": when the new IP's connection is too jittery, the next try uses airplane mode, so the phone looks for the network again and can land on another cell. Mobile data off and on keeps the same cell. Normal changes still use the method you picked, and the hotspot never uses airplane mode (it would turn the hotspot off). If the phone turns USB tethering off in airplane mode, the app turns it back on once.
 
 ### Fixed
 - A new Steam account now shows up on Accounts, Configs and Profiles without restarting the app. Turning protection off stopped the check that sees new accounts, a read while Steam was writing its account list could miss one until Steam wrote it again, and Configs and Profiles didn't redraw while they were open. A new account also moves to its place in the list instead of the end.

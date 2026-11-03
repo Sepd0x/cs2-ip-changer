@@ -475,6 +475,14 @@ static class CoreTests
             check("Ligação boa: no máximo 3 vezes", !Quality.ChangeAgain(jittery, Quality.GoodRetries) && Quality.GoodRetries == 3);
             check("Ligação boa: sem medição não muda", !Quality.ChangeAgain(null, 0) && !Quality.ChangeAgain(new LinkQuality(0, 0, 0, 0, null), 0));
             check("Ligação boa: desligada por defeito", !new Settings().RequireGoodLink);
+            // beta.10: a repetição por ligação má usa o modo de avião (os dados ficam na mesma antena), nunca no hotspot
+            check("Ligação boa: troca normal usa o método escolhido",
+                Quality.MethodFor(Adb.Method.MobileData, false, false) == Adb.Method.MobileData && Quality.MethodFor(Adb.Method.Airplane, false, false) == Adb.Method.Airplane);
+            check("Ligação boa: repetição por ligação má usa o modo de avião",
+                Quality.MethodFor(Adb.Method.MobileData, true, false) == Adb.Method.Airplane && Quality.MethodFor(Adb.Method.Airplane, true, false) == Adb.Method.Airplane);
+            check("Ligação boa: no hotspot nunca o modo de avião sem o escolheres",
+                Quality.MethodFor(Adb.Method.MobileData, true, true) == Adb.Method.MobileData && Quality.MethodFor(Adb.Method.MobileData, false, true) == Adb.Method.MobileData);
+            check("Ligação boa: recusa do telemóvel reconhecida", Adb.Refused.StartsWith("The phone refused"));
         }
     }
 }

@@ -34,7 +34,7 @@ The short version is in the [README](../README.md#features). This page has the d
 
 ## Change IP
 
-**Change IP.** Turns mobile data (or airplane mode) off and on over ADB until the carrier hands you a new IP. Old IPs stay in a list so you can see they really changed. With CGNAT the carrier sometimes gives the same IP back, so the app keeps trying (you set how many times).
+**Change IP.** Turns mobile data (or airplane mode) off and on over ADB until the carrier hands you a new IP. Old IPs stay in a list so you can see they really changed. With CGNAT the carrier sometimes gives the same IP back, so the app keeps trying (you set how many times). With "Keep changing until the connection is good", a new IP that's too jittery is changed again with airplane mode, so the phone looks for another cell (not on the hotspot).
 
 **Change IP and rejoin.** When a server kicks or bans you, the app plays a sound and offers to get a new IP and join the last server again (only once protection is confirmed). After a ban it also logs into the next account that server hasn't banned, because the ban is on the IP and the account. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> does it from inside the game (you can pick another key in Settings > New IP + next account). When Steam or VAC refuses the account instead, the app says so and doesn't offer a new IP, because it wouldn't help.
 

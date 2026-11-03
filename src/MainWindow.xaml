@@ -1998,7 +1998,7 @@
                                         </StackPanel>
                                     </CheckBox>
                                     <CheckBox x:Name="GoodLinkBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,12,0,0"
-                                              ToolTip="On mobile data the lag in CS2 is mostly jitter: the ping is fine, but your moves reach the server late. Another IP can land on another cell. After each new IP the app pings for about 2 s, as in Checks > Connection quality, and changes again when jitter is 20 ms or more (or 2 of the 10 pings are lost), 3 more changes at most, on top of the attempts. Each check adds 5 to 15 s to Change IP.">
+                                              ToolTip="On mobile data the lag in CS2 is mostly jitter: the ping is fine, but your moves reach the server late. Mobile data off and on keeps the phone on the same cell, so each change again uses airplane mode (not on the hotspot), and the phone looks for the network again: it can land on another cell. After each new IP the app pings for about 2 s, as in Checks > Connection quality, and changes again when jitter is 20 ms or more (or 2 of the 10 pings are lost), 3 more changes at most, on top of the attempts. Each check adds 5 to 15 s to Change IP.">
                                         <StackPanel>
                                             <TextBlock Text="Keep changing until the connection is good"/>
                                             <TextBlock Text="Changes again while jitter is 20 ms or more: up to 3 more changes than the attempts above." Style="{StaticResource OptSub}"/>

@@ -58,6 +58,14 @@ public static class Quality
     public static bool ChangeAgain(LinkQuality q, int retried) =>
         q != null && q.Sent > 0 && retried < GoodRetries && (q.JitterMs >= GoodJitterMs || q.LossPct >= 20);
 
+    /// <summary>
+    /// How one Change IP attempt cycles the phone. Data off and on keeps the phone on the same cell, so the retry after a bad
+    /// connection uses airplane mode, which makes the phone look for the network again (it can land on another cell).
+    /// Not on the hotspot: airplane mode turns the phone's Wi-Fi off, and the hotspot with it.
+    /// </summary>
+    public static Adb.Method MethodFor(Adb.Method chosen, bool afterBadLink, bool hotspot) =>
+        afterBadLink && !hotspot ? Adb.Method.Airplane : chosen;
+
     /// <summary>Pings <paramref name="ip"/> <paramref name="count"/> times, 200 ms apart. Average and jitter come from the answers only.</summary>
     public static async Task<LinkQuality> Measure(string ip, string netType, int count = 8, int timeoutMs = 1000)
     {
