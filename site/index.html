@@ -109,8 +109,9 @@
   --disp:"Funnel Display","Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
   --mono:"Fragment Mono","Cascadia Mono",Consolas,ui-monospace,"SFMono-Regular",Menlo,monospace}
 *{box-sizing:border-box}
-html{color-scheme:dark;scroll-behavior:smooth;font-size:16px;-webkit-text-size-adjust:100%}
-@media (min-width:1800px){html{font-size:clamp(18px,.94vw,24px)}}
+html{color-scheme:dark;scroll-behavior:smooth;font-size:100%;-webkit-text-size-adjust:100%}
+@media (min-width:1600px){html{font-size:clamp(1rem,1vw,1.125rem)}}
+@media (min-width:1915px){html{font-size:clamp(1.125rem,.94vw,1.5rem)}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.6 var(--sans);-webkit-font-smoothing:antialiased}
 main{overflow-x:clip}
