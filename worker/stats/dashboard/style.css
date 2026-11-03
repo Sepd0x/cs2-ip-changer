@@ -9,11 +9,11 @@
   /* /tokens */
   --bg: var(--t-bg); --edge: var(--t-edge); --panel: var(--t-surface); --panel2: #1b1b1b; --line: var(--t-line); --line2: var(--t-line-strong);
   --btn: #232323; --btn-acc: #202a34; --hover: #1e1e1e;
-  --ink: #e4e4e4; --ink2: #afafaf; --ink3: #8b8b8b;
+  --ink: #e4e4e4; --ink2: var(--t-muted); --ink3: var(--t-faint);
   --acc: var(--t-accent); --acc2: #a9d2f8; --acc-d: var(--t-accent-deep); --acc-ink: #cfe6ff;
   --good: var(--t-good); --warn: var(--t-warn); --bad: #ee6b5f;
   --heat-hi: #fff1b8;
-  --gradient: linear-gradient(90deg, #3cb3e5 0%, #7e83d6 24%, #c252c7 48%, #ce9187 72%, #d4c059 88%, #d8df3b 100%);
+  --gradient: var(--t-top);
   --mono: Consolas, "Cascadia Mono", ui-monospace, monospace;
   color-scheme: dark;
 }

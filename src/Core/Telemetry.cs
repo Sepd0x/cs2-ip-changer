@@ -100,6 +100,14 @@ public static class Telemetry
         + "Never IPs, servers, accounts, Steam names or IDs, your carrier or anything you type.\n\n"
         + "Quit closes the app without changing anything on your PC.";
 
+    /// <summary>The notice's version (Settings.StatsNotice). 2 since beta.9: the ID is kept for the install. An older accept is asked again once.</summary>
+    public const int NoticeVersion = 2;
+
+    /// <summary>Added to the notice for someone who accepted an older one (beta.8 said the ID was new every day).</summary>
+    public const string NoticeChanged =
+        "Changed since you last accepted: the ID is now kept for this install instead of new every day, so the stats can tell people "
+        + "who come back from new installs. It is still random and has no name.";
+
     /// <summary>Added to the notice when it shows right after an update (--updated): Quit undoes what the version before left on.</summary>
     public const string NoticeAfterUpdate =
         "You just updated: the version before left its protection on. Quit also turns it off, like Turn off protection, so your servers "

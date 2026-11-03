@@ -168,9 +168,14 @@ static class SecurityTests
                 foreach (var (name, json) in new[] { ("b7", "{ \"Mode\": \"servers\" }"), ("b8-sim", "{ \"UsageStats\": true }"), ("b8-nao", "{ \"UsageStats\": false }"), ("estragado", "{ nao é json") })
                     check($"Telemetria: settings {name} vê o aviso", !App.StatsAcceptedIn(WriteJson(tmp, $"s-{name}.json", json)) && !Store.Load(Path.Combine(tmp, $"s-{name}.json"), () => new Settings()).StatsAccepted);
                 var accepted = Path.Combine(tmp, "s-aceite.json");
-                Store.Save(accepted, new Settings { StatsAccepted = true });
+                Store.Save(accepted, new Settings { StatsAccepted = true, StatsNotice = Telemetry.NoticeVersion });
                 check("Telemetria: Accept fica guardado e não volta a perguntar", App.StatsAcceptedIn(accepted)
                     && App.StatsGate(Array.Empty<string>(), () => { asked++; return false; }, accepted) && asked == 1);
+                // beta.9: quem aceitou o aviso da beta.8 (ID novo todos os dias) vê-o uma vez mais, com o que mudou; não conta como 1.º arranque
+                var b8 = WriteJson(tmp, "s-b8-aceite.json", "{ \"StatsAccepted\": true }");
+                check("Telemetria: aceite na beta.8 volta a ver o aviso uma vez", App.StatsNoticeIn(b8) == 1 && !App.StatsAcceptedIn(b8)
+                    && App.StatsGate(Array.Empty<string>(), () => { asked++; return true; }, b8) && asked == 2 && App.StatsAskedAgain);
+                check("Telemetria: o aviso de novo diz que o ID passou a ficar", Telemetry.NoticeChanged.Contains("kept for this install") && Telemetry.NoticeVersion == 2);
 
                 // O ID (beta.9): aleatório, feito uma vez por instalação e guardado; um de antes da beta.9 (o diário da beta.8, o fixo da beta.7) é trocado
                 var id1 = Telemetry.InstallId(null, false);
@@ -194,6 +199,7 @@ static class SecurityTests
                 // revisão: settings.json estragado com o .prev aceite não volta a mostrar o aviso (como o Store.Load)
                 var est = WriteJson(tmp, "s-est.json", "{ estragado");
                 File.WriteAllText(est + ".prev", "{ \"StatsAccepted\": true }");
+                File.WriteAllText(est + ".prev", $"{{ \"StatsAccepted\": true, \"StatsNotice\": {Telemetry.NoticeVersion} }}");
                 check("Telemetria: settings estragado com o .prev aceite não pergunta outra vez", App.StatsAcceptedIn(est) && !File.Exists(Directory.GetFiles(tmp, "s-est.json.broken*").FirstOrDefault() ?? "x"));
                 check("Telemetria: depois de uma atualização, o aviso diz que Quit desliga a proteção que ficou", Telemetry.NoticeAfterUpdate.Contains("Quit also turns it off"));
 

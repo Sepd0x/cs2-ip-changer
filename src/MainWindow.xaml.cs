@@ -34,6 +34,7 @@ public partial class MainWindow : Window
     string _lastEgressKey;
     string _verifiedKey, _measuredKey;
     int _ipSeq;
+    bool _standby, _standbyPhoneSaid;
     bool _distrust, _restored, _phoneBusy, _tetherHinted, _cs2WasRunning, _wasProtected, _everProtected, _homeCached, _switching, _reveal, _syncing, _syncAgain, _changingIp, _querying, _refreshingAcc, _uiLock, _closingDone;
     string _adb;
     PhoneInfo _phone;
@@ -60,6 +61,9 @@ public partial class MainWindow : Window
         ParseDevArgs(args);
         StartHiddenIfAsked(args);
         _justUpdated = args.Contains("--updated");
+        // Each start waits for the phone (Guard.StaysOnStandby). An update carries on as the old copy was: protected, waiting, or off.
+        _standby = !_justUpdated || args.Contains(Updater.StandbyArg);
+        _restored = _justUpdated && args.Contains(Updater.OffArg);
         ShowVersion();
 
         Log.Added += e => Dispatcher.BeginInvoke(() =>
@@ -80,18 +84,20 @@ public partial class MainWindow : Window
         }
         if (_s.ApiKeyLost) Log.Warn("The Steam Web API key in settings.json was saved by another Windows user or on another PC and can't be read here. Paste it again in Settings > Steam.");
         InitDev();
-        if (App.StatsJustAccepted && !_demo && !_s.StatsAccepted)
+        if (App.StatsJustAccepted && !_demo)
         {
             _s.StatsAccepted = true;
+            _s.StatsNotice = Telemetry.NoticeVersion;
             Log.Info("Usage stats accepted. README > Telemetry lists what is sent.");
             try { SaveSettings(); }
             catch (Exception ex) { Log.Warn("Couldn't save that the usage stats notice was accepted (" + ex.Message + "); it shows again at the next start."); }
         }
         Telemetry.Start(_demo, TelemetryNow, _s.StatsAccepted);
         TelemetryHook();
-        // The day the notice was accepted: the dashboard's "new users" (also once for someone coming from beta.7, who sees it once)
-        if (App.StatsJustAccepted && !_demo) Telemetry.Count("first_start");
-        if (App.StatsJustAccepted && !_demo && !Rec.On) Loaded += (_, _) => FirstStartCheck();   // Steam and CS2 found? (4 nov.)
+        // The day the notice was accepted: the dashboard's "new users" (also once for someone coming from beta.7, who sees it once;
+        // not for an older notice accepted again, that's no first start)
+        if (App.StatsJustAccepted && !App.StatsAskedAgain && !_demo) Telemetry.Count("first_start");
+        if (App.StatsJustAccepted && !App.StatsAskedAgain && !_demo && !Rec.On) Loaded += (_, _) => FirstStartCheck();   // Steam and CS2 found? (4 nov.)
         LoadFlags();
         LoadOpenWith();
         LoadServers();
@@ -166,6 +172,7 @@ public partial class MainWindow : Window
             ShowLastServer();
             WatchSteamLog();
             await SyncNow(force: true);
+            if (_restored) ShowProtectionOff();   // updated while protection was off: it stays off
             _ = RefreshPhone();
             _ = RefreshPublicIps();
             _tick.Start();

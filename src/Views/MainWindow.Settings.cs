@@ -169,6 +169,12 @@ public partial class MainWindow
         ShowRegionsStatus();
         if (left == null) Toast("Protection is off and checked. It comes back when you click Turn protection back on or open the app again.", true);
         else Toast("Couldn't remove: " + left + ". Restart the PC to clear the routes, or run the app with --restore.", Tone.Error);
+        ShowProtectionOff();
+    }
+
+    /// <summary>Protection off (Turn off protection, or the first start after an update made while it was off): Servers and Status say so.</summary>
+    void ShowProtectionOff()
+    {
         foreach (var s in _servers) { s.Protected = false; s.RouteText = "Off"; }
         SetHero("bad", "Protection off", "You turned protection off. Click Turn protection back on to protect again.");
         UpdateTurnOff();

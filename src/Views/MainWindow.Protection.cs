@@ -66,8 +66,9 @@ public partial class MainWindow
                 force = true;
             }
             var reason = _distrust ? WhySame : PhoneWifiOn ? WhyWifi : _noHome ? WhyNoHome : null;
-            var rep = await _guard.Sync(_s, ips, force, reason, cs2Running, _verifiedKey);
+            var rep = await _guard.Sync(_s, ips, force, reason, cs2Running, _verifiedKey, _standby);
             if (legacyBefore != _s.LegacyCleaned || cs2Before != _s.Cs2Path) SaveSettings();
+            StandbyAfter(rep, cs2Running);
             ApplyReport(rep);
         }
         finally { _syncing = false; }
@@ -81,6 +82,33 @@ public partial class MainWindow
             try { await SyncNow(again); }
             finally { waiting?.TrySetResult(); }
         }
+    }
+
+    /// <summary>The wait for the phone ends for good once protection took over fully (a later drop is a real drop, blocked).</summary>
+    void StandbyAfter(GuardReport rep, bool cs2Running)
+    {
+        if (!_standby || rep.Error != null) return;
+        if (!rep.Standby)
+        {
+            _standby = false;
+            if (!_s.NoPhone && rep.Egress != null) Log.Ok("The phone is confirmed: protection is fully on.");
+            return;
+        }
+        if (rep.Egress != null && cs2Running && !_standbyPhoneSaid)
+        {
+            _standbyPhoneSaid = true;
+            Log.Info("The phone is confirmed, but CS2 was already open on your home network: your servers go through the phone now, and the rest of CS2 when you close it, so the match isn't cut.");
+        }
+    }
+
+    /// <summary>What the wait for the phone leaves blocked, for the Status text.</summary>
+    string StandbyText(int n)
+    {
+        var off = _s.BlockedRegions?.Count ?? 0;
+        return "CS2 and Valve's servers use your home network until the phone is connected and its IP checked."
+            + (n > 0 ? $" {Fmt.Count(n, "server")} on your Servers page stay blocked until then." : "")
+            + (off > 0 ? $" {Fmt.Count(off, "matchmaking region")} you turned off on Regions stay off." : "")
+            + " Then protection turns on by itself.";
     }
 
     /// <summary>The trusted connection stays trusted only while the report still sees that same connection.</summary>
@@ -233,6 +261,11 @@ public partial class MainWindow
         var cs2Off = _s.LockCs2 && rep.Cs2LockOk == false;
         if (rep.FirewallProblem != null)
             SetHero("bad", "Windows Firewall is off", rep.FirewallProblem + ". " + FirewallHint("there is no kill switch"));
+        else if (rep.Standby && rep.Egress == null)
+            SetHero("warn", rep.Candidate != null ? "Checking the phone's IP…" : "Not protected yet · waiting for the phone", StandbyText(n));
+        else if (rep.Standby)
+            SetHero("warn", "Your servers are protected · CS2 follows when closed",
+                "The phone is confirmed, but CS2 was already open on your home network. Your servers go through the phone now; the rest of CS2 moves to it when you close CS2, so the match isn't cut. Change IP moves it now.");
         else if (rep.DistrustReason == Guard.WhyUnchecked)
             SetHero(held, "Checking the phone's IP…", $"{Blocked(rep)} stay blocked until the app confirms the phone's public IP is not your home IP.");
         else if (rep.DistrustReason == WhyNoHome)
@@ -705,6 +738,7 @@ public partial class MainWindow
         if (_demo) { Toast("Test finished: everything protected.", true); return true; }
         LeakBtn.IsEnabled = false;
         _restored = false;
+        _standby = false;   // a leak test tests protection: on now, also when started with Windows and still waiting
         if (!_tick.IsEnabled) _tick.Start();
         ShowProgress("Testing: Firewall, kill switch, routes and public IP…");
         try

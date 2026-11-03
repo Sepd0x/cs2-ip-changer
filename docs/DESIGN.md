@@ -17,12 +17,12 @@ The guide pages copy the home page's style (`tools/site-pages.mjs`), so they get
 | `--t-surface2` | `Surface2` | `--bg3` | |
 | `--t-line` | `Line` | `--line` | `--line` |
 | `--t-line-strong` | `LineStrong` | `--line2` | `--line2` |
-| `--t-muted`, `--t-faint` | `Muted`, `Faint` | `--ink2`, `--ink3` | |
+| `--t-muted`, `--t-faint` | `Muted`, `Faint` | `--ink2`, `--ink3` | `--ink2`, `--ink3` |
 | `--t-good`, `--t-warn` | `Good`, `Warn` | | `--good`, `--warn` |
 | `--t-accent` | `AccentColor` | `--accent`, `--route` | `--acc` |
 | `--t-accent-deep` | `AccentDeepColor` (web only: filled buttons with white text) | `--sand` | `--acc-d` |
 | `--t-accent-rgb` | `AccentColor` as `r,g,b`, for `rgba(var(--t-accent-rgb),.1)` | | |
-| `--t-top1`…`--t-top3`, `--t-top` | `Top1`…`Top3`, the line at the top of the window | body top line | |
+| `--t-top1`…`--t-top3`, `--t-top` | `Top1`…`Top3`, the line at the top of the window | body top line | `--gradient` |
 
 The block also has `--t-side`, `--t-surface3`, `--t-text`, `--t-bad`, `--t-accent-light` and `--t-accent-dark`, for new rules.
 The same table is `WEB` in `tools/design-tokens.mjs`.

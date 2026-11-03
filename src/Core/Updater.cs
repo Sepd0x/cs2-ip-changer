@@ -229,7 +229,10 @@ public static partial class Updater
     /// Puts the new exe in place (the running one becomes .old) and starts it. beforeStart frees what the
     /// new instance needs (the mutex, the hotkeys). Puts everything back if something fails.
     /// </summary>
-    public static void Install(string sha, Action beforeStart)
+    /// <summary>Passed to the new copy with --updated: the old one was still waiting for the phone, or had protection turned off.</summary>
+    public const string StandbyArg = "--standby", OffArg = "--off";
+
+    public static void Install(string sha, Action beforeStart, string state = null)
     {
         var exe = Environment.ProcessPath!;
         if (Sha256Of(NewExe) != sha) throw new InvalidDataException("the downloaded file changed after the check");
@@ -246,7 +249,7 @@ public static partial class Updater
             if (Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(hold)).ToLowerInvariant() != sha.ToLowerInvariant())
                 throw new InvalidDataException("the downloaded file changed after the check");
             beforeStart?.Invoke();
-            Process.Start(new ProcessStartInfo(exe, "--updated") { UseShellExecute = false, WorkingDirectory = Dir });
+            Process.Start(new ProcessStartInfo(exe, state is StandbyArg or OffArg ? "--updated " + state : "--updated") { UseShellExecute = false, WorkingDirectory = Dir });
         }
         catch
         {

@@ -27,7 +27,7 @@ export const WEB = {
   },
   dashboard: {
     '--bg': 'bg', '--edge': 'edge', '--panel': 'surface', '--line': 'line', '--line2': 'line-strong',
-    '--acc': 'accent', '--acc-d': 'accent-deep', '--good': 'good', '--warn': 'warn',
+    '--ink2': 'muted', '--ink3': 'faint', '--acc': 'accent', '--acc-d': 'accent-deep', '--good': 'good', '--warn': 'warn', '--gradient': 'top',
   },
 };
 

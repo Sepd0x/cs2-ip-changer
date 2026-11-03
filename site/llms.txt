@@ -4,7 +4,7 @@
 
 Website: https://sepd0x.github.io/cs2-ip-changer/
 Source and downloads: https://github.com/Sepd0x/cs2-ip-changer (latest release: https://github.com/Sepd0x/cs2-ip-changer/releases/latest)
-Status: beta (0.1.0-beta.8). Free, no account. Not affiliated with Valve.
+Status: beta (0.1.0-beta.9). Free, no account. Not affiliated with Valve.
 
 ## How it works
 

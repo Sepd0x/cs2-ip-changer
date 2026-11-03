@@ -42,7 +42,8 @@ public partial class App : Application
         // The notice would become the app's MainWindow and closing it would end the app, so the main window decides that again below.
         var updated = args.Contains("--updated");
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
-        if (!StatsGate(args, () => StatsNoticeWindow(updated).ShowAndWait(), Paths.File("settings.json")))
+        var settingsFile = Paths.File("settings.json");
+        if (!StatsGate(args, () => StatsNoticeWindow(updated, StatsNoticeIn(settingsFile) > 0).ShowAndWait(), settingsFile))
         {
             if (updated) UndoAfterUpdateQuit();
             Shutdown();
@@ -189,46 +190,57 @@ public partial class App : Application
     /// </summary>
     public static bool StatsGate(string[] args, Func<bool> ask, string settingsFile)
     {
-        if (args.Contains("--demo") || Rec.On || StatsAcceptedIn(settingsFile)) return true;
+        if (args.Contains("--demo") || Rec.On) return true;
+        var had = StatsNoticeIn(settingsFile);
+        if (had >= Telemetry.NoticeVersion) return true;
         if (!ask()) return false;
         StatsJustAccepted = true;
+        StatsAskedAgain = had > 0;
         return true;
     }
 
+    /// <summary>The notice showed again because an older one was accepted: not a first start.</summary>
+    public static bool StatsAskedAgain { get; private set; }
+
+    /// <summary>The current notice was accepted before (<see cref="StatsNoticeIn"/>).</summary>
+    public static bool StatsAcceptedIn(string settingsFile) => StatsNoticeIn(settingsFile) >= Telemetry.NoticeVersion;
+
     /// <summary>
-    /// "StatsAccepted": true in settings.json, read the way Store.Load reads it (a file locked for a moment is tried again for
-    /// about 2 s, a damaged one falls back to .prev) but only read: nothing is written, not even the .broken copy.
-    /// A missing or unreadable file is "not yet".
+    /// Which notice settings.json says was accepted: 0 none, 1 one from before beta.9 ("StatsAccepted": true alone), else "StatsNotice".
+    /// Read the way Store.Load reads it (a file locked for a moment is tried again for about 2 s, a damaged one falls back to .prev)
+    /// but only read: nothing is written, not even the .broken copy. A missing or unreadable file is "not yet".
     /// </summary>
-    public static bool StatsAcceptedIn(string settingsFile)
+    public static int StatsNoticeIn(string settingsFile)
     {
-        if (!System.IO.File.Exists(settingsFile)) return false;
+        if (!System.IO.File.Exists(settingsFile)) return 0;
         string raw = null;
         for (var i = 0; raw == null; i++)
         {
             try { raw = System.IO.File.ReadAllText(settingsFile); }
             catch (System.IO.IOException) when (i < 20) { Thread.Sleep(100); }
-            catch { return false; }
+            catch { return 0; }
         }
-        if (Accepted(raw) is bool b) return b;
-        try { return System.IO.File.Exists(settingsFile + ".prev") && Accepted(System.IO.File.ReadAllText(settingsFile + ".prev")) == true; }
-        catch { return false; }
+        if (Accepted(raw) is int n) return n;
+        try { return System.IO.File.Exists(settingsFile + ".prev") ? Accepted(System.IO.File.ReadAllText(settingsFile + ".prev")) ?? 0 : 0; }
+        catch { return 0; }
 
         // null: not JSON (damaged)
-        static bool? Accepted(string json)
+        static int? Accepted(string json)
         {
             try
             {
                 using var doc = System.Text.Json.JsonDocument.Parse(json.TrimStart('﻿'));
-                return doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object
-                    && doc.RootElement.TryGetProperty(nameof(Settings.StatsAccepted), out var v) && v.ValueKind == System.Text.Json.JsonValueKind.True;
+                var root = doc.RootElement;
+                if (root.ValueKind != System.Text.Json.JsonValueKind.Object
+                    || !root.TryGetProperty(nameof(Settings.StatsAccepted), out var v) || v.ValueKind != System.Text.Json.JsonValueKind.True) return 0;
+                return root.TryGetProperty(nameof(Settings.StatsNotice), out var n) && n.TryGetInt32(out var k) && k > 1 ? k : 1;
             }
             catch { return null; }
         }
     }
 
-    internal static NoticeWindow StatsNoticeWindow(bool updated = false) =>
-        new(Telemetry.NoticeTitle, Telemetry.NoticeText + (updated ? "\n\n" + Telemetry.NoticeAfterUpdate : ""), "Accept", "Quit");
+    internal static NoticeWindow StatsNoticeWindow(bool updated = false, bool changed = false) =>
+        new(Telemetry.NoticeTitle, Telemetry.NoticeText + (changed ? "\n\n" + Telemetry.NoticeChanged : "") + (updated ? "\n\n" + Telemetry.NoticeAfterUpdate : ""), "Accept", "Quit");
 
     /// <summary>
     /// Quit at the notice right after an update: the version before left its protection on for this copy to take over. With no

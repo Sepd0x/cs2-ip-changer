@@ -15,6 +15,8 @@ public sealed class GuardReport
     public bool? Cs2LockOk { get; init; }
     public Dictionary<string, bool> RouteOk { get; init; } = new();
     public string EffectiveMode { get; init; }
+    /// <summary>Waiting for the phone after the app started: Game only without the CS2 lock (Guard.StaysOnStandby).</summary>
+    public bool Standby { get; init; }
     /// <summary>Whole PC: the routes, DNS and IPv6 rules are all confirmed.</summary>
     public bool FullModeOk { get; init; }
     /// <summary>Whole PC: Windows sends the rest of the PC's IPv4 through the protected connection.</summary>
@@ -145,11 +147,11 @@ public sealed class Guard
 
     /// <param name="distrust">Why the connection can't be trusted right now (null = trusted).</param>
     /// <param name="verifiedKey">The candidate whose public IP was measured and isn't the home IP. Any other candidate stays blocked.</param>
-    public Task<GuardReport> Sync(Settings s, IReadOnlyCollection<string> ips, bool force = false, string distrust = null, bool cs2Running = false, string verifiedKey = null) =>
+    public Task<GuardReport> Sync(Settings s, IReadOnlyCollection<string> ips, bool force = false, string distrust = null, bool cs2Running = false, string verifiedKey = null, bool standby = false) =>
         Task.Run(async () =>
         {
             await _gate.WaitAsync();
-            try { return await SyncCore(s, ips.Distinct().ToList(), force, distrust, cs2Running, verifiedKey); }
+            try { return await SyncCore(s, ips.Distinct().ToList(), force, distrust, cs2Running, verifiedKey, standby); }
             catch (Exception ex)
             {
                 Log.Error("Sync: " + ex.Message);
@@ -169,6 +171,15 @@ public sealed class Guard
     /// </summary>
     public static string ModeFor(string mode, bool gameMode, bool cs2Running) =>
         mode == "home" ? "home" : mode == "all" || (gameMode && cs2Running) ? "all" : "servers";
+
+    /// <summary>
+    /// Each start (by hand or with Windows) waits for the phone instead of locking CS2 with no phone there, which also shut out
+    /// Valve's servers: until the phone is confirmed (its IP measured), protection is Game only without the CS2 lock, so the servers
+    /// in the list stay blocked and the rest of CS2 uses the home network. With the phone confirmed it turns on fully, but not while
+    /// CS2 is open on the home network: that would cut the match. Once on, a drop blocks as always. No phone mode is the user's choice.
+    /// </summary>
+    public static bool StaysOnStandby(bool standby, string mode, bool phoneConfirmed, bool cs2Running) =>
+        standby && mode != "home" && (!phoneConfirmed || cs2Running);
 
     /// <summary>
     /// Windows sends the rest of the PC through the phone while it shouldn't (game only or no phone): the phone's adapter gets a
@@ -200,7 +211,7 @@ public sealed class Guard
         "Managed by CS2 IP Changer. CS2's game traffic (UDP) can only go out through the protected connection: servers not in the list never see your home IP.",
         Firewall.NET_FW_IP_PROTOCOL_UDP);
 
-    async Task<GuardReport> SyncCore(Settings s, List<string> ips, bool force, string distrust, bool cs2Running, string verifiedKey)
+    async Task<GuardReport> SyncCore(Settings s, List<string> ips, bool force, string distrust, bool cs2Running, string verifiedKey, bool standby)
     {
         var adapters = Net.Scan();
         var candidate = Net.PickEgress(adapters, s.EgressAdapterId, s.EgressSsid, out var problem);
@@ -208,13 +219,16 @@ public sealed class Guard
         if (distrust == null && candidate != null && KeyOf(candidate) != verifiedKey) distrust = WhyUnchecked;
         var egress = distrust != null ? null : candidate;
         if (distrust != null && candidate != null) problem = distrust;
-        var mode = ModeFor(s.Mode, s.GameMode, cs2Running);
+        // Waiting for the phone (Game only without the CS2 lock): CS2 and Valve's servers work on the home network, the servers in
+        // the list stay blocked until the phone carries them.
+        var waiting = StaysOnStandby(standby, s.Mode, egress != null, cs2Running);
+        var mode = waiting ? "servers" : ModeFor(s.Mode, s.GameMode, cs2Running);
         // No phone blocks nothing, so "Servers blocked" would be false there; back on protection the problem is said again.
         if (mode == "home") _lastProblem = null;
         else if (problem != _lastProblem) { if (problem != null) Log.Warn(problem + " Servers blocked."); _lastProblem = problem; }
         var fwProblem = Firewall.CheckEnabled();
         if (mode == "home") return await HomeMode(s, adapters, candidate, fwProblem, force);
-        var cs2 = s.LockCs2 && (s.PhoneSeen || egress != null) ? Steam.Cs2Path(s) : null;
+        var cs2 = !waiting && s.LockCs2 && (s.PhoneSeen || egress != null) ? Steam.Cs2Path(s) : null;
 
         // 1) Firewall first: there is never a moment when a server is reachable with the home IP.
         var killOk = false;
@@ -328,6 +342,7 @@ public sealed class Guard
             Adapters = adapters,
             Egress = egress,
             Candidate = candidate,
+            Standby = waiting,
             EgressProblem = problem,
             Distrusted = distrust != null && candidate != null,
             DistrustReason = candidate != null ? distrust : null,

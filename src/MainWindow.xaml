@@ -472,7 +472,7 @@
                     </Grid>
 
                     <!-- ======================================== Page: Connection -->
-                    <ScrollViewer x:Name="PageNet" Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="16,0,16,0" SizeChanged="NetLayout_Changed">
+                    <ScrollViewer x:Name="PageNet" Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="16,0,16,0">
                         <Grid MinHeight="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -480,14 +480,14 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- The last group of each column reaches the bottom only when that fills a small gap or the window is wide (FitNetColumns) -->
+                            <!-- The last group of each column reaches the bottom, so both columns end on one line (beta.9) -->
                             <Grid x:Name="NetLeft">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <HeaderedContentControl x:Name="Hero" Style="{StaticResource Group}" Header="Status" SizeChanged="NetLayout_Changed">
+                                <HeaderedContentControl x:Name="Hero" Style="{StaticResource Group}" Header="Status">
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
@@ -569,7 +569,7 @@
                                     </Grid>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Phone" SizeChanged="NetLayout_Changed">
+                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Phone">
                                     <StackPanel>
                                         <StackPanel Orientation="Horizontal">
                                             <!-- PhoneDot holds the colour the code sets; the marker draws it with its shape -->
@@ -602,7 +602,7 @@
                                     </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl x:Name="ModeGroup" Grid.Row="2" Style="{StaticResource Group}" Header="What goes through the phone" VerticalAlignment="Top" SizeChanged="NetLayout_Changed">
+                                <HeaderedContentControl x:Name="ModeGroup" Grid.Row="2" Style="{StaticResource Group}" Header="What goes through the phone">
                                     <StackPanel>
                                         <RadioButton x:Name="ModeServers" Style="{StaticResource Choice}" GroupName="mode" Checked="Mode_Checked">
                                             <StackPanel>
@@ -639,7 +639,7 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <HeaderedContentControl Style="{StaticResource Group}" Header="Checks" SizeChanged="NetLayout_Changed">
+                                <HeaderedContentControl Style="{StaticResource Group}" Header="Checks">
                                     <StackPanel>
                                         <ItemsControl x:Name="Checks">
                                             <ItemsControl.ItemTemplate>
@@ -660,7 +660,7 @@
                                     </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl x:Name="HistoryGroup" Grid.Row="2" Style="{StaticResource Group}" Header="Previous IPs" VerticalAlignment="Top" SizeChanged="NetLayout_Changed">
+                                <HeaderedContentControl x:Name="HistoryGroup" Grid.Row="2" Style="{StaticResource Group}" Header="Previous IPs">
                                     <StackPanel>
                                         <TextBlock x:Name="HistoryEmpty" Text="No IP changes yet." Style="{StaticResource Sub}"/>
                                         <ScrollViewer MaxHeight="168" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -1948,10 +1948,10 @@
                                 <HeaderedContentControl Style="{StaticResource Group}" Header="Background and data">
                                     <StackPanel>
                                         <CheckBox x:Name="StartWithWindowsBox" Style="{StaticResource Switch}" Click="StartWithWindows_Click" Margin="0,0,0,12" ToolTipService.ShowOnDisabled="True"
-                                                  ToolTip="A scheduled task named 'CS2 IP Changer' opens the app in the notification area when you sign in, with its admin rights and without the UAC prompt each time. Only for the copy installed in C:\Program Files\CS2 IP Changer. Turning this off, Remove everything and --restore delete the task.">
+                                                  ToolTip="A scheduled task named 'CS2 IP Changer' opens the app in the notification area when you sign in, with its admin rights and without the UAC prompt each time. Until the phone is connected, only the servers on your Servers page are blocked and the rest of CS2 uses your home network. Only for the copy installed in C:\Program Files\CS2 IP Changer. Turning this off, Remove everything and --restore delete the task.">
                                             <StackPanel>
                                                 <TextBlock Text="Start with Windows"/>
-                                                <TextBlock Text="Opens in the notification area when you sign in, without the UAC prompt." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="Opens in the notification area when you sign in. Protection waits for the phone." Style="{StaticResource OptSub}"/>
                                                 <TextBlock x:Name="AutostartHint" Visibility="Collapsed" Style="{StaticResource OptSub}" Foreground="{StaticResource Warn}"
                                                            Text="Only for the installed copy: start the app from Downloads and click Install."/>
                                             </StackPanel>

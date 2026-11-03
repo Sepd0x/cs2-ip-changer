@@ -4,6 +4,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+## [0.1.0-beta.9] - 2026-11-03
+
 ### Added
 - Settings > Delete my stats: deletes everything the stats server keeps under this install's ID and gives the app a new one.
 - Accounts: a Ready filter (accounts New IP + next account can use now) and a "Ready first" order (ready, then the cooldown that ends first, banned last), for when the list grows.
@@ -17,10 +19,14 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Join on a server the list shows as full now offers Join anyway, next to Wait for a slot. Many servers keep spectator or reserved slots the list doesn't count; with the teams full you come in as a spectator.
 - Rejoin (or Join) turned away with "server is full" right after you tried no longer just stops: the app tries again every 15 seconds for 2 minutes. The list's player count can be old, or count spectators.
 - The click that brings the app to the front, and clicks while it doesn't have the focus, no longer count as rage clicks in the usage stats.
+- The app no longer blocks all of CS2, Valve's servers too, when it starts before the phone is connected (with Start with Windows, say). Until the phone is connected and its IP checked, the servers on your Servers page stay blocked and the rest of CS2 uses your home network. Then protection turns on fully by itself; if CS2 was already open, the rest of CS2 follows when you close it, so a match isn't cut. Change IP or Run leak test turns it on right away. Once on, a phone drop blocks everything as before.
+- An update keeps protection as it was: still waiting for the phone, or off if you had turned it off. Before, the new version always turned it on.
 
 ### Changed
+- Connection: What goes through the phone and Previous IPs always reach the bottom of the window, so both columns end on one line.
 - The usage stats say a bit more, to see what in the app works and what confuses people: minutes on each screen, moves between screens, where on each screen people click (a coarse grid, added up for everyone with no ID) and clicks that hit nothing, how long ago the app was set up (in rough bands), and every 5 minutes while the app is open a short signal with what is on. Still never IPs, servers, accounts, names or anything you type. [Telemetry](README.md#telemetry) has the full list.
 - The usage stats ID is now kept for the install instead of new every day, so the stats can tell people who come back from new installs. It is still random, has no name and is never made from your PC or from you. Because it is kept, the stats are no longer called anonymous (the notice is now just "Usage stats"): one install's days link up, though never to a person. Only the click map and the setup report, which carry no ID, are anonymous. Settings > Delete my stats deletes everything the server keeps under it and gives the app a new ID.
+- If you accepted the usage stats in beta.8, the notice shows once more after this update, saying what changed: that notice said the ID was new every day.
 - The stats also count Change IP (method, time, attempts, quality after it), phone connection drops, mobile data per day, Rejoin, the first screen opened, minutes with CS2 open and with protection on, the regions turned off (Valve's public codes), the version updated from and how many "Open with CS2" programs open as administrator, in rough bands.
 - The stats also say which rows of the Checks panel are red when a report is made (by a short name, never their text) and whether Run leak test passed or failed. The stats dashboard's Versions page now compares versions with real numbers (crashes, lag, IP changes that worked, time to Protected and to start).
 - Reports from online virus scanners (they run the exe in a sandbox and accept the notice by themselves) are now told apart from people in the stats.
@@ -365,7 +371,8 @@ First public release, as ServerRouteTool.
 - Restore network, to undo every route and rule in one click.
 - Dark interface in Portuguese.
 
-[Unreleased]: ../../compare/v0.1.0-beta.8...HEAD
+[Unreleased]: ../../compare/v0.1.0-beta.9...HEAD
+[0.1.0-beta.9]: ../../releases/tag/v0.1.0-beta.9
 [0.1.0-beta.8]: ../../releases/tag/v0.1.0-beta.8
 [0.1.0-beta.7]: ../../releases/tag/v0.1.0-beta.7
 [0.1.0-beta.6]: ../../releases/tag/v0.1.0-beta.6

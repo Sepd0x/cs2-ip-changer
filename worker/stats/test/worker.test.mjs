@@ -580,7 +580,7 @@ test('design: no shared color copied by hand (charts and the other palettes keep
   const exact = ['bg', 'edge', 'surface', 'surface2', 'surface3', 'line', 'line-strong', 'good', 'warn', 'accent', 'accent-light', 'accent-dark', 'accent-deep', 'top1', 'top2', 'top3'];
   // and no near copy of the accent or the top line (a hand-picked #5ca8f0 is drift)
   const near = ['accent', 'accent-light', 'accent-dark', 'accent-deep', 'top1', 'top2', 'top3'];
-  // Known, waiting for a yes (publish/o197-propostas.md): the dashboard's top line was picked from a capture of the app.
+  // Known: the copy of the app on "Na app" splits its top line in two (sidebar and page), each piece picked from a capture.
   const KNOWN = new Set([`${DASH_CSS} #3cb3e5`, `${DASH_CSS} #d8df3b`]);
   const files = { 'site/index.html': styleOf('site/index.html'), 'site/404.html': styleOf('site/404.html'), [DASH_CSS]: readRoot(DASH_CSS).replace(/html\[data-pal="[a-z]+"\]\s*\{[^}]*\}/g, '') };
   for (const g of guides) files[g] = styleOf(g);

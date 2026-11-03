@@ -33,6 +33,11 @@ public sealed partial class Settings
     /// no ID is made. Settings from beta.7 and the beta.8 tests (UsageStats) don't have it, so they see the notice once.
     /// </summary>
     public bool StatsAccepted { get; set; }
+    /// <summary>
+    /// Which usage stats notice was accepted (Telemetry.NoticeVersion). An accept from before beta.9 has 0 here: that notice said the
+    /// ID was new every day, so it shows once more, saying what changed.
+    /// </summary>
+    public int StatsNotice { get; set; }
     public DateTime? LastUpdateCheck { get; set; }
     public string UpdateLatest { get; set; }              // highest version seen on GitHub at the last check
     /// <summary>The Steam Web API key, in memory only. settings.json keeps it encrypted for this Windows user (SteamApiKeySealed).</summary>

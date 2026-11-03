@@ -481,6 +481,8 @@ public partial class MainWindow
         if (confirm && Steam.Cs2Running && !await Ask("CS2 is open", "If you are on a server, you will be disconnected when the IP changes. Continue?", "Change IP")) return false;
 
         _changingIp = true;
+        // Still waiting for the phone since the start: asking for a new IP is asking for protection now, CS2 open or not
+        if (_standby) { _standby = false; Log.Info("Change IP: protection turns on fully now."); }
         // The new IP isn't known yet: untrusted (servers and CS2 blocked) until it is measured again.
         _verifiedKey = null;
         await SyncNow(force: true);

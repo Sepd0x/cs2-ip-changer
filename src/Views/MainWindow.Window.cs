@@ -65,34 +65,6 @@ public partial class MainWindow
     /// <summary>After Hide logins changes, or a new home IP or account list is known.</summary>
     void RemaskLog() { foreach (var e in _log) MaskLog(e); }
 
-    // ------------------------------------------------------------ Connection: when the last group of a column reaches the bottom
-
-    void NetLayout_Changed(object sender, SizeChangedEventArgs e) => FitNetColumns();
-
-    /// <summary>
-    /// The last group of each Connection column stretches to the bottom only when that closes a small gap (both columns then end
-    /// on one line) or the window is wide. At 1240 a short Previous IPs would otherwise be a tall empty frame.
-    /// </summary>
-    void FitNetColumns()
-    {
-        if (NetLeft == null || NetRight == null || PageNet.ViewportHeight <= 0) return;
-        static double Natural(Grid col) => col.Children.OfType<FrameworkElement>().Sum(c => c.DesiredSize.Height);
-        var left = Natural(NetLeft);
-        var right = Natural(NetRight);
-        var page = Math.Max(PageNet.ViewportHeight, Math.Max(left, right));
-        var wide = ActualWidth >= 1600;
-        Stretch(ModeGroup, StretchLast(wide, page - left));
-        Stretch(HistoryGroup, StretchLast(wide, page - right));
-        static void Stretch(FrameworkElement g, bool on)
-        {
-            var want = on ? VerticalAlignment.Stretch : VerticalAlignment.Top;
-            if (g.VerticalAlignment != want) g.VerticalAlignment = want;
-        }
-    }
-
-    /// <summary>Stretch the last group of a column: always on a wide window, else only over a gap of 120 px or less.</summary>
-    public static bool StretchLast(bool wide, double gap) => wide || gap <= 120;
-
     void SideStatus_Click(object sender, MouseButtonEventArgs e) => NavNet.IsChecked = true;
     void Min_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
     void Max_Click(object sender, RoutedEventArgs e) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
