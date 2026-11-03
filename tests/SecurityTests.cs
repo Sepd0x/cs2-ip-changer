@@ -16,6 +16,9 @@ static class SecurityTests
         return p.ExitCode == 0 && (File.Exists(check) || Directory.Exists(check));
     }
 
+    /// <summary>The repo's root, from this file's path at build time (tests read the app's own XAML and docs).</summary>
+    internal static string Repo([System.Runtime.CompilerServices.CallerFilePath] string here = "") => Path.GetDirectoryName(Path.GetDirectoryName(here));
+
     static string WriteJson(string dir, string name, string json)
     {
         var f = Path.Combine(dir, name);
@@ -169,28 +172,23 @@ static class SecurityTests
                 check("Telemetria: Accept fica guardado e não volta a perguntar", App.StatsAcceptedIn(accepted)
                     && App.StatsGate(Array.Empty<string>(), () => { asked++; return false; }, accepted) && asked == 1);
 
-                // O ID: o mesmo durante o dia (UTC), novo no dia seguinte, e o de ontem sai do disco
-                var day1 = new DateTime(2026, 11, 1, 23, 50, 0, DateTimeKind.Utc);
-                var (id1, d1) = Telemetry.DailyId(null, null, day1);
-                var (again, _) = Telemetry.DailyId(id1, d1, day1.AddMinutes(5));
-                var (id2, d2) = Telemetry.DailyId(id1, d1, day1.AddMinutes(15));
-                check("Telemetria: ID igual no mesmo dia, novo no dia seguinte", again == id1 && id2 != id1 && d1 == "2026-11-01" && d2 == "2026-11-02"
-                    && System.Text.RegularExpressions.Regex.IsMatch(id2, "^[0-9a-f]{32}$"));
-                check("Telemetria: ID aleatório, dois PCs no mesmo dia não têm o mesmo", Telemetry.DailyId(null, null, day1).Id != Telemetry.DailyId(null, null, day1).Id);
-                // telemetry.json da beta.7 (ID fixo, sem dia) e um de ontem: o ID antigo é gravado por cima logo à 1.ª leitura; o Mine fica
-                File.WriteAllText(tf, "{ \"Id\": \"0123456789abcdef0123456789abcdef\", \"Mine\": true, \"Clicks\": { \"ChangeIp_Click\": 3 } }");
-                Telemetry.Today(tf, day1);
+                // O ID (beta.9): aleatório, feito uma vez por instalação e guardado; um de antes da beta.9 (o diário da beta.8, o fixo da beta.7) é trocado
+                var id1 = Telemetry.InstallId(null, false);
+                check("Telemetria: ID da instalação fica o mesmo (dias, arranques)", Telemetry.InstallId(id1, true) == id1 && System.Text.RegularExpressions.Regex.IsMatch(id1, "^[0-9a-f]{32}$"));
+                check("Telemetria: ID aleatório, dois PCs não têm o mesmo", Telemetry.InstallId(null, false) != Telemetry.InstallId(null, false));
+                check("Telemetria: ID de antes da beta.9 ou estragado é trocado", Telemetry.InstallId(id1, false) != id1 && Telemetry.InstallId("nope", true) != "nope");
+                // telemetry.json da beta.7/8: o ID antigo é gravado por cima logo à 1.ª leitura; o Mine fica; depois fica sempre o mesmo
+                File.WriteAllText(tf, "{ \"Id\": \"0123456789abcdef0123456789abcdef\", \"Day\": \"2026-11-01\", \"Mine\": true, \"Clicks\": { \"ChangeIp_Click\": 3 } }");
+                Telemetry.EnsureId(tf);
                 var t1 = File.ReadAllText(tf);
-                Telemetry.Today(tf, day1.AddMinutes(5));
-                var t1b = File.ReadAllText(tf);
-                Telemetry.Today(tf, day1.AddDays(1));
+                Telemetry.EnsureId(tf);
                 var t2 = File.ReadAllText(tf);
                 var idOf = (string t) => System.Text.RegularExpressions.Regex.Match(t, "\"Id\": \"([0-9a-f]{32})\"").Groups[1].Value;
-                check("Telemetria: o ID fixo da beta.7 nunca mais é usado", !t1.Contains("0123456789abcdef") && t1.Contains("\"Mine\": true") && t1.Contains("2026-11-01"), t1);
-                check("Telemetria: o ID de ontem não fica no disco", idOf(t1) == idOf(t1b) && idOf(t2) != "" && idOf(t2) != idOf(t1) && !t2.Contains(idOf(t1)) && t2.Contains("2026-11-02"), t2);
+                check("Telemetria: o ID da beta.7/8 nunca mais é usado", !t1.Contains("0123456789abcdef") && t1.Contains("\"Mine\": true") && t1.Contains("\"Install\": true"), t1);
+                check("Telemetria: depois fica o mesmo ID", idOf(t1) != "" && idOf(t1) == idOf(t2), t2);
                 // revisão: nem no .prev (o Store.Save guarda o ficheiro de antes)
                 var prev = File.Exists(tf + ".prev") ? File.ReadAllText(tf + ".prev") : "";
-                check("Telemetria: o .prev também não guarda o ID de ontem nem o da beta.7", !prev.Contains(idOf(t1)) && !prev.Contains("0123456789abcdef"), prev);
+                check("Telemetria: o .prev também não guarda o ID de antes da beta.9", !prev.Contains("0123456789abcdef"), prev);
                 // revisão: os tamanhos das listas vão por intervalos, nunca o número exato
                 check("Telemetria: tamanhos das listas por intervalos", new[] { 0, 1, 2, 5, 6, 20, 21, 100, 101, 5000 }.Select(Telemetry.Band).SequenceEqual(new[] { 0, 1, 2, 2, 6, 6, 21, 21, 101, 101 }));
                 // revisão: settings.json estragado com o .prev aceite não volta a mostrar o aviso (como o Store.Load)
@@ -199,11 +197,17 @@ static class SecurityTests
                 check("Telemetria: settings estragado com o .prev aceite não pergunta outra vez", App.StatsAcceptedIn(est) && !File.Exists(Directory.GetFiles(tmp, "s-est.json.broken*").FirstOrDefault() ?? "x"));
                 check("Telemetria: depois de uma atualização, o aviso diz que Quit desliga a proteção que ficou", Telemetry.NoticeAfterUpdate.Contains("Quit also turns it off"));
 
-                // O texto: anónimo, obrigatório, a lista do que vai, e nunca "pseudonymous"
+                // O texto (beta.9, ID fixo = pseudónimo no RGPD): obrigatório, a lista do que vai, e nunca chama anónimo ao relatório com ID.
+                // "anonymous" só onde é verdade: o mapa de calor e o relatório de ambiente, sem ID.
                 var n = Telemetry.NoticeText;
-                check("Telemetria: o aviso diz anónimo e obrigatório, nunca pseudónimo", n.Contains("anonymous usage stats") && n.Contains("using it means")
-                    && !n.Contains("pseudonym", StringComparison.OrdinalIgnoreCase) && Telemetry.NoticeTitle == "Anonymous usage stats");
-                check("Telemetria: o aviso diz o que vai e o que nunca vai", n.Contains("new every day") && n.Contains("country") && n.Contains("errors")
+                var primeira = n[..n.IndexOf('\n')];
+                check("Telemetria: o aviso diz obrigatório e nunca chama anónimo ao relatório com ID", Telemetry.NoticeTitle == "Usage stats" && n.Contains("using it means")
+                    && primeira.Contains("usage stats") && !primeira.Contains("anonymous", StringComparison.OrdinalIgnoreCase)
+                    && n.Contains("random ID made for this install, with no name")
+                    && n.Split('\n').Where(l => l.Contains("anonymous", StringComparison.OrdinalIgnoreCase)).All(l => l.Contains("coarse grid") || l.Contains("no ID")));
+                check("Telemetria: o texto do Settings não chama anónimo ao relatório com ID", File.ReadAllText(Path.Combine(Repo(), "src", "MainWindow.xaml"))
+                    is var xs && xs.Contains("Text=\"Usage stats, required while the app is in beta, with a random ID made for this install, with no name") && !xs.Contains("Anonymous usage stats"));
+                check("Telemetria: o aviso diz o que vai e o que nunca vai", n.Contains("random ID made for this install") && n.Contains("Delete my stats") && n.Contains("country") && n.Contains("errors")
                     && n.Contains("Never IPs, servers, accounts") && n.Contains("Quit closes the app without changing anything"));
             }
 

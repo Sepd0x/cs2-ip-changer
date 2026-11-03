@@ -83,7 +83,7 @@ public partial class MainWindow : Window
         if (App.StatsJustAccepted && !_demo && !_s.StatsAccepted)
         {
             _s.StatsAccepted = true;
-            Log.Info("Anonymous usage stats accepted. README > Telemetry lists what is sent.");
+            Log.Info("Usage stats accepted. README > Telemetry lists what is sent.");
             try { SaveSettings(); }
             catch (Exception ex) { Log.Warn("Couldn't save that the usage stats notice was accepted (" + ex.Message + "); it shows again at the next start."); }
         }
@@ -91,6 +91,7 @@ public partial class MainWindow : Window
         TelemetryHook();
         // The day the notice was accepted: the dashboard's "new users" (also once for someone coming from beta.7, who sees it once)
         if (App.StatsJustAccepted && !_demo) Telemetry.Count("first_start");
+        if (App.StatsJustAccepted && !_demo && !Rec.On) Loaded += (_, _) => FirstStartCheck();   // Steam and CS2 found? (4 nov.)
         LoadFlags();
         LoadOpenWith();
         LoadServers();

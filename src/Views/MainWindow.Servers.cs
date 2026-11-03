@@ -43,7 +43,37 @@ public partial class MainWindow
         if (!_demo) SaveServers();
     }
 
-    void ServerList_SelectionChanged(object sender, SelectionChangedEventArgs e) => RemoveBtn.IsEnabled = ServerList.SelectedItems.Count > 0;
+    void ServerList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        var n = ServerList.SelectedItems.Count;
+        RemoveBtn.IsEnabled = n > 0;
+        // The button says what it asks (3 nov.: with one server marked, Refresh only ever asked that one)
+        QueryBtn.Content = RefreshLabel(n);
+    }
+
+    public static string RefreshLabel(int selected) => selected <= 0 ? "Refresh all" : selected == 1 ? "Refresh 1" : $"Refresh {selected}";
+
+    /// <summary>
+    /// Unmarking a server (3 nov.: there was no way back to none marked): a click on the only marked row, a click on the empty
+    /// part of the list, or Escape. Ctrl+click still adds and takes away as usual; buttons in a row and double-click work as before.
+    /// </summary>
+    void ServerList_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton != MouseButton.Left || e.ClickCount != 1 || Keyboard.Modifiers != ModifierKeys.None) return;
+        ListBoxItem row = null;
+        for (var d = e.OriginalSource as DependencyObject; d != null && !ReferenceEquals(d, ServerList); d = d is System.Windows.Media.Visual ? System.Windows.Media.VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d))
+        {
+            if (d is System.Windows.Controls.Primitives.ButtonBase or System.Windows.Controls.Primitives.ScrollBar or TextBox) return;
+            if (d is ListBoxItem li) { row = li; break; }
+        }
+        if (row == null) { ServerList.UnselectAll(); return; }
+        if (row.IsSelected && ServerList.SelectedItems.Count == 1 && !InPlayerList(e.OriginalSource as DependencyObject)) { ServerList.UnselectAll(); e.Handled = true; }
+    }
+
+    void ServerList_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && ServerList.SelectedItems.Count > 0) { ServerList.UnselectAll(); e.Handled = true; }
+    }
 
     void SaveServers() { if (!_demo) Store.Save(Paths.File("servers.json"), _servers.ToList()); }
 
@@ -286,10 +316,9 @@ public partial class MainWindow
             if (!await WaitAfterCrash(s)) return false;
             if (!fromSlotWait && (_s.NoPhone ? HomeAdapter : _last?.Egress) is Adapter eg && await QueryOne(s, eg) && s.MaxPlayers > 0 && s.PlayerCount >= s.MaxPlayers)
             {
-                if (!await Ask("Server is full", $"{s.Title} is full ({s.PlayersText}). Wait for a free slot? The app checks every 5 s and joins (or tells you) when one opens.", "Wait for a slot"))
-                    return false;
-                StartSlotWait(s);
-                return true;
+                if (await Ask("Server is full", FullText(s.Title, s.PlayersText), "Wait for a slot", "Join anyway")) { StartSlotWait(s); return true; }
+                if (!_dialogCancelClicked) return false;   // Escape: neither
+                Log.Info($"{s.Key} shows full ({s.PlayersText}): joining anyway, as asked.");
             }
             if (!SteamReady && !await WaitSteamReady(60) && !await Ask("Steam has no session yet",
                     "Steam has not reconnected to Valve yet (for example, after you changed the IP). If you join now, the server kicks you with \"No Steam logon\" after a few minutes.",
@@ -383,6 +412,16 @@ public partial class MainWindow
         _slotTimer.Tick += SlotTick;
         _slotTimer.Start();
     }
+
+    /// <summary>
+    /// The list's count is what the server shows: many keep spectator or reserved slots it doesn't count (the "full" server a console
+    /// connect still got into, 3 nov.). Join anyway asks the server itself; a real "full" comes back from CS2's console and the app
+    /// tries again every 15 s (RetryFull). CS2 has no command to ask for a spectator slot: with the teams full the server puts you there.
+    /// </summary>
+    public static string FullText(string title, string players) =>
+        $"{title} shows as full ({players}). Many servers keep spectator or reserved slots the list doesn't count: Join anyway asks the server "
+        + "itself, and if the teams are full you come in as a spectator (pick a team when a slot frees up).\n\n"
+        + "Or wait for a slot: the app checks every 5 s and joins (or tells you) when one opens.";
 
     void StopSlotWait()
     {

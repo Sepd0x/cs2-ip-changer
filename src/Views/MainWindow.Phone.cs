@@ -38,6 +38,7 @@ public partial class MainWindow
         var info = Adb.SteadyWifi(await Adb.Status(_adb), _phone, ref _wifiOnReads);
         var wifiBefore = PhoneWifiOn;
         _phone = info;   // SetPhone below redraws the buttons for it (PhoneFirstRun)
+        Telemetry.Phone(info);
         DiagPhone(info);
         if (info == null) SetPhone(Ui.Bad, "ADB failed to start", "Try reinstalling ADB.");
         else if (info.State == "none")
@@ -189,6 +190,28 @@ public partial class MainWindow
             PhoneButtons.Children.Remove(PhoneSetupBtn);
             PhoneButtons.Children.Insert(want, PhoneSetupBtn);
         }
+    }
+
+    /// <summary>
+    /// The first start (4 nov.): what's missing of Steam and CS2, each with what to do. Empty when both are there. The phone has its
+    /// own first run (Phone setup goes first until a phone is seen), so it isn't asked here.
+    /// </summary>
+    public static List<string> StartProblems(bool steam, bool cs2)
+    {
+        var p = new List<string>();
+        if (!steam) p.Add("Steam wasn't found on this PC. Accounts, Join and Rejoin need it: install Steam, log in, then open the app again.");
+        else if (!cs2) p.Add("CS2 wasn't found in your Steam libraries. Install it in Steam. If it's on a drive Steam doesn't list, open CS2 once while the app is open and the app finds it.");
+        return p;
+    }
+
+    async void FirstStartCheck()
+    {
+        var steam = Steam.InstallDir() != null;
+        var cs2 = steam && await Task.Run(() => Steam.Cs2Path(_s)) != null;
+        var p = StartProblems(steam, cs2);
+        if (p.Count == 0) { Log.Ok("First start: Steam and CS2 found."); return; }
+        Log.Warn("First start: " + string.Join(" ", p));
+        await Ask("Before you start", string.Join("\n\n", p) + "\n\nThe phone comes next: Phone setup on the Connection page walks you through it.", "OK", null);
     }
 
     async void AdbInstall_Click(object sender, RoutedEventArgs e)
@@ -468,6 +491,9 @@ public partial class MainWindow
         var first = _egressPublic;
         string got = null;
         var goodRetries = 0;
+        var tries = 0;
+        QualityLevel? measured = null;
+        var took = Stopwatch.StartNew();   // for the stats: how long, how many attempts, the quality (Telemetry.IpChange)
         _ipChangedAt = DateTime.Now.AddTicks(-(DateTime.Now.Ticks % TimeSpan.TicksPerSecond));
         Diag.Write("change-ip", new { from = first });
         try
@@ -484,6 +510,7 @@ public partial class MainWindow
             for (var attempt = 1; attempt <= max + goodRetries; attempt++)
             {
                 var of = max + goodRetries;
+                tries = attempt;
                 ShowProgress($"Attempt {attempt}/{of}: phone data off for {_s.OffSeconds} s…");
                 var err = await Adb.Cycle(_adb, _phone.Serial, method, Math.Clamp(_s.OffSeconds, 1, 60));
                 if (err != null) { Log.Error(err); Toast(err, Tone.Error); return false; }
@@ -502,6 +529,7 @@ public partial class MainWindow
                 // On mobile data the lag is upload jitter, and another IP can land on another cell: measured like the Quality check
                 if (_s.RequireGoodLink && await MeasureNewLink(got, attempt, of) is LinkQuality q)
                 {
+                    measured = q.Level;
                     if (Quality.ChangeAgain(q, goodRetries))
                     {
                         goodRetries++;
@@ -514,6 +542,8 @@ public partial class MainWindow
             }
 
             if (got != null) ResetSteamAfterIpChange();
+            if (got != null && got != first && got != (_homePublic ?? _s.LastHomeIp))
+                Telemetry.IpChange(method == Adb.Method.Airplane, took.Elapsed, tries, measured, goodRetries);
             Diag.Write("ip-changed", new { from = first, to = got });
             var home = _homePublic ?? _s.LastHomeIp;
             if (got != null && got == home)

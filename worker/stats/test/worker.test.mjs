@@ -127,6 +127,51 @@ test('ingest beta.9: the live signal keeps one row per ID, at most every 4 minut
   assert.equal((await ingest.fetch(livePost({ ...sig, id: 'nope' }), { DB })).status, 400);
 });
 
+test('ingest beta.9 part 2: band counters only inside their family, reserved names refused, days active and settings by name', async () => {
+  const DB = fakeD1();
+  const counts = { m_comm: 1, m_comm_lag: 1, ping_50_80: 1, ping_63: 1, jit_lt5: 1, late_gt10: 1, loss_0: 1, sess_1_2h: 1, sess_97: 1, st_1_2: 1, tp_10_30: 1,
+    start_auto: 1, app_start: 1, crash: 1, unclean_exit: 1, upd_accepted: 1, upd_hacked: 1, scl_servers_75: 2, scl_servers_60: 1, scl_Bad_25: 1,
+    scr_connection: 999, age_30p: 1, net_dc: 1, set_AsAdmin: 1, act_7: 1, phone_setup_tetheroff: 1 };
+  const res = await ingest.fetch(post(report({ counts, active7: 3, settings: ['CloseToTray', 'Mode', 'Mode', 'Cs2Path', 42] })), { DB });
+  assert.equal(res.status, 204);
+  const names = DB.raw.prepare('SELECT name FROM counts ORDER BY name').all().map((r) => r.name);
+  assert.deepEqual(names, ['act_3', 'app_start', 'crash', 'jit_lt5', 'late_gt10', 'loss_0', 'm_comm', 'm_comm_lag', 'phone_setup_tetheroff', 'ping_50_80',
+    'scl_servers_75', 'sess_1_2h', 'set_CloseToTray', 'set_Mode', 'st_1_2', 'start_auto', 'tp_10_30', 'unclean_exit', 'upd_accepted']);
+  await ingest.fetch(post(report({ id: ID(4), active7: 9, settings: 'Mode' })), { DB });
+  assert.equal(DB.raw.prepare("SELECT COUNT(*) n FROM counts WHERE id = ? AND (name LIKE 'act_%' OR name LIKE 'set_%')").get(ID(4)).n, 0);
+});
+
+test('ingest beta.9 part 2: at most 100 counters a report', async () => {
+  const DB = fakeD1();
+  const counts = Object.fromEntries([...Array(150)].map((_, i) => [`c${i}`, 1]));
+  await ingest.fetch(post(report({ counts })), { DB });
+  assert.equal(DB.raw.prepare('SELECT COUNT(*) n FROM counts').get().n, 100);
+});
+
+test('ingest beta.9 part 2: the environment report has no ID, keeps only counts per day, drops odd values', async () => {
+  const DB = fakeD1();
+  const envPost = (b, type = 'application/json') => { const r = post(b, { type, cf: { country: 'PT' } }); return new Request('https://stats.example.workers.dev/v1/env', r); };
+  const e = { v: 1, app: '0.1.0-beta.9', lang: 'pt', win: 'm', scale: '125', build: 26100, brand: 'samsung', android: '15', net: '5g', dev: false };
+  assert.equal((await ingest.fetch(envPost(e), { DB })).status, 204);
+  assert.equal((await ingest.fetch(envPost({ ...e, id: ID(9), lang: 'Português', scale: '133', build: 26100.5, brand: 'SM-S918B', android: '15.1', net: 'wifi', model: 'SM-S918B' }), { DB })).status, 204);
+  const rows = DB.raw.prepare('SELECT k, v, n FROM env ORDER BY k, v').all().map((r) => `${r.k}=${r.v}:${r.n}`);
+  assert.deepEqual(rows, ['android=15:1', 'brand=samsung:1', 'build=26100:1', 'lang=pt:1', 'net=5g:1', 'reports=all:2', 'scale=125:1', 'win=m:2']);
+  const cols = DB.raw.prepare('PRAGMA table_info(env)').all().map((c) => c.name);
+  assert.deepEqual(cols, ['day', 'k', 'v', 'n', 'dev'], 'no id, no country');
+  assert.ok(!JSON.stringify(DB.raw.prepare('SELECT * FROM env').all()).includes('SM-S918B'));
+  assert.equal((await ingest.fetch(envPost(e, 'text/plain'), { DB })).status, 415);
+  assert.equal((await ingest.fetch(envPost({ ...e, v: 2 }), { DB })).status, 400);
+  assert.equal((await ingest.fetch(envPost('x'.repeat(3000)), { DB })).status, 413);
+});
+
+test('ingest beta.9 part 2: the environment report stops at the daily budget', async () => {
+  const DB = fakeD1();
+  DB.raw.prepare('INSERT INTO budget (day, rows) VALUES (?, ?)').run(new Date().toISOString().slice(0, 10), 39999);
+  const r = new Request('https://stats.example.workers.dev/v1/env', post({ v: 1, app: '0.1.0-beta.9', lang: 'pt' }));
+  assert.equal((await ingest.fetch(r, { DB })).status, 429);
+  assert.equal(DB.raw.prepare('SELECT COUNT(*) n FROM env').get().n, 0);
+});
+
 // ------------------------------------------------------------------ Access
 
 const TEAM = 'https://example-team.cloudflareaccess.com';
@@ -367,6 +412,99 @@ test('dashboard beta.9: summary keeps the scanners apart, no install ID leaves, 
   assert.equal(other.days.at(-1).users, 0, 'a version filter keeps only that version');
 });
 
+test('dashboard beta.9 part 2: matches by link, sessions, crashes, scroll, setup, settings, cohorts and the environment', async () => {
+  const DB = fakeD1();
+  const token = await jwt(claims());
+  const env = { ...env0(), DB };
+  const at = (id, over) => ingest.fetch(post(report({ id: ID(id), ...over })), { DB });
+  await at(1, { link: 'usb', counts: { accounts: 2, m_comm: 3, m_comm_lag: 1, m_valve: 1, ping_50_80: 2, ping_lt30: 2, late_gt10: 1, app_start: 2, start_auto: 1, start_hand: 1,
+    crash: 1, sess_15_30: 2, st_1_2: 2, tp_10_30: 1, upd_seen: 1, upd_declined: 1, scl_servers_0: 1, scl_servers_75: 1, phone_setup_tetheroff: 1, phone_setup_done: 1 },
+    errors: [{ type: 'Fatal_NullReferenceException', at: 'MainWindow.QueryServers', n: 1 }, { type: 'IOException', at: 'Store.Save', n: 2 }], active7: 3, settings: ['CloseToTray'], age: '0' });
+  await at(2, { link: 'hotspot', counts: { accounts: 1, m_comm: 2, m_comm_lag: 2, ping_gt120: 2, app_start: 1, phone_setup_nousb: 1 }, age: '1' });
+  const envPost = (b) => new Request('https://stats.example.workers.dev/v1/env', post(b));
+  await ingest.fetch(envPost({ v: 1, app: '0.1.0-beta.9', lang: 'pt', build: 26100, brand: 'samsung', scale: '125' }), { DB });
+  await ingest.fetch(envPost({ v: 1, app: '0.1.0-beta.9', lang: 'pt', build: 12345, dev: true }), { DB });
+  const s = await (await dashboard.fetch(get('/api/summary?period=7', token), env)).json();
+  assert.equal(s.cs2.matches, 6);
+  assert.equal(s.cs2.laggy, 3);
+  assert.deepEqual(s.cs2.lag.usb.community, { n: 3, lag: 1 });
+  assert.deepEqual(s.cs2.lag.hotspot.community, { n: 2, lag: 2 });
+  assert.deepEqual(s.cs2.ping.find((x) => x.band === '>120'), { band: '>120', usb: 0, hotspot: 2 });
+  assert.equal(s.days.at(-1).sessions, 3);
+  assert.equal(s.days.at(-1).crashes, 1);
+  assert.equal(s.days.at(-1).matches, 6);
+  assert.deepEqual([s.sessions.auto, s.sessions.hand], [1, 1]);
+  assert.equal(s.sessions.len.find((x) => x.band === '15-30').n, 2);
+  assert.deepEqual(s.crashPlaces, [{ at: 'MainWindow.QueryServers', type: 'NullReferenceException', app: '0.1.0-beta.8', n: 1 }]);
+  assert.ok(s.errors.every((e) => !e.type.startsWith('Fatal_')), 'crashes apart from the errors');
+  assert.deepEqual(s.scroll.servers, { visits: 2, reach: [50, 50, 50] });
+  assert.equal(s.setupOpened, 2);
+  assert.equal(s.setup.find((x) => x.key === 'done').n, 1);
+  assert.deepEqual(s.settings, [{ name: 'CloseToTray', n: 1 }]);
+  assert.equal(s.active.find((x) => x.band === '3').n, 1);
+  assert.deepEqual([s.updates.seen, s.updates.declined], [1, 1]);
+  assert.ok(s.cohorts.length >= 1 && s.cohorts.some((c) => c.n === 1));
+  assert.equal(s.env.reports, 1, 'dev env reports stay apart');
+  assert.deepEqual(s.env.windows, [{ k: 'Windows 11 24H2', n: 1 }]);
+  assert.deepEqual(s.env.scale, [{ k: '125%', n: 1 }]);
+  assert.equal(s.counters.m_comm, 5, 'band counters still add up');
+  const d = await (await dashboard.fetch(get('/api/summary?period=7&dev=1', token), env)).json();
+  assert.deepEqual(d.env.windows, [{ k: 'Build 12345', n: 1 }]);
+});
+
+test('ingest beta.9: the kept install ID is marked, and Delete my stats removes all its rows', async () => {
+  const DB = fakeD1();
+  await ingest.fetch(post(report({ idk: 'install', counts: { ip_changed: 1, id_install: 5 }, errors: [{ type: 'X', at: 'A.B', n: 1 }] })), { DB });
+  await ingest.fetch(post(report({ id: ID(2) })), { DB });
+  assert.deepEqual(DB.raw.prepare("SELECT n FROM counts WHERE name = 'id_install'").all().map((r) => r.n), [1], 'marked once, never sent as a counter');
+  const forget = (b) => new Request('https://stats.example.workers.dev/v1/forget', post(b));
+  assert.equal((await ingest.fetch(forget({ v: 1, id: ID(1), app: '0.1.0-beta.9' }), { DB })).status, 204);
+  for (const t of ['pings', 'clicks', 'counts', 'errors']) assert.equal(DB.raw.prepare(`SELECT COUNT(*) n FROM ${t} WHERE id = ?`).get(ID(1)).n, 0, t);
+  assert.equal(DB.raw.prepare('SELECT COUNT(*) n FROM pings WHERE id = ?').get(ID(2)).n, 1, 'other installs stay');
+  assert.equal((await ingest.fetch(forget({ v: 1, id: 'nope', app: '0.1.0-beta.9' }), { DB })).status, 400);
+});
+
+test('dashboard beta.9: with the kept ID, installs, new against returning and exact cohorts', async () => {
+  const DB = fakeD1();
+  const token = await jwt(claims());
+  const env = { ...env0(), DB };
+  const now = Date.now();
+  const dayAgo = (n) => new Date(now - n * 864e5).toISOString().slice(0, 10);
+  // install 1: first seen 9 days ago, back today; install 2: new today; a daily beta.8 ID stays out of these numbers
+  for (const [id, n] of [[1, 9], [1, 0], [2, 0]]) {
+    DB.raw.prepare('INSERT INTO pings (day, ts, id, app, minutes, dev) VALUES (?, ?, ?, ?, ?, 0)').run(dayAgo(n), now - n * 864e5, ID(id), '0.1.0-beta.9', 10);
+    DB.raw.prepare("INSERT INTO counts (day, id, name, n, dev) VALUES (?, ?, 'id_install', 1, 0)").run(dayAgo(n), ID(id));
+  }
+  DB.raw.prepare('INSERT INTO pings (day, ts, id, app, minutes, dev) VALUES (?, ?, ?, ?, ?, 0)').run(dayAgo(0), now, ID(3), '0.1.0-beta.8', 10);
+  const s = await (await dashboard.fetch(get('/api/summary?period=7', token), env)).json();
+  assert.deepEqual([s.installs.active, s.installs.fresh, s.installs.back, s.installs.prev], [2, 1, 1, 1]);
+  const first = s.cohortsExact.find((c) => c.n === 1 && c.back[3] === 1);
+  assert.ok(first, 'install 1 counts once in the day 7 column');
+  assert.ok(!JSON.stringify(s).includes(ID(1)), 'no install ID in the answer');
+});
+
+test('ingest beta.9 part 3: IP changes, drops, Rejoin, first screen, updated from, data and regions; odd ones dropped', async () => {
+  const DB = fakeD1();
+  const token = await jwt(claims());
+  const counts = { accounts: 1, chg_air: 2, chgt_10_20: 2, chga_1: 1, chga_2: 1, chgq_good: 1, chgq_great: 1, chg_retry: 1, drop_3p: 1, drop_9: 1, rej_try: 2, rej_back: 1, rej_wait: 1,
+    fs_servers: 1, fs_Bad: 1, cable_hint: 1, updfrom_0_1_0_beta_8: 1, 'updfrom_x': 1, reg_fra: 9, data_gt2g: 1, cs2_start: 2, min_prot: 120, min_cs2: 90 };
+  await ingest.fetch(post(report({ link: 'usb', counts, data: '1_2g', regions: ['fra', 'mad', 'mad', 'Paris', 'x'] })), { DB });
+  await ingest.fetch(post(report({ id: ID(2), data: '7 GB', regions: 'fra', counts: { accounts: 1 } })), { DB });
+  const names = DB.raw.prepare('SELECT name FROM counts WHERE id = ? ORDER BY name').all(ID(1)).map((r) => r.name);
+  for (const n of ['chgq_great', 'drop_9', 'fs_Bad', 'updfrom_x', 'reg_fra', 'data_gt2g']) assert.ok(!names.includes(n) || n === 'reg_fra' && names.filter((x) => x === 'reg_fra').length === 1, n);
+  assert.ok(names.includes('data_1_2g') && names.includes('reg_mad') && names.includes('updfrom_0_1_0_beta_8') && names.includes('cable_hint'));
+  assert.equal(DB.raw.prepare("SELECT COUNT(*) n FROM counts WHERE id = ? AND (name LIKE 'reg_%' OR name LIKE 'data_%')").get(ID(2)).n, 0);
+  const s = await (await dashboard.fetch(get('/api/summary?period=7', token), { ...env0(), DB })).json();
+  assert.deepEqual(s.phone.method[0], { k: 'Modo avião', n: 2 });
+  assert.deepEqual(s.phone.duration.find((x) => x.band === '10-20 s'), { band: '10-20 s', usb: 2, hotspot: 0 });
+  assert.equal(s.phone.data.find((x) => x.band === '1-2 GB').n, 1);
+  assert.deepEqual([s.cs2.rejoin.tries, s.cs2.rejoin.back, s.cs2.rejoin.waits], [2, 1, 1]);
+  assert.deepEqual(s.cs2.regions.map((r) => r.code).sort(), ['fra', 'mad']);
+  assert.deepEqual(s.firstScreen, [{ screen: 'servers', n: 1 }]);
+  assert.deepEqual(s.updates.from, [{ v: '0.1.0-beta.8', n: 1 }]);
+  assert.deepEqual([s.cs2.sessions, s.cs2.hoursProtected], [2, 2]);
+});
+
 test('dashboard beta.9: live is only counts of the last 6 minutes', async () => {
   const DB = fakeD1();
   const token = await jwt(claims());
@@ -378,4 +516,25 @@ test('dashboard beta.9: live is only counts of the last 6 minutes', async () => 
   assert.equal(l.inGame, 1);
   assert.deepEqual(l.byScreen, [{ k: 'connection', n: 1 }, { k: 'tray', n: 1 }]);
   assert.ok(!JSON.stringify(l).includes(ID(1)));
+});
+
+test('beta.9 part 4: red Checks and the leak test only inside their families; per-version metrics from the server', async () => {
+  const DB = fakeD1();
+  const token = await jwt(claims());
+  await ingest.fetch(post(report({ counts: { accounts: 1, chk_firewall: 1, chk_data: 1, chk_Windows: 1, chk_firewall_x: 1, leak_ok: 2, leak_bad: 1, leak_maybe: 1,
+    app_start: 2, crash: 1, ip_changed: 3, ip_same: 1, m_comm: 4, m_comm_lag: 1, tp_10_30: 2, st_1_2: 2 }, minutes: 20 })), { DB });
+  await ingest.fetch(post(report({ id: ID(2), app: '0.1.0-beta.9', counts: { accounts: 1, chk_firewall: 1, app_start: 1, tp_lt10: 1, st_lt1: 1 }, minutes: 5 })), { DB });
+  const names = DB.raw.prepare('SELECT name FROM counts WHERE id = ? ORDER BY name').all(ID(1)).map((r) => r.name);
+  for (const n of ['chk_Windows', 'chk_firewall_x', 'leak_maybe']) assert.ok(!names.includes(n), n);
+  assert.ok(names.includes('chk_firewall') && names.includes('leak_bad'));
+  const s = await (await dashboard.fetch(get('/api/summary?period=7', token), { ...env0(), DB })).json();
+  assert.deepEqual(s.checks.red, [{ k: 'Windows Firewall', key: 'firewall', n: 2 }, { k: 'Mobile data', key: 'data', n: 1 }]);
+  assert.deepEqual(s.checks.leak, { pass: 2, fail: 1 });
+  assert.ok(!('chk_firewall' in s.counters), 'red Checks are install-days, not counters');
+  const b8 = s.versionMetrics['0.1.0-beta.8'];
+  assert.deepEqual([b8.days, b8.sessions, b8.crashes, b8.ipNew, b8.lag, b8.minMed], [1, 2, 1, [3, 4], [1, 4], 10]);
+  assert.equal(b8.toProtected.find((x) => x.band === '10-30 s').n, 2);
+  assert.equal(s.versionMetrics['0.1.0-beta.9'].startup.find((x) => x.band === '<1 s').n, 1);
+  assert.deepEqual(s.adoption.at(-1).by, { '0.1.0-beta.8': 1, '0.1.0-beta.9': 1 });
+  assert.ok(!JSON.stringify(s).includes(ID(1)), 'no install ID leaves');
 });

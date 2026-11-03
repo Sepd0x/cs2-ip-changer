@@ -29,7 +29,7 @@ public sealed partial class Settings
     public bool RequireGoodLink { get; set; }            // Change IP keeps trying while the new connection's jitter is too high
     public bool CheckUpdates { get; set; } = true;
     /// <summary>
-    /// The anonymous usage stats notice was accepted (App.StatsGate, before the app opens). False until then: nothing is sent and
+    /// The usage stats notice was accepted (App.StatsGate, before the app opens). False until then: nothing is sent and
     /// no ID is made. Settings from beta.7 and the beta.8 tests (UsageStats) don't have it, so they see the notice once.
     /// </summary>
     public bool StatsAccepted { get; set; }
@@ -102,6 +102,8 @@ public sealed partial class Settings
     public string LastServer { get; set; }                // IP:port of the last server you joined through the app
     public DateTime? LastServerAt { get; set; }
     public string AccountSort { get; set; } = "recent";
+    /// <summary>Accounts as "cards" or "rows" (4 nov.). Null until picked: from 12 accounts the page offers rows.</summary>
+    public string AccountsView { get; set; }
     public bool AutoJoinFollowed { get; set; }            // a followed player moves to another server in the list: join it
     public string HotkeySwitch { get; set; } = DefaultHotkeySwitch;   // global hotkey for Switch (never Ctrl+Alt: that is AltGr)
     public string HotkeyRejoin { get; set; } = DefaultHotkeyRejoin;   // global hotkey for Change IP and rejoin

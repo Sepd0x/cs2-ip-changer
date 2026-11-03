@@ -194,18 +194,18 @@ function makeData(filters) {
 
   // ---------- a app com calor
   const RATES = {
-    connection: { visits: 3.1, share: 57, users: 100, scroll: [38, 12, 4], b: { NewIpNext: [0.8, 33], ChangeIp: [3.1, 86], ChangeIpRejoin: [1.2, 41], LeakTest: [0.22, 22], TurnOff: [0.3, 28], CopyIp: [0.34, 24], ShowHome: [0.12, 15], UsbTether: [0.42, 30], PhoneSetup: [0.15, 18], LinkPick: [0.08, 9], ModeGame: [0.05, 6], ModeCs2: [0.1, 12], ModeAlways: [0.04, 5], ModeNoPhone: [0.025, 3], ClearHistory: [0.012, 2] },
-      dead: [[0, 34], [1, 21], [2, 12], [3, 6], [4, 8]], rage: [['ChangeIp', 14], ['UsbTether', 6]] },
-    servers: { visits: 1.9, share: 19, users: 72, scroll: [71, 44, 19], b: { NewIpNext: [0.25, 14], PasteBox: [0.3, 28], Port: [0.03, 4], Add: [0.28, 27], Paste: [0.24, 21], Import: [0.02, 2], Search: [0.18, 16], AutoRefresh: [0.05, 9], Refresh: [1.3, 58], CopyIps: [0.1, 8], Remove: [0.06, 7], Star: [0.15, 18], Players: [0.5, 37], Join: [1.9, 64], PlayerFlag: [0.2, 19] },
-      dead: [[0, 15], [1, 5]], deadBtn: [['Remove', 27]], rage: [['Refresh', 9], ['Join', 5]] },
-    regions: { visits: 0.6, share: 6, users: 41, scroll: [62, 30, 9], b: { NewIpNext: [0.05, 4], RegRefresh: [0.3, 24], Closest3: [0.24, 22], EuropeOnly: [0.18, 17], AllowAll: [0.12, 13], PingSlider: [0.3, 19], BlockSlower: [0.2, 15], Allow: [0.6, 30], OnlyThis: [0.05, 5] },
-      dead: [[0, 9], [1, 14]], rage: [['RegRefresh', 3]] },
-    accounts: { visits: 0.7, share: 8, users: 38, scroll: [22, 5, 1], b: { NewIpNext: [0.1, 7], AccSearch: [0.08, 7], Filters: [0.2, 15], Sort: [0.05, 5], OpenCs2: [0.04, 6], SteamMin: [0.03, 5], Offline: [0.02, 3], HideNames: [0.03, 4], AccAdd: [0.06, 9], AccRefresh: [0.1, 9], AccGear: [0.02, 3], NewIpNext2: [0.18, 11], LogIn: [1.2, 34], AccStar: [0.08, 8], Rotation: [0.1, 9] },
-      dead: [[0, 19]], rage: [['LogIn', 7]] },
-    configs: { visits: 0.35, share: 4, users: 21, scroll: [57, 26, 8], b: { NewIpNext: [0.03, 2], CopyFrom: [0.1, 12], CopyTo: [0.12, 12], WhatToCopy: [0.08, 9], All: [0.03, 4], None: [0.02, 2], Copy: [0.1, 11], SyncMode: [0.05, 8], MainPick: [0.03, 5], SyncNow: [0.12, 10], UndoSync: [0.02, 2], Restore: [0.03, 3], SaveSnap: [0.04, 4], ImportSnap: [0.01, 1], SnapIcons: [0.02, 2], Compare: [0.06, 6], AccSync: [0.03, 4] },
+    connection: { visits: 3.1, share: 57, users: 100, scroll: [38, 12, 4], b: { Quick: [0.8, 33], ChangeIp: [3.1, 86], Rejoin: [1.2, 41], LeakTest: [0.22, 22], Restore: [0.3, 28], CopyEgressIp: [0.34, 24], Reveal: [0.12, 15], Tether: [0.42, 30], PhoneHelp: [0.15, 18], LinkPick: [0.08, 9], ModeGame: [0.05, 6], ModeCs2: [0.1, 12], ModeAlways: [0.04, 5], ModeNoPhone: [0.025, 3], ClearHistory: [0.012, 2] },
+      dead: [[0, 34], [1, 21], [2, 12], [3, 6], [4, 8]], rage: [['ChangeIp', 14], ['Tether', 6]] },
+    servers: { visits: 1.9, share: 19, users: 72, scroll: [71, 44, 19], b: { Quick: [0.25, 14], PasteBox: [0.3, 28], Port: [0.03, 4], AddServers: [0.28, 27], PasteServers: [0.24, 21], ImportServers: [0.02, 2], Search: [0.18, 16], AutoQuery: [0.05, 9], QueryServers: [1.3, 58], CopyServers: [0.1, 8], RemoveServers: [0.06, 7], SrvFav: [0.15, 18], SrvPlayers: [0.5, 37], SrvConnect: [1.9, 64], PlayerFlag: [0.2, 19] },
+      dead: [[0, 15], [1, 5]], deadBtn: [['RemoveServers', 27]], rage: [['QueryServers', 9], ['SrvConnect', 5]] },
+    regions: { visits: 0.6, share: 6, users: 41, scroll: [62, 30, 9], b: { Quick: [0.05, 4], RegionsRefresh: [0.3, 24], RegionsClosest: [0.24, 22], RegionsContinent: [0.18, 17], RegionsAllowAll: [0.12, 13], PingSlider: [0.3, 19], RegionsUnder: [0.2, 15], RegionToggle: [0.6, 30], RegionOnly: [0.05, 5] },
+      dead: [[0, 9], [1, 14]], rage: [['RegionsRefresh', 3]] },
+    accounts: { visits: 0.7, share: 8, users: 38, scroll: [22, 5, 1], b: { Quick: [0.1, 7], AccSearch: [0.08, 7], Filters: [0.2, 15], Sort: [0.05, 5], AccOpt: [0.04, 6], SteamMin: [0.03, 5], Offline: [0.02, 3], HideNames: [0.03, 4], AccAdd: [0.06, 9], AccRefresh: [0.1, 9], SwitchSteps: [0.02, 3], NewIpNext2: [0.18, 11], AccSwitch: [1.2, 34], AccFav: [0.08, 8], AccToggleQuick: [0.1, 9] },
+      dead: [[0, 19]], rage: [['AccSwitch', 7]] },
+    configs: { visits: 0.35, share: 4, users: 21, scroll: [57, 26, 8], b: { Quick: [0.03, 2], CopyFrom: [0.1, 12], CopyTo: [0.12, 12], WhatToCopy: [0.08, 9], CfgToAll: [0.03, 4], CfgToNone: [0.02, 2], CfgCopy: [0.1, 11], SyncMode: [0.05, 8], MainPick: [0.03, 5], CfgSyncNow: [0.12, 10], CfgUndo: [0.02, 2], Restore: [0.03, 3], CfgSnapSave: [0.04, 4], CfgSnapImport: [0.01, 1], SnapIcons: [0.02, 2], Compare: [0.06, 6], AccSync: [0.03, 4] },
       dead: [[0, 6], [1, 2]], rage: [] },
-    profiles: { visits: 0.15, share: 2.5, users: 9, scroll: [40, 11, 3], b: { NewIpNext: [0.01, 1], Template: [0.04, 5], TplIcons: [0.01, 1], Pick: [0.03, 4], PicRemove: [0.01, 1], SteamName: [0.05, 6], Bio: [0.02, 3], Privacy: [0.03, 3], ChangeWhat: [0.05, 5], LookLike: [0.02, 2], Preview: [0.06, 6], SignInOut: [0.1, 7], SignOutAll: [0.01, 1], RestoreOrig: [0.02, 2], ClearNames: [0.004, 0], Apply: [0.07, 6] },
-      dead: [[0, 11], [1, 4]], rage: [['Apply', 4]] },
+    profiles: { visits: 0.15, share: 2.5, users: 9, scroll: [40, 11, 3], b: { Quick: [0.01, 1], Template: [0.04, 5], TplIcons: [0.01, 1], TplPickAvatar: [0.03, 4], TplClearAvatar: [0.01, 1], SteamName: [0.05, 6], Bio: [0.02, 3], Privacy: [0.03, 3], ChangeWhat: [0.05, 5], LookLike: [0.02, 2], ProfIdentical: [0.06, 6], ProfSignIn: [0.1, 7], ProfForgetAll: [0.01, 1], ProfRestoreSelected: [0.02, 2], ClearNames: [0.004, 0], ProfApply: [0.07, 6] },
+      dead: [[0, 11], [1, 4]], rage: [['ProfApply', 4]] },
     log: { visits: 0.2, share: 1.5, users: 14, b: { LogCopy: [0.05, 6], LogFilter: [0.03, 3], LogFolder: [0.02, 2], LogClear: [0.01, 1], LogScroll: [0.01, 1] } },
     settings: { visits: 0.3, share: 1, users: 26, b: { StartWin: [0.06, 14], Hotkeys: [0.05, 9], CheckUpdate: [0.04, 8], Tray: [0.03, 7], UsageStats: [0.01, 2], ResetAll: [0.002, 0] } },
   };
@@ -233,9 +233,9 @@ function makeData(filters) {
     const dead = [], rage = [];
     if (s.img) {
       const mk = (rect, nn, label, list, pt) => { const n = Math.round(nn * sf * jitter(1, 0.15)); if (!n) return; const [c, rr] = cellOf(pt[0], pt[1]); if (list === dead) scatter(rect, n, 2); list.push({ c, r: rr, n, days: Math.min(n, UD, Math.max(1, Math.round(n * 0.55))), x: pt[0], y: pt[1], label }); };
-      for (const [ti, nn] of R.dead || []) { const tx = s.text[ti]; mk(tx.r, nn, tx.label, dead, [tx.r[0] + tx.r[2] / 2, tx.r[1] + tx.r[3] / 2]); }
-      for (const [bid, nn] of R.deadBtn || []) { const b = s.buttons.find((q) => q.id === bid); mk(b.r, nn, `${b.label} (desligado)`, dead, [b.r[0] + b.r[2] / 2, b.r[1] + b.r[3] / 2]); }
-      for (const [bid, nn] of R.rage || []) { const b = s.buttons.find((q) => q.id === bid); mk(b.r, nn, b.label, rage, [b.r[0] + 8, b.r[1] + b.r[3]]); }
+      for (const [ti, nn] of R.dead || []) { const tx = s.text?.[ti]; if (!tx) continue; mk(tx.r, nn, tx.label, dead, [tx.r[0] + tx.r[2] / 2, tx.r[1] + tx.r[3] / 2]); }
+      for (const [bid, nn] of R.deadBtn || []) { const b = s.buttons.find((q) => q.id === bid); if (!b?.r) continue; mk(b.r, nn, `${b.label} (desligado)`, dead, [b.r[0] + b.r[2] / 2, b.r[1] + b.r[3] / 2]); }
+      for (const [bid, nn] of R.rage || []) { const b = s.buttons.find((q) => q.id === bid); if (!b?.r) continue; mk(b.r, nn, b.label, rage, [b.r[0] + 8, b.r[1] + b.r[3]]); }
       const noise = Math.round(UD * 0.12);
       for (let i = 0; i < noise; i++) hit(UI.X0 + r() * (UI.W - UI.X0), 40 + r() * (UI.H - 40));
     }
@@ -252,7 +252,7 @@ function makeData(filters) {
   const paths = pathsBase.map(([a, b, n]) => ({ from: a, to: b, n: Math.max(0, Math.round(n * sf * jitter(1, 0.12))) })).filter((p) => p.n > 0);
   const firstScreen = [['servers', 0.46], ['connection', 0.28], ['accounts', 0.11], ['regions', 0.08], ['settings', 0.04], ['configs', 0.03]].map(([s, p]) => ({ screen: s, n: Math.round(T.sessions * p) }));
   const shortcuts = [
-    { action: 'Change IP and rejoin', keys: 'Ctrl+Shift+F10', kb: Math.round(screens.connection.buttons.ChangeIpRejoin.n * 1.38), mouse: screens.connection.buttons.ChangeIpRejoin.n },
+    { action: 'Change IP and rejoin', keys: 'Ctrl+Shift+F10', kb: Math.round(screens.connection.buttons.Rejoin.n * 1.38), mouse: screens.connection.buttons.Rejoin.n },
     { action: 'Abrir a app', keys: 'bandeja contra atalho', kb: Math.round(T.sessions * 0.37), mouse: Math.round(T.sessions * 0.63) },
   ];
   const settingsChanged = [['Start with Windows', 'ligado', 0.62], ['Mode', 'Whole PC while CS2 is open', 0.44], ['Refresh every 30 s', 'desligado', 0.35], ['Sync', 'From a main account', 0.31],

@@ -8,8 +8,9 @@ namespace SRT.Core;
 
 /// <param name="WifiConnected">The phone's Wi-Fi is on a network (true), on but on none (false), or the phone doesn't say (null, Android 10 and older).</param>
 /// <param name="WifiUnknown">The Wi-Fi reading didn't come back as a value (an adb error, a timeout, an empty answer): WifiOn says nothing.</param>
+/// <param name="Brand">ro.product.brand and <paramref name="Android"/> ro.build.version.release: only for the stats' environment report (Telemetry.BrandOf, AndroidOf).</param>
 public sealed record PhoneInfo(string Serial, string State, string Model, string Carrier, string NetType, int? Battery, bool WifiOn = false, string WifiSsid = null,
-    bool? WifiConnected = null, bool WifiUnknown = false)
+    bool? WifiConnected = null, bool WifiUnknown = false, string Brand = null, string Android = null)
 {
     public bool Ready => State == "device";
 
@@ -380,22 +381,23 @@ public static class Adb
         var state = parts[1].Trim();
         if (state != "device") return new PhoneInfo(serial, state, null, null, null, null);
 
-        // One shell for everything (it runs every 2 s during a match): model, carrier, network, battery | Wi-Fi on, Wi-Fi network.
-        var q = await Run(adb, $"-s {serial} shell \"getprop ro.product.model; getprop gsm.operator.alpha; getprop gsm.network.type; dumpsys battery | grep -m1 level; " +
+        // One shell for everything (it runs every 2 s during a match): model, carrier, network, brand, Android version, battery | Wi-Fi on,
+    // Wi-Fi network. The battery is last: when its grep finds nothing, no line before it moves.
+        var q = await Run(adb, $"-s {serial} shell \"getprop ro.product.model; getprop gsm.operator.alpha; getprop gsm.network.type; getprop ro.product.brand; getprop ro.build.version.release; dumpsys battery | grep -m1 level; " +
             "echo ---; settings get global wifi_on; cmd wifi status 2>/dev/null | grep -m1 -i 'connected'\"");
         var all = q.Output.Replace("\r", "").Split('\n');
         var cut = Array.FindIndex(all, l => l.Trim() == "---");
         var lines = (cut >= 0 ? all[..cut] : all).Select(l => l.Trim()).ToArray();
         string L(int i) => i < lines.Length ? lines[i] : null;
         int? battery = null;
-        var lv = L(3);
+        var lv = L(5);
         if (lv != null && int.TryParse(lv.Replace("level:", "").Trim(), out var b)) battery = b;
         var carrier = L(1)?.Split(',').FirstOrDefault(s => !string.IsNullOrWhiteSpace(s));
         var net = L(2)?.Split(',').FirstOrDefault(s => !string.IsNullOrWhiteSpace(s) && s != "Unknown");
         // Not q.Ok: with Wi-Fi off the last grep finds nothing and the shell exits 1, though the answer is right (seen on a Samsung, 29 Oct).
         // An adb error has no "---", so ParseWifi still gives unknown for it.
         var (wifiOn, ssid, connected) = ParseWifi(q.Output);
-        return new PhoneInfo(serial, state, L(0), carrier, PrettyNet(net), battery, wifiOn == true, ssid, wifiOn == true ? connected : false, wifiOn == null);
+        return new PhoneInfo(serial, state, L(0), carrier, PrettyNet(net), battery, wifiOn == true, ssid, wifiOn == true ? connected : false, wifiOn == null, L(3), L(4));
     }
 
     /// <summary>

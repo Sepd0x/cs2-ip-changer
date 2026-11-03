@@ -14,7 +14,7 @@
   const nfa = (v) => (v == null ? '-' : Math.abs(v) < 10 && v % 1 ? nf(v, 1) : nf(Math.round(v)));
   const pc = (v, d = 0) => (v == null ? '-' : `${nf(v, d)}%`);
   const plural = (n, one, many) => `${nf(n)} ${n === 1 ? one : many}`;
-  const lc = (n) => (n < LIVE_MIN ? 'menos de 5' : nf(n));
+  const lc = (n) => (n > 0 && n < LIVE_MIN ? 'menos de 5' : nf(n));
   const MES = ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.'];
   const fdate = (iso) => { const [, m, d] = iso.split('-'); return `${+d} ${MES[m - 1]}`; };
   const hhmm = (t) => new Date(t).toISOString().slice(11, 16);
@@ -443,7 +443,7 @@
 
   // ------------------------------------------------------------------ regras: o que melhorar
   // Ordem: o que está partido primeiro (fugas, crashes), depois por instalações-dia afetadas.
-  const NOT_RARE = new Set(['ClearHistory', 'UndoSync', 'ResetAll', 'ClearNames', 'LogClear', 'Remove', 'PicRemove', 'RestoreOrig', 'Restore', 'TplIcons', 'SignOutAll', 'TurnOff', 'SnapIcons']);
+  const NOT_RARE = new Set(['ClearHistory', 'CfgUndo', 'ResetAll', 'LogClear', 'RemoveServers', 'TplClearAvatar', 'ProfRestoreSelected', 'CfgRestore', 'TplNew', 'TplCopyFrom', 'TplDelete', 'ProfForgetAll', 'Restore', 'CfgSnapUse', 'CfgSnapExport', 'CfgSnapDelete', 'DeleteStats', 'ReportProblem']);
   function suggestions() {
     const out = [], sc = D.screens, per = periodShort(), UD = UDn();
     const dead = (sid, frag) => (sc[sid].dead || []).find((d) => d.label.includes(frag));
@@ -453,7 +453,7 @@
     if (lk.fail >= 1) out.push({ tone: 'bad', pri: 0, affected: lk.fail, title: 'O teste de fugas falhou', why: `${plural(lk.fail, 'falha', 'falhas')} em ${plural(lk.pass + lk.fail, 'teste', 'testes')} ${per}.`, rule: 'teste de fugas falhado: 1 ou mais', href: '#fiab' });
     const cp = D.rel.crashPlaces.find((x) => x.fresh);
     if (cp) out.push({ tone: 'bad', pri: 1, affected: cp.n, title: `Corrige o crash da ${cp.ver} em ${cp.at}`, why: `${plural(cp.n, 'crash', 'crashes')} ${per}; a versão anterior não tinha este.`, rule: 'crash num sítio que a versão anterior não tinha', href: '#fiab' });
-    if ((d = dead('connection', 'IP que')) && d.n >= 5) out.push({ tone: 'warn', affected: d.days, title: 'Torna o IP clicável para copiar', why: `${plural(d.n, 'clique morto', 'cliques mortos')} no texto do IP ${per}. O botão de copiar ao lado teve ${nf(sc.connection.buttons.CopyIp.n)}.`, rule: 'cliques mortos num texto: 5 ou mais', href: '#app/connection' });
+    if ((d = dead('connection', 'IP que')) && d.n >= 5) out.push({ tone: 'warn', affected: d.days, title: 'Torna o IP clicável para copiar', why: `${plural(d.n, 'clique morto', 'cliques mortos')} no texto do IP ${per}. O botão de copiar ao lado teve ${nf(sc.connection.buttons.CopyEgressIp.n)}.`, rule: 'cliques mortos num texto: 5 ou mais', href: '#app/connection' });
     if ((d = rage('connection', 'Change IP')) && d.n >= 3) { const dur = D.phone.duration; const all = sum(dur, (x) => x.usb + x.hotspot); out.push({ tone: 'warn', affected: d.days, title: 'Mostra o progresso enquanto o Change IP troca', why: `${plural(d.n, 'rajada', 'rajadas')} de cliques de raiva no Change IP.${all >= MIN ? ` A troca demora 10 s ou mais em ${pc((100 * sum(dur.slice(2), (x) => x.usb + x.hotspot)) / all)} das vezes (n=${nf(all)}).` : ''}`, rule: 'cliques de raiva num botão: 3 ou mais', href: '#app/connection' }); }
     const L = D.cs2.lag, nU = L.usb.valve.n + L.usb.community.n, nH = L.hotspot.valve.n + L.hotspot.community.n;
     if (S.f.link === 'all' && nU >= LOW && nH >= LOW) {
@@ -465,7 +465,7 @@
     if (worst && worst.drop >= 0.25) out.push({ tone: 'warn', affected: worst.from - worst.to, title: `Revê o passo "${worst.k}" do Phone setup`, why: `Chegam ao passo antes ${nf(worst.from)}, passam ${nf(worst.to)} (−${pc(worst.drop * 100)}).`, rule: 'passo do setup que perde 25% ou mais', href: '#telemovel' });
     if ((d = dead('servers', 'desligado')) && d.n >= 5) out.push({ tone: 'warn', affected: d.days, title: 'Diz porque o Remove está desligado', why: `${plural(d.n, 'clique', 'cliques')} no Remove sem servidor escolhido.`, rule: 'cliques num botão desligado: 5 ou mais', href: '#app/servers' });
     if ((d = dead('regions', 'nome da região')) && d.n >= 4) out.push({ tone: 'acc', affected: d.days, title: 'Liga a região ao clicar no nome', why: `${plural(d.n, 'clique', 'cliques')} no nome da região em vez da caixa.`, rule: 'cliques mortos num texto ao lado de um controlo', href: '#app/regions' });
-    if ((d = dead('accounts', 'cartão')) && d.n >= 4) out.push({ tone: 'acc', affected: d.days, title: 'Dá uma ação ao clique no cartão da conta', why: `${plural(d.n, 'clique', 'cliques')} no corpo do cartão. O Log in teve ${nf(sc.accounts.buttons.LogIn.n)}.`, rule: 'cliques mortos num cartão: 4 ou mais', href: '#app/accounts' });
+    if ((d = dead('accounts', 'cartão')) && d.n >= 4) out.push({ tone: 'acc', affected: d.days, title: 'Dá uma ação ao clique no cartão da conta', why: `${plural(d.n, 'clique', 'cliques')} no corpo do cartão. O Log in teve ${nf(sc.accounts.buttons.AccSwitch.n)}.`, rule: 'cliques mortos num cartão: 4 ou mais', href: '#app/accounts' });
     const fa = D.funnel[0], fb = D.funnel[1];
     if (fa.n >= MIN && 1 - fb.n / fa.n >= 0.2) out.push({ tone: 'warn', affected: fa.n - fb.n, title: 'Ajuda a ligar o telemóvel no 1.º dia', why: `${plural(fa.n, 'instalação nova', 'instalações novas')}, ${nf(fb.n)} com o telemóvel pronto no mesmo dia (−${pc((1 - fb.n / fa.n) * 100)}).`, rule: 'passo do 1.º dia que perde 20% ou mais', href: '#uso' });
     const cr = [...D.rel.checksRed].sort((a, b) => b.n - a.n)[0];
@@ -476,7 +476,7 @@
     if (up.declined >= 3) out.push({ tone: 'dim', affected: up.declined, title: 'Diz o que muda no aviso de atualização', why: `${plural(up.declined, 'recusa', 'recusas')} e ${plural(up.failed, 'falha', 'falhas')} ${per}.`, rule: 'recusas de atualização: 3 ou mais', href: '#fiab' });
     if (UD >= LOW) {
       const rare = [];
-      for (const s of UI.screens) for (const b of s.buttons) { const bd = sc[s.id].buttons[b.id]; if (bd && bd.days / UD <= 0.02 && !b.id.startsWith('NewIpNext') && !NOT_RARE.has(b.id)) rare.push(`${b.label} (${s.name})`); }
+      for (const s of UI.screens) for (const b of s.buttons) { const bd = sc[s.id].buttons[b.id]; if (bd && bd.days / UD <= 0.02 && b.id !== 'Quick' && !NOT_RARE.has(b.id)) rare.push(`${b.label} (${s.name})`); }
       if (rare.length) out.push({ tone: 'dim', affected: 0, title: 'Junta ou esconde o que quase não se usa', why: `${rare.length} ${rare.length === 1 ? 'botão usado' : 'botões usados'} em 2% das instalações-dia ou menos: ${rare.slice(0, 4).join(', ')}${rare.length > 4 ? ' e mais' : ''}.`, rule: 'botão em 2% das instalações-dia ou menos (n ≥ 30); ficam de fora apagar e desfazer', href: '#app' });
     }
     const E = D.env, lang = [...E.lang].sort((a, b) => b.n - a.n)[0];
@@ -522,7 +522,7 @@
     if (!rows.length) return '<p class="note">Ninguém.</p>';
     const small = rows.filter((r) => r.n < LIVE_MIN), big = rows.filter((r) => r.n >= LIVE_MIN).sort((a, b) => a.n - b.n);
     const hide2 = small.length === 1 && big.length ? big[0] : null;
-    return `<div class="bl live">${rows.map((r) => { const sup = r === hide2; const txt = r.n < LIVE_MIN ? 'menos de 5' : sup ? '5 ou mais' : nf(r.n); return `<div class="row"><span class="k">${esc(r.k)}</span><span class="t">${r.n >= LIVE_MIN && !sup ? `<i style="width:${(r.n / Math.max(1, D.live.now)) * 100}%"></i>` : ''}</span><span class="v${r.n < LIVE_MIN || sup ? ' low' : ''}">${txt}</span></div>`; }).join('')}</div>`;
+    return `<div class="bl live">${rows.map((r) => { const sup = r === hide2; const txt = r.n > 0 && r.n < LIVE_MIN ? 'menos de 5' : sup ? '5 ou mais' : nf(r.n); return `<div class="row"><span class="k">${esc(r.k)}</span><span class="t">${r.n >= LIVE_MIN && !sup ? `<i style="width:${(r.n / Math.max(1, D.live.now)) * 100}%"></i>` : ''}</span><span class="v${r.n < LIVE_MIN || sup ? ' low' : ''}">${txt}</span></div>`; }).join('')}</div>`;
   };
   const liveHead = () => `<div class="livebig"><span class="big${D.live.now < LIVE_MIN ? ' bigtxt' : ''}">${lc(D.live.now)}</span><span class="dim">a usar agora · ${lc(D.live.inGame)} em jogo · ${lc(D.live.protectedN)} com proteção ligada</span></div>`;
 
@@ -666,7 +666,7 @@
         <div class="scale">menos ${[0, 0.25, 0.5, 0.75, 1].map((t) => `<i style="background:${heatCell(t).bg}"></i>`).join('')} mais · n = ${plural(sum(D.when.flat()), 'sessão', 'sessões')}</div></section>
       <section class="gb s8"><h2>Coortes por semana de instalação <small>abriram a app N dias depois · "3 de 6" com menos de 20</small></h2><div class="tw"><table class="t coh"><thead><tr><th>Semana</th><th class="n">Novas</th>${['Dia 1', 'Dia 3', 'Dia 7', 'Dia 14', 'Dia 30'].map((x) => `<th class="n">${x}</th>`).join('')}</tr></thead><tbody>
         ${D.cohorts.map((c) => `<tr><td>${fdate(c.week)}</td><td class="n">${nf(c.n)}</td>${!c.n ? '<td class="dim" colspan="5">sem instalações novas</td>' : c.back[1] == null ? '<td class="dim" colspan="5">ainda não passou uma semana</td>' : c.back.slice(1).map((v) => cohCell(v, c.n)).join('')}</tr>`).join('')}</tbody></table></div>
-        <p class="note">Usa a idade da instalação em bandas, contada no PC. Ninguém é seguido de um dia para o outro.</p></section>
+        <p class="note">Desde a beta.9: cada instalação conta uma vez por coluna (ID fixo e aleatório, sem nada do PC). Antes: estimativa pela idade em bandas, em instalações-dia.</p></section>
       <section class="gb s4"><h2>Idade da instalação <small>instalações-dia, dias desde que foi instalada</small></h2>
         <div class="tw"><table class="t"><thead><tr><th>Dias</th><th class="n">Instalações-dia</th><th class="n">%</th></tr></thead><tbody>${D.installAge.map((a) => { const q = ratio(a.n, UD); return `<tr><td>${esc(a.band)}</td><td class="n">${nf(a.n)}</td><td class="n ${q.cls}">${q.txt}</td></tr>`; }).join('')}</tbody></table></div>
         <h3>Dias com a app aberta nos últimos 7 <small class="dim">quem abriu pelo menos 1</small></h3>${cols(D.activeDays, [{ k: 'n', name: 'Instalações-dia', color: 'var(--acc)' }], { h: 90 })}</section>
@@ -698,7 +698,7 @@
       <section class="gb s4"><h2>Tentativas até ficar boa <small>n=${nf(ipAll)}</small></h2>${pctCols(p.attempts, ipAll)}</section>
       <section class="gb s4"><h2>Qualidade depois da troca <small>teste da app</small></h2>${shareBars([{ k: 'Boa', n: p.quality.boa, cls: 'good' }, { k: 'Razoável', n: p.quality.razoavel, cls: 'warn' }, { k: 'Má', n: p.quality.ma, cls: 'bad' }], ipAll)}
         <h3>Trocaram outra vez por jitter</h3>${shareBars([{ k: 'Trocas repetidas', n: p.quality.retry }], ipAll)}</section>
-      <section class="gb s6"><h2>Onde o Phone setup para</h2>${p.setup[0].n < MIN ? `<p class="note">Poucos dados (n=${nf(p.setup[0].n)}).</p>` : `<div class="fun">${p.setup.map((s, i) => `${i ? `<span></span><span class="dr${p.setup[i - 1].n && 1 - s.n / p.setup[i - 1].n >= 0.25 ? ' worst' : ''}">−${pc(p.setup[i - 1].n ? (1 - s.n / p.setup[i - 1].n) * 100 : 0)}</span>` : ''}<span class="k" title="${esc(s.k)}">${esc(s.k)}</span><span class="t"><i style="width:${(s.n / setupTop) * 100}%"></i></span><span class="v">${nf(s.n)}</span>`).join('')}</div>`}</section>
+      <section class="gb s6"><h2>Onde o Phone setup para</h2>${p.setup[0].n < MIN ? `<p class="note">Poucos dados (n=${nf(p.setup[0].n)}).</p>` : `<div class="fun">${p.setup.map((s, i) => `${i ? `<span></span><span class="dr${p.setup[i - 1].n && 1 - s.n / p.setup[i - 1].n >= 0.25 ? ' worst' : ''}">−${pc(p.setup[i - 1].n ? (1 - s.n / p.setup[i - 1].n) * 100 : 0)}</span>` : ''}<span class="k" title="${esc(s.k)}">${esc(s.k)}</span><span class="t"><i style="width:${(s.n / setupTop) * 100}%"></i></span><span class="v">${nf(s.n)}</span>`).join('')}</div>`}${p.steps && p.steps.length ? `<h3>Passos vistos <small class="dim">instalações-dia que passaram por cada passo</small></h3>${shareBars(p.steps.map((x) => ({ k: x.k, n: x.n })), Math.max(1, p.setup[0].n))}` : ''}</section>
       <section class="gb s6"><h2>Do arranque a Protected</h2><div class="kl">Banda mediana</div><div class="kv">${ses >= MIN ? esc(p.toProtectedMedian) : '-'}</div><div class="nn">n=${plural(ses, 'sessão', 'sessões')}</div>${pctCols(p.toProtected, ses)}</section>
       <section class="gb s6"><h2>Quedas do telemóvel por sessão <small>n=${nf(ses)}</small></h2>${pctCols(p.drops, ses)}</section>
       <section class="gb s6"><h2>Dados móveis por dia <small>instalações-dia, n=${nf(UDn())}</small></h2>${pctCols(p.data, UDn())}</section>
@@ -868,7 +868,7 @@
     $$('#period button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.p === f.period)));
   }
   function renderFooter() {
-    $('#foot').innerHTML = 'Unidade: instalação-dia. O ID da app muda todos os dias, por isso ninguém é seguido de um dia para o outro e quem abre a app em 3 dias conta 3 vezes. Retenção e coortes usam a idade da instalação em bandas (0, 1, 2-3, 4-6, 7-13, 14-29, 30+), contada no PC. O ambiente vem num relatório à parte, sem ID, só em contagens. O IP chega à Cloudflare em cada pedido, como em qualquer site, e não é lido nem guardado: os logs e a observability do Worker estão desligados. Percentagens com menos de 5 casos mostram "-"; com menos de 30 ficam a cinzento. Builds de desenvolvimento ficam de fora. Dias em UTC; "Quando usam" em hora de Lisboa. Grelha de cliques: 24×16 células sobre a área à direita da barra lateral da app.';
+    $('#foot').innerHTML = 'Unidade dos gráficos por dia: instalação-dia. Desde a beta.9 o ID é fixo por instalação (aleatório, nunca do PC nem da pessoa; Delete my stats na app apaga tudo dele), por isso instalações diferentes, novas, as que voltaram e as coortes são exatas; na beta.8 o ID mudava todos os dias e essas contas usam a idade em bandas (0, 1, 2-3, 4-6, 7-13, 14-29, 30+). O ambiente vem num relatório à parte, sem ID, só em contagens. O IP chega à Cloudflare em cada pedido, como em qualquer site, e não é lido nem guardado: os logs e a observability do Worker estão desligados. Percentagens com menos de 5 casos mostram "-"; com menos de 30 ficam a cinzento. Builds de desenvolvimento ficam de fora. Dias em UTC; "Quando usam" em hora de Lisboa. Grelha de cliques: 24×16 células sobre a área à direita da barra lateral da app.';
   }
   function setLivePill() { $('#liveN').textContent = lc(D.live.now); }
 

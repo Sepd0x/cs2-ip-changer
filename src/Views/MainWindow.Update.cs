@@ -30,6 +30,7 @@ public partial class MainWindow
                 if (wasKnown != r.Version)
                 {
                     Log.Info($"Version {r.Version} is available on GitHub.");
+                    Telemetry.Count("upd_seen");
                     Toast($"CS2 IP Changer {r.Version} is available. Click Update under the version number.", Tone.Info);
                 }
             }
@@ -79,7 +80,8 @@ public partial class MainWindow
             }
             HideProgress();
             var size = r.Size > 0 ? $" (about {Math.Max(1, (r.Size + 500_000) / 1_000_000)} MB)" : "";
-            if (!await Ask("Update CS2 IP Changer", $"Download version {r.Version}{size} from GitHub, check its SHA-256 and restart the app?{MobileDataNote()}\n\nProtection stays on while it restarts. If you are on a server, you will be disconnected for a few seconds while the new version checks the phone's IP.", "Update")) return;
+            if (!await Ask("Update CS2 IP Changer", $"Download version {r.Version}{size} from GitHub, check its SHA-256 and restart the app?{MobileDataNote()}\n\nProtection stays on while it restarts. If you are on a server, you will be disconnected for a few seconds while the new version checks the phone's IP.", "Update")) { Telemetry.Count("upd_declined"); return; }
+            Telemetry.Count("upd_accepted");
             ShowProgress("Downloading the update…");
             var sha = await Updater.Download(r, new Progress<string>(t => ProgressText.Text = t));
             Log.Ok($"Update {r.Version} downloaded, SHA-256 matches ({sha[..12]}…). Restarting.");
@@ -90,6 +92,7 @@ public partial class MainWindow
         catch (Exception ex)
         {
             Log.Error("Update: " + ex.Message);
+            Telemetry.Count("upd_failed");
             Toast("Update failed: " + ex.Message, Tone.Error);
             if (_closingDone) { _closingDone = false; RegisterHotkeys(); App.ReacquireSingleInstance(); }
         }
@@ -111,6 +114,7 @@ public partial class MainWindow
     {
         _ = Updater.CleanupOld();
         if (!_justUpdated) return;
+        Telemetry.Count("upd_done");
         Log.Ok($"Updated to {AppInfo.Version}.");
         Toast($"Updated to {AppInfo.Version}.", true);
     }

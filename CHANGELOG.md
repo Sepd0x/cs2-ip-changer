@@ -4,9 +4,28 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Added
+- Settings > Delete my stats: deletes everything the stats server keeps under this install's ID and gives the app a new one.
+- Accounts: a Ready filter (accounts New IP + next account can use now) and a "Ready first" order (ready, then the cooldown that ends first, banned last), for when the list grows.
+- Accounts can show as rows instead of cards (the button next to the order): one line per account, so bans, cooldowns and who is in rotation line up. From 12 accounts the page offers it once.
+- Log > Report a problem opens a new GitHub issue in your browser with the app and Windows versions filled in. Nothing is sent until you press Submit there.
+- At the first start the app checks that Steam and CS2 are on the PC and, if one is missing, says what to do.
+- When the phone's USB connection drops 3 times in 10 minutes, the app says it's most likely the cable or the USB port.
+
+### Fixed
+- Servers: a marked server can be unmarked again (click it again, click the empty part of the list or press Escape). The button now says what it asks: Refresh all, Refresh 1 or Refresh 3.
+- Join on a server the list shows as full now offers Join anyway, next to Wait for a slot. Many servers keep spectator or reserved slots the list doesn't count; with the teams full you come in as a spectator.
+- Rejoin (or Join) turned away with "server is full" right after you tried no longer just stops: the app tries again every 15 seconds for 2 minutes. The list's player count can be old, or count spectators.
+- The click that brings the app to the front, and clicks while it doesn't have the focus, no longer count as rage clicks in the usage stats.
+
 ### Changed
 - The usage stats say a bit more, to see what in the app works and what confuses people: minutes on each screen, moves between screens, where on each screen people click (a coarse grid, added up for everyone with no ID) and clicks that hit nothing, how long ago the app was set up (in rough bands), and every 5 minutes while the app is open a short signal with what is on. Still never IPs, servers, accounts, names or anything you type. [Telemetry](README.md#telemetry) has the full list.
+- The usage stats ID is now kept for the install instead of new every day, so the stats can tell people who come back from new installs. It is still random, has no name and is never made from your PC or from you. Because it is kept, the stats are no longer called anonymous (the notice is now just "Usage stats"): one install's days link up, though never to a person. Only the click map and the setup report, which carry no ID, are anonymous. Settings > Delete my stats deletes everything the server keeps under it and gives the app a new ID.
+- The stats also count Change IP (method, time, attempts, quality after it), phone connection drops, mobile data per day, Rejoin, the first screen opened, minutes with CS2 open and with protection on, the regions turned off (Valve's public codes), the version updated from and how many "Open with CS2" programs open as administrator, in rough bands.
+- The stats also say which rows of the Checks panel are red when a report is made (by a short name, never their text) and whether Run leak test passed or failed. The stats dashboard's Versions page now compares versions with real numbers (crashes, lag, IP changes that worked, time to Protected and to start).
 - Reports from online virus scanners (they run the exe in a sandbox and accept the notice by themselves) are now told apart from people in the stats.
+- The usage stats also say, in rough bands: for each CS2 match whether it was a Valve or community server, whether it lagged and its ping, jitter, late messages and lost packets; how the app started, how long sessions last, how long the start and getting to Protected take, and crashes as their type and place in the code; how far down each screen people scroll; what happened with the update notice; which on/off settings were changed (by name); and on how many of the last 7 days the app was open. Never the server, the map or the time.
+- A separate daily report about the setup goes with no ID and no country, and is only added into counts: Windows language, window size and screen scale in bands, Windows build, the phone's brand (from a short list, never the model), Android version and 4G or 5G. [Telemetry](README.md#telemetry) has the full list.
 
 ## [0.1.0-beta.8] - 2026-11-01
 

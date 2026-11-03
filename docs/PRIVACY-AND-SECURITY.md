@@ -17,7 +17,7 @@ There's no account and no server of ours that sees your IPs. The app talks to th
 | steamcommunity.com, login.steampowered.com, Steam's picture servers (`*.steamstatic.com`) | Account profiles, avatars and bans; profile changes on the Profiles page | Public profile requests; for accounts you signed in to on Profiles, that account's Steam session |
 | dl.google.com | Only if you ask the app to download ADB | A normal download |
 | api.github.com, github.com | Update check, once a day (can be turned off) | A normal request; release files come from GitHub's download servers |
-| stats.cs2ipchanger.workers.dev (Cloudflare Worker, source in [`worker/stats`](../worker/stats)) | Anonymous usage stats, required in the beta, after you accept | What's listed in [Telemetry](../README.md#telemetry). Never IPs, servers, accounts or names |
+| stats.cs2ipchanger.workers.dev (Cloudflare Worker, source in [`worker/stats`](../worker/stats)) | Usage stats with a random install ID and no name, required in the beta, after you accept | What's listed in [Telemetry](../README.md#telemetry). Never IPs, servers, accounts or names |
 
 Pings and A2S queries go to the game servers in your list and to Valve's relays, through the phone (through home in No phone mode). Links like Leetify or csstats.gg open in your browser; the app itself doesn't contact them.
 
@@ -84,5 +84,5 @@ The app installs an update only if the exe matches the release's SHA-256 and tha
 - **The kill switch needs Windows Firewall on.** A third-party firewall that turns it off leaves the app without one, and the app says so.
 - **IPv6 isn't routed through the phone.** CS2's game traffic is IPv4; in Whole PC mode IPv6 is blocked so nothing leaves from home.
 - **Steam's web sign-ins on the Profiles page** use your normal connection outside Whole PC mode.
-- **The usage stats** reach Cloudflare from your IP, like any website; the Worker gets only the country and stores no IP.
+- **The usage stats** reach Cloudflare from your IP, like any website; the Worker gets only the country and stores no IP. The daily report about your setup (`/v1/env`: Windows language, window and scale bands, Windows build, phone brand and Android version, 4G/5G) has no ID and the Worker doesn't read its country: it is only added into counts per day, so it can't be tied to the daily report. The daily report's ID is random and kept per install since beta.9, so returns can be counted; Settings > Delete my stats deletes everything kept under it (`/v1/forget`). Numbers that could tell installs apart (ping, jitter, session length, install age, list sizes) go in rough bands.
 - The exe isn't code-signed with an Authenticode certificate, so SmartScreen may warn you.

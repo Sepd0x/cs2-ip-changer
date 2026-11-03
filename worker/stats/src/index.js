@@ -1,7 +1,7 @@
-// Anonymous usage stats for CS2 IP Changer (beta). README > Telemetry says what the app sends.
+// Usage stats for CS2 IP Changer (beta), with a random install ID (pseudonymous; the heat map and /v1/env have no ID). README > Telemetry says what the app sends.
 //
-// What is kept: a random ID made on the PC (since beta.8 new every day, so it never links one day to the next; before beta.8 it
-// was fixed per install), the app and Windows versions, the mode, how the phone is connected,
+// What is kept: a random ID made on the PC (fixed per install until beta.7, new every day in beta.8, fixed per install again
+// since beta.9 so returns can be counted; never made from the PC or the user, and Delete my stats in the app deletes it all here), the app and Windows versions, the mode, how the phone is connected,
 // minutes the app was open, the country (two letters, from Cloudflare), how many times each button or hotkey was used, a few counters (IP changes, kicks, bans marked,
 // list sizes: servers, accounts, flagged players, "Open with CS2" programs and turned-off regions) and errors as type + code location. Never kept: the sender's IP (Cloudflare needs it to deliver the
 // request and works out the country from it; this code only gets the country, never the IP), and nothing the app doesn't send (no IPs, servers, accounts, names). Logs are off (wrangler.jsonc).
@@ -32,6 +32,65 @@ const HOSTING = new Set([15169, 396982, 16509, 14618, 8075, 8068, 16276, 24940, 
 const HEAT_TABLE = 'CREATE TABLE IF NOT EXISTS heat (day TEXT NOT NULL, app TEXT NOT NULL, screen TEXT NOT NULL, kind TEXT NOT NULL, cell TEXT NOT NULL, n INTEGER NOT NULL, dev INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, app, screen, kind, cell, dev))';
 const LIVE_TABLE = 'CREATE TABLE IF NOT EXISTS live (id TEXT PRIMARY KEY, ts INTEGER NOT NULL, app TEXT NOT NULL, mode TEXT, link TEXT, screen TEXT, cs2 INTEGER, prot INTEGER, tray INTEGER, dev INTEGER NOT NULL DEFAULT 0)';
 const LIVE_GAP = 4 * 60 * 1000;   // the app sends every 5 minutes
+// beta.9 part 2: counters the app sends in bands (src/Core/Telemetry.cs). A name in one of these families must be one of its bands,
+// so nothing else (an exact number, a made-up name) comes in through them. Names the Worker makes itself can't be sent as counters.
+const BANDS = {
+  m: ['valve', 'valve_lag', 'comm', 'comm_lag'],
+  ping: ['lt30', '30_50', '50_80', '80_120', 'gt120'],
+  jit: ['lt5', '5_10', '10_20', '20_40', 'gt40'],
+  jitd: ['lt5', '5_10', '10_20', '20_40', 'gt40'],
+  late: ['0', 'lt1', '1_3', '3_10', 'gt10'],
+  loss: ['0', '1_10', '11_100', 'gt100'],
+  sess: ['lt5', '5_15', '15_30', '30_60', '1_2h', 'gt2h'],
+  st: ['lt1', '1_2', '2_4', '4_8', 'gt8'],
+  tp: ['lt10', '10_30', '30_60', '1_3m', 'gt3m'],
+  start: ['auto', 'hand'],
+  upd: ['seen', 'accepted', 'declined', 'failed', 'done'],
+  // Change IP (method, time, attempts, quality measured after it, retried for jitter), phone drops per session, Rejoin, the
+  // first screen picked after the start, the cable hint
+  chg: ['air', 'data', 'retry'],
+  chgt: ['lt5', '5_10', '10_20', '20_40', 'gt40'],
+  chga: ['1', '2', '3', '4p'],
+  chgq: ['good', 'fair', 'bad'],
+  drop: ['0', '1', '2', '3p'],
+  rej: ['try', 'back', 'wait'],
+  fs: ['connection', 'servers', 'regions', 'accounts', 'configs', 'profiles', 'log', 'settings'],
+  cable: ['hint'],
+  // The Checks panel's red rows when the report is built (Telemetry.CheckKeys) and Run leak test, passed or failed
+  chk: ['egress', 'routes', 'cs2', 'kill', 'firewall', 'diff', 'data', 'quality', 'steam', 'pc', 'regions'],
+  leak: ['ok', 'bad'],
+};
+const UPD_FROM = /^updfrom_\d+_\d+_\d+(_[0-9A-Za-z_]{1,20})?$/;
+const DATA = ['lt250m', '250_500m', '500m_1g', '1_2g', 'gt2g'];
+const REGION = /^[a-z]{3,4}[0-9]?$/;
+const SCROLL = /^scl_[a-z]{1,12}_(0|25|50|75|100)$/;
+const RESERVED = /^(scr|path|age|act|set|reg|data)_|^(net_dc|id_install)$/;
+// Same list as Telemetry.SettingNames: on/off settings and the mode, by name only
+const SETTINGS = new Set(['GameMode', 'SteamOnEgress', 'KeepPcOffPhone', 'RequireGoodLink', 'CheckUpdates', 'SteamSilent', 'SteamOffline', 'StreamerMode',
+  'AutoStreamer', 'AutoQuery', 'CleanupOnExit', 'CloseToTray', 'AutoJoinFollowed', 'SwitchIp', 'SwitchAccount', 'SwitchRejoin',
+  'SwitchOpenWith', 'CommandSounds', 'AutoModeByQuality', 'NoPhone', 'Mode']);
+
+/** A counter name the app may send: not one the Worker makes, and inside its family's bands when it has one. */
+export function counterOk(name) {
+  if (!NAME.test(name) || RESERVED.test(name)) return false;
+  if (name.startsWith('scl_')) return SCROLL.test(name);
+  if (name.startsWith('updfrom_')) return UPD_FROM.test(name);
+  const cut = name.indexOf('_');
+  const fam = cut > 0 ? name.slice(0, cut) : null;
+  return fam && Object.hasOwn(BANDS, fam) ? BANDS[fam].includes(name.slice(cut + 1)) : true;
+}
+
+// The environment report (POST /v1/env): no ID and no country, once a day per install. Only these values are kept, as counts per day.
+const ENV = {
+  lang: (x) => typeof x === 'string' && /^[a-z]{2,3}$/.test(x),
+  win: (x) => ['s', 'm', 'l'].includes(x),
+  scale: (x) => ['100', '125', '150', '175p'].includes(x),
+  build: (x) => Number.isInteger(x) && x >= 10000 && x <= 99999,
+  brand: (x) => ['samsung', 'google', 'xiaomi', 'oneplus', 'motorola', 'oppo', 'realme', 'vivo', 'huawei', 'honor', 'nothing', 'sony', 'asus', 'nokia', 'zte', 'tcl', 'other'].includes(x),
+  android: (x) => typeof x === 'string' && /^\d{1,2}$/.test(x) && +x >= 4 && +x <= 40,
+  net: (x) => ['5g', '4g', '3g', '2g'].includes(x),
+};
+const ENV_TABLE = 'CREATE TABLE IF NOT EXISTS env (day TEXT NOT NULL, k TEXT NOT NULL, v TEXT NOT NULL, n INTEGER NOT NULL, dev INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, k, v, dev))';
 
 /**
  * The body, read up to max bytes and no further. Content-Length can be missing (chunked) or wrong, and request.text() would
@@ -95,6 +154,7 @@ async function withinBudget(env, day, stmts, cost) {
     if (!/no such table/i.test(String(e && e.message))) throw e;
     await env.DB.prepare(HEAT_TABLE).run();
     await env.DB.prepare(LIVE_TABLE).run();
+    await env.DB.prepare(ENV_TABLE).run();
     await env.DB.batch(stmts);
   }
   return new Response(null, { status: 204 });
@@ -120,10 +180,49 @@ async function live(request, env) {
   return withinBudget(env, day, stmts, 3);
 }
 
+/**
+ * POST /v1/env, once a day: the environment with no ID and no country (Cloudflare's country is not read here), added into the day's
+ * counts. Nothing ties it to the daily report. Only the day's row budget limits it (there is no ID to limit by).
+ */
+async function envReport(request, env) {
+  if (!/^application\/json\s*(;|$)/i.test(request.headers.get('content-type') || '')) return new Response('json only', { status: 415 });
+  let b;
+  try {
+    const text = await readCapped(request, 2048);
+    if (text === null) return new Response('too big', { status: 413 });
+    b = JSON.parse(text);
+  } catch { return new Response('bad json', { status: 400 }); }
+  if (!plain(b) || b.v !== 1 || !VERSION.test(b.app)) return new Response('bad', { status: 400 });
+  const day = new Date().toISOString().slice(0, 10);
+  const dev = b.dev === true ? 1 : 0;
+  const stmts = [];
+  for (const [k, ok] of Object.entries(ENV)) {
+    const v = b[k];
+    if (v === null || v === undefined || !ok(v)) continue;
+    stmts.push(env.DB.prepare('INSERT INTO env (day, k, v, n, dev) VALUES (?, ?, ?, 1, ?) ON CONFLICT (day, k, v, dev) DO UPDATE SET n = n + 1').bind(day, k, String(v), dev));
+  }
+  stmts.push(env.DB.prepare('INSERT INTO env (day, k, v, n, dev) VALUES (?, ?, ?, 1, ?) ON CONFLICT (day, k, v, dev) DO UPDATE SET n = n + 1').bind(day, 'reports', 'all', dev));
+  return withinBudget(env, day, stmts, 2 * stmts.length);
+}
+
+/**
+ * POST /v1/forget (Settings > Delete my stats): everything kept under this install's ID goes. The heat map and the environment
+ * report have no ID, so nothing there is tied to it. The ID is random and only on that PC, so only that PC can ask.
+ */
+async function forget(request, env) {
+  const b = await body(request);
+  if (b instanceof Response) return b;
+  const day = new Date().toISOString().slice(0, 10);
+  const stmts = ['pings', 'clicks', 'counts', 'errors', 'live'].map((t) => env.DB.prepare(`DELETE FROM ${t} WHERE id = ?`).bind(b.id));
+  return withinBudget(env, day, stmts, 60);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (request.method === 'POST' && url.pathname === '/v1/live') return live(request, env);
+    if (request.method === 'POST' && url.pathname === '/v1/env') return envReport(request, env);
+    if (request.method === 'POST' && url.pathname === '/v1/forget') return forget(request, env);
     if (request.method !== 'POST' || url.pathname !== '/v1') return new Response('CS2 IP Changer stats. See the README.', { status: 404 });
     const b = await body(request);
     if (b instanceof Response) return b;
@@ -141,11 +240,11 @@ export default {
       env.DB.prepare('INSERT INTO pings (day, ts, id, app, os, mode, link, minutes, country, dev) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
         .bind(day, now, b.id, b.app, word(b.os), word(b.mode), word(b.link), int(b.minutes, MAX_MINUTES), cc, dev),
     ];
-    // Caps a little above what the app sends (about 130 buttons, a few counters, at most 30 errors)
-    for (const [table, obj, max, cap] of [['clicks', b.clicks, 100000, 150], ['counts', b.counts, 1000000, 40]]) {
+    // Caps a little above what the app sends (about 130 buttons, counters and their bands, at most 30 errors)
+    for (const [table, obj, max, cap, ok] of [['clicks', b.clicks, 100000, 150, (x) => NAME.test(x)], ['counts', b.counts, 1000000, 100, counterOk]]) {
       if (!plain(obj)) continue;
       for (const [name, n] of Object.entries(obj).slice(0, cap))
-        if (NAME.test(name) && int(n, max) !== null)
+        if (ok(name) && int(n, max) !== null)
           stmts.push(env.DB.prepare(`INSERT INTO ${table} (day, id, name, n, dev) VALUES (?, ?, ?, ?, ?)`).bind(day, b.id, name, n, dev));
     }
     if (Array.isArray(b.errors))
@@ -164,6 +263,16 @@ export default {
       }
     if (typeof b.age === 'string' && Object.hasOwn(AGES, b.age)) extra.push([`age_${AGES[b.age]}`, 1]);
     if (hosting) extra.push(['net_dc', 1]);
+    // beta.9: the ID is kept per install (before, new every day). Marked, so the dashboard counts returns only for these IDs.
+    if (b.idk === 'install') extra.push(['id_install', 1]);
+    // Mobile data today in a band, and the regions turned off on the Regions page (Valve's public codes, like fra)
+    if (DATA.includes(b.data)) extra.push([`data_${b.data}`, 1]);
+    if (Array.isArray(b.regions))
+      for (const r of [...new Set(b.regions)].slice(0, 60)) if (typeof r === 'string' && REGION.test(r)) extra.push([`reg_${r}`, 1]);
+    // Days open in the last 7 (counted on the PC) and the settings changed from their factory value, by name
+    if (Number.isInteger(b.active7) && b.active7 >= 1 && b.active7 <= 7) extra.push([`act_${b.active7}`, 1]);
+    if (Array.isArray(b.settings))
+      for (const s of [...new Set(b.settings)].slice(0, SETTINGS.size)) if (typeof s === 'string' && SETTINGS.has(s)) extra.push([`set_${s}`, 1]);
     for (const [name, n] of extra)
       stmts.push(env.DB.prepare('INSERT INTO counts (day, id, name, n, dev) VALUES (?, ?, ?, ?, ?)').bind(day, b.id, name, n, dev));
     // pings has two indexes, the other tables one: 3 rows for the ping, 2 for each other row

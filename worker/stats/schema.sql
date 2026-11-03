@@ -18,3 +18,6 @@ CREATE TABLE IF NOT EXISTS heat (day TEXT NOT NULL, app TEXT NOT NULL, screen TE
 -- beta.9. The live signal: one row per install-day ID, written over every 5 minutes while the app is open. The dashboard only counts it.
 CREATE TABLE IF NOT EXISTS live (id TEXT PRIMARY KEY, ts INTEGER NOT NULL, app TEXT NOT NULL, mode TEXT, link TEXT, screen TEXT, cs2 INTEGER, prot INTEGER, tray INTEGER, dev INTEGER NOT NULL DEFAULT 0);
 CREATE INDEX IF NOT EXISTS live_ts ON live (ts);
+-- beta.9. The environment report (POST /v1/env): no install ID and no country, only counts per day of each value (Windows language,
+-- window and scale bands, Windows build, phone brand and Android version, 4G/5G). k = reports counts the reports. Made by the Worker if missing.
+CREATE TABLE IF NOT EXISTS env (day TEXT NOT NULL, k TEXT NOT NULL, v TEXT NOT NULL, n INTEGER NOT NULL, dev INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, k, v, dev));

@@ -216,11 +216,15 @@ public static class Crash
         catch { }
     }
 
+    /// <summary>The session before this one didn't close normally (a crash, a forced close or a power loss). For the stats (unclean_exit).</summary>
+    public static bool LastUnclean { get; private set; }
+
     public static void Started()
     {
         try
         {
-            if (System.IO.File.Exists(Marker))
+            LastUnclean = System.IO.File.Exists(Marker);
+            if (LastUnclean)
                 Log.Warn("The last session didn't close normally (a crash, a forced close or a power loss). If something looks wrong, Save bug report on the Log page has the details.");
             System.IO.File.WriteAllText(Paths.NoLink(Marker), DateTime.Now.ToString("O"));
         }

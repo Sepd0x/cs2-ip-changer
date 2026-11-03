@@ -18,43 +18,43 @@
         <!-- Tag, Key and OptSub live in Theme.xaml (shared with the Steam sign-in window) -->
 
         <!-- Account card -->
+        <!-- Accounts: the right-click menu of a card and of a row -->
+        <ContextMenu x:Key="AccMenu" x:Shared="False">
+                <MenuItem Header="Log in to this account" Tag="&#xE8AB;" Click="AccSwitch_Click"/>
+                <MenuItem Header="Log in and open CS2" Tag="&#xE768;" Click="AccSwitchCs2_Click"/>
+                <MenuItem Header="Copy config to…" Tag="&#xE8C8;" Click="AccCfgCopy_Click"/>
+                <MenuItem Header="Use as main config" Tag="&#xE8F1;" Click="AccCfgMain_Click"/>
+                <Separator/>
+                <MenuItem Header="Open Steam profile" Tag="&#xE8A7;" Click="AccProfile_Click"/>
+                <MenuItem Header="Open in Leetify" Tag="&#xE9D9;" Click="AccLeetify_Click"/>
+                <MenuItem Header="Open in csstats.gg" Tag="&#xE9D2;" Click="AccCsstats_Click"/>
+                <MenuItem Header="Copy SteamID64" Tag="&#xE8C8;" Click="AccCopyId_Click"/>
+                <MenuItem Header="Copy CS2 friend code" Tag="&#xE8C8;" Click="AccCopyFriendCode_Click"/>
+                <MenuItem Header="Copy username" Tag="&#xE8C8;" Click="AccCopyLogin_Click"/>
+                <MenuItem Header="Change profile…" Tag="&#xE77B;" Click="AccChangeProfile_Click"/>
+                <MenuItem Header="Copy look to…" Tag="&#xE8B9;" Click="AccCopyLook_Click"/>
+                <Separator/>
+                <MenuItem Header="Cooldown: 21 hours" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="1260"/>
+                <MenuItem Header="Cooldown: 3 days (72 h)" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="4320"/>
+                <MenuItem Header="Cooldown: 7 days" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="10080"/>
+                <MenuItem Header="Cooldown: 14 days" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="20160"/>
+                <MenuItem Header="Cooldown: 31 days" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="44640"/>
+                <MenuItem Header="Cooldown: 45 days" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="64800"/>
+                <MenuItem Header="Cooldown: 181 days" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="260640"/>
+                <MenuItem Header="Custom cooldown…" Tag="&#xE70F;" Click="AccCooldown_Click" CommandParameter="-1"/>
+                <MenuItem Header="Clear cooldown" Tag="&#xE711;" Click="AccCooldown_Click" CommandParameter="0"/>
+                <MenuItem Header="Clear server bans" Tag="&#xE711;" Click="AccClearBans_Click" IsEnabled="{Binding HasServerBans}"/>
+                <Separator/>
+                <MenuItem Header="{Binding QuickMenuText}" Tag="&#xE8AB;" Click="AccToggleQuick_Click"/>
+                <MenuItem Header="Favorite (yes/no)" Tag="&#xE734;" Click="AccFav_Click"/>
+                <MenuItem Header="Note and tags…" Tag="&#xE70F;" Click="AccNote_Click"/>
+                <MenuItem Header="Refresh this one" Tag="&#xE72C;" Click="AccRefreshOne_Click"/>
+                <MenuItem Header="Hide from list" Tag="&#xED1A;" Click="AccHide_Click"/>
+            </ContextMenu>
+
         <DataTemplate x:Key="AccountCard">
-            <Border Margin="0,0,10,10" Style="{StaticResource Card}" BorderBrush="{Binding CardBorder}"
+            <Border Margin="0,0,10,10" Style="{StaticResource Card}" BorderBrush="{Binding CardBorder}" ContextMenu="{StaticResource AccMenu}"
                     ToolTip="{Binding Tip}" ToolTipService.InitialShowDelay="700" ToolTipService.ShowDuration="30000">
-                <Border.ContextMenu>
-                    <ContextMenu>
-                        <MenuItem Header="Log in to this account" Tag="&#xE8AB;" Click="AccSwitch_Click"/>
-                        <MenuItem Header="Log in and open CS2" Tag="&#xE768;" Click="AccSwitchCs2_Click"/>
-                        <MenuItem Header="Copy config to…" Tag="&#xE8C8;" Click="AccCfgCopy_Click"/>
-                        <MenuItem Header="Use as main config" Tag="&#xE8F1;" Click="AccCfgMain_Click"/>
-                        <Separator/>
-                        <MenuItem Header="Open Steam profile" Tag="&#xE8A7;" Click="AccProfile_Click"/>
-                        <MenuItem Header="Open in Leetify" Tag="&#xE9D9;" Click="AccLeetify_Click"/>
-                        <MenuItem Header="Open in csstats.gg" Tag="&#xE9D2;" Click="AccCsstats_Click"/>
-                        <MenuItem Header="Copy SteamID64" Tag="&#xE8C8;" Click="AccCopyId_Click"/>
-                        <MenuItem Header="Copy CS2 friend code" Tag="&#xE8C8;" Click="AccCopyFriendCode_Click"/>
-                        <MenuItem Header="Copy username" Tag="&#xE8C8;" Click="AccCopyLogin_Click"/>
-                        <MenuItem Header="Change profile…" Tag="&#xE77B;" Click="AccChangeProfile_Click"/>
-                        <MenuItem Header="Copy look to…" Tag="&#xE8B9;" Click="AccCopyLook_Click"/>
-                        <Separator/>
-                        <MenuItem Header="Cooldown: 21 hours" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="1260"/>
-                        <MenuItem Header="Cooldown: 3 days (72 h)" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="4320"/>
-                        <MenuItem Header="Cooldown: 7 days" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="10080"/>
-                        <MenuItem Header="Cooldown: 14 days" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="20160"/>
-                        <MenuItem Header="Cooldown: 31 days" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="44640"/>
-                        <MenuItem Header="Cooldown: 45 days" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="64800"/>
-                        <MenuItem Header="Cooldown: 181 days" Tag="&#xE916;" Click="AccCooldown_Click" CommandParameter="260640"/>
-                        <MenuItem Header="Custom cooldown…" Tag="&#xE70F;" Click="AccCooldown_Click" CommandParameter="-1"/>
-                        <MenuItem Header="Clear cooldown" Tag="&#xE711;" Click="AccCooldown_Click" CommandParameter="0"/>
-                        <MenuItem Header="Clear server bans" Tag="&#xE711;" Click="AccClearBans_Click" IsEnabled="{Binding HasServerBans}"/>
-                        <Separator/>
-                        <MenuItem Header="{Binding QuickMenuText}" Tag="&#xE8AB;" Click="AccToggleQuick_Click"/>
-                        <MenuItem Header="Favorite (yes/no)" Tag="&#xE734;" Click="AccFav_Click"/>
-                        <MenuItem Header="Note and tags…" Tag="&#xE70F;" Click="AccNote_Click"/>
-                        <MenuItem Header="Refresh this one" Tag="&#xE72C;" Click="AccRefreshOne_Click"/>
-                        <MenuItem Header="Hide from list" Tag="&#xED1A;" Click="AccHide_Click"/>
-                    </ContextMenu>
-                </Border.ContextMenu>
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -147,6 +147,82 @@
                 </Grid>
             </Border>
         </DataTemplate>
+
+        <!-- Accounts as rows (4 nov.): picked in Accounts, offered from 12 accounts. The same menu, star, rotation and Log in as the card, on one line. -->
+        <DataTemplate x:Key="AccountRow">
+            <Border Margin="0,0,10,3" Padding="10,3" Style="{StaticResource Card}" BorderBrush="{Binding CardBorder}" ContextMenu="{StaticResource AccMenu}"
+                    ToolTip="{Binding Tip}" ToolTipService.InitialShowDelay="700" ToolTipService.ShowDuration="30000">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="170"/>
+                        <ColumnDefinition Width="160"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid Width="24" Height="24" VerticalAlignment="Center">
+                        <Border Background="{StaticResource Surface3}" BorderBrush="{StaticResource Edge}" BorderThickness="1">
+                            <TextBlock Text="{Binding Initial}" FontSize="11" Foreground="{StaticResource Muted}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <Border Visibility="{Binding HasAvatar, Converter={StaticResource Vis}}">
+                            <Border.Background>
+                                <ImageBrush ImageSource="{Binding Avatar}" Stretch="UniformToFill"/>
+                            </Border.Background>
+                        </Border>
+                    </Grid>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,8,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxWidth="120"/>
+                        <TextBlock Text="  in use" Foreground="{StaticResource Good}" FontSize="11" VerticalAlignment="Center"
+                                   Visibility="{Binding Active, Converter={StaticResource Vis}}" ToolTip="Account currently logged in"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="{Binding LoginShown}" Foreground="{StaticResource Faint}" FontFamily="{StaticResource Mono}" FontSize="11"
+                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" ClipToBounds="True" Margin="0,3,0,0">
+                        <TextBlock Style="{StaticResource Tag}" Text="{Binding VacText}" Foreground="{StaticResource Bad}" Visibility="{Binding HasVac, Converter={StaticResource Vis}}"/>
+                        <TextBlock Style="{StaticResource Tag}" Text="{Binding GameBanText}" Foreground="{StaticResource Bad}" Visibility="{Binding HasGameBan, Converter={StaticResource Vis}}"/>
+                        <TextBlock Style="{StaticResource Tag}" Text="trade ban" Foreground="{StaticResource Warn}" Visibility="{Binding HasTradeBan, Converter={StaticResource Vis}}"/>
+                        <TextBlock Style="{StaticResource Tag}" Text="community" Foreground="{StaticResource Bad}" Visibility="{Binding HasCommunityBan, Converter={StaticResource Vis}}"/>
+                        <TextBlock Style="{StaticResource Tag}" Text="{Binding ServerBansText}" Foreground="{StaticResource Bad}" Visibility="{Binding HasServerBans, Converter={StaticResource Vis}}"
+                                   ToolTip="{Binding ServerBansTip}"/>
+                        <TextBlock Style="{StaticResource Tag}" Text="{Binding CooldownText}" Foreground="{StaticResource Warn}" Visibility="{Binding InCooldown, Converter={StaticResource Vis}}"
+                                   ToolTip="Cooldown set by you. Right-click to change."/>
+                        <TextBlock Style="{StaticResource Tag}" Text="not in rotation" Visibility="{Binding Excluded, Converter={StaticResource Vis}}"/>
+                        <TextBlock Style="{StaticResource Tag}" Text="limited" Visibility="{Binding Limited, Converter={StaticResource Vis}}"/>
+                        <TextBlock Style="{StaticResource Tag}" Text="{Binding HoursText}" Visibility="{Binding HasHours, Converter={StaticResource Vis}}"/>
+                        <Border BorderBrush="{StaticResource LineStrong}" BorderThickness="1" Padding="5,0,5,1" Margin="0,0,10,3"
+                                Visibility="{Binding HasTags, Converter={StaticResource Vis}}" ToolTip="Your tags (right-click > Note and tags)">
+                            <TextBlock Text="{Binding Tags}" Foreground="{StaticResource Info}" FontSize="11"/>
+                        </Border>
+                    </StackPanel>
+                    <Button Grid.Column="4" Style="{StaticResource IconBtn}" Content="{Binding StarGlyph}" Click="AccFav_Click" Width="24" Height="24" VerticalAlignment="Center"
+                            ToolTip="Favorite: stays at the top"/>
+                    <CheckBox Grid.Column="5" Style="{StaticResource Switch}" IsChecked="{Binding InRotation, Mode=OneWay}" Click="AccToggleQuick_Click" Margin="10,0,0,0"
+                              VerticalAlignment="Center" ToolTip="{Binding QuickTip}"/>
+                    <Button Grid.Column="6" Margin="8,0,0,0" Click="AccSwitch_Click" VerticalAlignment="Center">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource RowBtn}">
+                                <Setter Property="Content" Value="Log in"/>
+                                <Setter Property="ToolTip" Value="Closes Steam and reopens it on this account. Only works for accounts with 'Remember me' ticked on this PC."/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Active}" Value="True">
+                                        <Setter Property="Content" Value="In use"/>
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </Grid>
+            </Border>
+        </DataTemplate>
+        <ItemsPanelTemplate x:Key="AccCardsPanel">
+            <UniformGrid Columns="4" VerticalAlignment="Top" Loaded="AccGrid_Loaded"/>
+        </ItemsPanelTemplate>
+        <ItemsPanelTemplate x:Key="AccRowsPanel">
+            <StackPanel Loaded="AccGrid_Loaded"/>
+        </ItemsPanelTemplate>
 
         <!-- Server list row -->
         <Style x:Key="ServerRowItem" TargetType="ListBoxItem" BasedOn="{StaticResource RowItem}">
@@ -700,7 +776,7 @@
                                     <StackPanel Grid.Column="2" Orientation="Horizontal">
                                         <CheckBox x:Name="AutoQueryBox" Style="{StaticResource Switch}" Content="Refresh every 30 s" Margin="0,0,14,0" VerticalAlignment="Center" Click="AutoQuery_Click"
                                                   ToolTip="Players, map and ping every 30 seconds, always through the phone"/>
-                                        <Button x:Name="QueryBtn" Click="QueryServers_Click" Content="Refresh" ToolTip="Asks each server for its name, map, players and ping (through the phone, never the home network)"/>
+                                        <Button x:Name="QueryBtn" Click="QueryServers_Click" Content="Refresh all" ToolTip="Asks the marked servers, or all of them when none is marked, for their name, map, players and ping (through the phone, never the home network). Click a marked server again, or press Escape, to unmark it."/>
                                         <Button x:Name="CopyBtn" Click="CopyServers_Click" Content="Copy IPs" ToolTip="Copies the selected servers (or all) as IP:port"/>
                                         <Border Width="1" Background="{StaticResource Line}" Margin="4,4,14,4"/>
                                         <Button x:Name="RemoveBtn" Style="{StaticResource Danger}" Margin="0" Click="RemoveServers_Click" Content="Remove" IsEnabled="False" ToolTipService.ShowOnDisabled="True" ToolTip="Removes the selected servers and their routes. Select first (Ctrl or Shift for several)."/>
@@ -726,6 +802,7 @@
                                 </Grid>
                                 <ListBox x:Name="ServerList" Grid.Row="3" Padding="0" SelectionMode="Extended" ItemContainerStyle="{StaticResource ServerRowItem}"
                                          ItemTemplate="{StaticResource ServerRow}" MouseDoubleClick="ServerList_DoubleClick" SelectionChanged="ServerList_SelectionChanged"
+                                         PreviewMouseLeftButtonDown="ServerList_PreviewMouseDown" KeyDown="ServerList_KeyDown"
                                          VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"/>
                                 <StackPanel x:Name="ServersEmpty" Grid.Row="3" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed">
                                     <TextBlock Text="No servers yet" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center"/>
@@ -931,6 +1008,8 @@
                                          ToolTip="Name, username, SteamID, notes and tags"/>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
                                     <RadioButton x:Name="FAll" Style="{StaticResource Seg}" GroupName="accf" Content="All" IsChecked="True" Checked="AccFilter_Changed"/>
+                                    <RadioButton x:Name="FReady" Style="{StaticResource Seg}" GroupName="accf" Content="Ready" Checked="AccFilter_Changed"
+                                                 ToolTip="Accounts New IP + next account can use now: in rotation, no cooldown, no VAC or game ban"/>
                                     <RadioButton x:Name="FFav" Style="{StaticResource Seg}" GroupName="accf" Content="Favorites" Checked="AccFilter_Changed"/>
                                     <RadioButton x:Name="FClean" Style="{StaticResource Seg}" GroupName="accf" Content="No bans" Checked="AccFilter_Changed"
                                                  ToolTip="No Steam bans. Server bans are separate."/>
@@ -941,12 +1020,16 @@
                                 </StackPanel>
                                 <TextBlock x:Name="AccCount" Grid.Column="2" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" Foreground="{StaticResource Faint}" VerticalAlignment="Center" HorizontalAlignment="Right"
                                            TextTrimming="CharacterEllipsis" Margin="12,0,12,0"/>
-                                <ComboBox x:Name="AccSort" Grid.Column="3" Width="150" SelectionChanged="AccFilter_Changed" ToolTip="Order (favorites always come first)">
+                                <StackPanel Grid.Column="3" Orientation="Horizontal">
+                                <Button x:Name="AccViewBtn" Style="{StaticResource IconBtn}" Click="AccView_Click" Content="&#xE8FD;" Margin="0,0,6,0" ToolTip="Show as rows: more accounts at once"/>
+                                <ComboBox x:Name="AccSort" Width="150" SelectionChanged="AccFilter_Changed" ToolTip="Order (favorites always come first)">
                                     <ComboBoxItem Content="Most recent" Tag="recent"/>
+                                    <ComboBoxItem Content="Ready first" Tag="ready" ToolTip="Ready to use, then the cooldown that ends first, banned last"/>
                                     <ComboBoxItem Content="Name" Tag="name"/>
                                     <ComboBoxItem Content="No Steam bans first" Tag="clean"/>
                                     <ComboBoxItem Content="Most CS2 hours" Tag="hours"/>
                                 </ComboBox>
+                                </StackPanel>
                             </Grid>
 
                             <Grid Grid.Row="1" Margin="0,0,0,12">
@@ -981,13 +1064,19 @@
                             </Grid>
 
                             <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
-                                <ItemsControl x:Name="AccountsPanel" ItemTemplate="{StaticResource AccountCard}" SizeChanged="AccountsPanel_SizeChanged" Margin="0,0,-2,0">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <UniformGrid Columns="4" VerticalAlignment="Top" Loaded="AccGrid_Loaded"/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                </ItemsControl>
+                                <StackPanel>
+                                    <!-- From 12 accounts, while no view was picked: rows show more at once (4 nov.) -->
+                                    <Border x:Name="AccRowsHint" Style="{StaticResource Card}" Padding="12,8" Margin="0,0,10,10" Visibility="Collapsed">
+                                        <DockPanel>
+                                            <Button DockPanel.Dock="Right" Click="AccView_Click" Tag="cards" Content="Keep cards" Margin="8,0,0,0"/>
+                                            <Button DockPanel.Dock="Right" Style="{StaticResource Primary}" Click="AccView_Click" Tag="rows" Content="Show as rows" Margin="0"/>
+                                            <TextBlock Text="Many accounts? Rows put each account on one line, so bans, cooldowns and who is in rotation line up. The button next to the order switches back any time."
+                                                       Foreground="{StaticResource Muted}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        </DockPanel>
+                                    </Border>
+                                    <ItemsControl x:Name="AccountsPanel" ItemTemplate="{StaticResource AccountCard}" ItemsPanel="{StaticResource AccCardsPanel}"
+                                                  SizeChanged="AccountsPanel_SizeChanged" Margin="0,0,-2,0"/>
+                                </StackPanel>
                             </ScrollViewer>
                             <StackPanel x:Name="AccountsEmpty" Grid.Row="2" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed">
                                 <TextBlock Text="No accounts yet" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center"/>
@@ -1667,6 +1756,8 @@
                                 <Button Click="LogCopy_Click" Content="Copy all" ToolTip="Copies the log so you can paste it where you need it (e.g. to ask for help)"/>
                                 <Button Click="ExportReport_Click" Content="Save bug report"
                                         ToolTip="Saves a .zip on the Desktop to attach to a bug report: this log, the app's settings and rules, Steam's connection log and CS2's console. Your home IP and API key are left out."/>
+                                <Button Click="ReportProblem_Click" Content="Report a problem"
+                                        ToolTip="Opens a new issue on GitHub with the app and Windows versions filled in. Nothing is sent until you press Submit there."/>
                                 <Button Click="LogClear_Click" Margin="0" Content="Clear screen" ToolTip="Clears this list. The log file stays in SRT_Dados."/>
                             </StackPanel>
                         </Grid>
@@ -2003,8 +2094,10 @@
                                         </CheckBox>
                                         <!-- Telemetry (beta): required, accepted once before the app opens (App.StatsGate), README > Telemetry -->
                                         <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,12,0,0" Background="Transparent"
-                                                   Text="Anonymous usage stats, required while the app is in beta: once a day, with a random ID that is new every day. Never IPs, servers, accounts or names."
+                                                   Text="Usage stats, required while the app is in beta, with a random ID made for this install, with no name (never from your PC or you). Never IPs, servers, accounts or names."
                                                    ToolTip="Sent: the app and Windows versions, your country as two letters, the mode, how the phone is connected, minutes open, how often each button and hotkey is used, a few counters, how long your lists are, and errors as their type and place in the code. Details in the README, under Telemetry."/>
+                                        <Button Click="DeleteStats_Click" Margin="0,8,0,0" HorizontalAlignment="Left" Content="Delete my stats"
+                                                ToolTip="Deletes everything the stats server keeps under this install's ID, then the app starts over with a new ID."/>
                                     </StackPanel>
                                 </HeaderedContentControl>
 

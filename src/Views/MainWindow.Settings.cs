@@ -60,6 +60,7 @@ public partial class MainWindow
             OptStreamer.IsChecked = HideLogins;
             OptStreamer.IsEnabled = !Rec.On;
             AccSort.SelectedItem = AccSort.Items.Cast<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == _s.AccountSort) ?? AccSort.Items[0];
+            ApplyAccountView();
         }
         finally { _uiLock = false; }
     }

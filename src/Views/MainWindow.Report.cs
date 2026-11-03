@@ -41,6 +41,27 @@ public partial class MainWindow
         finally { HideProgress(); }
     }
 
+    /// <summary>
+    /// Log > Report a problem (4 nov.): a new GitHub issue in the browser, with the app and Windows versions and the mode filled in.
+    /// Nothing else goes in the link (no IPs, names, servers or log), and nothing is sent until you press Submit on GitHub.
+    /// </summary>
+    public static string IssueUrl(string app, string windows, string mode)
+    {
+        static string Safe(string s) => new string((s ?? "").Where(c => char.IsLetterOrDigit(c) || c is '.' or '-' or '+').Take(40).ToArray()) is { Length: > 0 } x ? x : "?";
+        var body = "**What happened**\n\n\n**What you expected**\n\n\n**Steps to get there**\n1. \n\n"
+            + $"**Setup**\n- App: {Safe(app)}\n- Windows: {Safe(windows)}\n- Mode: {Safe(mode)}\n\n"
+            + "Log > Save bug report makes a .zip without your home IP, API key, usernames or Steam names. Check it, then drag it here if it helps.";
+        return $"https://github.com/{Updater.Repo}/issues/new?title={Uri.EscapeDataString("Problem: ")}&body={Uri.EscapeDataString(body)}";
+    }
+
+    async void ReportProblem_Click(object sender, RoutedEventArgs e)
+    {
+        if (!await Ask("Report a problem", "Opens a new issue on GitHub in your browser, with the app and Windows versions filled in. Nothing is sent until you "
+                + "press Submit there (a GitHub account is needed).\n\nTo attach the log, use Save bug report first and check the .zip.", "Open GitHub")) return;
+        if (_demo) { Toast("Demo: GitHub would open.", true); return; }
+        OpenUrl(IssueUrl(AppInfo.Version.Split('+')[0], Environment.OSVersion.Version.ToString(), _s.Mode));
+    }
+
     /// <summary>The moment of the export: version, Windows, adapters, the app's routes and rules, the last check and the paths.</summary>
     async Task<string> BuildReportText()
     {

@@ -59,7 +59,7 @@ public partial class App : Application
             if (Installer.KeepRegistered(Environment.ProcessPath, Updater.Clean(AppInfo.Version)) is string why) Log.Warn("The entry in Windows Settings > Installed apps couldn't be written: " + why);
         });
         DispatcherUnhandledException += OnUiError;
-        AppDomain.CurrentDomain.UnhandledException += (_, a) => Crash.Write(a.ExceptionObject as Exception, "fatal");
+        AppDomain.CurrentDomain.UnhandledException += (_, a) => { Crash.Write(a.ExceptionObject as Exception, "fatal"); Telemetry.Fatal(a.ExceptionObject as Exception); };
         if (!args.Contains("--demo")) Crash.Started();
         Exit += (_, _) => { Crash.Ended(); Adb.KillOwnServer(); };
         TaskScheduler.UnobservedTaskException += (_, a) => { Log.Error("Task: " + a.Exception?.GetBaseException().Message); Crash.Write(a.Exception, "task"); Telemetry.Error(a.Exception); a.SetObserved(); };

@@ -382,6 +382,9 @@ public static class Program
         catch { return false; }
     }
 
+    // Reviewed 4 nov. (o192): every MessageBoxW here stays Windows' own box on purpose. Each runs where the app's window must not load:
+    // DLL search not locked, a folder others can change (Downloads), files not unpacked to the admin-only folder, or runtime variables
+    // that load code into .NET. WPF loads dozens of DLLs; user32 is already in. The app's own window starts at RunFolderProblem/RunInstall.
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     static extern int MessageBoxW(IntPtr hWnd, string text, string caption, uint type);
 

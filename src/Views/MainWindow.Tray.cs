@@ -163,6 +163,7 @@ public partial class MainWindow
         var added = _data.Add(a?.Id, DataMeter.Read(a?.Id));
         if (added > 0)
         {
+            Telemetry.Data(added);
             var now = DateTime.Now;
             var before = _s.DataMonth == DataMeter.Month(now) ? _s.DataMonthBytes : 0;
             (_s.DataMonth, _s.DataMonthBytes) = DataMeter.AddToMonth(_s.DataMonth, _s.DataMonthBytes, added, now);

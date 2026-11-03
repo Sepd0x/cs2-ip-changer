@@ -159,6 +159,7 @@ public partial class MainWindow
     {
         var rep = _last;
         if (rep == null) return;
+        TrackPhoneDrop(rep);
         var n = _servers.Select(s => s.Ip).Distinct().Count();
         var routesOk = rep.RouteOk.Values.Count(v => v);
         if (rep.EffectiveMode == "home") { HomeStatusUi(rep, n); return; }
@@ -386,6 +387,7 @@ public partial class MainWindow
     void SetHero(string kind, string title, string sub)
     {
         _heroWanted = (kind, title, sub);
+        if (kind == "good") Telemetry.ProtectedNow();
         if (_changingTitle != null)
             (kind, title, sub) = ("warn", _changingTitle, "Mobile data goes off and on until the carrier gives a new IP. If you are on a server, you will drop.");
         var (fg, bg, glyph, side) = kind switch
@@ -716,6 +718,7 @@ public partial class MainWindow
                 return false;
             }
             var bad = _checks.Where(c => c.Ok == false).Select(c => c.Title).ToList();
+            Telemetry.LeakTest(bad.Count == 0);
             if (bad.Count == 0)
             {
                 Log.Ok("Leak test: everything confirmed.");

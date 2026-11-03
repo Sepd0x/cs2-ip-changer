@@ -50,6 +50,7 @@ public partial class MainWindow
             if (Cs2Console.IsConnectLine(line))
             {
                 _consoleServer = _kicks.Server;
+                if (_consoleServer != null) RejoinBack(_consoleServer);
                 if (_kicks.OnValve && !valveBefore) Log.Info("CS2 joined a Valve server: kicks and bans there are left alone.");
                 continue;
             }
@@ -80,6 +81,8 @@ public partial class MainWindow
             _lagTipShown = true;
             Toast("That match lagged on the phone's connection. " + NetReport.Tips(_last?.Egress?.IsWifi == true), Tone.Info);
         }
+        // The stats: Valve or community and the numbers in bands (never the server). A local map or the menu isn't a match.
+        if (_kicks.OnValve || _consoleServer != null) Telemetry.Match(r, _kicks.OnValve);
         Diag.Write("cs2-network", new { r.Seconds, r.PingP50, r.PingP95, r.JitterUp, r.JitterDown, r.UpLate, r.UpMissedLate, r.DownMissedLate, r.Dropped });
     }
 
@@ -185,6 +188,27 @@ public partial class MainWindow
         {
             Log.Info($"{server ?? "The server"}: {d.Reason}. Console: " + Cut(line));
             Diag.Write("kick", new { kind = "full", line, server });
+            // Turned away right after a Join or Rejoin from the app: the list's count can be old or count spectators (3 nov.: kicked
+            // as a spectator for AFK, two left, Rejoin said full). So the app tries again every 15 s, 8 times (2 minutes).
+            if (inList != null && server == _s.LastServer && _s.LastServerAt is DateTime at && DateTime.Now - at < TimeSpan.FromMinutes(3)
+                && d.Reason != "kicked to make room for a reserved slot")
+            {
+                if (_fullServer != server || DateTime.Now - _fullSince > TimeSpan.FromMinutes(5)) { _fullServer = server; _fullSince = DateTime.Now; _fullTries = 0; }
+                if (_fullTries < FullTries)
+                {
+                    _fullTries++;
+                    if (_fullTries == 1)
+                    {
+                        Telemetry.Rejoin("wait");
+                        Toast("The server said it's full. The app tries again every 15 s for 2 minutes.", Tone.Info);
+                    }
+                    Log.Info($"Trying {server} again in 15 s ({_fullTries}/{FullTries}).");
+                    _ = RetryFull(inList);
+                    return;
+                }
+                Toast("The server stayed full for 2 minutes. Try another server, or Wait for a slot on the Servers page.", Tone.Info);
+                return;
+            }
             Toast(d.Reason == "kicked to make room for a reserved slot" ? "The server kicked you to make room for a reserved slot. Not a ban: join again when there's space."
                 : "The server is full. Not a ban: try again in a moment or pick another server.", Tone.Info);
             return;
@@ -395,6 +419,26 @@ public partial class MainWindow
         finally { _rejoining = false; UpdateRejoinBtn(); }
     }
 
+    const int FullTries = 8;
+    string _fullServer, _rejoinTarget;
+    DateTime _fullSince, _rejoinAt;
+    int _fullTries;
+
+    /// <summary>15 s after the server said full: joins it again, unless CS2 closed or another server came in between.</summary>
+    async Task RetryFull(ServerItem s)
+    {
+        await Task.Delay(15000);
+        if (_fullServer == s.Key && Steam.Cs2Running && _servers.Contains(s)) await Join(s, fromSlotWait: true);
+    }
+
+    /// <summary>For the stats: a Rejoin counts as back when CS2 connects to that server within 3 minutes.</summary>
+    void RejoinBack(string server)
+    {
+        if (_rejoinTarget == null || server != _rejoinTarget || DateTime.Now - _rejoinAt > TimeSpan.FromMinutes(3)) return;
+        _rejoinTarget = null;
+        Telemetry.Rejoin("back");
+    }
+
     async void Rejoin_Click(object sender, RoutedEventArgs e) => await ChangeIpAndRejoin("Button");
 
     /// <summary>
@@ -403,6 +447,8 @@ public partial class MainWindow
     /// </summary>
     Task ChangeIpAndRejoin(string from)
     {
+        Telemetry.Rejoin("try");
+        (_rejoinTarget, _rejoinAt) = (_s.LastServer, DateTime.Now);
         if (!BannedOnLast()) return RunCommand("Change IP and rejoin", "starting…", () => RunSwitch(new SwitchSteps(true, false, true, true), from));
         Log.Info($"{from}: {ActiveAccount()?.Name} is banned on {_s.LastServer}, so the rejoin also switches account.");
         return RejoinAfterBan(from);

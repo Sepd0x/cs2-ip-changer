@@ -36,8 +36,8 @@
     D.releases = rel.slice().reverse();
 
     // Days, totals and the KPIs from real install-days
-    const mk = (x) => ({ date: x.date, users: x.users, fresh: x.fresh, sessions: x.users, minutes: x.minutes, sessMed: x.users ? Math.round(x.minutes / x.users) : null,
-      ipNew: x.ipNew, ipSame: x.ipSame, ipNone: x.ipNone, crashes: 0, matches: 0, laggy: 0, errors: x.errors, back1: 0, freshPrev: 0, back: Math.max(0, x.users - x.fresh) });
+    const mk = (x) => ({ date: x.date, users: x.users, fresh: x.fresh, sessions: x.sessions, minutes: x.minutes, sessMed: x.users ? Math.round(x.minutes / x.users) : null,
+      ipNew: x.ipNew, ipSame: x.ipSame, ipNone: x.ipNone, crashes: x.crashes, matches: x.matches, laggy: x.laggy, errors: x.errors, back1: 0, freshPrev: 0, back: Math.max(0, x.users - x.fresh) });
     D.days = R.days.map(mk);
     const T = {}; for (const k of Object.keys(D.days[0] || {})) if (k !== 'date' && k !== 'sessMed') T[k] = D.days.reduce((s, d) => s + (d[k] || 0), 0);
     T.daysWithData = D.days.filter((d) => d.users > 0).length;
@@ -45,8 +45,10 @@
     D.prevTotals = Object.assign(D.prevTotals, { users: R.prev.users, fresh: R.prev.fresh, minutes: R.prev.minutes });
     const ipAll = T.ipNew + T.ipSame + T.ipNone;
     const val = { usersPerDay: [T.daysWithData ? T.users / T.daysWithData : null, T.daysWithData], fresh: [T.fresh, T.fresh],
-      minPerSession: [T.users ? T.minutes / T.users : null, T.users], ipNew: [pct(T.ipNew, ipAll), ipAll] };
-    const ser = { usersPerDay: (d) => d.users, fresh: (d) => d.fresh, minPerSession: (d) => (d.users ? d.minutes / d.users : null), ipNew: (d) => pct(d.ipNew, d.ipNew + d.ipSame + d.ipNone) };
+      minPerSession: [T.users ? T.minutes / T.users : null, T.users], ipNew: [pct(T.ipNew, ipAll), ipAll],
+      lag: [pct(T.laggy, T.matches), T.matches], crashFree: [T.sessions ? 100 - pct(T.crashes, T.sessions) : null, T.sessions] };
+    const ser = { usersPerDay: (d) => d.users, fresh: (d) => d.fresh, minPerSession: (d) => (d.users ? d.minutes / d.users : null), ipNew: (d) => pct(d.ipNew, d.ipNew + d.ipSame + d.ipNone),
+      lag: (d) => pct(d.laggy, d.matches), crashFree: (d) => (d.sessions ? 100 - pct(d.crashes, d.sessions) : null) };
     for (const k of D.kpis) {
       const v = val[k.id];
       k.n = v ? v[1] : 0; k.value = v && k.n >= k.min ? v[0] : null; k.prev = null; k.prevN = 0;
@@ -74,27 +76,60 @@
       }
       const h = R.heat[s.id] || { c: [], d: [], r: [] };
       if (out.grid) for (const [c, r, n] of h.c) if (out.grid[r] && c < UI.COLS) out.grid[r][c] += n;
-      const near = (x, y) => { const b = s.buttons.find((q2) => x >= q2.r[0] - 4 && x <= q2.r[0] + q2.r[2] + 4 && y >= q2.r[1] - 4 && y <= q2.r[1] + q2.r[3] + 4); return b ? `${b.label} (desligado ou ao lado)` : 'Área sem botão'; };
+      const near = (x, y) => { const b = s.buttons.find((q2) => q2.r && x >= q2.r[0] - 4 && x <= q2.r[0] + q2.r[2] + 4 && y >= q2.r[1] - 4 && y <= q2.r[1] + q2.r[3] + 4); return b ? `${b.label} (desligado ou ao lado)` : 'Área sem botão'; };
       out.dead = h.d.map(([c, r, n]) => { const [x, y] = cellXY(c, r); return { c, r, n, days: n, x, y, label: near(x, y) }; });
       out.rage = h.r.map(([c, r, n]) => { const [x, y] = cellXY(c, r); return { c, r, n, days: n, x, y, label: near(x, y).replace(' (desligado ou ao lado)', '') }; });
-      out.scroll = null;
+      const sc = R.scroll && R.scroll[s.id];
+      out.scroll = sc ? [{ k: 'Todas as janelas', n: sc.visits, reach: [100, ...sc.reach] }] : null;
     }
     D.paths = R.paths;
+
+    // beta.9 part 2: sessions, retention, matches, crashes, updates, Phone setup, settings, shortcuts and the environment
+    D.sessionLen = R.sessions.len; D.startKind = { windows: R.sessions.auto, hand: R.sessions.hand };
+    D.visible = { min: T.minutes, visible: totalMin };
+    D.activeDays = R.active;
+    // beta.9 keeps the ID per install: exact cohorts (each install once per column); before that, the age bands' estimate
+    const exact = (R.cohortsExact || []).some((c) => c.n > 0);
+    D.cohorts = exact ? R.cohortsExact : R.cohorts;
+    D.installs = R.installs;
+    Object.assign(D.cs2, R.cs2);
+    D.settingsChanged = R.settings.map((x) => ({ name: x.name, value: 'mudado', n: x.n }));
+    const bt = (n) => (R.buttons[n] || { n: 0 }).n;
+    D.shortcuts = [{ action: 'Change IP and rejoin', keys: 'atalho', kb: bt('Hotkey_Rejoin'), mouse: bt('Rejoin_Click') },
+      { action: 'New IP + next account', keys: 'atalho', kb: bt('Hotkey_Switch'), mouse: bt('Quick_Click') }];
+    Object.assign(D.phone, { method: R.phone.method, duration: R.phone.duration, attempts: R.phone.attempts, quality: R.phone.quality, drops: R.phone.drops, data: R.phone.data });
+    D.firstScreen = R.firstScreen;
+    D.phone.toProtected = R.sessions.toProtected; D.phone.toProtectedMedian = medianBand(R.sessions.toProtected);
+    const done = (R.setup.find((x) => x.key === 'done') || { n: 0 }).n;
+    D.phone.setup = [{ k: 'Abriram o Phone setup', n: R.setupOpened }, { k: 'Pronto', n: done }];
+    D.phone.steps = R.setup.filter((x) => x.n && x.key !== 'done');
+    D.env = Object.assign({ unfiltered: true }, R.env);
     D.firstScreen = [];
 
     // Lists that carry the mock's names (versions, places in the code) go, or get the real ones; dated series follow the real days
     const dates = D.days.map((x) => x.date);
     const T7 = Math.max(1, T.users);
-    D.rel.crashPlaces = [];
+    D.rel.crashPlaces = R.crashPlaces.map((c) => ({ at: c.at, ver: short(c.app), n: c.n, fresh: false }));
+    Object.assign(D.rel, { crashes: T.crashes, sessions: T.sessions, crashFree: T.sessions ? 100 - pct(T.crashes, T.sessions) : null, startup: R.sessions.startup });
+    Object.assign(D.rel.updates, R.updates);
     D.rel.errors = R.errors.map((e) => ({ type: e.type, at: e.at, ver: short(e.app), p: e.days / T7, days: e.days, fresh: false, up: false, n: e.n, trend: Array(14).fill(0) }));
-    D.rel.crashSeries = dates.map((date) => ({ date, crashes: 0, sessions: 0 }));
+    if (R.checks) { D.rel.checksRed = R.checks.red.map((c) => ({ k: c.k, n: c.n })); D.rel.leak = R.checks.leak; }
+    D.rel.crashSeries = D.days.map((x) => ({ date: x.date, crashes: x.crashes, sessions: x.sessions }));
     const vers = R.versions.map((v) => short(v.k));
-    D.versions.adoption = dates.map((date) => ({ date, shares: Object.fromEntries(vers.map((v) => [v, 0])) }));
+    const adopt = new Map((R.adoption || []).map((x) => [x.date, x.by]));
+    D.versions.adoption = dates.map((date) => {
+      const by = adopt.get(date) || {}, t = Object.values(by).reduce((s, n) => s + n, 0);
+      return { date, shares: Object.fromEntries(vers.map((v) => [v, 0]).concat(Object.entries(by).map(([k, n]) => [short(k), t ? n / t : 0]))) };
+    });
     const met = {};
-    for (const v of R.versions) met[short(v.k)] = { days: v.n, sessions: v.n, crashes: 0, ipNew: [0, 0], lag: [0, 0], minMed: 0, errors: R.errors.filter((e) => e.app === v.k).reduce((s, e) => s + e.n, 0), toProtected: '-', startup: '-' };
+    for (const v of R.versions) {
+      const m = (R.versionMetrics || {})[v.k];
+      met[short(v.k)] = m ? { ...m, toProtected: medianBand(m.toProtected) || '-', startup: medianBand(m.startup) || '-' }
+        : { days: v.n, sessions: v.n, crashes: 0, ipNew: [0, 0], lag: [0, 0], minMed: 0, errors: R.errors.filter((e) => e.app === v.k).reduce((s, e) => s + e.n, 0), toProtected: '-', startup: '-' };
+    }
     D.versions.metrics = met;
     D.phone.results = { novo: T.ipNew, mesmo: T.ipSame, sem: T.ipNone };
-    D.rel.updates.from = [];
+    D.rel.updates.from = (R.updates.from || []).map((x) => ({ v: short(x.v), n: x.n }));
     if (!Object.keys(met).length) met['-'] = { days: 0, sessions: 0, crashes: 0, ipNew: [0, 0], lag: [0, 0], minMed: 0, errors: 0, toProtected: '-', startup: '-' };
     D.newest = R.versions.length ? short(R.versions.map((v) => v.k).sort(compareV).at(-1)) : null;
     D.github.releases = rel.map((r) => ({ tag: r.tag, date: r.date, exe: r.exe })); D.github.days = [];
@@ -105,7 +140,7 @@
     D.alerts.list = R.automated ? [{ tone: 'warn', kind: 'auto', text: 'Análises automáticas deixadas de fora', n: R.automated,
       nText: `${R.automated} instalações-dia sem conta Steam, sem cliques e sem minutos (antivírus online como o VirusTotal)${R.automatedDc ? `, ${R.automatedDc} de datacenters` : ''}`, when: D.asOf }] : [];
 
-    if (GH && !GH.problems) {
+    if (GH && GH.stars != null) {   // problems is a list: empty when all went well
       const g = D.github;
       Object.assign(g, { stars: GH.stars ?? 0, forks: GH.forks ?? 0, watchers: GH.watchers ?? 0, issues: GH.issues ?? 0,
         views: GH.views?.count ?? 0, uniques: GH.views?.uniques ?? 0, clones: GH.clones?.count ?? 0, cloneUniques: GH.clones?.uniques ?? 0,
@@ -114,7 +149,8 @@
         releases: rel.map((r) => ({ tag: r.tag, date: r.date, exe: r.exe })),
         referrers: (GH.referrers || []).map((r) => ({ k: r.name, n: r.n, u: r.u })), paths: (GH.paths || []).map((p) => ({ k: p.name, n: p.n, u: p.u })) });
     }
-    D.realBar = `${DEV ? 'Os teus PCs de teste (dev). ' : ''}Dados reais desde ${D.days[0]?.date ?? D.asOf}. Ainda sem recolha (beta.10): partidas e lag, crashes, sessões, ambiente, atualizações, scroll.`;
+    const I = R.installs || { active: 0 };
+    D.realBar = `${DEV ? 'Os teus PCs de teste (dev). ' : ''}Dados reais desde ${D.days[0]?.date ?? D.asOf}. ${I.active ? `${I.active} ${I.active === 1 ? 'instalação diferente' : 'instalações diferentes'} no período (beta.9+): ${I.fresh} novas, ${I.back} voltaram. ` : ''}Partidas, sessões, crashes, ambiente, scroll e atualizações só a partir da beta.9.`;
     return D;
   };
 

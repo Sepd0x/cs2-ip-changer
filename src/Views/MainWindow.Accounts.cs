@@ -110,7 +110,7 @@ public partial class MainWindow
 
     void AccGrid_Loaded(object sender, RoutedEventArgs e)
     {
-        _accGrid = (System.Windows.Controls.Primitives.UniformGrid)sender;
+        _accGrid = sender as System.Windows.Controls.Primitives.UniformGrid;   // null in rows (a StackPanel)
         FitAccountColumns();
         if (!_accVisibleHooked)
         {
@@ -127,6 +127,30 @@ public partial class MainWindow
         _accGrid.Columns = Math.Max(1, (int)((AccountsPanel.ActualWidth + 10) / 260));
     }
 
+    /// <summary>Rows are offered from 12 accounts, until a view is picked (the button or the offer's own buttons).</summary>
+    public static bool SuggestRows(int accounts, string view) => view == null && accounts >= 12;
+
+    void ApplyAccountView()
+    {
+        var rows = _s.AccountsView == "rows";
+        AccountsPanel.ItemTemplate = (DataTemplate)FindResource(rows ? "AccountRow" : "AccountCard");
+        AccountsPanel.ItemsPanel = (ItemsPanelTemplate)FindResource(rows ? "AccRowsPanel" : "AccCardsPanel");
+        AccViewBtn.Content = rows ? "" : "";
+        AccViewBtn.ToolTip = rows ? "Show as cards" : "Show as rows: more accounts at once";
+        AccRowsHint.Visibility = SuggestRows(_accounts.Count, _s.AccountsView) ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>The view button flips cards and rows; the offer's buttons say which (Tag).</summary>
+    void AccView_Click(object sender, RoutedEventArgs e)
+    {
+        _s.AccountsView = (sender as FrameworkElement)?.Tag as string ?? (_s.AccountsView == "rows" ? "cards" : "rows");
+        SaveSettings();
+        ApplyAccountView();
+    }
+
+    /// <summary>"Ready first" (many accounts, 3 nov.): ready now, then in cooldown (the one ending first on top), then out of rotation, then banned.</summary>
+    public static int ReadyRank(AccountItem a) => a.HasVac || a.HasGameBan ? 3 : a.Excluded ? 2 : a.InCooldown ? 1 : 0;
+
     void ApplyAccountFilter()
     {
         var q = AccSearch.Text.Trim();
@@ -134,6 +158,7 @@ public partial class MainWindow
         if (q.Length > 0)
             list = list.Where(a => (a.Name ?? "").Contains(q, StringComparison.OrdinalIgnoreCase) || (a.Login ?? "").Contains(q, StringComparison.OrdinalIgnoreCase)
                 || (a.Note ?? "").Contains(q, StringComparison.OrdinalIgnoreCase) || (a.Tags ?? "").Contains(q, StringComparison.OrdinalIgnoreCase) || a.SteamId.Contains(q));
+        if (FReady.IsChecked == true) list = list.Where(a => a.Usable);
         if (FFav.IsChecked == true) list = list.Where(a => a.Favorite);
         if (FClean.IsChecked == true) list = list.Where(a => a.Clean);
         if (FBan.IsChecked == true) list = list.Where(a => a.HasVac || a.HasGameBan || a.HasTradeBan || a.HasCommunityBan);
@@ -146,6 +171,7 @@ public partial class MainWindow
             "name" => ordered.ThenBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase),
             "clean" => ordered.ThenByDescending(a => a.Clean).ThenBy(a => a.InCooldown).ThenBy(a => a.Name),
             "hours" => ordered.ThenByDescending(a => a.Meta.Profile?.Cs2Hours ?? -1),
+            "ready" => ordered.ThenBy(ReadyRank).ThenBy(a => a.InCooldown ? a.Meta.CooldownUntil : null).ThenBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase),
             _ => ordered.ThenByDescending(a => a.Meta.LastUsed ?? DateTimeOffset.FromUnixTimeSeconds(a.Local.Timestamp).LocalDateTime),
         };
         var sorted = ordered.ToList();
@@ -162,6 +188,7 @@ public partial class MainWindow
             ? (core.Length > 0 ? core + "\n" : "") + $"{_accHidden} hidden. Bring {(_accHidden == 1 ? "it" : "them")} back in Settings > Maintenance > Show hidden accounts."
             : (core.Length > 0 ? core : null);
         AccountsEmpty.Visibility = _accounts.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        AccRowsHint.Visibility = SuggestRows(_accounts.Count, _s.AccountsView) ? Visibility.Visible : Visibility.Collapsed;
         UpdateQuickInfo();
     }
 
