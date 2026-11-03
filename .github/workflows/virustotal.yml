@@ -1,0 +1,68 @@
+# Sends a release's CS2IPChanger.exe to VirusTotal and writes the result (how many engines flag it, and the link) in the
+# run's summary, for the README and the site (docs/RELEASING.md). Runs by itself when a release is published, or by hand:
+#   gh workflow run virustotal.yml -f tag=v0.1.0-beta.9
+# Needs the repository secret VT_API_KEY (a free VirusTotal key: Settings > Secrets and variables > Actions). The key never
+# leaves this job and is never printed. If VirusTotal already knows the exe, nothing is uploaded and the last result is used.
+
+name: VirusTotal
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag, e.g. v0.1.0-beta.9'
+        required: true
+
+permissions: {}
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read   # download the release's exe
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+      VT_KEY: ${{ secrets.VT_API_KEY }}
+    steps:
+      - name: Download the exe
+        run: |
+          [[ "$TAG" =~ ^v[0-9A-Za-z.-]+$ ]] || { echo "Not a release tag: $TAG"; exit 1; }
+          [ -n "$VT_KEY" ] || { echo "The VT_API_KEY secret is missing (Settings > Secrets and variables > Actions)."; exit 1; }
+          gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p CS2IPChanger.exe
+          echo "SHA=$(sha256sum CS2IPChanger.exe | cut -d' ' -f1)" >> "$GITHUB_ENV"
+
+      - name: Send it to VirusTotal and wait for the result
+        run: |
+          api=https://www.virustotal.com/api/v3
+          vt() { curl -sS --fail-with-body -H "x-apikey: $VT_KEY" "$@"; }
+          if ! vt "$api/files/$SHA" -o known.json 2>/dev/null; then
+            # Files over 32 MB go to a one-time upload URL
+            url=$(vt "$api/files/upload_url" | jq -r .data)
+            id=$(vt -F "file=@CS2IPChanger.exe" "$url" | jq -r .data.id)
+            echo "Uploaded, analysis $id"
+            for i in $(seq 1 50); do
+              sleep 30   # the free key allows 4 requests a minute
+              status=$(vt "$api/analyses/$id" | jq -r .data.attributes.status)
+              echo "Analysis: $status"
+              [ "$status" = completed ] && break
+            done
+            [ "$status" = completed ] || { echo "VirusTotal didn't finish in time; run this again later."; exit 1; }
+            sleep 20
+          fi
+          vt "$api/files/$SHA" -o file.json
+          flagged=$(jq '.data.attributes.last_analysis_stats | .malicious + .suspicious' file.json)
+          engines=$(jq '.data.attributes.last_analysis_results | length' file.json)
+          link="https://www.virustotal.com/gui/file/$SHA/detection"
+          echo "VirusTotal for $TAG: $flagged of $engines engines flag it. $link"
+          {
+            echo "### VirusTotal: $TAG"
+            echo "[$flagged of $engines engines]($link) flag it."
+            echo
+            echo '```'
+            jq -r '.data.attributes.last_analysis_results | to_entries[] | select(.value.category == "malicious" or .value.category == "suspicious") | "\(.key): \(.value.result)"' file.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
