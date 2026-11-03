@@ -110,8 +110,7 @@
   --mono:"Fragment Mono","Cascadia Mono",Consolas,ui-monospace,"SFMono-Regular",Menlo,monospace}
 *{box-sizing:border-box}
 html{color-scheme:dark;scroll-behavior:smooth;font-size:16px;-webkit-text-size-adjust:100%}
-@media (min-width:1800px){html{font-size:18px}}
-@media (min-width:2200px){.wrap{max-width:82rem}}
+@media (min-width:1800px){html{font-size:clamp(18px,.94vw,24px)}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.6 var(--sans);-webkit-font-smoothing:antialiased}
 main{overflow-x:clip}
@@ -382,7 +381,10 @@ ul.guides span{display:block;color:var(--ink3);font-size:.9rem;line-height:1.45;
   #vpn tbody th{grid-column:1/-1}
   #vpn td{padding-bottom:0}
 }
-body{border-top:2px solid transparent;border-image:var(--t-top) 1}</style>
+body{border-top:2px solid transparent;border-image:var(--t-top) 1}
+@media (max-width:360px){.top .wrap{gap:.6rem}.top nav{gap:.7rem}}
+@media (max-width:300px){.top nav a:not(.btn){display:none}}
+</style>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
