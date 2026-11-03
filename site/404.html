@@ -9,12 +9,13 @@
 <style>
 @font-face{font-family:"Funnel Sans";src:url(/cs2-ip-changer/fonts/funnel-sans.woff2) format("woff2");font-weight:300 800;font-display:swap}
 @font-face{font-family:"Funnel Display";src:url(/cs2-ip-changer/fonts/funnel-display.woff2) format("woff2");font-weight:300 800;font-display:swap}
+:root{/* tokens: tools/design-tokens.mjs, from src/Theme.xaml */--t-bg:#0e0e0e;--t-side:#0b0b0b;--t-edge:#050505;--t-surface:#171717;--t-surface2:#1d1d1d;--t-surface3:#262626;--t-line:#2a2a2a;--t-line-strong:#383838;--t-text:#dddddd;--t-muted:#adadad;--t-faint:#888888;--t-good:#7cc95a;--t-warn:#e3bf4b;--t-bad:#f05a4f;--t-accent:#5ba8f0;--t-accent-light:#7ebcf5;--t-accent-dark:#3e87d0;--t-accent-deep:#2b74c2;--t-top1:#3bb4e5;--t-top2:#c64fc6;--t-top3:#d8e03a;--t-accent-rgb:91,168,240;--t-top:linear-gradient(90deg,#3bb4e5,#c64fc6 50%,#d8e03a);/* /tokens */}
 html{color-scheme:dark}
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0e0e0e;color:#e4e4e4;font:16px/1.6 "Funnel Sans","Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;text-align:center;padding:20px}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--t-bg);color:#e4e4e4;font:16px/1.6 "Funnel Sans","Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;text-align:center;padding:20px}
 h1{font:500 1.9rem/1.15 "Funnel Display","Segoe UI",system-ui,sans-serif;letter-spacing:-.025em;margin:0 0 10px}
-p{color:#adadad;margin:0 0 24px}
-a{color:#e4e4e4;text-decoration:underline;text-decoration-color:#383838;text-underline-offset:.22em}
-a:hover{text-decoration-color:#5ba8f0}
+p{color:var(--t-muted);margin:0 0 24px}
+a{color:#e4e4e4;text-decoration:underline;text-decoration-color:var(--t-line-strong);text-underline-offset:.22em}
+a:hover{text-decoration-color:var(--t-accent)}
 </style>
 </head>
 <body>

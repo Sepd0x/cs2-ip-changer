@@ -14,6 +14,7 @@ const today = new Date().toISOString().slice(0, 10);
 // Guide layout: one article in a text column, with a sticky rail (download, contents, a crop of the app) on the right.
 // The fonts are the site's own (site/fonts), so the copied style points one folder up.
 const home = readFileSync(join(site, 'index.html'), 'utf8');
+const themeColor = home.match(/<meta name="theme-color" content="([^"]+)">/)[1];   // from src/Theme.xaml (tools/design-tokens.mjs)
 // The home page's own blocks (hero map, viewer, sections) are left out; its media queries stay, they hold the table rules too.
 const style = home.match(/<style>[\s\S]*?<\/style>/)[0].replace(/\/\* home: [\s\S]*?(?=@media \(max-width:1000px\))/, '').replace(/url\((fonts|assets)\//g, 'url(../$1/').replace('</style>', `/* guides */
 .gl{display:grid;grid-template-columns:minmax(0,1fr) 19rem;column-gap:3.5rem;padding-top:2.75rem;padding-bottom:4.5rem}
@@ -320,7 +321,7 @@ function render(p) {
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="${url}">
 <link rel="icon" href="../img/icon.png">
-<meta name="theme-color" content="#0e0e0e">
+<meta name="theme-color" content="${themeColor}">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="CS2 IP Changer">
 <meta property="og:title" content="${esc(p.title)}">

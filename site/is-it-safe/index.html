@@ -35,7 +35,7 @@
    "about": {
     "@id": "https://sepd0x.github.io/cs2-ip-changer/#app"
    },
-   "dateModified": "2026-11-01",
+   "dateModified": "2026-11-03",
    "primaryImageOfPage": "https://sepd0x.github.io/cs2-ip-changer/img/connection.png"
   },
   {
@@ -91,7 +91,8 @@
 @font-face{font-family:"Funnel Sans";src:url(../fonts/funnel-sans.woff2) format("woff2");font-weight:300 800;font-style:normal;font-display:swap}
 @font-face{font-family:"Funnel Display";src:url(../fonts/funnel-display.woff2) format("woff2");font-weight:300 800;font-style:normal;font-display:swap}
 @font-face{font-family:"Fragment Mono";src:url(../fonts/fragment-mono.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
-:root{--bg:#0e0e0e;--bg2:#171717;--bg3:#1d1d1d;--line:#2a2a2a;--line2:#383838;--ink:#e4e4e4;--ink2:#adadad;--ink3:#888888;--sand:#2b74c2;--sand-hi:#3a84d4;--on-sand:#ffffff;--plate:#121212;--area:rgba(91,168,240,.05);--area-line:rgba(91,168,240,.16);--glow:rgba(91,168,240,.10);--route:#5ba8f0;--accent:#5ba8f0;--route-soft:rgba(91,168,240,.22);--shadow:rgba(0,0,0,.55);
+:root{/* tokens: tools/design-tokens.mjs, from src/Theme.xaml */--t-bg:#0e0e0e;--t-side:#0b0b0b;--t-edge:#050505;--t-surface:#171717;--t-surface2:#1d1d1d;--t-surface3:#262626;--t-line:#2a2a2a;--t-line-strong:#383838;--t-text:#dddddd;--t-muted:#adadad;--t-faint:#888888;--t-good:#7cc95a;--t-warn:#e3bf4b;--t-bad:#f05a4f;--t-accent:#5ba8f0;--t-accent-light:#7ebcf5;--t-accent-dark:#3e87d0;--t-accent-deep:#2b74c2;--t-top1:#3bb4e5;--t-top2:#c64fc6;--t-top3:#d8e03a;--t-accent-rgb:91,168,240;--t-top:linear-gradient(90deg,#3bb4e5,#c64fc6 50%,#d8e03a);/* /tokens */
+  --bg:var(--t-bg);--bg2:var(--t-surface);--bg3:var(--t-surface2);--line:var(--t-line);--line2:var(--t-line-strong);--ink:#e4e4e4;--ink2:var(--t-muted);--ink3:var(--t-faint);--sand:var(--t-accent-deep);--sand-hi:#3a84d4;--on-sand:#ffffff;--plate:#121212;--area:rgba(var(--t-accent-rgb),.05);--area-line:rgba(var(--t-accent-rgb),.16);--glow:rgba(var(--t-accent-rgb),.10);--route:var(--t-accent);--accent:var(--t-accent);--route-soft:rgba(var(--t-accent-rgb),.22);--shadow:rgba(0,0,0,.55);
   --sans:"Funnel Sans","Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
   --disp:"Funnel Display","Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
   --mono:"Fragment Mono","Cascadia Mono",Consolas,ui-monospace,"SFMono-Regular",Menlo,monospace}
@@ -151,7 +152,7 @@ th,td{text-align:left;padding:1rem 1.25rem 1rem 0;border-bottom:1px solid var(--
 thead th,thead td{font:400 .72rem/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);padding-bottom:.85rem}
 tbody th{font-weight:500;color:var(--ink)}
 td{color:var(--ink2)}
-.us{padding-left:1.25rem;background:linear-gradient(90deg,rgba(91,168,240,.075),transparent 90%)}
+.us{padding-left:1.25rem;background:linear-gradient(90deg,rgba(var(--t-accent-rgb),.075),transparent 90%)}
 td.us{color:var(--ink)}
 thead .us{color:var(--accent);box-shadow:inset 0 2px 0 var(--sand)}
 #vpn table{table-layout:fixed}#vpn thead td{width:24%}
@@ -181,7 +182,7 @@ footer a:hover{color:var(--ink)}
   .tabs label::before{display:none}
   .tabs label b{font-size:.95rem}
   .tabs label span{display:none!important}
-  #pg-connection:checked~.tabs [for=pg-connection],#pg-servers:checked~.tabs [for=pg-servers],#pg-accounts:checked~.tabs [for=pg-accounts],#pg-regions:checked~.tabs [for=pg-regions],#pg-configs:checked~.tabs [for=pg-configs],#pg-profiles:checked~.tabs [for=pg-profiles]{border-color:var(--sand);background:rgba(91,168,240,.1)}
+  #pg-connection:checked~.tabs [for=pg-connection],#pg-servers:checked~.tabs [for=pg-servers],#pg-accounts:checked~.tabs [for=pg-accounts],#pg-regions:checked~.tabs [for=pg-regions],#pg-configs:checked~.tabs [for=pg-configs],#pg-profiles:checked~.tabs [for=pg-profiles]{border-color:var(--sand);background:rgba(var(--t-accent-rgb),.1)}
   .views figcaption .fd{display:inline;color:var(--ink2)}
   .also,.split{grid-template-columns:repeat(2,minmax(0,1fr))}
   .cta .wrap{grid-template-columns:1fr}
@@ -247,7 +248,7 @@ footer a:hover{color:var(--ink)}
   #vpn tbody th{grid-column:1/-1}
   #vpn td{padding-bottom:0}
 }
-body{border-top:2px solid transparent;border-image:linear-gradient(90deg,#3bb4e5,#c64fc6 50%,#d8e03a) 1}/* guides */
+body{border-top:2px solid transparent;border-image:var(--t-top) 1}/* guides */
 .gl{display:grid;grid-template-columns:minmax(0,1fr) 19rem;column-gap:3.5rem;padding-top:2.75rem;padding-bottom:4.5rem}
 .gl>*{grid-column:1}
 .ghead{padding-bottom:2.5rem}

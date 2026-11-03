@@ -12,6 +12,7 @@ It asks for a passphrase, saves the private key encrypted in your user folder (`
 
 ## Each release
 
+0. Colors and captures ([DESIGN.md](DESIGN.md)): `node tools/design-tokens.mjs --check`, `node --test worker/stats/test/worker.test.mjs`, and `node tools/shots.mjs` if a screen changed.
 1. Bump `<Version>` in `src/ServerRouteTool.csproj`, add the CHANGELOG section, commit, push the tag `v<version>`.
 2. The Release workflow runs the tests, builds the exe, attests it and puts the exe and its `.sha256` on a **draft** release.
 3. On your PC:

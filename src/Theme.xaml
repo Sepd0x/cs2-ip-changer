@@ -6,6 +6,8 @@
     <Color x:Key="AccentLightColor">#7EBCF5</Color>
     <Color x:Key="AccentDarkColor">#3E87D0</Color>
     <Color x:Key="AccentSoftColor">#225BA8F0</Color>
+    <!-- web only (site and stats dashboard): the filled buttons, darker so white text reads on them. tools/design-tokens.mjs -->
+    <Color x:Key="AccentDeepColor">#2B74C2</Color>
     <SolidColorBrush x:Key="AccentDim" Color="#8C5BA8F0"/>
     <Color x:Key="Top1">#3BB4E5</Color>
     <Color x:Key="Top2">#C64FC6</Color>

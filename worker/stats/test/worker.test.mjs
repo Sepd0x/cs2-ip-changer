@@ -5,6 +5,9 @@ import { fakeD1 } from './d1.mjs';
 import ingest, { readCapped } from '../src/index.js';
 import dashboard, { collect, page, github, excludeIds, resetGithubCache, compareVersions, readable } from '../src/dashboard.js';
 import { verifyAccess, resetAccessCache } from '../src/access.js';
+import { ASSETS } from '../src/assets.js';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readTheme, tokens, apply, FILES, WEB, BLOCK, ROOT } from '../../../tools/design-tokens.mjs';
 
 const ID = (n) => n.toString(16).padStart(32, '0');
 const report = (over = {}) => ({ v: 1, id: ID(1), app: '0.1.0-beta.8', os: '10.0.26300.0', mode: 'cs2open', link: 'usb', minutes: 12, dev: false, clicks: { ChangeIp_Click: 3 }, counts: { ip_changed: 2, servers: 6 }, errors: [], ...over });
@@ -537,4 +540,61 @@ test('beta.9 part 4: red Checks and the leak test only inside their families; pe
   assert.equal(s.versionMetrics['0.1.0-beta.9'].startup.find((x) => x.band === '<1 s').n, 1);
   assert.deepEqual(s.adoption.at(-1).by, { '0.1.0-beta.8': 1, '0.1.0-beta.9': 1 });
   assert.ok(!JSON.stringify(s).includes(ID(1)), 'no install ID leaves');
+});
+
+// ------------------------------------------------------------------ one set of colors: src/Theme.xaml -> site and dashboard (tools/design-tokens.mjs)
+
+const readRoot = (p) => readFileSync(ROOT + p, 'utf8');
+const styleOf = (p) => [...readRoot(p).matchAll(/<style>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join('\n');
+const guides = readdirSync(ROOT + 'site').filter((d) => existsSync(ROOT + `site/${d}/index.html`)).map((d) => `site/${d}/index.html`);
+const DASH_CSS = 'worker/stats/dashboard/style.css';
+
+test('design: the site and the dashboard have the colors of src/Theme.xaml now (node tools/design-tokens.mjs)', () => {
+  const theme = readTheme();
+  for (const f of FILES) assert.equal(apply(readRoot(f.path), f.style, theme), readRoot(f.path), `${f.path} is behind Theme.xaml: node tools/design-tokens.mjs`);
+  const home = readRoot('site/index.html').match(BLOCK)[0];
+  for (const g of ['site/index.html', ...guides]) {
+    assert.ok(readRoot(g).includes(home), `${g} has old tokens: node tools/site-pages.mjs`);
+    assert.equal(readRoot(g).match(/<meta name="theme-color" content="([^"]+)">/)[1], theme.BgColor, `${g} theme-color`);
+  }
+  assert.equal(ASSETS['style.css'].body, readRoot(DASH_CSS), 'the Worker serves an old style.css: node tools/dashboard-assets.mjs');
+});
+
+test('design: the shared names of the site and the dashboard are the tokens, set once', () => {
+  for (const [kind, text] of [['site', styleOf('site/index.html')], ['dashboard', readRoot(DASH_CSS)]]) {
+    const root = text.match(/:root\s*\{([\s\S]*?)\}/)[1].replace(BLOCK, '');
+    const decl = Object.fromEntries(root.split(';').map((d) => d.split(/:(.*)/s).map((x) => x.trim())).filter(([n]) => n.startsWith('--')));
+    // the other palettes of the dashboard set them again on purpose; nothing else may
+    const rest = text.replace(/:root\s*\{[\s\S]*?\}/, '').replace(/html\[data-pal="[a-z]+"\]\s*\{[^}]*\}/g, '');
+    for (const [name, token] of Object.entries(WEB[kind])) {
+      assert.equal(decl[name], `var(--t-${token})`, `${kind} ${name}`);
+      assert.ok(!new RegExp(`[{;\s]${name}\s*:`).test(rest), `${kind} sets ${name} again`);
+    }
+  }
+});
+
+test('design: no shared color copied by hand (charts and the other palettes keep their own)', () => {
+  const t = Object.fromEntries(tokens());
+  const rgb = (h) => { h = h.slice(1); if (h.length === 3) h = [...h].map((c) => c + c).join(''); return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)); };
+  // background, surfaces, lines, accent and top line: use var(--t-…), never the value
+  const exact = ['bg', 'edge', 'surface', 'surface2', 'surface3', 'line', 'line-strong', 'good', 'warn', 'accent', 'accent-light', 'accent-dark', 'accent-deep', 'top1', 'top2', 'top3'];
+  // and no near copy of the accent or the top line (a hand-picked #5ca8f0 is drift)
+  const near = ['accent', 'accent-light', 'accent-dark', 'accent-deep', 'top1', 'top2', 'top3'];
+  // Known, waiting for a yes (publish/o197-propostas.md): the dashboard's top line was picked from a capture of the app.
+  const KNOWN = new Set([`${DASH_CSS} #3cb3e5`, `${DASH_CSS} #d8df3b`]);
+  const files = { 'site/index.html': styleOf('site/index.html'), 'site/404.html': styleOf('site/404.html'), [DASH_CSS]: readRoot(DASH_CSS).replace(/html\[data-pal="[a-z]+"\]\s*\{[^}]*\}/g, '') };
+  for (const g of guides) files[g] = styleOf(g);
+  const found = [];
+  for (const [p, css] of Object.entries(files)) {
+    const s = css.replace(BLOCK, '');
+    const lits = [...s.matchAll(/#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b/g)].map((m) => [m[0].toLowerCase(), rgb(m[0])])
+      .concat([...s.matchAll(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/g)].map((m) => [m[0], [+m[1], +m[2], +m[3]]]));
+    for (const [lit, c] of lits) {
+      for (const name of exact) {
+        const d = Math.max(...rgb(t[name]).map((x, i) => Math.abs(x - c[i])));
+        if ((d === 0 || (d <= 3 && near.includes(name))) && !KNOWN.has(`${p} ${lit}`)) found.push(`${p}: ${lit} is ${d ? 'near ' : ''}--t-${name} (${t[name]})`);
+      }
+    }
+  }
+  assert.deepEqual(found, []);
 });

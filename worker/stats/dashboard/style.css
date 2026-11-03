@@ -1,11 +1,17 @@
 /* CS2 IP Changer · stats. Mesma família da app: cinzento muito escuro, linha em gradiente no topo,
    caixas de grupo com o título na linha, botões planos com 1 px. Três paletas para comparar (data-pal no <html>). */
 :root {
-  --bg: #0e0e0e; --edge: #050505; --panel: #171717; --panel2: #1b1b1b; --line: #2a2a2a; --line2: #383838;
+  /* tokens: tools/design-tokens.mjs, from src/Theme.xaml. Don't edit here: change Theme.xaml and run it again */
+  --t-bg: #0e0e0e; --t-side: #0b0b0b; --t-edge: #050505; --t-surface: #171717; --t-surface2: #1d1d1d; --t-surface3: #262626;
+  --t-line: #2a2a2a; --t-line-strong: #383838; --t-text: #dddddd; --t-muted: #adadad; --t-faint: #888888; --t-good: #7cc95a;
+  --t-warn: #e3bf4b; --t-bad: #f05a4f; --t-accent: #5ba8f0; --t-accent-light: #7ebcf5; --t-accent-dark: #3e87d0; --t-accent-deep: #2b74c2;
+  --t-top1: #3bb4e5; --t-top2: #c64fc6; --t-top3: #d8e03a; --t-accent-rgb: 91,168,240; --t-top: linear-gradient(90deg,#3bb4e5,#c64fc6 50%,#d8e03a);
+  /* /tokens */
+  --bg: var(--t-bg); --edge: var(--t-edge); --panel: var(--t-surface); --panel2: #1b1b1b; --line: var(--t-line); --line2: var(--t-line-strong);
   --btn: #232323; --btn-acc: #202a34; --hover: #1e1e1e;
   --ink: #e4e4e4; --ink2: #afafaf; --ink3: #8b8b8b;
-  --acc: #5ba8f0; --acc2: #a9d2f8; --acc-d: #2b74c2; --acc-ink: #cfe6ff;
-  --good: #7cc95a; --warn: #e3bf4b; --bad: #ee6b5f;
+  --acc: var(--t-accent); --acc2: #a9d2f8; --acc-d: var(--t-accent-deep); --acc-ink: #cfe6ff;
+  --good: var(--t-good); --warn: var(--t-warn); --bad: #ee6b5f;
   --heat-hi: #fff1b8;
   --gradient: linear-gradient(90deg, #3cb3e5 0%, #7e83d6 24%, #c252c7 48%, #ce9187 72%, #d4c059 88%, #d8df3b 100%);
   --mono: Consolas, "Cascadia Mono", ui-monospace, monospace;
@@ -62,7 +68,7 @@ header.bar { position: sticky; top: 0; z-index: 20; background: var(--bg); borde
 .pal { display: inline-flex; gap: 4px; align-items: center; color: var(--ink3); font-size: 11px; }
 .pal button { width: 16px; height: 16px; padding: 0; border: 1px solid var(--line2); cursor: pointer; }
 .pal button[aria-pressed="true"] { outline: 1px solid var(--acc); outline-offset: 1px; }
-.pal .p1 { background: linear-gradient(135deg, #0e0e0e 50%, #5ba8f0 50%); }
+.pal .p1 { background: linear-gradient(135deg, var(--t-bg) 50%, var(--t-accent) 50%); }
 .pal .p2 { background: linear-gradient(135deg, #1a1816 50%, #e6b450 50%); }
 .pal .p3 { background: linear-gradient(135deg, #000 50%, #fafafa 50%); }
 .filters { display: flex; gap: 8px 14px; align-items: center; padding: 6px 16px 8px; border-top: 1px solid var(--line); flex-wrap: wrap; }
@@ -235,20 +241,20 @@ table.coh td.c.empty { background: transparent; }
 .opacity input { width: 90px; accent-color: var(--acc); }
 
 .rwrap { position: relative; aspect-ratio: 1240 / 800; container-type: inline-size; background: var(--edge); border: 1px solid var(--edge); user-select: none; }
-.rnav { position: absolute; left: 0; top: 0; bottom: 0; width: 6.532%; background: #0e0e0e; border-right: 1px solid #2a2a2a; }
+.rnav { position: absolute; left: 0; top: 0; bottom: 0; width: 6.532%; background: var(--t-bg); border-right: 1px solid var(--t-line); }
 .rnav::before { content: ""; position: absolute; left: 0; right: -1px; top: 0; height: 0.375cqw; min-height: 2px; background: linear-gradient(90deg, #3cb3e5, #51a4e0); }
 .rnav button { position: absolute; left: 0; right: 0; height: 7.75%; background: none; border: 0; border-top: 1px solid #222; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25cqw; color: #9a9a9a; font-size: max(8px, 0.92cqw); padding: 0; }
 .rnav button svg { width: 1.9cqw; height: 1.9cqw; min-width: 12px; min-height: 12px; stroke: #6a6a6a; }
-.rnav button { background: color-mix(in srgb, #2b74c2 var(--sh, 0%), transparent); }
-.rnav button:hover { background: color-mix(in srgb, #2b74c2 var(--sh, 0%), #1c1c1c); color: #dcdcdc; }
+.rnav button { background: color-mix(in srgb, var(--t-accent-deep) var(--sh, 0%), transparent); }
+.rnav button:hover { background: color-mix(in srgb, var(--t-accent-deep) var(--sh, 0%), #1c1c1c); color: #dcdcdc; }
 @container (max-width: 1100px) { .rnav button .pc { display: none; } }
 .rnav button[aria-current="true"] { color: #fff; }
-.rnav button[aria-current="true"] svg { stroke: #5ba8f0; }
-.rnav button[aria-current="true"]::before { content: ""; position: absolute; left: 0; top: 18%; bottom: 18%; width: 0.22cqw; min-width: 2px; background: #5ba8f0; }
+.rnav button[aria-current="true"] svg { stroke: var(--t-accent); }
+.rnav button[aria-current="true"]::before { content: ""; position: absolute; left: 0; top: 18%; bottom: 18%; width: 0.22cqw; min-width: 2px; background: var(--t-accent); }
 .rnav button .pc { font-size: max(8px, 0.82cqw); color: #8e8e8e; font-variant-numeric: tabular-nums; }
-.rnav button .pc i { display: block; height: 2px; background: #2b74c2; margin: 1px auto 0; }
+.rnav button .pc i { display: block; height: 2px; background: var(--t-accent-deep); margin: 1px auto 0; }
 .rnav .ver { position: absolute; bottom: 1.2%; left: 0; right: 0; text-align: center; color: #8a8a8a; font-size: max(7px, 0.85cqw); line-height: 1.25; }
-.rstage { position: absolute; left: 6.532%; right: 0; top: 0; bottom: 0; overflow: hidden; background: #0e0e0e; }
+.rstage { position: absolute; left: 6.532%; right: 0; top: 0; bottom: 0; overflow: hidden; background: var(--t-bg); }
 .rstage img.shot { position: absolute; top: 0; left: -6.989%; width: 106.989%; height: 100%; display: block; pointer-events: none; transition: filter .2s; }
 .rstage.dimmed img.shot { filter: brightness(.74) saturate(.7); }
 .rstage canvas.heat { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; transition: opacity .2s; }
@@ -256,9 +262,9 @@ table.coh td.c.empty { background: transparent; }
 .rwrap.mini .rstage { left: 0; }
 .rstage .ov { position: absolute; inset: 0; }
 .bm { position: absolute; border: 1px dashed transparent; cursor: default; }
-.bm:hover, .bm.hl { border-color: var(--acc2); background: rgba(91, 168, 240, .08); }
+.bm:hover, .bm.hl { border-color: var(--acc2); background: rgba(var(--t-accent-rgb), .08); }
 .bm .bc { position: absolute; right: -4px; top: -9px; transform: translateY(-2px); background: #0b0b0b; border: 1px solid #3c3c3c; color: #e8e8e8; font: 600 max(9px, 0.88cqw)/1.25 var(--mono); padding: 0 4px; white-space: nowrap; pointer-events: none; }
-.bm .bc::before { content: ""; display: inline-block; width: 5px; height: 5px; margin-right: 4px; vertical-align: 1px; background: var(--rank, #5ba8f0); }
+.bm .bc::before { content: ""; display: inline-block; width: 5px; height: 5px; margin-right: 4px; vertical-align: 1px; background: var(--rank, var(--t-accent)); }
 .bm.below .bc { top: auto; bottom: -15px; transform: none; }
 .bm.zero .bc { color: #9a9a9a; border-style: dashed; }
 .mk { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; cursor: default; }
@@ -271,16 +277,16 @@ table.coh td.c.empty { background: transparent; }
 .sv { position: absolute; left: 0; right: 0; background: #000; pointer-events: none; }
 .heatleg { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--ink3); margin-top: 8px; flex-wrap: wrap; }
 .heatleg .ramp { width: 140px; height: 8px; }
-.placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; background: #0e0e0e; }
+.placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--t-bg); }
 .placeholder .ttl { height: 6.5%; min-height: 22px; display: flex; align-items: center; padding: 0 1.4cqw; color: #cfcfcf; font-size: max(9px, 1.05cqw); border-top: 0.375cqw solid transparent; border-image: linear-gradient(90deg, #51a4e0, #c252c7 50%, #d8df3b) 1; }
 .placeholder .ttl b { color: #fff; margin-left: 0.6cqw; }
 .placeholder .body { flex: 1; padding: 2.4cqw 1.4cqw; display: flex; flex-direction: column; gap: 1.6cqw; }
-.placeholder .pgb { position: relative; border: 1px solid #2a2a2a; background: #171717; padding: 2.2cqw 1.4cqw 1.4cqw; }
-.placeholder .pgb > span { position: absolute; top: -0.9cqw; left: 1cqw; padding: 0 0.5cqw; background: linear-gradient(#0e0e0e 50%, #171717 50%); color: #e4e4e4; font-size: max(9px, 1.05cqw); font-weight: 600; }
+.placeholder .pgb { position: relative; border: 1px solid var(--t-line); background: var(--t-surface); padding: 2.2cqw 1.4cqw 1.4cqw; }
+.placeholder .pgb > span { position: absolute; top: -0.9cqw; left: 1cqw; padding: 0 0.5cqw; background: linear-gradient(var(--t-bg) 50%, var(--t-surface) 50%); color: #e4e4e4; font-size: max(9px, 1.05cqw); font-weight: 600; }
 .placeholder .pbtns { display: flex; flex-wrap: wrap; gap: 1cqw; }
-.placeholder .pb { background: #232323; border: 1px solid #383838; color: #e6e6e6; padding: 0.5cqw 1.1cqw; font-size: max(9px, 1.05cqw); display: inline-flex; gap: 0.8cqw; align-items: baseline; }
+.placeholder .pb { background: #232323; border: 1px solid var(--t-line-strong); color: #e6e6e6; padding: 0.5cqw 1.1cqw; font-size: max(9px, 1.05cqw); display: inline-flex; gap: 0.8cqw; align-items: baseline; }
 .placeholder .pb b { font: 600 max(9px, 0.95cqw) var(--mono); color: #a9d2f8; }
-.placeholder .todo { color: #e3bf4b; font-size: max(9px, 1.05cqw); }
+.placeholder .todo { color: var(--t-warn); font-size: max(9px, 1.05cqw); }
 .placeholder .todo + p { color: #9a9a9a; margin: 0.4cqw 0 0; font-size: max(9px, 0.95cqw); }
 
 .scrstats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
@@ -331,7 +337,7 @@ footer { color: var(--ink3); font-size: 11.5px; padding: 0 20px 28px 208px; line
 }
 @media (max-width: 720px) {
   .rwrap { aspect-ratio: auto; background: none; border: 0; }
-  .rnav { position: static; width: auto; display: flex; overflow-x: auto; border: 1px solid #2a2a2a; border-bottom: 0; scrollbar-width: none; }
+  .rnav { position: static; width: auto; display: flex; overflow-x: auto; border: 1px solid var(--t-line); border-bottom: 0; scrollbar-width: none; }
   .rnav::before, .rnav .ver { display: none; }
   .rnav button { position: static; height: auto; flex: none; padding: 6px 10px; flex-direction: row; gap: 6px; font-size: 12px; border-top: 0; border-right: 1px solid #222; }
   .rnav button svg { width: 14px; height: 14px; }
