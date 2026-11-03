@@ -55,7 +55,8 @@ jobs:
           fi
           vt "$api/files/$SHA" -o file.json
           flagged=$(jq '.data.attributes.last_analysis_stats | .malicious + .suspicious' file.json)
-          engines=$(jq '.data.attributes.last_analysis_results | length' file.json)
+          # Like the VirusTotal page: only the engines that scanned it (not "type unsupported", timeouts or failures)
+          engines=$(jq '[.data.attributes.last_analysis_results[] | select(.category | IN("malicious","suspicious","undetected","harmless"))] | length' file.json)
           link="https://www.virustotal.com/gui/file/$SHA/detection"
           echo "VirusTotal for $TAG: $flagged of $engines engines flag it. $link"
           {
