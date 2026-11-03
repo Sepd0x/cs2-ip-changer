@@ -357,19 +357,24 @@ public partial class MainWindow
         Toast(s.Network == null ? $"{s.Title} uses the tag from its name again." : $"{s.Title} is now in the community {s.Network}.", true);
     }
 
+    /// <summary>One primary in Status: Turn on protection while it is off, else Change IP and rejoin with a last server, else Change IP.</summary>
+    public static (string Rejoin, string ChangeIp) StatusPrimary(bool protOn, bool noPhone, bool lastServer) =>
+        !protOn && !noPhone ? ("Btn", "Btn") : lastServer && !noPhone ? ("Primary", "Btn") : ("Btn", "Primary");
+
     void UpdateRejoinBtn()
     {
         RejoinBtn.IsEnabled = !_changingIp && !_rejoining && _s.LastServer != null && _phone?.Ready == true && !_s.NoPhone;
         RejoinBtn.ToolTip = _s.NoPhone ? "Off in the no phone mode: there is no IP to change." : (_s.LastServer == null ? "Join a server from Servers first. " : $"Changes the IP, then joins {_s.LastServer} again (with another account if this one is banned there). ")
             + $"Only joins with protection confirmed. In game: {_s.HotkeyRejoin}.";
-        // After a kick the way back is the rejoin: with a last server it is the primary, and its hotkey shows under it.
-        var rejoinFirst = _s.LastServer != null && !_s.NoPhone;
-        var want = rejoinFirst ? "Primary" : "Btn";
+        // After a kick the way back is the rejoin: with a last server it is the primary, and its hotkey shows under it. With protection
+        // off, Turn on protection is the one primary (beta.10).
+        var (rejoinStyle, changeStyle) = StatusPrimary(_protOn, _s.NoPhone, _s.LastServer != null);
+        var want = rejoinStyle + "|" + changeStyle;
         if (!Equals(RejoinBtn.Tag, want))
         {
             RejoinBtn.Tag = want;
-            RejoinBtn.Style = (Style)FindResource(want);
-            ChangeIpBtn.Style = (Style)FindResource(rejoinFirst ? "Btn" : "Primary");
+            RejoinBtn.Style = (Style)FindResource(rejoinStyle);
+            ChangeIpBtn.Style = (Style)FindResource(changeStyle);
         }
         RejoinHotkeyKeys.Text = _s.HotkeyRejoin;
         RejoinHotkeyHint.Visibility = _s.NoPhone ? Visibility.Collapsed : Visibility.Visible;

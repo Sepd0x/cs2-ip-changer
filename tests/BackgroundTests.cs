@@ -65,23 +65,26 @@ static class BackgroundTests
                 && !MainWindow.GoesToTray(false, true, false, false, false, false) && !MainWindow.GoesToTray(true, false, false, false, false, false));
             check("Bandeja: Quit, atualização, fim de sessão e demo fecham mesmo", !MainWindow.GoesToTray(true, true, true, false, false, false)
                 && !MainWindow.GoesToTray(true, true, false, true, false, false) && !MainWindow.GoesToTray(true, true, false, false, true, false) && !MainWindow.GoesToTray(true, true, false, false, false, true));
-            var menu = MainWindow.TrayLayout("Protected", armed: false, phone: false);
+            // beta.10: a proteção começa desligada, e o menu tem a linha para a ligar (ou desligar), logo a seguir ao Open
+            var menu = MainWindow.TrayLayout("Protection off", on: false, phone: false);
             var keys = menu.Where(l => l.Key != null).Select(l => l.Key).ToList();
-            check("Bandeja: menu com estado, Open, New IP, Change IP, Regions, Turn off, Quit",
-                keys.SequenceEqual(new[] { "state", "open", "switch", "changeip", "regions", "off", "quit" }) && menu[0].Text == "Protected" && !menu[0].Enabled);
-            check("Bandeja: Turn off só com a proteção ligada, Change IP só com telemóvel",
-                !menu.First(l => l.Key == "off").Enabled && !menu.First(l => l.Key == "changeip").Enabled
-                && MainWindow.TrayLayout("x", true, true).Where(l => l.Key is "off" or "changeip").All(l => l.Enabled));
+            check("Bandeja: menu com estado, Open, Turn on, New IP, Change IP, Regions, Quit",
+                keys.SequenceEqual(new[] { "state", "open", "on", "switch", "changeip", "regions", "quit" }) && menu[0].Text == "Protection off" && !menu[0].Enabled);
+            check("Bandeja: com a proteção ligada a linha desliga-a", MainWindow.TrayLayout("x", true, true).Any(l => l.Key == "off" && l.Text == "Turn off protection" && l.Enabled)
+                && MainWindow.TrayLayout("x", true, true).All(l => l.Key != "on"));
+            check("Bandeja: Turn on e Change IP cinzentos sem telemóvel (No phone mode)",
+                !menu.First(l => l.Key == "on").Enabled && !menu.First(l => l.Key == "changeip").Enabled
+                && MainWindow.TrayLayout("x", false, true).Where(l => l.Key is "on" or "changeip").All(l => l.Enabled));
             // Parte 5: o menu escuro. Linha do estado cinzenta e sem comando, Open a negrito, separadores, cinzentos sem telemóvel e sem proteção
             {
                 var ran = new List<string>();
-                var items = MainWindow.TrayItems("Protected", armed: false, phone: false, ran.Add);
+                var items = MainWindow.TrayItems("Protected", on: false, phone: false, ran.Add);
                 var flags = items.Select(Tray.MenuFlags).ToList();
                 check("Bandeja escura: estado cinzento, Open a negrito, 2 separadores",
                     flags[0] == (Tray.MfGrayed, false) && items[0].Run == null && flags[2] == (Tray.MfString, true)
                     && flags.Count(f => f.Flags == Tray.MfSeparator) == 2 && flags.Count(f => f.Default) == 1);
-                check("Bandeja escura: Change IP e Turn off cinzentos quando não servem",
-                    flags[items.FindIndex(i => i.Text == "Change IP")].Flags == Tray.MfGrayed && flags[items.FindIndex(i => i.Text == "Turn off protection")].Flags == Tray.MfGrayed
+                check("Bandeja escura: Change IP e Turn on cinzentos quando não servem",
+                    flags[items.FindIndex(i => i.Text == "Change IP")].Flags == Tray.MfGrayed && flags[items.FindIndex(i => i.Text == "Turn on protection")].Flags == Tray.MfGrayed
                     && MainWindow.TrayItems("x", true, true, _ => { }).Where(i => i.Text is "Change IP" or "Turn off protection").All(i => Tray.MenuFlags(i).Flags == Tray.MfString));
                 items.First(i => i.Text == "Quit").Run();
                 items.First(i => i.Text == "Regions").Run();

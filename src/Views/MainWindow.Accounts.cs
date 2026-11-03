@@ -16,13 +16,21 @@ namespace SRT;
 // Steam accounts
 public partial class MainWindow
 {
-    void LoadAccounts()
+    void LoadAccounts(List<LocalAccount> locals = null)
     {
+        if (locals == null)
+        {
+            try { locals = Steam.ReadAccounts(); }
+            catch (Exception ex)
+            {
+                // Steam writing the file right now: the list on screen stays, and the next tick reads it again (WatchSteamAccounts)
+                Log.Warn("Could not read the Steam accounts: " + ex.Message);
+                if (_accounts.Count > 0) return;
+                locals = new();
+            }
+        }
         _accMeta = Store.Load(Paths.File("accounts.json"), () => new Dictionary<string, AccountMeta>());
         _accounts.Clear();
-        List<LocalAccount> locals;
-        try { locals = Steam.ReadAccounts(); }
-        catch (Exception ex) { Log.Warn("Could not read the Steam accounts: " + ex.Message); locals = new(); }
         var active = Steam.InUseSteamId();
         _accHidden = 0;   // only hidden accounts Steam still has, not old entries in accounts.json
         foreach (var l in locals)
@@ -36,16 +44,24 @@ public partial class MainWindow
         if (HideLogins) RemaskLog();
         Log.Info($"{Fmt.Count(_accounts.Count, "Steam account")} on this PC.");
         ConfigsAccountsLoaded();   // a new account gets the CS2 config (Configs page)
+        // The other pages that list accounts, when they are the one on screen (otherwise they rebuild when they are opened)
+        if (PageProfiles.IsVisible) ShowProfiles();
+        if (PageConfigs.IsVisible) ShowConfigs();
     }
 
     void SaveAccounts() { if (!_demo) Store.Save(Paths.File("accounts.json"), _accMeta); }
 
-    DateTime _loginUsersAt;
+    DateTime _loginUsersAt, _loginUsersReadAt;
     string _activeSeen;
 
+    /// <summary>Hidden on purpose (right-click > Hide from list): not "missing" from the list.</summary>
+    bool AccHiddenId(string id) => _accMeta?.TryGetValue(id, out var m) == true && m.Hidden;
+
     /// <summary>
-    /// Every tick: an account added or logged in outside the app (Steam's own login, another switcher) shows up and
-    /// becomes the one in use, so ban marks and Switch don't keep acting on the old one.
+    /// Every tick (it runs with protection off too): an account added or logged in outside the app (Steam's own login, another
+    /// switcher) shows up on Accounts, Configs and Profiles and becomes the one in use, so ban marks and Switch don't keep acting on
+    /// the old one. loginusers.vdf is read when it changed, when Steam is on an account the list doesn't have, and every 30 s anyway:
+    /// a read while Steam was writing it (locked, or half written) used to leave the new account out until Steam wrote it again.
     /// </summary>
     void WatchSteamAccounts()
     {
@@ -53,17 +69,26 @@ public partial class MainWindow
         DateTime written = default;
         try { if (Steam.LoginUsersPath is string p && File.Exists(p)) written = File.GetLastWriteTimeUtc(p); } catch { }
         var active = Steam.InUseSteamId();   // today's client leaves ActiveUser at 0: then loginusers.vdf says who
-        var unknown = active != null && !_accounts.Any(a => a.SteamId == active) && !(_accMeta?.TryGetValue(active, out var m) == true && m.Hidden);
-        if (written != _loginUsersAt || unknown)
+        var unknown = active != null && !_accounts.Any(a => a.SteamId == active) && !AccHiddenId(active);
+        if (written != _loginUsersAt || unknown || DateTime.Now - _loginUsersReadAt > TimeSpan.FromSeconds(30))
         {
-            var first = _loginUsersAt == default;
+            List<LocalAccount> disk;
+            try { disk = Steam.ReadAccounts(); }
+            catch { return; }   // Steam is writing it: the next tick reads it
             _loginUsersAt = written;
-            if (!first)
+            _loginUsersReadAt = DateTime.Now;
+            if (Steam.AccountsDiffer(_accounts.Select(a => a.SteamId), disk, AccHiddenId))
             {
                 var before = _accounts.Select(a => a.SteamId).ToHashSet();
-                LoadAccounts();
+                LoadAccounts(disk);
                 var added = _accounts.Where(a => !before.Contains(a.SteamId)).ToList();
-                if (added.Count > 0) Toast(added.Count == 1 ? $"New Steam account: {added[0].Name}." : $"{added.Count} new Steam accounts.", true);
+                if (added.Count > 0)
+                {
+                    // A new account goes where the sort puts it (at the top in Most recent), not at the end of a long list
+                    _accResort = true;
+                    ApplyAccountFilter();
+                    Toast(added.Count == 1 ? $"New Steam account: {added[0].Name}." : $"{added.Count} new Steam accounts.", true);
+                }
             }
         }
         if (active == _activeSeen) return;
@@ -367,11 +392,15 @@ public partial class MainWindow
 
     async void WaitForNewAccount()
     {
-        var before = _accounts.Count + _accMeta.Values.Count(m => m.Hidden);
+        // By SteamID, not by count: old hidden entries in accounts.json (Steam no longer has them) made the count never go up
+        var before = _accounts.Select(a => a.SteamId).ToHashSet();
         for (var i = 0; i < 60; i++)
         {
             await Task.Delay(5000);
-            if (Steam.ReadAccounts().Count > before) { LoadAccounts(); Toast("New account added.", true); return; }
+            if (!_accounts.All(a => before.Contains(a.SteamId))) return;   // the tick found it already (and said so)
+            List<LocalAccount> disk;
+            try { disk = Steam.ReadAccounts(); } catch { continue; }
+            if (disk.Any(a => !before.Contains(a.SteamId) && !AccHiddenId(a.SteamId))) { LoadAccounts(disk); _accResort = true; ApplyAccountFilter(); Toast("New account added.", true); return; }
         }
     }
 

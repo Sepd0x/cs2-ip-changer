@@ -24,26 +24,29 @@ public partial class MainWindow
     /// <summary>"CS2 IP Changer: Protected" (what the top bar says).</summary>
     public static string TrayTip(string state) => Tray.TrimTip(string.IsNullOrWhiteSpace(state) ? "CS2 IP Changer" : "CS2 IP Changer: " + state);
 
-    /// <summary>The menu, top to bottom: the state (not clickable), Open, the commands, Quit. Key null = separator.</summary>
-    public static List<(string Text, string Key, bool Enabled)> TrayLayout(string state, bool armed, bool phone) =>
+    /// <summary>
+    /// The menu, top to bottom: the state (not clickable), Open, the commands, Quit. Key null = separator. <paramref name="on"/>: protection
+    /// is on, so the line turns it off; off, it turns it on (greyed in No phone mode, where there is nothing to turn on).
+    /// </summary>
+    public static List<(string Text, string Key, bool Enabled)> TrayLayout(string state, bool on, bool phone) =>
     [
         (string.IsNullOrWhiteSpace(state) ? "CS2 IP Changer" : state, "state", false),
         (null, null, false),
         ("Open", "open", true),
+        on ? ("Turn off protection", "off", true) : ("Turn on protection", "on", phone),
         ("New IP + next account", "switch", true),
         ("Change IP", "changeip", phone),
         ("Regions", "regions", true),
-        ("Turn off protection", "off", armed),
         (null, null, false),
         ("Quit", "quit", true),
     ];
 
     /// <summary>Built each time the menu opens, from the state of that moment. The state line has no command, so it is greyed.</summary>
-    public static List<Tray.Item> TrayItems(string state, bool armed, bool phone, Action<string> command) =>
-        TrayLayout(state, armed, phone).Select(l => l.Text == null ? new Tray.Item(null)
+    public static List<Tray.Item> TrayItems(string state, bool on, bool phone, Action<string> command) =>
+        TrayLayout(state, on, phone).Select(l => l.Text == null ? new Tray.Item(null)
             : new Tray.Item(l.Text, l.Key == "state" ? null : () => command(l.Key), l.Enabled, l.Key == "open")).ToList();
 
-    IReadOnlyList<Tray.Item> TrayMenu() => TrayItems(SideState.Text, ProtectionArmed, !_s.NoPhone, TrayCommand);
+    IReadOnlyList<Tray.Item> TrayMenu() => TrayItems(SideState.Text, _protOn && !_s.NoPhone, !_s.NoPhone, TrayCommand);
 
     void TrayCommand(string key)
     {
@@ -55,6 +58,7 @@ public partial class MainWindow
             case "changeip": _ = RunCommand("Change IP", "starting…", () => ChangeIp(confirm: true)); break;
             case "regions": ShowFromTray(); NavRegions.IsChecked = true; break;
             case "off": ShowFromTray(); Restore_Click(this, new RoutedEventArgs()); break;
+            case "on": _ = TurnProtectionOn(ask: true); break;   // a question (CS2 open) opens the window
             case "quit": _quitting = true; Close(); break;   // a question on the way (Keep and close) opens the window
         }
     }

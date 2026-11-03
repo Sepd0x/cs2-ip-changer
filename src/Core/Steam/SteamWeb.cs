@@ -573,7 +573,7 @@ public sealed class CommunitySession
         var sum = E("summary");
         if (sum != null) sum = WebUtility.HtmlDecode(Regex.Replace(Regex.Replace(sum, @"<br\s*/?>", "\n", RegexOptions.IgnoreCase), "<[^>]+>", "")).Trim();
         if (sum == "No information given.") sum = "";
-        return new PublicLook { PersonaName = E("steamID"), RealName = E("realname"), Summary = sum, Location = E("location"), AvatarUrl = E("avatarFull"), CustomUrl = E("customURL"), SteamId64 = E("steamID64") };
+        return new PublicLook { PersonaName = Steam.WebText(E("steamID")), RealName = Steam.WebText(E("realname")), Summary = sum, Location = Steam.WebText(E("location")), AvatarUrl = E("avatarFull"), CustomUrl = E("customURL"), SteamId64 = E("steamID64") };
     }
 
     /// <summary>Steam's default picture (the "?"): its hash is in the avatar URL of every profile that has it.</summary>

@@ -61,6 +61,16 @@ public static partial class Steam
     }
 
     /// <summary>
+    /// The list on screen no longer matches loginusers.vdf: an account there that isn't shown (and wasn't hidden), or one shown that
+    /// Steam no longer has. Compared by SteamID, so a read while nothing changed never reloads the list.
+    /// </summary>
+    public static bool AccountsDiffer(IEnumerable<string> shown, IEnumerable<LocalAccount> onDisk, Func<string, bool> hidden)
+    {
+        var want = (onDisk ?? Enumerable.Empty<LocalAccount>()).Select(a => a.SteamId).Where(id => !hidden(id)).ToHashSet();
+        return !want.SetEquals(shown ?? Enumerable.Empty<string>());
+    }
+
+    /// <summary>
     /// Marks the account Steam logs in to next. Today's client reads "AutoLogin" (1 on that account, 0 on the others) and the newest
     /// "timestamp"; it dropped "MostRecent" and "AllowAutoLogin", so those are only written where the file still has them (older clients).
     /// A key keeps the case it has in the file; a missing timestamp is written in lowercase, like Steam does.

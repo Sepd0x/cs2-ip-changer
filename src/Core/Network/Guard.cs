@@ -14,9 +14,10 @@ public sealed class GuardReport
     public bool KillSwitchOk { get; init; }
     public bool? Cs2LockOk { get; init; }
     public Dictionary<string, bool> RouteOk { get; init; } = new();
+    /// <summary>"servers", "all", "home" (No phone mode) or "off" (protection turned off: Guard.OnAtStart).</summary>
     public string EffectiveMode { get; init; }
-    /// <summary>Waiting for the phone after the app started: Game only without the CS2 lock (Guard.StaysOnStandby).</summary>
-    public bool Standby { get; init; }
+    /// <summary>Nothing is protected: protection off, or No phone mode. Only the Regions block stays.</summary>
+    public bool Unprotected => EffectiveMode is "home" or "off";
     /// <summary>Whole PC: the routes, DNS and IPv6 rules are all confirmed.</summary>
     public bool FullModeOk { get; init; }
     /// <summary>Whole PC: Windows sends the rest of the PC's IPv4 through the protected connection.</summary>
@@ -147,11 +148,11 @@ public sealed class Guard
 
     /// <param name="distrust">Why the connection can't be trusted right now (null = trusted).</param>
     /// <param name="verifiedKey">The candidate whose public IP was measured and isn't the home IP. Any other candidate stays blocked.</param>
-    public Task<GuardReport> Sync(Settings s, IReadOnlyCollection<string> ips, bool force = false, string distrust = null, bool cs2Running = false, string verifiedKey = null, bool standby = false) =>
+    public Task<GuardReport> Sync(Settings s, IReadOnlyCollection<string> ips, bool force = false, string distrust = null, bool cs2Running = false, string verifiedKey = null, bool on = true) =>
         Task.Run(async () =>
         {
             await _gate.WaitAsync();
-            try { return await SyncCore(s, ips.Distinct().ToList(), force, distrust, cs2Running, verifiedKey, standby); }
+            try { return await SyncCore(s, ips.Distinct().ToList(), force, distrust, cs2Running, verifiedKey, on); }
             catch (Exception ex)
             {
                 Log.Error("Sync: " + ex.Message);
@@ -172,21 +173,35 @@ public sealed class Guard
     public static string ModeFor(string mode, bool gameMode, bool cs2Running) =>
         mode == "home" ? "home" : mode == "all" || (gameMode && cs2Running) ? "all" : "servers";
 
-    /// <summary>
-    /// Each start (by hand or with Windows) waits for the phone instead of locking CS2 with no phone there, which also shut out
-    /// Valve's servers: until the phone is confirmed (its IP measured), protection is Game only without the CS2 lock, so the servers
-    /// in the list stay blocked and the rest of CS2 uses the home network. With the phone confirmed it turns on fully, but not while
-    /// CS2 is open on the home network: that would cut the match. Once on, a drop blocks as always. No phone mode is the user's choice.
-    /// </summary>
-    public static bool StaysOnStandby(bool standby, string mode, bool phoneConfirmed, bool cs2Running) =>
-        standby && mode != "home" && (!phoneConfirmed || cs2Running);
+    // ------------------------------------------------------------ On or off (beta.10: one rule instead of the beta.9 wait for the phone)
+    //  1. Protection is on only when you turn it on: Turn on protection (Status, the tray icon), or Settings > Turn on protection when
+    //     the app starts. Off, the app puts nothing in the Firewall or the routes except the Regions block, and every page works.
+    //  2. Once on, it stays on until you turn it off: a phone drop blocks your servers and CS2, it never turns protection off.
+    //  3. Each start is off, except: that setting; an update made while it was on; and CS2 still open with the block of the last run
+    //     in place (the app closed with Keep, or crashed): the match isn't moved to the home IP behind your back.
+    //  4. Closing with it on: the question asked once (keep the block or turn it off), the answer in Settings.
+
+    /// <summary>Passed to the new copy with --updated: protection was on in the old one (beta.9 passed nothing when it was protected).</summary>
+    public const string OnArg = "--on";
+
+    /// <summary>Rule 3. <paramref name="leftOn"/>: the app's kill switch rule is still in the Firewall from the last run.</summary>
+    public static bool OnAtStart(bool justUpdated, IReadOnlyCollection<string> args, bool onAtStart, bool leftOn, bool cs2Running, bool noPhone)
+    {
+        if (noPhone) return false;
+        // From beta.9: nothing = it was protected, --standby = it was still waiting for the phone (never turned on), --off = off
+        if (justUpdated) return args.Contains(OnArg) || !(args.Contains(Updater.OffArg) || args.Contains(Updater.StandbyArg));
+        return onAtStart || (leftOn && cs2Running);
+    }
+
+    /// <summary>The state the new copy gets from an update: the same as now.</summary>
+    public static string UpdateArg(bool on) => on ? OnArg : Updater.OffArg;
 
     /// <summary>
     /// Windows sends the rest of the PC through the phone while it shouldn't (game only or no phone): the phone's adapter gets a
     /// high metric so the home network wins. Only with another connection to fall back on, and only with the option on.
     /// </summary>
     public static bool NeedsPcOffPhone(string effectiveMode, bool keepPcOffPhone, int pcDefaultIndex, int phoneIndex, bool hasOtherInternet) =>
-        keepPcOffPhone && effectiveMode is "servers" or "home" && phoneIndex >= 0 && pcDefaultIndex == phoneIndex && hasOtherInternet;
+        keepPcOffPhone && effectiveMode is "servers" or "home" or "off" && phoneIndex >= 0 && pcDefaultIndex == phoneIndex && hasOtherInternet;
 
     public enum PcOffPhoneStep { None, Apply, Undo }
 
@@ -211,7 +226,7 @@ public sealed class Guard
         "Managed by CS2 IP Changer. CS2's game traffic (UDP) can only go out through the protected connection: servers not in the list never see your home IP.",
         Firewall.NET_FW_IP_PROTOCOL_UDP);
 
-    async Task<GuardReport> SyncCore(Settings s, List<string> ips, bool force, string distrust, bool cs2Running, string verifiedKey, bool standby)
+    async Task<GuardReport> SyncCore(Settings s, List<string> ips, bool force, string distrust, bool cs2Running, string verifiedKey, bool on)
     {
         var adapters = Net.Scan();
         var candidate = Net.PickEgress(adapters, s.EgressAdapterId, s.EgressSsid, out var problem);
@@ -219,16 +234,13 @@ public sealed class Guard
         if (distrust == null && candidate != null && KeyOf(candidate) != verifiedKey) distrust = WhyUnchecked;
         var egress = distrust != null ? null : candidate;
         if (distrust != null && candidate != null) problem = distrust;
-        // Waiting for the phone (Game only without the CS2 lock): CS2 and Valve's servers work on the home network, the servers in
-        // the list stay blocked until the phone carries them.
-        var waiting = StaysOnStandby(standby, s.Mode, egress != null, cs2Running);
-        var mode = waiting ? "servers" : ModeFor(s.Mode, s.GameMode, cs2Running);
-        // No phone blocks nothing, so "Servers blocked" would be false there; back on protection the problem is said again.
-        if (mode == "home") _lastProblem = null;
+        var mode = !on && s.Mode != "home" ? "off" : ModeFor(s.Mode, s.GameMode, cs2Running);
+        // Off and No phone block nothing, so "Servers blocked" would be false there; back on protection the problem is said again.
+        if (mode is "home" or "off") _lastProblem = null;
         else if (problem != _lastProblem) { if (problem != null) Log.Warn(problem + " Servers blocked."); _lastProblem = problem; }
         var fwProblem = Firewall.CheckEnabled();
-        if (mode == "home") return await HomeMode(s, adapters, candidate, fwProblem, force);
-        var cs2 = !waiting && s.LockCs2 && (s.PhoneSeen || egress != null) ? Steam.Cs2Path(s) : null;
+        if (mode is "home" or "off") return await HomeMode(s, adapters, candidate, fwProblem, force, mode, distrust);
+        var cs2 = s.LockCs2 && (s.PhoneSeen || egress != null) ? Steam.Cs2Path(s) : null;
 
         // 1) Firewall first: there is never a moment when a server is reachable with the home IP.
         var killOk = false;
@@ -342,7 +354,6 @@ public sealed class Guard
             Adapters = adapters,
             Egress = egress,
             Candidate = candidate,
-            Standby = waiting,
             EgressProblem = problem,
             Distrusted = distrust != null && candidate != null,
             DistrustReason = candidate != null ? distrust : null,
@@ -373,11 +384,11 @@ public sealed class Guard
     /// the phone through explicit routes to its gateway, so none needs that default route. Applied again whenever Windows still picks
     /// the phone (a cable that comes back can keep its interface index but loses the setting); undone as soon as it is not wanted.
     /// </summary>
-    async Task KeepPcOffPhone(Settings s, string mode, Adapter phone, List<Adapter> adapters)
+    async Task KeepPcOffPhone(Settings s, string mode, Adapter phone, List<Adapter> adapters, string userMode = null)
     {
         var other = phone != null && HasOtherInternet(adapters, phone);
         var onPhone = phone != null && Net.BestInterface("1.1.1.1") == phone.Index;
-        var step = PcOffPhoneNext(s.KeepPcOffPhone, s.Mode, mode, phone, other, _metricAppliedTo, onPhone, (DateTime.Now - _metricTriedAt).TotalSeconds);
+        var step = PcOffPhoneNext(s.KeepPcOffPhone, userMode ?? s.Mode, mode, phone, other, _metricAppliedTo, onPhone, (DateTime.Now - _metricTriedAt).TotalSeconds);
         if (step == PcOffPhoneStep.Undo)
         {
             await RestoreMetric();
@@ -392,7 +403,9 @@ public sealed class Guard
         _warned.Remove("metric");
         _metricAppliedTo = phone.Index;
         SaveOwned();
-        Log.Info(mode == "home" ? "No phone mode: the PC keeps using the home network, not the phone." : "The PC keeps using the home network; only the game goes through the phone.");
+        Log.Info(mode == "home" ? "No phone mode: the PC keeps using the home network, not the phone."
+            : mode == "off" ? "Protection off: the PC keeps using the home network, not the phone."
+            : "The PC keeps using the home network; only the game goes through the phone.");
     }
 
     /// <summary>
@@ -432,27 +445,45 @@ public sealed class Guard
     /// No phone mode: the kill switch, the IP test rule, the CS2 lock, whole PC and every route of the app are taken off, so CS2 and
     /// the servers use the home connection. The Regions rule is not the guard's and stays. Done again only when something changed.
     /// </summary>
-    async Task<GuardReport> HomeMode(Settings s, List<Adapter> adapters, Adapter phone, string fwProblem, bool force)
+    /// <summary>
+    /// No phone mode ("home") and protection off ("off"): the kill switch, the CS2 lock and the routes go, the Regions block stays.
+    /// Off still measures the phone's IP (the app's own test route and rule through it), so Status shows it, Change IP works and the
+    /// phone is already checked when you turn protection on. Save mobile data keeps the rest of the PC on the home network in both,
+    /// whatever mode is picked: so the home IP gets measured on a first start in Whole PC always too (review finding 7).
+    /// </summary>
+    async Task<GuardReport> HomeMode(Settings s, List<Adapter> adapters, Adapter phone, string fwProblem, bool force, string mode, string distrust)
     {
-        if (force || _fwSignature != "home")
+        var off = mode == "off";
+        // With Windows Firewall off the old rules can't be removed: the signature changes when it is back on, and they go then
+        var sig = (off ? "off|" + phone?.LocalIp : "home") + (fwProblem != null ? "|fw-off" : "");
+        if (force || _fwSignature != sig)
         {
+            var was = _fwSignature;
             if (fwProblem == null) Firewall.RemoveProtection();
             await RemoveOurRoutes(new HashSet<string> { Net.EchoIp }, adapters, all: true);
-            if (_fwSignature != "home") Log.Info("No phone mode: the kill switch and the routes are off. CS2 and servers see your home IP.");
-            _fwSignature = "home";
+            if (off && phone != null && fwProblem == null)
+                Firewall.Apply(Firewall.EchoRuleName, new[] { Net.EchoIp }, Environment.ProcessPath, phone.LocalIp, "Managed by CS2 IP Changer. Makes sure the app's IP test measures the protected connection.");
+            if (off && was?.StartsWith("off|") != true) Log.Info("Protection is off: no kill switch, no CS2 lock and no routes. CS2 and servers see your home IP.");
+            if (!off && was?.StartsWith("home") != true) Log.Info("No phone mode: the kill switch and the routes are off. CS2 and servers see your home IP.");
+            _fwSignature = sig;
         }
-        await KeepPcOffPhone(s, "home", phone, adapters);
+        if (off && phone != null) await EnsureRoutes(new List<string> { Net.EchoIp }, phone, adapters);
+        await KeepPcOffPhone(s, mode, phone, adapters, userMode: "servers");
         var pcIdx = Net.BestInterface("1.1.1.1");
         return new GuardReport
         {
             Adapters = adapters,
+            Candidate = off ? phone : null,
+            CandidateKey = off ? KeyOf(phone) : null,
+            DistrustReason = off && phone != null ? distrust : null,
+            Distrusted = off && phone != null && distrust != null,
             FirewallProblem = fwProblem,
-            EffectiveMode = "home",
+            EffectiveMode = mode,
             PcDefaultName = adapters.FirstOrDefault(a => a.Index == pcIdx)?.Name ?? "—",
             PcDefaultIndex = pcIdx,
             PhoneIndex = phone?.Index ?? -1,
             Steam = Net.ReadSteamLink(),
-            HasHome = adapters.Any(a => a.Up && a.Gateway != null && !a.IsPhone),
+            HasHome = adapters.Any(a => a.Up && a.Gateway != null && a.Index != phone?.Index && !a.IsPhone),
         };
     }
 

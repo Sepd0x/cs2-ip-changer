@@ -237,12 +237,15 @@ public partial class MainWindow
                     CrosshairText = set.Empty ? "No CS2 config yet" : Cs2Config.CrosshairSummary(set) ?? "Default crosshair",
                     ChangedText = set.Empty ? "Opens with CS2's defaults (or gets the sync)" : changed != null ? "Changed in game " + Fmt.Ago(changed) : "Not changed in game since the last copy",
                     CrosshairImage = CrosshairImage(xh),
+                    GroupKey = set.Empty ? CfgAccountRow.NoConfig : Cs2Config.CrosshairSummary(set) ?? "default",
                 });
             }
-            CfgAccountsList.ItemsSource = _cfgRows;
+            foreach (var r in _cfgRows) r.PropertyChanged += (_, ev) => { if (ev.PropertyName == nameof(CfgAccountRow.Selected)) ShowCfgToCount(); };
+            ShowCfgAccounts();
             _cfgToView = new System.Windows.Data.CollectionViewSource { Source = _cfgRows }.View;
-            _cfgToView.Filter = o => ((CfgAccountRow)o).SteamId != (CfgFromBox.SelectedItem as CfgSourceItem)?.SteamId;
+            _cfgToView.Filter = o => o is CfgAccountRow r && r.SteamId != (CfgFromBox.SelectedItem as CfgSourceItem)?.SteamId && CfgAccountRow.Matches(r, CfgToSearch.Text);
             CfgToList.ItemsSource = _cfgToView;
+            ShowCfgToCount();
             CfgAccountsEmpty.Visibility = _cfgRows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             // No accounts: nothing to copy to or save, so the buttons don't look like they'd do something.
             var any = _cfgRows.Count > 0;
@@ -362,12 +365,83 @@ public partial class MainWindow
         catch (Exception ex) { Log.Error("Config restore: " + Cs2ConfigStore.Why(ex)); Toast("Couldn't restore: " + Cs2ConfigStore.Why(ex), Tone.Error); }
     }
 
-    // ------------------------------------------------------------ Copy
+    // ------------------------------------------------------------ The Accounts list with many accounts (beta.10)
 
-    void CfgToAll_Click(object sender, RoutedEventArgs e)
+    /// <summary>Groups opened with Show (by crosshair), kept while the page is rebuilt.</summary>
+    readonly HashSet<string> _cfgOpen = new();
+
+    void ShowCfgAccounts()
+    {
+        var mainName = _cfgRows.FirstOrDefault(r => r.IsMain)?.Name;
+        var list = CfgDisplay(_cfgRows, CfgAccSearch.Text, _cfgOpen, mainName);
+        foreach (var g in list.OfType<CfgGroupRow>()) g.Toggle = () => { if (!_cfgOpen.Remove(g.Key)) _cfgOpen.Add(g.Key); ShowCfgAccounts(); };
+        CfgAccountsList.ItemsSource = list;
+        CfgAccCount.Text = _cfgRows.Count < 2 ? "" : string.IsNullOrWhiteSpace(CfgAccSearch.Text) ? Fmt.Count(_cfgRows.Count, "account")
+            : $"{list.OfType<CfgAccountRow>().Count()} of {_cfgRows.Count}";
+        CfgAccSearchHost.Visibility = _cfgRows.Count >= 8 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>
+    /// What the Accounts list shows: the main account and the one in use on their own at the top; then accounts that share a crosshair
+    /// (3 or more) as one line each, "23 accounts with the same crosshair as nightfall", opened with Show; then the rest by name. An
+    /// account waiting for CS2 to close or with Sync off is never folded into a group (it is the one that differs). A search shows the
+    /// matching accounts, no groups.
+    /// </summary>
+    public static List<object> CfgDisplay(IReadOnlyList<CfgAccountRow> rows, string query, ISet<string> open, string mainName, int minGroup = 3)
+    {
+        var res = new List<object>();
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            res.AddRange(rows.Where(r => CfgAccountRow.Matches(r, query)));
+            return res;
+        }
+        bool Alone(CfgAccountRow r) => r.IsMain || r.Active || r.Pending || !r.Sync;
+        res.AddRange(rows.Where(r => r.IsMain).Concat(rows.Where(r => r.Active && !r.IsMain)));
+        var mainKey = rows.FirstOrDefault(r => r.IsMain)?.GroupKey;
+        var rest = rows.Where(r => !r.IsMain && !r.Active).ToList();
+        var groups = rest.Where(r => !Alone(r)).GroupBy(r => r.GroupKey).Where(g => g.Count() >= minGroup)
+            .OrderBy(g => g.Key == CfgAccountRow.NoConfig).ThenByDescending(g => g.Key == mainKey).ThenByDescending(g => g.Count()).ToList();
+        var folded = groups.SelectMany(g => g).ToHashSet();
+        foreach (var g in groups)
+        {
+            var members = g.OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+            var first = members[0];
+            var group = new CfgGroupRow
+            {
+                Key = g.Key, Rows = members, Open = open.Contains(g.Key), CrosshairImage = first.CrosshairImage,
+                Title = g.Key == CfgAccountRow.NoConfig ? $"{members.Count} accounts with no CS2 config yet"
+                    : g.Key == mainKey && mainName != null ? $"{members.Count} accounts with the same crosshair as {mainName}"
+                    : $"{members.Count} accounts with the same crosshair",
+                Detail = g.Key == CfgAccountRow.NoConfig ? "They open with CS2's defaults, or get the sync." : first.CrosshairText,
+                Names = string.Join(", ", members.Take(6).Select(r => r.Name)) + (members.Count > 6 ? $" and {members.Count - 6} more" : ""),
+            };
+            res.Add(group);
+            if (group.Open) res.AddRange(members);
+        }
+        res.AddRange(rest.Where(r => !folded.Contains(r)).OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase));
+        return res;
+    }
+
+    void CfgGroupToggle_Click(object sender, RoutedEventArgs e) => ((sender as FrameworkElement)?.DataContext as CfgGroupRow)?.Toggle?.Invoke();
+
+    void CfgAccSearch_Changed(object sender, TextChangedEventArgs e) { if (!_cfgLoading) ShowCfgAccounts(); }
+
+    void CfgToSearch_Changed(object sender, TextChangedEventArgs e) => _cfgToView?.Refresh();
+
+    void ShowCfgToCount()
     {
         var from = (CfgFromBox.SelectedItem as CfgSourceItem)?.SteamId;
-        foreach (var r in _cfgRows) r.Selected = r.SteamId != from;
+        var n = _cfgRows.Count(r => r.Selected && r.SteamId != from);
+        CfgToCount.Text = n == 0 ? "None ticked" : $"{n} of {Fmt.Count(_cfgRows.Count(r => r.SteamId != from), "account")} ticked";
+    }
+
+    // ------------------------------------------------------------ Copy
+
+    /// <summary>All ticks the accounts shown under To (with a filter typed, only those).</summary>
+    void CfgToAll_Click(object sender, RoutedEventArgs e)
+    {
+        if (_cfgToView == null) return;
+        foreach (var r in _cfgToView.OfType<CfgAccountRow>()) r.Selected = true;
     }
 
     void CfgToNone_Click(object sender, RoutedEventArgs e) { foreach (var r in _cfgRows) r.Selected = false; }
@@ -377,6 +451,7 @@ public partial class MainWindow
         var from = (CfgFromBox.SelectedItem as CfgSourceItem)?.SteamId;
         if (from != null) foreach (var r in _cfgRows) if (r.SteamId == from) r.Selected = false;   // a hidden tick must not stay on
         _cfgToView?.Refresh();
+        if (CfgToCount != null) ShowCfgToCount();
     }
 
     void CfgCopy_Click(object sender, RoutedEventArgs e)
@@ -598,6 +673,29 @@ public sealed class CfgAccountRow : Observable
     public string ChangedText { get; init; }
     public ImageSource CrosshairImage { get; init; }
     public bool HasCrosshair => CrosshairImage != null;
+    /// <summary>Accounts with the same key share a crosshair (or have no config): the list folds them into one line.</summary>
+    public string GroupKey { get; init; }
+    public const string NoConfig = "\u0000none";
+    /// <summary>The search under Accounts and the filter under To: name or login.</summary>
+    public static bool Matches(CfgAccountRow r, string q) => string.IsNullOrWhiteSpace(q)
+        || (r.Name ?? "").Contains(q.Trim(), StringComparison.CurrentCultureIgnoreCase) || (r.Acc?.Login ?? "").Contains(q.Trim(), StringComparison.CurrentCultureIgnoreCase);
+}
+
+/// <summary>One line for several accounts with the same crosshair (Configs > Accounts with many accounts).</summary>
+public sealed class CfgGroupRow
+{
+    public string Key { get; init; }
+    public string Title { get; init; }
+    public string Detail { get; init; }
+    public string Names { get; init; }
+    public List<CfgAccountRow> Rows { get; init; }
+    public ImageSource CrosshairImage { get; init; }
+    public bool HasCrosshair => CrosshairImage != null;
+    public bool IsEmptyGroup => Key == CfgAccountRow.NoConfig;
+    public bool IsCrosshairGroup => !IsEmptyGroup;
+    public bool Open { get; init; }
+    public string ToggleText => Open ? "Hide" : "Show";
+    public Action Toggle { get; set; }
 }
 
 /// <summary>An account or a snapshot in the pickers.</summary>

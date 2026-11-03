@@ -70,7 +70,7 @@ You need Windows 10 or 11 (64-bit), admin rights and an Android phone with mobil
 
 1. **Download** `CS2IPChanger.exe` (about 66 MB) from the [latest release](https://github.com/Sepd0x/cs2-ip-changer/releases/latest) and put it in a folder only admins can change, like `C:\Program Files\CS2 IP Changer`. Started from Downloads or the Desktop, the app itself doesn't run there: it opens a window that offers to install it in that folder (Install copies the exe and your `SRT_Dados` and starts it from there; nothing is moved).
 2. **Connect the phone.** Plug it in by USB, turn on USB tethering and turn off the phone's Wi-Fi.
-3. **Open the app** (it asks for admin). On first start it says **Not protected yet** and points you to **Phone setup** (under Phone), which does each step it can and tells you the one thing left. Then paste the servers you play on into **Servers**.
+3. **Open the app** (it asks for admin). Open **Phone setup** (under Phone): each step checks itself and turns green, and where the app can do a step it has a button. Paste the servers you play on into **Servers**, then press **Turn on protection** in Status. Protection starts off each time the app opens (Settings > Protection can turn it on by itself).
 4. **Check.** Open **Connection** with CS2 and Steam running. Every check should be green, and the IP servers see must not be your home IP.
 
 > [!NOTE]
@@ -223,7 +223,7 @@ Every feature in detail: [docs/FEATURES.md](docs/FEATURES.md).
 - **Stream friendly.** Hide usernames, your home IP masked in the app, and the Steam Web API key hidden unless you click Show.
 - **Open with CS2.** Discord, Spotify or a stats tracker open with CS2, as you and never with the app's admin rights.
 - **Sounds.** A short sound when a command is taken and another when it's done or failed, in game too. They can be turned off.
-- **In the background.** An icon next to the clock with New IP + next account, Change IP, Regions, Turn off protection and Quit. The X can hide the window there, and the installed copy can start with Windows, in the notification area and without a UAC prompt each time (both off until you turn them on).
+- **In the background.** An icon next to the clock with Turn protection on or off, New IP + next account, Change IP, Regions and Quit. The X can hide the window there, and the installed copy can start with Windows, in the notification area and without a UAC prompt each time (both off until you turn them on).
 - **Mobile data counter.** What went through the phone this session and this month, with a warning at the limit you pick.
 - **Hide usernames while you stream.** It turns on by itself while OBS or Streamlabs is open.
 - **CS2 friend code.** Copy any account's friend code from its menu.
@@ -251,7 +251,7 @@ The [Quick start](#quick-start) covers the usual case.
 
 The firewall rules stay in place when you close the app, on purpose, so your IP can't leak while it's closed. To undo everything:
 
-- **In the app:** Turn off protection, on Connection or in the icon's menu next to the clock. It removes the routes and rules and checks that they're really gone. Protection stays off until you press Run leak test or open the app again. Regions you turned off stay off: Allow all (block off) on Regions lifts them.
+- **In the app:** Turn off protection, on Connection or in the icon's menu next to the clock. It removes the routes and rules and checks that they're really gone. Protection stays off until you press Turn on protection. Regions you turned off stay off: Allow all (block off) on Regions lifts them.
 - **If the window won't open:** run `CS2IPChanger.exe --restore`. It removes everything, the region block too.
 - **If you already deleted the app:** open [tools/restore.cmd](tools/restore.cmd), click Download raw file, right-click the file and pick Run as administrator, then restart the PC.
 

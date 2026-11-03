@@ -604,6 +604,8 @@ Part4Tests.Run(Check);
 Part5Tests.Run(Check);
 // beta.9: mapa de calor, cliques de raiva, idade em bandas (Beta9Tests.cs)
 Beta9Tests.Run(Check);
+// beta.10: contas novas, nomes do Steam, proteção ligada só quando a ligas (Beta10Tests.cs)
+Beta10Tests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

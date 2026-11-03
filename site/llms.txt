@@ -24,7 +24,8 @@ Status: beta (0.1.0-beta.9). Free, no account. Not affiliated with Valve.
 - CS2 config manager: copies binds, crosshair, game settings, video and HUD/radar/audio between accounts, with backups, snapshots and compare.
 - Profiles: changes the Steam name, picture, bio, country, privacy and custom URL of chosen accounts from templates, with preview and restore.
 - Regions: picks where CS2 matchmaking can put the player, with ping per region; turned-off regions are blocked by one Windows Firewall rule for cs2.exe on Valve's relay IPs only.
-- Phone setup: checks the cable, USB driver, USB debugging, tethering and the phone's Wi-Fi, and does each step it can.
+- Phone setup: steps for the cable, USB driver, USB debugging, tethering and the phone's Wi-Fi that check themselves (green or red), with a button where the app can do the step.
+- Protection starts off each time the app opens; Turn on protection (Status or the tray icon) turns it on until you turn it off.
 - No phone mode: play on the home connection (not protected) while accounts, configs, profiles and regions keep working.
 
 ## What it is not

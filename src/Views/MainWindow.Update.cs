@@ -80,13 +80,13 @@ public partial class MainWindow
             }
             HideProgress();
             var size = r.Size > 0 ? $" (about {Math.Max(1, (r.Size + 500_000) / 1_000_000)} MB)" : "";
-            if (!await Ask("Update CS2 IP Changer", $"Download version {r.Version}{size} from GitHub, check its SHA-256 and restart the app?{MobileDataNote()}\n\n" + (_restored ? "Protection stays off, as you left it." : _standby ? "The new version keeps waiting for the phone, as now." : "Protection stays on while it restarts. If you are on a server, you will be disconnected for a few seconds while the new version checks the phone's IP."), "Update")) { Telemetry.Count("upd_declined"); return; }
+            if (!await Ask("Update CS2 IP Changer", $"Download version {r.Version}{size} from GitHub, check its SHA-256 and restart the app?{MobileDataNote()}\n\n" + (!_protOn ? "Protection stays off, as now." : "Protection stays on while it restarts. If you are on a server, you will be disconnected for a few seconds while the new version checks the phone's IP."), "Update")) { Telemetry.Count("upd_declined"); return; }
             Telemetry.Count("upd_accepted");
             ShowProgress("Downloading the update…");
             var sha = await Updater.Download(r, new Progress<string>(t => ProgressText.Text = t));
             Log.Ok($"Update {r.Version} downloaded, SHA-256 matches ({sha[..12]}…). Restarting.");
             ProgressText.Text = "Restarting…";
-            Updater.Install(sha, PrepareExitForUpdate, _restored ? Updater.OffArg : _standby ? Updater.StandbyArg : null);
+            Updater.Install(sha, PrepareExitForUpdate, Guard.UpdateArg(_protOn));
             Application.Current.Shutdown();
         }
         catch (Exception ex)

@@ -538,6 +538,10 @@
                                         </Grid>
 
                                         <WrapPanel Grid.Row="2" x:Name="ActionRow" Margin="0,16,0,-6">
+                                            <!-- beta.10: protection starts off; this is the one way on (also in the tray icon's menu) -->
+                                            <Button x:Name="TurnOnBtn" Style="{StaticResource Primary}" Padding="22,0" Margin="0,0,6,6" VerticalAlignment="Top" Click="TurnOn_Click" Content="Turn on protection"
+                                                    Visibility="Collapsed"
+                                                    ToolTip="The kill switch, the routes and the CS2 lock: servers only see the phone's IP, and if the phone drops they are blocked instead of seeing your home IP. It stays on until you turn it off."/>
                                             <Button x:Name="ChangeIpBtn" Style="{StaticResource Primary}" Padding="22,0" Margin="0,0,6,6" VerticalAlignment="Top" Click="ChangeIp_Click" Content="Change IP"
                                                     ToolTipService.ShowOnDisabled="True"
                                                     ToolTip="Turns the phone's mobile data off and on until the carrier gives a new IP. Needs the phone set up over ADB. If you are on a server, you will drop."/>
@@ -550,10 +554,9 @@
                                                 </TextBlock>
                                             </StackPanel>
                                             <Button x:Name="LeakBtn" Click="LeakTest_Click" Margin="0,0,6,6" VerticalAlignment="Top" Content="Run leak test"
-                                                    ToolTip="Full test: Firewall, block, each server's route and whether the phone's IP really differs from your home IP. After Turn off protection it puts protection back first."/>
-                                            <!-- U5: the undo sits next to the test that turns protection back on -->
+                                                    ToolTip="Full test: Firewall, block, each server's route and whether the phone's IP really differs from your home IP."/>
                                             <Button x:Name="TurnOffBtn" Style="{StaticResource Danger}" Click="Restore_Click" Margin="0,0,0,6" VerticalAlignment="Top" Content="Turn off protection" Visibility="Collapsed"
-                                                    ToolTip="Removes the block, the routes and the CS2 lock. Use it if your internet stops working. Turn protection back on (where Run leak test is) brings it back. Your servers stay saved, and regions you turned off stay off (Allow all on Regions lifts them)."/>
+                                                    ToolTip="Removes the block, the routes and the CS2 lock. Use it if your internet stops working. Turn on protection brings it back. Your servers stay saved, and regions you turned off stay off (Allow all on Regions lifts them)."/>
                                         </WrapPanel>
 
                                         <Grid Grid.Row="2" x:Name="ProgressPanel" Margin="0,16,0,0" VerticalAlignment="Center" Visibility="Collapsed">
@@ -942,6 +945,9 @@
                                     <TextBlock Grid.Column="1" Text="Region" Style="{StaticResource CardTitle}" Margin="0"/>
                                     <TextBlock Grid.Column="2" Text="Country" Style="{StaticResource CardTitle}" Margin="0"/>
                                     <TextBlock Grid.Column="3" Text="Ping" Style="{StaticResource CardTitle}" Margin="0" ToolTip="Measured through the phone, the same path the game uses"/>
+                                    <!-- beta.10: Only this region shows on the row under the pointer or the one clicked; the header says so -->
+                                    <TextBlock Grid.Column="5" Grid.ColumnSpan="2" Text="Just one region? Point at it: Only this region" Style="{StaticResource CardTitle}" Margin="0"
+                                               HorizontalAlignment="Right" Foreground="{StaticResource Faint}"/>
                                 </Grid>
                                 <ListBox x:Name="RegionList" Grid.Row="1" ItemContainerStyle="{StaticResource ServerRowItem}" SelectionMode="Single"
                                          VirtualizingPanel.IsVirtualizing="False" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -974,8 +980,26 @@
                                                 <TextBlock Grid.Column="1" Text="{Binding City}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,10,0"/>
                                                 <TextBlock Grid.Column="2" Text="{Binding Country}" Foreground="{StaticResource Muted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,10,0"/>
                                                 <TextBlock Grid.Column="3" Text="{Binding PingText}" Foreground="{Binding PingBrush}" FontFamily="{StaticResource Mono}" FontSize="11" VerticalAlignment="Center"/>
-                                                <Button Grid.Column="6" Style="{StaticResource RowGhost}" Margin="0" HorizontalAlignment="Right" Click="RegionOnly_Click" Content="Only this region"
-                                                        ToolTip="Turns every other region off. Queues can get long, mostly outside peak hours."/>
+                                                <!-- beta.10: the same words on 30 rows were noise; it shows on the row under the pointer (or with the keyboard on it) -->
+                                                <Button Grid.Column="6" Margin="0" HorizontalAlignment="Right" Click="RegionOnly_Click" Content="Only this region"
+                                                        ToolTip="Turns every other region off. Queues can get long, mostly outside peak hours.">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource RowGhost}">
+                                                            <Setter Property="Opacity" Value="0"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                                                    <Setter Property="Opacity" Value="1"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                                                    <Setter Property="Opacity" Value="1"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                                                    <Setter Property="Opacity" Value="1"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
                                             </Grid>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
@@ -1134,19 +1158,36 @@
                                                     <ColumnDefinition Width="40"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Text="To" Style="{StaticResource Key}" Margin="0,1,0,0"/>
-                                                <ItemsControl x:Name="CfgToList" Grid.Column="1">
-                                                    <ItemsControl.ItemsPanel>
-                                                        <ItemsPanelTemplate>
-                                                            <WrapPanel/>
-                                                        </ItemsPanelTemplate>
-                                                    </ItemsControl.ItemsPanel>
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <CheckBox Style="{StaticResource Switch}" Content="{Binding Name}" IsChecked="{Binding Selected}" Margin="0,0,16,8"/>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
+                                                <TextBlock Text="To" Style="{StaticResource Key}" Margin="0,6,0,0"/>
+                                                <!-- beta.10: with 30 accounts the ticks were a wall. A filter, the count, and a box of even columns that scrolls -->
+                                                <StackPanel Grid.Column="1">
+                                                    <Grid Margin="0,0,0,6">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" MaxWidth="220"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBox x:Name="CfgToSearch" Tag="Filter accounts" TextChanged="CfgToSearch_Changed" ToolTip="Name or username. All ticks only the accounts shown."/>
+                                                        <TextBlock x:Name="CfgToCount" Grid.Column="1" Style="{StaticResource OptSub}" VerticalAlignment="Center" Margin="10,0,0,0" Text="None ticked"/>
+                                                    </Grid>
+                                                    <Border BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="8,6,4,0">
+                                                        <ScrollViewer MaxHeight="122" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                                            <ItemsControl x:Name="CfgToList">
+                                                                <ItemsControl.ItemsPanel>
+                                                                    <ItemsPanelTemplate>
+                                                                        <WrapPanel ItemWidth="128"/>
+                                                                    </ItemsPanelTemplate>
+                                                                </ItemsControl.ItemsPanel>
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Selected}" Margin="0,0,8,6" ToolTip="{Binding Name}">
+                                                                            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
+                                                                        </CheckBox>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </ScrollViewer>
+                                                    </Border>
+                                                </StackPanel>
                                             </Grid>
                                             <DockPanel Margin="0,6,0,7">
                                                 <TextBlock DockPanel.Dock="Left" Text="What to copy" Style="{StaticResource Key}" Margin="0"/>
@@ -1230,10 +1271,48 @@
                                     <HeaderedContentControl Style="{StaticResource Group}" Header="Accounts">
                                         <StackPanel>
                                             <TextBlock x:Name="CfgAccountsEmpty" Text="No Steam accounts on this PC yet." Style="{StaticResource Sub}" Visibility="Collapsed"/>
+                                            <!-- beta.10: from 8 accounts, a search; accounts with the same crosshair fold into one line (CfgDisplay) -->
+                                            <Grid x:Name="CfgAccSearchHost" Margin="0,0,0,6" Visibility="Collapsed">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" MaxWidth="260"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox x:Name="CfgAccSearch" Tag="Search accounts" TextChanged="CfgAccSearch_Changed" ToolTip="Name or username. While you search, every match shows on its own line."/>
+                                                <TextBlock x:Name="CfgAccCount" Grid.Column="1" Style="{StaticResource OptSub}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                            </Grid>
                                             <ItemsControl x:Name="CfgAccountsList">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,7">
+                                                <ItemsControl.Resources>
+                                                    <DataTemplate DataType="{x:Type local:CfgGroupRow}">
+                                                        <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,6" Background="Transparent">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="24"/>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <Border Width="24" Height="24" Background="{StaticResource Surface3}" BorderBrush="{StaticResource Edge}" BorderThickness="1" VerticalAlignment="Center">
+                                                                    <TextBlock Text="&#xE716;" Style="{StaticResource Icon}" FontSize="11" Foreground="{StaticResource Muted}" HorizontalAlignment="Center"/>
+                                                                </Border>
+                                                                <StackPanel Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                                    <TextBlock Text="{Binding Detail}" Foreground="{StaticResource Muted}" FontFamily="{StaticResource Mono}" FontSize="11" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"
+                                                                               Visibility="{Binding IsCrosshairGroup, Converter={StaticResource Vis}}"/>
+                                                                    <TextBlock Text="{Binding Detail}" Foreground="{StaticResource Muted}" FontSize="11" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"
+                                                                               Visibility="{Binding IsEmptyGroup, Converter={StaticResource Vis}}"/>
+                                                                    <TextBlock Text="{Binding Names}" Foreground="{StaticResource Faint}" FontSize="11" TextTrimming="CharacterEllipsis" Margin="0,1,0,0" ToolTip="{Binding Names}"/>
+                                                                </StackPanel>
+                                                                <Border Grid.Column="2" Width="28" Height="28" Background="{StaticResource Surface2}" BorderBrush="{StaticResource Line}" BorderThickness="1"
+                                                                        Margin="0,0,14,0" VerticalAlignment="Center" Visibility="{Binding HasCrosshair, Converter={StaticResource Vis}}">
+                                                                    <Image Source="{Binding CrosshairImage}" Width="26" Height="26" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                                                                </Border>
+                                                                <Button Grid.Column="3" Style="{StaticResource RowBtn}" Content="{Binding ToggleText}" Click="CfgGroupToggle_Click" MinWidth="58" Margin="0" VerticalAlignment="Center"
+                                                                        ToolTip="Show each account of this group (Sync on or off one by one)"/>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                    <DataTemplate DataType="{x:Type local:CfgAccountRow}">
+                                                        <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,5">
                                                             <Grid>
                                                                 <Grid.ColumnDefinitions>
                                                                     <ColumnDefinition Width="Auto"/>
@@ -1241,7 +1320,7 @@
                                                                     <ColumnDefinition Width="Auto"/>
                                                                     <ColumnDefinition Width="Auto"/>
                                                                 </Grid.ColumnDefinitions>
-                                                                <Grid Width="28" Height="28" VerticalAlignment="Top">
+                                                                <Grid Width="24" Height="24" VerticalAlignment="Center">
                                                                     <Border Background="{StaticResource Surface3}" BorderBrush="{StaticResource Edge}" BorderThickness="1">
                                                                         <TextBlock Text="{Binding Initial}" FontSize="12" Foreground="{StaticResource Muted}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                                     </Border>
@@ -1261,21 +1340,22 @@
                                                                         <TextBlock Text="  waiting for CS2 to close" Foreground="{StaticResource Warn}" FontSize="11" VerticalAlignment="Center"
                                                                                    Visibility="{Binding Pending, Converter={StaticResource Vis}}"/>
                                                                     </StackPanel>
-                                                                    <TextBlock Text="{Binding CrosshairText}" Foreground="{StaticResource Muted}" FontFamily="{StaticResource Mono}" FontSize="11"
-                                                                               TextTrimming="CharacterEllipsis" Margin="0,2,0,0" ToolTip="Crosshair"/>
-                                                                    <TextBlock Text="{Binding ChangedText}" Foreground="{StaticResource Faint}" FontSize="11" Margin="0,1,0,0"/>
+                                                                    <!-- One line under the name: the crosshair, then when it last changed -->
+                                                                    <TextBlock FontSize="11" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" ToolTip="{Binding ChangedText}">
+                                                                        <Run Text="{Binding CrosshairText, Mode=OneWay}" Foreground="{StaticResource Muted}" FontFamily="{StaticResource Mono}"/><Run Text="  ·  " Foreground="{StaticResource Faint}"/><Run Text="{Binding ChangedText, Mode=OneWay}" Foreground="{StaticResource Faint}"/>
+                                                                    </TextBlock>
                                                                 </StackPanel>
-                                                                <Border Grid.Column="2" Width="34" Height="34" Background="{StaticResource Surface2}" BorderBrush="{StaticResource Line}" BorderThickness="1"
+                                                                <Border Grid.Column="2" Width="28" Height="28" Background="{StaticResource Surface2}" BorderBrush="{StaticResource Line}" BorderThickness="1"
                                                                         Margin="0,0,14,0" VerticalAlignment="Center" ToolTip="Crosshair (approximate preview)"
                                                                         Visibility="{Binding HasCrosshair, Converter={StaticResource Vis}}">
-                                                                    <Image Source="{Binding CrosshairImage}" Width="32" Height="32" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                                                                    <Image Source="{Binding CrosshairImage}" Width="26" Height="26" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
                                                                 </Border>
                                                                 <CheckBox Grid.Column="3" Style="{StaticResource Switch}" Content="Sync" IsChecked="{Binding Sync}" Click="CfgOptOut_Click" VerticalAlignment="Center"
                                                                           ToolTip="Off: the sync never touches this account's config (Copy still can)"/>
                                                             </Grid>
                                                         </Border>
                                                     </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
+                                                </ItemsControl.Resources>
                                             </ItemsControl>
                                         </StackPanel>
                                     </HeaderedContentControl>
@@ -1666,9 +1746,48 @@
                                                             <TextBlock Grid.Column="4" Text="{Binding StatusText}" Foreground="{Binding StatusBrush}" FontSize="11" Margin="8,0,8,0"
                                                                        TextWrapping="Wrap" LineHeight="15" LineStackingStrategy="BlockLineHeight" MaxHeight="32" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" ToolTip="{Binding StatusText}"/>
                                                             <DockPanel Grid.Column="5" VerticalAlignment="Center">
-                                                                <Button DockPanel.Dock="Right" Style="{StaticResource RowBtn}" Content="{Binding SignInText}" Click="ProfSignIn_Click" Margin="0"
-                                                                        ToolTip="Sign in: the app keeps Steam's sign-in token for this account, encrypted for your Windows user. Sign out: deletes it."/>
-                                                                <TextBlock Text="{Binding Session}" Foreground="{Binding SessionBrush}" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,8,0"/>
+                                                                <!-- beta.10: the sign-in line and its button in one place. Signed in: the line ("Signed in · 187 d left", grey,
+                                                                     amber when it runs out soon), and on the row under the pointer the line turns into Sign out. Not signed in:
+                                                                     the line and Sign in, always in view (it is something to do). -->
+                                                                <Button DockPanel.Dock="Right" Content="{Binding SignInText}" Click="ProfSignIn_Click" Margin="0"
+                                                                        ToolTip="{Binding SignInTip}">
+                                                                    <Button.Style>
+                                                                        <Style TargetType="Button" BasedOn="{StaticResource RowBtn}">
+                                                                            <Style.Triggers>
+                                                                                <MultiDataTrigger>
+                                                                                    <MultiDataTrigger.Conditions>
+                                                                                        <Condition Binding="{Binding SignedIn}" Value="True"/>
+                                                                                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="False"/>
+                                                                                        <Condition Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType=Border}}" Value="False"/>
+                                                                                    </MultiDataTrigger.Conditions>
+                                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                </MultiDataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Button.Style>
+                                                                </Button>
+                                                                <TextBlock Text="{Binding Session}" Foreground="{Binding SessionBrush}" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,8,0">
+                                                                    <TextBlock.Style>
+                                                                        <Style TargetType="TextBlock">
+                                                                            <Style.Triggers>
+                                                                                <MultiDataTrigger>
+                                                                                    <MultiDataTrigger.Conditions>
+                                                                                        <Condition Binding="{Binding SignedIn}" Value="True"/>
+                                                                                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True"/>
+                                                                                    </MultiDataTrigger.Conditions>
+                                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                </MultiDataTrigger>
+                                                                                <MultiDataTrigger>
+                                                                                    <MultiDataTrigger.Conditions>
+                                                                                        <Condition Binding="{Binding SignedIn}" Value="True"/>
+                                                                                        <Condition Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType=Border}}" Value="True"/>
+                                                                                    </MultiDataTrigger.Conditions>
+                                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                </MultiDataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBlock.Style>
+                                                                </TextBlock>
                                                             </DockPanel>
                                                         </Grid>
                                                     </Border>
@@ -1712,11 +1831,27 @@
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            <Grid x:Name="LogTools" Margin="8,0,8,10" Visibility="Collapsed"/>
-                            <ListBox x:Name="LogList" Grid.Row="1" ItemContainerStyle="{StaticResource RowItem}">
+                            <!-- beta.10: with 600 lines, what failed was hard to find: a filter by kind and a search -->
+                            <Grid Margin="8,0,8,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="240"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="LogSearch" Tag="Search the Log" TextChanged="LogFilter_Changed" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <RadioButton x:Name="LogAll" Style="{StaticResource Seg}" GroupName="logf" Content="All" IsChecked="True" Checked="LogFilter_Changed"/>
+                                    <RadioButton x:Name="LogWarn" Style="{StaticResource Seg}" GroupName="logf" Content="Warnings and errors" Checked="LogFilter_Changed"/>
+                                    <RadioButton x:Name="LogErr" Style="{StaticResource Seg}" GroupName="logf" Content="Errors" Checked="LogFilter_Changed"/>
+                                </StackPanel>
+                                <TextBlock x:Name="LogCount" Grid.Column="2" Foreground="{StaticResource Faint}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                            </Grid>
+                            <Grid x:Name="LogTools" Grid.Row="1" Margin="8,0,8,10" Visibility="Collapsed"/>
+                            <ListBox x:Name="LogList" Grid.Row="2" ItemContainerStyle="{StaticResource RowItem}">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <Grid>
@@ -1752,7 +1887,7 @@
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
                             </ListBox>
-                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="8,8,8,2">
+                            <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="8,8,8,2">
                                 <Button Click="LogCopy_Click" Content="Copy all" ToolTip="Copies the log so you can paste it where you need it (e.g. to ask for help)"/>
                                 <Button Click="ExportReport_Click" Content="Save bug report"
                                         ToolTip="Saves a .zip on the Desktop to attach to a bug report: this log, the app's settings and rules, Steam's connection log and CS2's console. Your home IP and API key are left out."/>
@@ -1806,6 +1941,15 @@
                                             <StackPanel>
                                                 <TextBlock Text="Fall back to Game only on a weak connection"/>
                                                 <TextBlock Text="So the rest of the PC stops sharing a weak phone connection with CS2." Style="{StaticResource OptSub}"/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                        <!-- beta.10: when protection turns on and off by itself, apart from what it does -->
+                                        <TextBlock Text="Start and close" Style="{StaticResource Key}" Margin="0,4,0,8"/>
+                                        <CheckBox x:Name="ProtectOnStartBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12"
+                                                  ToolTip="Off (the default): the app always starts with protection off and you turn it on in Status or the tray icon. On: it turns on by itself at every start, also with Windows. With no phone connected, your servers and CS2 stay blocked until it is.">
+                                            <StackPanel>
+                                                <TextBlock Text="Turn on protection when the app starts"/>
+                                                <TextBlock Text="Also with Windows. Without the phone, your servers and CS2 stay blocked until you connect it." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
                                         <CheckBox x:Name="CleanupBox" Style="{StaticResource Switch}" Click="SettingChanged"
@@ -1948,16 +2092,16 @@
                                 <HeaderedContentControl Style="{StaticResource Group}" Header="Background and data">
                                     <StackPanel>
                                         <CheckBox x:Name="StartWithWindowsBox" Style="{StaticResource Switch}" Click="StartWithWindows_Click" Margin="0,0,0,12" ToolTipService.ShowOnDisabled="True"
-                                                  ToolTip="A scheduled task named 'CS2 IP Changer' opens the app in the notification area when you sign in, with its admin rights and without the UAC prompt each time. Until the phone is connected, only the servers on your Servers page are blocked and the rest of CS2 uses your home network. Only for the copy installed in C:\Program Files\CS2 IP Changer. Turning this off, Remove everything and --restore delete the task.">
+                                                  ToolTip="A scheduled task named 'CS2 IP Changer' opens the app in the notification area when you sign in, with its admin rights and without the UAC prompt each time. Protection starts off, unless Settings > Protection > Turn on protection when the app starts is on. Only for the copy installed in C:\Program Files\CS2 IP Changer. Turning this off, Remove everything and --restore delete the task.">
                                             <StackPanel>
                                                 <TextBlock Text="Start with Windows"/>
-                                                <TextBlock Text="Opens in the notification area when you sign in. Protection waits for the phone." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="Opens in the notification area when you sign in, with protection off (see Protection above)." Style="{StaticResource OptSub}"/>
                                                 <TextBlock x:Name="AutostartHint" Visibility="Collapsed" Style="{StaticResource OptSub}" Foreground="{StaticResource Warn}"
                                                            Text="Only for the installed copy: start the app from Downloads and click Install."/>
                                             </StackPanel>
                                         </CheckBox>
                                         <CheckBox x:Name="CloseToTrayBox" Style="{StaticResource Switch}" Click="CloseToTray_Click" Margin="0,0,0,12"
-                                                  ToolTip="The X hides the window and the app keeps protecting from the notification area (next to the clock). Click the icon to open it; right-click it for New IP, Change IP, Regions, Turn off protection and Quit.">
+                                                  ToolTip="The X hides the window and the app keeps protecting from the notification area (next to the clock). Click the icon to open it; right-click it for New IP, Change IP, Regions, Turn protection on or off and Quit.">
                                             <StackPanel>
                                                 <TextBlock Text="Close to the notification area"/>
                                                 <TextBlock Text="The X hides the window. Quit is in the icon's menu." Style="{StaticResource OptSub}"/>
@@ -2140,6 +2284,49 @@
             </Grid>
 
             <!-- Dialog -->
+            <!-- beta.10: Phone setup as steps that check themselves (PhoneSetup.Steps), each with its button when the app can do it -->
+            <Grid x:Name="SetupPane" Grid.Row="1" Background="#B0000000" Visibility="Collapsed">
+                <HeaderedContentControl Style="{StaticResource DialogGroup}" Width="580" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="18,20,18,16">
+                    <HeaderedContentControl.Header>
+                        <TextBlock Text="Phone setup"/>
+                    </HeaderedContentControl.Header>
+                    <StackPanel>
+                        <TextBlock x:Name="SetupSummary" Style="{StaticResource Sub}" TextWrapping="Wrap" Margin="0,0,0,12"
+                                   Text="Each step checks itself every 2 seconds. Do the red one and it turns green."/>
+                        <ItemsControl x:Name="SetupSteps">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,8" Background="{Binding RowBack}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="26"/>
+                                                <ColumnDefinition Width="150"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel VerticalAlignment="Top" Margin="4,4,0,0">
+                                                <local:StatusMark Brush="{Binding Brush}" HorizontalAlignment="Left"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{Binding Title}" FontWeight="SemiBold" Foreground="{Binding TitleBrush}" VerticalAlignment="Top"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding Detail}" Foreground="{Binding DetailBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,10,0" VerticalAlignment="Top"/>
+                                            <Button Grid.Column="3" Style="{StaticResource Primary}" Content="{Binding Action}" Click="SetupAction_Click" Margin="0" MinWidth="86" VerticalAlignment="Top"
+                                                    Visibility="{Binding HasAction, Converter={StaticResource Vis}}" IsEnabled="{Binding Idle}"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Grid Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="SetupFoot" Style="{StaticResource OptSub}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <Button x:Name="SetupCloseBtn" Grid.Column="1" Content="Close" Click="SetupClose_Click" Margin="0"/>
+                        </Grid>
+                    </StackPanel>
+                </HeaderedContentControl>
+            </Grid>
             <Grid x:Name="Dialog" Grid.Row="1" Background="#B0000000" Visibility="Collapsed">
                 <HeaderedContentControl Style="{StaticResource DialogGroup}" Width="480" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="18,20,18,16">
                     <HeaderedContentControl.Header>

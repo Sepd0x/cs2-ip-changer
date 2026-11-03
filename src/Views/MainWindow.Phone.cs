@@ -302,81 +302,137 @@ public partial class MainWindow
         now - (askedAt > missingSince ? askedAt : missingSince) > TetherWait;
     DateTime? _tetherMissingSince;
 
-    // ------------------------------------------------------------ Phone setup: does each step it can, says the one thing left
-
-    bool _setupRunning;
-    readonly List<string> _setupDone = new();
+    // ------------------------------------------------------------ Phone setup
 
     async void PhoneHelp_Click(object sender, RoutedEventArgs e) => await RunPhoneSetup();
 
-    /// <summary>Demo only (development build): the setup as it looks after a run.</summary>
+    /// <summary>Demo only (development build): the panel with made-up steps.</summary>
     partial void DemoPhoneSetup();
 
+    // ------------------------------------------------------------ The Phone setup panel (beta.10): steps that check themselves
+
+    readonly System.Collections.ObjectModel.ObservableCollection<SetupStepRow> _setupRows = new();
+    DispatcherTimer _setupTimer;
+    PhoneSetupState _setupState;
+    PhoneStep? _setupBusy;
+    string _setupBusyText;
+    bool _setupReading;
+    string _setupFirstTodo;
+
+    /// <summary>Opens the panel: every 2 s it reads the phone again and redraws the steps, until you close it.</summary>
     async Task RunPhoneSetup()
     {
-        if (_setupRunning) { Dialog.Visibility = Visibility.Visible; return; }
+        SetupSteps.ItemsSource = _setupRows;
+        SetupPane.Visibility = Visibility.Visible;
         if (_demo) { DemoPhoneSetup(); return; }
-        _setupRunning = true;
-        _setupDone.Clear();
-        Log.Info("Phone setup started.");
-        _ = Ask("Phone setup", "Checking the phone…", "Close", null);
-        var tried = new HashSet<PhoneStep>();
-        PhoneSetupState st = null;
-        var step = PhoneStep.Done;
+        if (_setupTimer?.IsEnabled == true) return;
+        Log.Info("Phone setup opened.");
+        _setupFirstTodo = null;
+        _setupTimer ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        _setupTimer.Tick -= SetupTick;
+        _setupTimer.Tick += SetupTick;
+        _setupTimer.Start();
+        await ReadSetupNow();
+    }
+
+    async void SetupTick(object sender, EventArgs e) => await ReadSetupNow();
+
+    async Task ReadSetupNow()
+    {
+        if (_setupReading || _setupBusy != null) return;
+        _setupReading = true;
+        try { ShowSetup(await ReadSetupState()); }
+        catch (Exception ex) { Log.Warn("Phone setup: " + ex.Message); }
+        finally { _setupReading = false; }
+    }
+
+    /// <summary>Draws the steps from what was read. The summary says what to do now, or that the phone is ready.</summary>
+    void ShowSetup(PhoneSetupState st)
+    {
+        _setupState = st;
+        var samsung = st.Usb.Vendor == "Samsung" || _phone?.Model?.StartsWith("SM-", StringComparison.OrdinalIgnoreCase) == true;
+        var steps = PhoneSetup.Steps(st, samsung, _phone?.Model, _s.EgressSsid);
+        var now = PhoneSetup.Current(steps);
+        _setupFirstTodo ??= now == null ? "done" : PhoneSetup.Key(now.Step);   // the usage count: where it stood when you opened it
+        _setupRows.Clear();
+        foreach (var i in steps)
+            _setupRows.Add(new SetupStepRow(i, i == now, _setupBusy == i.Step ? _setupBusyText : null, _setupBusy == null));
+        var ok = steps.Count(i => i.State == PhoneSetup.StepState.Ok);
+        SetupSummary.Text = now == null && steps.All(i => i.State == PhoneSetup.StepState.Ok)
+            ? "The phone is ready. The app checks its IP, then servers see it instead of your home IP."
+            : now == null ? $"{ok} of {steps.Count} ready." : $"{ok} of {steps.Count} ready. Next: {now.Title} (in red). It turns green by itself once done.";
+        SetupFoot.Text = _s.NoPhone ? "You picked No phone under What goes through the phone, so the app isn't using the phone right now."
+            : now == null ? "For less lag in game: " + NetReport.Tips(_last?.Egress?.IsWifi == true)
+            : "Each step checks itself every 2 seconds.";
+        SetupCloseBtn.Content = now == null ? "Done" : "Close";
+        SetupCloseBtn.Style = (Style)FindResource(now == null ? "Primary" : "Btn");
+    }
+
+    void SetupClose_Click(object sender, RoutedEventArgs e)
+    {
+        SetupPane.Visibility = Visibility.Collapsed;
+        _setupTimer?.Stop();
+        if (_demo || _setupFirstTodo == null) return;
+        Telemetry.Count("phone_setup_" + _setupFirstTodo);
+        Log.Info("Phone setup closed" + (PhoneSetup.Current(PhoneSetup.Steps(_setupState ?? new PhoneSetupState())) is { } left ? " at " + PhoneSetup.Key(left.Step) + "." : ": the phone is ready."));
+        _ = RefreshPhone();
+    }
+
+    /// <summary>The button of a step: the app does it, the row says what is happening, then the steps are read again.</summary>
+    async void SetupAction_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not SetupStepRow row || _setupBusy != null) return;
+        if (_demo) { Toast("Demo: " + row.Action + ".", true); return; }
+        var step = row.Item.Step;
+        Telemetry.Click("Setup_" + PhoneSetup.Key(step));
+        string Busy(string text) { _setupBusyText = text; if (_setupState != null) ShowSetup(_setupState); return text; }
+        _setupBusy = step;
         string why = null;
-        PhoneStep? whyFor = null;
         try
         {
-            for (var round = 0; round < 10; round++)
+            switch (step)
             {
-                SetupShow(st, "Checking the phone…");
-                st = await ReadSetupState();
-                step = PhoneSetup.Next(st);
-                SetupShow(st, null);
-                if (step == PhoneStep.Done || !PhoneSetup.AppDoes(step) || !tried.Add(step)) break;
-                Log.Info("Phone setup: " + PhoneSetup.Key(step));
-                var go = await DoSetupStep(step, st);
-                if (go.Why != null) (why, whyFor) = (go.Why, step);
-                if (!go.Continue) break;
+                case PhoneStep.NoAdbTool:
+                    if (await Ask("Phone setup", "Download Google's official platform-tools (about 7 MB) from dl.google.com?" + MobileDataNote(), "Download", "Not now"))
+                    {
+                        Busy("Downloading from Google…");
+                        if (!await InstallAdb(t => Busy(t), showProgress: false)) why = "The phone tool (ADB) didn't install. See the Log.";
+                    }
+                    break;
+                case PhoneStep.AdbFailed:
+                    Busy("Starting the phone tool again…");
+                    _adb = Adb.Find();
+                    break;
+                case PhoneStep.TetherOff:
+                    Busy("Turning on USB tethering…");
+                    var (adapter, w) = await TurnOnTethering(t => Busy(t));
+                    if (adapter == null) why = w;
+                    break;
+                case PhoneStep.WifiOn:
+                    Busy("Turning off the phone's Wi-Fi…");
+                    await TurnPhoneWifiOff();
+                    await Task.Delay(3000);
+                    await RefreshPhone();
+                    break;
+                case PhoneStep.PcOnPhone:
+                    Busy("Keeping the rest of the PC on your home network…");
+                    if (!_s.KeepPcOffPhone)
+                    {
+                        _s.KeepPcOffPhone = true;
+                        _uiLock = true;
+                        try { KeepOffBox.IsChecked = true; } finally { _uiLock = false; }
+                        SaveSettings();
+                        Log.Info("Phone setup turned on Save mobile data, so the rest of the PC stays on the home network.");
+                    }
+                    await SyncNow(force: true);
+                    await Task.Delay(1500);
+                    break;
             }
         }
         catch (Exception ex) { Log.Error("Phone setup: " + ex.Message); why = "Something failed: " + ex.Message; }
-        finally { _setupRunning = false; }
-        await RefreshPhone();
-        Telemetry.Count("phone_setup_" + PhoneSetup.Key(step));
-        var samsung = st?.Usb.Vendor == "Samsung" || _phone?.Model?.StartsWith("SM-", StringComparison.OrdinalIgnoreCase) == true;
-        var last = step == PhoneStep.Done ? "Ready. The app checks the phone's IP, then servers see it instead of your home IP.\n\nFor less lag in game: " + NetReport.Tips(_last?.Egress?.IsWifi == true)
-            : "Left for you: " + (whyFor == step && why != null ? why : PhoneSetup.Advice(step, st?.Usb.Problem, samsung));
-        if (_s.NoPhone) last += "\n\nYou picked No phone under What goes through the phone, so the app isn't using the phone right now.";
-        Log.Info(step == PhoneStep.Done ? "Phone setup: done." : "Phone setup: stopped at " + PhoneSetup.Key(step) + ".");
-        await Ask("Phone setup", SetupText(st, null) + "\n\n" + last, "Got it", null);
-    }
-
-    /// <summary>What the setup found, one line each, then what it did and what it's doing now.</summary>
-    string SetupText(PhoneSetupState st, string now)
-    {
-        var lines = new List<string>();
-        if (st != null)
-        {
-            lines.Add("Phone tool (ADB): " + (st.AdbTool ? "installed" : "not installed"));
-            lines.Add("USB: " + (st.AdbState == "device" ? $"{_phone?.Model ?? "phone"} over USB debugging"
-                : st.Usb.Problem is int c ? $"driver failed (code {c})"
-                : st.AdbState == "unauthorized" ? "waiting for you to allow USB debugging"
-                : st.Usb.Seen || st.Tethered ? "phone plugged in, USB debugging off"
-                : "no phone found"));
-            lines.Add("Connection: " + (st.Hotspot ? $"the phone's Wi-Fi hotspot ({_s.EgressSsid})" : st.Tethered ? "USB tethering on" : "USB tethering off"));
-            if (st.AdbState == "device" && !st.Hotspot) lines.Add("Phone Wi-Fi: " + (st.WifiOn ? "on" : "off (mobile data)"));
-            var pc = HomeAdapter?.Name;
-            lines.Add("Rest of the PC: " + (st.PcOnPhone ? "goes through the phone" : _s.WholePc && _last?.EffectiveMode == "all" ? "through the phone (Whole PC)" : pc != null ? $"home network ({pc})" : "home network"));
-        }
-        if (_setupDone.Count > 0) lines.Add("\n" + string.Join("\n", _setupDone));
-        if (now != null) lines.Add("\n" + now);
-        return string.Join("\n", lines);
-    }
-
-    void SetupShow(PhoneSetupState st, string now)
-    {
-        if (Dialog.Visibility == Visibility.Visible && DialogTitle.Text == "Phone setup") DialogText.Text = SetupText(st, now);
+        finally { _setupBusy = null; _setupBusyText = null; }
+        if (why != null) Toast(why, false);
+        await ReadSetupNow();
     }
 
     async Task<PhoneSetupState> ReadSetupState()
@@ -389,7 +445,7 @@ public partial class MainWindow
         var hotspot = !string.IsNullOrEmpty(_s.EgressSsid);
         var phone = Net.PickEgress(adapters, _s.EgressAdapterId, _s.EgressSsid);
         var other = phone != null && adapters.Any(a => a.Up && a.Gateway != null && a.Index != phone.Index && !a.IsPhone);
-        var mode = Guard.ModeFor(_s.Mode, _s.GameMode, Steam.Cs2Running);
+        var mode = _protOn || _s.NoPhone ? Guard.ModeFor(_s.Mode, _s.GameMode, Steam.Cs2Running) : "off";
         return new PhoneSetupState
         {
             AdbTool = _adb != null,
@@ -400,62 +456,6 @@ public partial class MainWindow
             WifiOn = info?.Ready == true && info.WifiOn && info.WifiConnected != false,
             PcOnPhone = Guard.NeedsPcOffPhone(mode, true, Net.BestInterface("1.1.1.1"), phone?.Index ?? -1, other),
         };
-    }
-
-    /// <summary>One step the app can do. Continue = check again; Why = what to tell you if it stops here.</summary>
-    async Task<(bool Continue, string Why)> DoSetupStep(PhoneStep step, PhoneSetupState st)
-    {
-        switch (step)
-        {
-            case PhoneStep.NoAdbTool:
-                if (!await Ask("Phone setup", SetupText(st, null) + "\n\nThe phone tool (ADB) is needed for Change IP and for the rest of this check. Download Google's official platform-tools (about 7 MB) from dl.google.com?" + MobileDataNote(), "Download", "Not now"))
-                    return (false, null);
-                _ = Ask("Phone setup", SetupText(st, "Downloading the phone tool (ADB) from Google…"), "Close", null);
-                if (!await InstallAdb(t => SetupShow(st, t), showProgress: false)) return (false, "The phone tool (ADB) didn't install. See the Log.");
-                _setupDone.Add("Installed the phone tool (ADB).");
-                return (true, null);
-            case PhoneStep.Unauthorized:
-                // The prompt is on the phone: wait for your tap (up to 30 s).
-                for (var i = 0; i < 15; i++)
-                {
-                    SetupShow(st, $"Allow USB debugging on the phone screen (tick \"Always allow\")… {30 - i * 2} s");
-                    await Task.Delay(2000);
-                    if ((await Adb.Status(_adb))?.Ready == true) { _setupDone.Add("USB debugging allowed."); return (true, null); }
-                }
-                return (false, null);
-            case PhoneStep.TetherOff:
-            {
-                var (adapter, why) = await TurnOnTethering(t => SetupShow(st, t));
-                if (adapter == null) return (false, why);
-                _setupDone.Add($"Turned on USB tethering ({adapter.Name}).");
-                return (true, null);
-            }
-            case PhoneStep.WifiOn:
-                if (!await Ask("Phone setup", SetupText(st, null) + "\n\nThe phone's Wi-Fi is on" + (_phone?.WifiSsid != null ? $" ({_phone.WifiSsid})" : "") +
-                        ": tethering may share your home network instead of mobile data. Turn it off on the phone?", "Turn Wi-Fi off", "Leave it on"))
-                    return (false, null);
-                _ = Ask("Phone setup", SetupText(st, "Turning off the phone's Wi-Fi…"), "Close", null);
-                await TurnPhoneWifiOff();
-                await Task.Delay(3000);
-                await RefreshPhone();
-                _setupDone.Add("Turned off the phone's Wi-Fi.");
-                return (true, null);
-            case PhoneStep.PcOnPhone:
-                SetupShow(st, "Keeping the rest of the PC on your home network…");
-                if (!_s.KeepPcOffPhone)
-                {
-                    _s.KeepPcOffPhone = true;
-                    _uiLock = true;
-                    try { KeepOffBox.IsChecked = true; } finally { _uiLock = false; }
-                    SaveSettings();
-                    Log.Info("Phone setup turned on Save mobile data, so the rest of the PC stays on the home network.");
-                }
-                await SyncNow(force: true);
-                await Task.Delay(1500);
-                if (Net.BestInterface("1.1.1.1") != _last?.PhoneIndex) _setupDone.Add("Moved the rest of the PC back to your home network.");
-                return (true, "Windows still sends the rest of the PC through the phone. Check the Log, or plug the PC into your home network.");
-        }
-        return (false, null);
     }
 
     async void ChangeIp_Click(object sender, RoutedEventArgs e) => await RunCommand("Change IP", "starting…", () => ChangeIp(confirm: true));
@@ -481,9 +481,7 @@ public partial class MainWindow
         if (confirm && Steam.Cs2Running && !await Ask("CS2 is open", "If you are on a server, you will be disconnected when the IP changes. Continue?", "Change IP")) return false;
 
         _changingIp = true;
-        // Still waiting for the phone since the start: asking for a new IP is asking for protection now, CS2 open or not
-        if (_standby) { _standby = false; Log.Info("Change IP: protection turns on fully now."); }
-        // The new IP isn't known yet: untrusted (servers and CS2 blocked) until it is measured again.
+        // Protection off: the phone's IP changes all the same (servers see it once protection is on). The new IP isn't known yet: untrusted (servers and CS2 blocked) until it is measured again.
         _verifiedKey = null;
         await SyncNow(force: true);
         ChangeIpBtn.IsEnabled = false;
@@ -562,7 +560,7 @@ public partial class MainWindow
                 AddHistory(got, _egressInfo, "trocado");
                 ResetQuality();
                 Log.Ok($"Mobile data back on: {got} (the IP before wasn't known, so it can't be compared). {range}");
-                Toast($"New IP: {got}. {range}", !sameRange);
+                Toast($"New IP: {got}. {range}" + (_protOn ? "" : " Protection is off: turn it on so servers see this IP."), !sameRange);
                 return true;
             }
             else if (got != null && got != first)
@@ -574,7 +572,7 @@ public partial class MainWindow
                 ResetQuality();
                 if (sameRange) Log.Warn($"IP changed: {first} → {got}. {range}");
                 else Log.Ok($"IP changed: {first} → {got}. {range}");
-                Toast($"New IP: {got}. {range}", !sameRange);
+                Toast($"New IP: {got}. {range}" + (_protOn ? "" : " Protection is off: turn it on so servers see this IP."), !sameRange);
                 return true;
             }
             else if (got == first)
@@ -664,4 +662,26 @@ public partial class MainWindow
         }
         return null;
     }
+}
+
+/// <summary>One line of the Phone setup panel: green done, red to do (the current one stands out), grey waiting for the one before.</summary>
+public sealed class SetupStepRow
+{
+    public SetupStepRow(PhoneSetup.SetupItem item, bool current, string busy, bool idle)
+    {
+        Item = item; Current = current; Busy = busy; Idle = idle;
+    }
+    public PhoneSetup.SetupItem Item { get; }
+    public bool Current { get; }
+    public string Busy { get; }
+    public bool Idle { get; }
+    public string Title => Item.Title;
+    public string Detail => Busy ?? Item.Detail;
+    public string Action => Item.Action;
+    public bool HasAction => Item.Action != null && Item.State == PhoneSetup.StepState.Todo;
+    public Brush Brush => Item.State switch { PhoneSetup.StepState.Ok => Ui.Good, PhoneSetup.StepState.Todo => Busy != null ? Ui.Warn : Ui.Bad, _ => Ui.Faint };
+    public Brush TitleBrush => Item.State == PhoneSetup.StepState.Waiting ? Ui.Faint : Ui.Text;
+    public Brush DetailBrush => Busy != null ? Ui.Warn : Item.State == PhoneSetup.StepState.Todo ? (Current ? Ui.Text : Ui.Muted) : Ui.Faint;
+    /// <summary>The step to do now gets a faint red band, so it is the first thing you see.</summary>
+    public Brush RowBack => Current ? Ui.BadSoft : Brushes.Transparent;
 }

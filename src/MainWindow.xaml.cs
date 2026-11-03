@@ -34,7 +34,12 @@ public partial class MainWindow : Window
     string _lastEgressKey;
     string _verifiedKey, _measuredKey;
     int _ipSeq;
-    bool _standby, _standbyPhoneSaid;
+    /// <summary>
+    /// Protection is on: only when you turned it on (Guard.OnAtStart has the rules). _restored: the app is closing or removing
+    /// everything, so no sync puts the rules back.
+    /// </summary>
+    bool _protOn, _turningOff;
+    string[] _startArgs;
     bool _distrust, _restored, _phoneBusy, _tetherHinted, _cs2WasRunning, _wasProtected, _everProtected, _homeCached, _switching, _reveal, _syncing, _syncAgain, _changingIp, _querying, _refreshingAcc, _uiLock, _closingDone;
     string _adb;
     PhoneInfo _phone;
@@ -61,9 +66,7 @@ public partial class MainWindow : Window
         ParseDevArgs(args);
         StartHiddenIfAsked(args);
         _justUpdated = args.Contains("--updated");
-        // Each start waits for the phone (Guard.StaysOnStandby). An update carries on as the old copy was: protected, waiting, or off.
-        _standby = !_justUpdated || args.Contains(Updater.StandbyArg);
-        _restored = _justUpdated && args.Contains(Updater.OffArg);
+        _startArgs = args;   // on or off is decided in Startup (Guard.OnAtStart), with the Firewall and CS2 read
         ShowVersion();
 
         Log.Added += e => Dispatcher.BeginInvoke(() =>
@@ -162,9 +165,16 @@ public partial class MainWindow : Window
     async Task Startup()
     {
         Log.Info($"CS2 IP Changer {AppInfo.Version} started{(_demo ? " (demo)" : "")}.");
-        if (_demo) LoadDemo();
+        if (_demo) { _protOn = true; LoadDemo(); }
         else
         {
+            var leftOn = false;
+            try { leftOn = Steam.Cs2Running && Firewall.BlockLeft(Firewall.Remaining()); } catch { }
+            _protOn = Guard.OnAtStart(_justUpdated, _startArgs, _s.ProtectOnStart, leftOn, Steam.Cs2Running, _s.NoPhone);
+            if (_s.NoPhone) { }   // No phone mode says so itself (Guard.HomeMode)
+            else if (!_protOn) Log.Info("Protection is off. Turn it on in Status (or the tray icon) when you want to play through the phone.");
+            else Log.Info(_justUpdated ? "Protection stays on after the update." : leftOn ? "CS2 is open with the block from the last run still on: protection stays on, so the match isn't moved to your home IP."
+                : "Protection turns on by itself (Settings > Protection > Turn on protection when the app starts).");
             StartupDev();
             ImportStartupFile();
             WatchStreaming();   // OBS already open: usernames hidden before the list shows them
@@ -172,7 +182,6 @@ public partial class MainWindow : Window
             ShowLastServer();
             WatchSteamLog();
             await SyncNow(force: true);
-            if (_restored) ShowProtectionOff();   // updated while protection was off: it stays off
             _ = RefreshPhone();
             _ = RefreshPublicIps();
             _tick.Start();

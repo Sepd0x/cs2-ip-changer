@@ -90,6 +90,8 @@ public sealed partial class Settings
     public bool AutoStreamer { get; set; } = true;
     public bool AutoQuery { get; set; } = true;
     public bool CleanupOnExit { get; set; }
+    /// <summary>Protection turns on by itself when the app starts (also with Windows). Off by default: you turn it on (Guard.OnAtStart).</summary>
+    public bool ProtectOnStart { get; set; }
     /// <summary>The window's X hides it in the notification area; the app keeps running (Quit is in the icon's menu).</summary>
     public bool CloseToTray { get; set; }
     /// <summary>The "still running in the notification area" notice was shown once.</summary>
@@ -204,8 +206,7 @@ public sealed class ServerItem : Observable
     [JsonIgnore] public bool? Protected { get => _protected; set { if (Set(ref _protected, value)) { Raise(nameof(RouteBrush)); Raise(nameof(RouteBg)); Raise(nameof(RouteTextBrush)); } } }
     [JsonIgnore] public Brush RouteBrush => Protected switch { true => Ui.Good, false => Ui.Bad, _ => Ui.Warn };
     [JsonIgnore] public Brush RouteBg => Protected switch { true => Ui.GoodSoft, false => Ui.BadSoft, _ => Ui.WarnSoft };
-    [JsonIgnore] public Brush RouteTextBrush => Protected switch { true => Ui.Faint, false => Ui.Bad, _ => Ui.Warn };
-    /// <summary>Who is on the server now (A2S). Null when the server didn't answer.</summary>
+    [JsonIgnore] public Brush RouteTextBrush => Protected switch { true => Ui.Faint, false => Ui.Bad, _ => Ui.Warn };    /// <summary>Who is on the server now (A2S). Null when the server didn't answer.</summary>
     [JsonIgnore] public List<PlayerRow> Players
     {
         get => _playerList;
@@ -365,7 +366,11 @@ public sealed class AccountItem : Observable
     public string SteamId => Local.SteamId;
     public string Login => Local.AccountName;
     public string LoginShown => Streamer && !Rec.On ? "••••••••" : Login;   // recording build: the login is blurred on screen instead
-    public string Name => Meta.Profile?.Persona ?? Local.PersonaName ?? Login;
+    /// <summary>
+    /// The Steam name: the profile's (decoded again here, for profiles saved encoded before beta.10), else the one in loginusers.vdf,
+    /// else the login. A bare SteamID64 is skipped: a profile that was never set up shows that instead of a name.
+    /// </summary>
+    public string Name => Steam.ShownName(Steam.WebText(Meta.Profile?.Persona)) ?? Steam.ShownName(Local.PersonaName) ?? Login;
     public string Initial => Rec.On || string.IsNullOrEmpty(Name) ? "?" : Name.Substring(0, 1).ToUpperInvariant();
 
     public bool Active { get => _active; set { if (Set(ref _active, value)) { Raise(nameof(CardBorder)); } } }

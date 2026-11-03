@@ -158,14 +158,7 @@ static class CoreTests
             string Group(string header) { var i = netXaml.IndexOf($"Header=\"{header}\""); return netXaml[netXaml.LastIndexOf('<', i)..netXaml.IndexOf('>', i)]; }
             check("Connection: What goes through the phone e Previous IPs vão até ao fundo",
                 !Group("What goes through the phone").Contains("VerticalAlignment") && !Group("Previous IPs").Contains("VerticalAlignment"));
-            // beta.9: arrancar sem o telemóvel (com o Windows ou à mão) bloqueava o CS2 todo, também os servidores da Valve.
-            // Agora cada arranque espera pelo telemóvel: Game only sem o lock do CS2 até o IP do telemóvel estar confirmado.
-            check("Arranque: sem telemóvel confirmado espera (sem lock do CS2)", Guard.StaysOnStandby(true, "servers", false, false) && Guard.StaysOnStandby(true, "all", false, false));
-            check("Arranque: telemóvel confirmado e CS2 fechado, a proteção liga toda", !Guard.StaysOnStandby(true, "servers", true, false));
-            check("Arranque: CS2 aberto em casa, espera que feche (não corta a partida)", Guard.StaysOnStandby(true, "servers", true, true));
-            check("Depois de ligada, uma queda do telemóvel bloqueia como sempre", !Guard.StaysOnStandby(false, "servers", false, false) && !Guard.StaysOnStandby(false, "all", false, true));
-            check("No phone é escolha dele, não espera", !Guard.StaysOnStandby(true, "home", false, false));
-            check("Atualização: a cópia nova sabe se a velha esperava ou estava desligada", Updater.StandbyArg == "--standby" && Updater.OffArg == "--off");
+            // beta.9 esperava pelo telemóvel em cada arranque (Guard.StaysOnStandby); a beta.10 troca isso por ligar e desligar: Beta10Tests.cs
             check("Servidores: colunas de jogadores", MainWindow.PlayerColumns(880) == 4 && MainWindow.PlayerColumns(100) == 1 && MainWindow.PlayerColumns(650) == 3,
                 $"{MainWindow.PlayerColumns(880)} {MainWindow.PlayerColumns(100)} {MainWindow.PlayerColumns(650)}");
             check("Checks: regiões todas permitidas", MainWindow.RegionsCheckText(30, 0) == "All 30 allowed" && MainWindow.RegionsCheckText(0, 0) == "All allowed");

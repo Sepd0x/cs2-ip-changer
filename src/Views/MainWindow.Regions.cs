@@ -137,8 +137,8 @@ public partial class MainWindow
         var local = PingVia?.LocalIp;
         if (local == null)
         {
-            // Never through the home network while the game goes through the phone: the number has to be what the game feels.
-            if (!quiet) Toast(_s.NoPhone ? "No connection to measure the ping through." : "Phone disconnected: the ping is only measured through the phone.", false);
+            // Through the phone while protection is on (the number has to be what the game feels, never from the home IP), else at home
+            if (!quiet) Toast(PingedOnHome ? "No connection to measure the ping through." : "Protection is on and the phone is disconnected: the ping is measured through the phone. Turning regions on and off still works.", false);
             ShowRegionsStatus();
             return;
         }
@@ -150,6 +150,7 @@ public partial class MainWindow
             var pings = await Regions.PingAll(_regionInfos, local);
             foreach (var r in _regions) r.PingMs = pings.GetValueOrDefault(r.Id, -1);
             _regionsPingedAt = DateTime.Now;
+            _regionsPingedHome = PingedOnHome;
             _regionView?.Refresh();
             if (!quiet) Toast($"{pings.Count(p => p.Value >= 0)} of {pings.Count} regions answered.", pings.Any(p => p.Value >= 0));
         }
@@ -162,10 +163,19 @@ public partial class MainWindow
         }
     }
 
-    /// <summary>The path CS2 uses: the phone, or the home connection in the no phone mode.</summary>
-    Adapter PingVia => _s.NoPhone ? HomeAdapter : _last?.Egress;
+    /// <summary>
+    /// The path CS2 uses: the home connection with protection off or in No phone mode (beta.10: Regions doesn't wait for the cable),
+    /// the phone while protection is on. With protection on and the phone not there, nothing is measured: the ping would leave from
+    /// the home IP while you asked for the phone. The page says where the ping was measured.
+    /// </summary>
+    Adapter PingVia => PingOnHome(_s.NoPhone, _protOn) ? HomeAdapter : _last?.Egress;
 
-    string MeasureFirst => _s.NoPhone ? "Measure the ping first: press Refresh." : "Measure the ping first: connect the phone and press Refresh.";
+    public static bool PingOnHome(bool noPhone, bool protOn) => noPhone || !protOn;
+
+    bool PingedOnHome => PingOnHome(_s.NoPhone, _protOn);
+    bool _regionsPingedHome;
+
+    string MeasureFirst => PingVia == null && !PingedOnHome ? "Measure the ping first: protection is on, so connect the phone and press Refresh." : "Measure the ping first: press Refresh.";
 
     Dictionary<string, int> MeasuredPings() => _regions.Where(r => r.PingMs >= 0).ToDictionary(r => r.Id, r => r.PingMs);
 
@@ -406,11 +416,12 @@ public partial class MainWindow
         if (_sdr.FromCache) src = $"Offline: using the list saved on {Fmt.When(_sdr.FetchedAt)}";
         var pinged = _regions.Any(r => r.PingMs >= 0);
         src += _pingingRegions ? " · measuring ping…"
-            : pinged ? $" · ping measured {Fmt.Ago(_regionsPingedAt)}" + (PingVia == null ? (_s.NoPhone ? "" : " · connect the phone to measure again") : "")
-            : PingVia == null ? (_s.NoPhone ? "" : " · connect the phone to measure ping")
+            : pinged ? $" · ping measured {Fmt.Ago(_regionsPingedAt)}" + (_regionsPingedHome ? " without the phone" : " through the phone")
+            : PingVia == null && !PingedOnHome ? " · connect the phone to measure ping (protection is on)"
             : "";
         RegionsSource.Text = src;
-        RegionsSource.ToolTip = $"Valve list revision {_sdr.Revision}. Ping is measured " + (_s.NoPhone ? "on your home connection" : "through the phone") + ", the same path the game uses.";
+        RegionsSource.ToolTip = $"Valve list revision {_sdr.Revision}. Ping is measured " + (PingedOnHome ? "without the phone (protection off or No phone)" : "through the phone")
+            + ", the same path the game uses now.";
 
         // CS2's own limit: a ping cap below the slowest region you allow means that region never comes up.
         var slowest = _regions.Where(r => r.Allowed && r.PingMs >= 0).OrderByDescending(r => r.PingMs).FirstOrDefault();

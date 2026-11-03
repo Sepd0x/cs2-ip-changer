@@ -184,7 +184,13 @@ public partial class MainWindow
         if (_demo || _querying) return;
         // No phone mode: the game uses the home connection, so the servers are asked from there too.
         var egress = _s.NoPhone && _last?.EffectiveMode == "home" ? HomeAdapter : _last?.Egress;
-        if (egress?.LocalIp == null) { if (!quiet) Toast(_s.NoPhone ? "No connection to ask the servers through." : "Phone disconnected: not querying servers over your home network.", false); return; }
+        if (egress?.LocalIp == null)
+        {
+            if (!quiet) Toast(_s.NoPhone ? "No connection to ask the servers through."
+                : !_protOn ? "Protection is off: the servers aren't asked over your home network. Turn it on to see players and ping."
+                : "Phone disconnected: not querying servers over your home network.", false);
+            return;
+        }
         _querying = true;
         try
         {
@@ -294,7 +300,12 @@ public partial class MainWindow
         if (!_demo)
         {
             // No phone mode: you chose the home connection, so there is no protection to wait for.
-            if (_restored && !_s.NoPhone) { Toast("Protection is off. Click Turn protection back on (Connection) first.", false); return false; }
+            // Protection off: joining would show the server your home IP. One question turns it on and goes on with the join.
+            if (!_protOn && !_s.NoPhone)
+            {
+                if (!await Ask("Protection is off", $"{s.Title} would see your home IP. Turn protection on and join through the phone?", "Turn on and join")) return false;
+                if (!await TurnProtectionOn(ask: false)) return false;
+            }
             await SyncNow(force: true);
             if (!_s.NoPhone && (_distrust || _cDiff.Ok == false)) { Toast("Not joining: the phone IP is the same as your home IP.", false); return false; }
             var fullOk = _last?.Egress != null && _last.EffectiveMode == "all" && _last.FullModeOk;
@@ -384,7 +395,7 @@ public partial class MainWindow
                 catch { }
             }
             if (!Steam.Cs2Running) { Log.Warn($"CS2 didn't open, so {s.Key} wasn't joined."); Toast($"CS2 didn't open, so {s.Title} wasn't joined.", false); return false; }
-            if (!_s.NoPhone && (_restored || _distrust)) { Log.Warn($"Not joining {s.Key}: protection changed while CS2 was opening."); Toast($"Not joining {s.Title}: protection changed while CS2 was opening.", false); return false; }
+            if (!_s.NoPhone && (!_protOn || _distrust)) { Log.Warn($"Not joining {s.Key}: protection changed while CS2 was opening."); Toast($"Not joining {s.Title}: protection changed while CS2 was opening.", false); return false; }
             if (ready) await Task.Delay(2000);
             Steam.OpenUrl($"steam://connect/{s.Key}");
             Log.Info($"CS2 menu {(ready ? "ready" : "not seen after 2 min")}: joining {s.Key}.");

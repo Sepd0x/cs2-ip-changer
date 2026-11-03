@@ -4,6 +4,25 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Changed
+- Protection now starts off every time the app opens, and you turn it on with the new Turn on protection button in Status (also in the tray icon's menu). Once on, it stays on until you turn it off: a phone drop blocks your servers and CS2, it never turns protection off. This replaces the beta.9 "waiting for the phone" start.
+- Settings > Protection > Turn on protection when the app starts, for those who want it on by itself (also with Start with Windows). It is off unless you tick it.
+- With protection off, the app still checks the phone, so Status shows whether it is ready and Change IP works. Joining a server with protection off asks first, and turns it on for you.
+- Two cases keep protection on at start: an update made while it was on, and CS2 still open with the block from the last run in place (you closed the app with Keep, or it crashed), so a match isn't moved to your home IP.
+- Phone setup is now a list of steps that check themselves every 2 seconds: the phone tool, the USB cable, USB debugging, allowing this PC, USB tethering and the phone's Wi-Fi. Each one is green when it's done and red when it's next. Where the app can do the step, it has a button (install the tool, turn tethering on, turn the phone's Wi-Fi off).
+- Configs with many accounts: accounts with the same crosshair show as one line ("26 accounts with the same crosshair as your main"), with Show to see each one. The main account and the one in use come first, the ones that differ stay in view, and there is a search. The ticks under Copy > To sit in a box with a filter and a count.
+- Regions works without the phone: with protection off or in No phone mode, the ping is measured on your home connection, and the page says where it was measured. With protection on it is still measured only through the phone, never from your home IP.
+- Regions: "Only this region" shows on the row under the pointer, or the one you click, instead of on every row. The list's header says so.
+- Profiles: the web sign-in line and its button share one place. "Signed in · 187 d left" is grey when all is well and amber when it runs out in less than 14 days or has run out; on the row under the pointer it turns into Sign out. Sign in stays in view.
+- Log: show all, warnings and errors, or errors only, and search the Log. Copy all still copies everything.
+- Settings > Protection: the two options for when protection turns on or off by itself sit together under "Start and close".
+
+### Fixed
+- A new Steam account now shows up on Accounts, Configs and Profiles without restarting the app. Turning protection off stopped the check that sees new accounts, a read while Steam was writing its account list could miss one until Steam wrote it again, and Configs and Profiles didn't redraw while they were open. A new account also moves to its place in the list instead of the end.
+- Steam names with symbols show as they are: `&lt; blank &gt;` no longer appears instead of `< blank >`. Profile names, real names and locations from Steam's profile page are decoded, also for names saved by earlier versions. Make all look like copies the real name too.
+- An account whose Steam profile was never set up shows its name instead of a long number (its SteamID).
+- In Whole PC, always, a first start could never read your home IP, so the phone was never trusted. With protection off at start, the app reads it before you turn protection on.
+
 ## [0.1.0-beta.9] - 2026-11-03
 
 ### Added

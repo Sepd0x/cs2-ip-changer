@@ -31,6 +31,15 @@ public static partial class Steam
 
     static int BanCount(Match m) => !m.Success ? 0 : m.Groups[1].Value.Equals("Multiple", StringComparison.OrdinalIgnoreCase) ? 2 : int.Parse(m.Groups[1].Value);
 
+    /// <summary>
+    /// Text from the profile XML (?xml=1): Steam puts names HTML-encoded inside the CDATA, so "&amp;lt; blank &amp;gt;" there is "&lt; blank &gt;"
+    /// on the profile. Decoded once; a name that already came decoded and has no entity stays the same.
+    /// </summary>
+    public static string WebText(string s) => s == null ? null : System.Net.WebUtility.HtmlDecode(s).Trim();
+
+    /// <summary>A name worth showing: not empty, and not a bare SteamID64 (what a profile that was never set up can show instead of a name).</summary>
+    public static string ShownName(string s) => string.IsNullOrWhiteSpace(s) || Regex.IsMatch(s.Trim(), @"^7656119\d{10}\z") ? null : s;
+
     /// <summary>Public profile: XML (no key) + profile page (bans, level). With a Web API key, bans come from the official API.</summary>
     public static async Task<SteamProfile> FetchProfile(string steamId, string apiKey)
     {
@@ -39,15 +48,15 @@ public static partial class Steam
         var x = XDocument.Parse(xml).Root;
         if (x == null || x.Element("error") != null) throw new InvalidDataException("Profile not found");
         string E(string n) => x.Element(n)?.Value?.Trim();
-        p.Persona = E("steamID");
+        p.Persona = WebText(E("steamID"));
         p.AvatarUrl = E("avatarFull");
         p.OnlineState = E("onlineState");
         p.Private = E("privacyState") != "public";
         p.Limited = E("isLimitedAccount") == "1";
         p.VacBans = E("vacBanned") == "1" ? 1 : 0;
         p.TradeBan = E("tradeBanState") is string tb && tb != "None" ? tb : null;
-        p.MemberSince = E("memberSince");
-        p.Country = E("location");
+        p.MemberSince = WebText(E("memberSince"));
+        p.Country = WebText(E("location"));
         var cs = x.Element("mostPlayedGames")?.Elements("mostPlayedGame")
             .FirstOrDefault(g => (g.Element("gameName")?.Value ?? "").Contains("Counter-Strike"));
         if (cs != null && double.TryParse(cs.Element("hoursOnRecord")?.Value?.Replace(",", ""), NumberStyles.Any, CultureInfo.InvariantCulture, out var h))
@@ -142,7 +151,7 @@ public static partial class Steam
             {
                 var x = XDocument.Parse(await Http.GetStringAsync($"https://steamcommunity.com/profiles/{id}/?xml=1")).Root;
                 if (x == null || x.Element("error") != null) continue;
-                res[id] = new Summary(x.Element("steamID")?.Value?.Trim(), x.Element("inGameServerIP")?.Value?.Trim());
+                res[id] = new Summary(WebText(x.Element("steamID")?.Value), x.Element("inGameServerIP")?.Value?.Trim());
             }
             catch { }
         }

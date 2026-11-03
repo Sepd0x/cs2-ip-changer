@@ -11,6 +11,8 @@ public partial class MainWindow
     partial void StartupDev();
     partial void AfterStartupDev();
     partial void LoadDemo();
+    /// <summary>The demo's Status after Turn on / Turn off protection (no Firewall in the demo).</summary>
+    partial void DemoProtection(bool on);
     partial void AddDefaultServers(List<(string Ip, int Port)> list);
     partial void ApplyDevSettings();
     partial void ReadDevSettings();

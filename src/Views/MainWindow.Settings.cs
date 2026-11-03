@@ -47,6 +47,7 @@ public partial class MainWindow
             AutoModeBox.IsChecked = _s.AutoModeByQuality;
             ApplyDevSettings();
             CleanupBox.IsChecked = _s.CleanupOnExit;
+            ProtectOnStartBox.IsChecked = _s.ProtectOnStart;
             CloseToTrayBox.IsChecked = _s.CloseToTray;
             AutoStreamerBox.IsChecked = _s.AutoStreamer;
             DataWarnBox.Text = _s.DataWarnGb > 0 ? _s.DataWarnGb.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) : "0";
@@ -88,6 +89,7 @@ public partial class MainWindow
         ReadDevSettings();
         if (guardChanged) _ = SyncNow(force: true);
         _s.CleanupOnExit = CleanupBox.IsChecked == true;
+        _s.ProtectOnStart = ProtectOnStartBox.IsChecked == true;
         var key = ApiKeyBox.Visibility == Visibility.Visible ? ApiKeyBox.Text : ApiKeyPwd.Password;
         _s.SteamApiKey = string.IsNullOrWhiteSpace(key) ? null : key.Trim();
         if (_s.SteamApiKey != null) ApiKeyLostText.Visibility = Visibility.Collapsed;
@@ -158,29 +160,26 @@ public partial class MainWindow
 
     async void Restore_Click(object sender, RoutedEventArgs e)
     {
-        if (!await Ask("Turn off protection?", TurnOffText, "Turn off protection", danger: true)) return;
-        if (_demo) return;
-        // Stays restored: network changes no longer put the rules back until Run leak test or the next start.
-        _restored = true;
-        _tick.Stop();
-        // The Regions rule stays: regions don't depend on protection (Allow all on Regions, or --restore, lifts them).
-        var left = await _guard.RestoreAll(_servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: true);
-        _last = null; // the old report would redraw "Protected" on the next IP check
+        if (!_protOn || _turningOff || !await Ask("Turn off protection?", TurnOffText, "Turn off protection", danger: true)) return;
+        _protOn = false;
+        if (_demo) { DemoProtection(false); return; }
+        // Everything of protection goes and is read back (the Regions rule stays: regions don't depend on protection); then the
+        // sync goes on with protection off, so the phone and accounts keep being watched (the tick no longer stops). Turn on waits
+        // until this is done (_turningOff), so the toast below never says "off" over protection you just turned on again.
+        _turningOff = true;
+        string left;
+        try
+        {
+            left = await _guard.RestoreAll(_servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: true);
+            await SyncNow(force: true);
+        }
+        finally { _turningOff = false; }
         ShowRegionsStatus();
-        if (left == null) Toast("Protection is off and checked. It comes back when you click Turn protection back on or open the app again.", true);
+        if (left == null) Toast("Protection is off and checked. Turn on protection (Status or the tray icon) brings it back.", true);
         else Toast("Couldn't remove: " + left + ". Restart the PC to clear the routes, or run the app with --restore.", Tone.Error);
-        ShowProtectionOff();
     }
 
-    /// <summary>Protection off (Turn off protection, or the first start after an update made while it was off): Servers and Status say so.</summary>
-    void ShowProtectionOff()
-    {
-        foreach (var s in _servers) { s.Protected = false; s.RouteText = "Off"; }
-        SetHero("bad", "Protection off", "You turned protection off. Click Turn protection back on to protect again.");
-        UpdateTurnOff();
-    }
-
-    const string TurnOffText = "Turns off the kill switch, the routes and the CS2 lock. Until you click Turn protection back on (in Status, where Run leak test was) or open the app again, servers see your home IP. " +
+    const string TurnOffText = "Turns off the kill switch, the routes and the CS2 lock. Until you click Turn on protection (in Status, or the tray icon), servers see your home IP. " +
         "Your servers stay saved, and the regions you turned off stay off (Allow all on Regions lifts them).";
 
     void OpenFirewall_Click(object sender, RoutedEventArgs e)

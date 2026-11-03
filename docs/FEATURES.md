@@ -28,7 +28,9 @@ The short version is in the [README](../README.md#features). This page has the d
 
 **Live checks.** Windows Firewall, routes, the IP servers see next to your home IP, whether the phone is really on mobile data, and whether Steam uses the same connection as the game (otherwise servers kick you with "No Steam logon"), and where other apps go. There's a leak test too.
 
-**Phone setup.** Under Phone, it checks the cable, the USB driver, USB debugging, tethering, the phone's Wi-Fi and where other apps go, does each step it can and tells you the one thing left. On first start the app says Not protected yet and points you here.
+**Phone setup.** Under Phone: a list of steps (the phone tool, the USB cable and its driver, USB debugging, allowing this PC, tethering, the phone's Wi-Fi, where other apps go) that check themselves every 2 seconds, green when done and red when next. Where the app can do the step, it has a button.
+
+**Turn on protection.** Protection starts off each time the app opens: CS2 and servers use your home connection, and the app still checks the phone. Turn on protection (in Status or the icon's menu) puts the block, the routes and the CS2 lock in place, and it stays on until you turn it off. Settings > Protection > Turn on protection when the app starts does it by itself. An update made with protection on keeps it on, and so does a start with CS2 still open and the block of the last run in place.
 
 ## Change IP
 
@@ -142,9 +144,9 @@ For this the app only talks to Steam (steamcommunity.com, login.steampowered.com
 
 **Stream friendly.** Hide usernames keeps usernames off screen, also in the Log, and your home IP stays masked in the app. The Steam Web API key is hidden unless you click Show. While OBS Studio or Streamlabs is open, Hide usernames turns on by itself (Settings > Steam).
 
-**In the background.** An icon next to the clock shows the protection state when you point at it; click it to open the app, right-click it for New IP + next account, Change IP, Regions, Turn off protection and Quit. While the window is hidden, the app's notices come as Windows notifications. In Settings > Background and data, all off until you turn them on:
+**In the background.** An icon next to the clock shows the protection state when you point at it; click it to open the app, right-click it for Turn protection on or off, New IP + next account, Change IP, Regions and Quit. While the window is hidden, the app's notices come as Windows notifications. In Settings > Background and data, all off until you turn them on:
 - **Close to the notification area**: the X hides the window and protection carries on.
-- **Start with Windows**: a scheduled task named "CS2 IP Changer" opens the app in the notification area when you sign in, with its admin rights and without a UAC prompt each time. Like any start, until the phone is connected and its IP checked only the servers on your Servers page are blocked, so Valve's servers work on your home network; then protection turns on fully (after CS2 closes, if it was open). Change IP or Run leak test turns it on right away. Only the copy in `C:\Program Files\CS2 IP Changer` can do this.
+- **Start with Windows**: a scheduled task named "CS2 IP Changer" opens the app in the notification area when you sign in, with its admin rights and without a UAC prompt each time. Like any start, protection is off until you turn it on, unless Settings > Protection > Turn on protection when the app starts is ticked. Only the copy in `C:\Program Files\CS2 IP Changer` can do this.
 - **Mobile data warning**: the Phone box on Connection counts what went through the phone's adapter since the app opened and this month, and the app warns once a month at the GB you pick. It counts everything on that adapter, not only CS2, and your carrier's count can differ a little.
 
 **Remove CS2 IP Changer.** At the bottom of Settings, or Uninstall in Windows Settings > Installed apps (the installed copy is listed there). Removes every rule and route the app made (the region block too), the Start with Windows task, `C:\ProgramData\CS2IPChanger` and the app itself, and stops the phone tool. You pick: keep `SRT_Dados` (settings and accounts, so installing again brings them back) or delete it too. Files the app still uses go a few seconds after it closes; only a file Windows still holds waits for the next restart.

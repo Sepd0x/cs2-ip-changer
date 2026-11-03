@@ -48,6 +48,25 @@ public partial class MainWindow
 
     void LogClear_Click(object sender, RoutedEventArgs e) => _log.Clear();
 
+    // ------------------------------------------------------------ Log filter (beta.10): by kind and a search. Copy all still copies everything.
+
+    System.ComponentModel.ICollectionView _logView;
+
+    /// <summary>A line passes: kind "all", "warn" (warnings and errors) or "error", and the search in the text shown (masked with Hide logins).</summary>
+    public static bool LogShows(LogEntry e, string kind, string q) =>
+        (kind switch { "warn" => e.Level is LogLevel.Warn or LogLevel.Error, "error" => e.Level == LogLevel.Error, _ => true })
+        && (string.IsNullOrWhiteSpace(q) || (e.Shown ?? "").Contains(q.Trim(), StringComparison.OrdinalIgnoreCase));
+
+    void LogFilter_Changed(object sender, RoutedEventArgs e)
+    {
+        if (LogList == null || LogSearch == null) return;   // the radio buttons fire while the window is still being built
+        _logView ??= System.Windows.Data.CollectionViewSource.GetDefaultView(_log);
+        var kind = LogErr.IsChecked == true ? "error" : LogWarn.IsChecked == true ? "warn" : "all";
+        var q = LogSearch.Text;
+        _logView.Filter = kind == "all" && string.IsNullOrWhiteSpace(q) ? null : o => o is LogEntry l && LogShows(l, kind, q);
+        LogCount.Text = _logView.Filter == null ? "" : $"{_logView.Cast<object>().Count()} of {_log.Count} lines";
+    }
+
     // ------------------------------------------------------------ Hide logins also covers the Log on screen (the file keeps everything)
 
     /// <summary>With Hide logins on, the home IP and the account logins show as ••• in the Log page.</summary>
@@ -207,7 +226,7 @@ public partial class MainWindow
             {
                 await AfterCancelledClose();
                 keep = await Ask("Close the app",
-                    $"{Blocked(_last)} stay blocked outside the phone after you close the app. Without the phone they can't connect until you open the app again and turn protection off.\n\n" +
+                    $"{Blocked(_last)} stay blocked outside the phone after you close the app. Without the phone they can't connect until you open the app again (it starts with protection off, unless CS2 is still open).\n\n" +
                     "The app remembers your answer. To change it: Settings > Protection > Turn off protection when closing the app.",
                     "Keep and close", "Turn off and close");
             }
@@ -222,7 +241,9 @@ public partial class MainWindow
             Close();
             return;
         }
-        if (!_s.CleanupOnExit)
+        // Keep (CleanupOnExit off) keeps a block that is on; with protection off there is no block, so the app's own test route and
+        // Save mobile data go like with Turn off and close
+        if (!_s.CleanupOnExit && _protOn)
         {
             if (!_guard.PcOffPhoneApplied) return;
             e.Cancel = true;
@@ -234,7 +255,7 @@ public partial class MainWindow
         }
         e.Cancel = true;
         // Removing the block with CS2 still in a match would send its next packets out with the home IP.
-        if (Steam.Cs2Running && !_restored)
+        if (Steam.Cs2Running && !_restored && _protOn)
         {
             await AfterCancelledClose();
             if (!await Ask("CS2 is still open", "Turning protection off now would send CS2's traffic through your home connection. Close CS2 first, or close the app and keep protection on this time.", "Keep protection and close")) { _quitting = false; return; }

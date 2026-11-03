@@ -559,7 +559,7 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}</style>
         <div><h3>Change IP</h3><p>Mobile data off and on over ADB until the carrier hands you a new IP, with a check that it's in a new /16 range.</p></div>
         <div><h3>Change IP and rejoin</h3><p>After a kick or ban: a new IP, the last server again, and the next account that server hasn't banned. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> in game.</p></div>
         <div><h3>Kill switch</h3><p>A Windows Firewall rule keeps your servers and CS2's game traffic on the phone (Block if the phone drops, in Checks). No phone mode blocks nothing.</p></div>
-        <div><h3>Phone setup</h3><p>Checks the cable, driver, USB debugging, tethering and the phone's Wi-Fi, and does each step it can.</p></div>
+        <div><h3>Phone setup</h3><p>Steps for the cable, driver, USB debugging, tethering and the phone's Wi-Fi that check themselves and turn green, with a button where the app can do it.</p></div>
         <div><h3>Connection quality</h3><p>Ping, jitter and loss through the phone every 30 seconds, with a warning when it's weak.</p></div>
         <div><h3>Stream friendly</h3><p>Your home IP stays masked in the app, and Hide usernames keeps them off screen, in the Log too.</p></div>
       </div>
@@ -650,7 +650,7 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}</style>
         <p class="sub">Windows 10 or 11 (64-bit), admin rights, Windows Firewall on, and an Android phone with mobile data.</p>
         <ol class="setup">
           <li><b>Download <code>CS2IPChanger.exe</code></b> from the <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">latest release</a> into a folder only admins can change, like <code>C:\Program Files\CS2 IP Changer</code>. Started from Downloads, it offers to install itself there in one click.</li>
-          <li><b>Plug the phone in by USB,</b> turn on USB tethering and turn off the phone's Wi-Fi. Until a phone is set up the app says Not protected yet, and <b>Phone setup</b> tells you what's missing.</li>
+          <li><b>Plug the phone in by USB,</b> turn on USB tethering and turn off the phone's Wi-Fi. <b>Phone setup</b> shows each step in green or red and what's missing. Then press <b>Turn on protection</b>: it starts off each time the app opens.</li>
           <li><b>Run the app</b> as admin and paste the servers you play on into Servers.</li>
           <li><b>Open Connection.</b> With CS2 and Steam running, every check should be green, including Phone IP is not your home IP.</li>
         </ol>

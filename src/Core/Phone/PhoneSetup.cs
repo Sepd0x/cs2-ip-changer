@@ -175,6 +175,60 @@ public static class PhoneSetup
         _ => "The phone is ready.",
     };
 
+    public enum StepState { Ok, Todo, Waiting }
+
+    /// <summary>One line of the Phone setup panel: what it checks, how it is now, and the button when the app can do it (null = you do it).</summary>
+    public sealed record SetupItem(PhoneStep Step, string Title, StepState State, string Detail, string Action);
+
+    /// <summary>
+    /// The Phone setup panel (beta.10), read again every 2 s while it is open: each step green when it is done, red when it is the
+    /// thing to do, grey while it waits for the one before (USB debugging can't be checked with no cable). With the hotspot there is
+    /// no tethering to turn on and the phone's Wi-Fi stays on; the cable is then only for Change IP.
+    /// </summary>
+    public static List<SetupItem> Steps(PhoneSetupState s, bool samsung = false, string model = null, string ssid = null)
+    {
+        var adb = s.AdbState == "device";
+        var inAdb = s.AdbState is "device" or "unauthorized" or "offline";
+        var plugged = inAdb || s.Usb.Seen || s.Tethered;
+        var list = new List<SetupItem>
+        {
+            !s.AdbTool ? new(PhoneStep.NoAdbTool, "Phone tool (ADB)", StepState.Todo, "Free, from Google, about 7 MB. Change IP and these checks need it.", "Install")
+            : s.AdbState == null ? new(PhoneStep.AdbFailed, "Phone tool (ADB)", StepState.Todo, Advice(PhoneStep.AdbFailed), "Try again")
+            : new(PhoneStep.NoAdbTool, "Phone tool (ADB)", StepState.Ok, "Installed", null),
+
+            s.Usb.Problem is int code ? new(PhoneStep.UsbDriverError, "USB cable", StepState.Todo, Advice(PhoneStep.UsbDriverError, code, samsung), null)
+            : plugged ? new(PhoneStep.NoUsb, "USB cable", StepState.Ok, model != null && adb ? $"{model} plugged in" : "Phone plugged in", null)
+            : s.Hotspot ? new(PhoneStep.NoUsb, "USB cable", StepState.Waiting, "You use the hotspot: the cable is only needed for Change IP.", null)
+            : new(PhoneStep.NoUsb, "USB cable", StepState.Todo, Advice(PhoneStep.NoUsb), null),
+
+            inAdb ? new(PhoneStep.NoUsbDebugging, "USB debugging", StepState.Ok, "On", null)
+            : !plugged || s.AdbState == null || !s.AdbTool ? new(PhoneStep.NoUsbDebugging, "USB debugging", StepState.Waiting, "Checked once the phone is plugged in.", null)
+            : new(PhoneStep.NoUsbDebugging, "USB debugging", StepState.Todo, UsbDebuggingSteps.Replace(", then press Phone setup", ": this step turns green by itself")
+                + (samsung ? "\nStill not found? Install \"Samsung USB Driver for Mobile Phones\" from Samsung's website." : ""), null),
+
+            adb ? new(PhoneStep.Unauthorized, "Allowed on this PC", StepState.Ok, "Allowed", null)
+            : s.AdbState == "unauthorized" ? new(PhoneStep.Unauthorized, "Allowed on this PC", StepState.Todo, Advice(PhoneStep.Unauthorized), null)
+            : s.AdbState == "offline" ? new(PhoneStep.Offline, "Allowed on this PC", StepState.Todo, Advice(PhoneStep.Offline), null)
+            : new(PhoneStep.Unauthorized, "Allowed on this PC", StepState.Waiting, "The phone asks once USB debugging is on.", null),
+
+            s.Hotspot ? new(PhoneStep.TetherOff, "Connection", StepState.Ok, ssid != null ? $"The phone's hotspot ({ssid})" : "The phone's hotspot", null)
+            : s.Tethered ? new(PhoneStep.TetherOff, "USB tethering", StepState.Ok, "On", null)
+            : adb ? new(PhoneStep.TetherOff, "USB tethering", StepState.Todo, "Off. The app can turn it on (on some phones you do it by hand).", "Turn on")
+            : plugged ? new(PhoneStep.TetherOff, "USB tethering", StepState.Todo, Advice(PhoneStep.TetherOff), null)
+            : new(PhoneStep.TetherOff, "USB tethering", StepState.Waiting, "Once the phone is plugged in.", null),
+
+            s.Hotspot ? new(PhoneStep.WifiOn, "Phone Wi-Fi", StepState.Ok, "Stays on for the hotspot", null)
+            : !adb ? new(PhoneStep.WifiOn, "Phone Wi-Fi off", StepState.Waiting, "Read over USB debugging. Until then, check it yourself: mobile data, not Wi-Fi.", null)
+            : s.WifiOn ? new(PhoneStep.WifiOn, "Phone Wi-Fi off", StepState.Todo, "On: tethering may share your home Wi-Fi instead of mobile data.", "Turn off")
+            : new(PhoneStep.WifiOn, "Phone Wi-Fi off", StepState.Ok, "Off: mobile data", null),
+        };
+        if (s.PcOnPhone) list.Add(new(PhoneStep.PcOnPhone, "Rest of the PC", StepState.Todo, "Going through the phone (uses mobile data).", "Keep it home"));
+        return list;
+    }
+
+    /// <summary>The step to do now: the first red one (null = all done or waiting on nothing).</summary>
+    public static SetupItem Current(IReadOnlyList<SetupItem> steps) => steps.FirstOrDefault(i => i.State == StepState.Todo);
+
     /// <summary>The short name of a step for the Log and the usage counts (never a serial, a name or a network).</summary>
     public static string Key(PhoneStep step) => step.ToString().ToLowerInvariant();
 }

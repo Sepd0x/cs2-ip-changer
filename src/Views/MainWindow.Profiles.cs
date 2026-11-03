@@ -115,13 +115,15 @@ public partial class MainWindow
         if (_demo)
         {
             r.SignedIn = _demoSigned.Contains(r.SteamId);
-            r.Session = r.SignedIn ? "Signed in · 187 d left" : "Not signed in";
+            r.DaysLeft = r.SignedIn ? (r.Name == "drift" ? 9 : 187) : null;   // one about to run out, to see the amber
+            r.Session = r.SignedIn ? $"Signed in · {r.DaysLeft} d left" : "Not signed in";
             return;
         }
         var info = _sessions?.Info(r.SteamId);
         var dead = _profExpired.Contains(r.SteamId);
         r.SignedIn = info?.Valid == true && !dead;
-        r.Session = info == null ? "Not signed in" : !info.Valid || dead ? "Sign-in expired" : $"Signed in · {(int)Math.Ceiling((info.Expires - DateTime.Now).TotalDays)} d left";
+        r.DaysLeft = r.SignedIn ? (int)Math.Ceiling((info.Expires - DateTime.Now).TotalDays) : null;
+        r.Session = info == null ? "Not signed in" : !info.Valid || dead ? "Sign-in expired" : $"Signed in · {r.DaysLeft} d left";
     }
 
     // ------------------------------------------------------------ Templates

@@ -330,6 +330,14 @@ public static class Firewall
     static readonly string[] ProtectionRules = { RuleName, EchoRuleName, Cs2RuleName, DnsUdpRuleName, DnsTcpRuleName, Ipv6RuleName };
 
     /// <summary>
+    /// A block of protection is still in the Firewall (from a run closed with Keep, or one that crashed): the kill switch, the CS2 lock
+    /// or the Whole PC rules. Not the app's own IP test rule, which blocks nothing else. With no servers listed only the CS2 lock and
+    /// the Whole PC rules are there, so the kill switch alone isn't enough (Guard.OnAtStart).
+    /// </summary>
+    public static bool BlockLeft(IEnumerable<string> remaining) =>
+        (remaining ?? Enumerable.Empty<string>()).Any(n => n != EchoRuleName && ProtectionRules.Contains(n));
+
+    /// <summary>
     /// The rules a restore removes. Turn off protection (and closing the app) keep the Regions rule: regions don't depend on the
     /// phone or on protection, only Allow all lifts them. --restore and tools\restore.cmd are the way out and remove everything.
     /// </summary>
