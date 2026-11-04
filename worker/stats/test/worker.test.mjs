@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import { fakeD1 } from './d1.mjs';
 import ingest, { readCapped, BUDGET_TRIGGERS, DAILY_ROWS, LIVE_ROWS, FORGET_ROWS, SITE_ROWS, SITE_ORIGIN, SITE_PAGES } from '../src/index.js';
 import { summary, live as liveNow, who, MAX_ROWS, livePeaks, lisbonHour } from '../src/api.js';
-import dashboard, { collect, page, github, excludeIds, resetGithubCache, compareVersions, readable, sampleLive, prune, snapshotGithub, githubHistory, RETAIN_DAYS, DAILY_CRON } from '../src/dashboard.js';
+import dashboard, { collect, page, github, excludeIds, resetGithubCache, compareVersions, readable, sampleLive, prune, snapshotGithub, githubHistory, RETAIN_DAYS, DAILY_CRON, assetsVersion, resetBriefCache, trafficRows } from '../src/dashboard.js';
+import { renderMd } from '../src/brief.js';
 import { verifyAccess, resetAccessCache } from '../src/access.js';
 import { ASSETS } from '../src/assets.js';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
@@ -374,7 +375,7 @@ test('dashboard: versions in order, names from the code readable', () => {
 test('dashboard beta.9: page, scripts and captures are served with a strict CSP, all behind Access', async () => {
   const token = await jwt(claims());
   const env = { ...env0(), DB: fakeD1() };
-  for (const [path, type] of [['/dashboard', 'text/html'], ['/d/app.js', 'text/javascript'], ['/d/real.js', 'text/javascript'], ['/d/style.css', 'text/css'], ['/ui/connection.png', 'image/png']]) {
+  for (const [path, type] of [['/dashboard', 'text/html'], ['/v3', 'text/html'], ['/d/app.js', 'text/javascript'], ['/d/real.js', 'text/javascript'], ['/d/style.css', 'text/css'], ['/d/v4/app.js', 'text/javascript'], ['/d/v4/real.js', 'text/javascript'], ['/d/v4/v4.css', 'text/css'], ['/ui/connection.png', 'image/png']]) {
     const res = await dashboard.fetch(get(path, token), env);
     assert.equal(res.status, 200, path);
     assert.ok(res.headers.get('content-type').startsWith(type), path);
@@ -384,6 +385,8 @@ test('dashboard beta.9: page, scripts and captures are served with a strict CSP,
   assert.equal((await dashboard.fetch(get('/d/../src/index.js', token), env)).status, 404);
   assert.equal((await dashboard.fetch(get('/api/summary'), env)).status, 403);
   assert.equal((await dashboard.fetch(get('/api/live'), env)).status, 403);
+  assert.equal((await dashboard.fetch(get('/api/brief'), env)).status, 403);
+  assert.equal((await dashboard.fetch(get('/api/brief?format=md'), env)).status, 403);
 });
 
 test('dashboard beta.9: summary keeps the scanners apart, no install ID leaves, dev only with ?dev=1', async () => {
@@ -845,7 +848,7 @@ test('v3: freshness (any PC and this view), the day budget, Por hora, yesterday 
   assert.equal(s.fresh.lastAny, at(T, '15:20'), 'any PC: the dev build too');
   assert.equal(s.fresh.lastTs, at(T, '14:05'), 'this view: without the dev build');
   assert.equal(s.lastTs, s.fresh.lastTs, 'the old field stays');
-  assert.deepEqual(s.fresh.budget, { day: T, rows: 30000, cap: DAILY_ROWS, live: 500, liveCap: LIVE_ROWS, site: 0, siteCap: SITE_ROWS });
+  assert.deepEqual(s.fresh.budget, { day: T, rows: 30000, cap: DAILY_ROWS, live: 500, liveCap: LIVE_ROWS, site: 0, siteCap: SITE_ROWS, forget: 0, forgetCap: FORGET_ROWS });
   assert.equal(s.hourly.hour, 15);
   assert.equal(s.hourly.today[9], 1); assert.equal(s.hourly.today[14], 1);
   assert.equal(s.hourly.today[13], 0, 'the scanner stays out');
@@ -902,10 +905,11 @@ test('v3: the funnel reaches Protected and is per day, back after 7 days, cohort
   assert.deepEqual(w.installs.day7, { n: 0, back: 0 }, 'with 7 days no new install has its day 7 over');
 });
 
-test('v3: the page at /dashboard is the v3, the v2 stays at /v2 with its own files, all behind Access', async () => {
+test('v3: the v3 page is at /v3 (v4: /dashboard is the v4), the v2 stays at /v2 with its own files, all behind Access', async () => {
   const token = await jwt(claims());
   const env = { ...env0(), DB: fakeD1() };
-  const v3 = await (await dashboard.fetch(get('/dashboard', token), env)).text();
+  const v3 = await (await dashboard.fetch(get('/v3', token), env)).text();
+  assert.equal((await dashboard.fetch(get('/v3'), env)).status, 403, '/v3 without Access');
   assert.ok(v3.includes('/d/real.js') && v3.includes('/d/app.js') && !v3.includes('/d/data.js'), 'the v3 has no mock data');
   assert.ok(!/makeV3|makeData|\bSCEN\b|GH_REAL|mockbar|id="scale"/.test(ASSETS['app.js'].body + ASSETS['real.js'].body + v3), 'no mock-up switch or example data');
   const v2 = await dashboard.fetch(get('/v2', token), env);
@@ -1085,10 +1089,12 @@ test('medir: the daily cron keeps a picture of GitHub (no token), and downloads 
     ['2026-11-01', 100, null, 10, null], ['2026-11-02', 131, 31, 12, 2], ['2026-11-04', 150, null, 13, null]]);
   assert.equal(h.days[0].all, 104, 'all files, the draft left out');
   assert.equal(DB.raw.prepare("SELECT COUNT(*) n FROM gh_daily WHERE name LIKE '%beta.9%'").get().n, 0, 'drafts are not counted');
-  // The picture never sends the token
-  let auth = 'none';
-  await snapshotGithub(DB, { GITHUB_TOKEN: 'secret' }, async (url, init) => { auth = init.headers.authorization; return ghPublic(1, 1)(url, init); }, t0);
-  assert.equal(auth, undefined);
+  // The picture of the public numbers never sends the token (v4: only the traffic reads, which need it, do)
+  const auth = {};
+  await snapshotGithub(DB, { GITHUB_TOKEN: 'secret' }, async (url, init) => { auth[String(url).replace(/^.*cs2-ip-changer/, '')] = init.headers.authorization; return ghPublic(1, 1)(url, init); }, t0);
+  assert.equal(auth[''], undefined);
+  assert.equal(auth['/releases?per_page=100'], undefined);
+  assert.equal(auth['/traffic/views'], 'Bearer secret');
 });
 
 test('medir: /api/github without the token, or with it refused, takes stars and downloads from the public API; the traffic says it needs the token', async () => {
@@ -1242,3 +1248,172 @@ test('security: every data-tip of the v3 that carries a version goes through esc
   const row = doc.split('\n').find((l) => l.includes('from the website (not the app)'));
   assert.ok(/country/.test(row) && /no IP/.test(row), row);
 });
+
+// ------------------------------------------------------------------ Nov. 2026: performance review (publish/auditoria-2026-11-04/dashboard-v4/desempenho.md)
+
+test('performance: the pages ask for their files with the version; those are kept, the rest checked by ETag, pages and API stay no-store', async () => {
+  const token = await jwt(claims());
+  const env = { ...env0(), DB: fakeD1() };
+  const v = assetsVersion();
+  assert.match(v, /^[0-9a-z]{1,8}$/);
+  for (const [path, files] of [['/dashboard', ['/d/style.css', '/d/v4/v4.css', '/d/ui-map.js', '/d/v4/real.js', '/d/v4/app.js']], ['/v3', ['/d/style.css', '/d/ui-map.js', '/d/real.js', '/d/app.js']], ['/v2', ['/d/v2/style.css', '/d/v2/app.js']]]) {
+    const res = await dashboard.fetch(get(path, token), env);
+    assert.equal(res.headers.get('cache-control'), 'no-store', path);
+    const html = await res.text();
+    for (const f of files) assert.ok(html.includes(`"${f}?v=${v}"`), `${path} asks for ${f}?v=`);
+    assert.ok(!/"\/d\/[^"?]+"/.test(html), `${path}: no file left without the version`);
+  }
+  const kept = await dashboard.fetch(get(`/d/app.js?v=${v}`, token), env);
+  assert.equal(kept.headers.get('cache-control'), 'private, max-age=31536000, immutable');
+  assert.equal(await kept.text(), ASSETS['app.js'].body);
+  // An old version (a tab opened before a deploy) or no version: checked every time, never kept as if it were this one
+  for (const p of ['/d/app.js', '/d/app.js?v=old', '/ui/connection.png']) assert.equal((await dashboard.fetch(get(p, token), env)).headers.get('cache-control'), 'private, no-cache', p);
+  const png = await dashboard.fetch(get('/ui/connection.png', token), env);
+  assert.equal(png.headers.get('etag'), `W/"${v}"`);
+  assert.deepEqual(new Uint8Array(await png.arrayBuffer()), new Uint8Array(Buffer.from(ASSETS['ui/connection.png'].body, 'base64')));
+  // Decoded once per isolate: the second answer is the same bytes
+  assert.deepEqual(new Uint8Array(await (await dashboard.fetch(get('/ui/connection.png', token), env)).arrayBuffer()), new Uint8Array(Buffer.from(ASSETS['ui/connection.png'].body, 'base64')));
+  const same = new Request('https://stats-dashboard.example.workers.dev/ui/connection.png', { headers: { 'cf-access-jwt-assertion': token, 'if-none-match': `"${v}"` } });
+  const r304 = await dashboard.fetch(same, env);
+  assert.equal(r304.status, 304);
+  assert.equal(await r304.text(), '');
+  assert.equal((await dashboard.fetch(new Request('https://stats-dashboard.example.workers.dev/d/app.js', { headers: { 'cf-access-jwt-assertion': token, 'if-none-match': 'W/"other"' } }), env)).status, 200);
+  // Still behind Access, also with the version or an ETag
+  assert.equal((await dashboard.fetch(new Request(`https://stats-dashboard.example.workers.dev/d/app.js?v=${v}`, { headers: { 'if-none-match': `W/"${v}"` } }), env)).status, 403);
+  for (const p of ['/api/live', '/api/summary', '/api/github']) assert.equal((await dashboard.fetch(get(p, token), env)).headers.get('cache-control'), 'no-store', p);
+});
+
+/** A D1 whose answers come on a later turn, counting how many round trips in a row an answer needed. */
+function roundTrips(DB) {
+  let done = 0, depth = 0;
+  const wrap = (s) => ({
+    bind: (...a) => wrap(s.bind(...a)),
+    ...Object.fromEntries(['all', 'first', 'run'].map((m) => [m, () => { const d = done + 1; depth = Math.max(depth, d); return new Promise((r) => setTimeout(r, 1)).then(() => s[m]()).then((x) => { done = Math.max(done, d); return x; }); }])),
+  });
+  return { db: { prepare: (sql) => wrap(DB.prepare(sql)), batch: (l) => DB.batch(l) }, depth: () => depth };
+}
+
+test('performance: the summary, the live block and the GitHub history each wait one D1 round trip, not two or three', async () => {
+  const DB = fakeD1();
+  await ingest.fetch(post(report()), { DB });
+  for (const [name, fn] of [['summary', (db) => summary(db, { period: 7, f: F0, dev: false, now: Date.now() })], ['live', (db) => liveNow(db, { dev: false, now: Date.now() })]]) {
+    const rt = roundTrips(DB);
+    const out = await fn(rt.db);
+    assert.ok(out, name);
+    assert.equal(rt.depth(), 1, name);
+  }
+  // /api/github: GitHub and the D1 read at once (GitHub here answers 403, so the public API is tried too)
+  const token = await jwt(claims());
+  const rt = roundTrips(DB);
+  const t0 = Date.now();
+  globalThis.fetch = async (url) => { url = String(url); if (url.includes('/cdn-cgi/access/certs')) return Response.json({ keys: [jwk] }); await new Promise((r) => setTimeout(r, 40)); return new Response('{}', { status: 403 }); };
+  const res = await dashboard.fetch(get('/api/github', token), { ...env0(), DB: rt.db });
+  assert.equal(res.status, 200);
+  assert.ok(Array.isArray((await res.json()).history.days));
+  assert.equal(rt.depth(), 1);
+  assert.ok(Date.now() - t0 < 200, 'GitHub cold: two GitHub rounds, the D1 read inside them');
+});
+
+test('performance: the v3 draws without waiting for GitHub (only Aquisição and Versões wait), and moving between pages reuses the live block', () => {
+  const app = ASSETS['app.js'].body, real = ASSETS['real.js'].body;
+  assert.ok(app.includes("const ghWait = page === 'aquisicao' || page === 'versoes';") && app.includes('ghWait && ghP ? ghP : G0'));
+  assert.ok(app.includes("if (D.G !== undefined && !ghOk(D.G)) out.push({ tone: 'bad', t: 'GitHub sem acesso'"), 'no "GitHub sem acesso" alert while it is still being read');
+  assert.ok(app.includes('DATA.L = await V3.live(true)'), 'the 1-minute tick always reads the live block fresh');
+  assert.ok(/githubNow\(\)/.test(real) && /Date\.now\(\) - LVat < 30_000/.test(real) && /forget\(\) \{ cache\.clear\(\); GHat = 0; LVat = 0; \}/.test(real));
+});
+
+// ------------------------------------------------------------------ v4 (Nov. 2026): /api/brief, the GitHub traffic kept, rep_exit
+
+test('v4 brief route: JSON and Markdown behind Access, the Markdown made from the same JSON, kept 5 minutes, no install ID', async () => {
+  resetBriefCache();
+  const token = await jwt(claims());
+  const DB = fakeD1();
+  const now = Date.now();
+  const day = new Date(now).toISOString().slice(0, 10);
+  DB.raw.prepare("INSERT INTO pings (day, ts, id, app, link, minutes, dev) VALUES (?, ?, ?, '0.1.0-beta.10', 'usb', 12, 0)").run(day, now - 60_000, ID(7));
+  for (const [k, n] of [['first_start', 1], ['accounts', 2], ['id_install', 1]]) DB.raw.prepare('INSERT INTO counts (day, id, name, n, dev) VALUES (?, ?, ?, ?, 0)').run(day, ID(7), k, n);
+  fakeNet({ github: { '': { stargazers_count: 3 }, '/releases?per_page=30': [] } });
+  const env = { ...env0(), DB, GITHUB_TOKEN: 'x', EXCLUDE_IDS: ID(9) };
+  const r = await dashboard.fetch(get('/api/brief', token), env);
+  assert.equal(r.status, 200);
+  assert.match(r.headers.get('content-type'), /application\/json/);
+  assert.equal(r.headers.get('cache-control'), 'private, max-age=300');
+  const text = await r.text();
+  const b = JSON.parse(text);
+  assert.equal(b.schema, 'brief.v1');
+  assert.deepEqual([b.kpis.new_installs.today, b.kpis.active_installs.today, b.scope.excluded_ids], [1, 1, 1]);
+  assert.ok(!/[0-9a-f]{32}/.test(text));
+  const md = await dashboard.fetch(get('/api/brief?format=md', token), env);
+  assert.match(md.headers.get('content-type'), /^text\/markdown; charset=utf-8/);
+  assert.equal(await md.text(), renderMd(b), 'one JSON, kept 5 minutes, both formats');
+  assert.equal((await dashboard.fetch(get('/api/brief'), env)).status, 403);
+  // A broken database answers 500 with the error, never a half brief
+  resetBriefCache();
+  const bad = await dashboard.fetch(get('/api/brief', token), { ...env, DB: { prepare: () => { throw new Error('D1 down'); } } });
+  assert.equal(bad.status, 500);
+});
+
+test('v4: the daily cron keeps the GitHub traffic with the token (views per day, referrers and pages as of the day), and history shows it apart from the pictures', async () => {
+  const DB = fakeD1();
+  const t0 = Date.parse('2026-11-04T03:07:00Z');
+  const traffic = async (url, init) => {
+    const path = String(url).replace(/^https:\/\/api\.github\.com\/repos\/[^/]+\/[^/]+/, '');
+    if (init?.headers?.authorization) {
+      if (path === '/traffic/views') return Response.json({ views: [{ timestamp: '2026-10-22T00:00:00Z', count: 5, uniques: 3 }, { timestamp: '2026-11-04T00:00:00Z', count: 9, uniques: 4 }] });
+      if (path === '/traffic/clones') return Response.json({ clones: [{ timestamp: '2026-11-03T00:00:00Z', count: 2, uniques: 1 }] });
+      if (path === '/traffic/popular/referrers') return Response.json([{ referrer: 'youtube.com', count: 40, uniques: 22 }, { referrer: 'reddit.com', count: 3, uniques: 2 }]);
+      if (path === '/traffic/popular/paths') return Response.json([{ path: '/Sepd0x/cs2-ip-changer', title: 'x', count: 50, uniques: 30 }]);
+      return new Response('{}', { status: 404 });
+    }
+    return ghPublic(5, 100)(url, init);
+  };
+  await snapshotGithub(DB, { GITHUB_TOKEN: 'good' }, traffic, t0);
+  const h = await githubHistory(DB, t0);
+  assert.deepEqual(h.days.map((d) => d.day), ['2026-11-04'], 'a day with only views is not a picture (no fake download peak)');
+  assert.deepEqual(h.traffic.days, [{ day: '2026-10-22', views: 5, uniques: 3, clones: 0, clones_u: 0 }, { day: '2026-11-03', views: 0, uniques: 0, clones: 2, clones_u: 1 }, { day: '2026-11-04', views: 9, uniques: 4, clones: 0, clones_u: 0 }]);
+  assert.deepEqual(h.traffic.refs, [{ name: 'youtube.com', n: 40, u: 22 }, { name: 'reddit.com', n: 3, u: 2 }]);
+  assert.equal(h.traffic.refsDay, '2026-11-04');
+  assert.equal(h.traffic.paths[0].name, '/Sepd0x/cs2-ip-changer');
+  assert.deepEqual(h.byRelease['v0.1.0-beta.10'], [{ day: '2026-11-04', n: 100 }]);
+  // Without the token, or refused: the picture as before and no traffic rows (never an error)
+  const DB2 = fakeD1();
+  await snapshotGithub(DB2, { GITHUB_TOKEN: 'bad' }, ghPublic(5, 100), t0);
+  assert.equal(DB2.raw.prepare("SELECT COUNT(*) n FROM gh_daily WHERE kind LIKE 'traffic%'").get().n, 0);
+  assert.equal(DB2.raw.prepare("SELECT COUNT(*) n FROM gh_daily WHERE kind = 'repo'").get().n, 4);
+  assert.deepEqual(await trafficRows({}, traffic, '2026-11-04'), []);
+  // The hourly retry looks for the day's repo row, not for any row of the day (today's views are keyed by today)
+  const DB3 = fakeD1();
+  DB3.raw.prepare("INSERT INTO gh_daily (day, kind, name, n) VALUES ('2026-11-04', 'traffic_views', 'count', 3)").run();
+  let asked = 0;
+  const orig = globalThis.fetch;
+  globalThis.fetch = async (u, i) => { asked++; return ghPublic(5, 100)(u, i); };
+  try { await dashboard.scheduled({ cron: '*/10 * * * *', scheduledTime: Date.parse('2026-11-04T05:02:00Z') }, { DB: DB3 }); } finally { globalThis.fetch = orig; }
+  assert.ok(asked >= 2, 'the picture was taken again');
+});
+
+test('v4: a report marked exit is counted as rep_exit (data health), and the app cannot send rep_exit itself', async () => {
+  const DB = fakeD1();
+  assert.equal((await ingest.fetch(post(report({ id: ID(3), exit: true, counts: { rep_exit: 5, ip_changed: 1 } })), { DB })).status, 204);
+  const rows = DB.raw.prepare("SELECT name, n FROM counts WHERE id = ? AND name IN ('rep_exit', 'ip_changed') ORDER BY name").all(ID(3));
+  assert.deepEqual(rows.map((r) => [r.name, r.n]), [['ip_changed', 1], ['rep_exit', 1]]);
+  assert.equal((await ingest.fetch(post(report({ id: ID(4), counts: { rep_exit: 1 } })), { DB })).status, 204);
+  assert.equal(DB.raw.prepare("SELECT COUNT(*) n FROM counts WHERE id = ? AND name = 'rep_exit'").get(ID(4)).n, 0);
+});
+
+test('v4: an Access service token (no e-mail, its Client ID in common_name) reads /api/brief only, and only when listed', async () => {
+  resetBriefCache();
+  const svc = (cn) => { const c = claims({ common_name: cn }); delete c.email; return jwt(c); };
+  const env = { ...env0(), DB: fakeD1(), SERVICE_TOKEN_IDS: 'abcd1234.access, other99.access' };
+  const ok = await svc('abcd1234.access');
+  assert.equal((await dashboard.fetch(get('/api/brief', ok), env)).status, 200);
+  assert.equal((await dashboard.fetch(get('/api/brief?format=md', ok), env)).status, 200);
+  for (const p of ['/dashboard', '/api/summary', '/api/live', '/api/github', '/classic', '/d/v4/app.js']) assert.equal((await dashboard.fetch(get(p, ok), env)).status, 403, p);
+  assert.equal((await dashboard.fetch(get('/api/brief', await svc('stranger.access')), env)).status, 403, 'a Client ID not listed');
+  assert.equal((await dashboard.fetch(get('/api/brief', ok), { ...env, SERVICE_TOKEN_IDS: '' })).status, 403, 'no list, no service token');
+  // The owner's e-mail token still opens everything; a token with an e-mail is never taken as a service token
+  assert.equal((await dashboard.fetch(get('/dashboard', await jwt(claims())), env)).status, 200);
+  assert.equal((await dashboard.fetch(get('/api/brief', await jwt(claims({ email: 'x@y.z', common_name: 'abcd1234.access' }))), env)).status, 403);
+});
+
+import './v4.test.mjs';
+import './brief.test.mjs';

@@ -5,7 +5,7 @@
 (function () {
   const DEV = new URLSearchParams(location.search).get('dev') === '1';
   const cache = new Map();
-  let GH, GHat = 0;
+  let GH, GHat = 0, GHp = null, LV = null, LVat = 0;
   const get = async (u) => {
     const r = await fetch(u, { credentials: 'same-origin', cache: 'no-store' });
     if (!r.ok) throw new Error(`${u.split('?')[0]} respondeu ${r.status}`);
@@ -21,14 +21,24 @@
       if (!cache.has(k)) cache.set(k, get('/api/summary?' + k).catch((e) => { cache.delete(k); throw e; }));
       return cache.get(k);
     },
-    async live() { return get('/api/live' + (DEV ? '?dev=1' : '')); },
-    /** GitHub: guardado 10 min no Worker; aqui 5 min. Se falhar, null e o resto da página continua. */
+    /**
+     * Ao vivo. Nov. 2026 (revisão de desempenho): mudar de página usa o que foi lido há menos de 30 s, em vez de esperar pela rede
+     * a cada clique; o relógio de 1 min pede sempre fresco (fresh).
+     */
+    async live(fresh) {
+      if (!fresh && LV && Date.now() - LVat < 30_000) return LV;
+      const r = await get('/api/live' + (DEV ? '?dev=1' : ''));
+      LV = r; LVat = Date.now();
+      return r;
+    },
+    /** GitHub: guardado 10 min no Worker; aqui 5 min. Se falhar, null e o resto da página continua. Um pedido de cada vez. */
     async github() {
       if (GH !== undefined && Date.now() - GHat < 300_000) return GH;
-      try { GH = await get('/api/github'); } catch { GH = null; }
-      GHat = Date.now();
-      return GH;
+      if (!GHp) GHp = get('/api/github').catch(() => null).then((g) => { GH = g; GHat = Date.now(); GHp = null; return g; });
+      return GHp;
     },
-    forget() { cache.clear(); GHat = 0; },
+    /** O GitHub já lido e fresco, ou undefined (ainda a ler): a página desenha-se sem esperar por ele. */
+    githubNow() { return GH !== undefined && Date.now() - GHat < 300_000 ? GH : undefined; },
+    forget() { cache.clear(); GHat = 0; LVat = 0; },
   };
 })();

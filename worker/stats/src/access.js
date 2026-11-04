@@ -84,6 +84,13 @@ export async function verifyAccess(request, env, { now = Date.now(), fetchFn = f
   if (payload.iss !== team) return { ok: false, why: 'wrong iss' };
   if (!Number.isFinite(payload.exp) || payload.exp + SKEW < t) return { ok: false, why: 'expired' };
   if (Number.isFinite(payload.nbf) && payload.nbf - SKEW > t) return { ok: false, why: 'not yet valid' };
+  // v4 (Nov. 2026): an Access service token (the agent reading /api/brief) has no e-mail; Access puts its Client ID in
+  // common_name. Only the Client IDs listed in the SERVICE_TOKEN_IDS secret pass, and dashboard.js lets them read /api/brief only.
+  if (typeof payload.email !== 'string' && typeof payload.common_name === 'string' && payload.common_name) {
+    const ids = String(env.SERVICE_TOKEN_IDS || '').split(/[\s,]+/).filter((x) => /^[A-Za-z0-9._-]{8,100}$/.test(x));
+    if (ids.includes(payload.common_name)) return { ok: true, service: payload.common_name };
+    return { ok: false, why: 'unknown service token' };
+  }
   if (typeof payload.email !== 'string' || payload.email.toLowerCase() !== email) return { ok: false, why: 'wrong email' };
   return { ok: true, email: payload.email };
 }

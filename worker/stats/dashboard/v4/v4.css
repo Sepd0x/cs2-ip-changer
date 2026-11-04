@@ -1,0 +1,112 @@
+/* CS2 IP Changer · stats v4 (4 nov. 2026). Por cima do style.css da v3 (os mesmos tokens, as mesmas caixas): só o que é novo.
+   Nenhuma cor copiada à mão: tudo por var(--…) do style.css. */
+
+/* faixa de saúde dos dados no topo (substitui a pílula de frescura): um quadrado por verificação, verde, amarelo ou vermelho */
+.health { display: inline-flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; text-decoration: none; color: var(--ink2); font-size: 12.5px; }
+.health .hc { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.health .hc::before { content: ""; width: 8px; height: 8px; background: var(--ink3); flex: none; }
+.health .hc.ok::before { background: var(--good); } .health .hc.warn::before { background: var(--warn); } .health .hc.bad::before { background: var(--bad); }
+.health .hc b { font-weight: 600; color: var(--ink); }
+.health .hc.warn b { color: var(--warn); } .health .hc.bad b { color: var(--bad); }
+.health:hover .hc { color: var(--ink); }
+
+/* o filtro ativo repetido debaixo do título de cada página */
+.fecho { display: inline-block; font-size: 11.5px; color: var(--acc-ink); border: 1px solid var(--acc-d); background: var(--acc-soft); padding: 0 6px; line-height: 18px; }
+
+/* as regras da página (do mesmo motor que o /api/brief) */
+.rband { display: flex; flex-direction: column; gap: 6px; }
+.rband > div { border-left: 3px solid var(--warn); background: var(--panel2); padding: 6px 10px; font-size: 12.5px; }
+.rband > div.high, .rband > div.bad { border-left-color: var(--bad); }
+.rband > div.info { border-left-color: var(--acc); }
+.rband .rr { color: var(--ink3); font-size: 11px; margin-top: 2px; }
+.rband a { text-decoration: none; }
+
+/* os seis números do Hoje: valor, as duas comparações e 14 dias */
+.k6 { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.k6 .kc .kv .ci { font-size: 11px; font-weight: 400; color: var(--ink3); }
+.kv .nd { color: var(--ink3); font-size: 12px; font-weight: 600; }
+.k6 .kc .kd { white-space: normal; }
+.k6 .kc .why { font-size: 11px; color: var(--ink3); margin-top: 3px; white-space: normal; line-height: 1.35; }
+.kc.wait .kv { color: var(--ink3); font-size: 15px; font-weight: 400; padding: 6px 0 4px; }
+
+/* funil com barras lineares: cada bloco normalizado ao seu 1.º passo (nunca escala log) */
+.lf { display: grid; grid-template-columns: minmax(130px, 210px) minmax(120px, 2fr) 64px 64px 74px; gap: 0 10px; align-items: center; font-size: 12.5px; }
+.lf > div { padding: 6px 0; border-top: 1px solid var(--line); min-width: 0; }
+.lf .hd { color: var(--ink3); font-size: 11px; border-top: 0; padding-top: 0; }
+.lf .hd.n, .lf .n, .lf .p { text-align: right; font-variant-numeric: tabular-nums; }
+.lf .k { color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lf .k small { display: block; color: var(--ink3); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lf .t { height: 14px; background: var(--btn); position: relative; }
+.lf .t i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--acc); min-width: 2px; }
+.lf .t.ext i { background: var(--acc-d); }
+.lf .t.na { background: repeating-linear-gradient(90deg, var(--line2) 0 5px, transparent 5px 9px); height: 1px; }
+.lf .n { font-weight: 600; font-size: 14px; }
+.lf .n.na { color: var(--ink3); font-weight: 400; font-size: 11.5px; white-space: nowrap; }
+.lf .p { color: var(--ink2); white-space: nowrap; }
+.lf .p .dim { white-space: normal; font-size: 11px; }
+.lf .p.worst { color: var(--bad); font-weight: 600; }
+.lf .side { grid-column: 1 / -1; color: var(--ink3); font-size: 11.5px; border-top: 1px dashed var(--line2); }
+
+/* onde encalham: uma linha por grupo, a soma dá 100% */
+.stk { display: grid; grid-template-columns: minmax(150px, 1.4fr) minmax(60px, 2fr) 56px 64px 76px minmax(110px, 1fr); gap: 0 10px; align-items: center; font-size: 12.5px; }
+.stk > div { padding: 7px 0; border-top: 1px solid var(--line); min-width: 0; }
+.stk .hd { color: var(--ink3); font-size: 11px; border-top: 0; padding-top: 0; }
+.stk .n, .stk .p, .stk .pp { text-align: right; font-variant-numeric: tabular-nums; }
+.stk .p { font-weight: 600; }
+.stk .t { height: 12px; background: var(--btn); position: relative; }
+.stk .t i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--warn); min-width: 2px; }
+.stk .t i.good { background: var(--good); }
+.stk .nx { font-size: 11.5px; } .stk .nx a { text-decoration: none; }
+.stk .pp.up { color: var(--bad); } .stk .pp.down { color: var(--good); }
+
+/* "não medido" a tracejado */
+.nm { color: var(--ink3); border-bottom: 1px dashed var(--line2); font-size: 11.5px; }
+td.nm { border-bottom: 1px dashed var(--line2); }
+
+/* a curva de retenção: pontos por dia de idade */
+.curve { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.curve > div { text-align: center; }
+.curve .cb { height: 70px; background: var(--btn); position: relative; }
+.curve .cb i { position: absolute; left: 25%; right: 25%; bottom: 0; background: var(--acc); }
+.curve .cv { font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 4px; }
+.curve .cl { color: var(--ink3); font-size: 11px; }
+
+/* Por hora, fechado por omissão */
+details.box > summary { cursor: pointer; color: var(--ink2); font-size: 12.5px; list-style: none; }
+details.box > summary::before { content: "▸ "; color: var(--ink3); }
+details.box[open] > summary::before { content: "▾ "; }
+
+/* a tabela das verificações de saúde */
+table.t td.st { width: 12px; padding-right: 0; }
+table.t td.st i { display: inline-block; width: 8px; height: 8px; background: var(--ink3); }
+table.t td.st i.ok { background: var(--good); } table.t td.st i.warn { background: var(--warn); } table.t td.st i.bad { background: var(--bad); }
+table.t td.wrap { white-space: normal; min-width: 200px; }
+.defs { display: grid; grid-template-columns: minmax(140px, 220px) 1fr; gap: 6px 14px; font-size: 12.5px; }
+.defs dt { font-family: var(--mono); font-size: 11.5px; color: var(--acc-ink); }
+.defs dd { margin: 0; color: var(--ink2); }
+
+@media (max-width: 1100px) {
+  .k6 { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 12px; }
+  .k6 .kc:nth-child(4) { border-left: 0; padding-left: 2px; }
+  .stk { grid-template-columns: minmax(130px, 1.4fr) minmax(50px, 1fr) 50px 56px 70px; }
+  .stk .nx { display: none; } .stk .hd.nx { display: none; }
+}
+@media (max-width: 760px) {
+  .health { gap: 2px 10px; font-size: 12px; order: 5; flex-basis: 100%; }
+  .k6 { grid-template-columns: 1fr 1fr; }
+  .k6 .kc:nth-child(odd) { border-left: 0; padding-left: 2px; }
+  .k6 .kc:nth-child(4) { border-left: 1px solid var(--line); padding-left: 14px; }
+  .lf { grid-template-columns: minmax(100px, 1.2fr) minmax(40px, 1fr) 46px 56px; }
+  .lf .p { white-space: normal; }
+  .envg { grid-template-columns: 1fr; }
+  .envg > div h3 { margin-top: 12px; }
+  nav.side { -webkit-mask-image: linear-gradient(90deg, black 85%, transparent); mask-image: linear-gradient(90deg, black 85%, transparent); }
+  .lf .pf, .lf .hd.pf { display: none; }
+  .stk { grid-template-columns: minmax(110px, 1.3fr) minmax(40px, 1fr) 40px 50px; }
+  .stk .pp, .stk .hd.pp { display: none; }
+  .curve { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .defs { grid-template-columns: 1fr; gap: 2px 0; } .defs dd { margin-bottom: 8px; }
+  /* no telemóvel o ao vivo vem logo a seguir aos números */
+  body[data-page="hoje"] .g > .live4 { order: -1; }
+  body[data-page="hoje"] .g > .kpis4 { order: -2; }
+}

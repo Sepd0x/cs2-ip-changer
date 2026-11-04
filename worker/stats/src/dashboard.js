@@ -8,8 +8,12 @@
 // RETAIN_DAYS are deleted (added-up counts with no ID stay). The cron is the only thing here that writes.
 
 import { verifyAccess } from './access.js';
-import { params, summary, live, who } from './api.js';
+import { params, summary, live, who, compareVersions } from './api.js';
 import { ASSETS } from './assets.js';
+import { buildBrief, renderMd } from './brief.js';
+import { annotations } from './annotations.js';
+
+export { compareVersions };
 
 const REPO = /^[A-Za-z0-9_.-]{1,100}\/[A-Za-z0-9_.-]{1,100}$/;
 const DAYS = [7, 30, 90];
@@ -26,23 +30,6 @@ const GH_TABLE = 'CREATE TABLE IF NOT EXISTS gh_daily (day TEXT NOT NULL, kind T
 const LIVE_HOURLY_TABLE = 'CREATE TABLE IF NOT EXISTS live_hourly (hour INTEGER NOT NULL, dev INTEGER NOT NULL DEFAULT 0, n INTEGER NOT NULL, game INTEGER NOT NULL, prot INTEGER NOT NULL, PRIMARY KEY (hour, dev))';
 const ymd = (t) => new Date(t).toISOString().slice(0, 10);
 const noTable = (e) => /no such table/i.test(String(e && e.message));
-
-/** Order of app versions: 0.1.0-beta.10 after 0.1.0-beta.9, a release after its betas. */
-export function compareVersions(a, b) {
-  const parse = (v) => { const [main, pre] = String(v).split('+')[0].split(/-(.*)/); return { main: main.split('.').map(Number), pre: pre ? pre.split('.') : null }; };
-  const x = parse(a), y = parse(b);
-  for (let i = 0; i < 3; i++) if ((x.main[i] || 0) !== (y.main[i] || 0)) return (x.main[i] || 0) - (y.main[i] || 0);
-  if (!x.pre || !y.pre) return (x.pre ? -1 : 0) - (y.pre ? -1 : 0);
-  for (let i = 0; i < Math.max(x.pre.length, y.pre.length); i++) {
-    const p = x.pre[i], q = y.pre[i];
-    if (p === undefined || q === undefined) return p === undefined ? -1 : 1;
-    const np = /^\d+$/.test(p), nq = /^\d+$/.test(q);
-    if (np && nq && Number(p) !== Number(q)) return Number(p) - Number(q);
-    if (np !== nq) return np ? -1 : 1;
-    if (!np && p !== q) return p < q ? -1 : 1;
-  }
-  return 0;
-}
 
 /** "ChangeIp_Click" → "Change IP", "Tray_open" → "Tray: open", "ip_changed" → "IP changed": names from the app's code, readable. */
 export function readable(name) {
@@ -73,7 +60,8 @@ export default {
     // The daily picture failed (GitHub's public API has a small limit per address): tried again once an hour until there is one
     if (new Date(now).getUTCMinutes() < 10 && new Date(now).getUTCHours() >= 4) {
       let have = null;
-      try { have = await env.DB.prepare('SELECT 1 AS y FROM gh_daily WHERE day = ? LIMIT 1').bind(ymd(now)).first(); } catch (e) { if (!noTable(e)) throw e; }
+      // v4: the day's picture is its repo row (traffic rows are keyed by the day GitHub counted, today's too)
+      try { have = await env.DB.prepare("SELECT 1 AS y FROM gh_daily WHERE day = ? AND kind = 'repo' LIMIT 1").bind(ymd(now)).first(); } catch (e) { if (!noTable(e)) throw e; }
       if (!have) await snapshotGithub(env.DB, env, fetch, now).catch(() => false);
     }
   },
@@ -81,6 +69,8 @@ export default {
     const url = new URL(request.url);
     const gate = await verifyAccess(request, env);
     if (!gate.ok) return text('Forbidden', 403);
+    // v4: a service token (the agent) reads the brief and nothing else
+    if (gate.service && url.pathname !== '/api/brief') return text('Forbidden', 403);
     if (request.method !== 'GET' && request.method !== 'HEAD') return text('Method not allowed', 405);
     if (url.pathname === '/') return new Response(null, { status: 302, headers: { location: '/dashboard' } });
     // beta.9: the new dashboard (worker/stats/dashboard, packed into assets.js) and its JSON. The old page stays at /classic.
@@ -94,17 +84,35 @@ export default {
         return json(data);
       } catch (e) { return json({ error: String(e?.message || e) }, 500); }
     }
+    // v4 (Nov. 2026): the state in one call, for the owner's page and for the agent (spec dashboard-v4 7). An agent comes in with
+    // an Access service token (CF-Access-Client-Id and -Secret), which Access turns into the same JWT checked above.
+    if (url.pathname === '/api/brief') {
+      const q = url.searchParams;
+      const fmt = q.get('format') === 'md' ? 'md' : 'json';
+      const date = /^\d{4}-\d{2}-\d{2}$/.test(q.get('date') || '') ? q.get('date') : null;
+      try {
+        const b0 = await cachedBrief(env, { now: now0, dev: q.get('dev') === '1', date });
+        // ?definitions=0: the same brief without the 6 KB of definitions (the agent keeps them from one full call)
+        const b = q.get('definitions') === '0' ? { ...b0, definitions: {}, definitions_omitted: true } : b0;
+        const head = { ...SAFE, 'cache-control': 'private, max-age=300' };
+        if (fmt === 'md') return new Response(request.method === 'HEAD' ? null : renderMd(b), { headers: { 'content-type': 'text/markdown; charset=utf-8', ...head } });
+        return new Response(request.method === 'HEAD' ? null : JSON.stringify(b), { headers: { 'content-type': 'application/json; charset=utf-8', ...head } });
+      } catch (e) { return json({ error: String(e?.message || e) }, 500); }
+    }
     if (url.pathname === '/api/github') {
-      const gh = await github(env, fetch, now0);
-      // The daily pictures (gh_daily): downloads and stars per day. Read fresh, the cached part is GitHub's answer
-      return json({ ...gh, history: await githubHistory(env.DB, now0).catch((e) => ({ days: [], error: String(e?.message || e) })) });
+      // The daily pictures (gh_daily): downloads and stars per day. Read fresh, the cached part is GitHub's answer.
+      // Nov. 2026 (performance review): the D1 read runs while GitHub answers, not after it
+      const [gh, history] = await Promise.all([github(env, fetch, now0), githubHistory(env.DB, now0).catch((e) => ({ days: [], error: String(e?.message || e) }))]);
+      // v4: the markers of the time series (videos, posts, incidents; the releases come with GitHub's answer)
+      return json({ ...gh, history, annotations: annotations() });
     }
     // Only the packed files: a name like __proto__ or toString is not one of them (Object.hasOwn)
     const file = (name) => (Object.hasOwn(ASSETS, name) ? ASSETS[name] : null);
-    // Nov. 2026: /dashboard is the v3 page; the v2 page stays at /v2 (its files under /d/v2/) for the owner to compare
-    const asset = url.pathname === '/dashboard' ? file('index.html') : url.pathname === '/v2' ? file('v2/index.html') : url.pathname.startsWith('/d/') ? file(url.pathname.slice(3))
+    // Nov. 2026: /dashboard is the v4 page (its files under /d/v4/); the v3 stays at /v3 and the v2 at /v2 for the owner to compare
+    const PAGES = { '/dashboard': 'v4/index.html', '/v3': 'index.html', '/v2': 'v2/index.html' };
+    const asset = Object.hasOwn(PAGES, url.pathname) ? file(PAGES[url.pathname]) : url.pathname.startsWith('/d/') ? file(url.pathname.slice(3))
       : url.pathname.startsWith('/ui/') ? file(url.pathname.slice(1)) : null;
-    if (asset) return serveAsset(request, asset);
+    if (asset) return serveAsset(request, asset, url);
     if (url.pathname !== '/classic') return text('Not found', 404);
     const days = DAYS.includes(Number(url.searchParams.get('days'))) ? Number(url.searchParams.get('days')) : 30;
     const now = Date.now();
@@ -129,15 +137,93 @@ const text = (body, status) => new Response(body, { status, headers: { 'content-
 const SAFE = { 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer', 'x-frame-options': 'DENY', 'cache-control': 'no-store' };
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8', ...SAFE } });
 
+// Nov. 2026 (performance review, publish/auditoria-2026-11-04/dashboard-v4/desempenho.md): the files went out with no-store, so
+// every visit downloaded them again (the v3's scripts and styles, the v2's capture, 1 MB of captures on Na app), and each capture
+// was decoded from base64 on every request (about 8 ms of CPU each, with the free plan's limit at 10 ms). Now: one version for the
+// whole packed set (a hash of every file, worked out once per isolate); the two pages ask for their files with ?v=<version> and
+// those are kept by this browser only (private, behind Access); any other file is checked with its ETag (304, no body), so a
+// deploy shows at once. The pages themselves and the API stay no-store. The captures are decoded once per isolate.
+let VERSION = null;
+/**
+ * The packed files' version: FNV-1a over every name, length and text, once per isolate. The captures (base64 PNG, 80% of the
+ * set) only every 7th character: any change to a PNG re-compresses its data from that point on, and the whole set would cost
+ * about 7 ms of CPU instead of 2.
+ */
+export function assetsVersion() {
+  if (VERSION) return VERSION;
+  let h = 0x811c9dc5;
+  for (const name of Object.keys(ASSETS).sort()) {
+    const a = ASSETS[name], s = `${name}\0${a.body.length}\0${a.body}`, step = a.b64 ? 7 : 1;
+    for (let i = 0; i < s.length; i += i < name.length + 12 ? 1 : step) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  }
+  return (VERSION = (h >>> 0).toString(36));
+}
+const BODIES = new Map();
+function bodyOf(a) {
+  let b = BODIES.get(a);
+  if (b !== undefined) return b;
+  if (a.b64) {
+    const s = atob(a.body);
+    b = new Uint8Array(s.length);
+    for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i);
+  } else if (a.type.startsWith('text/html')) {
+    // The page's own files with the version, so the browser can keep them (only "/d/..." in src and href; nothing else changes)
+    b = a.body.replace(/\b(src|href)="(\/d\/[^"?#]+)"/g, (_, attr, path) => `${attr}="${path}?v=${assetsVersion()}"`);
+  } else b = a.body;
+  BODIES.set(a, b);
+  return b;
+}
+
 /** A file of the new dashboard. Scripts only from here, no inline ones, nothing from outside. */
-function serveAsset(request, a) {
-  const body = a.b64 ? Uint8Array.from(atob(a.body), (c) => c.charCodeAt(0)) : a.body;
-  return new Response(request.method === 'HEAD' ? null : body, {
-    headers: {
-      'content-type': a.type, ...SAFE,
-      'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
-    },
-  });
+function serveAsset(request, a, url) {
+  const page = a.type.startsWith('text/html');
+  const v = assetsVersion();
+  const etag = `W/"${v}"`;
+  const cache = page ? 'no-store' : url?.searchParams.get('v') === v ? 'private, max-age=31536000, immutable' : 'private, no-cache';
+  const headers = {
+    'content-type': a.type, ...SAFE, 'cache-control': cache,
+    'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+  };
+  if (!page) {
+    headers.etag = etag;
+    const inm = request.headers.get('if-none-match') || '';
+    if (inm.split(',').some((t) => t.trim().replace(/^W\//, '') === `"${v}"`)) return new Response(null, { status: 304, headers });
+  }
+  return new Response(request.method === 'HEAD' ? null : bodyOf(a), { headers });
+}
+
+const ALL = { version: 'all', country: 'all', mode: 'all', link: 'all' };
+/** The tables in the database (the brief's health check), or null when the list can't be read. */
+export async function tableNames(db) {
+  try { return ((await db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all()).results ?? []).map((r) => r.name); } catch { return null; }
+}
+/**
+ * Everything the brief needs, in one D1 round trip next to GitHub: summary(30), live, the GitHub pictures, the table list. With
+ * date (a past UTC day, up to 89 days back) the brief is that day's, as at its end: live and GitHub are not historical.
+ */
+export async function readBrief(env, { now, dev = false, date = null, fetchFn = fetch }) {
+  const exclude = excludeIds(env.EXCLUDE_IDS);
+  let at = now, historical = false;
+  if (date && date < ymd(now) && date >= ymd(now - 89 * 864e5)) { at = Date.parse(date + 'T23:59:59Z'); historical = true; }
+  const [S, L, G, GH, tables] = await Promise.all([
+    summary(env.DB, { period: 30, f: ALL, dev, now: at, exclude, until: historical ? date : null }),
+    historical ? null : live(env.DB, { dev, now: at, exclude }).catch(() => null),
+    historical ? null : github(env, fetchFn, now).catch(() => null),
+    githubHistory(env.DB, at, 120, historical ? date : null).catch(() => ({ days: [] })),
+    tableNames(env.DB),
+  ]);
+  return buildBrief({ S, L, G, GH, tables, now: at, dev, excluded: exclude.length, historical, requested: date });
+}
+// The brief kept 5 minutes per isolate (the Cache API does nothing on workers.dev): the page and the agent asking twice cost one read
+let briefMemo = new Map();
+export function resetBriefCache() { briefMemo = new Map(); }
+async function cachedBrief(env, opt) {
+  const k = `${opt.dev ? 1 : 0}|${opt.date || ''}`;
+  const hit = briefMemo.get(k);
+  if (hit && opt.now - hit.at < 300_000) return hit.data;
+  const data = await readBrief(env, opt);
+  briefMemo.set(k, { at: opt.now, data });
+  return data;
 }
 
 /** Install IDs of the developer's PCs (release builds without Mine in telemetry.json), as a secret: comma or space separated. */
@@ -256,10 +342,37 @@ export async function snapshotGithub(db, env, fetchFn, now) {
     if (r.draft) continue;
     for (const a of r.assets ?? []) rows.push(['asset', `${String(r.tag_name).slice(0, 60)}/${String(a.name).slice(0, 120)}`, num(a.download_count)]);
   }
+  // v4 (spec R4): GitHub keeps its traffic 14 days only, so the videos' peak would be gone two weeks later. With the token, the
+  // views and clones of each day GitHub counted (keyed by that day, written over while GitHub still updates it) and the 14-day
+  // referrers and popular pages as of today. About GitHub's own counts of the repo, never of a person.
+  const traffic = await trafficRows(env, fetchFn, d, num);
   await db.prepare(GH_TABLE).run();
-  const stmts = rows.slice(0, 400).map(([kind, name, n]) => db.prepare('INSERT INTO gh_daily (day, kind, name, n) VALUES (?, ?, ?, ?) ON CONFLICT (day, kind, name) DO UPDATE SET n = excluded.n').bind(d, kind, name, n));
+  const stmts = [...rows.slice(0, 400).map(([kind, name, n]) => [d, kind, name, n]), ...traffic].map(([day, kind, name, n]) => db.prepare('INSERT INTO gh_daily (day, kind, name, n) VALUES (?, ?, ?, ?) ON CONFLICT (day, kind, name) DO UPDATE SET n = excluded.n').bind(day, kind, name, n));
   await db.batch(stmts);
-  return rows.length;
+  return rows.length + traffic.length;
+}
+
+const cleanToken = (env) => String(env.GITHUB_TOKEN || '').replace(/^\uFEFF/, '').trim();
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+/** The traffic as gh_daily rows [day, kind, name, n], or none without a token or when GitHub refuses it (never an error). */
+export async function trafficRows(env, fetchFn, d, num = (x) => (Number.isFinite(x) && x >= 0 ? Math.floor(x) : 0)) {
+  const token = cleanToken(env);
+  if (!token) return [];
+  const repo = repoOf(env);
+  const get = async (path) => { try { const r = await fetchFn(`https://api.github.com/repos/${repo}${path}`, { headers: { authorization: `Bearer ${token}`, ...GH_HEADERS } }); return r.ok ? await r.json() : null; } catch { return null; } };
+  const [views, clones, refs, paths] = await Promise.all([get('/traffic/views'), get('/traffic/clones'), get('/traffic/popular/referrers'), get('/traffic/popular/paths')]);
+  const out = [];
+  for (const [kind, list] of [['traffic_views', views && views.views], ['traffic_clones', clones && clones.clones]])
+    for (const v of Array.isArray(list) ? list.slice(0, 15) : []) {
+      const day = String(v.timestamp || '').slice(0, 10);
+      if (DAY.test(day)) out.push([day, kind, 'count', num(v.count)], [day, kind, 'uniques', num(v.uniques)]);
+    }
+  for (const [kind, list, field] of [['traffic_ref', refs, 'referrer'], ['traffic_path', paths, 'path']])
+    for (const r of Array.isArray(list) ? list.slice(0, 10) : []) {
+      const name = String(r[field] || '').slice(0, 120);
+      if (name) out.push([d, kind, name, num(r.count)], [d, `${kind}_u`, name, num(r.uniques)]);
+    }
+  return out;
 }
 
 /**
@@ -267,23 +380,48 @@ export async function snapshotGithub(db, env, fetchFn, now) {
  * the downloads of each day, the difference with the day before (only when both days have a picture, so a missed day never
  * makes a fake peak; the first day has none).
  */
-export async function githubHistory(db, now, days = 120) {
+export async function githubHistory(db, now, days = 120, until = null) {
   let rows = [];
   try { rows = (await db.prepare('SELECT day, kind, name, n FROM gh_daily WHERE day >= ? ORDER BY day').bind(ymd(now - (days - 1) * 864e5)).all()).results ?? []; } catch (e) { if (!noTable(e)) throw e; }
+  // v4: a past day's brief sees only the pictures up to that day
+  if (until) rows = rows.filter((r) => r.day <= until);
   const by = new Map();
+  // v4: the traffic rows apart (a day with only views is not a picture: it would make a fake download peak the day after)
+  const traffic = { days: [], refs: [], refsDay: null, paths: [], pathsDay: null };
+  const tv = new Map();
   for (const r of rows) {
+    if (r.kind.startsWith('traffic_')) {
+      if (r.kind === 'traffic_views' || r.kind === 'traffic_clones') {
+        const x = tv.get(r.day) || tv.set(r.day, { day: r.day, views: 0, uniques: 0, clones: 0, clones_u: 0 }).get(r.day);
+        x[r.kind === 'traffic_views' ? (r.name === 'count' ? 'views' : 'uniques') : (r.name === 'count' ? 'clones' : 'clones_u')] = r.n;
+      }
+      continue;
+    }
+    if (r.kind !== 'repo' && r.kind !== 'asset') continue;
     const x = by.get(r.day) || by.set(r.day, { day: r.day, exe: 0, all: 0, stars: null, forks: null, watchers: null, issues: null }).get(r.day);
     if (r.kind === 'repo' && r.name in x) x[r.name] = r.n;
     else if (r.kind === 'asset') { x.all += r.n; if (/\.exe$/i.test(r.name)) x.exe += r.n; }
   }
   const list = [...by.values()];
+  // v4: each release's exe downloads in each picture (Aquisição: per release, first days)
+  const byRelease = {};
+  for (const r of rows) if (r.kind === 'asset' && /\.exe$/i.test(r.name)) { const tag = r.name.split('/')[0]; (byRelease[tag] || (byRelease[tag] = [])).push({ day: r.day, n: r.n }); }
   for (let i = 0; i < list.length; i++) {
     const p = list[i - 1], x = list[i];
     const adj = p && ymd(Date.parse(p.day + 'T00:00:00Z') + 864e5) === x.day;
     x.exeDay = adj ? Math.max(0, x.exe - p.exe) : null;
     x.starsDay = adj && x.stars != null && p.stars != null ? x.stars - p.stars : null;
   }
-  return { days: list, first: list[0]?.day ?? null };
+  traffic.days = [...tv.values()].sort((a, b) => (a.day < b.day ? -1 : 1));
+  // The referrers and popular pages of the newest snapshot, and every referrer seen in the days read (the videos' traffic stays)
+  for (const [kind, key, dayKey] of [['traffic_ref', 'refs', 'refsDay'], ['traffic_path', 'paths', 'pathsDay']]) {
+    const mine = rows.filter((r) => r.kind === kind), u = new Map(rows.filter((r) => r.kind === `${kind}_u`).map((r) => [`${r.day}|${r.name}`, r.n]));
+    const lastDay = mine.reduce((m, r) => (r.day > m ? r.day : m), '');
+    traffic[dayKey] = lastDay || null;
+    traffic[key] = mine.filter((r) => r.day === lastDay).map((r) => ({ name: r.name, n: r.n, u: u.get(`${r.day}|${r.name}`) ?? null })).sort((a, b) => b.n - a.n);
+  }
+  traffic.refsByDay = rows.filter((r) => r.kind === 'traffic_ref').map((r) => ({ day: r.day, name: r.name, n: r.n }));
+  return { days: list, first: list[0]?.day ?? null, traffic, byRelease };
 }
 
 let ghCache = { at: 0, data: null };
@@ -297,7 +435,8 @@ export async function github(env, fetchFn, now) {
   // A token pasted from the clipboard can bring a BOM, spaces or a line break with it: GitHub then says 401
   const token = String(env.GITHUB_TOKEN || '').replace(/^\uFEFF/, '').trim();
   let problems = [];
-  if (!token) problems.push('No GITHUB_TOKEN secret: stars and downloads come from the public API; the traffic (views, clones, referrers) needs the token.');
+  // 4 Nov.: the secret was there but empty (pasted blank), and the page said it was missing: say which one it is
+  if (!token) problems.push((env.GITHUB_TOKEN === undefined ? 'No GITHUB_TOKEN secret' : 'The GITHUB_TOKEN secret is empty (paste the token again with wrangler secret put)') + ': stars and downloads come from the public API; the traffic (views, clones, referrers) needs the token.');
   const get = async (path, auth = true) => {
     try {
       const res = await fetchFn(`https://api.github.com/repos/${repo}${path}`, { headers: auth ? { authorization: `Bearer ${token}`, ...GH_HEADERS } : GH_HEADERS });

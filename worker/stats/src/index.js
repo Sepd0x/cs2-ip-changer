@@ -94,7 +94,8 @@ const UPD_FROM = /^updfrom_\d+_\d+_\d+(_[0-9A-Za-z_]{1,20})?$/;
 const DATA = ['lt250m', '250_500m', '500m_1g', '1_2g', 'gt2g'];
 const REGION = /^[a-z]{3,4}[0-9]?$/;
 const SCROLL = /^scl_[a-z]{1,12}_(0|25|50|75|100)$/;
-const RESERVED = /^(scr|path|age|act|set|reg|data)_|^(net_dc|id_install)$/;
+// v4: rep_exit is the Worker's own (a report marked exit), never the app's
+const RESERVED = /^(scr|path|age|act|set|reg|data)_|^(net_dc|id_install|rep_exit)$/;
 // Same list as Telemetry.SettingNames: on/off settings and the mode, by name only
 const SETTINGS = new Set(['GameMode', 'SteamOnEgress', 'KeepPcOffPhone', 'RequireGoodLink', 'CheckUpdates', 'SteamSilent', 'SteamOffline', 'StreamerMode',
   'AutoStreamer', 'AutoQuery', 'CleanupOnExit', 'CloseToTray', 'AutoJoinFollowed', 'SwitchIp', 'SwitchAccount', 'SwitchRejoin',
@@ -370,6 +371,8 @@ export default {
     if (hosting) extra.push(['net_dc', 1]);
     // beta.9: the ID is kept per install (before, new every day). Marked, so the dashboard counts returns only for these IDs.
     if (b.idk === 'install') extra.push(['id_install', 1]);
+    // v4 (spec R7): a report sent at close, sleep or sign-out, so the dashboard can say what share of the reports arrive that way
+    if (b.exit === true) extra.push(['rep_exit', 1]);
     // Mobile data today in a band, and the regions turned off on the Regions page (Valve's public codes, like fra)
     if (DATA.includes(b.data)) extra.push([`data_${b.data}`, 1]);
     if (Array.isArray(b.regions))

@@ -2,7 +2,8 @@
 // Cloudflare Access in front of all of it, and the Worker checks the Access token too. Steps: publish/dashboard-passos.md
 // (outside the repo). Deploy from this folder: npx wrangler deploy -c wrangler.dashboard.jsonc
 // Secrets (wrangler secret put NAME -c wrangler.dashboard.jsonc): TEAM_DOMAIN, POLICY_AUD, DASHBOARD_EMAIL, GITHUB_TOKEN,
-// and optionally EXCLUDE_IDS (old fixed install IDs of your own PCs).
+// and optionally EXCLUDE_IDS (old fixed install IDs of your own PCs) and SERVICE_TOKEN_IDS (v4: the Client IDs of the Access
+// service tokens allowed to read /api/brief, and nothing else).
 {
   "name": "stats-dashboard",
   "main": "src/dashboard.js",

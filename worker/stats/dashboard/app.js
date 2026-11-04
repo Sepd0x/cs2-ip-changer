@@ -196,9 +196,15 @@
     const my = ++seq;
     const page = pageNow();
     const need30 = page === 'hoje' || (page === 'utilizadores' && st.period < 14) || (['qualidade', 'ligacao', 'versoes'].includes(page) && st.period < 14);
-    const [R, H, L, G] = await Promise.all([V3.summary(st.f, st.period), need30 ? V3.summary(st.f, 30) : null, V3.live().catch(() => null), V3.github()]);
+    // Revisão de desempenho (nov. 2026): o GitHub demora 0,3 a 0,5 s quando o Worker acabou de arrancar. Só Aquisição e Versões
+    // esperam por ele; as outras páginas desenham-se já (G undefined = ainda a ler) e voltam a desenhar-se quando ele chega
+    const G0 = V3.githubNow();
+    const ghP = G0 === undefined ? V3.github() : null;
+    const ghWait = page === 'aquisicao' || page === 'versoes';
+    const [R, H, L, G] = await Promise.all([V3.summary(st.f, st.period), need30 ? V3.summary(st.f, 30) : null, V3.live().catch(() => null), ghWait && ghP ? ghP : G0]);
     if (my !== seq) return false;
     DATA = { R, H: H || R, L, G };
+    if (G === undefined && ghP) ghP.then((g) => { if (my !== seq || !DATA) return; DATA.G = g; const y = scrollY; render(); scrollTo(0, y); });
     return true;
   }
   async function refresh() {
@@ -235,7 +241,7 @@
     const cnt = { hoje: al.filter((a) => a.tone === 'bad').length, qualidade: newErr };
     $('#nav').innerHTML = PAGES.map(([id, label, icon]) => `<a href="#${id}"${id === st.page ? ' aria-current="page"' : ''}><svg viewBox="0 0 24 24">${icon}</svg>${label}${cnt[id] ? `<span class="cnt bad">${cnt[id]}</span>` : ''}</a>`).join('')
       + `<div class="foot">Unidade: a instalação (ID fixo desde a beta.9) e a instalação-dia. Dias em UTC, horas de Lisboa. Só tu vês este painel: números exatos, sem "menos de 5".</div>`
-      + '<div class="links"><a href="/v2">v2</a><a href="/classic">clássico</a></div>';
+      + '<div class="links"><a href="/dashboard">v4</a><a href="/v2">v2</a><a href="/classic">clássico</a></div>';
     $('#crumbPage').textContent = PAGES.find((p) => p[0] === st.page)[1];
     document.title = `${PAGES.find((p) => p[0] === st.page)[1]} · CS2 IP Changer stats`;
     renderFilters(D);
@@ -274,7 +280,7 @@
     // Revisão de segurança (4 nov.): o contador do site aceita uma Origin forjada fora do browser; uma enxurrada só se vê aqui
     const sc = Fr.budget.siteCap ? Fr.budget.site / Fr.budget.siteCap : 0;
     if (sc >= 0.5) out.push({ tone: sc >= 0.9 ? 'bad' : 'warn', t: `Contador do site a ${Math.round(100 * sc)}% do limite`, d: `${N(Fr.budget.site)} de ${N(Fr.budget.siteCap)} linhas hoje. Muito acima das visitas normais é alguém a mandar visitas falsas (a origem pode ser forjada fora do browser): os números do site de hoje não valem, e no limite deixam de contar até o dia mudar (UTC). Os relatórios da app não são afetados.`, src: ['e', 'fresh.budget.site'] });
-    if (!ghOk(D.G)) out.push({ tone: 'bad', t: 'GitHub sem acesso', d: `${D.G && D.G.problems && D.G.problems.length ? esc(D.G.problems.slice(0, 2).join(' · ')) : 'O /api/github não respondeu'}. Estrelas, downloads e visitas ficam sem dados; não são zeros.`, src: ['x', 'github.problems'] });
+    if (D.G !== undefined && !ghOk(D.G)) out.push({ tone: 'bad', t: 'GitHub sem acesso', d: `${D.G && D.G.problems && D.G.problems.length ? esc(D.G.problems.slice(0, 2).join(' · ')) : 'O /api/github não respondeu'}. Estrelas, downloads e visitas ficam sem dados; não são zeros.`, src: ['x', 'github.problems'] });
     const lk = H.links || [], lkN = lk.reduce((s, x) => s + x.n, 0), none = (lk.find((x) => x.k === 'none') || { n: 0 }).n;
     if (lkN >= 5 && none === lkN) out.push({ tone: 'warn', t: 'Ligação chega sempre "none"', d: `${N(none)} de ${N(lkN)} instalações-dia dos últimos 30 dias. Ping e lag por ligação ficam vazios até isto mudar.`, src: ['e', 'links'] });
     const since7 = addDays(H.asOf, -6);
@@ -307,7 +313,8 @@
     const hourly = H.hourly || { today: Array(24).fill(null), yday: Array(24).fill(0), hour: now.h };
     const hourSmall = isSmall([...hourly.today, ...hourly.yday]);
     const hourBox = box('Por hora', 'instalações com relatório · hoje contra ontem', [['e', 'hourly']], hourSmall ? hstrip(hourly, hourly.hour) : hbars(hourly, hourly.hour) + '<p class="note">Dos relatórios da app (cada instalação conta uma vez por hora). O ao vivo não guarda histórico.</p>', hourSmall ? 's12' : 's8');
-    const liveBox = L && L.now
+    // v4 passo 1: a caixa Agora fica sempre (0 a usar e o último sinal também é informação)
+    const liveBox = L
       ? box('Agora', 'sinal nos últimos 6 min, número exato', [['e', '/api/live']], `<div class="bigline"><span class="big">${N(L.now)}</span><span>a usar · ${N(L.inGame)} em jogo · ${N(L.protectedN)} Protected</span></div>
         <h3>Onde estão</h3>${bl(L.byScreen.map((x) => [scrName(x.k), x.n]))}<h3>Ligação</h3>${bl(tally(L.byLink, LINKS))}<h3>Modo</h3>${bl(tally(L.byMode, MODES))}<h3>Versão</h3>${bl(L.byVersion.map((x) => [short(x.k), x.n]))}<p class="note">${peakTxt(L)}</p>`, 's4')
       : '';
@@ -547,8 +554,8 @@
         ${errs.map((e) => { const tr = trend(e.perDay); return `<tr><td>${esc(e.type)}${e.fresh ? `<span class="newtag" title="1.º visto a ${dd(e.first.day)} na ${esc(short(e.first.app))}">novo</span>` : ''}</td><td class="mono hm">${esc(e.at)}</td><td>${esc(short(e.app))}</td><td class="n">${N(e.days)}</td><td class="n">${N(e.n)}</td><td>${isSmall(tr) ? nums(tr, '14 dias, um número por dia') : spark(tr, 84, 18, e.fresh ? 'bad' : 'acc')}</td></tr>`; }).join('')}</tbody></table></div><p class="note">Novo: visto pela 1.ª vez neste período (procura nos últimos 90 dias).</p>` : empty('Nenhum erro no período.'), 's8')}
       ${box('Crashes', `por dia, ${series.length} dias`, [['e', 'days.crashes'], ['e', 'crashPlaces']], `${isSmall(series.map((d) => d.crashes)) ? nums(series.map((d) => d.crashes)) : mini(series.map((d) => d.crashes))}<div class="xax dim" style="display:flex;justify-content:space-between;font-size:10.5px;margin-top:2px"><span>${dshort(series[0].date)}</span><span>${dshort(series.at(-1).date)}</span></div><h3>Onde</h3>${R.crashPlaces.length ? `<div class="tw"><table class="t"><tbody>${R.crashPlaces.map((c) => `<tr><td class="mono">${esc(c.at)}</td><td>${esc(short(c.app))}</td><td class="n">${N(c.n)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="note">Nenhum crash no período.</p>'}`, 's4')}
       ${box('Trocas de IP', `${N(ipAll)} ${ipAll === 1 ? 'troca' : 'trocas'}`, [['e', 'days.ip*'], ['e', 'phone.duration']], `${ipAll ? bl([['IP novo', T.ipNew, null, 'good'], ['Ficou o mesmo IP', T.ipSame, null, 'warn'], ['Sem rede', T.ipNone, null, 'bad']], { pct: true }) : empty('Nenhuma troca no período.')}<h3>Quanto demora</h3>${bl(dur, { pct: true, none: 'Sem tempos de troca no período.' })}`, 's4')}
-      ${box('Phone setup', 'instalações-dia em cada passo', [['e', 'setup[]'], ['e', 'setupOpened']], R.setupOpened ? bl([['Abriram o Phone setup', R.setupOpened], ...steps, ['Pronto', done, null, 'good']]) + '<p class="note">Cada passo conta as instalações-dia que o viram; a ordem é a da app.</p>' : empty('Ninguém abriu o Phone setup no período.'), 's4')}
-      <div class="s4 stack">${box('Checks a vermelho', 'instalações-dia', [['e', 'checks.red']], bl(R.checks.red.map((c) => [c.k, c.n]), { tone: 'warn', none: 'Nenhum Check a vermelho no período.' }) + `<p class="note">Fuga de IP de casa: ${N(R.checks.leak.fail)} ${R.checks.leak.fail === 1 ? 'falhado' : 'falhados'} em ${N(R.checks.leak.pass + R.checks.leak.fail)} ${R.checks.leak.pass + R.checks.leak.fail === 1 ? 'teste' : 'testes'} (o botão Run leak test).</p>`)}
+      ${box('Phone setup', 'o passo em que estava ao abrir', [['e', 'setup[]'], ['e', 'setupOpened']], R.setupOpened ? bl([['Abriram o Phone setup', R.setupOpened], ...steps, ['Pronto', done, null, 'good']]) + '<p class="note">Cada passo conta as instalações-dia em que o painel abriu nesse passo. Não é onde desistiram: isso pede um contador novo na app (phone_left_).</p>' : empty('Ninguém abriu o Phone setup no período.'), 's4')}
+      <div class="s4 stack">${box('Checks a vermelho', 'instalações-dia', [['e', 'checks.red']], bl(R.checks.red.map((c) => [c.k, c.n]), { tone: 'warn', none: 'Nenhum Check a vermelho no período.' }) + `<p class="note">Fuga de IP de casa: ${N(R.checks.leak.fail)} ${R.checks.leak.fail === 1 ? 'falhado' : 'falhados'} em ${N(R.checks.leak.pass + R.checks.leak.fail)} ${R.checks.leak.pass + R.checks.leak.fail === 1 ? 'teste' : 'testes'} (o botão Run leak test). O IP de casa voltou: <b class="${(R.counters.ip_home_back || 0) ? 'bad' : ''}">${N(R.counters.ip_home_back || 0)}</b> ${(R.counters.ip_home_back || 0) === 1 ? 'vez' : 'vezes'}. Erros escritos no Log: ${N(R.counters.log_error || 0)}.</p>`)}
       ${lagRows.length ? box('Lag por ligação', '% das partidas com lag', [['e', 'cs2.lag']], bl(lagRows.map(([k2, n, l]) => { const p = n ? l / n : 0; return [k2, Math.round(100 * p), [l, n], p > 0.3 ? 'bad' : p > 0.2 ? 'warn' : 'good']; }), { max: 100, fmt: (v) => `${v}%`, extra: (x) => `${N(x[0])} de ${N(x[1])}` }), 'grow')
         : box('Ainda sem dados', '', [], `<div class="empty"><b>Partidas ${N(cs.matches)} · regiões bloqueadas ${N((cs.regions || []).length)}</b><span>As partidas só chegam com sessões longas reportadas e com a ligação USB ou hotspot no relatório. Esta caixa passa a lag por ligação quando houver partidas.</span></div>`, 'dashed grow')}</div>
       ${box('Crashes por 100 sessões', 'janela de 7 dias, um número por dia', [['e', 'days.crashes / days.sessions']], `${nums(rate7.map((v) => (v == null ? 0 : v)), 'crashes por 100 sessões nos 7 dias até esse dia')}<div class="xax dim" style="display:flex;justify-content:space-between;font-size:10.5px;margin-top:2px"><span>${dshort(rate7d[0])}</span><span>${dshort(rate7d.at(-1))}</span></div><p class="note">Ponto: menos de 10 sessões nesses 7 dias, ou nenhum crash.</p>`, 's4')}
@@ -682,7 +689,7 @@
     const done = (R.setup.find((x) => x.key === 'done') || { n: 0 }).n;
     if (R.setupOpened >= 10 && done / R.setupOpened < 0.75) {
       const top = R.setup.filter((x) => x.key !== 'done' && x.n).sort((a, b) => b.n - a.n)[0];
-      out.push({ tone: 'warn', t: 'Revê o Phone setup', d: `${N(R.setupOpened)} abriram, ${N(done)} ficaram prontos.${top ? ` O passo mais visto: ${top.k} (${N(top.n)}).` : ''}`, rule: 'menos de 75% dos que abrem o Phone setup chegam a Pronto (10 ou mais)', href: '#qualidade' });
+      out.push({ tone: 'warn', t: 'Revê o Phone setup', d: `${N(R.setupOpened)} abriram, ${N(done)} ficaram prontos.${top ? ` O passo mais visto ao abrir: ${top.k} (${N(top.n)}).` : ''}`, rule: 'menos de 75% dos que abrem o Phone setup chegam a Pronto (10 ou mais)', href: '#qualidade' });
     }
     const fa = R.funnel[0].n, fb = R.funnel[1].n;
     if (fa >= 10 && 1 - fb / fa >= 0.2) out.push({ tone: 'warn', t: 'Ajuda a ligar o telemóvel no 1.º dia', d: `${N(fa)} instalações novas, ${N(fb)} com o telemóvel pronto no mesmo dia.`, rule: 'passo do 1.º dia que perde 20% ou mais (10 ou mais novas)', href: '#funil' });
@@ -835,7 +842,7 @@
   // Ao vivo a cada minuto; o resto a cada 5 minutos, só com a página à vista
   setInterval(async () => {
     if (document.hidden || !DATA) return;
-    try { DATA.L = await V3.live(); } catch { return; }
+    try { DATA.L = await V3.live(true); } catch { return; }
     if (st.page === 'hoje') { const y = scrollY; render(); scrollTo(0, y); } else render();
   }, 60_000);
   setInterval(() => { if (!document.hidden) { V3.forget(); const y = scrollY; refresh().then(() => scrollTo(0, y)); } }, 300_000);
