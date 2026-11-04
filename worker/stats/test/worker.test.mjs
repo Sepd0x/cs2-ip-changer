@@ -821,3 +821,111 @@ test('Revisão: "Voltam no dia seguinte" only counts installs whose next day is 
   const s = JSON.parse(JSON.stringify(await summary(DB, { period: 7, f: F0, dev: false, now })));
   assert.deepEqual(s.installs.nextDay, { n: 1, back: 0 });
 });
+
+// ------------------------------------------------------------------ dashboard v3 (4 nov. 2026): os campos novos do /api/summary
+
+test('v3: freshness (any PC and this view), the day budget, Por hora, yesterday at the same time and today in sums', async () => {
+  const DB = fakeD1();
+  const now = Date.parse('2026-11-04T15:30:00Z');   // inverno: Lisboa = UTC
+  const at = (d, hm) => Date.parse(`${d}T${hm}:00Z`);
+  const T = '2026-11-04', Y = '2026-11-03';
+  const ping = DB.raw.prepare('INSERT INTO pings (day, ts, id, app, minutes, dev, country, link, mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  const cnt = DB.raw.prepare('INSERT INTO counts (day, id, name, n, dev) VALUES (?, ?, ?, ?, 0)');
+  ping.run(Y, at(Y, '10:00'), ID(1), '0.1.0-beta.9', 20, 0, 'PT', 'none', 'game');
+  ping.run(Y, at(Y, '18:00'), ID(1), '0.1.0-beta.9', 30, 0, 'PT', 'none', 'game');
+  for (const [k, n] of [['first_start', 1], ['accounts', 1]]) cnt.run(Y, ID(1), k, n);
+  ping.run(T, at(T, '09:10'), ID(1), '0.1.0-beta.9', 5, 0, 'PT', 'none', 'game');
+  cnt.run(T, ID(1), 'ip_changed', 2);
+  ping.run(T, at(T, '14:05'), ID(2), '0.1.0-beta.10', 12, 0, 'BR', 'usb', 'cs2open');
+  cnt.run(T, ID(2), 'first_start', 1);
+  ping.run(T, at(T, '13:00'), ID(3), '0.1.0-beta.10', 0, 0, 'US', 'none', 'game');   // análise automática: 0 contas, 0 cliques, 0 min
+  ping.run(T, at(T, '15:20'), ID(9), '0.1.0-beta.10', 3, 1, 'PT', 'usb', 'game');     // build de dev
+  DB.raw.prepare('INSERT INTO budget (day, rows) VALUES (?, ?), (?, ?)').run(T, 30000, `${T}:live`, 500);
+  const s = JSON.parse(JSON.stringify(await summary(DB, { period: 7, f: F0, dev: false, now })));
+  assert.equal(s.fresh.lastAny, at(T, '15:20'), 'any PC: the dev build too');
+  assert.equal(s.fresh.lastTs, at(T, '14:05'), 'this view: without the dev build');
+  assert.equal(s.lastTs, s.fresh.lastTs, 'the old field stays');
+  assert.deepEqual(s.fresh.budget, { day: T, rows: 30000, cap: DAILY_ROWS, live: 500, liveCap: LIVE_ROWS });
+  assert.equal(s.hourly.hour, 15);
+  assert.equal(s.hourly.today[9], 1); assert.equal(s.hourly.today[14], 1);
+  assert.equal(s.hourly.today[13], 0, 'the scanner stays out');
+  assert.equal(s.hourly.today[15], 0); assert.equal(s.hourly.today[16], null, 'hours still to come are null');
+  assert.equal(s.hourly.yday[10], 1); assert.equal(s.hourly.yday[18], 1);
+  assert.deepEqual(s.sameTime, { users: 1, fresh: 1, minutes: 20 }, 'yesterday up to 15:30: only the 10:00 report');
+  const [td, yd] = s.recentDays;
+  assert.equal(td.date, T); assert.equal(td.users, 2); assert.equal(td.fresh, 1); assert.equal(td.ip, 2); assert.equal(td.minutes, 17);
+  assert.deepEqual(td.countries, [{ k: 'BR', n: 1 }, { k: 'PT', n: 1 }]);
+  assert.deepEqual(td.links, [{ k: 'none', n: 1 }, { k: 'usb', n: 1 }]);
+  assert.equal(yd.date, Y); assert.equal(yd.users, 1); assert.equal(yd.minutes, 50);
+  assert.ok(!JSON.stringify(s).includes(ID(1)) && !JSON.stringify(s).includes(ID(2)), 'no install ID in the answer');
+  // a period of 1 day still has yesterday for Por hora and the same time
+  const one = JSON.parse(JSON.stringify(await summary(DB, { period: 1, f: F0, dev: false, now })));
+  assert.equal(one.hourly.yday[10], 1); assert.equal(one.sameTime.users, 1); assert.equal(one.recentDays[1].users, 1);
+  // with no budget table yet (an old database) the bar says 0, and the answer still comes
+  DB.raw.exec('DROP TABLE budget');
+  const nb = JSON.parse(JSON.stringify(await summary(DB, { period: 7, f: F0, dev: false, now })));
+  assert.equal(nb.fresh.budget.rows, 0);
+  assert.ok(nb.warnings.some((w) => w.startsWith('budget')));
+});
+
+test('v3: the funnel reaches Protected and is per day, back after 7 days, cohorts by day, the first day of each error', async () => {
+  const DB = fakeD1();
+  const now = Date.parse('2026-11-04T15:30:00Z');
+  const ago = (n) => new Date(now - n * 864e5).toISOString().slice(0, 10);
+  const ping = DB.raw.prepare('INSERT INTO pings (day, ts, id, app, minutes, dev, link) VALUES (?, ?, ?, ?, 10, 0, ?)');
+  const cnt = DB.raw.prepare('INSERT INTO counts (day, id, name, n, dev) VALUES (?, ?, ?, ?, 0)');
+  const err = DB.raw.prepare('INSERT INTO errors (day, id, app, type, at, n, dev) VALUES (?, ?, ?, ?, ?, ?, 0)');
+  // A: new 9 days ago with the phone, a new IP and Protected; open again 7 days later. B: new 3 days ago, a new IP, no Protected.
+  ping.run(ago(9), now - 9 * 864e5, ID(1), '0.1.0-beta.9', 'usb');
+  for (const [k, n] of [['first_start', 1], ['id_install', 1], ['ip_changed', 1], ['tp_10_30', 1]]) cnt.run(ago(9), ID(1), k, n);
+  ping.run(ago(2), now - 2 * 864e5, ID(1), '0.1.0-beta.9', 'usb');
+  cnt.run(ago(2), ID(1), 'id_install', 1);
+  ping.run(ago(3), now - 3 * 864e5, ID(2), '0.1.0-beta.10', 'usb');
+  for (const [k, n] of [['first_start', 1], ['id_install', 1], ['ip_changed', 2]]) cnt.run(ago(3), ID(2), k, n);
+  err.run(ago(9), ID(1), '0.1.0-beta.9', 'E1', 'X.Y', 1);
+  err.run(ago(2), ID(1), '0.1.0-beta.9', 'E1', 'X.Y', 2);
+  err.run(ago(3), ID(2), '0.1.0-beta.10', 'E2', 'A.B', 1);
+  const s = JSON.parse(JSON.stringify(await summary(DB, { period: 30, f: F0, dev: false, now })));
+  assert.deepEqual(s.funnel.map((x) => x.n), [2, 2, 2], 'the three steps before stay as they were');
+  assert.equal(s.funnelProtected, 1);
+  assert.equal(s.funnelDays.length, 30);
+  assert.deepEqual(s.funnelDays.find((d) => d.date === ago(9)), { date: ago(9), fs: 1, ph: 1, ip: 1, prot: 1 });
+  assert.deepEqual(s.funnelDays.find((d) => d.date === ago(3)), { date: ago(3), fs: 1, ph: 1, ip: 1, prot: 0 });
+  assert.deepEqual(s.installs.day7, { n: 1, back: 1 }, 'B has no day 7 yet');
+  assert.deepEqual(s.cohortsDaily, [{ day: ago(9), n: 1, back: [0, 0, 1, null] }, { day: ago(3), n: 1, back: [0, null, null, null] }]);
+  const e1 = s.errors.find((e) => e.type === 'E1'), e2 = s.errors.find((e) => e.type === 'E2');
+  assert.deepEqual(e1.first, { day: ago(9), app: '0.1.0-beta.9' });
+  assert.deepEqual(e2.first, { day: ago(3), app: '0.1.0-beta.10' });
+  // with 7 days E1 is only from 2 days ago in the list, but its first day is still the one 9 days ago (not "new")
+  const w = JSON.parse(JSON.stringify(await summary(DB, { period: 7, f: F0, dev: false, now })));
+  assert.equal(w.errors.find((e) => e.type === 'E1').first.day, ago(9));
+  assert.deepEqual(w.installs.day7, { n: 0, back: 0 }, 'with 7 days no new install has its day 7 over');
+});
+
+test('v3: the page at /dashboard is the v3, the v2 stays at /v2 with its own files, all behind Access', async () => {
+  const token = await jwt(claims());
+  const env = { ...env0(), DB: fakeD1() };
+  const v3 = await (await dashboard.fetch(get('/dashboard', token), env)).text();
+  assert.ok(v3.includes('/d/real.js') && v3.includes('/d/app.js') && !v3.includes('/d/data.js'), 'the v3 has no mock data');
+  assert.ok(!/makeV3|makeData|\bSCEN\b|GH_REAL|mockbar|id="scale"/.test(ASSETS['app.js'].body + ASSETS['real.js'].body + v3), 'no mock-up switch or example data');
+  const v2 = await dashboard.fetch(get('/v2', token), env);
+  assert.equal(v2.status, 200);
+  const html = await v2.text();
+  for (const f of ['/d/v2/app.js', '/d/v2/data.js', '/d/v2/real.js', '/d/v2/style.css', '/d/ui-map.js']) {
+    assert.ok(html.includes(f), f);
+    assert.equal((await dashboard.fetch(get(f, token), env)).status, 200, f);
+  }
+  assert.equal((await dashboard.fetch(get('/v2'), env)).status, 403, '/v2 without Access');
+  assert.equal((await dashboard.fetch(get('/d/v2/app.js'), env)).status, 403);
+});
+
+test('Revisão v3: what the reports bring (error type, place in the code, version) is escaped on the page and in the CSV', () => {
+  const app = ASSETS['app.js'].body;
+  // LOCATION (index.js) lets < > ` | through: "Erro novo" in Pede atenção draws its text as HTML, so the place and version go through esc()
+  const alert = app.split('\n').find((l) => l.includes('Erro novo:'));
+  assert.ok(alert.includes('esc(e.at)') && alert.includes('esc(short(e.first.app))') && !/\$\{e\.at\}/.test(alert), alert);
+  // Nothing from a report reaches the HTML of a table raw
+  assert.ok(!/<td[^>]*>\$\{(e|c)\.(at|type|app)\}/.test(app));
+  // A cell starting with = + - @ opens as text in a spreadsheet
+  assert.ok(app.includes(String.raw`/^[=+\-@]/.test(v) ? ` + "`'${v}`"), 'CSV guard');
+});

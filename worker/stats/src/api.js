@@ -6,6 +6,8 @@
 // installs up to 2 nov. 2026 were these: no Steam account, no click, 0 minutes). An install-day counts as real when it has a Steam
 // account, a click or a minute; the rest is shown apart as "automated".
 
+import { DAILY_ROWS, LIVE_ROWS } from './index.js';
+
 const PERIODS = [1, 7, 30, 90];
 // Rows read per query. Nov. 2026: newest days first, so a cut drops the oldest, and the answer says which queries were cut
 // (truncated) for the dashboard to show it; past this the queries need to add up in SQL instead of here.
@@ -33,6 +35,12 @@ const WEEK = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
 export function lisbonSlot(hourIndex) {
   const parts = Object.fromEntries(LISBON.formatToParts(new Date(hourIndex * 3600_000)).map((p) => [p.type, p.value]));
   return [WEEK[parts.weekday] ?? 0, Number(parts.hour) % 24];
+}
+/** A time (ms) as the date and hour in Lisbon: the v3 "Por hora" counts in Lisbon hours, like "Quando usam". */
+const LISBON_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23' });
+export function lisbonHour(ts) {
+  const p = Object.fromEntries(LISBON_DAY.formatToParts(new Date(ts)).map((x) => [x.type, x.value]));
+  return { date: `${p.year}-${p.month}-${p.day}`, hour: Number(p.hour) % 24 };
 }
 const SCREENS = ['connection', 'servers', 'regions', 'accounts', 'configs', 'profiles', 'log', 'settings'];
 const AGE = { age_0: '0', age_1: '1', age_2_3: '2-3', age_4_6: '4-6', age_7_13: '7-13', age_14_29: '14-29', age_30p: '30+' };
@@ -121,6 +129,15 @@ export async function summary(db, { period, f, dev, now, exclude = [] }) {
     // The dashboard's freshness bar: the newest report in this view (last 90 days, on the day index)
     all(`SELECT MAX(ts) AS t FROM pings WHERE ${W.sql} AND day >= ?`, ...W.args, day(now - 89 * 864e5)),
   ]);
+  // v3 (Nov. 2026), all small reads on the day index: the newest report from any PC (dev builds and EXCLUDE_IDS too), the day's
+  // row budget (index.js), the reports of the last 3 days with their times (Por hora, yesterday at the same time) and, for each
+  // error in the last 90 days, the first day and version it was seen in
+  const [lastAnyR, budgetR, recentR, errFirstR] = await Promise.all([
+    all('SELECT MAX(ts) AS t FROM pings WHERE day >= ?', day(now - 89 * 864e5)),
+    soft('budget', all('SELECT day, rows FROM budget WHERE day IN (?, ?)', day(now), `${day(now)}:live`)),
+    capped('recent', `SELECT day, id, ts, minutes FROM pings WHERE ${W.sql} AND day >= ? ORDER BY day DESC`, ...W.args, day(now - 2 * 864e5)),
+    all(`SELECT type, at, MIN(day) AS first, SUBSTR(MIN(day || '|' || app), 12) AS app FROM errors WHERE ${W.sql} AND day >= ? GROUP BY type, at`, ...W.args, day(now - 89 * 864e5)),
+  ]);
 
   // One entry per install-day, with what decides real or automated
   const key = (r) => `${r.day}|${r.id}`;
@@ -173,6 +190,13 @@ export async function summary(db, { period, f, dev, now, exclude = [] }) {
   const f2 = f1.filter(([, i]) => i.link === 'usb' || i.link === 'hotspot' || i.c.phone_setup_done);
   const f3 = f2.filter(([, i]) => i.c.ip_changed);
   const funnel = [{ label: '1.º arranque', n: f1.length }, { label: 'Telemóvel ligado', n: f2.length }, { label: '1.ª troca com IP novo', n: f3.length }];
+  // v3: the step after, on the same install-day (Protected: a time to Protected was counted), and the steps per day of the period
+  const TP = BANDS.tp.map(([b]) => `tp_${b}`);
+  const f4 = f3.filter(([, i]) => TP.some((n) => i.c[n]));
+  const funnelProtected = f4.length;
+  const fd = new Map(days.map((x) => [x.date, { date: x.date, fs: 0, ph: 0, ip: 0, prot: 0 }]));
+  for (const [list, k] of [[f1, 'fs'], [f2, 'ph'], [f3, 'ip'], [f4, 'prot']]) for (const [, i] of list) if (fd.has(i.day)) fd.get(i.day)[k]++;
+  const funnelDays = [...fd.values()];
 
   // D9: when the app is open, weekday by hour in Lisbon: install-hours with a report, only the real install-days of the view
   const when = [...Array(7)].map(() => Array(24).fill(0));
@@ -267,10 +291,14 @@ export async function summary(db, { period, f, dev, now, exclude = [] }) {
   for (const r of installDays) if (realIds.has(r.id)) (seen.get(r.id) || seen.set(r.id, []).get(r.id)).push(r.day);
   // nextDay (D9): installs first seen in the period up to the day before yesterday (their next day is over), and how many of
   // them were open again the day after
-  const installs = { active: 0, fresh: 0, back: 0, prev: 0, perDay: {}, nextDay: { n: 0, back: 0 } };
+  const installs = { active: 0, fresh: 0, back: 0, prev: 0, perDay: {}, nextDay: { n: 0, back: 0 }, day7: { n: 0, back: 0 } };
   const exact = {};
   const AT = [0, 1, 3, 7, 14, 30];
   const today = day(now);
+  // v3: cohorts by the day of install while there are few a day (the last 14 days): open again at 1-2, 3-6, 7-13, 14-29 days,
+  // null while that age has not come for the day yet
+  const daily = {};
+  const dailyFrom = day(now - 13 * 864e5);
   for (const [, ds] of seen) {
     ds.sort();
     const first = ds[0];
@@ -280,6 +308,16 @@ export async function summary(db, { period, f, dev, now, exclude = [] }) {
     // Only when the day after is over (it is before today): an install first seen yesterday may still come back today
     const after = day(Date.parse(first + 'T00:00:00Z') + 864e5);
     if (first >= since && after < today) { installs.nextDay.n++; if (ds.includes(after)) installs.nextDay.back++; }
+    // v3: the same for a week: new in the period with day 7 over, and open again on day 7 or later
+    const after7 = day(Date.parse(first + 'T00:00:00Z') + 7 * 864e5);
+    if (first >= since && after7 < today) { installs.day7.n++; if (ds.some((x) => x >= after7)) installs.day7.back++; }
+    if (first >= dailyFrom) {
+      const t1 = Date.parse(first + 'T00:00:00Z');
+      const c = daily[first] || (daily[first] = { day: first, n: 0, back: [0, 0, 0, 0] });
+      c.n++;
+      const ages = ds.map((x) => Math.round((Date.parse(x + 'T00:00:00Z') - t1) / 864e5));
+      for (let q = 1; q <= 4; q++) if (ages.some((a) => a >= AT[q] && a < AT[q + 1])) c.back[q - 1]++;
+    }
     for (const x of ds) if (x >= since) { const p = installs.perDay[x] || (installs.perDay[x] = { n: 0, fresh: 0 }); p.n++; if (x === first) p.fresh++; }
     const t0 = Date.parse(first + 'T00:00:00Z');
     const w = monday(t0);
@@ -290,6 +328,9 @@ export async function summary(db, { period, f, dev, now, exclude = [] }) {
   }
   const cohortsExact = Object.values(exact).sort((a, b) => (a.week < b.week ? -1 : 1)).slice(-7)
     .map((c) => ({ ...c, back: c.back.map((v, q) => (q && Date.parse(c.week + 'T00:00:00Z') + (AT[q] + 6) * 864e5 > now ? null : v)) }));
+
+  const cohortsDaily = Object.values(daily).sort((a, b) => (a.day < b.day ? -1 : 1))
+    .map((c) => ({ ...c, back: c.back.map((v, q) => (day(Date.parse(c.day + 'T00:00:00Z') + AT[q + 1] * 864e5) < today ? v : null)) }));
 
   const cohortList = Object.values(cohorts).sort((a, b) => (a.week < b.week ? -1 : 1)).slice(-7)
     .map((c) => ({ ...c, back: c.back.map((v, q) => (q && Date.parse(c.week + 'T00:00:00Z') + ([0, 1, 3, 7, 14, 30][q] + 6) * 864e5 > now ? null : v)) }));
@@ -374,6 +415,43 @@ export async function summary(db, { period, f, dev, now, exclude = [] }) {
     for (const [, i] of inWin) if (i.c[name] !== undefined) { const b = SIZE_BAND[i.c[name]] ?? String(i.c[name]); m[b] = (m[b] || 0) + 1; }
     return { name, bands: Object.values(SIZE_BAND).filter((b) => m[b]).map((b) => ({ band: b, n: m[b] })) };
   });
+
+  // ---------------------------------------------------------------- v3 (Nov. 2026): the Hoje page and the freshness bar
+  // The real install-days of the view with the filters, in the period and the one before (today and yesterday are always in)
+  const okAll = new Map([...inPrev, ...inWin]);
+  const yday = day(now - 864e5);
+  // Today and yesterday (UTC days, like the charts): only sums and counts per value, never a row per install
+  const dayBlock = (dt) => {
+    const list = [...okAll.values()].filter((i) => i.day === dt);
+    const t = (get) => { const m = {}; for (const i of list) { const k = get(i); m[k] = (m[k] || 0) + 1; } return Object.entries(m).map(([k, n]) => ({ k, n })).sort((a, b) => b.n - a.n || (a.k < b.k ? -1 : 1)); };
+    const c = (n) => list.reduce((s, i) => s + (i.c[n] || 0), 0);
+    return { date: dt, users: list.length, fresh: list.filter((i) => i.c.first_start).length, minutes: list.reduce((s, i) => s + i.m, 0),
+      ip: c('ip_changed') + c('ip_same') + c('ip_no_network'), versions: t((i) => i.app), countries: t((i) => i.country), links: t((i) => i.link), modes: t((i) => i.mode) };
+  };
+  const recentDays = [dayBlock(today), dayBlock(yday)];
+  // Por hora: installs with a report in each Lisbon hour, today (null for the hours still to come) and yesterday. The live table
+  // keeps one row per ID, so this is from the reports, not the live signal.
+  const lt = lisbonHour(now), ly = lisbonHour(now - 864e5).date;
+  const hourSets = { [lt.date]: [...Array(24)].map(() => new Set()), [ly]: [...Array(24)].map(() => new Set()) };
+  // Yesterday up to this time (UTC day before, reports sent before now less a day): installs, the new ones, minutes
+  const cut = now - 864e5;
+  const same = new Map();
+  for (const r of recentR) {
+    const i = okAll.get(key(r)); if (!i) continue;
+    const h = lisbonHour(r.ts);
+    if (hourSets[h.date]) hourSets[h.date][h.hour].add(r.id);
+    if (r.day === yday && r.ts <= cut) { const x = same.get(r.id) || same.set(r.id, { m: 0, fresh: !!i.c.first_start }).get(r.id); x.m = Math.min(1440, x.m + (r.minutes || 0)); }
+  }
+  const hourly = { today: hourSets[lt.date].map((s, h) => (h > lt.hour ? null : s.size)), yday: hourSets[ly].map((s) => s.size), hour: lt.hour };
+  // Counted once a day with no time of their own: the new ones are those whose day has first_start; IP changes have no time at all
+  const sameTime = { users: same.size, fresh: [...same.values()].filter((x) => x.fresh).length, minutes: [...same.values()].reduce((s, x) => s + x.m, 0) };
+  const used = new Map(budgetR.map((r) => [r.day, r.rows]));
+  const fresh = { lastTs: last[0]?.t ?? null, lastAny: lastAnyR[0]?.t ?? null,
+    budget: { day: today, rows: used.get(today) || 0, cap: DAILY_ROWS, live: used.get(`${today}:live`) || 0, liveCap: LIVE_ROWS } };
+  // Each error with the first day and version it was seen in, in this view and the last 90 days
+  const firstOf = new Map(errFirstR.map((r) => [`${r.type}|${r.at}`, { day: r.first, app: r.app }]));
+  const errOut = Object.values(err).sort((a, b) => b.n - a.n).slice(0, 40).map((e) => ({ ...e, first: firstOf.get(`${e.type}|${e.at}`) || null }));
+
   return {
     asOf: day(now), now: new Date(now).toISOString().slice(11, 16), period, filters: f, dev,
     lastTs: last[0]?.t ?? null, truncated, warnings, excluded: (exclude || []).length,
@@ -382,7 +460,9 @@ export async function summary(db, { period, f, dev, now, exclude = [] }) {
     countries: tally((i) => i.country), versions: tally((i) => i.app), modes: tally((i) => i.mode), links: tally((i) => i.link), oses: tally((i) => i.os),
     counters, screens, paths, age: Object.entries(age).map(([band, n]) => ({ band, n })),
     buttons: btn, heat: heatOut,
-    errors: Object.values(err).sort((a, b) => b.n - a.n).slice(0, 40),
+    errors: errOut,
+    // v3 (Nov. 2026): added, nothing above changed
+    fresh, recentDays, hourly, sameTime, funnelProtected, funnelDays, cohortsDaily,
     cs2: { ...cs2, rejoin, regions, regionsDen: inWin.length, sessions: C('cs2_start'), hoursProtected: Math.round(C('min_prot') / 60), hoursCs2: Math.round(C('min_cs2') / 60) }, phone, firstScreen, sessions, updates, scroll, settings: Object.entries(settings).map(([name, n]) => ({ name, n })).sort((a, b) => b.n - a.n),
     active, setup, setupOpened: opened, cohorts: cohortList, cohortsExact, installs, env,
     checks, versionMetrics, adoption,

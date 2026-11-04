@@ -66,7 +66,8 @@ export default {
     if (url.pathname === '/api/github') return json(await github(env, fetch, now0));
     // Only the packed files: a name like __proto__ or toString is not one of them (Object.hasOwn)
     const file = (name) => (Object.hasOwn(ASSETS, name) ? ASSETS[name] : null);
-    const asset = url.pathname === '/dashboard' ? file('index.html') : url.pathname.startsWith('/d/') ? file(url.pathname.slice(3))
+    // Nov. 2026: /dashboard is the v3 page; the v2 page stays at /v2 (its files under /d/v2/) for the owner to compare
+    const asset = url.pathname === '/dashboard' ? file('index.html') : url.pathname === '/v2' ? file('v2/index.html') : url.pathname.startsWith('/d/') ? file(url.pathname.slice(3))
       : url.pathname.startsWith('/ui/') ? file(url.pathname.slice(1)) : null;
     if (asset) return serveAsset(request, asset);
     if (url.pathname !== '/classic') return text('Not found', 404);
