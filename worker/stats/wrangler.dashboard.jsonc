@@ -1,4 +1,4 @@
-// The stats page (src/dashboard.js), a second Worker on the same database. Only for the person who runs the project:
+// The stats page (src/dashboard.js), a second Worker on the same database (it only writes from its cron). Only for the person who runs the project:
 // Cloudflare Access in front of all of it, and the Worker checks the Access token too. Steps: publish/dashboard-passos.md
 // (outside the repo). Deploy from this folder: npx wrangler deploy -c wrangler.dashboard.jsonc
 // Secrets (wrangler secret put NAME -c wrangler.dashboard.jsonc): TEAM_DOMAIN, POLICY_AUD, DASHBOARD_EMAIL, GITHUB_TOKEN,
@@ -13,6 +13,9 @@
   // No request logs
   "observability": { "enabled": false, "logs": { "enabled": false, "invocation_logs": false } },
   "vars": { "GITHUB_REPO": "Sepd0x/cs2-ip-changer" },
+  // Nov. 2026, src/dashboard.js scheduled: every 10 minutes the live signal is counted (live_hourly); at 03:07 UTC a picture of
+  // GitHub's public numbers (gh_daily) and rows with an install ID older than 12 months deleted. Cron Triggers are free.
+  "triggers": { "crons": ["*/10 * * * *", "7 3 * * *"] },
   "d1_databases": [
     { "binding": "DB", "database_name": "cs2ipc-stats", "database_id": "4c55f7d0-849d-4e6b-8b46-b8a0b7a9e19f" }
   ]

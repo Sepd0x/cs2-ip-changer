@@ -6,7 +6,7 @@
 // installs up to 2 nov. 2026 were these: no Steam account, no click, 0 minutes). An install-day counts as real when it has a Steam
 // account, a click or a minute; the rest is shown apart as "automated".
 
-import { DAILY_ROWS, LIVE_ROWS } from './index.js';
+import { DAILY_ROWS, LIVE_ROWS, SITE_ROWS } from './index.js';
 
 const PERIODS = [1, 7, 30, 90];
 // Rows read per query. Nov. 2026: newest days first, so a cut drops the oldest, and the answer says which queries were cut
@@ -132,11 +132,13 @@ export async function summary(db, { period, f, dev, now, exclude = [] }) {
   // v3 (Nov. 2026), all small reads on the day index: the newest report from any PC (dev builds and EXCLUDE_IDS too), the day's
   // row budget (index.js), the reports of the last 3 days with their times (Por hora, yesterday at the same time) and, for each
   // error in the last 90 days, the first day and version it was seen in
-  const [lastAnyR, budgetR, recentR, errFirstR] = await Promise.all([
+  // Nov. 2026: the website's visit counter (no ID: never filtered, same for ?dev=1) for this period and the one before
+  const [lastAnyR, budgetR, recentR, errFirstR, siteR] = await Promise.all([
     all('SELECT MAX(ts) AS t FROM pings WHERE day >= ?', day(now - 89 * 864e5)),
-    soft('budget', all('SELECT day, rows FROM budget WHERE day IN (?, ?)', day(now), `${day(now)}:live`)),
+    soft('budget', all('SELECT day, rows FROM budget WHERE day IN (?, ?, ?)', day(now), `${day(now)}:live`, `${day(now)}:site`)),
     capped('recent', `SELECT day, id, ts, minutes FROM pings WHERE ${W.sql} AND day >= ? ORDER BY day DESC`, ...W.args, day(now - 2 * 864e5)),
     all(`SELECT type, at, MIN(day) AS first, SUBSTR(MIN(day || '|' || app), 12) AS app FROM errors WHERE ${W.sql} AND day >= ? GROUP BY type, at`, ...W.args, day(now - 89 * 864e5)),
+    soft('site', all('SELECT day, page, ref, country, event, SUM(n) AS n FROM site WHERE day >= ? GROUP BY day, page, ref, country, event', prevSince)),
   ]);
 
   // One entry per install-day, with what decides real or automated
@@ -447,10 +449,31 @@ export async function summary(db, { period, f, dev, now, exclude = [] }) {
   const sameTime = { users: same.size, fresh: [...same.values()].filter((x) => x.fresh).length, minutes: [...same.values()].reduce((s, x) => s + x.m, 0) };
   const used = new Map(budgetR.map((r) => [r.day, r.rows]));
   const fresh = { lastTs: last[0]?.t ?? null, lastAny: lastAnyR[0]?.t ?? null,
-    budget: { day: today, rows: used.get(today) || 0, cap: DAILY_ROWS, live: used.get(`${today}:live`) || 0, liveCap: LIVE_ROWS } };
+    budget: { day: today, rows: used.get(today) || 0, cap: DAILY_ROWS, live: used.get(`${today}:live`) || 0, liveCap: LIVE_ROWS,
+      // Security review (Nov. 2026): the website counter's share, so a flood of made-up visits shows on the dashboard
+      site: used.get(`${today}:site`) || 0, siteCap: SITE_ROWS } };
   // Each error with the first day and version it was seen in, in this view and the last 90 days
   const firstOf = new Map(errFirstR.map((r) => [`${r.type}|${r.at}`, { day: r.first, app: r.app }]));
   const errOut = Object.values(err).sort((a, b) => b.n - a.n).slice(0, 40).map((e) => ({ ...e, first: firstOf.get(`${e.type}|${e.at}`) || null }));
+
+  // The website (Nov. 2026): visits and Download clicks per day, page, referrer host and country. Counts only, with no ID
+  const site = { views: 0, downloads: 0, prevViews: 0, prevDownloads: 0, days: days.map((x) => ({ date: x.date, views: 0, downloads: 0 })), pages: [], refs: [], countries: [], since: null };
+  {
+    const sd = new Map(site.days.map((x) => [x.date, x])), pg = {}, rf = {}, ct = {};
+    for (const r of siteR) {
+      const v = r.event === 'view', n = r.n || 0;
+      if (r.day < since) { if (v) site.prevViews += n; else site.prevDownloads += n; continue; }
+      if (!site.since || r.day < site.since) site.since = r.day;
+      if (v) site.views += n; else site.downloads += n;
+      const x = sd.get(r.day); if (x) x[v ? 'views' : 'downloads'] += n;
+      const p = pg[r.page] || (pg[r.page] = { k: r.page, views: 0, downloads: 0 }); p[v ? 'views' : 'downloads'] += n;
+      if (v) { rf[r.ref || ''] = (rf[r.ref || ''] || 0) + n; ct[r.country || '?'] = (ct[r.country || '?'] || 0) + n; }
+    }
+    const list = (m) => Object.entries(m).map(([k, n]) => ({ k, n })).sort((a, b) => b.n - a.n || (a.k < b.k ? -1 : 1));
+    site.pages = Object.values(pg).sort((a, b) => b.views - a.views || b.downloads - a.downloads);
+    site.refs = list(rf).slice(0, 20);
+    site.countries = list(ct).slice(0, 20);
+  }
 
   return {
     asOf: day(now), now: new Date(now).toISOString().slice(11, 16), period, filters: f, dev,
@@ -462,7 +485,7 @@ export async function summary(db, { period, f, dev, now, exclude = [] }) {
     buttons: btn, heat: heatOut,
     errors: errOut,
     // v3 (Nov. 2026): added, nothing above changed
-    fresh, recentDays, hourly, sameTime, funnelProtected, funnelDays, cohortsDaily,
+    fresh, recentDays, hourly, sameTime, funnelProtected, funnelDays, cohortsDaily, site,
     cs2: { ...cs2, rejoin, regions, regionsDen: inWin.length, sessions: C('cs2_start'), hoursProtected: Math.round(C('min_prot') / 60), hoursCs2: Math.round(C('min_cs2') / 60) }, phone, firstScreen, sessions, updates, scroll, settings: Object.entries(settings).map(([name, n]) => ({ name, n })).sort((a, b) => b.n - a.n),
     active, setup, setupOpened: opened, cohorts: cohortList, cohortsExact, installs, env,
     checks, versionMetrics, adoption,
@@ -483,6 +506,31 @@ export async function live(db, { dev, now, exclude = [] }) {
     now: rows.length, inGame: rows.filter((r) => r.cs2 === 1).length, protectedN: rows.filter((r) => r.prot === 1).length, lastTs,
     byVersion: count((r) => r.app), byMode: count((r) => r.mode), byLink: count((r) => r.link),
     byScreen: count((r) => (r.tray === 1 ? 'tray' : r.screen)),
+    peaks: await livePeaks(db, { dev, now }),
   };
+}
+
+/**
+ * Nov. 2026: the live signal's history, from the cron's samples (live_hourly, the highest of each UTC hour). In Lisbon hours:
+ * today and yesterday hour by hour (null = no sample in that hour, not 0), yesterday's highest and its hour, and the highest of
+ * each of the last 14 days. Counts only.
+ */
+export async function livePeaks(db, { dev, now }) {
+  let rows = [];
+  try { rows = (await db.prepare('SELECT hour, n, game, prot FROM live_hourly WHERE dev = ? AND hour >= ? ORDER BY hour').bind(dev ? 1 : 0, Math.floor(now / 3600_000) - 15 * 24).all()).results ?? []; }
+  catch (e) { if (!/no such table/i.test(String(e && e.message))) throw e; }
+  const t = lisbonHour(now), y = lisbonHour(now - 864e5).date;
+  const today = Array(24).fill(null), yday = Array(24).fill(null), byDay = {};
+  for (const r of rows) {
+    const h = lisbonHour(r.hour * 3600_000);
+    if (h.date === t.date) today[h.hour] = Math.max(today[h.hour] ?? 0, r.n);
+    if (h.date === y) yday[h.hour] = Math.max(yday[h.hour] ?? 0, r.n);
+    byDay[h.date] = Math.max(byDay[h.date] ?? 0, r.n);
+  }
+  let ydayMax = null;
+  yday.forEach((v, h) => { if (v != null && (!ydayMax || v > ydayMax.n)) ydayMax = { n: v, hour: h }; });
+  const days14 = [];
+  for (let i = 13; i >= 0; i--) { const d = lisbonHour(now - i * 864e5).date; days14.push({ date: d, max: byDay[d] ?? null }); }
+  return { today, yday, hour: t.hour, ydayMax, days: days14, first: rows[0] ? rows[0].hour * 3600_000 : null };
 }
 

@@ -319,3 +319,25 @@ nav.side .links a:hover { color: var(--ink); background: none; }
   .fun .gap { padding-left: 28px; }
   .gb > .srcs { max-width: 45%; }
 }
+
+/* 4 nov.: o que veio da v2 */
+.envg.w4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.envg.w4 > div:nth-child(n+3) h3 { margin-top: 0; } .envg.w4 > div:nth-child(n+5) h3 { margin-top: 12px; }
+.wmap { display: grid; grid-template-columns: 34px repeat(24, minmax(14px, 1fr)); gap: 2px; align-items: center; font-size: 10.5px; font-variant-numeric: tabular-nums; min-width: 420px; }
+.wmap .hl { color: var(--ink3); font-size: 11px; }
+.wmap i { display: grid; place-items: center; height: 18px; font-style: normal; color: #06121e; font-weight: 600; }
+.wmap .hx { color: var(--ink3); text-align: left; }
+.dbars .col .okc { background: var(--good); } .dbars .col .wac { background: var(--warn); } .dbars .col .bac { background: var(--bad); }
+.adopt { display: flex; gap: 2px; height: 150px; align-items: stretch; }
+.adopt .col { flex: 1 1 0; display: flex; flex-direction: column-reverse; background: var(--btn); min-width: 0; }
+.adopt .col.zero { background: repeating-linear-gradient(135deg, #222 0 2px, #1a1a1a 2px 4px); }
+.adopt .col i { display: block; }
+.cmphead { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; color: var(--ink3); }
+.cmphead select { background: var(--btn); border: 1px solid var(--line2); color: var(--ink); padding: 3px 6px; font: inherit; }
+.al > div.acc { border-left-color: var(--acc); background: #141a20; } .al > div.dim { border-left-color: #4b5a69; background: #171819; }
+@media (max-width: 760px) { .envg.w4 { grid-template-columns: 1fr 1fr; } .envg.w4 > div:nth-child(n+3) h3 { margin-top: 12px; } }
+.kstrip.k4 { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 14px; }
+@media (min-width: 1101px) { .kstrip.k4 .kc:nth-child(4n+1) { border-left: 0; padding-left: 2px; } }
+.kstrip.k5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .kstrip.k4, .kstrip.k5 { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 12px; } }
+@media (max-width: 760px) { .kstrip.k4, .kstrip.k5 { grid-template-columns: 1fr 1fr; } }

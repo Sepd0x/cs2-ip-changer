@@ -27,3 +27,15 @@ CREATE INDEX IF NOT EXISTS live_ts ON live (ts);
 -- beta.9. The environment report (POST /v1/env): no install ID and no country, only counts per day of each value (Windows language,
 -- window and scale bands, Windows build, phone brand and Android version, 4G/5G). k = reports counts the reports. Made by the Worker if missing.
 CREATE TABLE IF NOT EXISTS env (day TEXT NOT NULL, k TEXT NOT NULL, v TEXT NOT NULL, n INTEGER NOT NULL, dev INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, k, v, dev));
+-- Nov. 2026. The website's visit counter (POST /v1/site): no ID, no IP, no cookie, only counts per day of page, referrer host,
+-- country and event (view or download). Its own share of the day's budget (day:site, SITE_ROWS in src/index.js) with its own
+-- triggers, next to the two above. Made by the Worker if missing.
+CREATE TABLE IF NOT EXISTS site (day TEXT NOT NULL, page TEXT NOT NULL, ref TEXT NOT NULL, country TEXT NOT NULL, event TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (day, page, ref, country, event));
+CREATE TRIGGER IF NOT EXISTS budget_site_insert BEFORE INSERT ON budget WHEN NEW.day LIKE '%:site' AND NEW.rows > 3000 BEGIN SELECT RAISE(ABORT, 'over budget'); END;
+CREATE TRIGGER IF NOT EXISTS budget_site_update BEFORE UPDATE ON budget WHEN NEW.day LIKE '%:site' AND NEW.rows > 3000 BEGIN SELECT RAISE(ABORT, 'over budget'); END;
+-- Nov. 2026, written by the dashboard Worker's cron (src/dashboard.js scheduled), no ID in either. gh_daily: once a day a picture of
+-- GitHub's public numbers (kind repo: stars, forks, watchers, issues; kind asset: tag/file and its download count), so downloads
+-- and stars per day are the difference between two days. live_hourly: every 10 minutes the live signal is counted and the
+-- highest of each UTC hour kept (dev 0 everyone, dev 1 only the developer's PCs).
+CREATE TABLE IF NOT EXISTS gh_daily (day TEXT NOT NULL, kind TEXT NOT NULL, name TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (day, kind, name));
+CREATE TABLE IF NOT EXISTS live_hourly (hour INTEGER NOT NULL, dev INTEGER NOT NULL DEFAULT 0, n INTEGER NOT NULL, game INTEGER NOT NULL, prot INTEGER NOT NULL, PRIMARY KEY (hour, dev));

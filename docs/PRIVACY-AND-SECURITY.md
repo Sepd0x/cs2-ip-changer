@@ -18,10 +18,21 @@ There's no account and no server of ours that sees your IPs. The app talks to th
 | dl.google.com | Only if you ask the app to download ADB | A normal download |
 | api.github.com, github.com | Update check, once a day (can be turned off) | A normal request; release files come from GitHub's download servers |
 | stats.cs2ipchanger.workers.dev (Cloudflare Worker, source in [`worker/stats`](../worker/stats)) | Usage stats with a random install ID and no name, required in the beta, after you accept | What's listed in [Telemetry](../README.md#telemetry). Never IPs, servers, accounts or names |
+| stats.cs2ipchanger.workers.dev, from the website (not the app) | Each page of the website you open, and a click on Download. Never with Do Not Track or Global Privacy Control on | The page, the name of the site you came from, visit or Download, and the country Cloudflare works out, added into counts per day. No cookies, no ID, no IP |
 
 Pings and A2S queries go to the game servers in your list and to Valve's relays, through the phone (through home in No phone mode). Links like Leetify or csstats.gg open in your browser; the app itself doesn't contact them.
 
 DNS: names like `ipwho.is` are looked up by Windows' normal DNS, which is your home router or provider unless you're in Whole PC mode. Your provider can see that a lookup of `ipwho.is` happened, not the phone's IP (that goes inside HTTPS).
+
+## Usage stats: who, why, for how long
+
+- **Who keeps them:** the author of this project (Sepd0x on GitHub). Contact: [GitHub issues](https://github.com/Sepd0x/cs2-ip-changer/issues) (don't paste your install ID there).
+- **What for:** finding and fixing bugs and making the app better. Never sold, shared or used for ads.
+- **Legal basis:** you accept the notice at the first start (Quit closes the app and sends nothing).
+- **Where:** Cloudflare (Workers and D1) processes and stores them for the project.
+- **How long:** rows with an install ID are deleted after 12 months. Counts added up for everyone with no ID (the click map, the setup report, the website counter) stay.
+- **Your rights:** Settings > Delete my stats deletes everything kept under your ID at once. For anything else (what is kept, a correction), open an issue. You can also complain to your data protection authority (in Portugal, the CNPD).
+- **The website** counts visits and Download clicks with no cookies and no ID, only as counts per day, and sends nothing with Do Not Track or Global Privacy Control on. GitHub Pages, which hosts it, keeps its own logs.
 
 ## What stays on your PC
 
@@ -84,5 +95,5 @@ The app installs an update only if the exe matches the release's SHA-256 and tha
 - **The kill switch needs Windows Firewall on.** A third-party firewall that turns it off leaves the app without one, and the app says so.
 - **IPv6 isn't routed through the phone.** CS2's game traffic is IPv4; in Whole PC mode IPv6 is blocked so nothing leaves from home.
 - **Steam's web sign-ins on the Profiles page** use your normal connection outside Whole PC mode.
-- **The usage stats** reach Cloudflare from your IP, like any website; the Worker gets only the country and stores no IP. The daily report about your setup (`/v1/env`: Windows language, window and scale bands, Windows build, phone brand and Android version, 4G/5G) has no ID and the Worker doesn't read its country: it is only added into counts per day, so it can't be tied to the usage report. The usage report goes 20 seconds after the start, every 30 minutes while the app is open (when something new was counted), before the PC sleeps, when Windows signs out or shuts down, and at close. Its ID is random and kept per install since beta.9, so returns can be counted: that makes it pseudonymous (one install's reports link up, never to a person), not anonymous. Settings > Delete my stats deletes everything kept under it (`/v1/forget`). Numbers that could tell installs apart (ping, jitter, session length, install age, list sizes) go in rough bands.
+- **The usage stats** reach Cloudflare from your IP, like any website; the Worker gets only the country and stores no IP. The daily report about your setup (`/v1/env`: Windows language, window and scale bands, Windows build, phone brand and Android version, 4G/5G) has no ID and the Worker doesn't read its country: it is only added into counts per day, so it can't be tied to the usage report. The usage report goes 20 seconds after the start, every 30 minutes while the app is open (when something new was counted), before the PC sleeps, when Windows signs out or shuts down, and at close. Its ID is random and kept per install since beta.9, so returns can be counted: that makes it pseudonymous (one install's reports link up, never to a person), not anonymous. Settings > Delete my stats deletes everything kept under it (`/v1/forget`), and rows with an ID are deleted after 12 months anyway. Numbers that could tell installs apart (ping, jitter, session length, install age, list sizes) go in rough bands.
 - The exe isn't code-signed with an Authenticode certificate, so SmartScreen may warn you.

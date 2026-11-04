@@ -229,6 +229,10 @@ The ID is random and made once for this install, with no name, never from your P
 
 It never sends IPs (yours, the phone's or servers'), server names or addresses, Steam accounts, logins, names or IDs, your carrier, city or region, players' names, file paths or anything you typed.
 
+**Who keeps the stats, and your rights.** The stats are kept by the author of this project (Sepd0x on GitHub), who decides what is collected and why. They are used only to find and fix bugs and to make the app better: never sold, never shared, never used for ads. The legal basis is that you accept the notice at the first start. They are stored on Cloudflare (Workers and D1), which processes them for the project and nothing else. Rows with an install ID are deleted after 12 months; counts added up for everyone, with no ID, stay. Settings > Delete my stats deletes everything kept under your ID at once, with no account and no email. For anything else (what is kept, a correction, a question), open an [issue on GitHub](https://github.com/Sepd0x/cs2-ip-changer/issues) and don't paste your install ID there. You can also complain to your data protection authority (in Portugal, the CNPD).
+
+**The website.** The website counts visits and clicks on Download, with no cookies and no ID: each page sends which page it is, the name of the site you came from (like `google.com`, never the page) and whether it was a visit or a Download click. The Worker adds the country Cloudflare works out and keeps only counts per day ([`/v1/site`](worker/stats/src/index.js)). Nothing is stored in your browser, and with Do Not Track or Global Privacy Control on, nothing is sent. GitHub Pages, which hosts the site, keeps its own logs under GitHub's privacy statement.
+
 <details>
 <summary><b>What it sends, and where it goes</b></summary>
 

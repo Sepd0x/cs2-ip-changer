@@ -1,4 +1,6 @@
 // Usage stats for CS2 IP Changer (beta), with a random install ID (pseudonymous; the heat map and /v1/env have no ID). README > Telemetry says what the app sends.
+// Nov. 2026: also the website's visit counter (/v1/site), with no ID and no cookie, only counts per day. Rows with an install ID are
+// deleted after 12 months by the dashboard Worker's daily cron (src/dashboard.js), the added-up counts stay.
 //
 // What is kept: a random ID made on the PC (fixed per install until beta.7, new every day in beta.8, fixed per install again
 // since beta.9 so returns can be counted; never made from the PC or the user, and Delete my stats in the app deletes it all here), the app and Windows versions, the mode, how the phone is connected,
@@ -15,13 +17,27 @@ export const DAILY_ROWS = 40000;
 // leave nothing for the reports. Delete my stats has its own small budget outside the day's, so a flood can't stop it.
 export const LIVE_ROWS = 12000;
 export const FORGET_ROWS = 2000;
+// Nov. 2026: the website's visit counter (POST /v1/site) has its own small budget, outside the day's, so a flood of made-up
+// visits can't take anything from the app's reports
+export const SITE_ROWS = 3000;
+// The website: the only origin that may send visits, and its pages (site/ and tools/site-pages.mjs; a test checks the list)
+export const SITE_ORIGIN = 'https://sepd0x.github.io';
+export const SITE_PAGES = ['/', '/change-ip-with-phone/', '/copy-cs2-config/', '/cs2-ip-ban/', '/cs2-region-picker/', '/hide-ip-cs2/', '/is-it-safe/',
+  '/steam-account-switcher/', '/steam-profile-editor/'];
+const SITE_TABLE = 'CREATE TABLE IF NOT EXISTS site (day TEXT NOT NULL, page TEXT NOT NULL, ref TEXT NOT NULL, country TEXT NOT NULL, event TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (day, page, ref, country, event))';
+const HOSTNAME = /^(?=.{3,80}$)[a-z0-9-]+(\.[a-z0-9-]+)+$/;
+const BOT = /bot|crawl|spider|slurp|headless|lighthouse|preview/i;
 // Same as schema.sql. wrangler deploy doesn't run the schema, so a database made before the budget existed gets the table here.
 const BUDGET_TABLE = 'CREATE TABLE IF NOT EXISTS budget (day TEXT PRIMARY KEY, rows INTEGER NOT NULL)';
 // The cap inside the database (schema.sql has the same text): the budget row can't go over its cap, and since every write is in
 // one batch (a transaction) with its budget row, requests sent at the same moment can't all pass on the same reading.
 const CAP = `CASE WHEN NEW.day LIKE '%:live' THEN ${LIVE_ROWS} WHEN NEW.day LIKE '%:forget' THEN ${FORGET_ROWS} ELSE ${DAILY_ROWS} END`;
-export const BUDGET_TRIGGERS = ['INSERT', 'UPDATE'].map((op) => `CREATE TRIGGER IF NOT EXISTS budget_cap_${op.toLowerCase()} BEFORE ${op} ON budget `
-  + `WHEN NEW.rows > ${CAP} BEGIN SELECT RAISE(ABORT, 'over budget'); END`);
+// Nov. 2026: the website's share has triggers of its own (a database made before keeps the two above as they were, and these
+// add the site's cap next to them, so nothing old has to be dropped)
+export const BUDGET_TRIGGERS = [...['INSERT', 'UPDATE'].map((op) => `CREATE TRIGGER IF NOT EXISTS budget_cap_${op.toLowerCase()} BEFORE ${op} ON budget `
+  + `WHEN NEW.rows > ${CAP} BEGIN SELECT RAISE(ABORT, 'over budget'); END`),
+...['INSERT', 'UPDATE'].map((op) => `CREATE TRIGGER IF NOT EXISTS budget_site_${op.toLowerCase()} BEFORE ${op} ON budget `
+  + `WHEN NEW.day LIKE '%:site' AND NEW.rows > ${SITE_ROWS} BEGIN SELECT RAISE(ABORT, 'over budget'); END`)];
 // The database's budget table and triggers made once per database here (a no-op when schema.sql already made them)
 const budgetReady = new WeakSet();
 // One report per install every 10 minutes; one more, marked exit, inside that time for the report at close, sleep or sign-out
@@ -152,6 +168,7 @@ async function body(request) {
 /** The budget rows a kind of request uses, with their caps: a report the day's, the live signal also its share, Delete my stats its own. */
 function budgetKeys(day, kind) {
   if (kind === 'forget') return [[`${day}:forget`, FORGET_ROWS]];
+  if (kind === 'site') return [[`${day}:site`, SITE_ROWS]];
   if (kind === 'live') return [[day, DAILY_ROWS], [`${day}:live`, LIVE_ROWS]];
   return [[day, DAILY_ROWS]];
 }
@@ -185,6 +202,7 @@ async function withinBudget(env, day, stmts, cost, kind = 'report') {
     await env.DB.prepare(HEAT_TABLE).run();
     await env.DB.prepare(LIVE_TABLE).run();
     await env.DB.prepare(ENV_TABLE).run();
+    await env.DB.prepare(SITE_TABLE).run();
     try { await env.DB.batch(stmts); } catch (e2) { if (overBudget(e2)) return new Response('later', { status: 429 }); throw e2; }
   }
   return new Response(null, { status: 204 });
@@ -258,9 +276,53 @@ async function forget(request, env) {
   return withinBudget(env, day, stmts, 60, 'forget');
 }
 
+/** The CORS headers for the website: only its origin, and answers vary with the Origin header. No credentials. */
+const siteHeaders = (extra = {}) => ({ 'access-control-allow-origin': SITE_ORIGIN, vary: 'Origin', 'cache-control': 'no-store', ...extra });
+
+/**
+ * POST /v1/site (Nov. 2026), from the website's pages: a visit or a click on Download, added into the day's counts by page,
+ * referrer host and country. No cookie, no ID, no IP, nothing about the browser: { v: 1, p: page, r: referrer host or "", e: "view" | "download" }.
+ * The page sends it with navigator.sendBeacon as text/plain (a simple request, no preflight), only from SITE_ORIGIN, and never
+ * when the browser says Do Not Track or Global Privacy Control; the Worker also drops those, hosting networks and bots.
+ */
+async function siteHit(request, env) {
+  if (request.headers.get('origin') !== SITE_ORIGIN) return new Response('origin', { status: 403 });
+  const h = siteHeaders();
+  const drop = () => new Response(null, { status: 204, headers: h });
+  if (request.headers.get('dnt') === '1' || request.headers.get('sec-gpc') === '1') return drop();
+  if (BOT.test(request.headers.get('user-agent') || '') || (request.cf && HOSTING.has(request.cf.asn))) return drop();
+  if (!/^text\/plain\s*(;|$)/i.test(request.headers.get('content-type') || '')) return new Response('text only', { status: 415, headers: h });
+  let b;
+  try {
+    const text = await readCapped(request, 512);
+    if (text === null) return new Response('too big', { status: 413, headers: h });
+    b = JSON.parse(text);
+  } catch { return new Response('bad json', { status: 400, headers: h }); }
+  const keys = plain(b) ? Object.keys(b) : [];
+  if (!plain(b) || b.v !== 1 || !keys.every((k) => ['v', 'p', 'r', 'e'].includes(k)) || !SITE_PAGES.includes(b.p) || !['view', 'download'].includes(b.e)
+    || (b.r !== undefined && typeof b.r !== 'string')) return new Response('bad', { status: 400, headers: h });
+  // The referrer's host only, lower case, without www. The site itself is "" (a move between its own pages); anything odd is "other"
+  let ref = String(b.r || '').toLowerCase().replace(/^www\./, '');
+  if (ref === new URL(SITE_ORIGIN).hostname) ref = '';
+  if (ref && !HOSTNAME.test(ref)) ref = 'other';
+  const cc = request.cf && typeof request.cf.country === 'string' && COUNTRY.test(request.cf.country) ? request.cf.country : '?';
+  const day = new Date().toISOString().slice(0, 10);
+  const stmt = env.DB.prepare('INSERT INTO site (day, page, ref, country, event, n) VALUES (?, ?, ?, ?, ?, 1) ON CONFLICT (day, page, ref, country, event) DO UPDATE SET n = n + 1')
+    .bind(day, b.p, ref, cc, b.e);
+  const res = await withinBudget(env, day, [stmt], 2, 'site');
+  return new Response(res.status === 204 ? null : res.body, { status: res.status, headers: h });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === '/v1/site') {
+      if (request.method === 'OPTIONS')
+        return request.headers.get('origin') === SITE_ORIGIN
+          ? new Response(null, { status: 204, headers: siteHeaders({ 'access-control-allow-methods': 'POST', 'access-control-allow-headers': 'content-type', 'access-control-max-age': '86400' }) })
+          : new Response('origin', { status: 403 });
+      if (request.method === 'POST') return siteHit(request, env);
+    }
     if (request.method === 'POST' && url.pathname === '/v1/live') return live(request, env);
     if (request.method === 'POST' && url.pathname === '/v1/env') return envReport(request, env);
     if (request.method === 'POST' && url.pathname === '/v1/forget') return forget(request, env);

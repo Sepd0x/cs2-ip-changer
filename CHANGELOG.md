@@ -4,6 +4,13 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Added
+- The website counts visits and clicks on Download, with no cookies and no ID, only as counts per day. With Do Not Track or Global Privacy Control on, it sends nothing. README > Telemetry says what it sends.
+
+### Changed
+- Usage stats rows with an install ID are now deleted after 12 months. Counts added up for everyone, with no ID, stay.
+- README > Telemetry, Privacy and security and the "Is it safe?" page now say who keeps the stats, what for, on what basis, where they are stored, for how long, and how to ask about them.
+
 ## [0.1.0-beta.10] - 2026-11-04
 
 ### Changed

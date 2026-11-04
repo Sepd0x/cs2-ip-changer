@@ -2,9 +2,9 @@
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { fakeD1 } from './d1.mjs';
-import ingest, { readCapped, BUDGET_TRIGGERS, DAILY_ROWS, LIVE_ROWS, FORGET_ROWS } from '../src/index.js';
-import { summary, live as liveNow, who, MAX_ROWS } from '../src/api.js';
-import dashboard, { collect, page, github, excludeIds, resetGithubCache, compareVersions, readable } from '../src/dashboard.js';
+import ingest, { readCapped, BUDGET_TRIGGERS, DAILY_ROWS, LIVE_ROWS, FORGET_ROWS, SITE_ROWS, SITE_ORIGIN, SITE_PAGES } from '../src/index.js';
+import { summary, live as liveNow, who, MAX_ROWS, livePeaks, lisbonHour } from '../src/api.js';
+import dashboard, { collect, page, github, excludeIds, resetGithubCache, compareVersions, readable, sampleLive, prune, snapshotGithub, githubHistory, RETAIN_DAYS, DAILY_CRON } from '../src/dashboard.js';
 import { verifyAccess, resetAccessCache } from '../src/access.js';
 import { ASSETS } from '../src/assets.js';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
@@ -343,7 +343,7 @@ test('dashboard: GitHub numbers, and a missing permission is said on the page', 
 
 test('dashboard: a token pasted with a BOM, spaces or a line break still works', async () => {
   let auth;
-  globalThis.fetch = async (url, init) => { auth = init.headers.authorization; return Response.json({ stargazers_count: 1 }); };
+  globalThis.fetch = async (url, init) => { auth ??= init.headers.authorization; return Response.json({ stargazers_count: 1 }); };   // the first call (with the token); the rest may be the public fallback
   await github({ GITHUB_TOKEN: '\uFEFF github_pat_x \r\n' }, globalThis.fetch, Date.now());
   assert.equal(auth, 'Bearer github_pat_x');
 });
@@ -845,7 +845,7 @@ test('v3: freshness (any PC and this view), the day budget, Por hora, yesterday 
   assert.equal(s.fresh.lastAny, at(T, '15:20'), 'any PC: the dev build too');
   assert.equal(s.fresh.lastTs, at(T, '14:05'), 'this view: without the dev build');
   assert.equal(s.lastTs, s.fresh.lastTs, 'the old field stays');
-  assert.deepEqual(s.fresh.budget, { day: T, rows: 30000, cap: DAILY_ROWS, live: 500, liveCap: LIVE_ROWS });
+  assert.deepEqual(s.fresh.budget, { day: T, rows: 30000, cap: DAILY_ROWS, live: 500, liveCap: LIVE_ROWS, site: 0, siteCap: SITE_ROWS });
   assert.equal(s.hourly.hour, 15);
   assert.equal(s.hourly.today[9], 1); assert.equal(s.hourly.today[14], 1);
   assert.equal(s.hourly.today[13], 0, 'the scanner stays out');
@@ -928,4 +928,317 @@ test('Revisão v3: what the reports bring (error type, place in the code, versio
   assert.ok(!/<td[^>]*>\$\{(e|c)\.(at|type|app)\}/.test(app));
   // A cell starting with = + - @ opens as text in a spreadsheet
   assert.ok(app.includes(String.raw`/^[=+\-@]/.test(v) ? ` + "`'${v}`"), 'CSV guard');
+});
+
+// ------------------------------------------------------------------ medir (4 nov.): the website counter, the cron, GitHub without token, 12 months, v2 -> v3
+
+const siteReq = (body, { origin = SITE_ORIGIN, type = 'text/plain;charset=UTF-8', headers = {}, cf = { country: 'PT', asn: 3243 }, method = 'POST' } = {}) => {
+  const r = new Request('https://stats.example.workers.dev/v1/site', { method, headers: { ...(origin ? { origin } : {}), ...(method === 'POST' ? { 'content-type': type } : {}), ...headers },
+    ...(method === 'POST' ? { body: typeof body === 'string' ? body : JSON.stringify(body) } : {}) });
+  Object.defineProperty(r, 'cf', { value: cf });
+  return r;
+};
+const siteRows = (DB) => DB.raw.prepare('SELECT day, page, ref, country, event, n FROM site ORDER BY page, ref, event').all().map((r) => ({ ...r }));
+
+test('medir: a visit from the website is added into the day by page, referrer host and country, with no ID and no IP', async () => {
+  const DB = fakeD1();
+  const res = await ingest.fetch(siteReq({ v: 1, p: '/', r: 'www.Google.com', e: 'view' }, { headers: { 'cf-connecting-ip': '203.0.113.9' } }), { DB });
+  assert.equal(res.status, 204);
+  assert.equal(res.headers.get('access-control-allow-origin'), SITE_ORIGIN);
+  assert.equal(res.headers.get('access-control-allow-credentials'), null, 'no credentials');
+  await ingest.fetch(siteReq({ v: 1, p: '/', r: 'google.com', e: 'view' }), { DB });
+  await ingest.fetch(siteReq({ v: 1, p: '/is-it-safe/', r: 'sepd0x.github.io', e: 'download' }, { cf: { country: 'BR' } }), { DB });
+  await ingest.fetch(siteReq({ v: 1, p: '/cs2-ip-ban/', r: 'not a host!', e: 'view' }), { DB });
+  const rows = siteRows(DB);
+  assert.deepEqual(rows.map((r) => [r.page, r.ref, r.country, r.event, r.n]), [['/', 'google.com', 'PT', 'view', 2], ['/cs2-ip-ban/', 'other', 'PT', 'view', 1], ['/is-it-safe/', '', 'BR', 'download', 1]]);
+  const cols = DB.raw.prepare('PRAGMA table_info(site)').all().map((c) => c.name);
+  assert.deepEqual(cols, ['day', 'page', 'ref', 'country', 'event', 'n'], 'no ID, no IP, nothing about the browser');
+  assert.ok(!JSON.stringify(rows).includes('203.0.113.9'));
+  assert.equal(budgetOf(DB, today0()), 0, 'the app reports keep the whole day budget');
+  assert.ok(budgetOf(DB, `${today0()}:site`) > 0, 'the site has its own budget');
+});
+
+test('medir: the site counter refuses other origins, odd bodies and JSON, and drops Do Not Track, GPC, bots and hosting networks', async () => {
+  const DB = fakeD1();
+  const ok = { v: 1, p: '/', r: '', e: 'view' };
+  assert.equal((await ingest.fetch(siteReq(ok, { origin: 'https://evil.example' }), { DB })).status, 403);
+  assert.equal((await ingest.fetch(siteReq(ok, { origin: null }), { DB })).status, 403);
+  assert.equal((await ingest.fetch(siteReq(ok, { type: 'application/json' }), { DB })).status, 415);
+  for (const bad of [{ ...ok, p: '/nope/' }, { ...ok, e: 'click' }, { ...ok, v: 2 }, { ...ok, id: ID(1) }, { ...ok, r: 5 }, 'nope', '[]'])
+    assert.equal((await ingest.fetch(siteReq(bad), { DB })).status, 400, JSON.stringify(bad));
+  assert.equal((await ingest.fetch(siteReq('x'.repeat(600)), { DB })).status, 413);
+  for (const opt of [{ headers: { dnt: '1' } }, { headers: { 'sec-gpc': '1' } }, { headers: { 'user-agent': 'Googlebot/2.1' } }, { cf: { country: 'US', asn: 15169 } }]) {
+    const res = await ingest.fetch(siteReq(ok, opt), { DB });
+    assert.equal(res.status, 204, JSON.stringify(opt));
+  }
+  assert.equal(siteRows(DB).length, 0, 'nothing kept');
+});
+
+test('medir: the preflight answers only the website, without credentials', async () => {
+  const r = await ingest.fetch(siteReq(null, { method: 'OPTIONS', headers: { 'access-control-request-method': 'POST', 'access-control-request-headers': 'content-type' } }), { DB: fakeD1() });
+  assert.equal(r.status, 204);
+  assert.equal(r.headers.get('access-control-allow-origin'), SITE_ORIGIN);
+  assert.equal(r.headers.get('access-control-allow-methods'), 'POST');
+  assert.match(r.headers.get('vary'), /Origin/);
+  assert.equal(r.headers.get('access-control-allow-credentials'), null);
+  assert.equal((await ingest.fetch(siteReq(null, { method: 'OPTIONS', origin: 'https://evil.example' }), { DB: fakeD1() })).status, 403);
+  // The app's endpoints still never answer a preflight
+  const pre = new Request('https://x/v1', { method: 'OPTIONS', headers: { origin: SITE_ORIGIN } });
+  assert.equal((await ingest.fetch(pre, { DB: fakeD1() })).status, 404);
+});
+
+test('medir: the site counter stops at its own budget and the app reports go on', async () => {
+  const DB = fakeD1();
+  DB.raw.prepare('INSERT INTO budget (day, rows) VALUES (?, ?)').run(`${today0()}:site`, SITE_ROWS - 3);
+  assert.equal((await ingest.fetch(siteReq({ v: 1, p: '/', r: '', e: 'view' }), { DB })).status, 429);
+  assert.equal(siteRows(DB).length, 0);
+  assert.equal((await ingest.fetch(post(report()), { DB })).status, 204, 'a report still goes in');
+  // The cap is in the database too (the site's own triggers, next to the old ones)
+  assert.throws(() => DB.raw.prepare('UPDATE budget SET rows = ? WHERE day = ?').run(SITE_ROWS + 1, `${today0()}:site`), /over budget/);
+  assert.equal(DB.raw.prepare("SELECT COUNT(*) n FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'budget_site_%'").get().n, 2);
+});
+
+test('medir: every page of the site is known to the Worker and sends the counter only without Do Not Track or GPC', () => {
+  const root = new URL('../../../site/', import.meta.url);
+  const dirs = readdirSync(root, { withFileTypes: true }).filter((d) => d.isDirectory() && existsSync(new URL(`${d.name}/index.html`, root))).map((d) => `/${d.name}/`);
+  assert.deepEqual([...SITE_PAGES].sort(), ['/', ...dirs].sort(), 'SITE_PAGES is the list of the site pages');
+  for (const p of SITE_PAGES) {
+    const html = readFileSync(new URL(p === '/' ? 'index.html' : `${p.slice(1)}index.html`, root), 'utf8');
+    const js = html.slice(html.indexOf('/* visit counter'), html.indexOf('/* /shared */')).replace(/\/\*[\s\S]*?\*\//g, '');
+    assert.ok(js.includes("sendBeacon('https://stats.cs2ipchanger.workers.dev/v1/site'"), p);
+    assert.ok(/doNotTrack!=='1'/.test(js) && /globalPrivacyControl!==true/.test(js), `${p}: Do Not Track and GPC`);
+    assert.ok(!/cookie|localStorage|sessionStorage|indexedDB/i.test(js), `${p}: nothing kept in the browser`);
+    assert.ok(!/http-equiv="Content-Security-Policy"/i.test(html), `${p}: no CSP to block it`);
+  }
+});
+
+test('medir: summary() gives the site visits per day, page, referrer and country, and the period before', async () => {
+  const DB = fakeD1();
+  const now = Date.now(), d0 = new Date(now).toISOString().slice(0, 10), d8 = new Date(now - 8 * 864e5).toISOString().slice(0, 10);
+  const ins = DB.raw.prepare('INSERT INTO site (day, page, ref, country, event, n) VALUES (?, ?, ?, ?, ?, ?)');
+  ins.run(d0, '/', 'google.com', 'PT', 'view', 5); ins.run(d0, '/', '', 'BR', 'view', 2); ins.run(d0, '/is-it-safe/', 'github.com', 'PT', 'view', 1);
+  ins.run(d0, '/', 'google.com', 'PT', 'download', 2); ins.run(d8, '/', '', 'PT', 'view', 4);
+  const s = await summary(DB, { period: 7, f: { version: 'all', country: 'all', mode: 'all', link: 'all' }, dev: false, now });
+  assert.equal(s.site.views, 8);
+  assert.equal(s.site.downloads, 2);
+  assert.equal(s.site.prevViews, 4);
+  assert.deepEqual(s.site.days.at(-1), { date: d0, views: 8, downloads: 2 });
+  assert.deepEqual(s.site.pages[0], { k: '/', views: 7, downloads: 2 });
+  assert.deepEqual(s.site.refs.map((r) => r.k), ['google.com', '', 'github.com']);
+  assert.deepEqual(s.site.countries, [{ k: 'PT', n: 6 }, { k: 'BR', n: 2 }]);
+  // A database without the table: a warning, never zeros said as data
+  const old = fakeD1();
+  old.raw.exec('DROP TABLE site');
+  const w = await summary(old, { period: 7, f: { version: 'all', country: 'all', mode: 'all', link: 'all' }, dev: false, now });
+  assert.ok(w.warnings.some((x) => x.startsWith('site:')));
+});
+
+test('medir: the 10-minute cron keeps the highest live count of each hour, per view, and /api/live shows the peaks', async () => {
+  const DB = fakeD1();
+  const now = Date.now();
+  const put = (id, ts, over = {}) => DB.raw.prepare('INSERT OR REPLACE INTO live (id, ts, app, cs2, prot, dev) VALUES (?, ?, ?, ?, ?, ?)').run(ID(id), ts, '0.1.0-beta.10', over.cs2 ?? 1, over.prot ?? 1, over.dev ?? 0);
+  put(1, now); put(2, now); put(3, now, { dev: 1 }); put(4, now, { cs2: 0 }); put(0xe, now);
+  await sampleLive(DB, { now, exclude: [ID(0xe)] });
+  DB.raw.exec('DELETE FROM live WHERE id IN (' + [2, 4].map((n) => `'${ID(n)}'`).join(',') + ')');
+  await sampleLive(DB, { now: now + 60_000, exclude: [ID(0xe)] });
+  const h = Math.floor(now / 3600_000);
+  const rows = DB.raw.prepare('SELECT hour, dev, n, game, prot FROM live_hourly ORDER BY dev').all().map((r) => ({ ...r }));
+  if (Math.floor((now + 60_000) / 3600_000) === h) {
+    assert.deepEqual(rows, [{ hour: h, dev: 0, n: 3, game: 2, prot: 3 }, { hour: h, dev: 1, n: 2, game: 2, prot: 2 }], 'the highest of the hour stays');
+  }
+  assert.ok(!JSON.stringify(DB.raw.prepare('SELECT * FROM live_hourly').all()).includes(ID(1)), 'no ID');
+  // Yesterday's peak, in Lisbon hours, and hours with no sample are null (never 0)
+  const y = now - 864e5;
+  DB.raw.prepare('INSERT INTO live_hourly (hour, dev, n, game, prot) VALUES (?, 0, 7, 3, 7)').run(Math.floor(y / 3600_000));
+  const p = await livePeaks(DB, { dev: false, now });
+  assert.equal(p.ydayMax.n, 7);
+  assert.equal(p.ydayMax.hour, lisbonHour(Math.floor(y / 3600_000) * 3600_000).hour);
+  assert.equal(p.today[lisbonHour(now).hour], 3);
+  assert.ok(p.yday.filter((v) => v === null).length >= 20, 'no sample = null');
+  const token = await jwt(claims());
+  const l = await (await dashboard.fetch(get('/api/live', token), { ...env0(), DB })).json();
+  assert.equal(l.peaks.ydayMax.n, 7);
+  // An old database without live_hourly: no peaks, no error
+  const old = fakeD1(); old.raw.exec('DROP TABLE live_hourly');
+  assert.equal((await livePeaks(old, { dev: false, now })).first, null);
+});
+
+const ghPublic = (stars, exe, { other = 4 } = {}) => async (url, init) => {
+  if (String(url) === `${TEAM}/cdn-cgi/access/certs`) return Response.json({ keys: [jwk], public_cert: {}, public_certs: [] });
+  if (init?.headers?.authorization) return new Response('{}', { status: 401 });
+  const path = String(url).replace(/^https:\/\/api\.github\.com\/repos\/[^/]+\/[^/]+/, '');
+  if (path === '') return Response.json({ stargazers_count: stars, forks_count: 1, subscribers_count: 2, open_issues_count: 3 });
+  if (path.startsWith('/releases')) return Response.json([{ tag_name: 'v0.1.0-beta.10', assets: [{ name: 'CS2IPChanger.exe', download_count: exe }, { name: 'CS2IPChanger.exe.sha256', download_count: other }] },
+    { tag_name: 'v0.1.0-beta.9', draft: true, assets: [{ name: 'CS2IPChanger.exe', download_count: 999 }] }]);
+  return new Response('{}', { status: 404 });
+};
+
+test('medir: the daily cron keeps a picture of GitHub (no token), and downloads per day are the difference of two days in a row', async () => {
+  const DB = fakeD1();
+  const t0 = Date.parse('2026-11-01T03:07:00Z');
+  await snapshotGithub(DB, {}, ghPublic(10, 100), t0);
+  await snapshotGithub(DB, {}, ghPublic(12, 130), t0 + 864e5);
+  await snapshotGithub(DB, {}, ghPublic(12, 131), t0 + 864e5 + 3600_000);   // again the same day: written over
+  await snapshotGithub(DB, {}, ghPublic(13, 150), t0 + 3 * 864e5);           // a day missed before this one
+  const h = await githubHistory(DB, t0 + 3 * 864e5);
+  assert.deepEqual(h.days.map((d) => [d.day, d.exe, d.exeDay, d.stars, d.starsDay]), [
+    ['2026-11-01', 100, null, 10, null], ['2026-11-02', 131, 31, 12, 2], ['2026-11-04', 150, null, 13, null]]);
+  assert.equal(h.days[0].all, 104, 'all files, the draft left out');
+  assert.equal(DB.raw.prepare("SELECT COUNT(*) n FROM gh_daily WHERE name LIKE '%beta.9%'").get().n, 0, 'drafts are not counted');
+  // The picture never sends the token
+  let auth = 'none';
+  await snapshotGithub(DB, { GITHUB_TOKEN: 'secret' }, async (url, init) => { auth = init.headers.authorization; return ghPublic(1, 1)(url, init); }, t0);
+  assert.equal(auth, undefined);
+});
+
+test('medir: /api/github without the token, or with it refused, takes stars and downloads from the public API; the traffic says it needs the token', async () => {
+  globalThis.fetch = ghPublic(42, 17);
+  const a = await github({}, globalThis.fetch, Date.now());
+  assert.equal(a.stars, 42);
+  assert.equal(a.releases.find((r) => !r.draft).exe, 17);
+  assert.equal(a.views, null);
+  assert.equal(a.source, 'public');
+  assert.match(a.traffic, /GITHUB_TOKEN/);
+  assert.ok(a.problems[0].includes('GITHUB_TOKEN'));
+  resetGithubCache();
+  const b = await github({ GITHUB_TOKEN: 'bad' }, globalThis.fetch, Date.now());
+  assert.equal(b.stars, 42);
+  assert.equal(b.source, 'public (the token failed)');
+  assert.ok(b.problems[0].includes('refused (401)') && b.problems.some((p) => p.includes('/traffic/views')), b.problems.join(' | '));
+  assert.ok(!b.problems.some((p) => /^\/: |^\/releases/.test(p)), 'one line for the token, not one per path');
+  // The page: /api/github carries the history from gh_daily
+  resetGithubCache();
+  const DB = fakeD1();
+  await snapshotGithub(DB, {}, ghPublic(1, 5), Date.now() - 864e5);
+  await snapshotGithub(DB, {}, ghPublic(2, 9), Date.now());
+  const g = await (await dashboard.fetch(get('/api/github', await jwt(claims())), { ...env0(), DB })).json();
+  assert.equal(g.history.days.at(-1).exeDay, 4);
+});
+
+test('medir: the daily cron deletes rows with an install ID older than 12 months and keeps the counts with no ID', async () => {
+  const DB = fakeD1();
+  const now = Date.now();
+  const old = new Date(now - (RETAIN_DAYS + 2) * 864e5).toISOString().slice(0, 10), fresh = new Date(now - 10 * 864e5).toISOString().slice(0, 10);
+  for (const [d, id] of [[old, ID(1)], [fresh, ID(2)]]) {
+    DB.raw.prepare('INSERT INTO pings (day, ts, id, app) VALUES (?, ?, ?, ?)').run(d, Date.parse(d), id, '0.1.0-beta.9');
+    DB.raw.prepare('INSERT INTO clicks (day, id, name, n) VALUES (?, ?, ?, 1)').run(d, id, 'ChangeIp_Click');
+    DB.raw.prepare('INSERT INTO counts (day, id, name, n) VALUES (?, ?, ?, 1)').run(d, id, 'ip_changed');
+    DB.raw.prepare('INSERT INTO errors (day, id, app, type, at, n) VALUES (?, ?, ?, ?, ?, 1)').run(d, id, '0.1.0-beta.9', 'E', 'A.B');
+    DB.raw.prepare('INSERT INTO live (id, ts, app) VALUES (?, ?, ?)').run(id, Date.parse(d), '0.1.0-beta.9');
+    DB.raw.prepare('INSERT INTO heat (day, app, screen, kind, cell, n) VALUES (?, ?, ?, ?, ?, 1)').run(d, '0.1.0-beta.9', 'connection', 'c', '1,1');
+    DB.raw.prepare('INSERT INTO env (day, k, v, n) VALUES (?, ?, ?, 1)').run(d, 'lang', 'pt');
+    DB.raw.prepare('INSERT INTO site (day, page, ref, country, event, n) VALUES (?, ?, ?, ?, ?, 1)').run(d, '/', '', 'PT', 'view');
+    DB.raw.prepare('INSERT INTO gh_daily (day, kind, name, n) VALUES (?, ?, ?, 1)').run(d, 'repo', 'stars');
+    DB.raw.prepare('INSERT INTO budget (day, rows) VALUES (?, 1)').run(d);
+  }
+  const out = await prune(DB, now, { slice: 1 });
+  assert.deepEqual(out, { pings: 1, clicks: 1, counts: 1, errors: 1, live: 1 });
+  for (const t of ['pings', 'clicks', 'counts', 'errors', 'live']) assert.deepEqual(DB.raw.prepare(`SELECT id FROM ${t}`).all().map((r) => r.id), [ID(2)], t);
+  for (const t of ['heat', 'env', 'site', 'gh_daily']) assert.equal(DB.raw.prepare(`SELECT COUNT(*) n FROM ${t}`).get().n, 2, `${t} has no ID and stays`);
+  assert.equal(DB.raw.prepare('SELECT COUNT(*) n FROM budget').get().n, 1, 'old budget rows go');
+});
+
+test('medir: the crons are in wrangler.dashboard.jsonc, and scheduled() runs the right one', async () => {
+  const cfg = readFileSync(new URL('../wrangler.dashboard.jsonc', import.meta.url), 'utf8');
+  assert.match(cfg, /"triggers": \{ "crons": \["\*\/10 \* \* \* \*", "7 3 \* \* \*"\] \}/);
+  assert.ok(cfg.includes(`"${DAILY_CRON}"`));
+  assert.ok(!/"triggers"/.test(readFileSync(new URL('../wrangler.jsonc', import.meta.url), 'utf8')), 'the ingest Worker has no cron');
+  const DB = fakeD1();
+  const now = Date.now();
+  DB.raw.prepare('INSERT INTO live (id, ts, app) VALUES (?, ?, ?)').run(ID(1), now, '0.1.0-beta.10');
+  DB.raw.prepare('INSERT INTO pings (day, ts, id, app) VALUES (?, ?, ?, ?)').run('2020-01-01', 1, ID(9), '0.1.0-alpha.1');
+  globalThis.fetch = ghPublic(5, 50);
+  await dashboard.scheduled({ cron: '*/10 * * * *', scheduledTime: now }, { DB });
+  assert.equal(DB.raw.prepare('SELECT n FROM live_hourly WHERE dev = 0').get().n, 1);
+  assert.equal(DB.raw.prepare('SELECT COUNT(*) n FROM pings').get().n, 1, 'the 10-minute one never deletes');
+  await dashboard.scheduled({ cron: DAILY_CRON, scheduledTime: now }, { DB });
+  assert.equal(DB.raw.prepare('SELECT COUNT(*) n FROM pings').get().n, 0, 'the daily one deletes the old rows');
+  assert.ok(DB.raw.prepare("SELECT n FROM gh_daily WHERE name = 'stars'").get().n === 5, 'and keeps the picture of GitHub');
+  // The page itself still only reads: a POST is refused
+  assert.equal((await dashboard.fetch(new Request('https://x/api/summary', { method: 'POST', headers: { 'cf-access-jwt-assertion': await jwt(claims()) } }), { ...env0(), DB })).status, 405);
+});
+
+test('medir: the v3 shows every block of the v2, and the Fontes switch starts off', () => {
+  const app = ASSETS['app.js'].body, html = ASSETS['index.html'].body;
+  assert.match(html, /<input type="checkbox" id="srcs">/, 'Fontes off');
+  assert.ok(!/id="srcs" checked/.test(html));
+  // One name per block or number of the v2 (worker/stats/dashboard/v2/app.js), as the v3 calls it
+  const V2 = ['Instalações-dia', 'Novas', 'Voltam no dia seguinte', 'Minutos por instalação-dia', 'Trocas com IP novo', 'Partidas com lag', 'Sessões sem crash',
+    'Por dia', 'Agora', 'Pico de ontem', 'Modo', 'O que melhorar', 'Onde clicam', 'Telemóvel ligado', 'Este ecrã', 'Até onde fazem scroll', 'Quase não se usa', 'Tempo por ecrã', '1.º ecrã',
+    'Atalho contra rato', 'Caminhos', 'Definições mudadas', 'Quando usam', 'Voltam (por', 'dia 30', 'Idade da instalação', 'Dias com a app aberta', 'Sessões', 'Quanto duram',
+    'Como arranca', 'Janela à vista', 'Países', 'Trocas por dia', 'Método', 'Quanto demora a troca', 'Tentativas até ficar boa', 'Qualidade depois da troca',
+    'Trocaram outra vez por jitter', 'Phone setup', 'Do arranque a Protected', 'Quedas do telemóvel', 'Dados móveis por dia', 'Sessões com o CS2 aberto',
+    'Horas com proteção ligada', 'Partidas', 'Rejoin voltou a entrar', 'Ping por partida', 'Jitter de envio', 'Jitter de receção', 'Mensagens atrasadas', 'Pacotes perdidos',
+    'Kicks, bans e VPN vistos', 'Regiões mais bloqueadas', 'Crashes', 'Crashes por 100 sessões', 'Erros', 'Checks a vermelho', 'Fuga de IP de casa', 'Arranque até a app estar pronta',
+    'Atualizações', 'Vieram de', 'Outros contadores', 'Cliques fora do mapa', 'Tamanho das listas', 'Versão do Windows', 'Adoção ao longo do tempo', 'Comparar duas versões',
+    'Versões', 'Idioma', 'Windows', 'Rede do telemóvel', 'Janela', 'Escala', 'Marca do telemóvel', 'Android', 'Estrelas', 'Visitas ao repositório', 'Clones', 'Downloads do exe',
+    '1.º arranque por download', 'Issues abertas', 'Visitas ao repositório por dia', 'De onde vêm ao GitHub', 'Downloads por versão', 'Páginas mais vistas no GitHub', 'GitHub em parte'];
+  const miss = V2.filter((t) => !app.includes(t));
+  assert.deepEqual(miss, [], 'blocks of the v2 missing from the v3');
+  // And what is new: the site, downloads per day, the live history
+  for (const t of ['Visitas ao site', 'Cliques em Download', 'Downloads no período', 'Ao vivo por hora', 'Páginas do site', 'De onde vêm ao site', 'Do site à app', 'Downloads do exe por dia'])
+    assert.ok(app.includes(t), t);
+  for (const p of ['ligacao', 'versoes']) assert.ok(app.includes(`['${p}',`), p);
+});
+
+// ------------------------------------------------------------------ security review (4 nov.): the cron, the site counter's budget, escaping
+
+const forgetReq = (id) => Object.defineProperty(new Request('https://x/v1/forget', { method: 'POST', headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ v: 1, id, app: '0.1.0-beta.10' }) }), 'cf', { value: {} });
+
+test('security: a cleanup cut short never leaves rows Delete my stats can no longer find (pings go last)', async () => {
+  const DB = fakeD1();
+  const now = Date.UTC(2027, 11, 1, 3, 7);
+  const old = new Date(now - (RETAIN_DAYS + 3) * 864e5).toISOString().slice(0, 10);
+  DB.raw.prepare('INSERT INTO pings (day, ts, id, app, minutes) VALUES (?, ?, ?, ?, 5)').run(old, 1, ID(0xabc), '0.1.0-beta.10');
+  for (let i = 0; i < 3; i++) DB.raw.prepare('INSERT INTO clicks (day, id, name, n) VALUES (?, ?, ?, 1)').run(old, ID(0xabc), `B${i}`);
+  DB.raw.prepare('INSERT INTO counts (day, id, name, n) VALUES (?, ?, ?, 1)').run(old, ID(0xabc), 'ip_changed');
+  // A run that stops after 2 rows (the same as an error or a limit half way)
+  const out = await prune(DB, now, { slice: 1, maxRows: 2 });
+  assert.deepEqual(out, { clicks: 2, counts: 0, errors: 0, pings: 0, live: 0 });
+  assert.equal(DB.raw.prepare('SELECT COUNT(*) n FROM pings').get().n, 1, 'the ping that finds the day is still there');
+  assert.equal((await ingest.fetch(forgetReq(ID(0xabc)), { DB })).status, 204);
+  for (const t of ['pings', 'clicks', 'counts']) assert.equal(DB.raw.prepare(`SELECT COUNT(*) n FROM ${t}`).get().n, 0, `${t}: Delete my stats still deletes it all`);
+});
+
+test('security: one cleanup run stays inside the free plan (rows deleted and queries), and a backlog goes over the next days', async () => {
+  const DB = fakeD1();
+  let q = 0;
+  const counted = { ...DB, prepare: (sql) => { q++; return DB.prepare(sql); } };
+  const now = Date.UTC(2027, 11, 1, 3, 7);
+  const old = new Date(now - (RETAIN_DAYS + 3) * 864e5).toISOString().slice(0, 10);
+  const ins = DB.raw.prepare('INSERT INTO counts (day, id, name, n) VALUES (?, ?, ?, 1)');
+  DB.raw.exec('BEGIN'); for (let i = 0; i < 30000; i++) ins.run(old, ID(i % 500), 'x'); DB.raw.exec('COMMIT');
+  const first = await prune(counted, now);
+  assert.equal(first.counts, 20000, 'at most 20,000 rows a run');
+  assert.ok(q <= 15, `${q} queries`);
+  const second = await prune(DB, now + 864e5);
+  assert.equal(second.counts, 10000, 'the rest the next day');
+});
+
+test('security: the daily cron takes the GitHub picture even when the cleanup fails, and still ends as failed', async () => {
+  const DB = fakeD1();
+  const broken = { ...DB, prepare: (sql) => (/^DELETE/.test(sql) ? { bind: () => ({ run: async () => { throw new Error('D1_ERROR: limit'); } }) } : DB.prepare(sql)) };
+  globalThis.fetch = ghPublic(5, 50);
+  await assert.rejects(dashboard.scheduled({ cron: DAILY_CRON, scheduledTime: Date.now() }, { DB: broken }), /D1_ERROR/);
+  assert.equal(DB.raw.prepare("SELECT n FROM gh_daily WHERE name = 'stars'").get().n, 5);
+});
+
+test('security: the website counter\'s share of the budget is on the dashboard, with an alert when it fills up', async () => {
+  const DB = fakeD1();
+  const now = Date.now();
+  DB.raw.prepare('INSERT INTO budget (day, rows) VALUES (?, ?)').run(`${today0()}:site`, 2800);
+  const s = await summary(DB, { period: 7, f: F0, dev: false, now });
+  assert.equal(s.fresh.budget.site, 2800);
+  assert.equal(s.fresh.budget.siteCap, SITE_ROWS);
+  const app = ASSETS['app.js'].body;
+  assert.ok(app.includes("src: ['e', 'fresh.budget.site']") && app.includes('Fr.budget.siteCap'), 'Pede atenção says it');
+});
+
+test('security: every data-tip of the v3 that carries a version goes through esc(), and the privacy text names the country the site counter keeps', () => {
+  const app = ASSETS['app.js'].body;
+  for (const l of app.split('\n').filter((x) => /data-tip="\$\{/.test(x) && /short\(v\)/.test(x))) assert.ok(/data-tip="\$\{esc\(/.test(l), l.trim().slice(0, 90));
+  const doc = readFileSync(new URL('../../../docs/PRIVACY-AND-SECURITY.md', import.meta.url), 'utf8');
+  const row = doc.split('\n').find((l) => l.includes('from the website (not the app)'));
+  assert.ok(/country/.test(row) && /no IP/.test(row), row);
 });

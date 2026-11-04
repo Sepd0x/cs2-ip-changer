@@ -1,10 +1,14 @@
-// Stats page for the person who runs the project: a second Worker (wrangler.dashboard.jsonc) on the same database, only reads.
-// It is its own Worker because Cloudflare Access protects a whole workers.dev address: on the stats Worker it would also stop
+// Stats page for the person who runs the project: a second Worker (wrangler.dashboard.jsonc) on the same database. The pages
+// only read. It is its own Worker because Cloudflare Access protects a whole workers.dev address: on the stats Worker it would also stop
 // the app's reports to /v1. Access sits in front of all of it, and every request checks the Access token too (access.js).
-// GitHub numbers come from the API with a read-only token (secret GITHUB_TOKEN). No scripts and no outside files on the page.
+// GitHub numbers come from the API with a read-only token (secret GITHUB_TOKEN); without it, or when it fails, from GitHub's
+// public API (stars and downloads, never the traffic). No scripts and no outside files on the /classic page.
+// Nov. 2026, the cron (scheduled below, triggers in wrangler.dashboard.jsonc): every 10 minutes the live signal is counted into
+// live_hourly; once a day a picture of GitHub's public numbers goes into gh_daily and rows with an install ID older than
+// RETAIN_DAYS are deleted (added-up counts with no ID stay). The cron is the only thing here that writes.
 
 import { verifyAccess } from './access.js';
-import { params, summary, live } from './api.js';
+import { params, summary, live, who } from './api.js';
 import { ASSETS } from './assets.js';
 
 const REPO = /^[A-Za-z0-9_.-]{1,100}\/[A-Za-z0-9_.-]{1,100}$/;
@@ -15,6 +19,13 @@ const BAND = { 0: '0', 1: '1', 2: '2-5', 6: '6-20', 21: '21-100', 101: '100+' };
 const BANDS = Object.values(BAND);
 // Counted once by the app on the day its usage stats notice is accepted (MainWindow): new users
 const FIRST = 'first_start';
+// Rows with an install ID (pings, clicks, counts, errors, live) are kept this long, then the daily cron deletes them
+export const RETAIN_DAYS = 365;
+export const DAILY_CRON = '7 3 * * *';
+const GH_TABLE = 'CREATE TABLE IF NOT EXISTS gh_daily (day TEXT NOT NULL, kind TEXT NOT NULL, name TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (day, kind, name))';
+const LIVE_HOURLY_TABLE = 'CREATE TABLE IF NOT EXISTS live_hourly (hour INTEGER NOT NULL, dev INTEGER NOT NULL DEFAULT 0, n INTEGER NOT NULL, game INTEGER NOT NULL, prot INTEGER NOT NULL, PRIMARY KEY (hour, dev))';
+const ymd = (t) => new Date(t).toISOString().slice(0, 10);
+const noTable = (e) => /no such table/i.test(String(e && e.message));
 
 /** Order of app versions: 0.1.0-beta.10 after 0.1.0-beta.9, a release after its betas. */
 export function compareVersions(a, b) {
@@ -46,6 +57,26 @@ const LINKS = { usb: 'USB cable', hotspot: 'Wi-Fi hotspot', other: 'Other adapte
 const LISTS = { servers: 'Servers', accounts: 'Accounts', flags: 'Flagged players', open_with: 'Open with CS2', regions_blocked: 'Regions off' };
 
 export default {
+  /** The cron: the live signal every 10 minutes, GitHub's public numbers and the 12-month cleanup once a day. */
+  async scheduled(controller, env) {
+    const now = controller?.scheduledTime || Date.now();
+    const exclude = excludeIds(env.EXCLUDE_IDS);
+    if (controller?.cron === DAILY_CRON) {
+      // Each on its own: a cleanup that fails never leaves the day without its GitHub picture (the run still ends as failed)
+      let failed = null;
+      try { await prune(env.DB, now); } catch (e) { failed = e; }
+      await snapshotGithub(env.DB, env, fetch, now).catch(() => false);
+      if (failed) throw failed;
+      return;
+    }
+    await sampleLive(env.DB, { now, exclude });
+    // The daily picture failed (GitHub's public API has a small limit per address): tried again once an hour until there is one
+    if (new Date(now).getUTCMinutes() < 10 && new Date(now).getUTCHours() >= 4) {
+      let have = null;
+      try { have = await env.DB.prepare('SELECT 1 AS y FROM gh_daily WHERE day = ? LIMIT 1').bind(ymd(now)).first(); } catch (e) { if (!noTable(e)) throw e; }
+      if (!have) await snapshotGithub(env.DB, env, fetch, now).catch(() => false);
+    }
+  },
   async fetch(request, env) {
     const url = new URL(request.url);
     const gate = await verifyAccess(request, env);
@@ -63,7 +94,11 @@ export default {
         return json(data);
       } catch (e) { return json({ error: String(e?.message || e) }, 500); }
     }
-    if (url.pathname === '/api/github') return json(await github(env, fetch, now0));
+    if (url.pathname === '/api/github') {
+      const gh = await github(env, fetch, now0);
+      // The daily pictures (gh_daily): downloads and stars per day. Read fresh, the cached part is GitHub's answer
+      return json({ ...gh, history: await githubHistory(env.DB, now0).catch((e) => ({ days: [], error: String(e?.message || e) })) });
+    }
     // Only the packed files: a name like __proto__ or toString is not one of them (Object.hasOwn)
     const file = (name) => (Object.hasOwn(ASSETS, name) ? ASSETS[name] : null);
     // Nov. 2026: /dashboard is the v3 page; the v2 page stays at /v2 (its files under /d/v2/) for the owner to compare
@@ -159,6 +194,98 @@ export async function collect(db, { days, now, exclude = [] }) {
   };
 }
 
+/** Every 10 minutes: installs with a live signal in the last 6 minutes, the highest of each UTC hour kept. Only counts. */
+export async function sampleLive(db, { now, exclude = [] }) {
+  await db.prepare(LIVE_HOURLY_TABLE).run();
+  const hour = Math.floor(now / 3600_000);
+  const stmts = [];
+  for (const dev of [false, true]) {
+    const W = who(dev, exclude);
+    let r = null;
+    try {
+      r = await db.prepare(`SELECT COUNT(*) AS n, COALESCE(SUM(cs2 = 1), 0) AS game, COALESCE(SUM(prot = 1), 0) AS prot FROM live WHERE ${W.sql} AND ts >= ?`)
+        .bind(...W.args, now - 6 * 60_000).first();
+    } catch (e) { if (!noTable(e)) throw e; }
+    stmts.push(db.prepare('INSERT INTO live_hourly (hour, dev, n, game, prot) VALUES (?, ?, ?, ?, ?) ON CONFLICT (hour, dev) DO UPDATE SET '
+      + 'n = MAX(n, excluded.n), game = MAX(game, excluded.game), prot = MAX(prot, excluded.prot)').bind(hour, dev ? 1 : 0, r?.n || 0, r?.game || 0, r?.prot || 0));
+  }
+  await db.batch(stmts);
+}
+
+/**
+ * Once a day: rows with an install ID older than RETAIN_DAYS go (pings, clicks, counts, errors on the day index, live by its
+ * time), in slices so one run never holds the database long. The added-up tables with no ID (heat, env, site, live_hourly,
+ * gh_daily) stay; budget rows older than 30 days go too (they only guard their own day).
+ * Nov. 2026 (security review): pings go last, so a run cut short (an error, a limit) never leaves clicks, counts or errors
+ * whose day Delete my stats can't find any more (it looks the days up in pings). And at most maxRows a run: deletes are writes
+ * too (D1 free: 100,000 a day, index rows included), and the free plan stops a run at 50 queries. A day can write about 20,000
+ * rows (DAILY_ROWS counts each with its index), so one run takes a whole day; a backlog goes over the next days.
+ */
+export async function prune(db, now, { slice = 5000, maxRows = 20000 } = {}) {
+  const cut = ymd(now - RETAIN_DAYS * 864e5);
+  const out = {};
+  let left = maxRows;
+  for (const t of ['clicks', 'counts', 'errors', 'pings']) {
+    out[t] = 0;
+    while (left > 0) {
+      const take = Math.min(slice, left);
+      const r = await db.prepare(`DELETE FROM ${t} WHERE rowid IN (SELECT rowid FROM ${t} WHERE day < ? LIMIT ${take})`).bind(cut).run();
+      const n = Number(r?.meta?.changes ?? 0);
+      out[t] += n; left -= n;
+      if (n < take) break;
+    }
+  }
+  out.live = 0;
+  try { out.live = Number((await db.prepare('DELETE FROM live WHERE ts < ?').bind(now - RETAIN_DAYS * 864e5).run())?.meta?.changes ?? 0); } catch (e) { if (!noTable(e)) throw e; }
+  await db.prepare('DELETE FROM budget WHERE substr(day, 1, 10) < ?').bind(ymd(now - 30 * 864e5)).run();
+  return out;
+}
+
+const GH_HEADERS = { accept: 'application/vnd.github+json', 'user-agent': 'cs2ipc-stats-dashboard', 'x-github-api-version': '2022-11-28' };
+const repoOf = (env) => (REPO.test(env.GITHUB_REPO || '') ? env.GITHUB_REPO : 'Sepd0x/cs2-ip-changer');
+
+/** Once a day, from GitHub's public API (no token): stars, forks, watchers, open issues and every release file's download count. */
+export async function snapshotGithub(db, env, fetchFn, now) {
+  const repo = repoOf(env);
+  const get = async (path) => { const r = await fetchFn(`https://api.github.com/repos/${repo}${path}`, { headers: GH_HEADERS }); if (!r.ok) throw new Error(`${path || '/'}: GitHub said ${r.status}`); return r.json(); };
+  const [info, releases] = await Promise.all([get(''), get('/releases?per_page=100')]);
+  const num = (x) => (Number.isFinite(x) && x >= 0 ? Math.floor(x) : 0);
+  const d = ymd(now);
+  const rows = [['repo', 'stars', num(info.stargazers_count)], ['repo', 'forks', num(info.forks_count)], ['repo', 'watchers', num(info.subscribers_count)], ['repo', 'issues', num(info.open_issues_count)]];
+  for (const r of Array.isArray(releases) ? releases : []) {
+    if (r.draft) continue;
+    for (const a of r.assets ?? []) rows.push(['asset', `${String(r.tag_name).slice(0, 60)}/${String(a.name).slice(0, 120)}`, num(a.download_count)]);
+  }
+  await db.prepare(GH_TABLE).run();
+  const stmts = rows.slice(0, 400).map(([kind, name, n]) => db.prepare('INSERT INTO gh_daily (day, kind, name, n) VALUES (?, ?, ?, ?) ON CONFLICT (day, kind, name) DO UPDATE SET n = excluded.n').bind(d, kind, name, n));
+  await db.batch(stmts);
+  return rows.length;
+}
+
+/**
+ * The daily pictures as series: per day the exe downloads of every release added up, all files, stars, forks and watchers; and
+ * the downloads of each day, the difference with the day before (only when both days have a picture, so a missed day never
+ * makes a fake peak; the first day has none).
+ */
+export async function githubHistory(db, now, days = 120) {
+  let rows = [];
+  try { rows = (await db.prepare('SELECT day, kind, name, n FROM gh_daily WHERE day >= ? ORDER BY day').bind(ymd(now - (days - 1) * 864e5)).all()).results ?? []; } catch (e) { if (!noTable(e)) throw e; }
+  const by = new Map();
+  for (const r of rows) {
+    const x = by.get(r.day) || by.set(r.day, { day: r.day, exe: 0, all: 0, stars: null, forks: null, watchers: null, issues: null }).get(r.day);
+    if (r.kind === 'repo' && r.name in x) x[r.name] = r.n;
+    else if (r.kind === 'asset') { x.all += r.n; if (/\.exe$/i.test(r.name)) x.exe += r.n; }
+  }
+  const list = [...by.values()];
+  for (let i = 0; i < list.length; i++) {
+    const p = list[i - 1], x = list[i];
+    const adj = p && ymd(Date.parse(p.day + 'T00:00:00Z') + 864e5) === x.day;
+    x.exeDay = adj ? Math.max(0, x.exe - p.exe) : null;
+    x.starsDay = adj && x.stars != null && p.stars != null ? x.stars - p.stars : null;
+  }
+  return { days: list, first: list[0]?.day ?? null };
+}
+
 let ghCache = { at: 0, data: null };
 /** For the tests. */
 export function resetGithubCache() { ghCache = { at: 0, data: null }; }
@@ -166,27 +293,40 @@ export function resetGithubCache() { ghCache = { at: 0, data: null }; }
 /** Stars, 14-day views and clones, referrers, downloads per release. Kept 10 minutes. A missing token or permission is said on the page. */
 export async function github(env, fetchFn, now) {
   if (ghCache.data && now - ghCache.at < 600_000) return ghCache.data;
-  const repo = REPO.test(env.GITHUB_REPO || '') ? env.GITHUB_REPO : 'Sepd0x/cs2-ip-changer';
+  const repo = repoOf(env);
   // A token pasted from the clipboard can bring a BOM, spaces or a line break with it: GitHub then says 401
   const token = String(env.GITHUB_TOKEN || '').replace(/^\uFEFF/, '').trim();
-  if (!token) return { repo, problems: ['No GITHUB_TOKEN secret: GitHub numbers are off.'] };
-  const problems = [];
-  const get = async (path) => {
+  let problems = [];
+  if (!token) problems.push('No GITHUB_TOKEN secret: stars and downloads come from the public API; the traffic (views, clones, referrers) needs the token.');
+  const get = async (path, auth = true) => {
     try {
-      const res = await fetchFn(`https://api.github.com/repos/${repo}${path}`, {
-        headers: { authorization: `Bearer ${token}`, accept: 'application/vnd.github+json', 'user-agent': 'cs2ipc-stats-dashboard', 'x-github-api-version': '2022-11-28' },
-      });
-      if (!res.ok) { problems.push(`${path || '/'}: GitHub said ${res.status}`); return null; }
+      const res = await fetchFn(`https://api.github.com/repos/${repo}${path}`, { headers: auth ? { authorization: `Bearer ${token}`, ...GH_HEADERS } : GH_HEADERS });
+      if (!res.ok) { problems.push(`${path || '/'}${auth ? '' : ' (public)'}: GitHub said ${res.status}`); return null; }
       return await res.json();
-    } catch { problems.push(`${path || '/'}: no answer from GitHub`); return null; }
+    } catch { problems.push(`${path || '/'}${auth ? '' : ' (public)'}: no answer from GitHub`); return null; }
   };
-  const [info, views, clones, referrers, paths, releases] = await Promise.all([
-    get(''), get('/traffic/views'), get('/traffic/clones'), get('/traffic/popular/referrers'), get('/traffic/popular/paths'), get('/releases?per_page=30'),
-  ]);
+  const none = Promise.resolve(null);
+  let [info, views, clones, referrers, paths, releases] = await Promise.all(token
+    ? [get(''), get('/traffic/views'), get('/traffic/clones'), get('/traffic/popular/referrers'), get('/traffic/popular/paths'), get('/releases?per_page=30')]
+    : [none, none, none, none, none, none]);
+  // The token missing or refused: stars and releases are public, so they come from there (the traffic stays off)
+  let source = token ? 'token' : 'public';
+  if (!info || !Array.isArray(releases)) {
+    const [pi, pr] = await Promise.all([info ? info : get('', false), Array.isArray(releases) ? releases : get('/releases?per_page=30', false)]);
+    if (pi && !info) source = token ? 'public (the token failed)' : 'public';
+    if (!pi && !info) source = null;
+    info = info || pi; releases = Array.isArray(releases) ? releases : pr;
+  }
+  // The token refused but the public API answered: one line for it instead of one per path (the traffic ones stay)
+  if (token && source && source.startsWith('public')) {
+    const tok = problems.filter((p) => /^(\/|\/releases\?per_page=30): GitHub said/.test(p));
+    problems = [`The GITHUB_TOKEN was refused (${tok[0] ? tok[0].split('said ')[1] : 'no answer'}): stars and downloads come from the public API.`, ...problems.filter((p) => !tok.includes(p))];
+  }
+  const traffic = views || clones || referrers || paths ? null : (token ? 'the token has no access to the traffic' : 'needs the GITHUB_TOKEN secret');
   const num = (x) => (Number.isFinite(x) ? x : 0);
   const data = {
     repo,
-    problems,
+    problems, source, traffic,
     stars: info ? num(info.stargazers_count) : null,
     forks: info ? num(info.forks_count) : null,
     watchers: info ? num(info.subscribers_count) : null,

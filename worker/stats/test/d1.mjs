@@ -13,7 +13,7 @@ export function fakeD1() {
     bind: (...a) => stmt(sql, a),
     first: async () => db.prepare(sql).get(...args) ?? null,
     all: async () => ({ results: db.prepare(sql).all(...args) }),
-    run: async () => { db.prepare(sql).run(...args); return { success: true }; },
+    run: async () => { const r = db.prepare(sql).run(...args); return { success: true, meta: { changes: Number(r.changes) } }; },
   });
   return {
     raw: db,
