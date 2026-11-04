@@ -367,6 +367,34 @@ public static class Firewall
         return left;
     }
 
+    /// <summary>One of the app's rules as the Firewall has it now: its name and the addresses it blocks.</summary>
+    public sealed record RuleInfo(string Name, string Remote);
+
+    /// <summary>The app's rules in the Firewall now, with what they block (Log > What the app changed, beta.11). Only read.</summary>
+    public static List<RuleInfo> Describe()
+    {
+        var list = new List<RuleInfo>();
+        try
+        {
+            foreach (var r in (IEnumerable)Get(Policy(), "Rules"))
+                if ((string)Get(r, "Name") is string n && n.StartsWith("ServerRouteTool v9")) list.Add(new RuleInfo(n, (string)Get(r, "RemoteAddresses")));
+        }
+        catch (Exception ex) { Log.Warn("Could not read the Firewall: " + ex.Message); }
+        return list;
+    }
+
+    /// <summary>What one rule is for, in a few words (the rule names stay as they were since alpha.1, partly in Portuguese).</summary>
+    public static string Meaning(string name) => name switch
+    {
+        RuleName => "Kill switch: your servers only through the phone",
+        EchoRuleName => "The app's IP check only through the phone",
+        Cs2RuleName => "CS2 only through the phone",
+        DnsUdpRuleName or DnsTcpRuleName => "Whole PC: DNS only through the phone",
+        Ipv6RuleName => "Whole PC: IPv6 blocked",
+        RegionsRuleName => "Matchmaking regions you turned off",
+        _ => "From an older version",
+    };
+
     /// <summary>Removes the old v6/v7/v8 rules (one per IP and per adapter).</summary>
     public static int RemoveLegacy()
     {

@@ -168,7 +168,9 @@ public static class Program
     internal static NoticeWindow InstallWindow(string from, string target)
     {
         var keep = Directory.Exists(Path.Combine(target, "SRT_Dados")) && Directory.Exists(Path.Combine(from, "SRT_Dados"));
-        return new NoticeWindow("Install CS2 IP Changer", InstallText(from, target, keep, Installer.InstalledVersion(target), AppInfo.Version), "Install", "Close", action: async w =>
+        // beta.11 (audit P5): an older copy updated itself and left its protection on, which stays until the installed app starts
+        var blockLeft = Firewall.BlockLeft(Firewall.Remaining());
+        return new NoticeWindow("Install CS2 IP Changer", InstallText(from, target, keep, Installer.InstalledVersion(target), AppInfo.Version, blockLeft), "Install", "Close", action: async w =>
         {
             w.Working = true;
             w.Say($"Copying to {target}…");
@@ -192,6 +194,13 @@ public static class Program
             var note = (r.ExeKept != null ? $"Version {r.ExeKept} was already there and stays. " : "")
                 + (r.DataKept ? "The SRT_Dados already there was kept. " : "")
                 + (r.Skipped > 0 ? $"Left out {Fmt.Count(r.Skipped, "file")} from SRT_Dados (links, files kept online by OneDrive, or in use). " : "");
+            // beta.11 (audit P4): the old SRT_Dados keeps the Steam sign-ins. Only to the Recycle Bin, and only if you say so
+            var old = Installer.OldCopy(from, r);
+            if (old.Count > 0 && NoticeWindow.Ask("The old copy", Installer.OldCopyText(from), "Send to Recycle Bin", "Keep it"))
+            {
+                var left = old.Where(p => !Installer.Recycle(p)).ToList();
+                note += left.Count == 0 ? "The old SRT_Dados is in the Recycle Bin. " : $"Couldn't move {string.Join(", ", left)} to the Recycle Bin: delete it yourself. ";
+            }
             try { Installer.Start(r.Exe); }
             catch (Exception ex)
             {
@@ -208,9 +217,10 @@ public static class Program
     }
 
     /// <summary>What the Install window says: why the app doesn't run from <paramref name="from"/> and exactly what Install does.</summary>
-    public static string InstallText(string from, string target, bool keepData, string installed = null, string version = null)
+    public static string InstallText(string from, string target, bool keepData, string installed = null, string version = null, bool blockLeft = false)
     {
         var keepExe = Installer.KeepExe(installed, version);
+        if (blockLeft) return InstallText(from, target, keepData, installed, version) + "\n\n" + BlockLeftText(from);
         return $"CS2 IP Changer runs as admin, and programs without admin rights can change the folder it was started from:\n{from}\n\n"
             + "A file put next to the app there could run with admin rights, so the app doesn't run from it.\n\n"
             + (installed == null ? $"Install copies CS2IPChanger.exe to {target}, where only admins can change files, "
@@ -219,6 +229,11 @@ public static class Program
             + (keepData ? "keeps the SRT_Dados that is already there (the one in that folder isn't copied), " : "copies your SRT_Dados folder too if there is one there, ")
             + "and starts the app from there. Nothing in that folder is moved or deleted, so you can delete that copy afterwards.";
     }
+
+    /// <summary>The old copy's protection is still in the Firewall: what that means, and how to lift it without installing.</summary>
+    public static string BlockLeftText(string from) =>
+        "Protection from the old copy is still on: CS2 and your servers stay blocked outside the phone. Install, and the app takes it over. "
+        + $"To turn it off without installing, run as admin:\n\"{Path.Combine(from, Updater.ExeName)}\" --restore";
 
     /// <summary>The DLL from System32, or nothing (then .NET's own search runs, for a name System32 doesn't have).</summary>
     public static IntPtr SystemDll(string name)

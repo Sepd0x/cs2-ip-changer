@@ -6,8 +6,32 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ### Added
 - The website counts visits and clicks on Download, with no cookies and no ID, only as counts per day. With Do Not Track or Global Privacy Control on, it sends nothing. README > Telemetry says what it sends.
+- iPhone support in the app. Phone setup has the iPhone's own steps (Apple's driver, the cable, Trust This Computer, Personal Hotspot) instead of the Android ones, and the Phone box says "iPhone connected". Change IP on an iPhone is guided: the app tells you when to turn Airplane Mode on and off, waits for the iPhone to come back and shows the new IP.
+- Kicks and bans are now seen however CS2 is opened. The app adds -condebug -conclearlog to CS2's launch options in Steam for every account on this PC, only while Steam is closed (Steam would overwrite them otherwise). What you already have there stays, and a backup of each file is kept. Settings > Steam > See kicks and bans when Steam opens CS2 turns it off, and its button adds them right away (Steam closes and opens again, it asks first).
+- Log > What the app changed: the Firewall rules the app made and what each one blocks (your servers' IPs), the routes it added, the app's folder and the Start with Windows task, and a button that copies the command that undoes all of it.
+- Joined a server in CS2 that isn't in your list? The app offers to add it, with an Add button, once per server. The same button comes with a kick or ban from a server that isn't in your list.
+- A VPN app that carries your PC's traffic now shows up in Checks as "VPN app: on". Your servers and CS2 still go through the phone, but the app isn't tested with VPNs yet: if CS2 or your servers don't connect, turn the VPN off while you play. A VPN that is only installed, or Tailscale without an exit node, isn't flagged.
+- After Install, the app offers to send the old SRT_Dados folder (with your saved Steam sign-ins) to the Recycle Bin. Only if every file was copied, and only if you say yes.
+
+### Fixed
+- Turn on protection with the phone plugged in but USB tethering off did nothing you could see. Now the app turns USB tethering on by itself (and the phone's Wi-Fi off first, if it's on), and if it can't, Phone setup opens and shows what's missing.
+- Right after protection turned on, the app could join the server of a player you follow without you asking, and open CS2 to do it. Join automatically when a followed player moves now only offers the join, only when the player really moved to another server, and only while CS2 is open. Seeing the player for the first time just tells you.
+- A question in the app (like "Server is full") covered the Cancel at the top, and some had no button to back out. Every question now has an X, Esc and a click outside the box to close it without choosing, and the Cancel at the top stays clickable.
+- "IP servers see" could stay on "—" ("Checking the IP through the phone…") for minutes while you played. One failed check no longer clears it: the last IP stays, faint, with "Not confirmed since 19:30: weak connection?", and the Log says why the checks fail. A slow check is no longer overtaken by the next one forever.
+
+- The update check could fail for hours on mobile data: GitHub's API allows 60 checks an hour per IP, and many phones share one IP. When the API says no, the app now asks github.com which release is the latest. Updates are still only installed with the project's signature.
+- Install copied everything from the old SRT_Dados to Program Files, an old copy of the phone tool (ADB) included. Programs (.exe, .dll, scripts) and the platform-tools folder are now left out: the app downloads the phone tool again from Google, checked.
+- If an older copy left its protection on (after an update), the Install window now says so: CS2 and your servers stay blocked outside the phone until you install, and it gives the command that turns it off.
 
 ### Changed
+- Phone setup shows one step at a time: only the step to do now has its text and button. Done steps say "Done", the ones after it show only their name until it's their turn.
+- Phone setup's menu paths follow your phone: a Samsung gets the Samsung menus, every other phone the standard Android ones, with "Can't find it? Use the search at the top of Settings." Paths for other brands come once they are checked on a real phone.
+- Checks only show what needs you, with one line on top ("All 11 checks OK.", "1 check needs you.", "Protection is off, so there is little to check yet."). Show all brings every row back, and the app remembers it. Regions you turned off yourself don't count as a problem.
+- An empty Servers page explains what to do when you only know the server's name: join it once in CS2 with protection off and the app offers to add it, or, if you're banned there, ask on its Discord or website for the IP. It no longer tells a banned player to join the server and type status.
+- Connection > Phone hides Turn on USB tethering while the phone's tethering is already on.
+- The ban notification names the account you rejoin with: "Banned. Press Ctrl+Shift+F10 to rejoin with a new IP as atlas." With no account left, it says so instead of pointing to the key.
+- While the phone's Wi-Fi is on or the phone is gone, the fix (Turn off phone Wi-Fi, Phone setup) is the only blue button. Change IP and rejoin go back to blue once nothing blocks the game.
+- Usage stats count the Phone setup step you were at when you closed it (or closed the app with it open), next to the step it opened at, to see where people get stuck. Nothing new about you is sent: it's the name of a step. README > Telemetry will list it.
 - Usage stats rows with an install ID are now deleted after 12 months. Counts added up for everyone, with no ID, stay.
 - README > Telemetry, Privacy and security and the "Is it safe?" page now say who keeps the stats, what for, on what basis, where they are stored, for how long, and how to ask about them.
 

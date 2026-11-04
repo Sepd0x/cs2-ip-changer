@@ -983,6 +983,10 @@ public static class Telemetry
     }
 
     static bool _closed;
+    static Action _atExit;
+
+    /// <summary>Counts that wait for a close (e.g. Phone setup still open when the app closes): run once at exit, before the last report.</summary>
+    public static void AtExit(Action count) => _atExit += count;
 
     /// <summary>
     /// At close (Exit) and when Windows signs out or shuts down (SessionEnding): saved first, then at most 3 s for the report, so
@@ -993,6 +997,7 @@ public static class Telemetry
         if (_on && !_closed)
         {
             _closed = true;
+            try { _atExit?.Invoke(); } catch { }
             Count("sess_" + SessionBand(DateTime.UtcNow - _started));
             int drops; lock (Gate) drops = _drops;
             Count("drop_" + DropsBand(drops));

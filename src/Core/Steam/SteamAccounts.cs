@@ -304,7 +304,19 @@ public static partial class Steam
             for (var i = 0; i < 20 && !SteamClosedNow(); i++) await Task.Delay(250);
         }
         await Task.Delay(1000);
+        // Files Steam rewrites when it exits (CS2's launch options) can only be changed now, before it starts again.
+        if (SteamClosedNow() && WhileClosed != null)
+            try { await Task.Run(WhileClosed); } catch (Exception ex) { Log.Warn("While Steam was closed: " + ex.Message); }
     }
+
+    /// <summary>Runs each time the app has closed Steam and before it opens it again (the CS2 launch options).</summary>
+    public static Action WhileClosed { get; set; }
+
+    /// <summary>Steam and its web helper are both closed.</summary>
+    public static bool Closed => SteamClosedNow();
+
+    /// <summary>Closes Steam the clean way (see <see cref="CloseSteam"/>); true when it is closed.</summary>
+    public static async Task<bool> Close() { await CloseSteam(); return SteamClosedNow(); }
 
     const string Linked = "the Steam folder goes through a link or junction; the app only writes to a real folder";
 

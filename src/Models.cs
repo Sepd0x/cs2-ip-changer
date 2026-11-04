@@ -30,6 +30,8 @@ public sealed partial class Settings
     public bool RequireNew16 { get; set; }               // Change IP keeps trying until the /16 differs from the IP before
     public bool RequireGoodLink { get; set; }            // Change IP keeps trying while the new connection's jitter is too high
     public bool CheckUpdates { get; set; } = true;
+    /// <summary>Connection > Checks shows every row, not only the ones that need you (beta.11).</summary>
+    public bool ChecksShowAll { get; set; }
     /// <summary>
     /// The usage stats notice was accepted (App.StatsGate, before the app opens). False until then: nothing is sent and
     /// no ID is made. Settings from beta.7 and the beta.8 tests (UsageStats) don't have it, so they see the notice once.
@@ -113,7 +115,9 @@ public sealed partial class Settings
     public string AccountSort { get; set; } = "recent";
     /// <summary>Accounts as "cards" or "rows" (4 nov.). Null until picked: from 12 accounts the page offers rows.</summary>
     public string AccountsView { get; set; }
-    public bool AutoJoinFollowed { get; set; }            // a followed player moves to another server in the list: join it
+    public bool AutoJoinFollowed { get; set; }            // a followed player moves to another server while CS2 is open: offer to join
+    /// <summary>-condebug -conclearlog in CS2's launch options of every account, added while Steam is closed (Cs2LaunchOptions).</summary>
+    public bool Cs2LaunchOptions { get; set; } = true;
     public string HotkeySwitch { get; set; } = DefaultHotkeySwitch;   // global hotkey for Switch (never Ctrl+Alt: that is AltGr)
     public string HotkeyRejoin { get; set; } = DefaultHotkeyRejoin;   // global hotkey for Change IP and rejoin
     public const string DefaultHotkeySwitch = "Ctrl+Shift+F9", DefaultHotkeyRejoin = "Ctrl+Shift+F10";
@@ -164,6 +168,43 @@ public sealed class CheckItem : Observable
     public Brush Brush => Waiting ? Ui.Warn : Ok switch { true => Ui.Good, false => Ui.Bad, _ => Ui.Faint };
     /// <summary>The detail text is coloured only for a warning or an error; OK and waiting rows stay quiet.</summary>
     public Brush DetailBrush => Waiting ? Ui.Warn : Ok == false ? Ui.Bad : Ui.Muted;
+    /// <summary>Amber for something you chose (regions you turned off): worth seeing in Show all, but nothing to fix.</summary>
+    public bool Chosen { get; init; }
+    /// <summary>Red or amber: the row asks something of you (beta.11, the Checks only show these unless Show all is on).</summary>
+    public bool Attention => Ok == false || (Waiting && !Chosen);
+    bool _shown = true;
+    public bool Shown { get => _shown; set => Set(ref _shown, value); }
+}
+
+/// <summary>
+/// The Checks panel folded (beta.11, simulated users: 11 rows were "green noise" and amber read as "my internet is broken"): only
+/// the rows that need you, a one-line summary, and Show all (remembered) for everyone who wants every row.
+/// </summary>
+public static class ChecksView
+{
+    public static bool Shows(bool attention, bool showAll) => showAll || attention;
+
+    public static string Summary(int total, int ok, int attention, bool protOn = true) =>
+        attention == 1 ? "1 check needs you." : attention > 1 ? $"{attention} checks need you."
+        : !protOn ? "Protection is off, so there is little to check yet."
+        : ok == total ? $"All {total} checks OK." : "All good: nothing needs you.";
+
+    public static string Toggle(bool showAll) => showAll ? "Show less" : "Show all";
+
+    /// <summary>
+    /// The VPN that carries the PC's traffic now (the adapter Windows picks for the internet, <paramref name="pcDefaultIndex"/>), or
+    /// null. A VPN adapter that is only up (Tailscale or ZeroTier without an exit node, a VPN app idle in the tray) changes nothing.
+    /// </summary>
+    public static string VpnOn(IEnumerable<Adapter> adapters, int pcDefaultIndex) =>
+        adapters?.FirstOrDefault(a => a is { IsVpn: true, IsPhone: false, Up: true } && a.Index == pcDefaultIndex) is { } v ? (v.Description is { Length: > 0 } d ? d : v.Name) : null;
+
+    /// <summary>
+    /// The row says why (2nd round of simulated users: "Turn it off before you play" with no reason made Diogo stop). Nothing
+    /// stronger until it is tested with a VPN's kill switch: the app's routes and rules still send your servers and CS2 through the phone.
+    /// </summary>
+    public static string VpnDetail(string name) => $"On ({name}). Not tested with the app yet: if CS2 or your servers don't connect, turn it off while you play.";
+
+    public const string VpnHelp = "A VPN carries your PC's traffic. Your servers and CS2 still go through the phone (its IP is what they see), but the app wasn't tested with every VPN app and its kill switch.";
 }
 
 // ------------------------------------------------------------ Servers

@@ -24,9 +24,22 @@ public partial class MainWindow
         finally { _phoneBusy = false; }
     }
 
+    /// <summary>The phone is an iPhone (beta.11): no ADB, so the Phone box, Phone setup and Change IP have its own steps.</summary>
+    bool _iphone;
+
     async Task RefreshPhoneCore()
     {
         _adb ??= Adb.Find();
+        // An iPhone first: it never shows up in ADB, and "install the phone tool" or "turn on USB debugging" would send you the wrong way
+        if (_phone?.Ready != true && await IphoneState() is (true, var tethered))
+        {
+            AdbInstallBtn.Visibility = Visibility.Collapsed;
+            if (tethered) SetPhone(Ui.Good, "iPhone connected", "Change IP: the app tells you when to turn Airplane Mode on and off, then shows the new IP.");
+            else SetPhone(Ui.Warn, "iPhone found, no connection yet", PhoneSetup.IphoneHotspot);
+            UpdatePhoneCheck();
+            return;
+        }
+        _iphone = false;
         if (_adb == null)
         {
             SetPhone(Ui.Faint, "Phone tool not installed", "ADB, free from Google, about 7 MB. Phone setup installs it for you.");
@@ -47,7 +60,8 @@ public partial class MainWindow
             var usb = await Task.Run(PhoneUsb.Scan);
             NoteUsb(usb);
             if (usb.Problem is int code) SetPhone(Ui.Bad, "Phone driver failed", PhoneSetup.Advice(PhoneStep.UsbDriverError, code, usb.Vendor == "Samsung"));
-            else SetPhone(Ui.Faint, "Phone not found", usb.Seen ? "Windows sees the phone, but not over USB debugging. See \"Phone setup\"." : "Turn on USB debugging in developer options. See \"Phone setup\".");
+            // No jargon before there is a reason for it (4 nov., simulated users): Phone setup explains USB debugging when it's the step
+            else SetPhone(Ui.Faint, "Phone not found", usb.Seen ? "Phone plugged in. Press Phone setup to finish." : "Plug in your phone with a USB cable, then press Phone setup.");
         }
         else if (!info.Ready) SetPhone(Ui.Warn, "Waiting for authorization", info.Summary);
         else if (info.WifiOn && info.WifiConnected == false)
@@ -102,8 +116,10 @@ public partial class MainWindow
     {
         PhoneFirstRun();
         // Change IP only makes sense with the phone ready on ADB (and not in the no phone mode).
-        ChangeIpBtn.IsEnabled = !_changingIp && _phone?.Ready == true && !_s.NoPhone;
+        var iphone = _iphone && _phone?.Ready != true;
+        ChangeIpBtn.IsEnabled = !_changingIp && (_phone?.Ready == true || iphone && _last?.Egress != null) && !_s.NoPhone;
         ChangeIpBtn.ToolTip = _s.NoPhone ? "Off in the no phone mode: pick another option under What goes through the phone."
+            : iphone ? "Tells you when to turn Airplane Mode on and off on the iPhone, then shows the new IP. If you are on a server, you will drop."
             : "Turns the phone's mobile data off and on until the carrier gives a new IP. Needs the phone set up over ADB. If you are on a server, you will drop.";
         UpdateRejoinBtn();
         UpdateDataCheck();
@@ -135,7 +151,7 @@ public partial class MainWindow
         {
             _cPhoneData.Ok = null;
             _cPhoneData.Waiting = false;
-            _cPhoneData.Detail = _adb == null ? "Needs the phone tool (ADB)" : "Phone not found (check the USB cable)";
+            _cPhoneData.Detail = _adb == null ? "Needs Phone setup" : "Phone not found (check the USB cable)";
         }
         else
         {
@@ -175,12 +191,16 @@ public partial class MainWindow
     /// Until a phone has been seen once, Phone setup is the one button to press: it goes first, as the only primary, and the single
     /// steps it does by itself (install ADB, USB tethering) stay hidden. After that the buttons are back as before.
     /// </summary>
+    /// <summary>Turn on USB tethering only when it can work and isn't on yet.</summary>
+    public static bool ShowTetherButton(bool firstRun, bool phoneReady, bool tethered) => !firstRun && phoneReady && !tethered;
+
     void PhoneFirstRun()
     {
         var first = !PhoneKnown && !_s.NoPhone;
         AdbInstallHost.Visibility = first ? Visibility.Collapsed : Visibility.Visible;
         // USB tethering can only be asked of a phone ADB sees: while it isn't found the button would only fail.
-        TetherHost.Visibility = first || _phone?.Ready != true ? Visibility.Collapsed : Visibility.Visible;
+        // beta.11 (2nd round, Hugo: "Ready to change IP" next to "Turn on USB tethering"): not while the phone's tethering already carries the connection
+        TetherHost.Visibility = ShowTetherButton(first, _phone?.Ready == true, _last?.Egress?.IsPhone == true || _last?.Candidate?.IsPhone == true) ? Visibility.Visible : Visibility.Collapsed;
         PhoneSetupBtn.Style = (Style)FindResource(first ? "Primary" : typeof(Button));
         WifiOffBtn.Style = (Style)FindResource(first ? typeof(Button) : "Primary");
         var at = PhoneButtons.Children.IndexOf(PhoneSetupBtn);
@@ -274,6 +294,7 @@ public partial class MainWindow
         while (sw.Elapsed < TetherWait)
         {
             await Task.Delay(1000);
+            if (CommandCancelled) return (null, "Cancelled.");
             report?.Invoke($"Turning on USB tethering: waiting for Windows to see the phone ({(int)sw.Elapsed.TotalSeconds} s)…");
             var phone = Net.PickEgress(await Task.Run(Net.Scan), null, null);
             if (phone != null)
@@ -327,7 +348,7 @@ public partial class MainWindow
         if (_demo) { DemoPhoneSetup(); return; }
         if (_setupTimer?.IsEnabled == true) return;
         Log.Info("Phone setup opened.");
-        _setupFirstTodo = null;
+        _setupFirstTodo = _setupLeft = null;
         _setupTimer ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _setupTimer.Tick -= SetupTick;
         _setupTimer.Tick += SetupTick;
@@ -353,17 +374,19 @@ public partial class MainWindow
         var samsung = st.Usb.Vendor == "Samsung" || _phone?.Model?.StartsWith("SM-", StringComparison.OrdinalIgnoreCase) == true;
         var steps = PhoneSetup.Steps(st, samsung, _phone?.Model, _s.EgressSsid);
         var now = PhoneSetup.Current(steps);
-        _setupFirstTodo ??= now == null ? "done" : PhoneSetup.Key(now.Step);   // the usage count: where it stood when you opened it
+        // The usage counts: where it stood when you opened it, and where it is now (counted when you close it, beta.11)
+        _setupFirstTodo ??= PhoneSetup.StepKey(steps);
+        _setupLeft = PhoneSetup.StepKey(steps);
         _setupRows.Clear();
         foreach (var i in steps)
-            _setupRows.Add(new SetupStepRow(i, i == now, _setupBusy == i.Step ? _setupBusyText : null, _setupBusy == null));
+            _setupRows.Add(new SetupStepRow(i, now, _setupBusy == i.Step ? _setupBusyText : null, _setupBusy == null));
         var ok = steps.Count(i => i.State == PhoneSetup.StepState.Ok);
         SetupSummary.Text = now == null && steps.All(i => i.State == PhoneSetup.StepState.Ok)
             ? "The phone is ready. The app checks its IP, then servers see it instead of your home IP."
-            : now == null ? $"{ok} of {steps.Count} ready." : $"{ok} of {steps.Count} ready. Next: {now.Title} (in red). It turns green by itself once done.";
+            : now == null ? $"{ok} of {steps.Count} done." : $"{ok} of {steps.Count} done. Next: {now.Title}.";
         SetupFoot.Text = _s.NoPhone ? "You picked No phone under What goes through the phone, so the app isn't using the phone right now."
             : now == null ? "For less lag in game: " + NetReport.Tips(_last?.Egress?.IsWifi == true)
-            : "Each step checks itself every 2 seconds.";
+            : "Updates by itself. Do the red step and it turns green.";
         SetupCloseBtn.Content = now == null ? "Done" : "Close";
         SetupCloseBtn.Style = (Style)FindResource(now == null ? "Primary" : "Btn");
     }
@@ -373,9 +396,22 @@ public partial class MainWindow
         SetupPane.Visibility = Visibility.Collapsed;
         _setupTimer?.Stop();
         if (_demo || _setupFirstTodo == null) return;
-        Telemetry.Count("phone_setup_" + _setupFirstTodo);
+        CountSetupClosed();
         Log.Info("Phone setup closed" + (PhoneSetup.Current(PhoneSetup.Steps(_setupState ?? new PhoneSetupState())) is { } left ? " at " + PhoneSetup.Key(left.Step) + "." : ": the phone is ready."));
         _ = RefreshPhone();
+    }
+
+    string _setupLeft;
+
+    /// <summary>
+    /// Counts this opening of Phone setup once: the step when it opened and the step when it closed. Also at app exit with the panel
+    /// still open (Telemetry.AtExit), which before lost the count.
+    /// </summary>
+    void CountSetupClosed()
+    {
+        if (_demo) return;
+        foreach (var n in PhoneSetup.ClosedCounts(_setupFirstTodo, _setupLeft)) Telemetry.Count(n);
+        _setupFirstTodo = _setupLeft = null;
     }
 
     /// <summary>The button of a step: the app does it, the row says what is happening, then the steps are read again.</summary>
@@ -455,6 +491,7 @@ public partial class MainWindow
             Tethered = phone != null && !hotspot,
             WifiOn = info?.Ready == true && info.WifiOn && info.WifiConnected != false,
             PcOnPhone = Guard.NeedsPcOffPhone(mode, true, Net.BestInterface("1.1.1.1"), phone?.Index ?? -1, other),
+            Iphone = info?.Ready != true && (PhoneUsb.IsIphone(usb) || PhoneUsb.IsIphone(phone)),
         };
     }
 
@@ -466,6 +503,8 @@ public partial class MainWindow
         if (_changingIp) return false;
         if (_demo) { Toast("Demo: IP changed.", true); return false; }
         if (_s.NoPhone) { Toast("No phone mode: there is no IP to change. Pick another option under What goes through the phone.", false); return false; }
+        // beta.11: an iPhone has no ADB: the change is guided (you toggle Airplane Mode, the app waits and measures)
+        if (_iphone && _phone?.Ready != true) return await IphoneChangeIp();
         // USB tethering, or the phone's hotspot (saved by name) with the cable plugged in only for ADB.
         var hotspot = _last?.Egress is { IsWifi: true } && !string.IsNullOrEmpty(_s.EgressSsid);
         if (_last?.Egress != null && !_last.Egress.IsPhone && !hotspot)
@@ -686,21 +725,29 @@ public partial class MainWindow
 /// <summary>One line of the Phone setup panel: green done, red to do (the current one stands out), grey waiting for the one before.</summary>
 public sealed class SetupStepRow
 {
-    public SetupStepRow(PhoneSetup.SetupItem item, bool current, string busy, bool idle)
+    public SetupStepRow(PhoneSetup.SetupItem item, PhoneSetup.SetupItem now, string busy, bool idle)
     {
-        Item = item; Current = current; Busy = busy; Idle = idle;
+        Item = item; Current = item == now; Busy = busy; Idle = idle;
+        // beta.11: only the step to do now is open; the ones after it are only their title, in grey, until it is their turn
+        _later = now != null && !Current && item.State != PhoneSetup.StepState.Ok;
+        _shown = PhoneSetup.Shown(item, now);
     }
+    readonly bool _later;
+    readonly string _shown;
+    /// <summary>After the step to do now: grey, title only, no button.</summary>
+    public bool Later => _later;
     public PhoneSetup.SetupItem Item { get; }
     public bool Current { get; }
     public string Busy { get; }
     public bool Idle { get; }
     public string Title => Item.Title;
-    public string Detail => Busy ?? Item.Detail;
+    public string Detail => Busy ?? _shown;
+    public Visibility DetailVisibility => Detail == null ? Visibility.Collapsed : Visibility.Visible;
     public string Action => Item.Action;
-    public bool HasAction => Item.Action != null && Item.State == PhoneSetup.StepState.Todo;
-    public Brush Brush => Item.State switch { PhoneSetup.StepState.Ok => Ui.Good, PhoneSetup.StepState.Todo => Busy != null ? Ui.Warn : Ui.Bad, _ => Ui.Faint };
-    public Brush TitleBrush => Item.State == PhoneSetup.StepState.Waiting ? Ui.Faint : Ui.Text;
-    public Brush DetailBrush => Busy != null ? Ui.Warn : Item.State == PhoneSetup.StepState.Todo ? (Current ? Ui.Text : Ui.Muted) : Ui.Faint;
+    public bool HasAction => Item.Action != null && Item.State == PhoneSetup.StepState.Todo && !_later;
+    public Brush Brush => _later ? Ui.Faint : Item.State switch { PhoneSetup.StepState.Ok => Ui.Good, PhoneSetup.StepState.Todo => Busy != null ? Ui.Warn : Ui.Bad, _ => Ui.Faint };
+    public Brush TitleBrush => _later || Item.State == PhoneSetup.StepState.Waiting ? Ui.Faint : Ui.Text;
+    public Brush DetailBrush => Busy != null ? Ui.Warn : Current ? Ui.Text : Ui.Faint;
     /// <summary>The step to do now gets a faint red band, so it is the first thing you see.</summary>
     public Brush RowBack => Current ? Ui.BadSoft : Brushes.Transparent;
 }

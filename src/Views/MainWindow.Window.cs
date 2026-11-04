@@ -37,6 +37,7 @@ public partial class MainWindow
         }
         if (NavLog.IsChecked == true) UpdateDiagInfo();
         if (NavConfigs.IsChecked == true) ShowConfigs();
+        if (NavSettings.IsChecked == true) ShowLaunchOptions();
     }
 
     void LogCopy_Click(object sender, RoutedEventArgs e)

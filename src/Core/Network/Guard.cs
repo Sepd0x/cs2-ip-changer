@@ -422,6 +422,9 @@ public sealed class Guard
     /// <summary>Save mobile data is applied to an adapter right now.</summary>
     public bool PcOffPhoneApplied => _metricAppliedTo >= 0;
 
+    /// <summary>The routes the app added ("prefix|interface|next hop") and the adapter whose metric it changed (-1 = none), for Log > What the app changed.</summary>
+    public (List<string> Routes, int MetricIf) Owned() => (_ownedRoutes.ToList(), _metricAppliedTo);
+
     /// <summary>
     /// Closing without Clean up on exit: protection stays, but the phone's adapter gets its default route back. Otherwise, once
     /// the home network is gone, the PC has no internet through the phone until a restart.

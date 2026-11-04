@@ -51,6 +51,7 @@ public partial class MainWindow
             {
                 _consoleServer = _kicks.Server;
                 if (_consoleServer != null) RejoinBack(_consoleServer);
+                OfferAddJoined(_consoleServer);
                 if (_kicks.OnValve && !valveBefore) Log.Info("CS2 joined a Valve server: kicks and bans there are left alone.");
                 continue;
             }
@@ -61,6 +62,24 @@ public partial class MainWindow
     }
 
     readonly DisconnectTracker _kicks = new();
+    readonly HashSet<string> _addOffered = new();
+
+    /// <summary>
+    /// beta.11 (simulated users: "I only know my server by its name"): CS2 joined a community server that isn't in your list, so the
+    /// app offers to add it, once per server while the app is open. It never says the join was protected: a server outside the list
+    /// goes through the home connection, or the phone only in Whole PC.
+    /// </summary>
+    public static bool OffersAdd(string server, IEnumerable<string> listed, ICollection<string> offered) =>
+        server != null && !listed.Contains(server) && !offered.Contains(server);
+
+    public static string AddJoinedText(string server) => $"You joined {server}, which isn't in your servers. Add it, to play it through the phone next time?";
+
+    void OfferAddJoined(string server)
+    {
+        if (!OffersAdd(server, _servers.Select(x => x.Key), _addOffered)) return;
+        _addOffered.Add(server);
+        Toast(AddJoinedText(server), Tone.Info, "Add", () => AddFromText(server));
+    }
 
     readonly NetReportReader _netReport = new();
     bool _lagTipShown;
@@ -125,8 +144,11 @@ public partial class MainWindow
         if (written >= _cs2StartedAt) return;
         if (DateTime.Now - _cs2StartedAt < TimeSpan.FromSeconds(90) || DateTime.Now - _cs2LogSeenAt < TimeSpan.FromSeconds(60)) return;
         _condebugHinted = true;
-        Log.Warn("CS2 is not writing console.log, so kicks and bans can't be detected. In Steam, add -condebug -conclearlog to CS2's launch options.");
-        Toast("To detect kicks and bans, add -condebug -conclearlog to CS2's launch options in Steam (CS2 > Properties).", false);
+        Log.Warn("CS2 is not writing console.log, so kicks and bans can't be detected. " + (_s.Cs2LaunchOptions
+            ? "The app adds -condebug -conclearlog to CS2's launch options the next time Steam is closed (Settings > Steam has a button that does it now)."
+            : "Settings > Steam > See kicks and bans when Steam opens CS2 adds -condebug -conclearlog to CS2's launch options."));
+        Toast(_s.Cs2LaunchOptions ? "CS2 was opened without its console log, so kicks and bans aren't seen. Settings > Steam adds it in one click (Steam restarts)."
+            : "To see kicks and bans, turn on Settings > Steam > See kicks and bans when Steam opens CS2.", false);
     }
 
     /// <summary>The demo's kicks (it has no console): the same path as a real one.</summary>
@@ -230,13 +252,27 @@ public partial class MainWindow
         Diag.Write("kick", new { kind = what, line, server, reason = d.Reason, minutes = d.Minutes });
         // A ban or a VPN block is about the IP (and a ban about the account too): coming back needs both new, so the offer is
         // the switch. A kick is only a rejoin. The app only goes back to a server in your list: no promise for one that isn't.
-        Toast(inList == null ? $"You were {what} from the server{why}." + (server != null ? " It isn't in your list, so the app can't take you back: add it on Servers." : "")
+        if (inList == null && server != null)
+        {
+            // beta.11: the button adds it here, instead of sending you to the Servers page
+            _addOffered.Add(server);
+            Toast($"You were {what} from the server{why}. It isn't in your list, so the app can't take you back. Add it for next time?", Tone.Warn, "Add", () => AddFromText(server));
+        }
+        else Toast(inList == null ? $"You were {what} from the server{why}."
             : kind == KickKind.Vpn ? "The server blocked the phone's IP as a VPN or proxy. New IP + next account gets you back (if every IP is blocked, it blocks your carrier)."
-            : kind == KickKind.Ban ? $"You were banned from the server{d.For}. Press {_s.HotkeyRejoin} for a new IP and another account, then rejoin."
+            : kind == KickKind.Ban ? BanToast(d.For, _s.HotkeyRejoin, NextQuick(inList)?.Name)
             : $"You were kicked from the server{why}. Not a ban: you can rejoin.", false);
         UpdateRejoinBtn();
         if (inList != null && Dialog.Visibility != Visibility.Visible && !_changingIp && !_rejoining) _ = OfferRejoin(d);
     }
+
+    /// <summary>
+    /// The ban toast (beta.11): says which account comes next before you press anything (Hugo: "F9 or F10, and as who?").
+    /// With no account left it says so, instead of a key that can't help.
+    /// </summary>
+    public static string BanToast(string forText, string hotkey, string next) => next != null
+        ? $"Banned{forText}. Press {hotkey} to rejoin with a new IP as {next}."
+        : $"Banned{forText}. No other account to rejoin with: the rest are out of rotation, on cooldown or banned there.";
 
     async Task OfferRejoin(Disconnect d)
     {
@@ -358,8 +394,10 @@ public partial class MainWindow
     }
 
     /// <summary>One primary in Status: Turn on protection while it is off, else Change IP and rejoin with a last server, else Change IP.</summary>
-    public static (string Rejoin, string ChangeIp) StatusPrimary(bool protOn, bool noPhone, bool lastServer) =>
-        !protOn && !noPhone ? ("Btn", "Btn") : lastServer && !noPhone ? ("Primary", "Btn") : ("Btn", "Primary");
+    /// <paramref name="fixFirst"/> (beta.11, simulated users: "three blue buttons"): something blocks the game (the phone's Wi-Fi is
+    /// on, or the phone is gone), so its fix (Turn off phone Wi-Fi, Phone setup) is the one blue button, not Change IP.
+    public static (string Rejoin, string ChangeIp) StatusPrimary(bool protOn, bool noPhone, bool lastServer, bool fixFirst = false) =>
+        (!protOn && !noPhone) || (fixFirst && !noPhone) ? ("Btn", "Btn") : lastServer && !noPhone ? ("Primary", "Btn") : ("Btn", "Primary");
 
     void UpdateRejoinBtn()
     {
@@ -368,7 +406,7 @@ public partial class MainWindow
             + $"Only joins with protection confirmed. In game: {_s.HotkeyRejoin}.";
         // After a kick the way back is the rejoin: with a last server it is the primary, and its hotkey shows under it. With protection
         // off, Turn on protection is the one primary (beta.10).
-        var (rejoinStyle, changeStyle) = StatusPrimary(_protOn, _s.NoPhone, _s.LastServer != null);
+        var (rejoinStyle, changeStyle) = StatusPrimary(_protOn, _s.NoPhone, _s.LastServer != null, PhoneWifiOn || (_last != null && _last.Egress == null));
         var want = rejoinStyle + "|" + changeStyle;
         if (!Equals(RejoinBtn.Tag, want))
         {

@@ -86,6 +86,7 @@ public partial class MainWindow
         Telemetry.SettingsFrom(() => Telemetry.Changed(_s, new Settings()));
         Telemetry.RegionsFrom(() => Telemetry.RegionCodes(_regionInfos, _s?.BlockedRegions));
         Telemetry.ChecksFrom(() => _checks.Where(c => c.Ok == false).Select(c => c.Title).ToList());
+        Telemetry.AtExit(CountSetupClosed);   // beta.11: the app closed with Phone setup open (its step there is where they stopped)
         Telemetry.WindowFrom(() => (ActualWidth, System.Windows.Media.VisualTreeHelper.GetDpi(this).DpiScaleX));
         Loaded += (_, _) => Telemetry.Ready();
         Activated += (_, _) => Telemetry.Activated();

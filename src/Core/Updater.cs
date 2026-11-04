@@ -138,11 +138,48 @@ public static partial class Updater
         return h;
     }
 
+    public const string LatestPage = "https://github.com/" + Repo + "/releases/latest";
+
+    /// <summary>
+    /// The newest release. The API first; when it refuses (60 requests an hour per IP without a token, and mobile data shares one IP
+    /// between many people, audit C6) or fails, the redirect of github.com/.../releases/latest, which has no such limit. The
+    /// download is the same either way: only an exe with the project's signature is installed.
+    /// </summary>
     public static async Task<Release> Latest(CancellationToken ct = default)
     {
         if (Rec.On) return null;   // the recording build never replaces itself with the normal one
-        using var http = Http(15);
-        return PickLatest(await http.GetStringAsync(ApiUrl + "?per_page=50", ct));
+        try
+        {
+            using var http = Http(15);
+            return PickLatest(await http.GetStringAsync(ApiUrl + "?per_page=50", ct));
+        }
+        catch (Exception api) when (!ct.IsCancellationRequested)
+        {
+            try
+            {
+                using var h = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(15) };
+                h.DefaultRequestHeaders.UserAgent.ParseAdd("CS2IPChanger/0.1");
+                using var resp = await h.GetAsync(LatestPage, HttpCompletionOption.ResponseHeadersRead, ct);
+                if (FromLatestRedirect(resp.Headers.Location) is { } r) return r;
+            }
+            catch (Exception) when (!ct.IsCancellationRequested) { }
+            throw new HttpRequestException($"{api.Message} (and github.com/…/releases/latest didn't answer)", api);
+        }
+    }
+
+    /// <summary>
+    /// The release that "releases/latest" redirects to (".../releases/tag/v0.1.0-beta.11"). The tag must be a version, so nothing
+    /// else gets into the download links; the files are the ones each release has, next to the tag.
+    /// </summary>
+    public static Release FromLatestRedirect(Uri location)
+    {
+        if (location == null || !location.IsAbsoluteUri || location.Scheme != Uri.UriSchemeHttps || location.Host != "github.com") return null;
+        var prefix = "/" + Repo + "/releases/tag/";
+        if (!location.AbsolutePath.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) return null;
+        var tag = Uri.UnescapeDataString(location.AbsolutePath[prefix.Length..]);
+        if (!IsValid(tag) || tag.Contains('/') || tag.Contains('+')) return null;
+        var dl = $"https://github.com/{Repo}/releases/download/{tag}/{ExeName}";
+        return new Release(Clean(tag), tag, $"https://github.com/{Repo}/releases/tag/{tag}", dl, dl + ".sha256", 0, dl + ".sha256.sig");
     }
 
     // ------------------------------------------------------------ The release signature

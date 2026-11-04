@@ -50,6 +50,7 @@ public partial class MainWindow
             ProtectOnStartBox.IsChecked = _s.ProtectOnStart;
             CloseToTrayBox.IsChecked = _s.CloseToTray;
             AutoStreamerBox.IsChecked = _s.AutoStreamer;
+            LaunchOptsBox.IsChecked = _s.Cs2LaunchOptions;
             DataWarnBox.Text = _s.DataWarnGb > 0 ? _s.DataWarnGb.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) : "0";
             ApiKeyBox.Text = _s.SteamApiKey ?? "";
             ApiKeyPwd.Password = _s.SteamApiKey ?? "";
@@ -75,6 +76,9 @@ public partial class MainWindow
         _s.RequireNew16 = New16Box.IsChecked == true;
         _s.RequireGoodLink = GoodLinkBox.IsChecked == true;
         _s.AutoJoinFollowed = AutoJoinBox.IsChecked == true;
+        var launchOptsOn = !_s.Cs2LaunchOptions && LaunchOptsBox.IsChecked == true;
+        _s.Cs2LaunchOptions = LaunchOptsBox.IsChecked == true;
+        if (launchOptsOn) AddLaunchOptionsIfSteamClosed();
         _s.SwitchIp = SwIpBox.IsChecked == true;
         _s.SwitchAccount = SwAccountBox.IsChecked == true;
         _s.SwitchRejoin = SwRejoinBox.IsChecked == true;

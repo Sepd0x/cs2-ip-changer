@@ -261,7 +261,60 @@ public static class Installer
     /// folder must not become trusted), and leftovers of saves and starts.</summary>
     public static bool Skip(string name) =>
         name.Equals("owned.json", StringComparison.OrdinalIgnoreCase) || name.Equals("running.flag", StringComparison.OrdinalIgnoreCase)
-        || name.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase) || name.Contains(".broken-", StringComparison.OrdinalIgnoreCase);
+        || name.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase) || name.Contains(".broken-", StringComparison.OrdinalIgnoreCase)
+        // beta.11 (audit P6): no program from the old folder goes into Program Files. The app downloads ADB again, checked
+        || name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) || name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
+        || name.EndsWith(".sys", StringComparison.OrdinalIgnoreCase) || name.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase)
+        || name.EndsWith(".bat", StringComparison.OrdinalIgnoreCase) || name.EndsWith(".ps1", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Folders never copied: platform-tools (an old copy of ADB, programs only; the app gets its own from Google, checked).</summary>
+    public static bool SkipDir(string name) => name.Equals("platform-tools", StringComparison.OrdinalIgnoreCase);
+
+    // ------------------------------------------------------------ After Install: the old copy (audit P4)
+
+    /// <summary>
+    /// What Install leaves in the old folder that is worth sending to the Recycle Bin: SRT_Dados (saved Steam sign-ins, settings,
+    /// from beta.5 to beta.7 the Steam Web API key in plain text) and the .old exe of an update. Only offered when every file of
+    /// SRT_Dados was copied; links are never offered.
+    /// </summary>
+    public static List<string> OldCopy(string fromDir, Result r)
+    {
+        var list = new List<string>();
+        if (r == null || r.DataError != null || r.DataKept || r.Files <= 0 || r.Skipped > 0) return list;
+        var data = Path.Combine(fromDir, "SRT_Dados");
+        if (Directory.Exists(data) && !Paths.IsLink(data)) list.Add(data);
+        var old = Path.Combine(fromDir, Updater.ExeName + ".old");
+        if (File.Exists(old) && !Paths.IsLink(old)) list.Add(old);
+        return list;
+    }
+
+    public static string OldCopyText(string fromDir) =>
+        $"The app is installed and has your settings. The old copy in {fromDir} still has its SRT_Dados folder, with your saved Steam sign-ins.\n\n"
+        + "Send it to the Recycle Bin? You can get it back from there.";
+
+    /// <summary>To the Recycle Bin, never deleted for good: moved (a rename on the same disk), so a link inside is moved as a link.</summary>
+    public static bool Recycle(string path)
+    {
+        if (Paths.IsLink(path) || !(Directory.Exists(path) || File.Exists(path))) return false;
+        var op = new ShFileOp { Func = 3 /* FO_DELETE */, From = Path.GetFullPath(path) + "\0\0", Flags = 0x40 | 0x10 | 0x4 | 0x400 /* ALLOWUNDO, NOCONFIRMATION, SILENT, NOERRORUI */ };
+        return SHFileOperationW(ref op) == 0 && !op.Aborted && !(Directory.Exists(path) || File.Exists(path));
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    struct ShFileOp
+    {
+        public IntPtr Hwnd;
+        public uint Func;
+        public string From;
+        public string To;
+        public ushort Flags;
+        [MarshalAs(UnmanagedType.Bool)] public bool Aborted;
+        public IntPtr NameMappings;
+        public string Title;
+    }
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    static extern int SHFileOperationW(ref ShFileOp op);
 
     /// <summary>
     /// Copies a data folder file by file. The folder itself is opened without following a link and must really be where it was named;
@@ -288,7 +341,8 @@ public static class Installer
                 if (Skip(Path.GetFileName(f))) continue;
                 if (CopyFile(f, Path.Combine(root, r), Path.Combine(to, r))) files++; else skipped++;
             }
-            foreach (var d in Directory.GetDirectories(src)) Copy(Path.Combine(rel, Path.GetFileName(d)), depth + 1);
+            foreach (var d in Directory.GetDirectories(src))
+                if (!SkipDir(Path.GetFileName(d))) Copy(Path.Combine(rel, Path.GetFileName(d)), depth + 1);
         }
         Copy("", 0);
         return (files, skipped);

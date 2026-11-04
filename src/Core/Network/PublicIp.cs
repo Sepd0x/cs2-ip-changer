@@ -60,22 +60,27 @@ public static partial class Net
     /// <summary>The public IP servers see (through the protected connection).</summary>
     public static async Task<string> EgressPublicIp(Adapter egress, CancellationToken ct = default)
     {
-        if (egress == null || BestInterface(EchoIp) != egress.Index) return null;
+        if (egress == null) { LastEgressError = "no phone connection"; return null; }
+        if (BestInterface(EchoIp) != egress.Index) { LastEgressError = $"Windows would send {EchoIp} through another adapter"; return null; }
         using var http = ClientVia(egress.Index, egress.LocalIp);
         try
         {
             var trace = await http.GetStringAsync($"https://{EchoIp}/cdn-cgi/trace", ct);
             var line = trace.Split('\n').FirstOrDefault(l => l.StartsWith("ip="));
             var ip = line?[3..].Trim();
-            if (!IPAddress.TryParse(ip, out var a) || a.AddressFamily != AddressFamily.InterNetwork) return null;
+            if (!IPAddress.TryParse(ip, out var a) || a.AddressFamily != AddressFamily.InterNetwork) { LastEgressError = "the answer had no IPv4"; return null; }
+            LastEgressError = null;
             // The country Cloudflare saw: what the phone's line shows when ipwho.is can't be asked through the phone
             if (CountryOf(trace.Split('\n').FirstOrDefault(l => l.StartsWith("loc="))?[4..].Trim()) is string country)
                 lock (InfoCache) TraceCountry[ip] = country;
             return ip;
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
-        catch { return null; }
+        catch (Exception ex) { LastEgressError = ex is TaskCanceledException ? "timed out" : ex.GetType().Name + ": " + ex.Message; return null; }
     }
+
+    /// <summary>Why the last check through the phone gave no IP (null when it answered). For the Log, when checks keep failing.</summary>
+    public static string LastEgressError { get; private set; }
 
     /// <summary>The public IP of the rest of the PC (home network). Only answers if the request really leaves through that adapter.</summary>
     public static async Task<string> HomePublicIp(int homeIf, CancellationToken ct = default)

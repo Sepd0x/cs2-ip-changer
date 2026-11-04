@@ -63,7 +63,7 @@ static class PhoneTests
             var drv = PhoneSetup.Advice(PhoneStep.UsbDriverError, 10);
             check("Setup: texto do driver com o código", drv == "Windows sees the phone but its USB driver failed (code 10). Unplug it, use another USB port or cable, or restart the phone.", drv);
             check("Setup: código 28 num Samsung fala do driver da Samsung", PhoneSetup.Advice(PhoneStep.UsbDriverError, 28, samsung: true).Contains("Samsung USB Driver"));
-            check("Setup: por autorizar diz o que tocar", PhoneSetup.Advice(PhoneStep.Unauthorized).StartsWith("Allow USB debugging on the phone screen"));
+            check("Setup: por autorizar diz o que tocar", PhoneSetup.Advice(PhoneStep.Unauthorized).Contains("tap Allow"));
             check("Setup: cabo", PhoneSetup.Advice(PhoneStep.NoUsb).StartsWith("Plug the phone into the PC"));
             check("Setup: depuração USB traz os passos", PhoneSetup.Advice(PhoneStep.NoUsbDebugging).Contains("Build number") && PhoneSetup.Advice(PhoneStep.NoUsbDebugging).Contains("USB debugging"));
             var all = Enum.GetValues<PhoneStep>().Select(x => PhoneSetup.Advice(x, 10, true)).ToList();

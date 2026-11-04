@@ -644,10 +644,20 @@
                                 </Grid.RowDefinitions>
                                 <HeaderedContentControl Style="{StaticResource Group}" Header="Checks">
                                     <StackPanel>
+                                        <!-- beta.11: only the rows that need you, unless Show all (remembered) -->
+                                        <Grid Margin="0,0,0,8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock x:Name="ChecksSummary" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{StaticResource Muted}"/>
+                                            <Button x:Name="ChecksToggle" Grid.Column="1" Style="{StaticResource Ghost}" Padding="8,2" Margin="8,0,0,0" Content="Show all" Click="ChecksToggle_Click"
+                                                    ToolTip="Every check, also the ones that are fine"/>
+                                        </Grid>
                                         <ItemsControl x:Name="Checks">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Grid Margin="0,0,0,9" ToolTip="{Binding Help}" Background="Transparent">
+                                                    <Grid Margin="0,0,0,9" ToolTip="{Binding Help}" Background="Transparent" Visibility="{Binding Shown, Converter={StaticResource Vis}}">
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="20"/>
                                                             <ColumnDefinition Width="180"/>
@@ -809,11 +819,10 @@
                                          VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"/>
                                 <StackPanel x:Name="ServersEmpty" Grid.Row="3" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed">
                                     <TextBlock Text="No servers yet" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Type IP:port in the box above, paste a list or import a .txt or .cfg file." Foreground="{StaticResource Muted}" Margin="0,4,0,0" HorizontalAlignment="Center"/>
-                                    <TextBlock Foreground="{StaticResource Faint}" FontSize="11" Margin="0,4,0,12" HorizontalAlignment="Center">
-                                        <Run Text="Don't know a server's IP:port? Join it in CS2, open the console and type"/>
-                                        <Run Text="status" FontFamily="{StaticResource Mono}" Foreground="{StaticResource Muted}"/><Run Text="."/>
-                                    </TextBlock>
+                                    <TextBlock Text="Paste the IP:port of the servers you play on, or import a .txt or .cfg file." Foreground="{StaticResource Muted}" Margin="0,4,0,0" HorizontalAlignment="Center"/>
+                                    <!-- beta.11, 2nd round of simulated users: they know the server's name, not its IP, and a banned player can't join it to type status -->
+                                    <TextBlock x:Name="ServersEmptyHelp" Foreground="{StaticResource Faint}" FontSize="11" Margin="0,4,0,12" HorizontalAlignment="Center" TextAlignment="Center"
+                                               Text="Only know its name? Join it once in CS2 with protection off (that join uses your home IP): the app offers to add it.&#x0a;Banned there? Ask on its Discord or website for the IP (it often reads connect 1.2.3.4:27015)."/>
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                         <Button Style="{StaticResource Primary}" Click="PasteServers_Click" Content="Paste from clipboard"/>
                                         <Button Click="ImportServers_Click" Margin="0" Content="Import file"/>
@@ -1889,6 +1898,8 @@
                             </ListBox>
                             <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="8,8,8,2">
                                 <Button Click="LogCopy_Click" Content="Copy all" ToolTip="Copies the log so you can paste it where you need it (e.g. to ask for help)"/>
+                                <Button Click="AppChanges_Click" Content="What the app changed"
+                                        ToolTip="The Firewall rules, routes and blocked IPs the app made in Windows now, and the command that undoes them"/>
                                 <Button Click="ExportReport_Click" Content="Save bug report"
                                         ToolTip="Saves a .zip on the Desktop to attach to a bug report: this log, the app's settings and rules, Steam's connection log and CS2's console. Your home IP and API key are left out."/>
                                 <Button Click="ReportProblem_Click" Content="Report a problem"
@@ -2161,7 +2172,7 @@
                                         <CheckBox x:Name="AutoJoinBox" Style="{StaticResource Switch}" Click="SettingChanged">
                                             <StackPanel>
                                                 <TextBlock Text="Join automatically when a followed player moves"/>
-                                                <TextBlock Text="Only servers in your list, with the usual checks. If CS2 is open, the app asks first." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="Only while CS2 is open, and the app always asks first. It never opens CS2 or joins by itself." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
                                     </StackPanel>
@@ -2225,6 +2236,18 @@
                                                 <TextBlock Text="So a login or your home IP never ends up on a stream." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
+                                        <CheckBox x:Name="LaunchOptsBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,12,0,0"
+                                                  ToolTip="Adds -condebug -conclearlog to CS2's launch options (Steam > CS2 > Properties) of every account on this PC. What you already have there stays. Only while Steam is closed: Steam would overwrite it otherwise. A backup of each file goes to SRT_Dados\launch-options.">
+                                            <StackPanel>
+                                                <TextBlock Text="See kicks and bans when Steam opens CS2"/>
+                                                <TextBlock Text="CS2 only writes its console log with -condebug. The app adds it to CS2's launch options while Steam is closed, and keeps what you have there." Style="{StaticResource OptSub}"/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                        <StackPanel Orientation="Horizontal" Margin="44,6,0,0">
+                                            <Button x:Name="LaunchOptsBtn" Content="Add to CS2's launch options now" Click="LaunchOpts_Click"
+                                                    ToolTip="Closes Steam if it is open (it asks first), adds the two options to every account, and opens Steam again."/>
+                                            <TextBlock x:Name="LaunchOptsText" Style="{StaticResource OptSub}" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                        </StackPanel>
                                     </StackPanel>
                                 </HeaderedContentControl>
 
@@ -2274,7 +2297,12 @@
                                 <Border x:Name="ToastStrip" DockPanel.Dock="Top" Height="2" Background="{StaticResource TopLine}"/>
                                 <StackPanel Orientation="Horizontal" Margin="12,9,12,10">
                                     <TextBlock x:Name="ToastIcon" Text="&#xE73E;" Style="{StaticResource Icon}" FontSize="12" Foreground="{StaticResource Good}" VerticalAlignment="Top" Margin="0,2,10,0"/>
-                                    <TextBlock x:Name="ToastText" TextWrapping="Wrap" MaxWidth="360"/>
+                                    <StackPanel>
+                                        <TextBlock x:Name="ToastText" TextWrapping="Wrap" MaxWidth="360"/>
+                                        <!-- beta.11: a toast can carry one action (Add a server you just joined) -->
+                                        <Button x:Name="ToastActionBtn" Style="{StaticResource Primary}" HorizontalAlignment="Left" Margin="0,8,0,0" Padding="12,3"
+                                                Visibility="Collapsed" Click="ToastAction_Click"/>
+                                    </StackPanel>
                                 </StackPanel>
                             </DockPanel>
                         </Border>
@@ -2292,7 +2320,7 @@
                     </HeaderedContentControl.Header>
                     <StackPanel>
                         <TextBlock x:Name="SetupSummary" Style="{StaticResource Sub}" TextWrapping="Wrap" Margin="0,0,0,12"
-                                   Text="Each step checks itself every 2 seconds. Do the red one and it turns green."/>
+                                   Text="Updates by itself. Do the red step and it turns green."/>
                         <ItemsControl x:Name="SetupSteps">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -2308,7 +2336,8 @@
                                                 <local:StatusMark Brush="{Binding Brush}" HorizontalAlignment="Left"/>
                                             </StackPanel>
                                             <TextBlock Grid.Column="1" Text="{Binding Title}" FontWeight="SemiBold" Foreground="{Binding TitleBrush}" VerticalAlignment="Top"/>
-                                            <TextBlock Grid.Column="2" Text="{Binding Detail}" Foreground="{Binding DetailBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,10,0" VerticalAlignment="Top"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding Detail}" Foreground="{Binding DetailBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,10,0" VerticalAlignment="Top"
+                                                       Visibility="{Binding DetailVisibility}"/>
                                             <Button Grid.Column="3" Style="{StaticResource Primary}" Content="{Binding Action}" Click="SetupAction_Click" Margin="0" MinWidth="86" VerticalAlignment="Top"
                                                     Visibility="{Binding HasAction, Converter={StaticResource Vis}}" IsEnabled="{Binding Idle}"/>
                                         </Grid>
@@ -2327,8 +2356,10 @@
                     </StackPanel>
                 </HeaderedContentControl>
             </Grid>
-            <Grid x:Name="Dialog" Grid.Row="1" Background="#B0000000" Visibility="Collapsed">
-                <HeaderedContentControl Style="{StaticResource DialogGroup}" Width="480" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="18,20,18,16">
+            <!-- Below the top bar (4 nov.): its Cancel stops the command that asked, so the question never hides the way out -->
+            <Grid x:Name="Dialog" Grid.Row="1" Margin="0,44,0,0" Background="#B0000000" Visibility="Collapsed" MouseLeftButtonDown="DialogBackdrop_MouseDown">
+                <Grid Width="480" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <HeaderedContentControl Style="{StaticResource DialogGroup}" Padding="18,20,18,16">
                     <HeaderedContentControl.Header>
                         <TextBlock x:Name="DialogTitle"/>
                     </HeaderedContentControl.Header>
@@ -2347,6 +2378,10 @@
                         </StackPanel>
                     </StackPanel>
                 </HeaderedContentControl>
+                <!-- Every question has a way out that does neither (like Esc): the X, or a click outside the box -->
+                <Button x:Name="DialogClose" Style="{StaticResource Chrome}" Width="34" Height="30" FontSize="10" Content="&#xE8BB;" HorizontalAlignment="Right" VerticalAlignment="Top"
+                        Margin="0,9,1,0" Click="DialogClose_Click" ToolTip="Close without choosing (Esc)" AutomationProperties.Name="Close"/>
+                </Grid>
             </Grid>
         </Grid>
     </Border>

@@ -123,8 +123,9 @@ public partial class MainWindow : Window
         _checks.Add(_cQuality = new CheckItem { Title = "Connection quality", Help = "Ping, jitter and loss through the phone, measured every 30 s. Weak means lag in game: the app warns, and can drop Whole PC to Game only while it lasts (Settings > Protection)." });
         _checks.Add(_cSteam = new CheckItem { Title = "Steam through the phone", Help = "steam.exe talks to Valve through the phone, like CS2. If Steam is on another network or reconnects mid-game, the server kicks you with \"No Steam logon\"." });
         _checks.Add(_cPc = new CheckItem { Title = "Other apps", Help = "Where the rest of the PC's traffic goes out (browser, Discord, downloads)." });
-        _checks.Add(_cRegions = new CheckItem { Title = "Matchmaking regions", Help = "Regions you turned off on the Regions page stay blocked for CS2 matchmaking until you allow them again (Allow all). Turning protection off, closing the app and No phone mode don't change them." });
+        _checks.Add(_cRegions = new CheckItem { Title = "Matchmaking regions", Chosen = true, Help = "Regions you turned off on the Regions page stay blocked for CS2 matchmaking until you allow them again (Allow all). Turning protection off, closing the app and No phone mode don't change them." });
         UpdateRegionsCheck();
+        HookChecksView();
 
         ApplySettingsToUi();
         UpdateHistoryEmpty();
@@ -180,6 +181,7 @@ public partial class MainWindow : Window
             WatchStreaming();   // OBS already open: usernames hidden before the list shows them
             LoadAccounts();
             ShowLastServer();
+            InitLaunchOptions();
             WatchSteamLog();
             await SyncNow(force: true);
             _ = RefreshPhone();
@@ -214,7 +216,7 @@ public partial class MainWindow : Window
         _ = WatchQuality();
         if (!_checkingUpdate && _s.CheckUpdates && (_s.LastUpdateCheck == null || Fmt.Stale(_s.LastUpdateCheck.Value, TimeSpan.FromHours(24)))) _ = CheckForUpdates();
         if (!_changingIp && DateTime.Now.Second % 10 < 5) _ = RefreshPhone();
-        if (!_changingIp && (DateTime.Now - _lastIpCheck).TotalSeconds > (Steam.Cs2Running ? 15 : 90)) _ = RefreshPublicIps();
+        if (!_changingIp && _ipRunning == 0 && (DateTime.Now - _lastIpCheck).TotalSeconds > (Steam.Cs2Running ? 15 : 90)) _ = RefreshPublicIps();
     }
 
     void OnSecond()

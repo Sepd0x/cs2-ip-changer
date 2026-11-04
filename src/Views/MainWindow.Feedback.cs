@@ -27,6 +27,8 @@ public partial class MainWindow
         // The window is in the notification area: what a tray command or the tick has to say comes as a Windows notification.
         if (!IsVisible && tone != Tone.Info) _tray?.Balloon(tone == Tone.Error ? "CS2 IP Changer: problem" : "CS2 IP Changer", text);
         ToastText.Text = text;
+        _toastAction = null;
+        ToastActionBtn.Visibility = Visibility.Collapsed;
         ToastIcon.Text = tone switch { Tone.Ok => "", Tone.Error => "", Tone.Info => "", _ => "" };
         ToastIcon.Foreground = tone switch { Tone.Ok => Ui.Good, Tone.Error => Ui.Bad, Tone.Info => Ui.Muted, _ => Ui.Warn };
         // The strip on top: the brand line, red for an error.
@@ -36,6 +38,28 @@ public partial class MainWindow
         _toastTimer.Stop();
         _toastTimer.Interval = TimeSpan.FromSeconds(Math.Clamp(text.Length / 14.0, 3.5, 9));
         _toastTimer.Start();
+    }
+
+    Func<Task> _toastAction;
+
+    /// <summary>A toast with one button (beta.11). It stays a little longer, so there is time to press it.</summary>
+    void Toast(string text, Tone tone, string action, Func<Task> run)
+    {
+        Toast(text, tone);
+        _toastAction = run;
+        ToastActionBtn.Content = action;
+        ToastActionBtn.Visibility = Visibility.Visible;
+        _toastTimer.Stop();
+        _toastTimer.Interval = TimeSpan.FromSeconds(12);
+        _toastTimer.Start();
+    }
+
+    async void ToastAction_Click(object sender, RoutedEventArgs e)
+    {
+        var run = _toastAction;
+        _toastAction = null;
+        HideToast();
+        if (run != null) await run();
     }
 
     void HideToast()
@@ -183,6 +207,17 @@ public partial class MainWindow
 
     void DialogOk_Click(object sender, RoutedEventArgs e) { Dialog.Visibility = Visibility.Collapsed; _dialogTcs?.TrySetResult(true); }
     void DialogCancel_Click(object sender, RoutedEventArgs e) { _dialogCancelClicked = sender == DialogCancel; Dialog.Visibility = Visibility.Collapsed; _commandDeclined |= _command != null; _dialogTcs?.TrySetResult(false); }
+
+    /// <summary>The X: closes the question without picking either button, like Esc (a full server: neither wait nor join).</summary>
+    void DialogClose_Click(object sender, RoutedEventArgs e) => DialogCancel_Click(this, null);
+
+    /// <summary>A click on the dark area around the box closes it the same way.</summary>
+    void DialogBackdrop_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource != Dialog) return;
+        e.Handled = true;
+        DialogCancel_Click(this, null);
+    }
 
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {

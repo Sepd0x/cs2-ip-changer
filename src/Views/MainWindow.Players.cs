@@ -243,8 +243,19 @@ public partial class MainWindow
     /// <summary>After each refresh: where each followed player is now (the profile's server first, then the name).</summary>
     async Task CheckFollowed()
     {
+        // Two refreshes at once saw the same player twice and started two joins (4 nov.): one check at a time.
+        if (_checkingFollowed) return;
         var followed = _flags.Where(f => f.Follow).ToList();
         if (followed.Count == 0) return;
+        _checkingFollowed = true;
+        try { await CheckFollowedCore(followed); }
+        finally { _checkingFollowed = false; }
+    }
+
+    bool _checkingFollowed;
+
+    async Task CheckFollowedCore(List<PlayerFlag> followed)
+    {
         // With a key one call covers every profile; without one, the public XML is read less often.
         if ((DateTime.Now - _profilesAt).TotalSeconds >= (string.IsNullOrWhiteSpace(_s.SteamApiKey) ? 120 : 25))
         {
@@ -262,15 +273,24 @@ public partial class MainWindow
                 if (f.SeenOn != null && DateTime.Now - f.SeenAt > TimeSpan.FromMinutes(5)) f.SeenOn = null;
                 continue;
             }
+            // A move is a player the app was watching on another server a moment ago. The first time they show up (the app just
+            // started, protection just turned on and the list was read for the first time) is not a move: it only tells you.
+            var moved = f.SeenOn != null && at.Key != f.SeenOn && DateTime.Now - f.SeenAt < TimeSpan.FromMinutes(2);
             f.SeenAt = DateTime.Now;
             if (at.Key == f.SeenOn) continue;
             f.SeenOn = at.Key;
             if (at.Key == mine) continue;
-            OnFollowedFound(f, at, byProfile != null);
+            OnFollowedFound(f, at, byProfile != null, moved);
         }
     }
 
-    void OnFollowedFound(PlayerFlag f, ServerItem at, bool byProfile)
+    /// <summary>
+    /// Auto-join never starts on its own (4 nov.: "as soon as protection turned on it tried to join a server without me asking").
+    /// It only offers the join, and only when the player you follow moved while CS2 is open; otherwise the bar and a toast say it.
+    /// </summary>
+    public static bool FollowAutoJoins(bool autoJoinOn, bool moved, bool cs2Running) => autoJoinOn && moved && cs2Running;
+
+    void OnFollowedFound(PlayerFlag f, ServerItem at, bool byProfile, bool moved)
     {
         _followServer = at;
         var how = byProfile ? "" : f.SteamId == null ? " (matched by name)" : " (by name)";
@@ -278,7 +298,7 @@ public partial class MainWindow
         FollowBar.Visibility = Visibility.Visible;
         System.Media.SystemSounds.Asterisk.Play();
         Log.Info($"Followed player {f.Shown} is on {at.Key} ({at.Title})" + (byProfile ? ", from the Steam profile." : ", by name."));
-        if (_s.AutoJoinFollowed) _ = AutoJoinFollowed(f, at);
+        if (FollowAutoJoins(_s.AutoJoinFollowed, moved, _demo || Steam.Cs2Running)) _ = AutoJoinFollowed(f, at);
         else if (!PageServers.IsVisible) Toast($"{f.Shown} is on {at.Title}. Join from Servers.", Tone.Info);   // on Servers the bar says it
     }
 
@@ -286,7 +306,7 @@ public partial class MainWindow
     {
         if (_rejoining || _changingIp || _switching || Dialog.Visibility == Visibility.Visible) return;
         // With CS2 open the app can't be sure you're not mid-match, so it always asks.
-        if (!_demo && Steam.Cs2Running && !await Ask("Join the player you follow?", $"{f.Shown} is on {at.Title}. CS2 is open: if you're on a server, joining leaves it.", "Join", "Stay")) return;
+        if (!_demo && !await Ask("Join the player you follow?", $"{f.Shown} is on {at.Title}. CS2 is open: if you're on a server, joining leaves it.", "Join", "Stay")) return;
         Log.Info($"Auto-join: following {f.Shown} to {at.Key}.");
         HideFollowBar();
         await Join(at);

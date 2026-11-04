@@ -85,7 +85,8 @@ public partial class MainWindow
 
     // ------------------------------------------------------------ Turn on, turn off (Guard.OnAtStart has the rules)
 
-    async void TurnOn_Click(object sender, RoutedEventArgs e) => await TurnProtectionOn(ask: true);
+    // A command (4 nov.): the top bar says what it is doing while it connects the phone, and Cancel stops the wait for tethering
+    async void TurnOn_Click(object sender, RoutedEventArgs e) => await RunCommand("Turn on protection", "turning on…", () => TurnProtectionOn(ask: true));
 
     /// <summary>
     /// Protection on: the kill switch, the routes and the CS2 lock (and Whole PC, by the mode). With no phone, your servers and CS2
@@ -105,7 +106,52 @@ public partial class MainWindow
         if (_demo) { DemoProtection(true); return true; }
         await SyncNow(force: true);
         _ = RefreshPublicIps();
+        await ConnectPhoneAfterTurnOn(openSetup: ask);
         return true;
+    }
+
+    public enum TurnOnStep { None, Tether, WifiThenTether, Setup }
+
+    /// <summary>
+    /// What Turn on protection does next when the phone isn't connected yet (4 nov.: "I clicked Turn on protection and nothing
+    /// happened", tethering was off). A phone ADB sees gets USB tethering turned on by the app, like Phone setup does (Wi-Fi off
+    /// first, or tethering would share the home Wi-Fi). Anything else opens Phone setup, which says what is missing.
+    /// </summary>
+    public static TurnOnStep NextAfterTurnOn(bool connected, bool hotspotSaved, bool phoneReady, bool phoneWifiOn) =>
+        connected ? TurnOnStep.None
+        : hotspotSaved ? TurnOnStep.Setup
+        : phoneReady ? (phoneWifiOn ? TurnOnStep.WifiThenTether : TurnOnStep.Tether)
+        : TurnOnStep.Setup;
+
+    async Task ConnectPhoneAfterTurnOn(bool openSetup)
+    {
+        try
+        {
+            if (_last?.Candidate != null) return;
+            await RefreshPhone();
+            var next = NextAfterTurnOn(_last?.Candidate != null, !string.IsNullOrEmpty(_s.EgressSsid), _phone?.Ready == true, _phone?.Ready == true && _phone.WifiOn && _phone.WifiConnected != false);
+            if (next == TurnOnStep.None) return;
+            if (next is TurnOnStep.Tether or TurnOnStep.WifiThenTether)
+            {
+                Toast("Protection is on. Connecting the phone: turning on USB tethering…", Tone.Info);
+                ShowProgress("Connecting the phone: turning on USB tethering…");
+                Step("turning on USB tethering on the phone…");
+                using var wait = _command != null ? CommandWait() : null;
+                try
+                {
+                    if (next == TurnOnStep.WifiThenTether) { await TurnPhoneWifiOff(); await Task.Delay(2000); }
+                    var (adapter, why) = await TurnOnTethering(t => ProgressText.Text = t);
+                    if (CommandCancelled) return;   // Cancel at the top: protection stays on, the phone part stops here
+                    if (adapter != null) { Toast($"Phone connected ({adapter.Name}). The app checks its IP, then servers see it.", true); return; }
+                    Log.Warn("Turn on protection: the phone didn't connect by itself. " + why);
+                }
+                finally { HideProgress(); }
+            }
+            // Protection is on and blocks servers until the phone is there: say it, and show the steps instead of leaving it silent.
+            Toast("Protection is on, but the phone isn't connected yet: servers and CS2 stay blocked. Phone setup shows what's missing.", false);
+            if (openSetup && SetupPane.Visibility != Visibility.Visible) await RunPhoneSetup();
+        }
+        catch (Exception ex) { Log.Warn("Connecting the phone after Turn on protection: " + ex.Message); }
     }
 
     /// <summary>The Turn on / Turn off / leak test buttons follow the state; the main button is picked in UpdateRejoinBtn (StatusPrimary).</summary>
@@ -116,6 +162,7 @@ public partial class MainWindow
         TurnOffBtn.Visibility = _protOn && !_s.NoPhone ? Visibility.Visible : Visibility.Collapsed;
         LeakBtn.Visibility = _protOn && !_s.NoPhone ? Visibility.Visible : Visibility.Collapsed;
         UpdateRejoinBtn();
+        RefreshChecksView();   // the Checks summary says when protection is off
     }
 
     /// <summary>The trusted connection stays trusted only while the report still sees that same connection.</summary>
@@ -134,6 +181,7 @@ public partial class MainWindow
         }
         _lastEgressKey = egressKey;
         _last = rep;
+        UpdateVpnCheck(rep);
         // A connection that went away (or changed) loses its trust: back with the same adapter and DHCP lease, it is measured again
         // before CS2 traffic is let through it.
         _verifiedKey = TrustAfter(_verifiedKey, rep.CandidateKey);
@@ -218,12 +266,12 @@ public partial class MainWindow
         _cCs2.Ok = !_s.LockCs2 || notLockedYet ? null : rep.Cs2LockOk;
         _cCs2.Waiting = notLockedYet;
         _cCs2.Detail = !_s.LockCs2 ? "Turned off in Settings"
-            : notLockedYet ? "Not locked yet: CS2 is locked to the phone once you've connected one"
+            : notLockedYet ? "Waits for the phone"
             : rep.Cs2LockOk == null ? "Couldn't find cs2.exe (open CS2 once)"
             : rep.Cs2LockOk == true ? (rep.Egress != null ? "CS2 only goes out through the phone" : "CS2 blocked until you connect the phone") : "Rule not confirmed";
         _cRoutes.Ok = n == 0 || waiting ? null : rep.Egress != null && routesOk == n;
         _cRoutes.Waiting = n > 0 && waiting;
-        _cRoutes.Detail = n == 0 ? "No servers added yet" : waiting ? "Blocked until the phone is connected" : $"{routesOk} of {n}";
+        _cRoutes.Detail = n == 0 ? "No servers added yet" : waiting ? "Waiting for the phone (safe)" : $"{routesOk} of {n}";
         var same = _egressPublic != null && _homePublic != null && _egressPublic == _homePublic;
         _cDiff.Ok = _egressPublic == null || _homePublic == null ? null : !same;
         _cDiff.Detail = _egressPublic == null ? "Waiting for the phone's IP" : _homePublic == null ? "No home network to compare" : same ? "Same IP: the phone is sharing your Wi-Fi" : "Yes";
@@ -280,8 +328,10 @@ public partial class MainWindow
             SetHero(held, "Your IP is the same as your home IP",
                 $"{Blocked(rep)} are blocked until the IP is different. The phone is sharing your home Wi-Fi, or the PC went back to the router. Turn off the phone's Wi-Fi under Phone.");
         else if (rep.Egress == null && !PhoneKnown)
-            SetHero("warn", "Not protected yet",
-                "If you open CS2 now, servers see your home IP. Set up the phone first: Phone setup below walks you through it.");
+            // With protection on, the title says what it waits for (beside Turn off protection, "Not protected yet" read as a contradiction)
+            SetHero("warn", _protOn ? "Waiting for the phone" : "Not protected yet",
+                _protOn ? "Your servers and CS2 wait for the phone, so your home IP can't reach them. Phone setup below walks you through it."
+                : "If you open CS2 now, servers see your home IP. Set up the phone first: Phone setup below walks you through it.");
         else if (rep.Egress == null && rep.EgressProblem != null)
             SetHero(held, "You left the phone's network", rep.EgressProblem + $" {Blocked(rep)} are blocked until you are back on the hotspot.");
         else if (rep.Egress == null)
@@ -289,7 +339,8 @@ public partial class MainWindow
                 n == 0 ? (string.IsNullOrEmpty(_s.EgressSsid)
                     ? "Plug in your phone with USB and turn on USB tethering. First time? See Phone setup below."
                     : "Connect the phone to its Wi-Fi hotspot.")
-                : rep.KillSwitchOk ? $"You're safe: {Blocked(rep, lower: true)} are blocked until you connect the phone (USB cable or Wi-Fi hotspot)."
+                : rep.KillSwitchOk ? $"You're safe: {Blocked(rep, lower: true)} wait for the phone (USB cable or Wi-Fi hotspot)."
+                    + (rep.EffectiveMode == "servers" ? " The rest of the PC works as usual." : "")
                 : "The block on your servers isn't confirmed, so they could see your home IP. Don't join until Checks are green.");
         else if (rep.EffectiveMode == "all" && rep.FullModeOk && (n == 0 || rep.KillSwitchOk) && !cs2Off)
             SetHero("good", _s.Mode == "all" ? "Protected · whole PC" : "Protected · whole PC (CS2 open)", "The PC's traffic and DNS go out through the phone, and IPv6 is blocked. CS2 and your servers only see the phone's IP.");
@@ -553,7 +604,33 @@ public partial class MainWindow
         ShowRegionsStatus();
     }
 
+    /// <summary>Checks running now. The 15 s tick waits for the last one: a slow check (weak phone, home endpoints timing out)
+    /// was always overtaken by the next and never landed, so the IP stayed on "Checking" (4 nov.).</summary>
+    int _ipRunning;
+    /// <summary>The last check through the phone failed since then (null = the IP shown was confirmed by the last check).</summary>
+    DateTime? _egressFailSince;
+    int _egressFails;
+    string _egressKey;
+    bool _egressFailLogged;
+
     async Task RefreshPublicIps()
+    {
+        _ipRunning++;
+        try { await RefreshPublicIpsCore(); }
+        finally { _ipRunning--; }
+    }
+
+    /// <summary>
+    /// What the box shows after a check. A failed check keeps the last IP of the same phone connection (faint, with since when
+    /// it couldn't be confirmed) instead of going back to "—": a weak connection is worth saying, and the IP didn't change because
+    /// one request failed. Another connection, or none, clears it. Trust never comes from this: only from a check that answered.
+    /// </summary>
+    public static (string Ip, bool Failed) EgressAfterCheck(string measured, string shown, string shownKey, string key) =>
+        measured != null ? (measured, false)
+        : key == null || shown == null || shownKey != key ? (null, false)
+        : (shown, true);
+
+    async Task RefreshPublicIpsCore()
     {
         if (_demo) return;
         _lastIpCheck = DateTime.Now;
@@ -633,7 +710,25 @@ public partial class MainWindow
             _homeCached = true;
             if (!LookUpHome(h, _homePublic, cached: true) && h != _homePublic) _homeInfo = null;
         }
-        _egressPublic = e;
+        var (shownIp, failed) = EgressAfterCheck(e, _egressPublic, _egressKey, key);
+        _egressPublic = shownIp;
+        _egressKey = shownIp == null ? null : key;
+        if (!failed)
+        {
+            if (_egressFailLogged && e != null) Log.Ok($"The phone's IP answered again: {e}.");
+            _egressFailSince = null; _egressFails = 0; _egressFailLogged = false;
+        }
+        else
+        {
+            _egressFails++;
+            _egressFailSince ??= DateTime.Now;
+            if (!_egressFailLogged && DateTime.Now - _egressFailSince.Value > TimeSpan.FromSeconds(45))
+            {
+                _egressFailLogged = true;
+                Log.Warn($"The phone's IP couldn't be checked since {_egressFailSince:HH:mm:ss} ({_egressFails} tries: {Net.LastEgressError ?? "no answer"}). "
+                    + "The phone connection may be weak. Showing the last IP that answered.");
+            }
+        }
         if (h != _homePublic && HideLogins) { _homePublic = h; RemaskLog(); }
         _homePublic = h;
         DiagIps(e, h, same);
@@ -671,9 +766,10 @@ public partial class MainWindow
         var isHome = _egressPublic != null && _egressPublic == _homePublic;
         EgressIp.Text = _egressPublic == null ? "—" : isHome && !_reveal ? Fmt.MaskIp(_egressPublic) : _egressPublic;
         // Mid-change the IP shown is the old one (faint); a new one is green for two seconds, next to the toast that announces it.
-        EgressIp.Foreground = !inUse || _changingTitle != null ? Ui.Faint : DateTime.Now < _ipFlashUntil ? Ui.Good : Ui.Text;
+        EgressIp.Foreground = !inUse || _changingTitle != null || _egressFailSince != null ? Ui.Faint : DateTime.Now < _ipFlashUntil ? Ui.Good : Ui.Text;
         EgressIsp.Text = _egressPublic == null ? (_last?.Candidate != null ? "Checking the IP through the phone…" : "No phone connection")
             : !inUse ? "Not in use: servers are blocked"
+            : _egressFailSince != null ? (_egressFails < 2 ? "Checking again through the phone…" : $"Not confirmed since {_egressFailSince:HH:mm}: weak connection?")
             : _egressInfo?.Short ?? "";
         HomeIp.Text = _homePublic == null ? "—" : _reveal ? _homePublic : Fmt.MaskIp(_homePublic);
         HomeIsp.Text = _homePublic == null ? "No home network detected"

@@ -606,6 +606,11 @@ Part5Tests.Run(Check);
 Beta9Tests.Run(Check);
 // beta.10: contas novas, nomes do Steam, proteção ligada só quando a ligas (Beta10Tests.cs)
 Beta10Tests.Run(Check);
+// beta.11: o teste de 4 nov. (Turn on, auto-join, perguntas com saída, o IP) e as opções de arranque do CS2 (Beta11Tests.cs)
+Beta11Tests.Run(Check);
+// beta.11 qualidade: Phone setup passo a passo, menus por marca, contador phone_left_, Checks, VPN, What the app changed, updates sem
+// o limite da API, Install sem programas do SRT_Dados antigo (Beta11QualidadeTests.cs)
+Beta11QualidadeTests.Run(Check);
 // auditoria de 4 nov.: quando a telemetria envia, a ligação, as regiões, os limites e o corpo do teste do Worker (TelemetryTests.cs)
 TelemetryTests.Run(Check);
 
