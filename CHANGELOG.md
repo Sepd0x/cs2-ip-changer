@@ -4,6 +4,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+## [0.1.0-beta.10] - 2026-11-04
+
 ### Changed
 - Protection now starts off every time the app opens, and you turn it on with the new Turn on protection button in Status (also in the tray icon's menu). Once on, it stays on until you turn it off: a phone drop blocks your servers and CS2, it never turns protection off. This replaces the beta.9 "waiting for the phone" start.
 - Settings > Protection > Turn on protection when the app starts, for those who want it on by itself (also with Start with Windows). It is off unless you tick it.
@@ -17,8 +19,23 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Log: show all, warnings and errors, or errors only, and search the Log. Copy all still copies everything.
 - Settings > Protection: the two options for when protection turns on or off by itself sit together under "Start and close".
 - Change IP with "Keep changing until the connection is good": when the new IP's connection is too jittery, the next try uses airplane mode, so the phone looks for the network again and can land on another cell. Mobile data off and on keeps the same cell. Normal changes still use the method you picked, and the hotspot never uses airplane mode (it would turn the hotspot off). If the phone turns USB tethering off in airplane mode, the app turns it back on once.
+- The usage stats notice shows once more, so everyone who accepted it before reads that the stats now also go out every 30 minutes.
+- Usage stats are now sent every 30 minutes while the app is open (when something new was counted), before the PC goes to sleep and when Windows signs out or shuts down, as well as at the start and at close. Before, an app left in the tray for hours was counted with a minute or two, and a session shorter than 10 minutes sent nothing at close. README > Telemetry says when it sends.
+- Usage stats send your list sizes, turned-off regions and changed settings in the first report of the day, and again only when they change, instead of in every report.
+- A new install starts in Game only: only CS2 and Steam use the phone, so OBS, Discord and downloads stay on your home connection. Whole PC while CS2 is open is still one click away in Connection, and an install that already had it keeps it.
+- The Download button on the website and in the README now downloads the exe directly, with its version, size and date next to it.
+- New guide content: how to change your region in CS2, step by step, and how to do the same block by hand with Windows Firewall.
+- On a phone, the guides now offer to copy the page link for your PC instead of a Windows download.
+- Screenshots on the website open at full size when you click them.
+- The README is shorter. The full FAQ and the setup details now live in docs/FAQ.md and docs/SETUP.md.
 
 ### Fixed
+- The VirusTotal link on the "Is it safe?" page now points to the current release's exe, and the README no longer mixes up an old result with the new one.
+- Usage stats: the regions you turned off never reached the stats server. The app sent the Regions page's own names; it now sends Valve's public codes (like `fra`), as README > Telemetry always said.
+- Usage stats: how the phone is connected was taken before the phone was found, so it always said "not connected". The report now says the best connection seen since the last report.
+- Usage stats: the time the PC was asleep no longer counts as minutes the app was open.
+- Usage stats: a large report is cut to what the stats server takes, so nothing the app counted as sent is dropped on the way. What doesn't fit goes in the next report.
+- Settings > Delete my stats still works on a day the stats server is busy (it has its own daily limit), and answers at once when nothing is kept under the ID.
 - A new Steam account now shows up on Accounts, Configs and Profiles without restarting the app. Turning protection off stopped the check that sees new accounts, a read while Steam was writing its account list could miss one until Steam wrote it again, and Configs and Profiles didn't redraw while they were open. A new account also moves to its place in the list instead of the end.
 - Steam names with symbols show as they are: `&lt; blank &gt;` no longer appears instead of `< blank >`. Profile names, real names and locations from Steam's profile page are decoded, also for names saved by earlier versions. Make all look like copies the real name too.
 - An account whose Steam profile was never set up shows its name instead of a long number (its SteamID).
@@ -391,7 +408,8 @@ First public release, as ServerRouteTool.
 - Restore network, to undo every route and rule in one click.
 - Dark interface in Portuguese.
 
-[Unreleased]: ../../compare/v0.1.0-beta.9...HEAD
+[Unreleased]: ../../compare/v0.1.0-beta.10...HEAD
+[0.1.0-beta.10]: ../../releases/tag/v0.1.0-beta.10
 [0.1.0-beta.9]: ../../releases/tag/v0.1.0-beta.9
 [0.1.0-beta.8]: ../../releases/tag/v0.1.0-beta.8
 [0.1.0-beta.7]: ../../releases/tag/v0.1.0-beta.7

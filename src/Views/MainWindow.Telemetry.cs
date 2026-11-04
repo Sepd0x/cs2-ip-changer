@@ -10,8 +10,7 @@ public partial class MainWindow
     (string, string, Dictionary<string, int>) TelemetryNow()
     {
         var mode = _s == null ? null : _s.Mode == "all" ? "always" : _s.NoPhone ? "nophone" : _s.GameMode ? "cs2open" : "game";
-        var eg = _last?.Egress;
-        var link = eg == null ? "none" : eg.IsPhone ? "usb" : eg.IsWifi ? "hotspot" : "other";
+        var link = TelemetryLink(_last?.Egress);
         var sizes = new Dictionary<string, int>
         {
             ["servers"] = _servers.Count,
@@ -23,6 +22,9 @@ public partial class MainWindow
         };
         return (mode, link, sizes);
     }
+
+    /// <summary>How the phone is connected, in the stats' words.</summary>
+    static string TelemetryLink(Adapter eg) => eg == null ? "none" : eg.IsPhone ? "usb" : eg.IsWifi ? "hotspot" : "other";
 
     /// <summary>The screen's id in the stats, the same as the dashboard's ui-map.js.</summary>
     string TelemetryScreen() =>
@@ -40,6 +42,9 @@ public partial class MainWindow
 
     void TrackPhoneDrop(GuardReport rep)
     {
+        // Each guard report: the stats keep the best link seen since their last report (audit D3: the report 20 s after the start
+        // came before the phone was seen and always said "none")
+        Telemetry.SeenLink(TelemetryLink(rep.Egress));
         var up = rep.Egress != null;
         if (_egressUp && !up && !_changingIp && !_s.NoPhone)
         {
@@ -79,7 +84,7 @@ public partial class MainWindow
         // environment report (its width and the screen's scale, both in bands there), and the time until the window is ready
         Telemetry.Started(_startHidden);
         Telemetry.SettingsFrom(() => Telemetry.Changed(_s, new Settings()));
-        Telemetry.RegionsFrom(() => _s?.BlockedRegions);
+        Telemetry.RegionsFrom(() => Telemetry.RegionCodes(_regionInfos, _s?.BlockedRegions));
         Telemetry.ChecksFrom(() => _checks.Where(c => c.Ok == false).Select(c => c.Title).ToList());
         Telemetry.WindowFrom(() => (ActualWidth, System.Windows.Media.VisualTreeHelper.GetDpi(this).DpiScaleX));
         Loaded += (_, _) => Telemetry.Ready();

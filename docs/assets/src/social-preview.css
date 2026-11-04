@@ -1,0 +1,33 @@
+/* Cores do src/Theme.xaml (docs/DESIGN.md). Nada de cor nova. */
+:root{
+  --bg:#0E0E0E; --side:#0B0B0B; --surface:#171717; --surface2:#1D1D1D; --surface3:#262626;
+  --edge:#050505; --line:#2A2A2A; --line2:#383838;
+  --text:#DDDDDD; --muted:#ADADAD; --faint:#888888; --white:#F2F2F2;
+  --good:#7CC95A; --warn:#E3BF4B; --bad:#F05A4F;
+  --acc:#5BA8F0; --top1:#3BB4E5; --top2:#C64FC6; --top3:#D8E03A;
+  --sans:"Segoe UI Variable Text","Segoe UI",sans-serif;
+  --disp:"Segoe UI Variable Display","Segoe UI Variable Text","Segoe UI",sans-serif;
+  --mono:"Cascadia Mono",Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg)}
+body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiased;overflow:hidden}
+.f{position:relative;width:1280px;height:640px;overflow:hidden;background:var(--bg)}
+/* a linha de 3 cores do topo da janela da app */
+.top{position:absolute;left:0;right:0;top:0;height:5px;background:linear-gradient(90deg,var(--top1),var(--top2) 50%,var(--top3));z-index:5}
+.h{font-family:var(--disp);font-weight:700;letter-spacing:-.022em;color:var(--white);line-height:1.06}
+.h em{font-style:normal;color:var(--acc)}
+.mono{font-family:var(--mono)}
+/* caixa de grupo da app: rebordo escuro, linha, titulo pousado na linha */
+.gb{position:relative;background:var(--surface);border:1px solid var(--line);box-shadow:0 0 0 1px var(--edge)}
+.gb>.lab{position:absolute;left:14px;top:-13px;padding:0 6px;background:var(--bg);font-weight:600;font-size:18px;color:var(--white);line-height:24px}
+.btn{display:inline-block;border:1px solid var(--line2);background:var(--surface2);color:var(--text);padding:8px 18px;font-size:19px;line-height:1.2}
+.btn.acc{border-color:#3C668E;background:#202A34;color:#7EBCF5}
+.sq{display:inline-block;width:12px;height:12px;vertical-align:1px;margin-right:10px}
+.win{position:absolute;border:1px solid var(--line2);box-shadow:0 0 0 1px var(--edge),0 24px 60px rgba(0,0,0,.55);background:var(--bg)}
+.win img{display:block;width:100%;height:auto}
+
+/* og:image do site (1200x630): o mesmo cartao, reduzido e centrado */
+body.og .f{width:1200px;height:630px}
+body.og .f>.in{position:absolute;left:0;top:15px;width:1280px;height:640px;transform:scale(.9375);transform-origin:0 0}
+.f>.in{position:absolute;inset:0}

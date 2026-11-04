@@ -155,4 +155,4 @@ For this the app only talks to Steam (steamcommunity.com, login.steampowered.com
 
 **Updates.** Once a day at most it checks for a new version. It only installs it if the exe matches the SHA-256 from the release and that `.sha256` file is signed with the project's own key, which is kept off GitHub. Before downloading it tells you the size, and warns you when the download would go through the phone's mobile data. You can turn this off.
 
-**Save bug report.** On the Log page. It saves a .zip on your Desktop for an issue, with your current and last home IP, API key, logins, Steam and player names, SteamIDs, Wi-Fi names, emails and your Windows user hidden. Details in [If something goes wrong](../README.md#if-something-goes-wrong).
+**Save bug report.** On the Log page. It saves a .zip on your Desktop for an issue, with your current and last home IP, API key, logins, Steam and player names, SteamIDs, Wi-Fi names, emails and your Windows user hidden. Details in [If something goes wrong](SETUP.md#if-something-goes-wrong).

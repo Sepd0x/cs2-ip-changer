@@ -18,6 +18,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="../fonts/funnel-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
+<script>document.documentElement.classList.add('js')</script>
 <script type="application/ld+json">
 {
  "@context": "https://schema.org",
@@ -35,11 +36,30 @@
    "about": {
     "@id": "https://sepd0x.github.io/cs2-ip-changer/#app"
    },
-   "dateModified": "2026-11-03",
-   "primaryImageOfPage": "https://sepd0x.github.io/cs2-ip-changer/img/connection.png"
+   "author": {
+    "@id": "https://sepd0x.github.io/cs2-ip-changer/#author"
+   },
+   "datePublished": "2026-10-31",
+   "dateModified": "2026-11-04",
+   "breadcrumb": {
+    "@id": "https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/#crumbs"
+   },
+   "primaryImageOfPage": {
+    "@type": "ImageObject",
+    "url": "https://sepd0x.github.io/cs2-ip-changer/img/connection.png",
+    "width": 1240,
+    "height": 800
+   }
+  },
+  {
+   "@type": "Person",
+   "@id": "https://sepd0x.github.io/cs2-ip-changer/#author",
+   "name": "Sepd0x",
+   "url": "https://github.com/Sepd0x"
   },
   {
    "@type": "BreadcrumbList",
+   "@id": "https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/#crumbs",
    "itemListElement": [
     {
      "@type": "ListItem",
@@ -57,6 +77,7 @@
   },
   {
    "@type": "FAQPage",
+   "@id": "https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/#faq",
    "mainEntity": [
     {
      "@type": "Question",
@@ -135,7 +156,7 @@ h1,h2,h3{text-wrap:balance}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--sand);color:var(--on-sand);font:600 1rem/1.2 var(--sans);padding:.9rem 1.35rem;border:0;border-radius:6px;text-decoration:none;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 1px 0 rgba(0,0,0,.4),0 10px 30px -12px var(--glow);transition:background-color .15s}
 .btn:hover{background:var(--sand-hi)}
 .btn:active{transform:translateY(1px)}
-.btn svg{width:18px;height:18px;flex:none}
+.btn svg{width:1.125em;height:1.125em;flex:none}
 .btn-s{padding:.55rem .85rem;font-size:.9rem;border-radius:5px}
 .link{color:var(--ink2);font-weight:500}
 .link:hover{color:var(--ink)}
@@ -177,6 +198,17 @@ footer{border-top:1px solid var(--line);padding:2rem 0 2.5rem;color:var(--ink3);
 footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between}
 footer a{color:var(--ink2);text-decoration:none}
 footer a:hover{color:var(--ink)}
+.btn-ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line2)}
+.btn-ghost:hover{background:var(--bg3)}
+.btn-ghost svg{width:1.05em;height:1.05em}
+.top nav a.btn-ghost{color:var(--ink)}
+.rel{color:var(--ink3);font-size:.86rem;line-height:1.5;margin:.7rem 0 0}
+.rel a{color:var(--ink2)}
+.rel a:hover{color:var(--ink)}
+a.zoom{display:block;cursor:zoom-in}
+.lightbox{padding:0;border:0;background:transparent;max-width:96vw;max-height:94vh;overflow:visible}
+.lightbox::backdrop{background:rgba(0,0,0,.86)}
+.lightbox img{display:block;width:auto;height:auto;max-width:96vw;max-height:94vh;border-radius:8px;box-shadow:0 0 0 1px var(--line2),0 30px 80px -20px #000;cursor:zoom-out}
 @media (max-width:1000px){
   .hero{grid-template-columns:1fr;gap:2.25rem;padding-top:2.25rem;padding-bottom:3rem}
   .hero-copy{padding-top:0}
@@ -194,11 +226,12 @@ footer a:hover{color:var(--ink)}
   .views figcaption .fd{display:inline;color:var(--ink2)}
   .also,.split{grid-template-columns:repeat(2,minmax(0,1fr))}
   .cta .wrap{grid-template-columns:1fr}
+  .faq{grid-template-columns:1fr}
 }
 @media (max-width:760px){
   .top .wrap{height:3.5rem}
   .top nav{gap:1.1rem}
-  .top nav a.hide-s{display:none}
+  .top nav .hide-s{display:none}
   .hero{padding-top:1.75rem;gap:1.75rem}
   .hero h1{font-size:clamp(2.1rem,9.6vw,2.6rem);line-height:1.03;margin-bottom:1rem}
   .lead{font-size:1.04rem}
@@ -221,7 +254,11 @@ footer a:hover{color:var(--ink)}
   .r-phone{display:block}
   .phone-app{display:block;position:relative;z-index:3;margin:-2.5rem .75rem 0;border-radius:8px;overflow:hidden;box-shadow:0 0 0 1px var(--line2),0 24px 50px -16px rgba(0,0,0,.75)}
   section{padding:2.5rem 0}
-  .who{display:none}
+  .who{padding:1.6rem 0}
+  .who .wrap{gap:.7rem}
+  .who ul{grid-template-columns:1fr;gap:.45rem;font-size:.92rem;line-height:1.45}
+  .who li b{display:inline}
+  .top nav .btn-ghost{padding:.5rem .75rem}
   .sub{margin-bottom:1.5rem}
   #setup .sub{display:none}
   .shot{border-radius:7px}
@@ -263,13 +300,20 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
 .gl{display:grid;grid-template-columns:minmax(0,1fr) 19rem;column-gap:3.5rem;padding-top:2.75rem;padding-bottom:4.5rem}
 .gl>*{grid-column:1}
 .ghead{padding-bottom:2.5rem}
-.crumbs{font:400 .75rem/1.4 var(--mono);letter-spacing:.06em;color:var(--ink3);margin:0 0 1.4rem}.crumbs a{color:var(--ink2);text-decoration:none}.crumbs a:hover{color:var(--ink)}
+.crumbs{font:400 .75rem/1.4 var(--mono);letter-spacing:.06em;color:var(--ink3);margin:0 0 1.4rem}.crumbs a{color:var(--ink2)}.crumbs a:hover{color:var(--ink)}
 .ghead h1{font:500 clamp(2rem,3.7vw,2.75rem)/1.06 var(--disp);letter-spacing:-.03em;margin:0 0 1.1rem;max-width:24ch}
 .ghead .lead{margin:0}
 .rail{grid-column:2;grid-row:1/span 4}
 .rail-in{position:sticky;top:1.5rem;display:flex;flex-direction:column;gap:1.9rem}
 .rail .btn{width:100%}
+.rail .copyrow .btn,.gmore .end .copyrow .btn{width:auto}
 .rail .checks{margin-top:1.1rem;font-size:.86rem;gap:.35rem 1rem}
+@media (min-width:761px){.get-phone{display:none}}
+.gstar{color:var(--ink3);font-size:.95rem;margin:1.6rem 0 0}
+.gstar a{color:var(--ink2)}
+.gtext ol.howto{padding-left:0;list-style:none;counter-reset:hs}
+.gtext ol.howto li{position:relative;padding-left:2.4rem;margin-bottom:.8rem}
+.gtext ol.howto li::before{counter-increment:hs;content:counter(hs);position:absolute;left:0;top:.05rem;width:1.6rem;height:1.6rem;display:flex;align-items:center;justify-content:center;border:1px solid var(--line2);border-radius:50%;font:400 .72rem/1 var(--mono);color:var(--ink)}
 .toc h2{font:400 .72rem/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:0 0 .6rem}
 .toc ul{list-style:none;margin:0;padding:0 0 0 .9rem;border-left:1px solid var(--line)}
 .toc li{margin:.35rem 0;font-size:.92rem;line-height:1.4}
@@ -298,6 +342,9 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
 .gmore span{display:block;color:var(--ink3);font-size:.9rem;line-height:1.45;margin-top:.2rem}
 .gmore .end{display:none}
 .gmore .end .btn{width:100%}
+.gmore .end .link,.gstar a{font:inherit;text-decoration:underline;text-decoration-color:var(--line2);text-decoration-thickness:1px;text-underline-offset:.22em}
+.gmore .end .link{font-weight:500;font-size:.92rem}
+.gtext code{overflow-wrap:anywhere}
 @media (max-width:900px){
   .gl{grid-template-columns:minmax(0,1fr);padding-top:1.75rem;padding-bottom:3rem}
   .rail{grid-column:1;grid-row:auto;order:1}
@@ -322,8 +369,8 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
       <a class="hide-s" href="../#features">Features</a>
       <a class="hide-s" href="../#guides">Guides</a>
       <a class="hide-s" href="../is-it-safe/">Is it safe?</a>
-      <a href="https://github.com/Sepd0x/cs2-ip-changer">GitHub</a>
-      <a class="btn btn-s" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Download</a>
+      <a class="btn btn-s btn-ghost" href="https://github.com/Sepd0x/cs2-ip-changer" title="Star CS2 IP Changer on GitHub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg><span>Star<span class="hide-s"> on GitHub</span></span></a>
+      <a class="btn btn-s get-desk" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download</a>
     </nav>
   </div>
 </header>
@@ -338,7 +385,8 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
     <aside class="rail" aria-label="Download and contents">
       <div class="rail-in">
         <div>
-          <a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a>
+          <div class="get-desk"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a><p class="rel">v0.1.0-beta.9 · 63.4 MB · 3 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Release notes and checksums</a></p></div>
+          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">sepd0x.github.io/cs2-ip-changer/change-ip-with-phone</code><button class="btn" type="button" data-copy="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/">Copy link</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div>
           <ul class="checks" aria-label="At a glance"><li>Free</li><li>Public source</li><li>No account</li><li>Doesn't touch cs2.exe</li><li>Signed updates</li><li><a href="https://www.virustotal.com/gui/file/441e9ae0c8def2de90c83cfdec3c531a963a8370d5418a5ae0c7f43887bd6517/detection">VirusTotal report</a></li></ul>
           <p class="safe">Not code-signed, so SmartScreen warns the first time: <a href="../is-it-safe/">how to check it</a></p>
           <p class="req">Beta · Windows 10/11 · Android phone + USB cable or hotspot · uses mobile data · admin</p>
@@ -353,7 +401,7 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
             <li><a href="#faq">FAQ</a></li>
           </ul>
         </nav>
-        <figure style="margin:0"><a class="crop" href="../img/connection.png" style="aspect-ratio:569/428" aria-label="The Connection page: protection status, the IP servers see next to your home IP, and the phone ready to change IP (full screenshot)"><picture><source type="image/webp" srcset="../img/connection.webp"><img src="../img/connection.png" alt="The Connection page: protection status, the IP servers see next to your home IP, and the phone ready to change IP" width="1240" height="800" loading="lazy" style="width:217.93%;margin:-7.73% 0 0 -15.99%"></picture></a><figcaption class="cropcap">The Connection page of the app</figcaption></figure>
+        <figure style="margin:0"><a class="crop zoom" href="../img/connection.png" style="aspect-ratio:569/428" aria-label="The Connection page: protection status, the IP servers see next to your home IP, and the phone ready to change IP (full screenshot)"><picture><source type="image/webp" srcset="../img/connection.webp"><img src="../img/connection.png" alt="The Connection page: protection status, the IP servers see next to your home IP, and the phone ready to change IP" width="1240" height="800" loading="eager" fetchpriority="high" style="width:217.93%;margin:-7.73% 0 0 -15.99%"></picture></a><figcaption class="cropcap">The Connection page of the app</figcaption></figure>
       </div>
     </aside>
     <article class="gtext">
@@ -380,7 +428,9 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
         <li><a href="../hide-ip-cs2/">Hide your IP without a VPN</a><span>Who sees your IP, and every method compared.</span></li>
         <li><a href="../is-it-safe/">Is it safe?</a><span>What it changes and how to check the download.</span></li>
       </ul>
-      <div class="end"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a><p class="req">Free beta · Windows 10/11 · Android phone + USB cable or hotspot · uses mobile data · admin</p></div>
+      <div class="end"><div class="get-desk"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a><p class="rel">v0.1.0-beta.9 · 63.4 MB · 3 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Release notes and checksums</a></p></div>
+          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">sepd0x.github.io/cs2-ip-changer/change-ip-with-phone</code><button class="btn" type="button" data-copy="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/">Copy link</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div><p class="req">Free beta · Windows 10/11 · Android phone + USB cable or hotspot · uses mobile data · admin</p></div>
+      <p class="gstar">Useful? A <a href="https://github.com/Sepd0x/cs2-ip-changer">star on GitHub</a> helps other players find it.</p>
     </nav>
   </div>
 </main>
@@ -390,5 +440,26 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
     <span><a href="https://github.com/Sepd0x/cs2-ip-changer">Source</a> · <a href="https://github.com/Sepd0x/cs2-ip-changer/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/Sepd0x/cs2-ip-changer#privacy">Privacy</a> · <a href="https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose">Report a bug</a></span>
   </div>
 </footer>
+<script>
+(function(){
+  var d=document;
+  /* on a phone: copy this page's link to open it on the PC */
+  d.querySelectorAll('[data-copy]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var label=b.textContent,done=function(ok){b.textContent=ok?'Copied':'Copy failed';setTimeout(function(){b.textContent=label},1800)};
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(b.getAttribute('data-copy')).then(function(){done(true)},function(){done(false)})}else{done(false)}
+    });
+  });
+  /* a screenshot opens at full size over the page; a click or Escape closes it (without JS the link opens the picture) */
+  var box;
+  d.addEventListener('click',function(e){
+    var a=e.target.closest&&e.target.closest('a.zoom');
+    if(!a||e.button||e.ctrlKey||e.metaKey||e.shiftKey||!window.HTMLDialogElement)return;
+    e.preventDefault();
+    if(!box){box=d.createElement('dialog');box.className='lightbox';box.setAttribute('aria-label','Screenshot');box.innerHTML='<img alt="">';box.addEventListener('click',function(){box.close()});d.body.appendChild(box)}
+    var img=box.querySelector('img'),src=a.querySelector('img');img.src=a.getAttribute('href');img.alt=src?src.alt:'';box.showModal();
+  });
+  })();
+</script>
 </body>
 </html>

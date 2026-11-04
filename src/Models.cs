@@ -18,7 +18,9 @@ public sealed partial class Settings
     /// <summary>A phone connection was checked at least once. Until then cs2.exe isn't locked, so trying the app without a phone
     /// (and closing it) never leaves CS2 unable to connect at home.</summary>
     public bool PhoneSeen { get; set; }
-    public bool GameMode { get; set; } = true;            // CS2 open = whole PC through the phone connection
+    // CS2 open = whole PC through the phone connection. Off for new installs since beta.10: only CS2 (and Steam) use the phone,
+    // so OBS, Discord and downloads stay at home, as the site says. Saved settings keep their value.
+    public bool GameMode { get; set; }
     public bool SteamOnEgress { get; set; } = true;       // Steam talks to Valve through the same connection as CS2
     public string Cs2Path { get; set; }
     public bool KeepPcOffPhone { get; set; } = true;

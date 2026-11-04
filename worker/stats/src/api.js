@@ -1,12 +1,39 @@
 // The new dashboard's data (beta.9): /api/summary and /api/live, behind the same Access check as the page. Only added-up
-// numbers leave here, never an install ID or a row per install. Unit: the install-day (the app's ID is new every day).
+// numbers leave here, never an install ID or a row per install. Unit: the install-day (one install open on one day). Since
+// beta.9 the app keeps its random ID per install (pseudonymous), so installs, returns and cohorts are also counted exactly.
 //
 // Real or automated: online virus scanners run the exe in a sandbox, accept the notice by themselves and report (5 of 5 outside
 // installs up to 2 nov. 2026 were these: no Steam account, no click, 0 minutes). An install-day counts as real when it has a Steam
 // account, a click or a minute; the rest is shown apart as "automated".
 
 const PERIODS = [1, 7, 30, 90];
-const MAX_ROWS = 50000;   // enough for now; past this the queries need to add up in SQL instead of here
+// Rows read per query. Nov. 2026: newest days first, so a cut drops the oldest, and the answer says which queries were cut
+// (truncated) for the dashboard to show it; past this the queries need to add up in SQL instead of here.
+export const MAX_ROWS = 50000;
+// Sent as list sizes in bands (Telemetry.Band): one value a report, the same all day, so the day's highest is kept (never added up)
+const SIZES = ['servers', 'accounts', 'flags', 'open_with', 'open_with_admin', 'regions_blocked'];
+const SIZE_BAND = { 0: '0', 1: '1', 2: '2-5', 6: '6-20', 21: '21-100', 101: '100+' };
+// How the phone was connected, best first: an install-day that was on the phone at any report counts with that link
+const LINK_RANK = ['none', 'other', 'hotspot', 'usb'];
+
+/**
+ * The rows of one view: the release builds (dev 0) less the developer's own PCs (EXCLUDE_IDS), or with ?dev=1 the dev builds
+ * and those PCs. <prefix> is a table alias ("p.").
+ */
+export function who(dev, exclude = [], prefix = '') {
+  const ids = (exclude || []).filter((x) => /^[0-9a-f]{32}$/.test(x));
+  if (!ids.length) return { sql: `${prefix}dev = ?`, args: [dev ? 1 : 0] };
+  const list = ids.map(() => '?').join(',');
+  return dev ? { sql: `(${prefix}dev = 1 OR ${prefix}id IN (${list}))`, args: ids } : { sql: `(${prefix}dev = 0 AND ${prefix}id NOT IN (${list}))`, args: ids };
+}
+
+/** The UTC hour (hours since 1970) as the weekday (0 Monday) and hour in Lisbon, where the dashboard is read. */
+const LISBON = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Lisbon', weekday: 'short', hour: '2-digit', hourCycle: 'h23' });
+const WEEK = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
+export function lisbonSlot(hourIndex) {
+  const parts = Object.fromEntries(LISBON.formatToParts(new Date(hourIndex * 3600_000)).map((p) => [p.type, p.value]));
+  return [WEEK[parts.weekday] ?? 0, Number(parts.hour) % 24];
+}
 const SCREENS = ['connection', 'servers', 'regions', 'accounts', 'configs', 'profiles', 'log', 'settings'];
 const AGE = { age_0: '0', age_1: '1', age_2_3: '2-3', age_4_6: '4-6', age_7_13: '7-13', age_14_29: '14-29', age_30p: '30+' };
 // Counted by the app, not real counters for the charts (list sizes in bands, the beta.9 extras)
@@ -61,32 +88,50 @@ export function params(url) {
 }
 
 /** Everything the dashboard draws for one period, added up. */
-export async function summary(db, { period, f, dev, now }) {
+export async function summary(db, { period, f, dev, now, exclude = [] }) {
   const since = day(now - (period - 1) * 864e5);
   const prevSince = day(now - (2 * period - 1) * 864e5);
   const d = dev ? 1 : 0;
+  const W = who(dev, exclude), Wp = who(dev, exclude, 'p.');
+  const truncated = [], warnings = [];
   const all = async (sql, ...args) => (await db.prepare(sql).bind(...args).all()).results ?? [];
-  const [pings, counts, clicks, heat, errors, envRows, installDays] = await Promise.all([
-    all(`SELECT day, id, MIN(COALESCE(SUM(minutes), 0), 1440) AS m, MAX(app) AS app, MAX(country) AS country, MAX(mode) AS mode, MAX(link) AS link
-         FROM pings WHERE dev = ? AND day >= ? GROUP BY day, id LIMIT ${MAX_ROWS}`, d, prevSince),
-    all(`SELECT day, id, name, SUM(n) AS n FROM counts WHERE dev = ? AND day >= ? GROUP BY day, id, name LIMIT ${MAX_ROWS}`, d, prevSince),
-    all(`SELECT day, id, name, SUM(n) AS n FROM clicks WHERE dev = ? AND day >= ? GROUP BY day, id, name LIMIT ${MAX_ROWS}`, d, since),
-    all(`SELECT screen, kind, cell, app, SUM(n) AS n FROM heat WHERE dev = ? AND day >= ? GROUP BY screen, kind, cell, app`, d, since).catch(() => []),
-    all(`SELECT day, id, type, at, app, SUM(n) AS n FROM errors WHERE dev = ? AND day >= ? GROUP BY day, id, type, at, app LIMIT ${MAX_ROWS}`, d, since),
-    all('SELECT k, v, SUM(n) AS n FROM env WHERE dev = ? AND day >= ? GROUP BY k, v', d, since).catch(() => []),
-    all(`SELECT DISTINCT p.day, p.id FROM pings p JOIN (SELECT DISTINCT id FROM counts WHERE name = 'id_install' AND dev = ?) k ON k.id = p.id
-         WHERE p.dev = ? LIMIT ${MAX_ROWS}`, d, d),
+  // Newest days first (ORDER BY day DESC): a cut drops the oldest days and is said in truncated, never silent
+  const capped = async (name, sql, ...args) => {
+    const r = await all(`${sql} LIMIT ${MAX_ROWS + 1}`, ...args);
+    if (r.length > MAX_ROWS) { r.length = MAX_ROWS; truncated.push(name); }
+    return r;
+  };
+  // Tables made by the Worker the first time (heat, env, live): missing in an old database is a note, not an empty block with no word
+  const soft = (name, p) => p.catch((e) => { warnings.push(`${name}: ${String(e?.message || e)}`); return []; });
+  const [pings, counts, clicks, heat, errors, envRows, installDays, hours, last] = await Promise.all([
+    // D7: the version and the mode of the day are the newest report's, not the highest text ("0.1.0-beta.10" < "0.1.0-beta.9" as
+    // text). D3: the link is the best the install-day had (USB, then hotspot), so a report from before the phone was up doesn't win.
+    capped('pings', `SELECT day, id, MIN(COALESCE(SUM(minutes), 0), 1440) AS m, SUBSTR(MAX(ts || '|' || app), 15) AS app, MAX(country) AS country,
+         SUBSTR(MAX(ts || '|' || COALESCE(mode, '')), 15) AS mode, MAX(CASE link WHEN 'usb' THEN 3 WHEN 'hotspot' THEN 2 WHEN 'other' THEN 1 WHEN 'none' THEN 0 END) AS lk,
+         MAX(os) AS os FROM pings WHERE ${W.sql} AND day >= ? GROUP BY day, id ORDER BY day DESC`, ...W.args, prevSince),
+    capped('counts', `SELECT day, id, name, SUM(n) AS n, MAX(n) AS mx FROM counts WHERE ${W.sql} AND day >= ? GROUP BY day, id, name ORDER BY day DESC`, ...W.args, prevSince),
+    capped('clicks', `SELECT day, id, name, SUM(n) AS n FROM clicks WHERE ${W.sql} AND day >= ? GROUP BY day, id, name ORDER BY day DESC`, ...W.args, since),
+    soft('heat', all(`SELECT screen, kind, cell, app, SUM(n) AS n FROM heat WHERE dev = ? AND day >= ? GROUP BY screen, kind, cell, app`, d, since)),
+    capped('errors', `SELECT day, id, type, at, app, SUM(n) AS n FROM errors WHERE ${W.sql} AND day >= ? GROUP BY day, id, type, at, app ORDER BY day DESC`, ...W.args, since),
+    soft('env', all('SELECT k, v, SUM(n) AS n FROM env WHERE dev = ? AND day >= ? GROUP BY k, v', d, since)),
+    capped('installDays', `SELECT DISTINCT p.day, p.id FROM pings p JOIN (SELECT DISTINCT id FROM counts WHERE name = 'id_install' AND ${W.sql}) k ON k.id = p.id
+         WHERE ${Wp.sql} ORDER BY p.day DESC`, ...W.args, ...Wp.args),
+    // D9: when the app is open, from the reports' times (each install counts once an hour)
+    capped('hours', `SELECT day, id, CAST(ts / 3600000 AS INTEGER) AS h FROM pings WHERE ${W.sql} AND day >= ? GROUP BY day, id, h ORDER BY day DESC`, ...W.args, since),
+    // The dashboard's freshness bar: the newest report in this view (last 90 days, on the day index)
+    all(`SELECT MAX(ts) AS t FROM pings WHERE ${W.sql} AND day >= ?`, ...W.args, day(now - 89 * 864e5)),
   ]);
 
   // One entry per install-day, with what decides real or automated
   const key = (r) => `${r.day}|${r.id}`;
   const inst = new Map();
-  for (const p of pings) inst.set(key(p), { day: p.day, id: p.id, m: p.m, app: p.app, country: p.country || '?', mode: p.mode || '?', link: p.link || '?', acc: 0, clicks: 0, c: {}, dc: false });
+  for (const p of pings) inst.set(key(p), { day: p.day, id: p.id, m: p.m, app: p.app, country: p.country || '?', mode: p.mode || '?', link: LINK_RANK[p.lk] || '?', os: p.os || '?', acc: 0, clicks: 0, c: {}, dc: false });
   for (const c of counts) {
     const i = inst.get(key(c)); if (!i) continue;
-    if (c.name === 'accounts') i.acc = Math.max(i.acc, c.n);
+    if (c.name === 'accounts') i.acc = Math.max(i.acc, c.mx ?? c.n);
     else if (c.name === 'net_dc') i.dc = true;
-    i.c[c.name] = (i.c[c.name] || 0) + c.n;
+    // A list size is a state, sent again in later reports of the day: the highest band, never the sum of the bands
+    i.c[c.name] = SIZES.includes(c.name) ? Math.max(i.c[c.name] || 0, c.mx ?? c.n) : (i.c[c.name] || 0) + c.n;
   }
   for (const c of clicks) { const i = inst.get(key(c)); if (i) i.clicks += c.n; }
   const real = (i) => i.acc >= 1 || i.clicks > 0 || i.m >= 1;
@@ -116,7 +161,26 @@ export async function summary(db, { period, f, dev, now }) {
     x.matches += (i.c.m_valve || 0) + (i.c.m_comm || 0); x.laggy += (i.c.m_valve_lag || 0) + (i.c.m_comm_lag || 0);
   }
   for (const [dd, n] of Object.entries(autoDays)) if (byDay.has(dd)) byDay.get(dd).automated = n;
-  const prev = { users: inPrev.length, fresh: inPrev.filter(([, i]) => i.c.first_start).length, minutes: inPrev.reduce((s, [, i]) => s + i.m, 0) };
+  // The period before, with the same numbers the KPIs compare (D9: before only users, new and minutes)
+  const sumPrev = (name) => inPrev.reduce((s, [, i]) => s + (i.c[name] || 0), 0);
+  const prev = { users: inPrev.length, fresh: inPrev.filter(([, i]) => i.c.first_start).length, minutes: inPrev.reduce((s, [, i]) => s + i.m, 0),
+    daysWithData: new Set(inPrev.map(([, i]) => i.day)).size, ipNew: sumPrev('ip_changed'), ipSame: sumPrev('ip_same'), ipNone: sumPrev('ip_no_network'),
+    matches: sumPrev('m_valve') + sumPrev('m_comm'), laggy: sumPrev('m_valve_lag') + sumPrev('m_comm_lag'), sessions: sumPrev('app_start'), crashes: sumPrev('crash') };
+
+  // D9: the first day of a new install, each step inside the one before on the same install-day: the notice accepted
+  // (first_start), the phone on (a report with USB or hotspot, or Phone setup done) and a first Change IP with a new IP
+  const f1 = inWin.filter(([, i]) => i.c.first_start);
+  const f2 = f1.filter(([, i]) => i.link === 'usb' || i.link === 'hotspot' || i.c.phone_setup_done);
+  const f3 = f2.filter(([, i]) => i.c.ip_changed);
+  const funnel = [{ label: '1.º arranque', n: f1.length }, { label: 'Telemóvel ligado', n: f2.length }, { label: '1.ª troca com IP novo', n: f3.length }];
+
+  // D9: when the app is open, weekday by hour in Lisbon: install-hours with a report, only the real install-days of the view
+  const when = [...Array(7)].map(() => Array(24).fill(0));
+  for (const r of hours) {
+    if (!ok.has(key(r))) continue;
+    const [wd, h] = lisbonSlot(r.h);
+    when[wd][h]++;
+  }
 
   const tally = (get) => { const m = {}; for (const [, i] of inWin) { const k = get(i); m[k] = (m[k] || 0) + 1; } return Object.entries(m).map(([k, n]) => ({ k, n })).sort((a, b) => b.n - a.n); };
 
@@ -135,11 +199,12 @@ export async function summary(db, { period, f, dev, now }) {
     return from ? { from, to, n } : null;
   }).filter(Boolean).sort((a, b) => b.n - a.n);
 
+  // Each button with its clicks per day too (the dashboard's 14-day trend)
   const btn = {};
   for (const c of clicks) {
     if (!ok.has(key(c))) continue;
-    const b = btn[c.name] || (btn[c.name] = { n: 0, days: 0 });
-    b.n += c.n; b.days++;
+    const b = btn[c.name] || (btn[c.name] = { n: 0, days: 0, perDay: {} });
+    b.n += c.n; b.days++; b.perDay[c.day] = (b.perDay[c.day] || 0) + c.n;
   }
 
   // The heat map has no install ID (added up on arrival): only the version filter applies to it
@@ -200,15 +265,21 @@ export async function summary(db, { period, f, dev, now }) {
   const realIds = new Set([...inPrev, ...inWin].map(([, i]) => i.id));
   const seen = new Map();
   for (const r of installDays) if (realIds.has(r.id)) (seen.get(r.id) || seen.set(r.id, []).get(r.id)).push(r.day);
-  const installs = { active: 0, fresh: 0, back: 0, prev: 0, perDay: {} };
+  // nextDay (D9): installs first seen in the period up to the day before yesterday (their next day is over), and how many of
+  // them were open again the day after
+  const installs = { active: 0, fresh: 0, back: 0, prev: 0, perDay: {}, nextDay: { n: 0, back: 0 } };
   const exact = {};
   const AT = [0, 1, 3, 7, 14, 30];
+  const today = day(now);
   for (const [, ds] of seen) {
     ds.sort();
     const first = ds[0];
     const inW = ds.some((x) => x >= since), inP = ds.some((x) => x >= prevSince && x < since);
     if (inW) { installs.active++; if (first >= since) installs.fresh++; else installs.back++; }
     if (inP) installs.prev++;
+    // Only when the day after is over (it is before today): an install first seen yesterday may still come back today
+    const after = day(Date.parse(first + 'T00:00:00Z') + 864e5);
+    if (first >= since && after < today) { installs.nextDay.n++; if (ds.includes(after)) installs.nextDay.back++; }
     for (const x of ds) if (x >= since) { const p = installs.perDay[x] || (installs.perDay[x] = { n: 0, fresh: 0 }); p.n++; if (x === first) p.fresh++; }
     const t0 = Date.parse(first + 'T00:00:00Z');
     const w = monday(t0);
@@ -265,8 +336,8 @@ export async function summary(db, { period, f, dev, now }) {
       continue;
     }
     const k = `${e.type}|${e.at}|${e.app}`;
-    const x = err[k] || (err[k] = { type: e.type, at: e.at, app: e.app, n: 0, days: 0 });
-    x.n += e.n; x.days++;
+    const x = err[k] || (err[k] = { type: e.type, at: e.at, app: e.app, n: 0, days: 0, perDay: {} });
+    x.n += e.n; x.days++; x.perDay[e.day] = (x.perDay[e.day] || 0) + e.n;
   }
 
   // Checks red when a report was built (install-days with that row red) and Run leak test
@@ -297,11 +368,18 @@ export async function summary(db, { period, f, dev, now }) {
 
   const versionsAll = [...new Set([...inst.values()].map((i) => i.app))];
   const countriesAll = [...new Set([...inst.values()].map((i) => i.country))].sort();
+  // D8: the list sizes (only in /classic before): install-days in each band
+  const sizes = SIZES.map((name) => {
+    const m = {};
+    for (const [, i] of inWin) if (i.c[name] !== undefined) { const b = SIZE_BAND[i.c[name]] ?? String(i.c[name]); m[b] = (m[b] || 0) + 1; }
+    return { name, bands: Object.values(SIZE_BAND).filter((b) => m[b]).map((b) => ({ band: b, n: m[b] })) };
+  });
   return {
     asOf: day(now), now: new Date(now).toISOString().slice(11, 16), period, filters: f, dev,
+    lastTs: last[0]?.t ?? null, truncated, warnings, excluded: (exclude || []).length,
     options: { version: versionsAll, country: countriesAll },
-    days, prev, automated, automatedDc,
-    countries: tally((i) => i.country), versions: tally((i) => i.app), modes: tally((i) => i.mode), links: tally((i) => i.link),
+    days, prev, automated, automatedDc, funnel, when, sizes,
+    countries: tally((i) => i.country), versions: tally((i) => i.app), modes: tally((i) => i.mode), links: tally((i) => i.link), oses: tally((i) => i.os),
     counters, screens, paths, age: Object.entries(age).map(([band, n]) => ({ band, n })),
     buttons: btn, heat: heatOut,
     errors: Object.values(err).sort((a, b) => b.n - a.n).slice(0, 40),
@@ -312,15 +390,17 @@ export async function summary(db, { period, f, dev, now }) {
   };
 }
 
-/** Who has the app open now: install-days with a signal in the last 6 minutes, only as counts. */
-export async function live(db, { dev, now }) {
-  let rows = [];
+/** Who has the app open now: installs with a signal in the last 6 minutes, only as counts, and when the last signal came. */
+export async function live(db, { dev, now, exclude = [] }) {
+  const W = who(dev, exclude);
+  let rows = [], lastTs = null;
   try {
-    rows = (await db.prepare('SELECT app, mode, link, screen, cs2, prot, tray FROM live WHERE dev = ? AND ts >= ?').bind(dev ? 1 : 0, now - 6 * 60_000).all()).results ?? [];
+    rows = (await db.prepare(`SELECT app, mode, link, screen, cs2, prot, tray FROM live WHERE ${W.sql} AND ts >= ?`).bind(...W.args, now - 6 * 60_000).all()).results ?? [];
+    lastTs = (await db.prepare(`SELECT ts FROM live WHERE ${W.sql} ORDER BY ts DESC LIMIT 1`).bind(...W.args).first())?.ts ?? null;
   } catch { rows = []; }
   const count = (get) => { const m = {}; for (const r of rows) { const k = get(r) ?? '?'; m[k] = (m[k] || 0) + 1; } return Object.entries(m).map(([k, n]) => ({ k, n })).sort((a, b) => b.n - a.n); };
   return {
-    now: rows.length, inGame: rows.filter((r) => r.cs2 === 1).length, protectedN: rows.filter((r) => r.prot === 1).length,
+    now: rows.length, inGame: rows.filter((r) => r.cs2 === 1).length, protectedN: rows.filter((r) => r.prot === 1).length, lastTs,
     byVersion: count((r) => r.app), byMode: count((r) => r.mode), byLink: count((r) => r.link),
     byScreen: count((r) => (r.tray === 1 ? 'tray' : r.screen)),
   };

@@ -3,21 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CS2 region picker: choose your matchmaking region (free)</title>
-<meta name="description" content="Pick which regions CS2 matchmaking can put you in, with the ping of each region. Free Windows app: one firewall rule for cs2.exe on Valve relays only.">
+<title>CS2 region picker: how to change your region in CS2</title>
+<meta name="description" content="Pick your CS2 matchmaking region: block the ones you don't want and see the ping of each. Free Windows app, one firewall rule for cs2.exe on Valve relays.">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/">
 <link rel="icon" href="../img/icon.png">
 <meta name="theme-color" content="#0e0e0e">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="CS2 IP Changer">
-<meta property="og:title" content="CS2 region picker: choose your matchmaking region (free)">
-<meta property="og:description" content="Pick which regions CS2 matchmaking can put you in, with the ping of each region. Free Windows app: one firewall rule for cs2.exe on Valve relays only.">
+<meta property="og:title" content="CS2 region picker: how to change your region in CS2">
+<meta property="og:description" content="Pick your CS2 matchmaking region: block the ones you don't want and see the ping of each. Free Windows app, one firewall rule for cs2.exe on Valve relays.">
 <meta property="og:url" content="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/">
 <meta property="og:image" content="https://sepd0x.github.io/cs2-ip-changer/img/regions.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="../fonts/funnel-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
+<script>document.documentElement.classList.add('js')</script>
 <script type="application/ld+json">
 {
  "@context": "https://schema.org",
@@ -26,8 +27,8 @@
    "@type": "WebPage",
    "@id": "https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/#page",
    "url": "https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/",
-   "name": "CS2 region picker: choose your matchmaking region (free)",
-   "description": "Pick which regions CS2 matchmaking can put you in, with the ping of each region. Free Windows app: one firewall rule for cs2.exe on Valve relays only.",
+   "name": "CS2 region picker: how to change your region in CS2",
+   "description": "Pick your CS2 matchmaking region: block the ones you don't want and see the ping of each. Free Windows app, one firewall rule for cs2.exe on Valve relays.",
    "inLanguage": "en",
    "isPartOf": {
     "@id": "https://sepd0x.github.io/cs2-ip-changer/#website"
@@ -35,11 +36,30 @@
    "about": {
     "@id": "https://sepd0x.github.io/cs2-ip-changer/#app"
    },
-   "dateModified": "2026-11-03",
-   "primaryImageOfPage": "https://sepd0x.github.io/cs2-ip-changer/img/regions.png"
+   "author": {
+    "@id": "https://sepd0x.github.io/cs2-ip-changer/#author"
+   },
+   "datePublished": "2026-10-31",
+   "dateModified": "2026-11-04",
+   "breadcrumb": {
+    "@id": "https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/#crumbs"
+   },
+   "primaryImageOfPage": {
+    "@type": "ImageObject",
+    "url": "https://sepd0x.github.io/cs2-ip-changer/img/regions.png",
+    "width": 1240,
+    "height": 800
+   }
+  },
+  {
+   "@type": "Person",
+   "@id": "https://sepd0x.github.io/cs2-ip-changer/#author",
+   "name": "Sepd0x",
+   "url": "https://github.com/Sepd0x"
   },
   {
    "@type": "BreadcrumbList",
+   "@id": "https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/#crumbs",
    "itemListElement": [
     {
      "@type": "ListItem",
@@ -56,14 +76,121 @@
    ]
   },
   {
+   "@type": "HowTo",
+   "@id": "https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/#howto",
+   "name": "Change your region, step by step",
+   "description": "Pick your CS2 matchmaking region: block the ones you don't want and see the ping of each. Free Windows app, one firewall rule for cs2.exe on Valve relays.",
+   "inLanguage": "en",
+   "image": "https://sepd0x.github.io/cs2-ip-changer/img/regions.png",
+   "tool": [
+    {
+     "@type": "HowToTool",
+     "name": "CS2 IP Changer (free, Windows 10 and 11)"
+    }
+   ],
+   "step": [
+    {
+     "@type": "HowToStep",
+     "position": 1,
+     "name": "Get the app",
+     "text": "Download CS2IPChanger.exe and run it. It asks for admin, because firewall rules are a system setting. For Regions you don't need the phone or protection.",
+     "url": "https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/#step-1"
+    },
+    {
+     "@type": "HowToStep",
+     "position": 2,
+     "name": "Open Regions and measure the ping",
+     "text": "The list comes from Valve's own relay list, by continent and city. Press Refresh: the app pings each region the way the game will reach it.",
+     "url": "https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/#step-2"
+    },
+    {
+     "@type": "HowToStep",
+     "position": 3,
+     "name": "Turn off the regions you don't want",
+     "text": "Untick them one by one, or use a shortcut: Only this region, Closest 3, your continent only (like Europe only) or Ping under X ms. Keep at least one region on.",
+     "url": "https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/#step-3"
+    },
+    {
+     "@type": "HowToStep",
+     "position": 4,
+     "name": "Check the block",
+     "text": "Under the list the page says how many regions CS2 can play in, and \"Block is on. Only CS2 is affected.\"",
+     "url": "https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/#step-4"
+    },
+    {
+     "@type": "HowToStep",
+     "position": 5,
+     "name": "Start CS2 and queue",
+     "text": "CS2 measures the regions when it starts, so start it after the change. If your slowest region left on is above CS2's Max Acceptable Matchmaking Ping, the page tells you which number to set in Settings > Game.",
+     "url": "https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/#step-5"
+    },
+    {
+     "@type": "HowToStep",
+     "position": 6,
+     "name": "Undo it",
+     "text": "Click Allow all (block off) on Regions. CS2IPChanger.exe --restore also removes the rule.",
+     "url": "https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/#step-6"
+    }
+   ]
+  },
+  {
    "@type": "FAQPage",
+   "@id": "https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/#faq",
    "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "How do I change my region in CS2?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "CS2 has no region setting. Matchmaking puts you where your ping to Valve's relays is good, and Max Acceptable Matchmaking Ping only caps the ping. To choose, block the regions you don't want: open Regions in CS2 IP Changer, turn off what you don't want, and matchmaking can only find you a match where you left regions on."
+     }
+    },
     {
      "@type": "Question",
      "name": "How do I force CS2 to only put me in EU servers?",
      "acceptedAnswer": {
       "@type": "Answer",
       "text": "Open the Regions page and click your continent's shortcut (Europe only in Europe), or Only this region on one region. Every other region is blocked for cs2.exe, so matchmaking can only find you a match where you left regions on. Max Acceptable Matchmaking Ping in CS2's settings only limits the ping; it doesn't pick a region."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Is there a region lock in CS2?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Not one you can set in the game. To lock yourself to one region, click Only this region on it: every other region stays blocked for cs2.exe until you click Allow all (block off)."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Does it work for Premier?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Yes. Premier, Competitive, Casual, Deathmatch and Wingman all pick a server by ping to Valve's relays, so they all follow the regions you left on. With few regions on, Premier can take longer to find a match."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "My server picker doesn't block anything. Why?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Most of the time Windows Firewall is off, or another firewall has taken over (some antivirus suites do), so block rules do nothing. The Regions page checks Windows Firewall and tells you when the rule isn't enforced. Also start CS2 again after a change: it measures the regions when it starts."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Can I choose which players I meet?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "No. It picks the regions your matches are played in, not the players. Players from anywhere can queue into a region they can reach."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Do I need the phone for Regions?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "No. Regions works with or without the phone and doesn't depend on protection. The ping is measured through the phone while protection is on, and through your home connection when it's off."
      }
     },
     {
@@ -135,7 +262,7 @@ h1,h2,h3{text-wrap:balance}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--sand);color:var(--on-sand);font:600 1rem/1.2 var(--sans);padding:.9rem 1.35rem;border:0;border-radius:6px;text-decoration:none;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 1px 0 rgba(0,0,0,.4),0 10px 30px -12px var(--glow);transition:background-color .15s}
 .btn:hover{background:var(--sand-hi)}
 .btn:active{transform:translateY(1px)}
-.btn svg{width:18px;height:18px;flex:none}
+.btn svg{width:1.125em;height:1.125em;flex:none}
 .btn-s{padding:.55rem .85rem;font-size:.9rem;border-radius:5px}
 .link{color:var(--ink2);font-weight:500}
 .link:hover{color:var(--ink)}
@@ -177,6 +304,17 @@ footer{border-top:1px solid var(--line);padding:2rem 0 2.5rem;color:var(--ink3);
 footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between}
 footer a{color:var(--ink2);text-decoration:none}
 footer a:hover{color:var(--ink)}
+.btn-ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line2)}
+.btn-ghost:hover{background:var(--bg3)}
+.btn-ghost svg{width:1.05em;height:1.05em}
+.top nav a.btn-ghost{color:var(--ink)}
+.rel{color:var(--ink3);font-size:.86rem;line-height:1.5;margin:.7rem 0 0}
+.rel a{color:var(--ink2)}
+.rel a:hover{color:var(--ink)}
+a.zoom{display:block;cursor:zoom-in}
+.lightbox{padding:0;border:0;background:transparent;max-width:96vw;max-height:94vh;overflow:visible}
+.lightbox::backdrop{background:rgba(0,0,0,.86)}
+.lightbox img{display:block;width:auto;height:auto;max-width:96vw;max-height:94vh;border-radius:8px;box-shadow:0 0 0 1px var(--line2),0 30px 80px -20px #000;cursor:zoom-out}
 @media (max-width:1000px){
   .hero{grid-template-columns:1fr;gap:2.25rem;padding-top:2.25rem;padding-bottom:3rem}
   .hero-copy{padding-top:0}
@@ -194,11 +332,12 @@ footer a:hover{color:var(--ink)}
   .views figcaption .fd{display:inline;color:var(--ink2)}
   .also,.split{grid-template-columns:repeat(2,minmax(0,1fr))}
   .cta .wrap{grid-template-columns:1fr}
+  .faq{grid-template-columns:1fr}
 }
 @media (max-width:760px){
   .top .wrap{height:3.5rem}
   .top nav{gap:1.1rem}
-  .top nav a.hide-s{display:none}
+  .top nav .hide-s{display:none}
   .hero{padding-top:1.75rem;gap:1.75rem}
   .hero h1{font-size:clamp(2.1rem,9.6vw,2.6rem);line-height:1.03;margin-bottom:1rem}
   .lead{font-size:1.04rem}
@@ -221,7 +360,11 @@ footer a:hover{color:var(--ink)}
   .r-phone{display:block}
   .phone-app{display:block;position:relative;z-index:3;margin:-2.5rem .75rem 0;border-radius:8px;overflow:hidden;box-shadow:0 0 0 1px var(--line2),0 24px 50px -16px rgba(0,0,0,.75)}
   section{padding:2.5rem 0}
-  .who{display:none}
+  .who{padding:1.6rem 0}
+  .who .wrap{gap:.7rem}
+  .who ul{grid-template-columns:1fr;gap:.45rem;font-size:.92rem;line-height:1.45}
+  .who li b{display:inline}
+  .top nav .btn-ghost{padding:.5rem .75rem}
   .sub{margin-bottom:1.5rem}
   #setup .sub{display:none}
   .shot{border-radius:7px}
@@ -263,13 +406,20 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
 .gl{display:grid;grid-template-columns:minmax(0,1fr) 19rem;column-gap:3.5rem;padding-top:2.75rem;padding-bottom:4.5rem}
 .gl>*{grid-column:1}
 .ghead{padding-bottom:2.5rem}
-.crumbs{font:400 .75rem/1.4 var(--mono);letter-spacing:.06em;color:var(--ink3);margin:0 0 1.4rem}.crumbs a{color:var(--ink2);text-decoration:none}.crumbs a:hover{color:var(--ink)}
+.crumbs{font:400 .75rem/1.4 var(--mono);letter-spacing:.06em;color:var(--ink3);margin:0 0 1.4rem}.crumbs a{color:var(--ink2)}.crumbs a:hover{color:var(--ink)}
 .ghead h1{font:500 clamp(2rem,3.7vw,2.75rem)/1.06 var(--disp);letter-spacing:-.03em;margin:0 0 1.1rem;max-width:24ch}
 .ghead .lead{margin:0}
 .rail{grid-column:2;grid-row:1/span 4}
 .rail-in{position:sticky;top:1.5rem;display:flex;flex-direction:column;gap:1.9rem}
 .rail .btn{width:100%}
+.rail .copyrow .btn,.gmore .end .copyrow .btn{width:auto}
 .rail .checks{margin-top:1.1rem;font-size:.86rem;gap:.35rem 1rem}
+@media (min-width:761px){.get-phone{display:none}}
+.gstar{color:var(--ink3);font-size:.95rem;margin:1.6rem 0 0}
+.gstar a{color:var(--ink2)}
+.gtext ol.howto{padding-left:0;list-style:none;counter-reset:hs}
+.gtext ol.howto li{position:relative;padding-left:2.4rem;margin-bottom:.8rem}
+.gtext ol.howto li::before{counter-increment:hs;content:counter(hs);position:absolute;left:0;top:.05rem;width:1.6rem;height:1.6rem;display:flex;align-items:center;justify-content:center;border:1px solid var(--line2);border-radius:50%;font:400 .72rem/1 var(--mono);color:var(--ink)}
 .toc h2{font:400 .72rem/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:0 0 .6rem}
 .toc ul{list-style:none;margin:0;padding:0 0 0 .9rem;border-left:1px solid var(--line)}
 .toc li{margin:.35rem 0;font-size:.92rem;line-height:1.4}
@@ -298,6 +448,9 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
 .gmore span{display:block;color:var(--ink3);font-size:.9rem;line-height:1.45;margin-top:.2rem}
 .gmore .end{display:none}
 .gmore .end .btn{width:100%}
+.gmore .end .link,.gstar a{font:inherit;text-decoration:underline;text-decoration-color:var(--line2);text-decoration-thickness:1px;text-underline-offset:.22em}
+.gmore .end .link{font-weight:500;font-size:.92rem}
+.gtext code{overflow-wrap:anywhere}
 @media (max-width:900px){
   .gl{grid-template-columns:minmax(0,1fr);padding-top:1.75rem;padding-bottom:3rem}
   .rail{grid-column:1;grid-row:auto;order:1}
@@ -322,8 +475,8 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
       <a class="hide-s" href="../#features">Features</a>
       <a class="hide-s" href="../#guides">Guides</a>
       <a class="hide-s" href="../is-it-safe/">Is it safe?</a>
-      <a href="https://github.com/Sepd0x/cs2-ip-changer">GitHub</a>
-      <a class="btn btn-s" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Download</a>
+      <a class="btn btn-s btn-ghost" href="https://github.com/Sepd0x/cs2-ip-changer" title="Star CS2 IP Changer on GitHub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg><span>Star<span class="hide-s"> on GitHub</span></span></a>
+      <a class="btn btn-s get-desk" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download</a>
     </nav>
   </div>
 </header>
@@ -332,13 +485,14 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
     <div class="ghead">
       <p class="crumbs"><a href="../">CS2 IP Changer</a> / CS2 region picker</p>
       <p class="eyebrow">CS2 server picker</p>
-      <h1>CS2 region picker: choose where matchmaking puts you</h1>
-      <p class="lead">The Regions page of CS2 IP Changer lists Valve's matchmaking regions with the ping of each one, and lets you turn off the ones you don't want. Premier, Competitive, Casual, Deathmatch and Wingman then only find matches in the regions you left on.</p>
+      <h1>How to change your region in CS2, with a free region picker</h1>
+      <p class="lead">CS2 has no region setting: matchmaking picks the region for you, by ping. The Regions page of CS2 IP Changer lists Valve's matchmaking regions with the ping of each one, and blocks the ones you turn off. Premier, Competitive, Casual, Deathmatch and Wingman then only find matches in the regions you left on.</p>
     </div>
     <aside class="rail" aria-label="Download and contents">
       <div class="rail-in">
         <div>
-          <a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a>
+          <div class="get-desk"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a><p class="rel">v0.1.0-beta.9 · 63.4 MB · 3 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Release notes and checksums</a></p></div>
+          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">sepd0x.github.io/cs2-ip-changer/cs2-region-picker</code><button class="btn" type="button" data-copy="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/">Copy link</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div>
           <ul class="checks" aria-label="At a glance"><li>Free</li><li>Public source</li><li>No account</li><li>Doesn't touch cs2.exe</li><li>Signed updates</li><li><a href="https://www.virustotal.com/gui/file/441e9ae0c8def2de90c83cfdec3c531a963a8370d5418a5ae0c7f43887bd6517/detection">VirusTotal report</a></li></ul>
           <p class="safe">Not code-signed, so SmartScreen warns the first time: <a href="../is-it-safe/">how to check it</a></p>
           <p class="req">Beta · Windows 10/11 · Android phone + USB cable or hotspot · uses mobile data · admin</p>
@@ -346,26 +500,38 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
         <nav class="toc" aria-labelledby="toc-h">
           <h2 id="toc-h">On this page</h2>
           <ul>
-            <li><a href="#how-cs2-picks-a-server">How CS2 picks a server</a></li>
+            <li><a href="#how-cs2-picks-your-region">How CS2 picks your region</a></li>
+            <li><a href="#change-your-region-step-by-step">Change your region, step by step</a></li>
             <li><a href="#what-the-regions-page-does">What the Regions page does</a></li>
+            <li><a href="#do-it-by-hand-without-the-app">Do it by hand, without the app</a></li>
             <li><a href="#things-to-know">Things to know</a></li>
             <li><a href="#faq">FAQ</a></li>
           </ul>
         </nav>
-        <figure style="margin:0"><a class="crop" href="../img/regions.png" style="aspect-ratio:760/466" aria-label="The Regions page: Valve's matchmaking regions by continent, each with its ping, and the ones turned off blocked for cs2.exe (full screenshot)"><picture><source type="image/webp" srcset="../img/regions.webp"><img src="../img/regions.png" alt="The Regions page: Valve's matchmaking regions by continent, each with its ping, and the ones turned off blocked for cs2.exe" width="1240" height="800" loading="lazy" style="width:163.16%;margin:-5.79% 0 0 -11.97%"></picture></a><figcaption class="cropcap">The Regions page of the app</figcaption></figure>
+        <figure style="margin:0"><a class="crop zoom" href="../img/regions.png" style="aspect-ratio:760/466" aria-label="The Regions page: Valve's matchmaking regions by continent, each with its ping, and the ones turned off blocked for cs2.exe (full screenshot)"><picture><source type="image/webp" srcset="../img/regions.webp"><img src="../img/regions.png" alt="The Regions page: Valve's matchmaking regions by continent, each with its ping, and the ones turned off blocked for cs2.exe" width="1240" height="800" loading="eager" fetchpriority="high" style="width:163.16%;margin:-5.79% 0 0 -11.97%"></picture></a><figcaption class="cropcap">The Regions page of the app</figcaption></figure>
       </div>
     </aside>
     <article class="gtext">
-      <h2 id="how-cs2-picks-a-server">How CS2 picks a server</h2>
-      <p>CS2 matchmaking doesn't connect you straight to a server. It measures your ping to Valve's relays (Steam Datagram Relay) in each region and queues you where the ping is good. If a region's relays can't be reached, CS2 treats that region as unavailable and looks elsewhere.</p><p>That's what a CS2 server picker uses: it makes the regions you don't want unreachable, so the game never picks them.</p>
+      <h2 id="how-cs2-picks-your-region">How CS2 picks your region</h2>
+      <p>When you queue, the game measures your ping to Valve's relays (Steam Datagram Relay) in each region and looks for a match where the ping is good. Max Acceptable Matchmaking Ping, in Settings &gt; Game, only sets the highest ping you accept; it doesn't choose a region.</p><p>So the only way to choose is to make the regions you don't want unreachable. If <code>cs2.exe</code> can't reach a region's relays, CS2 treats that region as unavailable and looks elsewhere. That's what a CS2 region picker or server picker does, and it's what the Regions page does, with one Windows Firewall rule.</p>
+      <h2 id="change-your-region-step-by-step">Change your region, step by step</h2>
+      <ol class="howto"><li id="step-1"><b>Get the app.</b> Download CS2IPChanger.exe and run it. It asks for admin, because firewall rules are a system setting. For Regions you don't need the phone or protection.</li><li id="step-2"><b>Open Regions and measure the ping.</b> The list comes from Valve's own relay list, by continent and city. Press Refresh: the app pings each region the way the game will reach it.</li><li id="step-3"><b>Turn off the regions you don't want.</b> Untick them one by one, or use a shortcut: Only this region, Closest 3, your continent only (like Europe only) or Ping under X ms. Keep at least one region on.</li><li id="step-4"><b>Check the block.</b> Under the list the page says how many regions CS2 can play in, and &quot;Block is on. Only CS2 is affected.&quot;</li><li id="step-5"><b>Start CS2 and queue.</b> CS2 measures the regions when it starts, so start it after the change. If your slowest region left on is above CS2's Max Acceptable Matchmaking Ping, the page tells you which number to set in Settings &gt; Game.</li><li id="step-6"><b>Undo it.</b> Click Allow all (block off) on Regions. CS2IPChanger.exe --restore also removes the rule.</li></ol>
       <h2 id="what-the-regions-page-does">What the Regions page does</h2>
-      <ul><li><b>The real list from Valve.</b> The regions come from Valve's own relay list (<code>GetSDRConfig</code>, app 730), grouped by city and continent. The last list is saved, so the page works offline.</li><li><b>Ping for each region</b>, measured the way the game will feel it: through the phone when you play on mobile data, through your home connection in No phone mode.</li><li><b>Shortcuts:</b> Only this region, Closest 3, your continent only (Europe only, North America only and so on), Ping under X ms, and Allow all (block off).</li><li><b>One firewall rule, for <code>cs2.exe</code> only.</b> Turned-off regions are blocked on Valve's relay IPs only. Steam, your friends list and community servers are not touched.</li><li><b>Kept up to date.</b> When Valve changes the relay list, the rule is rebuilt, so new relays in a region you turned off are blocked too.</li></ul>
+      <ul><li><b>The real list from Valve.</b> The regions come from Valve's own relay list (<code>GetSDRConfig</code>, app 730), grouped by city and continent. A city with more than one relay site, like Stockholm, is one row, and turning it off blocks all of them. The last list is saved, so the page works offline.</li><li><b>Ping for each region</b>, measured the way the game will feel it: through the phone while protection is on, through your home connection when it's off or in No phone mode.</li><li><b>Shortcuts:</b> Only this region, Closest 3, your continent only (Europe only, North America only and so on), Ping under X ms, and Allow all (block off).</li><li><b>One firewall rule, for <code>cs2.exe</code> only.</b> Turned-off regions are blocked on Valve's relay IPs only. Steam, your friends list and community servers are not touched.</li><li><b>Kept up to date.</b> While regions are off, Valve's list is read again every hour, and when it changes the rule is rebuilt, so new relays in a region you turned off are blocked too. After a shortcut, a region Valve adds later stays off as well.</li><li><b>Checked every 30 seconds.</b> If something else removes or changes the rule, the app puts it back, with or without protection.</li></ul>
+      <h2 id="do-it-by-hand-without-the-app">Do it by hand, without the app</h2>
+      <p>You can build the same block yourself with Windows Firewall:</p><ol><li>Open Valve's relay list for CS2: <code>https://api.steampowered.com/ISteamApps/GetSDRConfig/v1/?appid=730</code>. Each site (a "pop", like <code>fra</code> for Frankfurt) lists the IPs of its relays.</li><li>Open Windows Defender Firewall with Advanced Security and add an Outbound rule: Program, the path to <code>cs2.exe</code> (in <code>steamapps\common\Counter-Strike Global Offensive\game\bin\win64</code>), Block the connection.</li><li>In the rule's Scope, add the relay IPs of every region you don't want as remote IP addresses.</li></ol><p>It works, but it's dozens of IPs, some cities have more than one pop (Stockholm has two; Frankfurt, Vienna and London also have a partner's relays), and Valve changes the list from time to time, so a rule made by hand goes out of date. You also don't see the ping of each region. The app reads the list, groups the pops by city, shows the ping and rebuilds the rule when Valve changes it.</p>
       <h2 id="things-to-know">Things to know</h2>
-      <ul><li>Changes apply at once, and CS2 measures the regions again on its next start. Don't change them during a match.</li><li>Blocking too much means long queues or no match at all, and Premier can take longer. Leave a few regions on.</li><li>It works with or without the phone. Regions don't depend on protection: they stay off until you click Allow all (block off).</li></ul>
+      <ul><li>Changes apply at once, and CS2 measures the regions again on its next start. Don't change them during a match.</li><li>Blocking too much means long queues or no match at all, and Premier can take longer. Leave a few regions on; the app won't let you turn them all off.</li><li>CS2's Max Acceptable Matchmaking Ping still counts. If it's lower than the ping of your slowest region left on, CS2 never uses that region, and the page tells you which number to set.</li><li>Windows Firewall has to be on. If it's off, the page says the rule is in place but not enforced until the Firewall is back on.</li><li>It works with or without the phone. Regions don't depend on protection: they stay off until you click Allow all (block off).</li></ul>
     </article>
     <section class="gfaq" aria-labelledby="faq">
       <h2 id="faq">FAQ</h2>
+      <details><summary>How do I change my region in CS2?</summary><p>CS2 has no region setting. Matchmaking puts you where your ping to Valve's relays is good, and Max Acceptable Matchmaking Ping only caps the ping. To choose, block the regions you don't want: open Regions in CS2 IP Changer, turn off what you don't want, and matchmaking can only find you a match where you left regions on.</p></details>
       <details><summary>How do I force CS2 to only put me in EU servers?</summary><p>Open the Regions page and click your continent's shortcut (Europe only in Europe), or Only this region on one region. Every other region is blocked for cs2.exe, so matchmaking can only find you a match where you left regions on. Max Acceptable Matchmaking Ping in CS2's settings only limits the ping; it doesn't pick a region.</p></details>
+      <details><summary>Is there a region lock in CS2?</summary><p>Not one you can set in the game. To lock yourself to one region, click Only this region on it: every other region stays blocked for cs2.exe until you click Allow all (block off).</p></details>
+      <details><summary>Does it work for Premier?</summary><p>Yes. Premier, Competitive, Casual, Deathmatch and Wingman all pick a server by ping to Valve's relays, so they all follow the regions you left on. With few regions on, Premier can take longer to find a match.</p></details>
+      <details><summary>My server picker doesn't block anything. Why?</summary><p>Most of the time Windows Firewall is off, or another firewall has taken over (some antivirus suites do), so block rules do nothing. The Regions page checks Windows Firewall and tells you when the rule isn't enforced. Also start CS2 again after a change: it measures the regions when it starts.</p></details>
+      <details><summary>Can I choose which players I meet?</summary><p>No. It picks the regions your matches are played in, not the players. Players from anywhere can queue into a region they can reach.</p></details>
+      <details><summary>Do I need the phone for Regions?</summary><p>No. Regions works with or without the phone and doesn't depend on protection. The ping is measured through the phone while protection is on, and through your home connection when it's off.</p></details>
       <details><summary>Does forcing a region get me banned?</summary><p>The Regions page doesn't touch the game, its files or its memory. It adds one outbound Windows Firewall rule that stops cs2.exe from reaching Valve's relays in the regions you turned off, so to the game it looks like a bad connection to those relays. We can't speak for Valve and can't promise anything about how they treat it.</p></details>
       <details><summary>Does it change community servers or my friends list?</summary><p>No. The rule only covers cs2.exe and only Valve's relay IPs. Community servers, Steam and friends work as before.</p></details>
       <details><summary>How do I undo it?</summary><p>Click Allow all (block off) on the Regions page. Running the app with --restore, or tools/restore.cmd, also removes every rule the app made. Turn off protection and No phone mode leave the region rule on.</p></details>
@@ -377,7 +543,9 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
         <li><a href="../steam-account-switcher/">Steam account switcher</a><span>No passwords, ban marks per server.</span></li>
         <li><a href="../is-it-safe/">Is it safe?</a><span>What it changes and how to check the download.</span></li>
       </ul>
-      <div class="end"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a><p class="req">Free beta · Windows 10/11 · Android phone + USB cable or hotspot · uses mobile data · admin</p></div>
+      <div class="end"><div class="get-desk"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a><p class="rel">v0.1.0-beta.9 · 63.4 MB · 3 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Release notes and checksums</a></p></div>
+          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">sepd0x.github.io/cs2-ip-changer/cs2-region-picker</code><button class="btn" type="button" data-copy="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/">Copy link</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div><p class="req">Free beta · Windows 10/11 · Android phone + USB cable or hotspot · uses mobile data · admin</p></div>
+      <p class="gstar">Useful? A <a href="https://github.com/Sepd0x/cs2-ip-changer">star on GitHub</a> helps other players find it.</p>
     </nav>
   </div>
 </main>
@@ -387,5 +555,26 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
     <span><a href="https://github.com/Sepd0x/cs2-ip-changer">Source</a> · <a href="https://github.com/Sepd0x/cs2-ip-changer/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/Sepd0x/cs2-ip-changer#privacy">Privacy</a> · <a href="https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose">Report a bug</a></span>
   </div>
 </footer>
+<script>
+(function(){
+  var d=document;
+  /* on a phone: copy this page's link to open it on the PC */
+  d.querySelectorAll('[data-copy]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var label=b.textContent,done=function(ok){b.textContent=ok?'Copied':'Copy failed';setTimeout(function(){b.textContent=label},1800)};
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(b.getAttribute('data-copy')).then(function(){done(true)},function(){done(false)})}else{done(false)}
+    });
+  });
+  /* a screenshot opens at full size over the page; a click or Escape closes it (without JS the link opens the picture) */
+  var box;
+  d.addEventListener('click',function(e){
+    var a=e.target.closest&&e.target.closest('a.zoom');
+    if(!a||e.button||e.ctrlKey||e.metaKey||e.shiftKey||!window.HTMLDialogElement)return;
+    e.preventDefault();
+    if(!box){box=d.createElement('dialog');box.className='lightbox';box.setAttribute('aria-label','Screenshot');box.innerHTML='<img alt="">';box.addEventListener('click',function(){box.close()});d.body.appendChild(box)}
+    var img=box.querySelector('img'),src=a.querySelector('img');img.src=a.getAttribute('href');img.alt=src?src.alt:'';box.showModal();
+  });
+  })();
+</script>
 </body>
 </html>

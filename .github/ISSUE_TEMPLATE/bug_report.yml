@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        If the problem is your connection, try Settings > Turn off protection first. If the window won't open, run `CS2IPChanger.exe --restore`.
+        If the problem is your connection, try Turn off protection first (on the Connection page, or in the icon's menu next to the clock). If the window won't open, run `CS2IPChanger.exe --restore`. More in [If something goes wrong](https://github.com/Sepd0x/cs2-ip-changer/blob/main/docs/SETUP.md#if-something-goes-wrong).
 
   - type: input
     id: version
@@ -46,6 +46,7 @@ body:
         - Game only
         - Whole PC while CS2 is open
         - Whole PC, always
+        - "No phone: play on your home connection"
         - Not sure
 
   - type: textarea
@@ -70,7 +71,7 @@ body:
     attributes:
       label: Log
       description: |
-        Log tab > Copy all, then paste it here. If the app won't open, write `none`.
+        Log tab > Copy all, then paste it here, or attach the .zip from Log > Save bug report (it hides your home IP, logins and names; look through it first). If the app won't open, write `none`.
         Before you post, replace your home IP, Steam account names, your Wi-Fi or hotspot name and your Windows user name (it shows up in file paths) with something like `xxx`.
       render: text
     validations:

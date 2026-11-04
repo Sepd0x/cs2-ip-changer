@@ -7,5 +7,8 @@ contact_links:
     url: https://github.com/Sepd0x/cs2-ip-changer#if-something-goes-wrong
     about: How to undo the routes and firewall rules, and what to check when the phone or the game won't connect.
   - name: Questions (FAQ)
-    url: https://github.com/Sepd0x/cs2-ip-changer#faq
-    about: VPNs, VAC, ping, CGNAT, hotspots, regions and what the app sends.
+    url: https://github.com/Sepd0x/cs2-ip-changer/blob/main/docs/FAQ.md
+    about: VPNs, VAC, bans, ping, CGNAT, hotspots, regions and the phone.
+  - name: Guides on the website
+    url: https://sepd0x.github.io/cs2-ip-changer/#guides
+    about: IP bans, how to change your region in CS2, setup with your phone, and how to check the download.

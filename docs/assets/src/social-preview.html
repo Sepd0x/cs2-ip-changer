@@ -1,25 +1,15 @@
 <!doctype html>
 <meta charset="utf-8">
-<link rel="stylesheet" href="base.css">
+<title>Social preview</title>
+<link rel="stylesheet" href="social-preview.css">
 <style>
-  /* Centered, so square crops (Reddit) and 1.91:1 crops (X) keep the title */
-  html, body { background: #121212; }
-  .frame { width: 1280px; height: 640px; border: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-  .frame > img { width: 120px; height: 120px; }
-  .title { font-size: 84px; line-height: 1; margin-top: 32px; }
-  .tag { font-size: 34px; margin-top: 18px; }
-  .route { margin-top: 44px; }
-  .node { font-size: 24px; text-align: left; }
-  .node small { font-size: 18px; }
-  .arrow { width: 56px; }
+  .h{position:absolute;left:0;right:0;top:62px;text-align:center;font-size:64px}
+  /* captura real (docs/screenshots/connection.png, recorte 580x296) a 1,15 */
+  .win{left:306px;top:236px;width:668px}
 </style>
-<div class="frame topline">
-  <img src="../logo.svg" alt="">
-  <div class="title">CS2 IP Changer</div>
-  <div class="tag muted">Route CS2 and Steam through your phone's mobile data.</div>
-  <div class="route">
-    <span class="node">Your PC</span><span class="arrow"></span>
-    <span class="node phone">Phone<small>mobile data</small></span><span class="arrow"></span>
-    <span class="node">Server sees<small class="ip mono">198.51.100.23</small></span>
-  </div>
-</div>
+<body>
+<div class="f"><div class="top"></div><div class="in">
+  <div class="h">IP banned on a CS2 server?<br><em>New IP</em> in one click.</div>
+  <div class="win"><img src="social-preview-status.png" alt=""></div>
+</div></div>
+</body>

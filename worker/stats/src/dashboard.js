@@ -57,13 +57,17 @@ export default {
     if (url.pathname === '/api/summary' || url.pathname === '/api/live') {
       const p = params(url);
       try {
-        const data = url.pathname === '/api/live' ? await live(env.DB, { dev: p.dev, now: now0 }) : await summary(env.DB, { ...p, now: now0 });
+        // D2: the developer's own PCs (EXCLUDE_IDS) stay out of everyone's numbers here too, as on /classic; with ?dev=1 they are in
+        const exclude = excludeIds(env.EXCLUDE_IDS);
+        const data = url.pathname === '/api/live' ? await live(env.DB, { dev: p.dev, now: now0, exclude }) : await summary(env.DB, { ...p, now: now0, exclude });
         return json(data);
       } catch (e) { return json({ error: String(e?.message || e) }, 500); }
     }
     if (url.pathname === '/api/github') return json(await github(env, fetch, now0));
-    const asset = url.pathname === '/dashboard' ? ASSETS['index.html'] : url.pathname.startsWith('/d/') ? ASSETS[url.pathname.slice(3)]
-      : url.pathname.startsWith('/ui/') ? ASSETS[url.pathname.slice(1)] : null;
+    // Only the packed files: a name like __proto__ or toString is not one of them (Object.hasOwn)
+    const file = (name) => (Object.hasOwn(ASSETS, name) ? ASSETS[name] : null);
+    const asset = url.pathname === '/dashboard' ? file('index.html') : url.pathname.startsWith('/d/') ? file(url.pathname.slice(3))
+      : url.pathname.startsWith('/ui/') ? file(url.pathname.slice(1)) : null;
     if (asset) return serveAsset(request, asset);
     if (url.pathname !== '/classic') return text('Not found', 404);
     const days = DAYS.includes(Number(url.searchParams.get('days'))) ? Number(url.searchParams.get('days')) : 30;
@@ -100,12 +104,12 @@ function serveAsset(request, a) {
   });
 }
 
-/** Old fixed install IDs of the developer's PCs (before beta.8), as a secret: comma or space separated. */
+/** Install IDs of the developer's PCs (release builds without Mine in telemetry.json), as a secret: comma or space separated. */
 export function excludeIds(s) {
   return String(s || '').split(/[\s,]+/).filter((x) => /^[0-9a-f]{32}$/.test(x)).slice(0, 50);
 }
 
-/** Every number on the page from the database, leaving out dev builds. An ID on one day = one install-day (the ID is daily). */
+/** Every number on the page from the database, leaving out dev builds. An ID on one day = one install-day. */
 export async function collect(db, { days, now, exclude = [] }) {
   const since = new Date(now - (days - 1) * 864e5).toISOString().slice(0, 10);
   const not = exclude.length ? ` AND id NOT IN (${exclude.map(() => '?').join(',')})` : '';
@@ -242,7 +246,7 @@ const card = (title, body, cls = '') => `<section class="card${cls ? ' ' + cls :
 
 export function page({ days, stats, gh, now, email }) {
   const s = stats || {};
-  const tabs = DAYS.map((d) => (d === days ? `<b>${d} days</b>` : `<a href="/dashboard?days=${d}">${d} days</a>`)).join('');
+  const tabs = DAYS.map((d) => (d === days ? `<b>${d} days</b>` : `<a href="/classic?days=${d}">${d} days</a>`)).join('');
   // The ones not already in the top 12
   const least = s.clicks?.length > 12 ? s.clicks.slice(12).reverse().slice(0, 6) : [];
   const today = s.perDay?.at(-1), yesterday = s.perDay?.at(-2);
@@ -306,5 +310,5 @@ footer{max-width:1200px;margin:auto;padding:0 20px 30px;color:var(--ink3);font-s
 @media(max-width:900px){main{grid-template-columns:repeat(2,minmax(0,1fr))}.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){header,main,footer{padding-left:12px;padding-right:12px}main{grid-template-columns:minmax(0,1fr)}.span2{grid-column:auto}.tv,.tile.big .tv{font-size:24px}}
 </style></head><body><header><h1>CS2 IP Changer <span>stats</span></h1><nav>${tabs}</nav></header>
-<main>${body}${ghBody}</main><footer>Dev builds left out. A user = one install open on one day: the app's ID is new every day, so nobody can be followed from one day to the next, and someone who opens the app on 3 days counts 3 times. New users = installs that accepted the usage stats notice that day (also once for someone coming from beta.7). Days in UTC. GitHub numbers kept 10 minutes. ${esc(new Date(now).toISOString().slice(0, 16).replace('T', ' '))} UTC · ${esc(email)}</footer></body></html>`;
+<main>${body}${ghBody}</main><footer>Dev builds left out. A user = one install open on one day, so someone who opens the app on 3 days counts 3 times. The app's ID is random (never from the PC or the person) and, since beta.9, kept for the install (in beta.8 it was new every day). New users = installs that accepted the usage stats notice that day (also once for someone coming from beta.7). Days in UTC. GitHub numbers kept 10 minutes. ${esc(new Date(now).toISOString().slice(0, 16).replace('T', ' '))} UTC · ${esc(email)}</footer></body></html>`;
 }

@@ -9,7 +9,11 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const RM = matchMedia('(prefers-reduced-motion: reduce)');
   const MIN = 5, LOW = 30;
-  const LIVE_MIN = new URLSearchParams(location.search).get('dev') === '1' ? 1 : 5;   // the developer's own test PCs: exact numbers
+  // Nov. 2026 (audit D10): the real dashboard is private (behind Access, only its owner sees it), so it shows exact numbers with
+  // their n from 1 up, and only greys the small ones. The mock-up keeps the public rules (5, "menos de 5"). The suggestions keep MIN.
+  const REAL = !!window.realData;
+  const SHOW_MIN = REAL ? 1 : MIN;
+  const LIVE_MIN = REAL || new URLSearchParams(location.search).get('dev') === '1' ? 1 : 5;
   const nf = (n, d = 0) => Number(n).toLocaleString('pt-PT', { minimumFractionDigits: d, maximumFractionDigits: d });
   const nfa = (v) => (v == null ? '-' : Math.abs(v) < 10 && v % 1 ? nf(v, 1) : nf(Math.round(v)));
   const pc = (v, d = 0) => (v == null ? '-' : `${nf(v, d)}%`);
@@ -24,7 +28,7 @@
   const niceMax = (v) => { const p = 10 ** Math.floor(Math.log10(v || 1)); for (const m of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * p >= v) return m * p; return 10 * p; };
   /** Percentagem com o n: '-' e "poucos dados" abaixo de MIN; classe 'low' abaixo de LOW. */
   function ratio(num, den, dec = 0) {
-    if (!den || den < MIN) return { v: null, txt: '-', note: `poucos dados (n=${nf(den || 0)})`, cls: 'low' };
+    if (!den || den < SHOW_MIN) return { v: null, txt: '-', note: `poucos dados (n=${nf(den || 0)})`, cls: 'low' };
     const v = (100 * num) / den;
     return { v, txt: pc(v, dec), note: `n=${nf(den)}`, cls: den < LOW ? 'low' : '' };
   }
@@ -88,7 +92,9 @@
   }
   const periodLabel = () => (D.period === 1 ? `hoje até às ${D.now}` : `últimos ${D.period} dias`);
   const periodShort = () => (D.period === 1 ? 'hoje' : `em ${D.period} dias`);
-  const prevLabel = () => (D.period === 1 ? 'contra ontem até à mesma hora' : 'contra o período antes');
+  const prevLabel = () => (D.period === 1 ? (REAL ? 'contra ontem inteiro, só as percentagens' : 'contra ontem até à mesma hora') : 'contra o período antes');
+  /** Minutes as minutes below an hour (before, 40 minutes showed as "0 h"). */
+  const fmin = (v) => (v < 60 ? `${nf(v)} min` : `${nf(v / 60, v < 600 ? 1 : 0)} h`);
   const scrName = (id) => UI.screens.find((s) => s.id === id)?.name || id;
   const UDn = () => D.totals.users;
 
@@ -148,7 +154,7 @@
   }
 
   function cols(rows, keys, o = {}) {
-    if (o.norm) { const tot = Object.fromEntries(keys.map((k) => [k.k, sum(rows, (r) => r[k.k])])); keys = keys.filter((k) => tot[k.k] >= MIN); if (!keys.length) return `<p class="note">Poucos dados (n=${nf(Math.max(0, ...Object.values(tot)))}).</p>`; rows = rows.map((r) => ({ ...r, ...Object.fromEntries(keys.map((k) => [k.k, tot[k.k] ? (100 * r[k.k]) / tot[k.k] : 0])) })); o = { ...o, fmt: (v) => pc(v), tots: tot }; }
+    if (o.norm) { const tot = Object.fromEntries(keys.map((k) => [k.k, sum(rows, (r) => r[k.k])])); keys = keys.filter((k) => tot[k.k] >= SHOW_MIN); if (!keys.length) return `<p class="note">Poucos dados (n=${nf(Math.max(0, ...Object.values(tot)))}).</p>`; rows = rows.map((r) => ({ ...r, ...Object.fromEntries(keys.map((k) => [k.k, tot[k.k] ? (100 * r[k.k]) / tot[k.k] : 0])) })); o = { ...o, fmt: (v) => pc(v), tots: tot }; }
     const max = Math.max(1, ...rows.flatMap((r) => keys.map((k) => r[k.k])));
     const f = o.fmt || nf;
     const html = `<div class="cols" style="height:${o.h || 118}px">${rows.map((r) => `<div>${keys.length === 1 || o.labels ? `<span class="vv">${keys.map((k) => f(r[k.k])).join(' · ')}</span>` : ''}<div class="bs">${keys.map((k) => `<i style="height:${(r[k.k] / max) * 100}%;background:${k.color}" data-tip="${esc(`${r.band}${keys.length > 1 ? ` · ${k.name}` : ''}: ${f(r[k.k])}`)}"></i>`).join('')}</div><small>${esc(r.band)}</small></div>`).join('')}</div>`;
@@ -509,12 +515,12 @@
 
   function funnelHtml() {
     const F = D.funnel, top = F[0].n;
-    if (top < MIN) return `<p class="note">Poucos dados: ${plural(top, 'instalação nova', 'instalações novas')} ${periodShort()}.</p>`;
+    if (top < SHOW_MIN) return `<p class="note">Poucos dados: ${plural(top, 'instalação nova', 'instalações novas')} ${periodShort()}.</p>`;
     return `<div class="fun">${F.map((s, i) => `${i ? `<span></span><span class="dr${F[i - 1].n && 1 - s.n / F[i - 1].n >= 0.2 ? ' worst' : ''}">−${pc(F[i - 1].n ? (1 - s.n / F[i - 1].n) * 100 : 0)}</span>` : ''}<span class="k" title="${esc(s.label)}">${esc(s.label)}</span><span class="t"><i style="width:${(s.n / top) * 100}%"></i></span><span class="v">${nf(s.n)}<small>${pc((100 * s.n) / top)}</small></span>`).join('')}</div>`;
   }
 
   const feedLi = (e) => `<li><span class="tm">${hhmm(e.t)}</span><span class="vv">${esc(e.version)}</span><span><span class="sq ${e.tone}"></span>${esc(e.text)}</span></li>`;
-  const liveFeedHtml = (items) => `<ul class="feed">${items.map(feedLi).join('')}</ul>`;
+  const liveFeedHtml = (items) => (D.live.noFeed ? '<p class="note">Ainda não recolhido: o servidor guarda só o último sinal de cada instalação, sem eventos.</p>' : `<ul class="feed">${items.map(feedLi).join('')}</ul>`);
   /** Contagens ao vivo: barra só a partir de 5; abaixo disso "menos de 5". */
   // Supressão secundária: se só uma categoria fica abaixo de 5, a menor das outras também se esconde ("5 ou mais"),
   // para não se tirar a pequena por subtração do total.
@@ -527,7 +533,7 @@
   const liveHead = () => `<div class="livebig"><span class="big${D.live.now < LIVE_MIN ? ' bigtxt' : ''}">${lc(D.live.now)}</span><span class="dim">a usar agora · ${lc(D.live.inGame)} em jogo · ${lc(D.live.protectedN)} com proteção ligada</span></div>`;
 
   function stageBox(sid, mini) {
-    return `<div class="rwrap${mini ? ' mini' : ''}" id="${mini ? 'miniRep' : 'rep'}">${mini ? '' : `<div class="rnav">${UI.screens.map((s, i) => `<button style="top:${((52 + 62 * i) / 800 * 100).toFixed(2)}%;--sh:${Math.min(42, Math.round(D.screens[s.id].share * 0.7))}%" data-scr="${s.id}" aria-current="${s.id === sid}" data-tip="${esc(`${s.name}: ${D.screens[s.id].share}% do tempo com a app aberta`)}">${icon(s.icon)}<span>${esc(s.name)}</span><span class="pc">${nf(D.screens[s.id].share, D.screens[s.id].share % 1 ? 1 : 0)}%<i style="width:${Math.max(6, D.screens[s.id].share * 1.4)}%"></i></span></button>`).join('')}<div class="ver">v0.1.0<br>${esc(D.newest || 'beta.11')}</div></div>`}<div class="rstage"></div></div>`;
+    return `<div class="rwrap${mini ? ' mini' : ''}" id="${mini ? 'miniRep' : 'rep'}">${mini ? '' : `<div class="rnav">${UI.screens.map((s, i) => `<button style="top:${((52 + 62 * i) / 800 * 100).toFixed(2)}%;--sh:${Math.min(42, Math.round(D.screens[s.id].share * 0.7))}%" data-scr="${s.id}" aria-current="${s.id === sid}" data-tip="${esc(`${s.name}: ${D.screens[s.id].share}% do tempo com a app aberta`)}">${icon(s.icon)}<span>${esc(s.name)}</span><span class="pc">${nf(D.screens[s.id].share, D.screens[s.id].share % 1 ? 1 : 0)}%<i style="width:${Math.max(6, D.screens[s.id].share * 1.4)}%"></i></span></button>`).join('')}<div class="ver">v0.1.0<br>${esc(D.newest || '-')}</div></div>`}<div class="rstage"></div></div>`;
   }
 
   // ------------------------------------------------------------------ páginas
@@ -551,7 +557,7 @@
       <section class="gb s7"><h2>O que melhorar primeiro <small>${periodLabel()}</small></h2><a class="more" href="#melhorar">Todas (${sug.length})</a>${sugHtml(sug.slice(0, 4))}</section>
       <section class="gb s5"><h2>Onde clicam no Connection</h2><a class="more" href="#app/connection">Abrir o mapa</a>${stageBox('connection', true)}
         <p class="note">${topB[0].n ? `Mais clicados: ${topB.map((b) => `${esc(b.label)} <span class="tab">${nf(b.n)}</span>`).join(' · ')}` : 'Poucos dados com estes filtros.'}</p></section>
-      <section class="gb s4"><h2>1.º dia <small>passos no mesmo dia</small></h2>${funnelHtml()}<p class="note">Downloads do exe no GitHub: ${nf(D.github.downloadsPeriod)} ${unf()}</p></section>
+      <section class="gb s4"><h2>1.º dia <small>passos no mesmo dia</small></h2>${funnelHtml()}<p class="note">${REAL ? `Downloads do exe das versões lançadas no período (desde que saíram): ${nf(D.github.downloadsPeriod)}` : `Downloads do exe no GitHub: ${nf(D.github.downloadsPeriod)}`} ${unf()}</p></section>
       <section class="gb s4"><h2>Telemóvel e partidas</h2><a class="more" href="#telemovel">Detalhe</a>
         <div class="kl">Trocas com IP novo</div><div class="kv ${ipR.cls}">${ipR.txt}</div>${nline(ipR, 'trocas')}
         ${stack([['IP novo', T.ipNew, 'var(--good)'], ['mesmo IP', T.ipSame, 'var(--warn)'], ['sem rede', T.ipNone, 'var(--bad)']])}
@@ -571,7 +577,7 @@
     if (!el) return;
     const n = D.live.lastHour.open.length;
     const hide = (v) => (v < LIVE_MIN ? null : v);
-    chart(el, { dates: [...Array(n)].map(() => D.asOf), h, markers: false, left: 22, label: 'Última hora', fmt: nf, floor: LIVE_MIN,
+    chart(el, { dates: [...Array(n)].map(() => D.asOf), h, markers: false, left: 22, label: 'Última hora', fmt: nf, floor: LIVE_MIN > 1 ? LIVE_MIN : 0,
       xLabels: [[0, 'há 60 min', 'start'], [n - 1, 'agora', 'end']], tipHead: (i) => (i === n - 1 ? 'agora' : `há ${n - 1 - i} min`),
       series: [{ name: 'Abertas', values: D.live.lastHour.open.map(hide), color: 'var(--acc)' }, { name: 'Em jogo', values: D.live.lastHour.game.map(hide), color: 'var(--good)' }] });
   }
@@ -582,10 +588,10 @@
       <section class="gb s8"><h2>Agora <small>instalações com sinal nos últimos 6 min</small></h2>
         <div data-live-box="head">${liveHead()}</div>
         <div class="g" style="gap:14px;margin-top:14px" data-live-box="agg">${liveAggHtml()}</div>
-        <p class="note">Só contagens. Abaixo de 5 diz "menos de 5". Nenhuma linha por instalação, nenhum país.</p></section>
-      <section class="gb s4"><h2>Última hora</h2><div class="chart" id="lvHour"></div>${legend([['abertas', 'var(--acc)'], ['em jogo', 'var(--good)']])}
-        <div class="statrow" style="margin-top:10px"><div class="stat"><div class="kl">Pico na última hora</div><div class="kv">${lc(Math.max(...D.live.lastHour.open))}</div></div></div></section>
-      <section class="gb s7"><h2>Eventos ao vivo <small>tipo, versão e resultado</small></h2><div id="lvFeed">${liveFeedHtml(D.live.feed.slice(0, 18))}</div><p class="note">A hora é a do sinal, de 5 em 5 min.</p></section>
+        <p class="note">Só contagens${LIVE_MIN > 1 ? '. Abaixo de 5 diz "menos de 5"' : ', exatas (página privada)'}. Nenhuma linha por instalação, nenhum país.</p></section>
+      <section class="gb s4"><h2>Última hora</h2><div class="chart" id="lvHour"></div>${legend([['abertas', 'var(--acc)'], ['em jogo', 'var(--good)']])}${REAL ? '<p class="note">Sem histórico no servidor: a linha começa quando abres a página (um ponto por minuto).</p>' : ''}
+        <div class="statrow" style="margin-top:10px"><div class="stat"><div class="kl">Pico na última hora</div><div class="kv">${lc(Math.max(0, ...D.live.lastHour.open.filter((v) => v != null)))}</div></div></div></section>
+      <section class="gb s7"><h2>Eventos ao vivo <small>tipo, versão e resultado</small></h2><div id="lvFeed">${liveFeedHtml(D.live.feed.slice(0, 18))}</div>${D.live.noFeed ? '' : '<p class="note">A hora é a do sinal, de 5 em 5 min.</p>'}</section>
       <section class="gb s5"><h2>Hoje até às ${esc(D.now)}</h2>
         <div class="statrow"><div class="stat"><div class="kl">Instalações abertas</div><div class="kv">${nf(today.users)}</div></div><div class="stat"><div class="kl">Novas</div><div class="kv">${nf(today.fresh)}</div></div><div class="stat"><div class="kl">Trocas de IP</div><div class="kv">${nf(today.ipNew + today.ipSame + today.ipNone)}</div></div><div class="stat"><div class="kl">Partidas</div><div class="kv">${nf(today.matches)}</div></div><div class="stat"><div class="kl">Crashes</div><div class="kv ${today.crashes ? 'bad' : ''}">${nf(today.crashes)}</div></div></div>
         <h3>Trocas de hoje</h3>${stack([['IP novo', today.ipNew, 'var(--good)'], ['mesmo IP', today.ipSame, 'var(--warn)'], ['sem rede', today.ipNone, 'var(--bad)']])}${legend([['IP novo', 'var(--good)'], ['mesmo IP', 'var(--warn)'], ['sem rede', 'var(--bad)']])}</section>
@@ -616,7 +622,7 @@
         ${s.img ? `<div class="heatleg"><span>menos</span><canvas class="ramp" id="ramp"></canvas><span>mais cliques</span><b class="tab">n = ${plural(total, 'clique', 'cliques')}</b><span class="dim">· escala ${S.heatScale === 'log' ? 'log' : 'linear'} de cada ecrã · grelha 24×16 desfocada · clica na barra da app para trocar de ecrã</span></div>` : '<div class="heatleg">Sem captura, sem mapa: os cliques ficam nos botões e na lista ao lado.</div>'}</section>
       <div class="aside">
         <section class="gb"><h2>Este ecrã <small>${esc(s.name)}</small></h2><div class="scrstats">
-          <div><div class="kl">Do tempo aberto</div><div class="kv">${nf(d.share, d.share % 1 ? 1 : 0)}%</div><div class="nn">${nf(d.minutes / 60)} h</div></div>
+          <div><div class="kl">Do tempo aberto</div><div class="kv">${nf(d.share, d.share % 1 ? 1 : 0)}%</div><div class="nn">${fmin(d.minutes)}</div></div>
           <div><div class="kl">Abrem este ecrã</div><div class="kv ${openR.cls}">${openR.txt}</div><div class="nn">${nf(d.days)} de ${nf(UD)} inst.-dia</div></div>
           <div><div class="kl">Cliques</div><div class="kv">${nf(clicks)}</div><div class="nn">${nf(d.visits)} visitas</div></div>
           <div><div class="kl">Cliques mortos</div><div class="kv ${deadN ? 'warn' : ''}">${nf(deadN)}</div><div class="nn">${deadR.v == null ? '-' : `${deadR.txt} dos cliques`}</div></div>
@@ -628,7 +634,7 @@
       </div>
     </div>
     <div class="g" style="margin-top:22px">
-      <section class="gb s4"><h2>Minutos por ecrã</h2>${bars(UI.screens.map((q) => ({ k: q.name, v: D.screens[q.id].minutes, sub: `${nf(D.screens[q.id].share, D.screens[q.id].share % 1 ? 1 : 0)}%`, hl: q.id === sid })).sort((a, b) => b.v - a.v), { fmt: (v) => `${nf(v / 60)} h` })}</section>
+      <section class="gb s4"><h2>Minutos por ecrã</h2>${bars(UI.screens.map((q) => ({ k: q.name, v: D.screens[q.id].minutes, sub: `${nf(D.screens[q.id].share, D.screens[q.id].share % 1 ? 1 : 0)}%`, hl: q.id === sid })).sort((a, b) => b.v - a.v), { fmt: fmin })}</section>
       <section class="gb s4"><h2>1.º ecrã depois do arranque <small>a app abre no Connection</small></h2>${shareBars(D.firstScreen.map((x) => ({ k: x.screen === 'connection' ? 'Fica no Connection' : scrName(x.screen), n: x.n })), D.totals.sessions)}<p class="note">n = ${plural(D.totals.sessions, 'sessão', 'sessões')}</p></section>
       <section class="gb s4"><h2>Atalho ou rato <small>a mesma ação</small></h2>${D.shortcuts.map((x) => { const t = x.kb + x.mouse, q = ratio(x.kb, t); return `<div style="margin-bottom:10px"><div class="kl" style="color:var(--ink2)">${esc(x.action)} <span class="dim">· ${esc(x.keys)}</span></div>${stack([['atalho', x.kb, 'var(--acc)'], ['rato', x.mouse, 'var(--line2)']])}<div class="kd"><span class="${q.cls}">atalho ${q.txt}</span><span>${esc(q.note)}</span></div></div>`; }).join('')}</section>
       <section class="gb s8"><h2>Caminhos entre ecrãs <small>de onde para onde · ${periodLabel()} · passa o rato num ecrã</small></h2><div class="chart" id="sankey"></div></section>
@@ -662,15 +668,15 @@
     return `<div class="g">
       <section class="gb s12"><h2>Instalações abertas por dia <small>uma instalação aberta num dia conta 1</small></h2><div class="chart" id="usUsers"></div>${legend([['as outras', 'var(--acc)'], ['novas', 'var(--acc2)'], ['versão nova', '', 'dash']])}</section>
       <section class="gb s6"><h2>1.º dia <small>cada passo é parte do anterior, no mesmo dia · ${periodLabel()}</small></h2>${funnelHtml()}<p class="note">1.º arranque = aceitaram o aviso. Downloads do GitHub ficam à parte (GitHub, não filtrado). A retenção está nas coortes.</p></section>
-      <section class="gb s6"><h2>Quando usam <small>sessões, hora de Lisboa</small></h2><div class="hm">${days.map((dn, di) => `<span>${dn}</span>${D.when[di].map((v, h) => `<i style="background:${heatCell(v / dmax).bg}" data-tip="${dn} ${h}h: ${plural(v, 'sessão', 'sessões')}"></i>`).join('')}`).join('')}<div class="hx"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>23h</span></div></div>
-        <div class="scale">menos ${[0, 0.25, 0.5, 0.75, 1].map((t) => `<i style="background:${heatCell(t).bg}"></i>`).join('')} mais · n = ${plural(sum(D.when.flat()), 'sessão', 'sessões')}</div></section>
+      <section class="gb s6"><h2>Quando usam <small>${D.whenReal ? 'instalações com a app aberta em cada hora (pelos relatórios)' : 'sessões'}, hora de Lisboa</small></h2><div class="hm">${days.map((dn, di) => `<span>${dn}</span>${D.when[di].map((v, h) => `<i style="background:${heatCell(v / dmax).bg}" data-tip="${dn} ${h}h: ${D.whenReal ? plural(v, 'instalação', 'instalações') : plural(v, 'sessão', 'sessões')}"></i>`).join('')}`).join('')}<div class="hx"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>23h</span></div></div>
+        <div class="scale">menos ${[0, 0.25, 0.5, 0.75, 1].map((t) => `<i style="background:${heatCell(t).bg}"></i>`).join('')} mais · n = ${D.whenReal ? plural(sum(D.when.flat()), 'instalação-hora', 'instalações-hora') : plural(sum(D.when.flat()), 'sessão', 'sessões')}</div></section>
       <section class="gb s8"><h2>Coortes por semana de instalação <small>abriram a app N dias depois · "3 de 6" com menos de 20</small></h2><div class="tw"><table class="t coh"><thead><tr><th>Semana</th><th class="n">Novas</th>${['Dia 1', 'Dia 3', 'Dia 7', 'Dia 14', 'Dia 30'].map((x) => `<th class="n">${x}</th>`).join('')}</tr></thead><tbody>
         ${D.cohorts.map((c) => `<tr><td>${fdate(c.week)}</td><td class="n">${nf(c.n)}</td>${!c.n ? '<td class="dim" colspan="5">sem instalações novas</td>' : c.back[1] == null ? '<td class="dim" colspan="5">ainda não passou uma semana</td>' : c.back.slice(1).map((v) => cohCell(v, c.n)).join('')}</tr>`).join('')}</tbody></table></div>
         <p class="note">Desde a beta.9: cada instalação conta uma vez por coluna (ID fixo e aleatório, sem nada do PC). Antes: estimativa pela idade em bandas, em instalações-dia.</p></section>
       <section class="gb s4"><h2>Idade da instalação <small>instalações-dia, dias desde que foi instalada</small></h2>
         <div class="tw"><table class="t"><thead><tr><th>Dias</th><th class="n">Instalações-dia</th><th class="n">%</th></tr></thead><tbody>${D.installAge.map((a) => { const q = ratio(a.n, UD); return `<tr><td>${esc(a.band)}</td><td class="n">${nf(a.n)}</td><td class="n ${q.cls}">${q.txt}</td></tr>`; }).join('')}</tbody></table></div>
         <h3>Dias com a app aberta nos últimos 7 <small class="dim">quem abriu pelo menos 1</small></h3>${cols(D.activeDays, [{ k: 'n', name: 'Instalações-dia', color: 'var(--acc)' }], { h: 90 })}</section>
-      <section class="gb s6"><h2>Minutos por sessão por dia <small>mediana</small></h2><div class="chart" id="usMin"></div></section>
+      <section class="gb s6"><h2>${REAL ? 'Minutos por instalação-dia, por dia <small>média</small>' : 'Minutos por sessão por dia <small>mediana</small>'}</h2><div class="chart" id="usMin"></div></section>
       <section class="gb s3"><h2>Sessões</h2>
         <h3>Duração</h3>${cols(D.sessionLen, [{ k: 'n', name: 'Sessões', color: 'var(--acc)' }], { h: 80 })}
         <h3>Como arranca</h3>${stack([['com o Windows', D.startKind.windows, 'var(--acc)'], ['à mão', D.startKind.hand, 'var(--acc2)']])}<div class="kd"><span>com o Windows ${ratio(D.startKind.windows, D.totals.sessions).txt}</span><span>n=${nf(D.totals.sessions)}</span></div>
@@ -681,13 +687,14 @@
   P.uso.after = () => {
     const dates = D.days.map((d) => d.date);
     chart($('#usUsers'), { dates, type: 'bars', stacked: true, total: 'Instalações abertas', h: 210, series: [{ name: 'As outras', values: D.days.map((d) => d.back), color: 'var(--acc)' }, { name: 'Novas', values: D.days.map((d) => d.fresh), color: 'var(--acc2)' }] });
-    chart($('#usMin'), { dates, h: 170, fmt: (v) => `${nf(v)} min`, tipFoot: (i) => `n = ${plural(D.days[i].sessions, 'sessão', 'sessões')}`, series: [{ name: 'Mediana', values: D.days.map((d) => (d.sessions >= MIN ? d.sessMed : null)), color: 'var(--acc)', area: true }] });
+    chart($('#usMin'), { dates, h: 170, fmt: (v) => `${nf(v)} min`, tipFoot: (i) => (REAL ? `n = ${plural(D.days[i].users, 'instalação-dia', 'instalações-dia')}` : `n = ${plural(D.days[i].sessions, 'sessão', 'sessões')}`),
+      series: [{ name: REAL ? 'Média' : 'Mediana', values: D.days.map((d) => ((REAL ? d.users >= SHOW_MIN : d.sessions >= MIN) ? d.sessMed : null)), color: 'var(--acc)', area: true }] });
   };
 
   P.telemovel = () => {
     const p = D.phone, T = D.totals, ipAll = T.ipNew + T.ipSame + T.ipNone, ipR = ratio(T.ipNew, ipAll);
     const setupTop = Math.max(1, p.setup[0].n), ses = D.totals.sessions;
-    const pctCols = (rows, den) => cols(rows.map((x) => ({ band: x.band, pct: den >= MIN ? (100 * x.n) / den : 0 })), [{ k: 'pct', name: '%', color: 'var(--acc)' }], { fmt: (v) => (den >= MIN ? pc(v) : '-') });
+    const pctCols = (rows, den) => cols(rows.map((x) => ({ band: x.band, pct: den >= SHOW_MIN ? (100 * x.n) / den : 0 })), [{ k: 'pct', name: '%', color: 'var(--acc)' }], { fmt: (v) => (den >= SHOW_MIN ? pc(v) : '-') });
     return `<div class="g">
       <section class="gb s4"><h2>Trocas de IP <small>${periodLabel()}</small></h2>
         <div class="kl">Trocas com IP novo</div><div class="big ${ipR.cls}">${ipR.txt}</div>${nline(ipR, 'trocas')}
@@ -698,8 +705,8 @@
       <section class="gb s4"><h2>Tentativas até ficar boa <small>n=${nf(ipAll)}</small></h2>${pctCols(p.attempts, ipAll)}</section>
       <section class="gb s4"><h2>Qualidade depois da troca <small>teste da app</small></h2>${shareBars([{ k: 'Boa', n: p.quality.boa, cls: 'good' }, { k: 'Razoável', n: p.quality.razoavel, cls: 'warn' }, { k: 'Má', n: p.quality.ma, cls: 'bad' }], ipAll)}
         <h3>Trocaram outra vez por jitter</h3>${shareBars([{ k: 'Trocas repetidas', n: p.quality.retry }], ipAll)}</section>
-      <section class="gb s6"><h2>Onde o Phone setup para</h2>${p.setup[0].n < MIN ? `<p class="note">Poucos dados (n=${nf(p.setup[0].n)}).</p>` : `<div class="fun">${p.setup.map((s, i) => `${i ? `<span></span><span class="dr${p.setup[i - 1].n && 1 - s.n / p.setup[i - 1].n >= 0.25 ? ' worst' : ''}">−${pc(p.setup[i - 1].n ? (1 - s.n / p.setup[i - 1].n) * 100 : 0)}</span>` : ''}<span class="k" title="${esc(s.k)}">${esc(s.k)}</span><span class="t"><i style="width:${(s.n / setupTop) * 100}%"></i></span><span class="v">${nf(s.n)}</span>`).join('')}</div>`}${p.steps && p.steps.length ? `<h3>Passos vistos <small class="dim">instalações-dia que passaram por cada passo</small></h3>${shareBars(p.steps.map((x) => ({ k: x.k, n: x.n })), Math.max(1, p.setup[0].n))}` : ''}</section>
-      <section class="gb s6"><h2>Do arranque a Protected</h2><div class="kl">Banda mediana</div><div class="kv">${ses >= MIN ? esc(p.toProtectedMedian) : '-'}</div><div class="nn">n=${plural(ses, 'sessão', 'sessões')}</div>${pctCols(p.toProtected, ses)}</section>
+      <section class="gb s6"><h2>Onde o Phone setup para</h2>${p.setup[0].n < SHOW_MIN ? `<p class="note">Poucos dados (n=${nf(p.setup[0].n)}).</p>` : `<div class="fun">${p.setup.map((s, i) => `${i ? `<span></span><span class="dr${p.setup[i - 1].n && 1 - s.n / p.setup[i - 1].n >= 0.25 ? ' worst' : ''}">−${pc(p.setup[i - 1].n ? (1 - s.n / p.setup[i - 1].n) * 100 : 0)}</span>` : ''}<span class="k" title="${esc(s.k)}">${esc(s.k)}</span><span class="t"><i style="width:${(s.n / setupTop) * 100}%"></i></span><span class="v">${nf(s.n)}</span>`).join('')}</div>`}${p.steps && p.steps.length ? `<h3>Passos vistos <small class="dim">instalações-dia que passaram por cada passo</small></h3>${shareBars(p.steps.map((x) => ({ k: x.k, n: x.n })), Math.max(1, p.setup[0].n))}` : ''}</section>
+      <section class="gb s6"><h2>Do arranque a Protected</h2><div class="kl">Banda mediana</div><div class="kv">${ses >= SHOW_MIN ? esc(p.toProtectedMedian) : '-'}</div><div class="nn">n=${plural(ses, 'sessão', 'sessões')}</div>${pctCols(p.toProtected, ses)}</section>
       <section class="gb s6"><h2>Quedas do telemóvel por sessão <small>n=${nf(ses)}</small></h2>${pctCols(p.drops, ses)}</section>
       <section class="gb s6"><h2>Dados móveis por dia <small>instalações-dia, n=${nf(UDn())}</small></h2>${pctCols(p.data, UDn())}</section>
     </div>`;
@@ -714,7 +721,7 @@
     const lagCell = (x) => { const q = ratio(x.lag, x.n); const tone = q.v == null ? 'low' : q.cls === 'low' ? 'low' : q.v >= 40 ? 'bad' : q.v >= 20 ? 'warn' : 'good'; return `<td class="n ${tone}"><span style="font-size:15px">${q.txt}</span><div class="nn">n=${nf(x.n)}</div></td>`; };
     const lagR = ratio(c.laggy, M), valR = ratio(c.valve, M), rjR = ratio(c.rejoin.back, c.rejoin.tries);
     const k2 = [{ k: 'usb', name: 'USB', color: 'var(--acc)' }, { k: 'hotspot', name: 'Hotspot', color: 'var(--acc2)' }];
-    const pctCols = (rows) => cols(rows.map((x) => ({ band: x.band, pct: M >= MIN ? (100 * x.n) / M : 0 })), [{ k: 'pct', name: '%', color: 'var(--acc)' }], { fmt: (v) => (M >= MIN ? pc(v) : '-'), h: 100 });
+    const pctCols = (rows) => cols(rows.map((x) => ({ band: x.band, pct: M >= SHOW_MIN ? (100 * x.n) / M : 0 })), [{ k: 'pct', name: '%', color: 'var(--acc)' }], { fmt: (v) => (M >= SHOW_MIN ? pc(v) : '-'), h: 100 });
     const rows = [S.f.link === 'hotspot' || S.f.link === 'other' ? '' : `<tr><td>USB</td>${lagCell(L.usb.valve)}${lagCell(L.usb.community)}</tr>`, S.f.link === 'usb' || S.f.link === 'other' ? '' : `<tr><td>Hotspot</td>${lagCell(L.hotspot.valve)}${lagCell(L.hotspot.community)}</tr>`].join('');
     return `<div class="g">
       <section class="gb s12"><h2>CS2 <small>${periodLabel()}</small></h2><div class="kstrip">
@@ -754,8 +761,20 @@
         <h3>Arranque até a app estar pronta <small class="dim">sessões</small></h3>${cols(R.startup.map((x) => ({ band: x.band, n: x.n })), [{ k: 'n', name: 'Sessões', color: 'var(--acc)' }], { h: 80 })}</section>
       <section class="gb s4"><h2>Atualizações</h2>${bars([{ k: 'Viram o aviso', v: up.seen }, { k: 'Aceitaram', v: up.accepted }, { k: 'Concluíram', v: up.done, cls: 'good' }, { k: 'Recusaram', v: up.declined, cls: 'warn' }, { k: 'Falharam', v: up.failed, cls: 'bad' }])}
         <h3>Vieram de</h3>${bars(up.from.map((x) => ({ k: x.v, v: x.n, cls: 'dim' })))}</section>
+      ${othersHtml()}
     </div>`;
   };
+  /** D8: what the app sends and no other block shows (counters, clicks outside the map, list sizes, Windows), plain lists. */
+  function othersHtml() {
+    const O = D.others;
+    if (!O) return '';
+    const list = (rows, f) => (rows.length ? `<div class="tw"><table class="t"><tbody>${rows.map(f).join('')}</tbody></table></div>` : '<p class="note">Nada neste período.</p>');
+    return `<section class="gb s4"><h2>Outros contadores <small>sem bloco próprio</small></h2>${list(O.counters, (c) => `<tr><td>${esc(c.k)}${c.k !== c.code ? `<div class="nn mono">${esc(c.code)}</div>` : ''}</td><td class="n">${nf(c.n)}</td></tr>`)}
+        <p class="note">Instalações no período antes: ${nf(O.prevInstalls)}.</p></section>
+      <section class="gb s4"><h2>Cliques fora do mapa <small>botões e menus sem lugar no "Na app"</small></h2>${list(O.clicks, (c) => `<tr><td class="mono">${esc(c.k)}</td><td class="n">${nf(c.n)}</td><td class="n dim">${plural(c.days, 'inst.-dia', 'inst.-dia')}</td></tr>`)}</section>
+      <section class="gb s4"><h2>Tamanho das listas <small>instalações-dia por banda</small></h2>${list(O.sizes, (z) => `<tr><td>${esc(z.k)}<div class="nn">${z.bands.map((b) => `${esc(b.band)}: ${nf(b.n)}`).join(' · ')}</div></td></tr>`)}<p class="note">Banda: instalações-dia com esse tamanho.</p>
+        <h3>Versão do Windows <small class="dim">do relatório com ID</small></h3>${list(O.oses, (o) => `<tr><td class="mono">${esc(o.k)}</td><td class="n">${nf(o.n)}</td></tr>`)}</section>`;
+  }
   P.fiab.after = () => {
     const cs = D.rel.crashSeries, off = cs.length - D.chartN, seg = cs.slice(off);
     const dates = seg.map((d) => d.date);
@@ -775,8 +794,8 @@
       return `<tr><td>${label}</td><td class="n ${a.cls}">${a.txt}</td><td class="n ${b.cls}">${b.txt}</td><td class="d ${tone}">${dv >= 0 ? '+' : '−'}${nf(Math.abs(dv), 1)}${unit}</td></tr>`;
     };
     const band = (label, a, b) => { const d = BANDS.indexOf(a) - BANDS.indexOf(b); return `<tr><td>${label} <small class="dim">banda mediana</small></td><td class="n">${esc(a)}</td><td class="n">${esc(b)}</td><td class="d ${d === 0 ? 'dim' : d < 0 ? 'good' : 'bad'}">${d === 0 ? 'igual' : `${Math.abs(d)} ${Math.abs(d) === 1 ? 'banda' : 'bandas'} ${d < 0 ? 'mais rápida' : 'mais lenta'}`}</td></tr>`; };
-    const num = (v, n) => (n >= MIN ? { v, txt: nf(v, v % 1 ? 1 : 0), cls: n < LOW ? 'low' : '' } : { v: null, txt: '-', cls: 'low' });
-    const opt = (sel) => vs.map((v) => `<option value="${v}"${v === sel ? ' selected' : ''}>${v}</option>`).join('');
+    const num = (v, n) => (n >= SHOW_MIN ? { v, txt: nf(v, v % 1 ? 1 : 0), cls: n < LOW ? 'low' : '' } : { v: null, txt: '-', cls: 'low' });
+    const opt = (sel) => vs.map((v) => `<option value="${esc(v)}"${v === sel ? ' selected' : ''}>${esc(v)}</option>`).join('');
     const gh = Object.fromEntries(D.github.releases.map((r) => [r.tag, r.exe]));
     return `<div class="g">
       <section class="gb s12"><h2>Adoção ao longo do tempo <small>% das instalações abertas em cada dia</small> ${unf()}</h2><div class="chart" id="vsAdopt"></div><div id="vsLeg"></div></section>
@@ -830,7 +849,8 @@
   P.github = () => {
     const G = D.github;
     const dl = sum(G.releases, (r) => r.exe);
-    const conv = anyFilter() ? { txt: '-', note: 'só sem filtros' } : (() => { const q = ratio(D.funnel[0].n, G.downloadsPeriod); return { txt: q.txt, note: q.note }; })();
+    // The real dashboard has no downloads per day (GitHub gives totals since each release), so a ratio for the period would be made up
+    const conv = REAL ? { txt: '-', note: 'ainda não recolhido: sem downloads por dia' } : anyFilter() ? { txt: '-', note: 'só sem filtros' } : (() => { const q = ratio(D.funnel[0].n, G.downloadsPeriod); return { txt: q.txt, note: q.note }; })();
     return `<div class="g">
       <section class="gb s12"><h2>GitHub ${unf()}</h2><div class="kstrip">
         <div class="kc"><div class="kl">Estrelas</div><div class="kv">${nf(G.stars)}</div><div class="nn">${plural(G.forks, 'fork', 'forks')} · ${nf(G.watchers)} a seguir</div></div>
@@ -843,6 +863,7 @@
       <section class="gb s4"><h2>De onde vêm</h2>${bars(G.referrers.map((r) => ({ k: r.k, v: r.n, sub: `${r.u}`, tip: `${r.k}: ${r.n} visitas, ${r.u} únicos` })))}</section>
       <section class="gb s6"><h2>Downloads por versão</h2>${bars(G.releases.map((r) => ({ k: `${r.tag} · ${fdate(r.date)}`, v: r.exe })))}</section>
       <section class="gb s6"><h2>Páginas mais vistas</h2>${bars(G.paths.map((r) => ({ k: r.k, kHtml: `<span class="mono">${esc(r.k)}</span>`, v: r.n, sub: `${r.u}` })))}</section>
+      ${(G.problems || []).length ? `<section class="gb s12"><h2>O GitHub não respondeu a tudo</h2>${G.problems.map((x) => `<p class="note" style="color:var(--bad)">${esc(x)}</p>`).join('')}<p class="note">Os números a zero acima podem vir disto, não serem zeros.</p></section>` : ''}
     </div>`;
   };
   P.github.after = () => {
@@ -854,7 +875,7 @@
   function renderNav() {
     const n = suggestions().filter((s) => s.tone === 'bad' || s.tone === 'warn').length;
     $('#nav').innerHTML = PAGES.map((p) => (p ? `<a href="#${p.id}" data-page="${p.id}"${p.id === S.page ? ' aria-current="page"' : ''}>${icon(p.icon)}<span>${esc(p.name)}</span>${p.id === 'melhorar' && n ? `<span class="cnt">${n}</span>` : ''}</a>` : '<div class="sep"></div>')).join('')
-      + '<div class="navnote">Unidade: instalação-dia; o ID muda todos os dias. O IP chega à Cloudflare como em qualquer pedido e não é lido nem guardado.</div>';
+      + '<div class="navnote">Unidade: instalação-dia. Desde a beta.9 o ID é aleatório e fixo por instalação (pseudónimo). O IP chega à Cloudflare como em qualquer pedido e não é lido nem guardado.</div>';
   }
   function renderFilters() {
     const o = D.options, f = S.f;
@@ -868,7 +889,7 @@
     $$('#period button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.p === f.period)));
   }
   function renderFooter() {
-    $('#foot').innerHTML = 'Unidade dos gráficos por dia: instalação-dia. Desde a beta.9 o ID é fixo por instalação (aleatório, nunca do PC nem da pessoa; Delete my stats na app apaga tudo dele), por isso instalações diferentes, novas, as que voltaram e as coortes são exatas; na beta.8 o ID mudava todos os dias e essas contas usam a idade em bandas (0, 1, 2-3, 4-6, 7-13, 14-29, 30+). O ambiente vem num relatório à parte, sem ID, só em contagens. O IP chega à Cloudflare em cada pedido, como em qualquer site, e não é lido nem guardado: os logs e a observability do Worker estão desligados. Percentagens com menos de 5 casos mostram "-"; com menos de 30 ficam a cinzento. Builds de desenvolvimento ficam de fora. Dias em UTC; "Quando usam" em hora de Lisboa. Grelha de cliques: 24×16 células sobre a área à direita da barra lateral da app.';
+    $('#foot').innerHTML = `Unidade dos gráficos por dia: instalação-dia. Desde a beta.9 o ID é fixo por instalação (aleatório, nunca do PC nem da pessoa; Delete my stats na app apaga tudo dele), por isso instalações diferentes, novas, as que voltaram e as coortes são exatas; na beta.8 o ID mudava todos os dias e essas contas usam a idade em bandas (0, 1, 2-3, 4-6, 7-13, 14-29, 30+). O ambiente vem num relatório à parte, sem ID, só em contagens. O IP chega à Cloudflare em cada pedido, como em qualquer site, e não é lido nem guardado: os logs e a observability do Worker estão desligados. ${REAL ? 'Números exatos com o n ao lado (página privada); com menos de 30 casos ficam a cinzento.' : 'Percentagens com menos de 5 casos mostram "-"; com menos de 30 ficam a cinzento.'} Builds de desenvolvimento ficam de fora. Dias em UTC; "Quando usam" em hora de Lisboa. Grelha de cliques: 24×16 células sobre a área à direita da barra lateral da app.`;
   }
   function setLivePill() { $('#liveN').textContent = lc(D.live.now); }
 
@@ -895,7 +916,13 @@
     animateNumbers(main);
   }
 
-  async function refresh() { if (window.fetchReal) { try { await fetchReal(S.f); } catch (e) { showErr(e); return; } } load(); renderFilters(); renderNav(); renderPage(); setLivePill(); }
+  async function refresh() { if (window.fetchReal) { try { await fetchReal(S.f); } catch (e) { showErr(e); return; } } load(); renderBar(); renderFilters(); renderNav(); renderPage(); setLivePill(); }
+  /** The bar at the top: in production, how fresh the data is (red after 12 hours without a report), redone on every refresh. */
+  function renderBar() {
+    const bar = document.querySelector('.mockbar');
+    if (!D.realBar || !bar) return;
+    bar.innerHTML = `<span${D.realStale ? ' style="color:var(--bad)"' : ''}>${esc(D.realBar)}</span>`;
+  }
   function showErr(e) { $('#main').innerHTML = `<section class="gb s12"><h2>Não deu para ler os dados</h2><p class="note">${esc(String(e && e.message || e))}</p></section>`; }
 
   function route() {
@@ -984,7 +1011,7 @@
     try { const l = JSON.parse(store.get('layers2') || 'null'); if (l) Object.assign(S.layers, l); } catch { /* ignora */ }
     if (window.fetchReal) { try { await fetchReal(S.f); } catch (e) { showErr(e); return; } }
     load();
-    if (D.realBar && document.querySelector('.mockbar')) document.querySelector('.mockbar').innerHTML = `<span>${esc(D.realBar)}</span>`;
+    renderBar();
     renderFilters(); renderNav(); renderFooter(); setLivePill();
     if (!location.hash) { const last = store.get('page'); if (last && last !== 'geral') history.replaceState(null, '', `#${last}`); }
     route();

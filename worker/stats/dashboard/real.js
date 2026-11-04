@@ -49,18 +49,42 @@
       lag: [pct(T.laggy, T.matches), T.matches], crashFree: [T.sessions ? 100 - pct(T.crashes, T.sessions) : null, T.sessions] };
     const ser = { usersPerDay: (d) => d.users, fresh: (d) => d.fresh, minPerSession: (d) => (d.users ? d.minutes / d.users : null), ipNew: (d) => pct(d.ipNew, d.ipNew + d.ipSame + d.ipNone),
       lag: (d) => pct(d.laggy, d.matches), crashFree: (d) => (d.sessions ? 100 - pct(d.crashes, d.sessions) : null) };
+    // Nov. 2026 (audit D4, D9, D10, D11): per day over the whole period (not only the days with data); the day after from the kept
+    // IDs; the period before from the server; exact numbers with their n (the page is private, behind Access); labels that say
+    // what is counted. With "Hoje" the day before is a whole day, so only the rates compare.
+    const P = R.prev || {}, ipPrev = (P.ipNew || 0) + (P.ipSame || 0) + (P.ipNone || 0), nd = (R.installs && R.installs.nextDay) || { n: 0, back: 0 };
+    val.usersPerDay = [T.users / F.period, T.users];
+    val.nextDay = [pct(nd.back, nd.n), nd.n];
+    const prevVal = { usersPerDay: F.period > 1 ? [P.users / F.period, P.users] : null, fresh: F.period > 1 ? [P.fresh, P.fresh] : null,
+      minPerSession: [P.users ? P.minutes / P.users : null, P.users], ipNew: [pct(P.ipNew, ipPrev), ipPrev], lag: [pct(P.laggy, P.matches), P.matches],
+      crashFree: [P.sessions ? 100 - pct(P.crashes, P.sessions) : null, P.sessions] };
+    const LABEL = { usersPerDay: ['Instalações abertas por dia', 'instalações-dia no período'], fresh: ['1.º arranque', 'aceitaram o aviso'],
+      nextDay: ['Voltam no dia seguinte', 'novas até anteontem'], minPerSession: ['Minutos por inst.-dia', 'instalações-dia · média'] };
     for (const k of D.kpis) {
-      const v = val[k.id];
-      k.n = v ? v[1] : 0; k.value = v && k.n >= k.min ? v[0] : null; k.prev = null; k.prevN = 0;
+      const v = val[k.id], pv = prevVal[k.id];
+      if (LABEL[k.id]) [k.label, k.nUnit] = LABEL[k.id];
+      k.n = v ? v[1] : 0; k.value = v && (k.n >= 1 || k.id === 'fresh') ? v[0] : null;
+      k.prev = pv && pv[1] >= 1 ? pv[0] : null; k.prevN = pv ? pv[1] : 0;
       k.series = D.days.slice(-14).map((d) => (ser[k.id] ? ser[k.id](d) : null));
     }
 
-    // Live: only counts
-    if (LIVE) { Object.assign(D.live, LIVE); D.live.lastHour.open = D.live.lastHour.open.map(() => 0); D.live.lastHour.open[D.live.lastHour.open.length - 1] = LIVE.now; D.live.lastHour.game = D.live.lastHour.game.map(() => 0); D.live.lastHour.game[D.live.lastHour.game.length - 1] = LIVE.inGame; }
+    // Live: only counts. No history is kept, so the last hour starts empty and fills while the page is open; no event feed yet.
+    if (LIVE) { Object.assign(D.live, LIVE); D.live.lastHour.open = D.live.lastHour.open.map(() => null); D.live.lastHour.open[D.live.lastHour.open.length - 1] = LIVE.now; D.live.lastHour.game = D.live.lastHour.game.map(() => null); D.live.lastHour.game[D.live.lastHour.game.length - 1] = LIVE.inGame; }
     D.live.feed = [];
+    D.live.noFeed = true;
+    // D9: the first day's steps and when the app is open, from the server (before both stayed at 0)
+    if (Array.isArray(R.funnel)) D.funnel = R.funnel;
+    if (Array.isArray(R.when) && R.when.length === 7) D.when = R.when;
+    D.whenReal = true;
 
     D.countries = R.countries.map((x) => ({ c: x.k, k: COUNTRY[x.k] || x.k, n: x.n }));
     if (Array.isArray(D.installAge)) for (const b of D.installAge) b.n = (R.age.find((a) => a.band === b.band) || { n: 0 }).n;
+
+    // A count per day over the last 14 days of the chart (buttons, errors), from the server's perDay
+    const last14 = D.days.slice(-14).map((x) => x.date);
+    const trend = (perDay) => last14.map((dt) => (perDay && perDay[dt]) || 0);
+    // A band's median only when there is something to take it from (data.js gives the first band for an empty list)
+    const median = (rows) => (rows && rows.reduce((s, x) => s + (x.n || 0), 0) ? medianBand(rows) : null);
 
     // The app's screens: minutes, buttons, the heat map, dead and rage clicks
     const totalMin = Object.values(R.screens).reduce((s, x) => s + x.minutes, 0);
@@ -72,7 +96,7 @@
       out.minutes = rs.minutes; out.days = rs.days; out.visits = visits[s.id] || 0; out.share = totalMin ? Math.round((100 * rs.minutes) / totalMin) : 0;
       for (const b of s.buttons) {
         const r = R.buttons[b.id + '_Click'] || R.buttons[b.id] || { n: 0, days: 0 };
-        out.buttons[b.id] = { n: r.n, days: r.days, trend: Array(14).fill(0), prev: 0, kb: 0 };
+        out.buttons[b.id] = { n: r.n, days: r.days, trend: trend(r.perDay), prev: 0, kb: 0 };
       }
       const h = R.heat[s.id] || { c: [], d: [], r: [] };
       if (out.grid) for (const [c, r, n] of h.c) if (out.grid[r] && c < UI.COLS) out.grid[r][c] += n;
@@ -92,6 +116,7 @@
     const exact = (R.cohortsExact || []).some((c) => c.n > 0);
     D.cohorts = exact ? R.cohortsExact : R.cohorts;
     D.installs = R.installs;
+    const I0 = R.installs || { active: 0, fresh: 0, back: 0, prev: 0 };
     Object.assign(D.cs2, R.cs2);
     D.settingsChanged = R.settings.map((x) => ({ name: x.name, value: 'mudado', n: x.n }));
     const bt = (n) => (R.buttons[n] || { n: 0 }).n;
@@ -99,12 +124,11 @@
       { action: 'New IP + next account', keys: 'atalho', kb: bt('Hotkey_Switch'), mouse: bt('Quick_Click') }];
     Object.assign(D.phone, { method: R.phone.method, duration: R.phone.duration, attempts: R.phone.attempts, quality: R.phone.quality, drops: R.phone.drops, data: R.phone.data });
     D.firstScreen = R.firstScreen;
-    D.phone.toProtected = R.sessions.toProtected; D.phone.toProtectedMedian = medianBand(R.sessions.toProtected);
+    D.phone.toProtected = R.sessions.toProtected; D.phone.toProtectedMedian = median(R.sessions.toProtected) || '-';
     const done = (R.setup.find((x) => x.key === 'done') || { n: 0 }).n;
     D.phone.setup = [{ k: 'Abriram o Phone setup', n: R.setupOpened }, { k: 'Pronto', n: done }];
     D.phone.steps = R.setup.filter((x) => x.n && x.key !== 'done');
     D.env = Object.assign({ unfiltered: true }, R.env);
-    D.firstScreen = [];
 
     // Lists that carry the mock's names (versions, places in the code) go, or get the real ones; dated series follow the real days
     const dates = D.days.map((x) => x.date);
@@ -112,7 +136,7 @@
     D.rel.crashPlaces = R.crashPlaces.map((c) => ({ at: c.at, ver: short(c.app), n: c.n, fresh: false }));
     Object.assign(D.rel, { crashes: T.crashes, sessions: T.sessions, crashFree: T.sessions ? 100 - pct(T.crashes, T.sessions) : null, startup: R.sessions.startup });
     Object.assign(D.rel.updates, R.updates);
-    D.rel.errors = R.errors.map((e) => ({ type: e.type, at: e.at, ver: short(e.app), p: e.days / T7, days: e.days, fresh: false, up: false, n: e.n, trend: Array(14).fill(0) }));
+    D.rel.errors = R.errors.map((e) => ({ type: e.type, at: e.at, ver: short(e.app), p: e.days / T7, days: e.days, fresh: false, up: false, n: e.n, trend: trend(e.perDay) }));
     if (R.checks) { D.rel.checksRed = R.checks.red.map((c) => ({ k: c.k, n: c.n })); D.rel.leak = R.checks.leak; }
     D.rel.crashSeries = D.days.map((x) => ({ date: x.date, crashes: x.crashes, sessions: x.sessions }));
     const vers = R.versions.map((v) => short(v.k));
@@ -124,7 +148,7 @@
     const met = {};
     for (const v of R.versions) {
       const m = (R.versionMetrics || {})[v.k];
-      met[short(v.k)] = m ? { ...m, toProtected: medianBand(m.toProtected) || '-', startup: medianBand(m.startup) || '-' }
+      met[short(v.k)] = m ? { ...m, toProtected: median(m.toProtected) || '-', startup: median(m.startup) || '-' }
         : { days: v.n, sessions: v.n, crashes: 0, ipNew: [0, 0], lag: [0, 0], minMed: 0, errors: R.errors.filter((e) => e.app === v.k).reduce((s, e) => s + e.n, 0), toProtected: '-', startup: '-' };
     }
     D.versions.metrics = met;
@@ -149,8 +173,32 @@
         releases: rel.map((r) => ({ tag: r.tag, date: r.date, exe: r.exe })),
         referrers: (GH.referrers || []).map((r) => ({ k: r.name, n: r.n, u: r.u })), paths: (GH.paths || []).map((p) => ({ k: p.name, n: p.n, u: p.u })) });
     }
-    const I = R.installs || { active: 0 };
-    D.realBar = `${DEV ? 'Os teus PCs de teste (dev). ' : ''}Dados reais desde ${D.days[0]?.date ?? D.asOf}. ${I.active ? `${I.active} ${I.active === 1 ? 'instalação diferente' : 'instalações diferentes'} no período (beta.9+): ${I.fresh} novas, ${I.back} voltaram. ` : ''}Partidas, sessões, crashes, ambiente, scroll e atualizações só a partir da beta.9.`;
+    D.github.problems = (GH && GH.problems) || [];
+
+    // D8: counted and kept, but with no block of their own until now: one plain list, so nothing the app sends stays unseen
+    const SHOWN = /^(ip_changed|ip_same|ip_no_network|app_start|crash|first_start|min_prot|cs2_start|kick_seen|vpn_seen|ban_seen|rej_try|rej_back|leak_ok|leak_bad|(m|ping|jit|jitd|late|loss|sess|st|tp|start|upd|updfrom|phone_setup|chg|chgt|chga|chgq|drop|data|scl|fs)_.*)$/;
+    const NAMES = { unclean_exit: 'Saídas sem fechar (crash ou forçadas)', log_error: 'Erros escritos no Log', ip_home_back: 'O IP voltou a ser o de casa',
+      rej_wait: 'Rejoin à espera de vaga', cable_hint: 'Aviso do cabo USB mostrado', min_cs2: 'Minutos com o CS2 aberto' };
+    const mapped = new Set(['Hotkey_Rejoin', 'Rejoin_Click', 'Hotkey_Switch', 'Quick_Click']);
+    for (const s of UI.screens) for (const b of s.buttons) { mapped.add(b.id + '_Click'); mapped.add(b.id); }
+    const LISTN = { servers: 'Servidores', accounts: 'Contas', flags: 'Jogadores marcados', open_with: 'Open with CS2', open_with_admin: 'Open with CS2 como admin', regions_blocked: 'Regiões desligadas' };
+    D.others = {
+      counters: Object.entries(R.counters || {}).filter(([k]) => !SHOWN.test(k)).map(([k, n]) => ({ k: NAMES[k] || k, code: k, n })).sort((a, b) => b.n - a.n),
+      clicks: Object.entries(R.buttons || {}).filter(([k]) => !mapped.has(k)).map(([k, b]) => ({ k, n: b.n, days: b.days })).sort((a, b) => b.n - a.n),
+      sizes: (R.sizes || []).filter((z) => z.bands.length).map((z) => ({ k: LISTN[z.name] || z.name, bands: z.bands })),
+      oses: R.oses || [], prevInstalls: I0.prev || 0,
+    };
+
+    // Dashboard D1: how fresh the data is, at the top. Red past 12 hours without a report.
+    const ago = (t) => { if (!t) return null; const m = Math.max(0, Math.round((Date.now() - t) / 60000)); return m < 60 ? `${m} min` : m < 48 * 60 ? `${Math.round(m / 60)} h` : `${Math.round(m / 1440)} dias`; };
+    const at = (t) => new Date(t).toISOString().slice(0, 16).replace('T', ' ');
+    const lastRep = R.lastTs, lastLive = LIVE && LIVE.lastTs;
+    D.realStale = !lastRep || Date.now() - lastRep > 12 * 3600_000;
+    const fresh = lastRep ? `Último relatório há ${ago(lastRep)} (${at(lastRep)} UTC)` : 'Nenhum relatório nos últimos 90 dias';
+    const freshLive = lastLive ? `último sinal ao vivo há ${ago(lastLive)}` : 'nenhum sinal ao vivo';
+    const cut = (R.truncated || []).length ? ` Atenção: leitura cortada nos dias mais antigos (${R.truncated.join(', ')}).` : '';
+    const warn = (R.warnings || []).length ? ` Sem dados de: ${R.warnings.map((w) => w.split(':')[0]).join(', ')}.` : '';
+    D.realBar = `${DEV ? 'Os teus PCs (dev e os de EXCLUDE_IDS). ' : R.excluded ? `Sem os teus ${R.excluded} PCs (EXCLUDE_IDS). ` : ''}${fresh} · ${freshLive}. ${I0.active ? `${I0.active} ${I0.active === 1 ? 'instalação diferente' : 'instalações diferentes'} no período (beta.9+): ${I0.fresh} com ID novo, ${I0.back} já vistas antes. ` : ''}Partidas, sessões, crashes, ambiente, scroll e atualizações só a partir da beta.9.${cut}${warn}`;
     return D;
   };
 

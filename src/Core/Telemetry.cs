@@ -16,7 +16,8 @@ namespace SRT.Core;
 
 /// <summary>
 /// Usage stats (pseudonymous: a kept random install ID), required to use the app: accepted once at the first start, before the app opens (App.StatsGate;
-/// README > Telemetry). Until then nothing is sent and no ID is made. Once at start, at close (Exit) and once a day it sends:
+/// README > Telemetry). Until then nothing is sent and no ID is made. 20 s after the start, every 30 minutes while the app is open
+/// and something is new, when the PC goes to sleep, when Windows signs out or shuts down, and at close (Exit) it sends:
 /// a random ID for the install (since beta.9 kept, before new every day; never made from the PC or the user),
 /// the app and Windows versions, the mode, how the phone is connected, minutes open, how many times each button and hotkey
 /// was used (by the name of its code, never its text), a few counters, list sizes in rough bands, and errors as type + place in the code.
@@ -64,6 +65,11 @@ public static class Telemetry
         public long DataBytes { get; set; }
         /// <summary>beta.9. The version that last ran here: after an update, the one it came from is counted once (upd_from).</summary>
         public string LastApp { get; set; }
+        /// <summary>Nov. 2026. The best phone link seen since the last report (usb, then hotspot, other, none), so a report made before the phone was up doesn't say "none".</summary>
+        public string BestLink { get; set; }
+        /// <summary>Nov. 2026. The UTC day and the content of the list sizes, regions and settings last sent: they only go again on a new day or when they change.</summary>
+        public string ExtrasDay { get; set; }
+        public string ExtrasSig { get; set; }
     }
     public sealed class ErrorItem { public string Type { get; set; } public string At { get; set; } public int N { get; set; } }
 
@@ -71,17 +77,15 @@ public static class Telemetry
     static readonly Regex Name = new(@"^[A-Za-z0-9_]{1,48}$", RegexOptions.Compiled);
     static State _st;
     static DateTime _since;
-    static bool _on, _sending;
+    static bool _on;
     static Func<(string Mode, string Link, Dictionary<string, int> Sizes)> _now;
 
     static string File_ => _file ?? Paths.File("telemetry.json");
 
     static string _file;
     static bool _hooked;
-    static DispatcherTimer _hourly, _first;
-#if PRIVADO
-    static DispatcherTimer _devLive;
-#endif
+    static DispatcherTimer _tick, _first;
+    static int _ticks;
 
     // Not "anonymous": the report carries a kept install ID, so under the GDPR it is pseudonymous. Only the heat map and the
     // environment report (no ID) are anonymous.
@@ -89,7 +93,7 @@ public static class Telemetry
 
     /// <summary>The notice at the first start (Accept or Quit). README > Telemetry has the same list.</summary>
     public const string NoticeText =
-        "While CS2 IP Changer is in beta, using it means it sends usage stats when it opens and closes, so bugs get found and fixed:\n\n"
+        "While CS2 IP Changer is in beta, using it means it sends usage stats when it opens and closes (and every 30 minutes while it's open), so bugs get found and fixed:\n\n"
         + "•  a random ID made for this install, with no name, never from your PC or from you (Settings > Delete my stats deletes everything kept under it), and how long ago the app was set up, only in rough bands (this week, 2 to 4 weeks…)\n"
         + "•  the app and Windows versions, and your country as two letters\n"
         + "•  the mode, how the phone is connected, minutes the app was open and on each screen, and every few minutes while it's open what is on (screen, CS2 open, protection on)\n"
@@ -100,13 +104,17 @@ public static class Telemetry
         + "Never IPs, servers, accounts, Steam names or IDs, your carrier or anything you type.\n\n"
         + "Quit closes the app without changing anything on your PC.";
 
-    /// <summary>The notice's version (Settings.StatsNotice). 2 since beta.9: the ID is kept for the install. An older accept is asked again once.</summary>
-    public const int NoticeVersion = 2;
+    /// <summary>
+    /// The notice's version (Settings.StatsNotice). 2 since beta.9: the ID is kept for the install. 3 since beta.10: the stats also go
+    /// out every 30 minutes while the app is open. An older accept is asked again once.
+    /// </summary>
+    public const int NoticeVersion = 3;
 
-    /// <summary>Added to the notice for someone who accepted an older one (beta.8 said the ID was new every day).</summary>
+    /// <summary>Added to the notice for someone who accepted an older one (beta.8 said the ID was new every day, beta.9 said open and close only).</summary>
     public const string NoticeChanged =
-        "Changed since you last accepted: the ID is now kept for this install instead of new every day, so the stats can tell people "
-        + "who come back from new installs. It is still random and has no name.";
+        "Changed since you last accepted: the stats now also go out every 30 minutes while the app is open (and before the PC sleeps), "
+        + "not only when it opens and closes. If you accepted before beta.9: the ID is now kept for this install instead of new every day, "
+        + "so the stats can tell people who come back from new installs. It is still random and has no name.";
 
     /// <summary>Added to the notice when it shows right after an update (--updated): Quit undoes what the version before left on.</summary>
     public const string NoticeAfterUpdate =
@@ -182,19 +190,26 @@ public static class Telemetry
             _live.Tick += (_, _) => { if (_live.Interval != TimeSpan.FromMinutes(5)) _live.Interval = TimeSpan.FromMinutes(5); _ = SendLive(); };
             Log.Added += e => { if (e.Level == LogLevel.Error) Count("log_error"); };
             if (Application.Current != null) Application.Current.Exit += (_, _) => SendAtExit();
-            _hourly = new DispatcherTimer { Interval = TimeSpan.FromHours(1) };
-            _hourly.Tick += (_, _) => { lock (Gate) if (_st != null) MarkActive(_st, DateTime.UtcNow); Save(); if (DateTime.UtcNow.Date != _st.LastSent.Date || DateTime.UtcNow - _st.LastSent > TimeSpan.FromHours(24)) _ = Send(); _ = SendEnv(late: true); };
+            // Nov. 2026 (audit D1, D5): before, a report went out only at the start, on a new UTC day and at close (and at close only
+            // 10 minutes after the last), so an app left in the tray for hours was counted with 1 minute. Now: every 30 minutes when
+            // something is new (Periodic), before the PC sleeps and when Windows signs out or shuts down. The dev build does the same.
+            _tick = new DispatcherTimer { Interval = TimeSpan.FromMinutes(5) };
+            _tick.Tick += (_, _) => OnTick();
+            try
+            {
+                Microsoft.Win32.SystemEvents.PowerModeChanged += (_, e) =>
+                {
+                    if (e.Mode == Microsoft.Win32.PowerModes.Suspend) SendBeforeSleep();
+                    else if (e.Mode == Microsoft.Win32.PowerModes.Resume) Resumed();
+                };
+                Microsoft.Win32.SystemEvents.SessionEnding += (_, _) => SendAtExit();
+            }
+            catch (Exception ex) { Log.Warn("Usage stats: no sleep and sign-out events (" + ex.GetType().Name + ")."); }
             // The first report waits until the window has loaded its lists (and never slows the start).
             _first = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
             _first.Tick += (_, _) => { _first.Stop(); _ = Send(); _ = SendEnv(late: false); };
-#if PRIVADO
-            // Dev build only: a report every 10 minutes (the server's limit per ID), so a test session shows up while it runs.
-            _devLive = new DispatcherTimer { Interval = TimeSpan.FromMinutes(10.5) };
-            _devLive.Tick += (_, _) => { Save(); bool go; lock (Gate) go = _st != null && SendAtClose(_st.LastSent, DateTime.UtcNow, _st.Minutes, _st.Clicks.Count, _st.Counts.Count); if (go) _ = Send(); };
-            _devLive.Start();
-#endif
         }
-        _hourly.Start();
+        _tick.Start();
         _live.Interval = TimeSpan.FromSeconds(30);
         _live.Start();
         _first.Start();
@@ -332,6 +347,7 @@ public static class Telemetry
             if (cs2) Count("min_cs2", 5);
             if (prot) Count("min_prot", 5);
             (string mode, string link, _) = _now != null ? _now() : (null, null, null);
+            SeenLink(link);
             string id;
             lock (Gate) { if (_st == null) return; id = _st.Id; }
             var body = JsonSerializer.Serialize(new
@@ -434,8 +450,37 @@ public static class Telemetry
 
     static bool _firstMove;
     static Func<IEnumerable<string>> _regions;
-    public static void RegionsFrom(Func<IEnumerable<string>> blocked) => _regions = blocked;
-    static readonly Regex RegionCode = new("^[a-z]{3,4}[0-9]?$", RegexOptions.Compiled);
+    /// <summary>The turned-off regions as Valve's public codes (RegionCodes), what the server keeps (reg_fra).</summary>
+    public static void RegionsFrom(Func<IEnumerable<string>> blockedCodes) => _regions = blockedCodes;
+    static readonly Regex RegionCodeShape = new("^[a-z]{3,4}[0-9]?$", RegexOptions.Compiled);
+
+    /// <summary>
+    /// A region's Valve code for the stats: its shortest pop code ("fra" for Frankfurt's "fra" and "dfra"), or null. Nov. 2026
+    /// (audit D4): the app sent the Regions page's ids ("frankfurt-germany"), which the server refuses, so no region ever arrived.
+    /// </summary>
+    public static string RegionCode(RegionInfo r) =>
+        r?.Codes?.Where(c => c != null && RegionCodeShape.IsMatch(c)).OrderBy(c => c.Length).ThenBy(c => c, StringComparer.Ordinal).FirstOrDefault();
+
+    /// <summary>The Valve codes of the turned-off regions (<paramref name="blockedIds"/> are RegionInfo ids), once each. Unknown ids are left out.</summary>
+    public static List<string> RegionCodes(IEnumerable<RegionInfo> regions, IEnumerable<string> blockedIds)
+    {
+        if (regions == null || blockedIds == null) return new();
+        var blocked = blockedIds.Where(x => x != null).ToHashSet();
+        return regions.Where(r => r != null && blocked.Contains(r.Id)).Select(RegionCode).Where(c => c != null).Distinct().ToList();
+    }
+
+    // ------------------------------------------------------------------ Nov. 2026: how the phone was connected
+
+    static readonly string[] LinkRank = { "none", "other", "hotspot", "usb" };
+    /// <summary>The better of two phone links (usb, then hotspot, other, none); an unknown one never wins.</summary>
+    public static string BestLink(string a, string b) => Array.IndexOf(LinkRank, b) > Array.IndexOf(LinkRank, a) ? b : a;
+
+    /// <summary>A phone link seen now (the window's guard report, the live signal): the report says the best one since the last report.</summary>
+    public static void SeenLink(string link)
+    {
+        if (!_on || Array.IndexOf(LinkRank, link) < 0) return;
+        lock (Gate) if (_st != null) _st.BestLink = BestLink(_st.BestLink, link);
+    }
 
     /// <summary>A version as a counter name ("0.1.0-beta.8" is "0_1_0_beta_8"), or null.</summary>
     public static string VersionName(string v) =>
@@ -614,6 +659,8 @@ public static class Telemetry
             NewId(_st);
             _st.Clicks.Clear(); _st.Counts.Clear(); _st.Errors.Clear(); _st.Heat.Clear(); _st.Screens.Clear(); _st.Paths.Clear(); _st.Active?.Clear();
             _st.Minutes = 0;
+            // Nov. 2026: nothing from the old ID's reports carries on (the best link seen, the extras already sent today)
+            _st.BestLink = null; _st.ExtrasDay = null; _st.ExtrasSig = null;
             _st.FirstDay = DateTime.UtcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             try { Write(File_, _st, true); } catch { }
         }
@@ -705,16 +752,103 @@ public static class Telemetry
     /// the last report (the server refuses those; that little waits for the next start), and not with nothing new.
     /// </summary>
     public static bool SendAtClose(DateTime lastSentUtc, DateTime nowUtc, double minutes, int clicks, int counts) =>
-        nowUtc - lastSentUtc >= TimeSpan.FromMinutes(10) && (minutes >= 1 || clicks > 0 || counts > 0);
+        nowUtc - lastSentUtc >= Gap && (minutes >= 1 || clicks > 0 || counts > 0);
+
+    /// <summary>The server's limit: one report per install every 10 minutes, and one more inside them marked exit.</summary>
+    public static readonly TimeSpan Gap = TimeSpan.FromMinutes(10);
+    /// <summary>Nov. 2026: how often a report goes out while the app is open (and something is new).</summary>
+    public static readonly TimeSpan Every = TimeSpan.FromMinutes(30);
+
+    /// <summary>
+    /// The report while the app is open (the 5-minute tick): every 30 minutes when something is new, and on a new UTC day or after
+    /// 24 hours anyway. Never inside the server's 10 minutes.
+    /// </summary>
+    public static bool Periodic(DateTime lastSentUtc, DateTime nowUtc, double minutes, int clicks, int counts) =>
+        nowUtc - lastSentUtc >= Gap && (nowUtc.Date != lastSentUtc.Date || nowUtc - lastSentUtc >= TimeSpan.FromHours(24)
+            || (nowUtc - lastSentUtc >= Every && (minutes >= 1 || clicks > 0 || counts > 0)));
+
+    /// <summary>
+    /// At close, sleep or sign-out: a normal report 10 minutes or more after the last, or one marked exit inside them (the server takes
+    /// one), so a 5-minute session isn't lost (audit D5). Nothing when nothing is new.
+    /// </summary>
+    public static (bool Go, bool Exit) AtClose(DateTime lastSentUtc, DateTime nowUtc, double minutes, int clicks, int counts)
+    {
+        var news = minutes >= 1 || clicks > 0 || counts > 0;
+        if (!news) return (false, false);
+        return nowUtc - lastSentUtc >= Gap ? (true, false) : (true, true);
+    }
 
     /// <summary>Same as worker/stats MAX_MINUTES.</summary>
     public const int MaxMinutes = 24 * 60;
 
-    sealed record Snapshot(string Body, Dictionary<string, int> Clicks, Dictionary<string, int> Counts, List<ErrorItem> Errors, int Minutes,
-        Dictionary<string, int> Heat = null, Dictionary<string, int> Screens = null, Dictionary<string, int> Paths = null);
+    /// <summary>
+    /// Nov. 2026 (audit D12): what one report takes, under the server's caps (150 buttons, 100 counters, 30 errors, 300 heat cells,
+    /// 16 KB), so the server never cuts what the app then takes as sent. The rest waits for the next report.
+    /// </summary>
+    public const int MaxClicks = 140, MaxCounts = 90, MaxErrors = 30, MaxHeat = 250, MaxBody = 14_000;
 
-    /// <summary>On the window's thread (the mode and list sizes come from it): the install ID, the minutes so far and the body.</summary>
-    static Snapshot Build()
+    /// <summary>One report's fields (Body). The same names as worker/stats/src/index.js reads.</summary>
+    public sealed class Report
+    {
+        public string Id, App, Os, Mode, Link, Age, Data;
+        public int Minutes;
+        public bool Dev, Exit, Install;
+        public int? Active7;
+        public Dictionary<string, int> Clicks = new(), Counts = new(), Heat = new(), Screens = new(), Paths = new();
+        public List<ErrorItem> Errors = new();
+        public List<string> Settings, Regions;
+    }
+
+    static readonly JsonSerializerOptions BodyJson = new() { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull };
+
+    /// <summary>The JSON the server gets (tests/TelemetryTests.cs checks it against worker/stats/test/app-report.json, which the Worker's tests send through).</summary>
+    public static string Body(Report r) => JsonSerializer.Serialize(new
+    {
+        v = 1, id = r.Id, idk = r.Install ? "install" : null, app = r.App, os = r.Os,
+        mode = r.Mode, link = r.Link, minutes = r.Minutes, dev = r.Dev, exit = r.Exit ? true : (bool?)null, clicks = r.Clicks, counts = r.Counts,
+        errors = r.Errors.Select(x => new { type = x.Type, at = x.At, n = x.N }),
+        heat = r.Heat.Select(x => { var k = x.Key.Split('|'); return new object[] { k[0], k[1], k[2], x.Value }; }),
+        screens = r.Screens, paths = r.Paths, age = r.Age, active7 = r.Active7, settings = r.Settings, regions = r.Regions, data = r.Data,
+    }, BodyJson);
+
+    /// <summary>
+    /// The body within MaxBody bytes: the heat map is halved first (its biggest part), then the buttons and the counters. What is
+    /// left out of <paramref name="r"/> stays on the PC for the next report (Sent only takes away what went).
+    /// </summary>
+    public static string Fit(Report r, params string[] keepCounts)
+    {
+        var body = Body(r);
+        var keep = new HashSet<string>(keepCounts ?? Array.Empty<string>());
+        for (var i = 0; i < 40 && Encoding.UTF8.GetByteCount(body) > MaxBody; i++)
+        {
+            if (r.Heat.Count > 0) r.Heat = r.Heat.OrderByDescending(x => x.Value).Take(r.Heat.Count / 2).ToDictionary(x => x.Key, x => x.Value);
+            else if (r.Clicks.Count > 10) r.Clicks = r.Clicks.Take(r.Clicks.Count / 2).ToDictionary(x => x.Key, x => x.Value);
+            else if (r.Counts.Count > keep.Count + 10) r.Counts = r.Counts.Where(x => keep.Contains(x.Key)).Concat(r.Counts.Where(x => !keep.Contains(x.Key)).Take((r.Counts.Count - keep.Count) / 2)).ToDictionary(x => x.Key, x => x.Value);
+            else if (r.Errors.Count > 5) r.Errors = r.Errors.Take(r.Errors.Count / 2).ToList();
+            else break;
+            body = Body(r);
+        }
+        return body;
+    }
+
+    /// <summary>The list sizes, regions, settings, age, days active and data band: sent on a new UTC day or when they changed (audit D6).</summary>
+    public static bool ExtrasDue(string lastDay, string lastSig, string today, string sig) => lastDay != today || lastSig != sig;
+
+    /// <summary>
+    /// What ExtrasDue compares, kept only in telemetry.json. The install ID is part of it, so after Delete my stats the new ID's
+    /// first report carries the extras (and its install mark, idk) again the same day; without it the new ID had none until midnight.
+    /// </summary>
+    public static string ExtrasSig(string id, IDictionary<string, int> bands, IEnumerable<string> regions, IEnumerable<string> settings, string age, int? active7, string data) =>
+        id + "|" + string.Join(";", (bands ?? new Dictionary<string, int>()).OrderBy(x => x.Key, StringComparer.Ordinal).Select(x => $"{x.Key}={x.Value}"))
+        + "|" + string.Join(",", (regions ?? Enumerable.Empty<string>()).OrderBy(x => x, StringComparer.Ordinal))
+        + "|" + string.Join(",", (settings ?? Enumerable.Empty<string>()).OrderBy(x => x, StringComparer.Ordinal))
+        + $"|{age}|{active7}|{data}";
+
+    sealed record Snapshot(string Body, Dictionary<string, int> Clicks, Dictionary<string, int> Counts, List<ErrorItem> Errors, int Minutes,
+        Dictionary<string, int> Heat, Dictionary<string, int> Screens, Dictionary<string, int> Paths, string ExtrasDay, string ExtrasSig);
+
+    /// <summary>The window's thread or not (the mode and list sizes are plain fields): the install ID, the minutes so far and the body.</summary>
+    static Snapshot Build(bool exit = false)
     {
         lock (Gate) MarkActive(_st, DateTime.UtcNow);   // the app can stay open past midnight (UTC)
         Save();
@@ -723,35 +857,46 @@ public static class Telemetry
         List<string> changed = null, regions = null, red = null;
         try { changed = _settings?.Invoke()?.Where(SettingNames.Contains).ToList(); } catch { }
         try { red = RedChecks(_redChecks?.Invoke()); } catch { }
-        try { regions = _regions?.Invoke()?.Where(r => r != null && RegionCode.IsMatch(r)).Distinct().Take(60).ToList(); } catch { }
+        try { regions = _regions?.Invoke()?.Where(r => r != null && RegionCodeShape.IsMatch(r)).Distinct().Take(60).ToList(); } catch { }
+        var today = DateTime.UtcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
         lock (Gate)
         {
             // The server takes at most a day of minutes in one report (more is refused, not stored). More than that waiting
             // here is from days without a report: the rest is dropped instead of piling up.
             if (_st.Minutes > MaxMinutes) _st.Minutes = MaxMinutes;
-            var clicks = new Dictionary<string, int>(_st.Clicks);
-            var counts = new Dictionary<string, int>(_st.Counts);
-            var errors = _st.Errors.Values.Select(x => new ErrorItem { Type = x.Type, At = x.At, N = x.N }).ToList();
-            var minutes = (int)Math.Round(_st.Minutes);
-            var all = new Dictionary<string, int>(counts);
-            foreach (var (k, v) in sizes ?? new()) all[k] = Band(v);
-            foreach (var k in red ?? new()) all[k] = 1;   // a state at send time, like the list sizes: not kept in _st.Counts
-            // beta.9: the server takes 300 heat cells, 12 screens and 60 moves a report; the rest waits for the next one
-            var heat = _st.Heat.OrderByDescending(x => x.Value).Take(300).ToDictionary(x => x.Key, x => x.Value);
-            var screens = _st.Screens.Where(x => x.Value >= 1).Take(12).ToDictionary(x => x.Key, x => (int)Math.Min(MaxMinutes, Math.Floor(x.Value)));
-            var paths = _st.Paths.Take(60).ToDictionary(x => x.Key, x => x.Value);
             var first = DateTime.TryParse(_st.FirstDay, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AdjustToUniversal, out var fd) ? fd : DateTime.UtcNow;
-            var body = JsonSerializer.Serialize(new
+            var r = new Report
             {
-                v = 1, id = _st.Id, idk = "install", app = Updater.Clean(AppInfo.Version.Split('+')[0]), os = Environment.OSVersion.Version.ToString(),
-                mode, link, minutes, dev = Dev || _st.Mine, clicks, counts = all,
-                errors = errors.Select(x => new { type = x.Type, at = x.At, n = x.N }),
-                heat = heat.Select(x => { var k = x.Key.Split('|'); return new object[] { k[0], k[1], k[2], x.Value }; }),
-                screens, paths, age = AgeBand((int)(DateTime.UtcNow.Date - first.Date).TotalDays),
-                active7 = ActiveDays(_st.Active, DateTime.UtcNow), settings = changed, regions,
-                data = _st.DataBytes > 0 && _st.DataDay == DateTime.UtcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) ? DataBand(_st.DataBytes) : null,
-            });
-            return new Snapshot(body, clicks, counts, errors, minutes, heat, screens, paths);
+                Id = _st.Id, App = Updater.Clean(AppInfo.Version.Split('+')[0]), Os = Environment.OSVersion.Version.ToString(), Mode = mode,
+                Link = BestLink(_st.BestLink, link), Minutes = (int)Math.Round(_st.Minutes), Dev = Dev || _st.Mine, Exit = exit,
+                Errors = _st.Errors.Values.Take(MaxErrors).Select(x => new ErrorItem { Type = x.Type, At = x.At, N = x.N }).ToList(),
+                // beta.9: the server takes 300 heat cells, 12 screens and 60 moves a report; the rest waits for the next one
+                Heat = _st.Heat.OrderByDescending(x => x.Value).Take(MaxHeat).ToDictionary(x => x.Key, x => x.Value),
+                Screens = _st.Screens.Where(x => x.Value >= 1).Take(12).ToDictionary(x => x.Key, x => (int)Math.Min(MaxMinutes, Math.Floor(x.Value))),
+                Paths = _st.Paths.Take(60).ToDictionary(x => x.Key, x => x.Value),
+                Clicks = _st.Clicks.Take(MaxClicks).ToDictionary(x => x.Key, x => x.Value),
+            };
+            // A state at send time, first in the counters so they always fit: the red Checks rows (every report) and, once a day or
+            // when they change, the list sizes in bands with the regions, settings, age, days active and data band
+            var states = new Dictionary<string, int>();
+            foreach (var k in red ?? new()) states[k] = 1;
+            var bands = (sizes ?? new()).ToDictionary(x => x.Key, x => Band(x.Value));
+            var age = AgeBand((int)(DateTime.UtcNow.Date - first.Date).TotalDays);
+            var active7 = ActiveDays(_st.Active, DateTime.UtcNow);
+            var data = _st.DataBytes > 0 && _st.DataDay == today ? DataBand(_st.DataBytes) : null;
+            var sig = ExtrasSig(_st.Id, bands, regions, changed, age, active7, data);
+            var extras = ExtrasDue(_st.ExtrasDay, _st.ExtrasSig, today, sig);
+            if (extras)
+            {
+                foreach (var (k, v) in bands) states[k] = v;
+                r.Install = true; r.Age = age; r.Active7 = active7; r.Settings = changed; r.Regions = regions; r.Data = data;
+            }
+            var counts = _st.Counts.Where(x => !states.ContainsKey(x.Key)).Take(Math.Max(0, MaxCounts - states.Count)).ToDictionary(x => x.Key, x => x.Value);
+            r.Counts = states.Concat(counts).ToDictionary(x => x.Key, x => x.Value);
+            var body = Fit(r, states.Keys.ToArray());
+            // Sent takes away only what went: the counters without the states, and what Fit kept
+            var sentCounts = r.Counts.Where(x => counts.ContainsKey(x.Key)).ToDictionary(x => x.Key, x => x.Value);
+            return new Snapshot(body, r.Clicks, sentCounts, r.Errors, r.Minutes, r.Heat, r.Screens, r.Paths, extras ? today : null, extras ? sig : null);
         }
     }
 
@@ -777,49 +922,96 @@ public static class Telemetry
             foreach (var (k, v) in s.Screens ?? new()) if (_st.Screens.TryGetValue(k, out var m) && (_st.Screens[k] = m - v) < 1e-9) _st.Screens.Remove(k);
             foreach (var (k, v) in s.Paths ?? new()) if (_st.Paths.TryGetValue(k, out var p) && (_st.Paths[k] = p - v) <= 0) _st.Paths.Remove(k);
             _st.LastSent = DateTime.UtcNow;
+            _st.BestLink = null;   // the next report says the best link from now on
+            if (s.ExtrasDay != null) { _st.ExtrasDay = s.ExtrasDay; _st.ExtrasSig = s.ExtrasSig; }
             try { Store.Save(File_, _st); } catch { }
         }
     }
 
+    // 1 while a report is on its way: the timer, the sleep and the close (other threads) never send two at once
+    static int _busy;
+    static bool Begin() => Interlocked.CompareExchange(ref _busy, 1, 0) == 0;
+    static void End() => Interlocked.Exchange(ref _busy, 0);
+
     static async Task Send()
     {
-        if (!_on || _sending) return;
-        _sending = true;
+        if (!_on || !Begin()) return;
         try
         {
             var s = Build();
             if (await Post(s.Body, TimeSpan.FromSeconds(8))) Sent(s);
         }
         catch { }
-        finally { _sending = false; }
+        finally { End(); }
     }
 
-    /// <summary>At close: saved first, then at most 3 s for the report, so closing never hangs on the network.</summary>
+    /// <summary>The minutes waiting to go: those saved and the ones since the last save.</summary>
+    static double PendingMinutes() => _st.Minutes + (DateTime.UtcNow - _since).TotalMinutes;
+
+    /// <summary>Every 5 minutes: the periodic report when due; every hour the save and the environment report as before.</summary>
+    static void OnTick()
+    {
+        bool due;
+        lock (Gate)
+        {
+            if (_st == null) return;
+            MarkActive(_st, DateTime.UtcNow);
+            due = Periodic(_st.LastSent, DateTime.UtcNow, PendingMinutes(), _st.Clicks.Count, _st.Counts.Count);
+        }
+        if (due) _ = Send();
+        if (++_ticks % 12 == 0) { if (!due) Save(); _ = SendEnv(late: true); }
+    }
+
+    /// <summary>A report with at most <paramref name="wait"/> for the network, for when the PC or the app is about to stop.</summary>
+    static void SendNow(TimeSpan wait)
+    {
+        if (!_on || !Begin()) return;
+        try
+        {
+            (bool go, bool exit) when;
+            lock (Gate) when = _st == null ? (false, false) : AtClose(_st.LastSent, DateTime.UtcNow, PendingMinutes(), _st.Clicks.Count, _st.Counts.Count);
+            if (!when.go) return;
+            var s = Build(when.exit);
+            // The request gives up before the wait does, so a report the server got is (almost always) also seen as sent and
+            // not sent again at the next start. A report still in flight from the timer when the app closes may still go twice:
+            // the stats can count one session's clicks twice, never lose them.
+            var post = Task.Run(() => Post(s.Body, wait - TimeSpan.FromSeconds(0.5)));
+            if (post.Wait(wait) && post.Result) Sent(s);
+        }
+        catch { }
+        finally { End(); }
+    }
+
+    static bool _closed;
+
+    /// <summary>
+    /// At close (Exit) and when Windows signs out or shuts down (SessionEnding): saved first, then at most 3 s for the report, so
+    /// closing never hangs on the network. The session's length and drops are counted once, whichever comes first.
+    /// </summary>
     static void SendAtExit()
     {
-        if (_on)
+        if (_on && !_closed)
         {
+            _closed = true;
             Count("sess_" + SessionBand(DateTime.UtcNow - _started));
             int drops; lock (Gate) drops = _drops;
             Count("drop_" + DropsBand(drops));
             ScrollDone(_visible ? _screen : null);
         }
         Save();
-        if (!_on || _sending) return;
-        try
-        {
-            bool go;
-            lock (Gate) go = _st != null && SendAtClose(_st.LastSent, DateTime.UtcNow, _st.Minutes, _st.Clicks.Count, _st.Counts.Count);
-            if (!go) return;
-            _sending = true;
-            var s = Build();
-            // The request gives up before the wait does, so a report the server got is (almost always) also seen as sent and
-            // not sent again at the next start. A report still in flight from the timer when the app closes may still go twice:
-            // the stats can count one session's clicks twice, never lose them.
-            var post = Task.Run(() => Post(s.Body, TimeSpan.FromSeconds(2.5)));
-            if (post.Wait(TimeSpan.FromSeconds(3)) && post.Result) Sent(s);
-        }
-        catch { }
-        finally { _sending = false; }
+        SendNow(TimeSpan.FromSeconds(3));
+    }
+
+    /// <summary>The PC is going to sleep: the minutes so far go out now (sleep isn't a close, so no session length).</summary>
+    static void SendBeforeSleep()
+    {
+        Save();
+        SendNow(TimeSpan.FromSeconds(2.5));
+    }
+
+    /// <summary>Back from sleep: the time asleep is not counted as minutes open (before, the next save added it all).</summary>
+    static void Resumed()
+    {
+        lock (Gate) { _since = DateTime.UtcNow; _screenSince = DateTime.UtcNow; }
     }
 }

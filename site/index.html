@@ -22,12 +22,12 @@
 <meta property="og:image" content="https://sepd0x.github.io/cs2-ip-changer/img/social-preview.png">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="640">
-<meta property="og:image:alt" content="CS2 IP Changer: route CS2 and Steam through your phone's mobile data">
+<meta property="og:image:alt" content="CS2 IP Changer: IP banned on a CS2 server? New IP in one click, with the app's Connection screen">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="CS2 IP Changer: change your CS2 IP with your phone">
 <meta name="twitter:description" content="Route CS2 and Steam through your phone's mobile data. Community servers see your carrier's IP, not your home IP.">
 <meta name="twitter:image" content="https://sepd0x.github.io/cs2-ip-changer/img/social-preview.png">
-<meta name="twitter:image:alt" content="CS2 IP Changer: route CS2 and Steam through your phone's mobile data">
+<meta name="twitter:image:alt" content="CS2 IP Changer: IP banned on a CS2 server? New IP in one click, with the app's Connection screen">
 <link rel="preload" href="fonts/funnel-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
 <script>document.documentElement.classList.add('js')</script>
@@ -40,7 +40,14 @@
       "@id": "https://sepd0x.github.io/cs2-ip-changer/#website",
       "name": "CS2 IP Changer",
       "url": "https://sepd0x.github.io/cs2-ip-changer/",
-      "inLanguage": "en"
+      "inLanguage": "en",
+      "publisher": { "@id": "https://sepd0x.github.io/cs2-ip-changer/#author" }
+    },
+    {
+      "@type": "Person",
+      "@id": "https://sepd0x.github.io/cs2-ip-changer/#author",
+      "name": "Sepd0x",
+      "url": "https://github.com/Sepd0x"
     },
     {
       "@type": "SoftwareApplication",
@@ -53,8 +60,14 @@
       "operatingSystem": "Windows 10, Windows 11 (64-bit)",
       "softwareRequirements": "Administrator rights, Windows Firewall on, an Android phone with mobile data (USB tethering or Wi-Fi hotspot)",
       "url": "https://sepd0x.github.io/cs2-ip-changer/",
-      "downloadUrl": "https://github.com/Sepd0x/cs2-ip-changer/releases/latest",
+      "downloadUrl": "https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe",
+      "installUrl": "https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/",
+      "softwareVersion": "0.1.0-beta.9",
+      "datePublished": "2026-10-27",
+      "dateModified": "2026-11-03",
+      "fileSize": "63.4 MB",
       "releaseNotes": "https://github.com/Sepd0x/cs2-ip-changer/blob/main/CHANGELOG.md",
+      "license": "https://github.com/Sepd0x/cs2-ip-changer/blob/main/LICENSE",
       "isAccessibleForFree": true,
       "inLanguage": "en",
       "image": "https://sepd0x.github.io/cs2-ip-changer/img/social-preview.png",
@@ -78,11 +91,7 @@
         "CS2 matchmaking region picker with ping per region",
         "Phone setup that checks the cable, driver, USB debugging, tethering and the phone's Wi-Fi"
       ],
-      "author": {
-        "@type": "Person",
-        "name": "Sepd0x",
-        "url": "https://github.com/Sepd0x"
-      },
+      "author": { "@id": "https://sepd0x.github.io/cs2-ip-changer/#author" },
       "sameAs": ["https://github.com/Sepd0x/cs2-ip-changer"],
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
     },
@@ -139,7 +148,7 @@ h1,h2,h3{text-wrap:balance}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--sand);color:var(--on-sand);font:600 1rem/1.2 var(--sans);padding:.9rem 1.35rem;border:0;border-radius:6px;text-decoration:none;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 1px 0 rgba(0,0,0,.4),0 10px 30px -12px var(--glow);transition:background-color .15s}
 .btn:hover{background:var(--sand-hi)}
 .btn:active{transform:translateY(1px)}
-.btn svg{width:18px;height:18px;flex:none}
+.btn svg{width:1.125em;height:1.125em;flex:none}
 .btn-s{padding:.55rem .85rem;font-size:.9rem;border-radius:5px}
 .link{color:var(--ink2);font-weight:500}
 .link:hover{color:var(--ink)}
@@ -181,6 +190,17 @@ footer{border-top:1px solid var(--line);padding:2rem 0 2.5rem;color:var(--ink3);
 footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between}
 footer a{color:var(--ink2);text-decoration:none}
 footer a:hover{color:var(--ink)}
+.btn-ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line2)}
+.btn-ghost:hover{background:var(--bg3)}
+.btn-ghost svg{width:1.05em;height:1.05em}
+.top nav a.btn-ghost{color:var(--ink)}
+.rel{color:var(--ink3);font-size:.86rem;line-height:1.5;margin:.7rem 0 0}
+.rel a{color:var(--ink2)}
+.rel a:hover{color:var(--ink)}
+a.zoom{display:block;cursor:zoom-in}
+.lightbox{padding:0;border:0;background:transparent;max-width:96vw;max-height:94vh;overflow:visible}
+.lightbox::backdrop{background:rgba(0,0,0,.86)}
+.lightbox img{display:block;width:auto;height:auto;max-width:96vw;max-height:94vh;border-radius:8px;box-shadow:0 0 0 1px var(--line2),0 30px 80px -20px #000;cursor:zoom-out}
 /* home: hero with the route map */
 .hero{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:3.5rem;align-items:start;padding-top:3.25rem;padding-bottom:4rem}
 .hero-copy{padding-top:2.6rem;position:relative;z-index:2}
@@ -296,13 +316,21 @@ ul.guides li::before{content:counter(g,decimal-leading-zero);display:block;font:
 ul.guides a{font:500 1.04rem/1.35 var(--disp);text-decoration:none}
 ul.guides a:hover{color:var(--accent)}
 ul.guides span{display:block;color:var(--ink3);font-size:.9rem;line-height:1.45;margin-top:.25rem}
-.faq{max-width:52rem;margin-top:4rem}
-.faq h2{margin-bottom:1.2rem}
-.faq .more{color:var(--ink3);margin:1.25rem 0 0;font-size:.95rem}
+.faq{margin-top:4rem;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,19rem);gap:1.5rem 4rem;align-items:start}
+.faq h2{margin-bottom:1.2rem;grid-column:1/-1}
+.faq .qs{min-width:0}
+.faq .more{border-top:1px solid var(--line);padding-top:1rem}
+.faq .more h3{margin-bottom:.6rem}
+.faq .more ul{list-style:none;margin:0;padding:0}
+.faq .more li{margin:0 0 .55rem;color:var(--ink3);font-size:.92rem;line-height:1.45}
 .faq .more a{color:var(--ink2)}
+.faq .more a:hover{color:var(--ink)}
 .cta .wrap{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1.5rem 3rem;align-items:center}
 .cta h2{margin-bottom:.5rem}
 .cta p.lead{margin:0;font-size:1rem}
+.cta .actions .btn-ghost{padding:.9rem 1.2rem}
+.cta .get-phone{margin-bottom:1rem}
+.cta .actions .btn-ghost svg{width:1.06em;height:1.06em}
 @media (max-width:1000px){
   .hero{grid-template-columns:1fr;gap:2.25rem;padding-top:2.25rem;padding-bottom:3rem}
   .hero-copy{padding-top:0}
@@ -320,11 +348,12 @@ ul.guides span{display:block;color:var(--ink3);font-size:.9rem;line-height:1.45;
   .views figcaption .fd{display:inline;color:var(--ink2)}
   .also,.split{grid-template-columns:repeat(2,minmax(0,1fr))}
   .cta .wrap{grid-template-columns:1fr}
+  .faq{grid-template-columns:1fr}
 }
 @media (max-width:760px){
   .top .wrap{height:3.5rem}
   .top nav{gap:1.1rem}
-  .top nav a.hide-s{display:none}
+  .top nav .hide-s{display:none}
   .hero{padding-top:1.75rem;gap:1.75rem}
   .hero h1{font-size:clamp(2.1rem,9.6vw,2.6rem);line-height:1.03;margin-bottom:1rem}
   .lead{font-size:1.04rem}
@@ -347,7 +376,11 @@ ul.guides span{display:block;color:var(--ink3);font-size:.9rem;line-height:1.45;
   .r-phone{display:block}
   .phone-app{display:block;position:relative;z-index:3;margin:-2.5rem .75rem 0;border-radius:8px;overflow:hidden;box-shadow:0 0 0 1px var(--line2),0 24px 50px -16px rgba(0,0,0,.75)}
   section{padding:2.5rem 0}
-  .who{display:none}
+  .who{padding:1.6rem 0}
+  .who .wrap{gap:.7rem}
+  .who ul{grid-template-columns:1fr;gap:.45rem;font-size:.92rem;line-height:1.45}
+  .who li b{display:inline}
+  .top nav .btn-ghost{padding:.5rem .75rem}
   .sub{margin-bottom:1.5rem}
   #setup .sub{display:none}
   .shot{border-radius:7px}
@@ -397,8 +430,8 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
       <a class="hide-s" href="#how">How it works</a>
       <a class="hide-s" href="#setup">Setup</a>
       <a class="hide-s" href="#guides">Guides</a>
-      <a href="https://github.com/Sepd0x/cs2-ip-changer">GitHub</a>
-      <a class="btn btn-s" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Download</a>
+      <a class="btn btn-s btn-ghost" href="https://github.com/Sepd0x/cs2-ip-changer" title="Star CS2 IP Changer on GitHub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg><span>Star<span class="hide-s"> on GitHub</span></span></a>
+      <a class="btn btn-s get-desk" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download</a>
     </nav>
   </div>
 </header>
@@ -409,12 +442,15 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
       <p class="eyebrow">CS2 IP ban bypass and home IP protection</p>
       <h1>Change your CS2 IP with your phone's mobile data</h1>
       <p class="lead">CS2 IP Changer sends CS2 and Steam through your Android phone, so community servers see your carrier's IP, not your home IP. IP banned? One click gets a new IP and rejoins the server, logged into the next account that server hasn't banned.</p>
-      <div class="actions get-desk">
-        <a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
-          Download for Windows
-        </a>
-        <a class="link" href="https://github.com/Sepd0x/cs2-ip-changer">Source on GitHub</a>
+      <div class="get-desk">
+        <div class="actions">
+          <a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
+            Download for Windows
+          </a>
+          <a class="link" href="https://github.com/Sepd0x/cs2-ip-changer">Source on GitHub</a>
+        </div>
+        <p class="rel"><!--rel:line-->v0.1.0-beta.9 · 63.4 MB · 3 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Release notes and checksums</a><!--/rel--></p>
       </div>
       <div class="get-phone">
         <p class="get-note">It's a Windows app. Open this page on your PC:</p>
@@ -422,7 +458,7 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
           <code class="url">sepd0x.github.io/cs2-ip-changer</code>
           <button class="btn" type="button" data-copy="https://sepd0x.github.io/cs2-ip-changer/">Copy link</button>
         </div>
-        <a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Download the .exe anyway</a>
+        <a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a>
       </div>
       <ul class="checks" aria-label="At a glance">
         <li>Free</li>
@@ -550,12 +586,12 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
           <label for="pg-profiles"><b>Profiles</b><span>Name, picture, bio and privacy on many Steam accounts from one template. Preview first; Restore original undoes it.</span></label>
         </div>
         <div class="views">
-          <figure class="f-connection"><div class="shot"><picture><source type="image/webp" srcset="img/connection.webp"><img src="img/connection.png" alt="The Connection page: protection status, the IP servers see next to your home IP, phone status and live checks" width="1240" height="800" loading="lazy"></picture></div><figcaption><span class="fd">Protection status, the IP servers see next to your home IP, the phone and live checks. </span><a href="change-ip-with-phone/">Change IP with your phone</a></figcaption></figure>
-          <figure class="f-servers"><div class="shot"><picture><source type="image/webp" srcset="img/servers.webp"><img src="img/servers.png" alt="The Servers page: your server list with name, map, players and ping, and the players on one server" width="1240" height="800" loading="lazy"></picture></div><figcaption><span class="fd">Your servers with name, map, players and ping through the phone. </span><a href="cs2-ip-ban/">Banned on one? CS2 IP ban</a></figcaption></figure>
-          <figure class="f-accounts"><div class="shot"><picture><source type="image/webp" srcset="img/accounts.webp"><img src="img/accounts.png" alt="The Accounts page: saved Steam accounts with ban status, cooldowns and the In rotation checkbox" width="1240" height="800" loading="lazy"></picture></div><figcaption><span class="fd">Saved Steam accounts with bans, cooldowns and server ban marks. </span><a href="steam-account-switcher/">Steam account switcher</a></figcaption></figure>
-          <figure class="f-regions"><div class="shot"><picture><source type="image/webp" srcset="img/regions.webp"><img src="img/regions.png" alt="The Regions page: Valve's matchmaking regions by continent, each with its ping through the phone, and the ones turned off blocked for cs2.exe" width="1240" height="800" loading="lazy"></picture></div><figcaption><span class="fd">Matchmaking regions with their ping; the ones you turn off are blocked for cs2.exe. </span><a href="cs2-region-picker/">CS2 region picker</a></figcaption></figure>
-          <figure class="f-configs"><div class="shot"><picture><source type="image/webp" srcset="img/configs.webp"><img src="img/configs.png" alt="The Configs page: copy, sync mode, Backups (undo), snapshots and compare" width="1240" height="800" loading="lazy"></picture></div><figcaption><span class="fd">Sync, copy and compare configs between accounts, with backups. </span><a href="copy-cs2-config/">Copy CS2 settings</a></figcaption></figure>
-          <figure class="f-profiles"><div class="shot"><picture><source type="image/webp" srcset="img/profiles.webp"><img src="img/profiles.png" alt="The Profiles page: a template on the left, and each account now and after on the right, with its sign-in" width="1240" height="800" loading="lazy"></picture></div><figcaption><span class="fd">A template on the left, each account now and after on the right. </span><a href="steam-profile-editor/">Steam profile editor</a></figcaption></figure>
+          <figure class="f-connection"><div class="shot"><a class="zoom" href="img/connection.png" aria-label="Open the connection screenshot at full size"><picture><source type="image/webp" srcset="img/connection.webp"><img src="img/connection.png" alt="The Connection page: protection status, the IP servers see next to your home IP, phone status and live checks" width="1240" height="800" loading="lazy"></picture></a></div><figcaption><span class="fd">Protection status, the IP servers see next to your home IP, the phone and live checks. </span><a href="change-ip-with-phone/">Change IP with your phone</a></figcaption></figure>
+          <figure class="f-servers"><div class="shot"><a class="zoom" href="img/servers.png" aria-label="Open the servers screenshot at full size"><picture><source type="image/webp" srcset="img/servers.webp"><img src="img/servers.png" alt="The Servers page: your server list with name, map, players and ping, and the players on one server" width="1240" height="800" loading="lazy"></picture></a></div><figcaption><span class="fd">Your servers with name, map, players and ping through the phone. </span><a href="cs2-ip-ban/">Banned on one? CS2 IP ban</a></figcaption></figure>
+          <figure class="f-accounts"><div class="shot"><a class="zoom" href="img/accounts.png" aria-label="Open the accounts screenshot at full size"><picture><source type="image/webp" srcset="img/accounts.webp"><img src="img/accounts.png" alt="The Accounts page: saved Steam accounts with ban status, cooldowns and the In rotation checkbox" width="1240" height="800" loading="lazy"></picture></a></div><figcaption><span class="fd">Saved Steam accounts with bans, cooldowns and server ban marks. </span><a href="steam-account-switcher/">Steam account switcher</a></figcaption></figure>
+          <figure class="f-regions"><div class="shot"><a class="zoom" href="img/regions.png" aria-label="Open the regions screenshot at full size"><picture><source type="image/webp" srcset="img/regions.webp"><img src="img/regions.png" alt="The Regions page: Valve's matchmaking regions by continent, each with its ping through the phone, and the ones turned off blocked for cs2.exe" width="1240" height="800" loading="lazy"></picture></a></div><figcaption><span class="fd">Matchmaking regions with their ping; the ones you turn off are blocked for cs2.exe. </span><a href="cs2-region-picker/">CS2 region picker</a></figcaption></figure>
+          <figure class="f-configs"><div class="shot"><a class="zoom" href="img/configs.png" aria-label="Open the configs screenshot at full size"><picture><source type="image/webp" srcset="img/configs.webp"><img src="img/configs.png" alt="The Configs page: copy, sync mode, Backups (undo), snapshots and compare" width="1240" height="800" loading="lazy"></picture></a></div><figcaption><span class="fd">Sync, copy and compare configs between accounts, with backups. </span><a href="copy-cs2-config/">Copy CS2 settings</a></figcaption></figure>
+          <figure class="f-profiles"><div class="shot"><a class="zoom" href="img/profiles.png" aria-label="Open the profiles screenshot at full size"><picture><source type="image/webp" srcset="img/profiles.webp"><img src="img/profiles.png" alt="The Profiles page: a template on the left, and each account now and after on the right, with its sign-in" width="1240" height="800" loading="lazy"></picture></a></div><figcaption><span class="fd">A template on the left, each account now and after on the right. </span><a href="steam-profile-editor/">Steam profile editor</a></figcaption></figure>
         </div>
       </div>
       <div class="also">
@@ -653,8 +689,8 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
         <p class="sub">Windows 10 or 11 (64-bit), admin rights, Windows Firewall on, and an Android phone with mobile data.</p>
         <ol class="setup">
           <li><b>Download <code>CS2IPChanger.exe</code></b> from the <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">latest release</a> into a folder only admins can change, like <code>C:\Program Files\CS2 IP Changer</code>. Started from Downloads, it offers to install itself there in one click.</li>
-          <li><b>Plug the phone in by USB,</b> turn on USB tethering and turn off the phone's Wi-Fi. <b>Phone setup</b> shows each step in green or red and what's missing. Then press <b>Turn on protection</b>: it starts off each time the app opens.</li>
-          <li><b>Run the app</b> as admin and paste the servers you play on into Servers.</li>
+          <li><b>Plug the phone in by USB,</b> turn on USB tethering and turn off the phone's Wi-Fi.</li>
+          <li><b>Run the app</b> as admin. <b>Phone setup</b> shows each step in green or red and what's missing. Paste the servers you play on into Servers, then press <b>Turn on protection</b>: it starts off each time the app opens.</li>
           <li><b>Open Connection.</b> With CS2 and Steam running, every check should be green, including Phone IP is not your home IP.</li>
         </ol>
         <p class="note">Change IP also needs USB debugging on the phone. Turn off protection, on the Connection page or in the icon&#39;s menu next to the clock, undoes it all. Full walkthrough: <a href="change-ip-with-phone/">Change IP with your phone</a>.</p>
@@ -693,11 +729,22 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
 
       <div class="faq" id="faq">
         <h2 id="faq-h">FAQ</h2>
+        <div class="qs">
         <details><summary>Is it a VPN? Does it work on servers that block VPNs?</summary><p>No, it isn't a VPN, and yes, it works there. A VPN sends your traffic through a datacenter, and many community servers block datacenter and VPN IP ranges. This app sends CS2 and Steam through your own phone's mobile data, so the server sees an ordinary mobile connection from your carrier. There's no VPN server in between and no subscription.</p></details>
         <details><summary>What do I need?</summary><p>Windows 10 or 11 (64-bit), admin rights, Windows Firewall turned on, and an Android phone with mobile data, connected by USB cable (USB tethering) or its Wi-Fi hotspot. USB debugging on the phone is only needed to change IP from the PC. CS2 and Steam then use the phone's data plan.</p></details>
         <details><summary>Can I use the phone's Wi-Fi hotspot instead of a cable?</summary><p>Yes. Connect the PC to the hotspot and pick it under Connection &gt; How the PC connects to the phone. The app remembers the network name, and if Windows jumps back to your home router it blocks everything. Change IP works on the hotspot too if the phone is also plugged in by USB with USB debugging on.</p></details>
         <details><summary>Does it send anything about me?</summary><p>While the app is in beta it sends usage stats, which are required to use it: the first start shows what is sent, with Accept and Quit (Quit closes the app without changing anything). Then it sends them once when it has been open for 20 seconds and then once a day: a random ID made for this install, with no name (never from your PC or from you; Settings > Delete my stats deletes it all), versions, your country, the mode, how the phone is connected, minutes open, how often each button is used, a few counters, how long your lists are and errors. Never IPs, servers, accounts, names or anything you typed, and the server keeps no IP. The full list is in the <a href="https://github.com/Sepd0x/cs2-ip-changer#telemetry">README</a>.</p></details>
-        <p class="more">More answers in the guides: <a href="cs2-ip-ban/">IP bans and range bans</a>, <a href="change-ip-with-phone/">ping, CGNAT and USB dongles</a>, <a href="is-it-safe/">VAC, admin rights and antivirus</a>, <a href="steam-account-switcher/">Steam passwords</a>, <a href="cs2-region-picker/">region bans</a>.</p>
+        </div>
+        <aside class="more" aria-labelledby="more-h">
+          <h3 id="more-h">More answers in the guides</h3>
+          <ul>
+            <li><a href="cs2-ip-ban/">IP bans and range bans</a></li>
+            <li><a href="change-ip-with-phone/">Ping, CGNAT and USB dongles</a></li>
+            <li><a href="is-it-safe/">VAC, admin rights and antivirus</a></li>
+            <li><a href="steam-account-switcher/">Steam passwords</a></li>
+            <li><a href="cs2-region-picker/">How to change your region in CS2</a></li>
+          </ul>
+        </aside>
       </div>
     </div>
   </section>
@@ -709,12 +756,20 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
         <p class="lead">Free and portable. Every release is built by GitHub Actions from the public source, and updates are signed.</p>
       </div>
       <div>
+        <div class="get-phone">
+          <div class="copyrow">
+            <code class="url">sepd0x.github.io/cs2-ip-changer</code>
+            <button class="btn" type="button" data-copy="https://sepd0x.github.io/cs2-ip-changer/">Copy link</button>
+          </div>
+        </div>
         <div class="actions">
-          <a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">
+          <a class="btn get-desk" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
             Download for Windows
           </a>
+          <a class="btn btn-ghost" href="https://github.com/Sepd0x/cs2-ip-changer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>Star on GitHub</a>
         </div>
+        <p class="rel get-desk"><!--rel:line-->v0.1.0-beta.9 · 63.4 MB · 3 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Release notes and checksums</a><!--/rel--></p>
         <p class="req">Windows 10/11 · Android phone + USB cable or hotspot · uses mobile data · admin</p>
       </div>
     </div>
@@ -743,6 +798,7 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
     p.addEventListener('pointermove',function(e){var r=p.getBoundingClientRect();tgt.x=(e.clientX-r.left)/r.width*100;tgt.y=(e.clientY-r.top)/r.height*100;go()});
     p.addEventListener('pointerleave',function(){tgt.x=78;tgt.y=20;go()});
   }
+  /* shared */
   /* on a phone: copy this page's link to open it on the PC */
   d.querySelectorAll('[data-copy]').forEach(function(b){
     b.addEventListener('click',function(){
@@ -750,6 +806,16 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
       if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(b.getAttribute('data-copy')).then(function(){done(true)},function(){done(false)})}else{done(false)}
     });
   });
+  /* a screenshot opens at full size over the page; a click or Escape closes it (without JS the link opens the picture) */
+  var box;
+  d.addEventListener('click',function(e){
+    var a=e.target.closest&&e.target.closest('a.zoom');
+    if(!a||e.button||e.ctrlKey||e.metaKey||e.shiftKey||!window.HTMLDialogElement)return;
+    e.preventDefault();
+    if(!box){box=d.createElement('dialog');box.className='lightbox';box.setAttribute('aria-label','Screenshot');box.innerHTML='<img alt="">';box.addEventListener('click',function(){box.close()});d.body.appendChild(box)}
+    var img=box.querySelector('img'),src=a.querySelector('img');img.src=a.getAttribute('href');img.alt=src?src.alt:'';box.showModal();
+  });
+  /* /shared */
 })();
 </script>
 </body>

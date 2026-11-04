@@ -606,6 +606,8 @@ Part5Tests.Run(Check);
 Beta9Tests.Run(Check);
 // beta.10: contas novas, nomes do Steam, proteção ligada só quando a ligas (Beta10Tests.cs)
 Beta10Tests.Run(Check);
+// auditoria de 4 nov.: quando a telemetria envia, a ligação, as regiões, os limites e o corpo do teste do Worker (TelemetryTests.cs)
+TelemetryTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

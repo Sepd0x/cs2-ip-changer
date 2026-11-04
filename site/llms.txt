@@ -4,7 +4,8 @@
 
 Website: https://sepd0x.github.io/cs2-ip-changer/
 Source and downloads: https://github.com/Sepd0x/cs2-ip-changer (latest release: https://github.com/Sepd0x/cs2-ip-changer/releases/latest)
-Status: beta (0.1.0-beta.9). Free, no account. Not affiliated with Valve.
+Download: https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe (CS2IPChanger.exe, 63.4 MB, SHA-256 441e9ae0c8def2de90c83cfdec3c531a963a8370d5418a5ae0c7f43887bd6517, VirusTotal: 0 of 69 engines flag it, https://www.virustotal.com/gui/file/441e9ae0c8def2de90c83cfdec3c531a963a8370d5418a5ae0c7f43887bd6517/detection)
+Status: beta. Latest release 0.1.0-beta.9 (2026-11-03). Free, no account. Not affiliated with Valve.
 
 ## How it works
 
@@ -43,7 +44,7 @@ Status: beta (0.1.0-beta.9). Free, no account. Not affiliated with Valve.
 - [Is it safe?](https://sepd0x.github.io/cs2-ip-changer/is-it-safe/): what it changes and how to check the download.
 - [Steam account switcher](https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/): no passwords, ban marks per server.
 - [Copy CS2 settings](https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/): crosshair, binds and video on every account.
-- [CS2 region picker](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/): choose where matchmaking puts you.
+- [CS2 region picker](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/): how to change your region in CS2 (CS2 has no region setting), step by step, how to do the same block by hand with Windows Firewall, and why a server picker sometimes blocks nothing.
 - [Steam profile editor](https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/): name, avatar and privacy on many accounts.
 
 ## Safety and privacy

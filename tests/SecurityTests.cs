@@ -175,7 +175,12 @@ static class SecurityTests
                 var b8 = WriteJson(tmp, "s-b8-aceite.json", "{ \"StatsAccepted\": true }");
                 check("Telemetria: aceite na beta.8 volta a ver o aviso uma vez", App.StatsNoticeIn(b8) == 1 && !App.StatsAcceptedIn(b8)
                     && App.StatsGate(Array.Empty<string>(), () => { asked++; return true; }, b8) && asked == 2 && App.StatsAskedAgain);
-                check("Telemetria: o aviso de novo diz que o ID passou a ficar", Telemetry.NoticeChanged.Contains("kept for this install") && Telemetry.NoticeVersion == 2);
+                check("Telemetria: o aviso de novo diz que o ID passou a ficar", Telemetry.NoticeChanged.Contains("kept for this install") && Telemetry.NoticeVersion == 3);
+                // beta.10: quem aceitou o aviso da beta.9 (só ao abrir e fechar) vê-o uma vez mais, com os 30 minutos
+                var b9 = WriteJson(tmp, "s-b9-aceite.json", "{ \"StatsAccepted\": true, \"StatsNotice\": 2 }");
+                check("Telemetria: aceite na beta.9 volta a ver o aviso uma vez, com os 30 minutos", !App.StatsAcceptedIn(b9)
+                    && App.StatsGate(Array.Empty<string>(), () => { asked++; return true; }, b9) && asked == 3 && App.StatsAskedAgain
+                    && Telemetry.NoticeChanged.Contains("every 30 minutes"));
 
                 // O ID (beta.9): aleatório, feito uma vez por instalação e guardado; um de antes da beta.9 (o diário da beta.8, o fixo da beta.7) é trocado
                 var id1 = Telemetry.InstallId(null, false);

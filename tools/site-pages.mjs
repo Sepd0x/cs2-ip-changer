@@ -1,8 +1,12 @@
-// Builds the guide pages of the site (site/<slug>/index.html) and site/sitemap.xml from the pages below.
+// Builds the guide pages of the site (site/<slug>/index.html) and site/sitemap.xml from the pages below, and puts the
+// latest release (site/release.json: version, size, date, SHA-256, VirusTotal) into the home page, the guides, README.md
+// and site/llms.txt, so the download line and the VirusTotal link are never typed by hand.
 // The look comes from site/index.html (its <style>), so the pages always match the home page. Run: node tools/site-pages.mjs
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+// After a release: node tools/site-pages.mjs --release v0.1.0-beta.10 --vt 0/69 (the VirusTotal run's summary gives N/M).
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const site = join(root, 'site');
@@ -10,6 +14,81 @@ const BASE = 'https://sepd0x.github.io/cs2-ip-changer/';
 const REPO = 'https://github.com/Sepd0x/cs2-ip-changer';
 const LATEST = `${REPO}/releases/latest`;
 const today = new Date().toISOString().slice(0, 10);
+
+// ------------------------------------------------------------ the latest release, from one file
+const RELEASE = join(site, 'release.json');
+const arg = (name) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : null; };
+if (arg('--release')) {
+  // Read from GitHub's public API, so the size, the date and the SHA-256 are the release's own.
+  const tag = arg('--release'), vt = arg('--vt'), was = JSON.parse(readFileSync(RELEASE, 'utf8'));
+  const r = await (await fetch(`https://api.github.com/repos/Sepd0x/cs2-ip-changer/releases/tags/${encodeURIComponent(tag)}`, { headers: { accept: 'application/vnd.github+json' } })).json();
+  const exe = r.assets?.find((a) => a.name === was.asset);
+  if (!exe) throw new Error(`${tag}: no ${was.asset} in the release (is it published?)`);
+  let sha = exe.digest?.startsWith('sha256:') ? exe.digest.slice(7) : null;
+  if (!sha) { const s = r.assets.find((a) => a.name === `${was.asset}.sha256`); sha = s && (await (await fetch(s.browser_download_url)).text()).split(/\s/)[0]; }
+  if (!/^[0-9a-f]{64}$/.test(sha || '')) throw new Error(`${tag}: no SHA-256 found`);
+  const m = /^(\d+)\/(\d+)$/.exec(vt || '');
+  if (!m && sha !== was.sha256) throw new Error('--vt <flagged>/<engines> is needed for a new exe (from the VirusTotal run of this release)');
+  const next = { ...was, tag, version: tag.replace(/^v/, ''), published: r.published_at.slice(0, 10), size: exe.size, sha256: sha,
+    virustotal: m ? { flagged: +m[1], engines: +m[2] } : was.virustotal };
+  writeFileSync(RELEASE, JSON.stringify(next, null, 1) + '\n');
+  console.log(`site/release.json: ${next.tag}, ${next.size} bytes, ${next.sha256.slice(0, 12)}…, VirusTotal ${next.virustotal.flagged}/${next.virustotal.engines}`);
+}
+const rel = JSON.parse(readFileSync(RELEASE, 'utf8'));
+const EXE = `${REPO}/releases/latest/download/${rel.asset}`;   // GitHub sends it to the newest release's exe (the name never changes, .github/workflows/release.yml)
+const VT = `https://www.virustotal.com/gui/file/${rel.sha256}/detection`;
+const size = `${(rel.size / 1048576).toFixed(1)} MB`;   // counted like GitHub's release page and the browsers (1 MB = 1024 KB)
+const day = (iso) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const short = rel.version.replace(/^\d+\.\d+\.\d+-/, '');   // beta.9
+const vtText = `${rel.virustotal.flagged} of ${rel.virustotal.engines} engines`;
+// The line under each Download button: what you get, and where the notes and checksums are.
+const relLine = `v${rel.version} · ${size} · ${day(rel.published)} · <a href="${LATEST}">Release notes and checksums</a>`;
+
+// git only reads here: when a file was first added, and when it last changed.
+const git = (...a) => { try { return execFileSync('git', a, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return ''; } };
+const firstAdded = (file) => git('log', '--diff-filter=A', '--format=%cs', '--', file).split('\n').filter(Boolean).pop() || today;
+const lastChanged = (file) => (git('status', '--porcelain', '--', file) ? today : git('log', '-1', '--format=%cs', '--', file)) || today;
+
+// One marked spot in a file: <!--rel:name-->...<!--/rel-->. A missing mark stops the build, so nothing is left old by mistake.
+const fill = (textIn, name, value, file) => {
+  const re = new RegExp(`<!--rel:${name}-->[\\s\\S]*?<!--/rel-->`, 'g');
+  if (!re.test(textIn)) throw new Error(`${file}: the mark <!--rel:${name}--> is missing`);
+  return textIn.replace(re, `<!--rel:${name}-->${value}<!--/rel-->`);
+};
+const vtLinks = (s) => s.replace(/https:\/\/www\.virustotal\.com\/gui\/file\/[0-9a-f]{64}\/detection/g, VT);
+
+// The home page: the download lines, the VirusTotal link and the release facts in its JSON-LD.
+{
+  const file = join(site, 'index.html');
+  let s = readFileSync(file, 'utf8');
+  s = fill(s, 'line', relLine, 'site/index.html');
+  s = vtLinks(s)
+    .replaceAll(/https:\/\/github\.com\/Sepd0x\/cs2-ip-changer\/releases\/latest\/download\/[^"<\s]+/g, EXE)
+    .replace(/("softwareVersion": )"[^"]*"/, `$1"${rel.version}"`)
+    .replace(/("datePublished": )"[^"]*"/, `$1"${rel.firstRelease}"`)
+    .replace(/("dateModified": )"[^"]*"/, `$1"${rel.published}"`)
+    .replace(/("fileSize": )"[^"]*"/, `$1"${size}"`)
+    .replace(/("downloadUrl": )"[^"]*"/, `$1"${EXE}"`);
+  writeFileSync(file, s);
+}
+// README.md: the download line under the button, the size in Quick start and the VirusTotal result.
+{
+  const file = join(root, 'README.md');
+  let s = readFileSync(file, 'utf8');
+  s = fill(s, 'line', `<a href="${EXE}">${rel.asset}</a> · v${rel.version} · ${size} · ${day(rel.published)} · <a href="${LATEST}">release notes and checksums</a>`, 'README.md');
+  s = fill(s, 'size', size, 'README.md');
+  s = fill(s, 'vt', `${short}: [${vtText}](${VT}) flag it`, 'README.md');
+  writeFileSync(file, vtLinks(s));
+}
+// site/llms.txt: the status line and the direct download.
+{
+  const file = join(site, 'llms.txt');
+  let s = readFileSync(file, 'utf8');
+  if (!/^Status: .*$/m.test(s) || !/^Download: .*$/m.test(s)) throw new Error('site/llms.txt: the Status: or Download: line is missing');
+  s = s.replace(/^Status: .*$/m, `Status: beta. Latest release ${rel.version} (${rel.published}). Free, no account. Not affiliated with Valve.`)
+    .replace(/^Download: .*$/m, `Download: ${EXE} (${rel.asset}, ${size}, SHA-256 ${rel.sha256}, VirusTotal: ${vtText} flag it, ${VT})`);
+  writeFileSync(file, s);
+}
 
 // Guide layout: one article in a text column, with a sticky rail (download, contents, a crop of the app) on the right.
 // The fonts are the site's own (site/fonts), so the copied style points one folder up.
@@ -20,13 +99,20 @@ const style = home.match(/<style>[\s\S]*?<\/style>/)[0].replace(/\/\* home: [\s\
 .gl{display:grid;grid-template-columns:minmax(0,1fr) 19rem;column-gap:3.5rem;padding-top:2.75rem;padding-bottom:4.5rem}
 .gl>*{grid-column:1}
 .ghead{padding-bottom:2.5rem}
-.crumbs{font:400 .75rem/1.4 var(--mono);letter-spacing:.06em;color:var(--ink3);margin:0 0 1.4rem}.crumbs a{color:var(--ink2);text-decoration:none}.crumbs a:hover{color:var(--ink)}
+.crumbs{font:400 .75rem/1.4 var(--mono);letter-spacing:.06em;color:var(--ink3);margin:0 0 1.4rem}.crumbs a{color:var(--ink2)}.crumbs a:hover{color:var(--ink)}
 .ghead h1{font:500 clamp(2rem,3.7vw,2.75rem)/1.06 var(--disp);letter-spacing:-.03em;margin:0 0 1.1rem;max-width:24ch}
 .ghead .lead{margin:0}
 .rail{grid-column:2;grid-row:1/span 4}
 .rail-in{position:sticky;top:1.5rem;display:flex;flex-direction:column;gap:1.9rem}
 .rail .btn{width:100%}
+.rail .copyrow .btn,.gmore .end .copyrow .btn{width:auto}
 .rail .checks{margin-top:1.1rem;font-size:.86rem;gap:.35rem 1rem}
+@media (min-width:761px){.get-phone{display:none}}
+.gstar{color:var(--ink3);font-size:.95rem;margin:1.6rem 0 0}
+.gstar a{color:var(--ink2)}
+.gtext ol.howto{padding-left:0;list-style:none;counter-reset:hs}
+.gtext ol.howto li{position:relative;padding-left:2.4rem;margin-bottom:.8rem}
+.gtext ol.howto li::before{counter-increment:hs;content:counter(hs);position:absolute;left:0;top:.05rem;width:1.6rem;height:1.6rem;display:flex;align-items:center;justify-content:center;border:1px solid var(--line2);border-radius:50%;font:400 .72rem/1 var(--mono);color:var(--ink)}
 .toc h2{font:400 .72rem/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:0 0 .6rem}
 .toc ul{list-style:none;margin:0;padding:0 0 0 .9rem;border-left:1px solid var(--line)}
 .toc li{margin:.35rem 0;font-size:.92rem;line-height:1.4}
@@ -55,6 +141,9 @@ const style = home.match(/<style>[\s\S]*?<\/style>/)[0].replace(/\/\* home: [\s\
 .gmore span{display:block;color:var(--ink3);font-size:.9rem;line-height:1.45;margin-top:.2rem}
 .gmore .end{display:none}
 .gmore .end .btn{width:100%}
+.gmore .end .link,.gstar a{font:inherit;text-decoration:underline;text-decoration-color:var(--line2);text-decoration-thickness:1px;text-underline-offset:.22em}
+.gmore .end .link{font-weight:500;font-size:.92rem}
+.gtext code{overflow-wrap:anywhere}
 @media (max-width:900px){
   .gl{grid-template-columns:minmax(0,1fr);padding-top:1.75rem;padding-bottom:3rem}
   .rail{grid-column:1;grid-row:auto;order:1}
@@ -74,9 +163,13 @@ const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, 
 const text = (html) => html.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
 const slug = (s) => s.toLowerCase().replace(/'/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>';
-const download = `<a class="btn" href="${LATEST}">${icon}Download for Windows</a>`;
+const star = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>';
+// On a PC: the exe itself, with what you get under it. On a phone (a Windows app is no use there): copy this page's link for the PC.
+const download = (url) => `<div class="get-desk"><a class="btn" href="${EXE}">${icon}Download for Windows</a><p class="rel">${relLine}</p></div>
+          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">${url.replace(/^https:\/\//, '').replace(/\/$/, '')}</code><button class="btn" type="button" data-copy="${url}">Copy link</button></div><a class="link" href="${EXE}">Download the .exe anyway</a></div>`;
 const req = 'Windows 10/11 · Android phone + USB cable or hotspot · uses mobile data · admin';
-const VT = 'https://www.virustotal.com/gui/file/441e9ae0c8def2de90c83cfdec3c531a963a8370d5418a5ae0c7f43887bd6517/detection';
+// The copy button and the screenshot viewer: the same code as the home page (between its /* shared */ marks).
+const shared = readFileSync(join(site, 'index.html'), 'utf8').match(/\/\* shared \*\/([\s\S]*?)\/\* \/shared \*\//)[1];
 // The trust line, the same as under the home page's buttons. Facts as in the README (the license isn't open source, so "Public source").
 const checks = `<ul class="checks" aria-label="At a glance"><li>Free</li><li>Public source</li><li>No account</li><li>Doesn't touch cs2.exe</li><li>Signed updates</li><li><a href="${VT}">VirusTotal report</a></li></ul>`;
 const safe = (here) => `Not code-signed, so SmartScreen warns the first time: ${here ? '<a href="#check-your-download">check your download</a>' : '<a href="../is-it-safe/">how to check it</a>'}`;
@@ -97,29 +190,46 @@ const labelTables = (html) => html.replace(/<table>([\s\S]*?)<\/table>/g, (table
 });
 
 // A crop of a 1240x800 screenshot: [name, x, y, width, height, alt]. The box keeps the crop's shape; the image is scaled and moved inside it.
-const crop = ([name, x, y, w, h, alt]) => `<a class="crop" href="../img/${name}.png" style="aspect-ratio:${w}/${h}" aria-label="${esc(alt)} (full screenshot)"><picture><source type="image/webp" srcset="../img/${name}.webp"><img src="../img/${name}.png" alt="${esc(alt)}" width="1240" height="800" loading="lazy" style="width:${(1240 / w * 100).toFixed(2)}%;margin:${(-y / w * 100).toFixed(2)}% 0 0 ${(-x / w * 100).toFixed(2)}%"></picture></a>`;
+// It is the biggest picture on a phone (the LCP), so it loads at once and first.
+const crop = ([name, x, y, w, h, alt]) => `<a class="crop zoom" href="../img/${name}.png" style="aspect-ratio:${w}/${h}" aria-label="${esc(alt)} (full screenshot)"><picture><source type="image/webp" srcset="../img/${name}.webp"><img src="../img/${name}.png" alt="${esc(alt)}" width="1240" height="800" loading="eager" fetchpriority="high" style="width:${(1240 / w * 100).toFixed(2)}%;margin:${(-y / w * 100).toFixed(2)}% 0 0 ${(-x / w * 100).toFixed(2)}%"></picture></a>`;
 
 // Each page answers one search and has one job. Facts come from the README and CHANGELOG; keep them in step when the app changes.
 // A question lives on one page only; the home FAQ links here.
 export const pages = [
   {
     slug: 'cs2-region-picker',
-    title: 'CS2 region picker: choose your matchmaking region (free)',
-    desc: 'Pick which regions CS2 matchmaking can put you in, with the ping of each region. Free Windows app: one firewall rule for cs2.exe on Valve relays only.',
+    title: 'CS2 region picker: how to change your region in CS2',
+    desc: 'Pick your CS2 matchmaking region: block the ones you don\'t want and see the ping of each. Free Windows app, one firewall rule for cs2.exe on Valve relays.',
     nav: 'CS2 region picker',
-    blurb: 'Choose where matchmaking puts you.',
+    blurb: 'How to change your region in CS2.',
     eyebrow: 'CS2 server picker',
-    h1: 'CS2 region picker: choose where matchmaking puts you',
-    lead: 'The Regions page of CS2 IP Changer lists Valve\'s matchmaking regions with the ping of each one, and lets you turn off the ones you don\'t want. Premier, Competitive, Casual, Deathmatch and Wingman then only find matches in the regions you left on.',
+    h1: 'How to change your region in CS2, with a free region picker',
+    lead: 'CS2 has no region setting: matchmaking picks the region for you, by ping. The Regions page of CS2 IP Changer lists Valve\'s matchmaking regions with the ping of each one, and blocks the ones you turn off. Premier, Competitive, Casual, Deathmatch and Wingman then only find matches in the regions you left on.',
     crop: ['regions', 91, 44, 760, 466,'The Regions page: Valve\'s matchmaking regions by continent, each with its ping, and the ones turned off blocked for cs2.exe'],
     related: ['copy-cs2-config', 'steam-account-switcher', 'is-it-safe'],
     sections: [
-      ['How CS2 picks a server', `<p>CS2 matchmaking doesn't connect you straight to a server. It measures your ping to Valve's relays (Steam Datagram Relay) in each region and queues you where the ping is good. If a region's relays can't be reached, CS2 treats that region as unavailable and looks elsewhere.</p><p>That's what a CS2 server picker uses: it makes the regions you don't want unreachable, so the game never picks them.</p>`],
-      ['What the Regions page does', `<ul><li><b>The real list from Valve.</b> The regions come from Valve's own relay list (<code>GetSDRConfig</code>, app 730), grouped by city and continent. The last list is saved, so the page works offline.</li><li><b>Ping for each region</b>, measured the way the game will feel it: through the phone when you play on mobile data, through your home connection in No phone mode.</li><li><b>Shortcuts:</b> Only this region, Closest 3, your continent only (Europe only, North America only and so on), Ping under X ms, and Allow all (block off).</li><li><b>One firewall rule, for <code>cs2.exe</code> only.</b> Turned-off regions are blocked on Valve's relay IPs only. Steam, your friends list and community servers are not touched.</li><li><b>Kept up to date.</b> When Valve changes the relay list, the rule is rebuilt, so new relays in a region you turned off are blocked too.</li></ul>`],
-      ['Things to know', `<ul><li>Changes apply at once, and CS2 measures the regions again on its next start. Don't change them during a match.</li><li>Blocking too much means long queues or no match at all, and Premier can take longer. Leave a few regions on.</li><li>It works with or without the phone. Regions don't depend on protection: they stay off until you click Allow all (block off).</li></ul>`],
+      ['How CS2 picks your region', `<p>When you queue, the game measures your ping to Valve's relays (Steam Datagram Relay) in each region and looks for a match where the ping is good. Max Acceptable Matchmaking Ping, in Settings &gt; Game, only sets the highest ping you accept; it doesn't choose a region.</p><p>So the only way to choose is to make the regions you don't want unreachable. If <code>cs2.exe</code> can't reach a region's relays, CS2 treats that region as unavailable and looks elsewhere. That's what a CS2 region picker or server picker does, and it's what the Regions page does, with one Windows Firewall rule.</p>`],
+      ['What the Regions page does', `<ul><li><b>The real list from Valve.</b> The regions come from Valve's own relay list (<code>GetSDRConfig</code>, app 730), grouped by city and continent. A city with more than one relay site, like Stockholm, is one row, and turning it off blocks all of them. The last list is saved, so the page works offline.</li><li><b>Ping for each region</b>, measured the way the game will feel it: through the phone while protection is on, through your home connection when it's off or in No phone mode.</li><li><b>Shortcuts:</b> Only this region, Closest 3, your continent only (Europe only, North America only and so on), Ping under X ms, and Allow all (block off).</li><li><b>One firewall rule, for <code>cs2.exe</code> only.</b> Turned-off regions are blocked on Valve's relay IPs only. Steam, your friends list and community servers are not touched.</li><li><b>Kept up to date.</b> While regions are off, Valve's list is read again every hour, and when it changes the rule is rebuilt, so new relays in a region you turned off are blocked too. After a shortcut, a region Valve adds later stays off as well.</li><li><b>Checked every 30 seconds.</b> If something else removes or changes the rule, the app puts it back, with or without protection.</li></ul>`],
+      ['Do it by hand, without the app', `<p>You can build the same block yourself with Windows Firewall:</p><ol><li>Open Valve's relay list for CS2: <code>https://api.steampowered.com/ISteamApps/GetSDRConfig/v1/?appid=730</code>. Each site (a "pop", like <code>fra</code> for Frankfurt) lists the IPs of its relays.</li><li>Open Windows Defender Firewall with Advanced Security and add an Outbound rule: Program, the path to <code>cs2.exe</code> (in <code>steamapps\\common\\Counter-Strike Global Offensive\\game\\bin\\win64</code>), Block the connection.</li><li>In the rule's Scope, add the relay IPs of every region you don't want as remote IP addresses.</li></ol><p>It works, but it's dozens of IPs, some cities have more than one pop (Stockholm has two; Frankfurt, Vienna and London also have a partner's relays), and Valve changes the list from time to time, so a rule made by hand goes out of date. You also don't see the ping of each region. The app reads the list, groups the pops by city, shows the ping and rebuilds the rule when Valve changes it.</p>`],
+      ['Things to know', `<ul><li>Changes apply at once, and CS2 measures the regions again on its next start. Don't change them during a match.</li><li>Blocking too much means long queues or no match at all, and Premier can take longer. Leave a few regions on; the app won't let you turn them all off.</li><li>CS2's Max Acceptable Matchmaking Ping still counts. If it's lower than the ping of your slowest region left on, CS2 never uses that region, and the page tells you which number to set.</li><li>Windows Firewall has to be on. If it's off, the page says the rule is in place but not enforced until the Firewall is back on.</li><li>It works with or without the phone. Regions don't depend on protection: they stay off until you click Allow all (block off).</li></ul>`],
     ],
+    // A how-to, as steps on the page and as HowTo in the JSON-LD. It goes after the first section.
+    howto: { h: 'Change your region, step by step', steps: [
+      ['Get the app', 'Download CS2IPChanger.exe and run it. It asks for admin, because firewall rules are a system setting. For Regions you don\'t need the phone or protection.'],
+      ['Open Regions and measure the ping', 'The list comes from Valve\'s own relay list, by continent and city. Press Refresh: the app pings each region the way the game will reach it.'],
+      ['Turn off the regions you don\'t want', 'Untick them one by one, or use a shortcut: Only this region, Closest 3, your continent only (like Europe only) or Ping under X ms. Keep at least one region on.'],
+      ['Check the block', 'Under the list the page says how many regions CS2 can play in, and "Block is on. Only CS2 is affected."'],
+      ['Start CS2 and queue', 'CS2 measures the regions when it starts, so start it after the change. If your slowest region left on is above CS2\'s Max Acceptable Matchmaking Ping, the page tells you which number to set in Settings > Game.'],
+      ['Undo it', 'Click Allow all (block off) on Regions. CS2IPChanger.exe --restore also removes the rule.'],
+    ] },
     faq: [
+      ['How do I change my region in CS2?', 'CS2 has no region setting. Matchmaking puts you where your ping to Valve\'s relays is good, and Max Acceptable Matchmaking Ping only caps the ping. To choose, block the regions you don\'t want: open Regions in CS2 IP Changer, turn off what you don\'t want, and matchmaking can only find you a match where you left regions on.'],
       ['How do I force CS2 to only put me in EU servers?', 'Open the Regions page and click your continent\'s shortcut (Europe only in Europe), or Only this region on one region. Every other region is blocked for cs2.exe, so matchmaking can only find you a match where you left regions on. Max Acceptable Matchmaking Ping in CS2\'s settings only limits the ping; it doesn\'t pick a region.'],
+      ['Is there a region lock in CS2?', 'Not one you can set in the game. To lock yourself to one region, click Only this region on it: every other region stays blocked for cs2.exe until you click Allow all (block off).'],
+      ['Does it work for Premier?', 'Yes. Premier, Competitive, Casual, Deathmatch and Wingman all pick a server by ping to Valve\'s relays, so they all follow the regions you left on. With few regions on, Premier can take longer to find a match.'],
+      ['My server picker doesn\'t block anything. Why?', 'Most of the time Windows Firewall is off, or another firewall has taken over (some antivirus suites do), so block rules do nothing. The Regions page checks Windows Firewall and tells you when the rule isn\'t enforced. Also start CS2 again after a change: it measures the regions when it starts.'],
+      ['Can I choose which players I meet?', 'No. It picks the regions your matches are played in, not the players. Players from anywhere can queue into a region they can reach.'],
+      ['Do I need the phone for Regions?', 'No. Regions works with or without the phone and doesn\'t depend on protection. The ping is measured through the phone while protection is on, and through your home connection when it\'s off.'],
       ['Does forcing a region get me banned?', 'The Regions page doesn\'t touch the game, its files or its memory. It adds one outbound Windows Firewall rule that stops cs2.exe from reaching Valve\'s relays in the regions you turned off, so to the game it looks like a bad connection to those relays. We can\'t speak for Valve and can\'t promise anything about how they treat it.'],
       ['Does it change community servers or my friends list?', 'No. The rule only covers cs2.exe and only Valve\'s relay IPs. Community servers, Steam and friends work as before.'],
       ['How do I undo it?', 'Click Allow all (block off) on the Regions page. Running the app with --restore, or tools/restore.cmd, also removes every rule the app made. Turn off protection and No phone mode leave the region rule on.'],
@@ -280,7 +390,7 @@ export const pages = [
     related: ['change-ip-with-phone', 'hide-ip-cs2', 'steam-account-switcher'],
     sections: [
       ['What it changes, and what it never touches', `<ul><li><b>Changes:</b> Windows routes and Windows Firewall rules (all named with the app's prefix), which saved Steam account logs in, and, only if you use those pages, CS2's config files and your Steam profiles.</li><li><b>Never touches:</b> the game process, its memory or its program files. It hides nothing from VAC or any anti-cheat.</li><li><b>Why admin:</b> routes and firewall rules are system settings, and Windows only lets admins change them. Steam, CS2, your browser and the programs it opens for you still run as you, not as admin.</li></ul>`],
-      ['Check your download', `<ul><li>Every release is built by GitHub Actions from the public source and comes with a <b>build attestation</b>. With the GitHub CLI: <code>gh attestation verify CS2IPChanger.exe -R Sepd0x/cs2-ip-changer</code>.</li><li>Each exe has a <b>SHA-256</b> file next to it in the release. In PowerShell: <code>Get-FileHash .\\CS2IPChanger.exe</code>, and compare.</li><li><b>Signed updates.</b> The app only installs an update whose SHA-256 matches the release and is signed with the project's offline key, with the version inside so an old release can't come back under a new tag. The key isn't on GitHub, so access to the repo alone can't push an exe to installed copies.</li><li><b>VirusTotal</b> for each release: <a href="https://www.virustotal.com/gui/file/b5de48fe17e48e8c38fb30e10aca2c193b0423ca43b4a765018cc178ab884490/detection">0 of 69 engines</a> flag beta.9.</li><li>The exe isn't code-signed, so Windows SmartScreen may warn the first time. More info &gt; Run anyway.</li></ul>`],
+      ['Check your download', `<ul><li>Every release is built by GitHub Actions from the public source and comes with a <b>build attestation</b>. With the GitHub CLI: <code>gh attestation verify CS2IPChanger.exe -R Sepd0x/cs2-ip-changer</code>.</li><li>Each exe has a <b>SHA-256</b> file next to it in the release. In PowerShell: <code>Get-FileHash .\\CS2IPChanger.exe</code>, and compare.</li><li><b>Signed updates.</b> The app only installs an update whose SHA-256 matches the release and is signed with the project's offline key, with the version inside so an old release can't come back under a new tag. The key isn't on GitHub, so access to the repo alone can't push an exe to installed copies.</li><li><b>VirusTotal</b> for each release: <a href="${VT}">${vtText}</a> flag ${short} (SHA-256 <code>${rel.sha256.slice(0, 12)}…</code>, the same as its <code>.sha256</code> file).</li><li>The exe isn't code-signed, so Windows SmartScreen may warn the first time. More info &gt; Run anyway.</li></ul>`],
       ['Your data', `<ul><li>No account, and no passwords kept. The account switcher uses the logins Steam already saved.</li><li>Usage stats, required to use the app in the beta: the first start shows what is sent, with Accept and Quit (Quit closes the app without changing anything). Then once when it has been open for 20 seconds, when it closes and once a day: a random ID made for this install, with no name (Settings > Delete my stats deletes everything kept under it), versions, your country, the mode, how the phone is connected, minutes open, button counts, where on each screen people click (a coarse grid, added up with everyone, with no ID), a few counters, list sizes and errors, and in rough bands how long ago the app was set up, each CS2 match's ping, jitter and lag (never the server), session length and crashes. Once a day a separate report with no ID and no country says the Windows language, window and screen scale, the Windows build, the phone's brand (never the model), Android version and 4G or 5G, and is only added into counts. Never IPs, servers, accounts or names. The server code is public (<a href="${REPO}/tree/main/worker/stats">worker/stats</a>).</li><li>To show the carrier and city, the app asks ipwho.is about your home IP and the phone's IP, so ipwho.is receives both, each one only through its own connection. Your public IP is measured with ipify, icanhazip, Amazon and Cloudflare. The full list, and what the app does with admin rights: <a href="${REPO}/blob/main/docs/PRIVACY-AND-SECURITY.md">Privacy and security</a>.</li><li>Save bug report saves a .zip on your Desktop and sends nothing. It leaves out your current and last home IP, API key, logins, names, SteamIDs, e-mails, Wi-Fi names and your Windows user; look through it before you post it.</li></ul>`],
       ['Undo everything', `<p>Turn off protection (on the Connection page, or in the icon&#39;s menu next to the clock) removes the routes and the kill switch, and Allow all (block off) on the Regions page lifts the region block. To remove everything at once, run <code>CS2IPChanger.exe --restore</code> (or <code>tools/restore.cmd</code> from the repo): every route and firewall rule the app made is removed. To uninstall, use Uninstall in Windows Settings &gt; Installed apps, or Remove CS2 IP Changer at the bottom of Settings: it removes the rules, routes, the Start with Windows task, <code>C:\\ProgramData\\CS2IPChanger</code> and the app, and you pick whether <code>SRT_Dados</code> (settings and accounts) stays.</p>`],
     ],
@@ -294,22 +404,34 @@ export const pages = [
 
 const bySlug = Object.fromEntries(pages.map((p) => [p.slug, p]));
 
-function render(p) {
+// The page's sections, with the how-to (if any) after the first one.
+const sectionsOf = (p) => p.howto
+  ? [p.sections[0], [p.howto.h, `<ol class="howto">${p.howto.steps.map(([n, t], i) => `<li id="step-${i + 1}"><b>${esc(n)}.</b> ${esc(t)}</li>`).join('')}</ol>`], ...p.sections.slice(1)]
+  : p.sections;
+
+function render(p, modified) {
   const url = `${BASE}${p.slug}/`;
+  const image = `${BASE}img/${p.crop[0]}.png`;
   const ld = {
     '@context': 'https://schema.org',
     '@graph': [
       { '@type': 'WebPage', '@id': `${url}#page`, url, name: p.title, description: p.desc, inLanguage: 'en',
-        isPartOf: { '@id': `${BASE}#website` }, about: { '@id': `${BASE}#app` }, dateModified: today,
-        primaryImageOfPage: `${BASE}img/${p.crop[0]}.png` },
-      { '@type': 'BreadcrumbList', itemListElement: [
+        isPartOf: { '@id': `${BASE}#website` }, about: { '@id': `${BASE}#app` }, author: { '@id': `${BASE}#author` },
+        datePublished: firstAdded(`site/${p.slug}/index.html`), dateModified: modified,
+        breadcrumb: { '@id': `${url}#crumbs` }, primaryImageOfPage: { '@type': 'ImageObject', url: image, width: 1240, height: 800 } },
+      // The author once more here, so the page's own JSON-LD says who wrote it (a search engine doesn't follow an @id to another page).
+      { '@type': 'Person', '@id': `${BASE}#author`, name: 'Sepd0x', url: 'https://github.com/Sepd0x' },
+      { '@type': 'BreadcrumbList', '@id': `${url}#crumbs`, itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'CS2 IP Changer', item: BASE },
         { '@type': 'ListItem', position: 2, name: p.nav, item: url }] },
-      ...(p.faq?.length ? [{ '@type': 'FAQPage', mainEntity: p.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }] : []),
+      ...(p.howto ? [{ '@type': 'HowTo', '@id': `${url}#howto`, name: p.howto.h, description: p.desc, inLanguage: 'en', image,
+        tool: [{ '@type': 'HowToTool', name: 'CS2 IP Changer (free, Windows 10 and 11)' }],
+        step: p.howto.steps.map(([n, t], i) => ({ '@type': 'HowToStep', position: i + 1, name: n, text: t, url: `${url}#step-${i + 1}` })) }] : []),
+      ...(p.faq?.length ? [{ '@type': 'FAQPage', '@id': `${url}#faq`, mainEntity: p.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }] : []),
     ],
   };
-  const image = `${BASE}img/${p.crop[0]}.png`;
-  const toc = [...p.sections.map(([h]) => [slug(h), h]), ...(p.faq?.length ? [['faq', 'FAQ']] : [])];
+  const sections = sectionsOf(p);
+  const toc = [...sections.map(([h]) => [slug(h), h]), ...(p.faq?.length ? [['faq', 'FAQ']] : [])];
   const related = p.related.map((s) => bySlug[s]);
   return `<!doctype html>
 <html lang="en">
@@ -331,6 +453,7 @@ function render(p) {
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="../fonts/funnel-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
+<script>document.documentElement.classList.add('js')</script>
 <script type="application/ld+json">
 ${JSON.stringify(ld, null, 1)}
 </script>
@@ -345,8 +468,8 @@ ${style}
       <a class="hide-s" href="../#features">Features</a>
       <a class="hide-s" href="../#guides">Guides</a>
       <a class="hide-s" href="../is-it-safe/">Is it safe?</a>
-      <a href="${REPO}">GitHub</a>
-      <a class="btn btn-s" href="${LATEST}">Download</a>
+      <a class="btn btn-s btn-ghost" href="${REPO}" title="Star CS2 IP Changer on GitHub">${star}<span>Star<span class="hide-s"> on GitHub</span></span></a>
+      <a class="btn btn-s get-desk" href="${EXE}">Download</a>
     </nav>
   </div>
 </header>
@@ -361,7 +484,7 @@ ${style}
     <aside class="rail" aria-label="Download and contents">
       <div class="rail-in">
         <div>
-          ${download}
+          ${download(url)}
           ${checks}
           <p class="safe">${safe(p.slug === 'is-it-safe')}</p>
           <p class="req">Beta · ${req}</p>
@@ -376,7 +499,7 @@ ${style}
       </div>
     </aside>
     <article class="gtext">
-${p.sections.map(([h, html]) => `      <h2 id="${slug(h)}">${esc(h)}</h2>
+${sections.map(([h, html]) => `      <h2 id="${slug(h)}">${esc(h)}</h2>
       ${labelTables(html)}`).join('\n')}
     </article>
 ${p.faq?.length ? `    <section class="gfaq" aria-labelledby="faq">
@@ -388,7 +511,8 @@ ${p.faq?.length ? `    <section class="gfaq" aria-labelledby="faq">
       <ul>
         ${related.map((r) => `<li><a href="../${r.slug}/">${esc(r.nav)}</a><span>${esc(r.blurb)}</span></li>`).join('\n        ')}
       </ul>
-      <div class="end">${download}<p class="req">Free beta · ${req}</p></div>
+      <div class="end">${download(url)}<p class="req">Free beta · ${req}</p></div>
+      <p class="gstar">Useful? A <a href="${REPO}">star on GitHub</a> helps other players find it.</p>
     </nav>
   </div>
 </main>
@@ -398,29 +522,41 @@ ${p.faq?.length ? `    <section class="gfaq" aria-labelledby="faq">
     <span><a href="${REPO}">Source</a> · <a href="${REPO}/blob/main/CHANGELOG.md">Changelog</a> · <a href="${REPO}#privacy">Privacy</a> · <a href="${REPO}/issues/new/choose">Report a bug</a></span>
   </div>
 </footer>
+<script>
+(function(){
+  var d=document;${shared}})();
+</script>
 </body>
 </html>
 `;
 }
 
+// Each page keeps its date until its content changes: rendered with the old date, an unchanged page comes out the same.
+// That date is the page's dateModified and its lastmod in the sitemap, so search engines see a real one.
 for (const p of pages) {
   const file = join(site, p.slug, 'index.html');
   mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, render(p));
+  const old = existsSync(file) ? readFileSync(file, 'utf8') : '';
+  const was = (old.match(/"dateModified": "(\d{4}-\d\d-\d\d)"/) || [])[1];
+  let html = was ? render(p, was) : '';
+  p.modified = html === old ? was : today;
+  if (html !== old) html = render(p, today);
+  writeFileSync(file, html);
 }
 
-// Sitemap: the home page with its screenshots, then every guide page.
+// Sitemap: the home page with its screenshots, then every guide page. The home page's date is its last change in git
+// (today while it has changes that aren't committed yet).
 const shots = ['connection', 'servers', 'accounts', 'regions', 'configs', 'profiles'];
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>${BASE}</loc>
-    <lastmod>${today}</lastmod>
+    <lastmod>${lastChanged('site/index.html')}</lastmod>
 ${shots.map((s) => `    <image:image><image:loc>${BASE}img/${s}.png</image:loc></image:image>`).join('\n')}
   </url>
 ${pages.map((p) => `  <url>
     <loc>${BASE}${p.slug}/</loc>
-    <lastmod>${today}</lastmod>
+    <lastmod>${p.modified}</lastmod>
   </url>`).join('\n')}
 </urlset>
 `;

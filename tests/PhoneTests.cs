@@ -194,7 +194,9 @@ static class PhoneTests
             check("Modo: valor desconhecido fica Game only", Guard.ModeFor("xyz", false, false) == "servers");
             var s = new Settings { Mode = "home", GameMode = true };
             check("Modo: No phone não é Whole PC (a qualidade não mexe)", s.NoPhone && !s.WholePc);
-            check("Modo: por defeito continua como estava (Game only + Whole PC com o CS2)", !new Settings().NoPhone && new Settings().Mode == "servers" && new Settings().WholePc);
+            // beta.10: uma instalação nova começa em Game only, sem o PC inteiro com o CS2 aberto (OBS, Discord e downloads ficam em casa)
+            check("Modo: por defeito é Game only, sem Whole PC com o CS2", !new Settings().NoPhone && new Settings().Mode == "servers" && !new Settings().GameMode && !new Settings().WholePc);
+            check("Modo: um settings guardado com o Whole PC com o CS2 mantém-no", System.Text.Json.JsonSerializer.Deserialize<Settings>("{\"GameMode\":true}").GameMode);
 
             // Migração: um settings.json antigo (sem "home") fica como estava; o No phone guarda-se e volta a ler-se.
             var dir = Path.Combine(Path.GetTempPath(), "srt-phone-" + Guid.NewGuid().ToString("N"));

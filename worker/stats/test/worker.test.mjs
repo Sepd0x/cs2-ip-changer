@@ -2,7 +2,8 @@
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { fakeD1 } from './d1.mjs';
-import ingest, { readCapped } from '../src/index.js';
+import ingest, { readCapped, BUDGET_TRIGGERS, DAILY_ROWS, LIVE_ROWS, FORGET_ROWS } from '../src/index.js';
+import { summary, live as liveNow, who, MAX_ROWS } from '../src/api.js';
 import dashboard, { collect, page, github, excludeIds, resetGithubCache, compareVersions, readable } from '../src/dashboard.js';
 import { verifyAccess, resetAccessCache } from '../src/access.js';
 import { ASSETS } from '../src/assets.js';
@@ -469,9 +470,9 @@ test('ingest beta.9: the kept install ID is marked, and Delete my stats removes 
 
 test('dashboard beta.9: with the kept ID, installs, new against returning and exact cohorts', async () => {
   const DB = fakeD1();
-  const token = await jwt(claims());
-  const env = { ...env0(), DB };
-  const now = Date.now();
+  // A fixed Tuesday noon (UTC): the cohort of a week only shows its day 7 once the whole week is 7 days old (api.js), so with
+  // Date.now() this test passed or failed by the day of the week (W12, D14)
+  const now = Date.parse('2026-11-03T12:00:00Z');
   const dayAgo = (n) => new Date(now - n * 864e5).toISOString().slice(0, 10);
   // install 1: first seen 9 days ago, back today; install 2: new today; a daily beta.8 ID stays out of these numbers
   for (const [id, n] of [[1, 9], [1, 0], [2, 0]]) {
@@ -479,7 +480,7 @@ test('dashboard beta.9: with the kept ID, installs, new against returning and ex
     DB.raw.prepare("INSERT INTO counts (day, id, name, n, dev) VALUES (?, ?, 'id_install', 1, 0)").run(dayAgo(n), ID(id));
   }
   DB.raw.prepare('INSERT INTO pings (day, ts, id, app, minutes, dev) VALUES (?, ?, ?, ?, ?, 0)').run(dayAgo(0), now, ID(3), '0.1.0-beta.8', 10);
-  const s = await (await dashboard.fetch(get('/api/summary?period=7', token), env)).json();
+  const s = JSON.parse(JSON.stringify(await summary(DB, { period: 7, f: { version: 'all', country: 'all', mode: 'all', link: 'all' }, dev: false, now })));
   assert.deepEqual([s.installs.active, s.installs.fresh, s.installs.back, s.installs.prev], [2, 1, 1, 1]);
   const first = s.cohortsExact.find((c) => c.n === 1 && c.back[3] === 1);
   assert.ok(first, 'install 1 counts once in the day 7 column');
@@ -597,4 +598,226 @@ test('design: no shared color copied by hand (charts and the other palettes keep
     }
   }
   assert.deepEqual(found, []);
+});
+
+// ------------------------------------------------------------------ auditoria de 4 nov. 2026 (equipa telemetria)
+
+const F0 = { version: 'all', country: 'all', mode: 'all', link: 'all' };
+const sum0 = async (DB, over = {}) => JSON.parse(JSON.stringify(await summary(DB, { period: 7, f: F0, dev: false, now: Date.now(), ...over })));
+const heavy = (n) => report({ id: ID(5000 + n), clicks: Object.fromEntries([...Array(150)].map((_, i) => [`B${i}_Click`, 1])),
+  counts: Object.fromEntries([...Array(100)].map((_, i) => [`c${i}`, 1])), errors: [...Array(30)].map((_, i) => ({ type: 'E' + i, at: 'A.B', n: 1 })),
+  heat: [...Array(300)].map((_, i) => ['connection', 'c', `${i % 24},${Math.floor(i / 24) % 16}`, 1]) });
+const budgetOf = (DB, k) => DB.raw.prepare('SELECT rows FROM budget WHERE day = ?').get(k)?.rows ?? 0;
+const today0 = () => new Date().toISOString().slice(0, 10);
+const liveReq = (n) => new Request('https://stats.example.workers.dev/v1/live', post({ v: 1, id: ID(n), app: '0.1.0-beta.10', mode: 'game', link: 'usb', screen: 'connection', cs2: false, prot: false, tray: false, dev: false }));
+
+test('W2: reports sent at the same moment cannot pass the day budget together (the cap is inside the write)', async () => {
+  const DB = fakeD1();
+  const res = await Promise.all([...Array(120)].map((_, i) => ingest.fetch(post(heavy(i)), { DB })));
+  const ok = res.filter((r) => r.status === 204).length;
+  assert.ok(res.some((r) => r.status === 429), 'some are refused');
+  assert.ok(budgetOf(DB, today0()) <= DAILY_ROWS, `budget ${budgetOf(DB, today0())}`);
+  assert.equal(DB.raw.prepare('SELECT COUNT(*) n FROM pings').get().n, ok, 'a refused report wrote nothing');
+});
+
+test('W2: schema.sql has the same budget triggers as the Worker, and an old database gets them', async () => {
+  const schema = readFileSync(new URL('../schema.sql', import.meta.url), 'utf8');
+  for (const t of BUDGET_TRIGGERS) assert.ok(schema.includes(t + ';'), t.slice(0, 60));
+  const DB = fakeD1();
+  DB.raw.exec('DROP TRIGGER budget_cap_insert; DROP TRIGGER budget_cap_update;');
+  await ingest.fetch(post(report()), { DB });
+  assert.equal(DB.raw.prepare("SELECT COUNT(*) n FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'budget_cap_%'").get().n, 2);
+});
+
+test('D6: the live signal has its share of the day, and the reports keep the rest', async () => {
+  const DB = fakeD1();
+  DB.raw.prepare('INSERT INTO budget (day, rows) VALUES (?, ?), (?, ?)').run(today0(), LIVE_ROWS - 2, `${today0()}:live`, LIVE_ROWS - 2);
+  assert.equal((await ingest.fetch(liveReq(1), { DB })).status, 429, 'live is out of its share');
+  assert.equal((await ingest.fetch(post(report()), { DB })).status, 204, 'a report still goes in');
+  assert.ok(budgetOf(DB, `${today0()}:live`) <= LIVE_ROWS);
+});
+
+test('W1/W3: Delete my stats has its own budget, answers an unknown ID without writing, and never scans the tables', async () => {
+  const DB = fakeD1();
+  await ingest.fetch(post(report({ counts: { ip_changed: 1 }, errors: [{ type: 'X', at: 'A.B', n: 1 }] })), { DB });
+  DB.raw.prepare('UPDATE budget SET rows = ? WHERE day = ?').run(DAILY_ROWS, today0());
+  const forget = (id) => new Request('https://stats.example.workers.dev/v1/forget', post({ v: 1, id, app: '0.1.0-beta.10' }));
+  assert.equal((await ingest.fetch(forget(ID(77)), { DB })).status, 204, 'unknown ID: nothing to delete');
+  assert.equal(budgetOf(DB, `${today0()}:forget`), 0, 'and nothing written');
+  assert.equal((await ingest.fetch(forget(ID(1)), { DB })).status, 204, 'the day budget is full, the delete still works');
+  for (const t of ['pings', 'clicks', 'counts', 'errors']) assert.equal(DB.raw.prepare(`SELECT COUNT(*) n FROM ${t} WHERE id = ?`).get(ID(1)).n, 0, t);
+  assert.ok(budgetOf(DB, `${today0()}:forget`) > 0 && budgetOf(DB, `${today0()}:forget`) <= FORGET_ROWS);
+  for (const t of ['clicks', 'counts', 'errors']) {
+    const plan = DB.raw.prepare(`EXPLAIN QUERY PLAN DELETE FROM ${t} WHERE day IN (SELECT DISTINCT day FROM pings WHERE id = ?) AND id = ?`).all(ID(1), ID(1)).map((r) => r.detail).join(' | ');
+    assert.ok(!new RegExp(`SCAN ${t}\\b`).test(plan) && !/SCAN pings\b/.test(plan), `${t}: ${plan}`);
+  }
+});
+
+test('D1/D5: one more report marked exit inside the 10 minutes; unmarked or a third one is refused', async () => {
+  const DB = fakeD1();
+  assert.equal((await ingest.fetch(post(report()), { DB })).status, 204);
+  assert.equal((await ingest.fetch(post(report({ minutes: 4 })), { DB })).status, 429, 'unmarked: the old rule');
+  assert.equal((await ingest.fetch(post(report({ minutes: 4, exit: true })), { DB })).status, 204, 'the exit report');
+  assert.equal((await ingest.fetch(post(report({ minutes: 1, exit: true })), { DB })).status, 429, 'only one');
+  assert.deepEqual(DB.raw.prepare('SELECT minutes FROM pings ORDER BY ts').all().map((r) => r.minutes), [12, 4]);
+});
+
+test('D3/D7: the link of the day is the best one, and the version the newest report, not the highest text', async () => {
+  const DB = fakeD1();
+  const t = Date.now(), d = today0();
+  const ins = DB.raw.prepare('INSERT INTO pings (day, ts, id, app, mode, link, minutes, dev) VALUES (?, ?, ?, ?, ?, ?, ?, 0)');
+  ins.run(d, t - 3000, ID(1), '0.1.0-beta.9', 'game', 'none', 5);
+  ins.run(d, t - 2000, ID(1), '0.1.0-beta.10', 'cs2open', 'usb', 5);
+  ins.run(d, t - 1000, ID(1), '0.1.0-beta.10', 'cs2open', 'none', 5);
+  const s = await sum0(DB);
+  assert.deepEqual(s.links, [{ k: 'usb', n: 1 }]);
+  assert.deepEqual(s.versions, [{ k: '0.1.0-beta.10', n: 1 }]);
+  assert.deepEqual(s.modes, [{ k: 'cs2open', n: 1 }]);
+});
+
+test('D2: the developer PCs (EXCLUDE_IDS) stay out of summary and live, and are in ?dev=1', async () => {
+  const DB = fakeD1();
+  await ingest.fetch(post(report({ id: ID(1), counts: { accounts: 3 } })), { DB });
+  await ingest.fetch(post(report({ id: ID(2), counts: { accounts: 3 } })), { DB });
+  for (const n of [1, 2]) await ingest.fetch(liveReq(n), { DB });
+  const exclude = [ID(2)];
+  assert.equal((await sum0(DB, { exclude })).days.at(-1).users, 1);
+  assert.equal((await sum0(DB, { exclude, dev: true })).days.at(-1).users, 1, 'the excluded PC shows with dev=1');
+  assert.equal((await liveNow(DB, { dev: false, now: Date.now(), exclude })).now, 1);
+  assert.deepEqual(who(false, ['bad']), { sql: 'dev = ?', args: [0] }, 'only real IDs reach the SQL');
+  // and through the Worker, with the secret
+  const token = await jwt(claims());
+  const s = await (await dashboard.fetch(get('/api/summary?period=7', token), { ...env0(), DB, EXCLUDE_IDS: ID(2) })).json();
+  assert.equal(s.days.at(-1).users, 1);
+  assert.ok(!JSON.stringify(s).includes(ID(2)), 'the excluded ID never goes out');
+  const l = await (await dashboard.fetch(get('/api/live', token), { ...env0(), DB, EXCLUDE_IDS: ID(2) })).json();
+  assert.equal(l.now, 1);
+});
+
+test('W4: a cut keeps the newest days and says so', async () => {
+  const DB = fakeD1();
+  const d = today0(), old = new Date(Date.now() - 5 * 864e5).toISOString().slice(0, 10);
+  DB.raw.prepare('INSERT INTO pings (day, ts, id, app, minutes, dev) VALUES (?, ?, ?, ?, 5, 0)').run(d, Date.now(), ID(1), '0.1.0-beta.10');
+  DB.raw.prepare("INSERT INTO counts (day, id, name, n, dev) VALUES (?, ?, 'ip_changed', 4, 0)").run(d, ID(1));
+  DB.raw.exec(`WITH RECURSIVE k(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM k WHERE x < ${MAX_ROWS + 10})
+    INSERT INTO counts (day, id, name, n, dev) SELECT '${old}', printf('%032x', x), 'ip_changed', 1, 0 FROM k`);
+  const s = await sum0(DB);
+  assert.ok(s.truncated.includes('counts'), JSON.stringify(s.truncated));
+  assert.equal(s.days.at(-1).ipNew, 4, "today's counter is kept");
+});
+
+test('W9: names of the object prototype are not files of the dashboard', async () => {
+  const token = await jwt(claims());
+  const env = { ...env0(), DB: fakeD1() };
+  for (const p of ['/d/__proto__', '/d/constructor', '/d/toString', '/ui/hasOwnProperty']) assert.equal((await dashboard.fetch(get(p, token), env)).status, 404, p);
+  assert.equal((await dashboard.fetch(get('/d/app.js', token), env)).status, 200);
+});
+
+test('W13: when the Access keys cannot be fetched, the failure is kept a minute too', async () => {
+  globalThis.fetch = async () => { certCalls++; return new Response('down', { status: 503 }); };
+  const token = await jwt(claims());
+  for (let i = 0; i < 10; i++) assert.equal((await dashboard.fetch(get('/dashboard', token), { ...env0(), DB: fakeD1() })).status, 403);
+  assert.equal(certCalls, 1);
+});
+
+test('W11: the tabs of /classic stay on /classic', async () => {
+  const token = await jwt(claims());
+  const html = await (await dashboard.fetch(get('/classic?days=7', token), { ...env0(), DB: fakeD1() })).text();
+  assert.ok(html.includes('href="/classic?days=30"') && !html.includes('href="/dashboard?days='));
+});
+
+test('D9: first day steps, when they use it, the day after, the period before, trends and list sizes', async () => {
+  const DB = fakeD1();
+  const now = Date.parse('2026-11-04T15:30:00Z');
+  const dayAgo = (n) => new Date(now - n * 864e5).toISOString().slice(0, 10);
+  const ping = DB.raw.prepare('INSERT INTO pings (day, ts, id, app, link, minutes, dev) VALUES (?, ?, ?, ?, ?, 10, 0)');
+  const cnt = DB.raw.prepare('INSERT INTO counts (day, id, name, n, dev) VALUES (?, ?, ?, ?, 0)');
+  // install 1 new 2 days ago with the phone and a new IP, back the next day; install 2 new today without a phone; one 9 days ago (before)
+  ping.run(dayAgo(2), now - 2 * 864e5, ID(1), '0.1.0-beta.10', 'usb');
+  for (const [k, n] of [['first_start', 1], ['ip_changed', 2], ['id_install', 1], ['accounts', 2], ['accounts', 2]]) cnt.run(dayAgo(2), ID(1), k, n);
+  ping.run(dayAgo(1), now - 864e5, ID(1), '0.1.0-beta.10', 'usb');
+  cnt.run(dayAgo(1), ID(1), 'id_install', 1);
+  ping.run(dayAgo(0), now, ID(2), '0.1.0-beta.10', 'none');
+  for (const [k, n] of [['first_start', 1], ['id_install', 1]]) cnt.run(dayAgo(0), ID(2), k, n);
+  ping.run(dayAgo(9), now - 9 * 864e5, ID(3), '0.1.0-beta.9', 'usb');
+  for (const [k, n] of [['ip_changed', 3], ['app_start', 2]]) cnt.run(dayAgo(9), ID(3), k, n);
+  DB.raw.prepare("INSERT INTO clicks (day, id, name, n, dev) VALUES (?, ?, 'ChangeIp_Click', 3, 0)").run(dayAgo(1), ID(1));
+  const s = JSON.parse(JSON.stringify(await summary(DB, { period: 7, f: F0, dev: false, now })));
+  assert.deepEqual(s.funnel.map((x) => x.n), [2, 1, 1]);
+  assert.equal(s.when.flat().reduce((a, b) => a + b, 0), 3, 'one install-hour per report');
+  assert.equal(s.when[2][15], 1, 'today 15:30 UTC is Wednesday 15h in Lisbon (winter)');
+  assert.deepEqual(s.installs.nextDay, { n: 1, back: 1 });
+  assert.equal(s.prev.ipNew, 3); assert.equal(s.prev.sessions, 2);
+  assert.deepEqual(s.buttons.ChangeIp_Click.perDay, { [dayAgo(1)]: 3 });
+  assert.deepEqual(s.sizes.find((x) => x.name === 'accounts').bands, [{ band: '2-5', n: 1 }], 'a size sent twice in a day is one band, not added up');
+  assert.ok(s.lastTs === now && Array.isArray(s.truncated) && Array.isArray(s.warnings));
+});
+
+test('K3: the body the app makes (Telemetry.Body, app-report.json) goes through the Worker and every field it carries shows in summary()', async () => {
+  // tests/TelemetryTests.cs fails when Telemetry.Body no longer makes this file; this test fails when a field in it is lost on the way
+  const body = JSON.parse(readFileSync(new URL('./app-report.json', import.meta.url), 'utf8'));
+  const DB = fakeD1();
+  assert.equal((await ingest.fetch(post(body), { DB })).status, 204);
+  const s = await sum0(DB);
+  const checks = {
+    v: () => true, id: () => !JSON.stringify(s).includes(body.id), dev: () => s.dev === false && s.days.at(-1).users === 1,
+    idk: () => s.installs.active === 1,
+    app: () => s.versions[0]?.k === body.app, os: () => s.oses[0]?.k === body.os, mode: () => s.modes[0]?.k === body.mode, link: () => s.links[0]?.k === body.link,
+    minutes: () => s.days.at(-1).minutes === body.minutes,
+    clicks: () => Object.entries(body.clicks).every(([k, n]) => s.buttons[k]?.n === n),
+    counts: () => true,   // name by name below
+    errors: () => body.errors.every((e) => (e.type.startsWith('Fatal_') ? s.crashPlaces.some((c) => c.at === e.at && c.n === e.n) : s.errors.some((x) => x.type === e.type && x.at === e.at && x.n === e.n))),
+    heat: () => body.heat.every(([sc, kind, cell, n]) => s.heat[sc]?.[kind]?.some(([c, r, v]) => `${c},${r}` === cell && v === n)),
+    screens: () => Object.entries(body.screens).every(([k, m]) => s.screens[k]?.minutes === m),
+    paths: () => Object.entries(body.paths).every(([p, n]) => { const [from, to] = p.split('>'); return s.paths.some((x) => x.from === from && x.to === to && x.n === n); }),
+    age: () => s.age.some((a) => a.band === body.age && a.n === 1),
+    active7: () => s.active.find((a) => a.band === String(body.active7))?.n === 1,
+    settings: () => body.settings.every((n) => s.settings.some((x) => x.name === n)),
+    regions: () => body.regions.every((c) => s.cs2.regions.some((x) => x.code === c)),
+    data: () => s.phone.data.reduce((a, x) => a + x.n, 0) === 1,
+    exit: () => true,
+  };
+  const missing = Object.keys(body).filter((k) => !checks[k]);
+  assert.deepEqual(missing, [], 'a field the app sends that this test does not check yet');
+  for (const [k, ok] of Object.entries(checks)) if (k in body) assert.ok(ok(), `field ${k} lost on the way`);
+  // Every counter: a list size in sizes, a red Checks row in checks, everything else under its own name in counters
+  const SIZE = ['servers', 'accounts', 'flags', 'open_with', 'open_with_admin', 'regions_blocked'];
+  const BAND = { 0: '0', 1: '1', 2: '2-5', 6: '6-20', 21: '21-100', 101: '100+' };
+  for (const [name, n] of Object.entries(body.counts)) {
+    if (SIZE.includes(name)) assert.ok(s.sizes.find((z) => z.name === name)?.bands.some((b) => b.band === BAND[n] && b.n === 1), `size ${name}`);
+    else if (name.startsWith('chk_')) assert.ok(s.checks.red.some((c) => c.key === name.slice(4)), name);
+    else assert.equal(s.counters[name], n, `counter ${name}`);
+  }
+});
+
+// ------------------------------------------------------------------ revisão da equipa telemetria (4 nov. 2026)
+
+test('Revisão: a database that refuses the budget triggers still takes reports (the read check stays)', async () => {
+  const DB = fakeD1();
+  DB.raw.exec('DROP TRIGGER budget_cap_insert; DROP TRIGGER budget_cap_update;');
+  const batch = DB.batch.bind(DB);
+  let refused = 0;
+  DB.batch = async (list) => {
+    if (list.some((s) => /CREATE TRIGGER/i.test(s.sql))) { refused++; throw new Error('D1_ERROR: not authorized'); }
+    return batch(list);
+  };
+  assert.equal((await ingest.fetch(post(report()), { DB })).status, 204, 'the report goes in');
+  assert.equal(DB.raw.prepare('SELECT COUNT(*) n FROM pings').get().n, 1);
+  assert.ok(refused >= 1, 'the triggers were asked for');
+  DB.raw.prepare('UPDATE budget SET rows = ? WHERE day = ?').run(DAILY_ROWS, today0());
+  assert.equal((await ingest.fetch(post(report({ id: ID(2) })), { DB })).status, 429, 'the read check still stops a full day');
+});
+
+test('Revisão: "Voltam no dia seguinte" only counts installs whose next day is over', async () => {
+  const DB = fakeD1();
+  const now = Date.parse('2026-11-04T15:30:00Z');
+  const dayAgo = (n) => new Date(now - n * 864e5).toISOString().slice(0, 10);
+  const ping = DB.raw.prepare('INSERT INTO pings (day, ts, id, app, link, minutes, dev) VALUES (?, ?, ?, ?, ?, 10, 0)');
+  const cnt = DB.raw.prepare('INSERT INTO counts (day, id, name, n, dev) VALUES (?, ?, ?, ?, 0)');
+  // install 1 new 2 days ago and not back yesterday; install 2 new yesterday (today is not over, so it can't count yet)
+  ping.run(dayAgo(2), now - 2 * 864e5, ID(1), '0.1.0-beta.10', 'usb');
+  ping.run(dayAgo(1), now - 864e5, ID(2), '0.1.0-beta.10', 'usb');
+  for (const [d, id] of [[dayAgo(2), ID(1)], [dayAgo(1), ID(2)]]) for (const k of ['first_start', 'id_install']) cnt.run(d, id, k, 1);
+  const s = JSON.parse(JSON.stringify(await summary(DB, { period: 7, f: F0, dev: false, now })));
+  assert.deepEqual(s.installs.nextDay, { n: 1, back: 0 });
 });

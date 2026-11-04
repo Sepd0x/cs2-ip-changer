@@ -2,6 +2,7 @@
 //
 // What is kept: a random ID made on the PC (fixed per install until beta.7, new every day in beta.8, fixed per install again
 // since beta.9 so returns can be counted; never made from the PC or the user, and Delete my stats in the app deletes it all here), the app and Windows versions, the mode, how the phone is connected,
+// whether the sender's network is a hosting or cloud one (only yes or no, from Cloudflare's network number, to keep online virus scanners apart),
 // minutes the app was open, the country (two letters, from Cloudflare), how many times each button or hotkey was used, a few counters (IP changes, kicks, bans marked,
 // list sizes: servers, accounts, flagged players, "Open with CS2" programs and turned-off regions) and errors as type + code location. Never kept: the sender's IP (Cloudflare needs it to deliver the
 // request and works out the country from it; this code only gets the country, never the IP), and nothing the app doesn't send (no IPs, servers, accounts, names). Logs are off (wrangler.jsonc).
@@ -9,9 +10,22 @@
 const MAX_BODY = 16 * 1024;
 // Rows written a day, index updates included (D1 counts them). Well under D1's free 100,000: the per-install limit below is keyed
 // on an id the sender picks, so a flood with fresh ids stops here instead of using up the day's writes (or costing money).
-const DAILY_ROWS = 40000;
+export const DAILY_ROWS = 40000;
+// Nov. 2026: the live signal (every 5 minutes from each open app) may use at most this much of the day, so it can never
+// leave nothing for the reports. Delete my stats has its own small budget outside the day's, so a flood can't stop it.
+export const LIVE_ROWS = 12000;
+export const FORGET_ROWS = 2000;
 // Same as schema.sql. wrangler deploy doesn't run the schema, so a database made before the budget existed gets the table here.
 const BUDGET_TABLE = 'CREATE TABLE IF NOT EXISTS budget (day TEXT PRIMARY KEY, rows INTEGER NOT NULL)';
+// The cap inside the database (schema.sql has the same text): the budget row can't go over its cap, and since every write is in
+// one batch (a transaction) with its budget row, requests sent at the same moment can't all pass on the same reading.
+const CAP = `CASE WHEN NEW.day LIKE '%:live' THEN ${LIVE_ROWS} WHEN NEW.day LIKE '%:forget' THEN ${FORGET_ROWS} ELSE ${DAILY_ROWS} END`;
+export const BUDGET_TRIGGERS = ['INSERT', 'UPDATE'].map((op) => `CREATE TRIGGER IF NOT EXISTS budget_cap_${op.toLowerCase()} BEFORE ${op} ON budget `
+  + `WHEN NEW.rows > ${CAP} BEGIN SELECT RAISE(ABORT, 'over budget'); END`);
+// The database's budget table and triggers made once per database here (a no-op when schema.sql already made them)
+const budgetReady = new WeakSet();
+// One report per install every 10 minutes; one more, marked exit, inside that time for the report at close, sleep or sign-out
+const GAP = 10 * 60 * 1000;
 const ID = /^[0-9a-f]{32}$/;
 const VERSION = /^\d+\.\d+\.\d+(-[0-9A-Za-z.-]{1,30})?$/;
 const NAME = /^[A-Za-z0-9_]{1,48}$/;
@@ -135,27 +149,43 @@ async function body(request) {
   return b;
 }
 
+/** The budget rows a kind of request uses, with their caps: a report the day's, the live signal also its share, Delete my stats its own. */
+function budgetKeys(day, kind) {
+  if (kind === 'forget') return [[`${day}:forget`, FORGET_ROWS]];
+  if (kind === 'live') return [[day, DAILY_ROWS], [`${day}:live`, LIVE_ROWS]];
+  return [[day, DAILY_ROWS]];
+}
+
+const overBudget = (e) => /over budget/i.test(String(e && e.message));
+
 /** Writes the batch inside the day's row budget (see DAILY_ROWS). cost = rows the statements write, index updates included. */
-async function withinBudget(env, day, stmts, cost) {
-  cost += 2;   // the budget row
-  const readBudget = () => env.DB.prepare('SELECT rows FROM budget WHERE day = ?').bind(day).first();
-  let used;
-  try { used = await readBudget(); } catch (e) {
-    if (!/no such table/i.test(String(e && e.message))) throw e;
+async function withinBudget(env, day, stmts, cost, kind = 'report') {
+  if (!budgetReady.has(env.DB)) {
+    // The table first, on its own: the reports need it. The triggers only close the race between requests at the same moment,
+    // so a database that refuses them still takes reports with the read check below (and they are asked again next time).
     await env.DB.prepare(BUDGET_TABLE).run();
-    used = await readBudget();
+    try {
+      await env.DB.batch(BUDGET_TRIGGERS.map((s) => env.DB.prepare(s)));
+      budgetReady.add(env.DB);
+    } catch { /* tried again on the next request */ }
   }
-  // Read first, so a refused report writes nothing: the budget only grows with reports that are kept
-  if ((used ? used.rows : 0) + cost > DAILY_ROWS) return new Response('later', { status: 429 });
-  stmts.push(env.DB.prepare('INSERT INTO budget (day, rows) VALUES (?, ?) ON CONFLICT (day) DO UPDATE SET rows = rows + excluded.rows')
-    .bind(day, cost));
+  const keys = budgetKeys(day, kind);
+  cost += 2 * keys.length;   // the budget rows
+  const used = new Map(((await env.DB.prepare(`SELECT day, rows FROM budget WHERE day IN (${keys.map(() => '?').join(',')})`)
+    .bind(...keys.map(([k]) => k)).all()).results ?? []).map((r) => [r.day, r.rows]));
+  // Read first, so a refused report writes nothing: the budget only grows with reports that are kept. The triggers stop the
+  // ones that read the same number at the same moment.
+  if (keys.some(([k, cap]) => (used.get(k) || 0) + cost > cap)) return new Response('later', { status: 429 });
+  for (const [k] of keys)
+    stmts.unshift(env.DB.prepare('INSERT INTO budget (day, rows) VALUES (?, ?) ON CONFLICT (day) DO UPDATE SET rows = rows + excluded.rows').bind(k, cost));
   try { await env.DB.batch(stmts); } catch (e) {
+    if (overBudget(e)) return new Response('later', { status: 429 });
     // wrangler deploy doesn't run schema.sql: the beta.9 tables are made the first time they're needed
     if (!/no such table/i.test(String(e && e.message))) throw e;
     await env.DB.prepare(HEAT_TABLE).run();
     await env.DB.prepare(LIVE_TABLE).run();
     await env.DB.prepare(ENV_TABLE).run();
-    await env.DB.batch(stmts);
+    try { await env.DB.batch(stmts); } catch (e2) { if (overBudget(e2)) return new Response('later', { status: 429 }); throw e2; }
   }
   return new Response(null, { status: 204 });
 }
@@ -177,7 +207,7 @@ async function live(request, env) {
     + 'ON CONFLICT (id) DO UPDATE SET ts = excluded.ts, app = excluded.app, mode = excluded.mode, link = excluded.link, screen = excluded.screen, '
     + 'cs2 = excluded.cs2, prot = excluded.prot, tray = excluded.tray, dev = excluded.dev')
     .bind(b.id, now, b.app, word(b.mode), word(b.link), screen, yes(b.cs2), yes(b.prot), yes(b.tray), b.dev === true ? 1 : 0)];
-  return withinBudget(env, day, stmts, 3);
+  return withinBudget(env, day, stmts, 3, 'live');
 }
 
 /**
@@ -208,13 +238,24 @@ async function envReport(request, env) {
 /**
  * POST /v1/forget (Settings > Delete my stats): everything kept under this install's ID goes. The heat map and the environment
  * report have no ID, so nothing there is tied to it. The ID is random and only on that PC, so only that PC can ask.
+ * Nov. 2026: an ID with nothing kept is answered at once, with one read on an index and nothing written; for one with rows, the
+ * deletes only look at the days it reported (indexed), never the whole tables. Its own budget (FORGET_ROWS), outside the day's.
  */
 async function forget(request, env) {
   const b = await body(request);
   if (b instanceof Response) return b;
   const day = new Date().toISOString().slice(0, 10);
-  const stmts = ['pings', 'clicks', 'counts', 'errors', 'live'].map((t) => env.DB.prepare(`DELETE FROM ${t} WHERE id = ?`).bind(b.id));
-  return withinBudget(env, day, stmts, 60);
+  const kept = await env.DB.prepare('SELECT 1 AS y FROM pings WHERE id = ? LIMIT 1').bind(b.id).first();
+  let liveRow = null;
+  try { liveRow = await env.DB.prepare('SELECT 1 AS y FROM live WHERE id = ?').bind(b.id).first(); } catch (e) {
+    if (!/no such table/i.test(String(e && e.message))) throw e;
+  }
+  if (!kept && !liveRow) return new Response(null, { status: 204 });
+  const days = 'SELECT DISTINCT day FROM pings WHERE id = ?';
+  const stmts = ['clicks', 'counts', 'errors'].map((t) => env.DB.prepare(`DELETE FROM ${t} WHERE day IN (${days}) AND id = ?`).bind(b.id, b.id));
+  stmts.push(env.DB.prepare('DELETE FROM pings WHERE id = ?').bind(b.id));
+  if (liveRow) stmts.push(env.DB.prepare('DELETE FROM live WHERE id = ?').bind(b.id));
+  return withinBudget(env, day, stmts, 60, 'forget');
 }
 
 export default {
@@ -232,20 +273,22 @@ export default {
     const cc = request.cf && typeof request.cf.country === 'string' && COUNTRY.test(request.cf.country) ? request.cf.country : null;
     const hosting = !!(request.cf && HOSTING.has(request.cf.asn));
 
-    // One report per install every 10 minutes at most: more is a loop or someone playing with the endpoint.
-    const last = await env.DB.prepare('SELECT ts FROM pings WHERE id = ? ORDER BY ts DESC LIMIT 1').bind(b.id).first();
-    if (last && now - last.ts < 10 * 60 * 1000) return new Response('later', { status: 429 });
+    // One report per install every 10 minutes at most: more is a loop or someone playing with the endpoint. Nov. 2026: one more
+    // inside those 10 minutes when it is marked exit (the app closing, the PC going to sleep or Windows signing out), so a short
+    // session isn't lost. Apps before that never mark it and get the old rule.
+    const recent = await env.DB.prepare('SELECT COUNT(*) AS n FROM pings WHERE id = ? AND ts > ?').bind(b.id, now - GAP).first();
+    if ((recent ? recent.n : 0) > (b.exit === true ? 1 : 0)) return new Response('later', { status: 429 });
 
     const stmts = [
       env.DB.prepare('INSERT INTO pings (day, ts, id, app, os, mode, link, minutes, country, dev) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
         .bind(day, now, b.id, b.app, word(b.os), word(b.mode), word(b.link), int(b.minutes, MAX_MINUTES), cc, dev),
     ];
-    // Caps a little above what the app sends (about 130 buttons, counters and their bands, at most 30 errors)
+    // Caps a little above what the app sends (it stops at 140 buttons and 90 counters with their bands, 30 errors). The good
+    // names are picked before the cap, so junk first in the body can't push real counters out.
     for (const [table, obj, max, cap, ok] of [['clicks', b.clicks, 100000, 150, (x) => NAME.test(x)], ['counts', b.counts, 1000000, 100, counterOk]]) {
       if (!plain(obj)) continue;
-      for (const [name, n] of Object.entries(obj).slice(0, cap))
-        if (ok(name) && int(n, max) !== null)
-          stmts.push(env.DB.prepare(`INSERT INTO ${table} (day, id, name, n, dev) VALUES (?, ?, ?, ?, ?)`).bind(day, b.id, name, n, dev));
+      for (const [name, n] of Object.entries(obj).filter(([name, n]) => ok(name) && int(n, max) !== null).slice(0, cap))
+        stmts.push(env.DB.prepare(`INSERT INTO ${table} (day, id, name, n, dev) VALUES (?, ?, ?, ?, ?)`).bind(day, b.id, name, n, dev));
     }
     if (Array.isArray(b.errors))
       for (const e of b.errors.slice(0, 30))

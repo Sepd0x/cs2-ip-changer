@@ -28,9 +28,14 @@ async function keysFor(team, kid, now, fetchFn) {
   const fresh = cache.team === team && now - cache.at < 3600_000;
   if (fresh && cache.keys.has(kid)) return cache.keys.get(kid);
   if (cache.team === team && now - cache.at < 60_000) return cache.keys.get(kid) ?? null;
-  const res = await fetchFn(`${team}/cdn-cgi/access/certs`, { headers: { accept: 'application/json' } });
-  if (!res.ok) return null;
-  const body = await res.json();
+  // A failed fetch is also remembered for a minute (keeping the keys already known), so a broken certs URL isn't asked on every request
+  const failed = () => { cache = { team, at: now, keys: cache.team === team ? cache.keys : new Map() }; return cache.keys.get(kid) ?? null; };
+  let res, body;
+  try {
+    res = await fetchFn(`${team}/cdn-cgi/access/certs`, { headers: { accept: 'application/json' } });
+    if (!res.ok) return failed();
+    body = await res.json();
+  } catch { return failed(); }
   const keys = new Map();
   for (const jwk of Array.isArray(body?.keys) ? body.keys : []) {
     if (jwk?.kty !== 'RSA' || typeof jwk.kid !== 'string' || (jwk.alg && jwk.alg !== 'RS256')) continue;
