@@ -18,7 +18,7 @@
     </picture>
   </a>
   <br>
-  <sub><!--rel:line--><a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">CS2IPChanger.exe</a> · v0.1.0-beta.9 · 63.4 MB · 3 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">release notes and checksums</a><!--/rel--></sub>
+  <sub><!--rel:line--><a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">CS2IPChanger.exe</a> · v0.1.0-beta.10 · 63.4 MB · 4 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">release notes and checksums</a><!--/rel--></sub>
 </p>
 
 <p align="center">
@@ -122,7 +122,7 @@ To check only the hash, put the `.sha256` file next to the exe and run this in P
 ```
 </details>
 
-Each release is also scanned on VirusTotal. <!--rel:vt-->beta.9: [0 of 69 engines](https://www.virustotal.com/gui/file/441e9ae0c8def2de90c83cfdec3c531a963a8370d5418a5ae0c7f43887bd6517/detection) flag it<!--/rel-->.
+Each release is also scanned on VirusTotal. <!--rel:vt-->beta.10: [0 of 68 engines](https://www.virustotal.com/gui/file/fae35fdfe338757fbed1813feb0d90be9552f5e3f09c7e1a6fe5b1f32bf3407b/detection) flag it<!--/rel-->.
 
 <details>
 <summary><b>Why some engines flag it</b></summary>
