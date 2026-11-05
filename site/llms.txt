@@ -1,6 +1,6 @@
 # CS2 IP Changer
 
-> Free Windows app (Windows 10 and 11, 64-bit) for Counter-Strike 2 that routes CS2 and Steam through an Android phone's mobile data, so community servers see the carrier's IP and not the player's home IP. It keeps the home IP out of community server logs and ban lists without a VPN (servers see an ordinary mobile connection, so it also works where VPNs are blocked), and after an IP ban on a community server the player changes IP from the app and joins again. It is not a VPN and does not touch the game process, its memory or its files.
+> Free Windows app (Windows 10 and 11, 64-bit) for Counter-Strike 2 that routes CS2 and Steam through a phone's mobile data (Android or iPhone), so community servers see the carrier's IP and not the player's home IP. It keeps the home IP out of community server logs and ban lists without a VPN (servers see an ordinary mobile connection, so it usually gets in where anti-VPN plugins block VPNs), and after an IP ban on a community server the player changes IP from the app and joins again. It is not a VPN and does not touch the game process, its memory or its program files.
 
 Website: https://sepd0x.github.io/cs2-ip-changer/
 Source and downloads: https://github.com/Sepd0x/cs2-ip-changer (latest release: https://github.com/Sepd0x/cs2-ip-changer/releases/latest)
@@ -13,7 +13,7 @@ Status: beta. Latest release 0.1.0-beta.10 (2026-11-04). Free, no account. Not a
 - The app adds Windows routes so CS2, Steam and the servers on the user's list go through the phone, and blocks them on the home connection. The browser, Discord and downloads stay on the home connection (Game only mode). The whole PC can go through the phone instead.
 - Kill switch (shown in the app's Checks as "Block if the phone drops"): a Windows Firewall rule blocks the listed servers on every adapter except the phone, and cs2.exe's game traffic (UDP) can only use the phone connection. If the cable comes out, the game loses connection instead of falling back to the home IP. Until a phone has been connected once, CS2 is not locked, and in No phone mode nothing is blocked.
 - Change IP: turns mobile data (or airplane mode) off and on over ADB until the carrier gives a new IP. It can report whether the new IP is in a new /16 range and keep trying until it is.
-- Needs admin rights (routes and firewall rules are system settings), Windows Firewall on, and an Android phone with mobile data. USB debugging is needed only to change IP from the PC.
+- Needs admin rights (routes and firewall rules are system settings), Windows Firewall on, and an Android phone or iPhone with mobile data. Changing IP from the PC needs Android with USB debugging; on an iPhone the player switches Airplane Mode on and off.
 
 ## Features
 
@@ -31,7 +31,7 @@ Status: beta. Latest release 0.1.0-beta.10 (2026-11-04). Free, no account. Not a
 
 ## What it is not
 
-- Not a VPN or proxy: servers see an ordinary mobile connection from the player's carrier, so it also works on community servers that block VPN and datacenter IPs.
+- Not a VPN or proxy: servers see an ordinary mobile connection from the player's carrier, so it usually gets in on community servers whose anti-VPN plugins block VPN and datacenter IPs. Not guaranteed: carriers share mobile IPs, so one can be flagged, and Change IP gets another.
 - Not a cheat and no VAC bypass: it does not hide cheats from any anti-cheat. A ban on a Steam account follows the account; a new IP does not lift it.
 - Will ping be worse? Usually, yes: mobile data adds latency and jitter compared with a home connection.
 - Who sees the IP: on community servers joined directly, the server admins and their plugins. Official matchmaking goes through Valve's relays (Steam Datagram Relay).
@@ -39,6 +39,7 @@ Status: beta. Latest release 0.1.0-beta.10 (2026-11-04). Free, no account. Not a
 ## Guides
 
 - [Change IP with your phone](https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/): setup from start to finish, game-only routing and a new IP in one click.
+- [CS2 with an iPhone](https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/): the protection works the same with an iPhone (Personal Hotspot by USB or Wi-Fi); for a new IP the player switches Airplane Mode on and off on the iPhone.
 - [CS2 IP ban](https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/): which ban you have (IP, range, SteamID or Valve) and how to get back in.
 - [Hide your IP without a VPN](https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/): who sees your IP, what they can do with it, and every method compared.
 - [Is it safe?](https://sepd0x.github.io/cs2-ip-changer/is-it-safe/): what it changes and how to check the download.
@@ -52,7 +53,7 @@ Status: beta. Latest release 0.1.0-beta.10 (2026-11-04). Free, no account. Not a
 - Releases are built by GitHub Actions from the public source, with a build attestation and a SHA-256 file.
 - Updates install only if the SHA-256 matches and is signed with the project's offline key, which is not on GitHub.
 - The exe is not code-signed, so Windows SmartScreen warns the first time.
-- Usage stats in the beta, required to use the app: the first start shows what is sent, with Accept and Quit (Quit closes the app without changing anything). Once when the app has been open for 20 seconds, when it closes, and once a day, with a random ID made for this install, with no name, never from the PC or the user (Delete my stats in Settings deletes it all): versions, country, mode, how the phone is connected, minutes open, button counts, a few counters, list sizes and errors. Nothing is sent and no ID is made before Accept. Never IPs, servers, accounts or names; the server stores no IP.
+- Usage stats in the beta, required to use the app: the first start shows what is sent, with Accept and Quit (Quit closes the app without changing anything). When the app has been open for 20 seconds, every 30 minutes while it stays open (if something new was counted) and when it closes, plus a short signal every 5 minutes of what is on, with a random ID made for this install, with no name, never from the PC or the user (Delete my stats in Settings deletes it all): versions, country, mode, how the phone is connected, minutes open, button counts, a few counters, list sizes and errors. Nothing is sent and no ID is made before Accept. Never IPs, servers, accounts or names; the server stores no IP.
 - Save bug report saves a .zip on the Desktop and sends nothing. It leaves out the current and last home IP, API key, logins, names, SteamIDs, e-mails, Wi-Fi names and the Windows user.
 - Third parties: ipwho.is receives the home IP and the phone's IP when the app shows their carrier and city (each asked only through its own connection); ipify, icanhazip, Amazon and Cloudflare see the IP they measure; Steam, Google (ADB download) and GitHub (updates) get normal requests.
 - It never opens CS2's memory and never injects into the game: it changes Windows routes and firewall rules, and which Steam account logs in.

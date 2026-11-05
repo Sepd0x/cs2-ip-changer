@@ -1256,7 +1256,7 @@ test('performance: the pages ask for their files with the version; those are kep
   const env = { ...env0(), DB: fakeD1() };
   const v = assetsVersion();
   assert.match(v, /^[0-9a-z]{1,8}$/);
-  for (const [path, files] of [['/dashboard', ['/d/style.css', '/d/v4/v4.css', '/d/ui-map.js', '/d/v4/real.js', '/d/v4/app.js']], ['/v3', ['/d/style.css', '/d/ui-map.js', '/d/real.js', '/d/app.js']], ['/v2', ['/d/v2/style.css', '/d/v2/app.js']]]) {
+  for (const [path, files] of [['/dashboard', ['/d/v5/home.css', '/d/v5/home.js']], ['/data', ['/d/style.css', '/d/v4/v4.css', '/d/ui-map.js', '/d/v4/real.js', '/d/v4/app.js']], ['/v3', ['/d/style.css', '/d/ui-map.js', '/d/real.js', '/d/app.js']], ['/v2', ['/d/v2/style.css', '/d/v2/app.js']]]) {
     const res = await dashboard.fetch(get(path, token), env);
     assert.equal(res.headers.get('cache-control'), 'no-store', path);
     const html = await res.text();
@@ -1417,3 +1417,57 @@ test('v4: an Access service token (no e-mail, its Client ID in common_name) read
 
 import './v4.test.mjs';
 import './brief.test.mjs';
+import './v5.test.mjs';
+
+// ------------------------------------------------------------------ v5 (5 Nov. 2026): two pages, the owner's and the data one
+test('v5: /dashboard is the owner\'s page and /data (and /dados) the data page, all behind Access, with the strict CSP', async () => {
+  const token = await jwt(claims());
+  const env = { ...env0(), DB: fakeD1() };
+  const home = await dashboard.fetch(get('/dashboard', token), env);
+  assert.equal(home.status, 200);
+  assert.match(home.headers.get('content-security-policy'), /script-src 'self';/);
+  const html = await home.text();
+  assert.ok(html.includes('<script type="module" src="/d/v5/home.js?v=') && html.includes('href="/data"'), 'the v5 page, with a link to the data page');
+  for (const p of ['/data', '/dados']) {
+    const r = await dashboard.fetch(get(p, token), env);
+    assert.equal(r.status, 200, p);
+    const t = await r.text();
+    assert.ok(t.includes('/d/v4/app.js?v=') && t.includes('dados'), p);
+    assert.equal((await dashboard.fetch(get(p), env)).status, 403, `${p} without Access`);
+  }
+  for (const f of ['/d/v5/home.js', '/d/v5/model.js', '/d/v5/home.css']) {
+    const r = await dashboard.fetch(get(f, token), env);
+    assert.equal(r.status, 200, f);
+    assert.equal((await dashboard.fetch(get(f), env)).status, 403, `${f} without Access`);
+  }
+  // A service token (the agent) still reads /api/brief and nothing else, the two new pages included
+  assert.equal((await dashboard.fetch(get('/dashboard'), env)).status, 403);
+});
+
+test('v5: no page links to the old versions any more (they still answer by address), and the owner\'s page has no jargon', async () => {
+  const token = await jwt(claims());
+  const env = { ...env0(), DB: fakeD1() };
+  const v5 = ASSETS['v5/index.html'].body + ASSETS['v5/home.js'].body + ASSETS['v5/model.js'].body;
+  const v4 = ASSETS['v4/index.html'].body + ASSETS['v4/app.js'].body;
+  for (const s of [v5, v4]) assert.ok(!/href="\/(v2|v3|classic)"/.test(s), 'a link to v2, v3 or classic');
+  for (const p of ['/v3', '/v2', '/classic']) assert.equal((await dashboard.fetch(get(p, token), env)).status, 200, p);
+  // What the owner called useless on the v4: methodology, units, time zones, links to old versions (it all lives on /data)
+  const words = /instalação-dia|install-day|UTC|Lisboa|coorte|cohort|EXCLUDE_IDS|clássico|não medido|Unidade:|brief/i;
+  const visible = v5.replace(/^\s*\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/'\/api\/brief'|\{ B, G, L \}|timeZone: 'Europe\/Lisbon'/g, '');
+  assert.ok(!words.test(visible), `jargon on the owner's page: ${(visible.match(words) || [])[0]}`);
+});
+
+test('v5: /api/brief still answers (JSON and Markdown) and its series now covers 30 days with matches and minutes', async () => {
+  const token = await jwt(claims());
+  const env = { ...env0(), DB: fakeD1() };
+  resetBriefCache();
+  const r = await dashboard.fetch(get('/api/brief', token), env);
+  assert.equal(r.status, 200);
+  const b = await r.json();
+  assert.equal(b.schema, 'brief.v1');
+  assert.equal(b.series.days.length, 30);
+  for (const k of ['matches', 'minutes', 'new_installs', 'active_installs']) assert.equal(b.series[k].length, 30, k);
+  const md = await dashboard.fetch(get('/api/brief?format=md', token), env);
+  assert.equal(md.status, 200);
+  assert.ok((await md.text()).startsWith('# CS2 IP Changer · brief '));
+});

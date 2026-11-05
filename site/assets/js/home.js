@@ -1,0 +1,246 @@
+/* CS2 IP Changer home: the story. One world (scenes.min.js, WorldScene) on a fixed stage behind the page; each beat of the
+   story is a block of text, and where the reader is picks the camera shot and the state of the route. The rest of the page
+   slides over the stage on plain ground, and the close shows the world once more.
+   Shared motion (smooth scroll, header line, reveals, guides index, footer) is readout.js. Reduced motion: the same shots
+   as cuts, the scene draws only when something changes. Without WebGL: the How it works drawing, and the text as it is. */
+(function () {
+  'use strict';
+  var d = document, root = d.documentElement, W = window;
+  var FX = root.classList.contains('fx');
+  var $ = function (s, el) { return (el || d).querySelector(s); };
+  var $$ = function (s, el) { return [].slice.call((el || d).querySelectorAll(s)); };
+  var clamp = function (v, a, b) { return Math.min(b === undefined ? 1 : b, Math.max(a || 0, v)); };
+  var topH = function () { var h = $('.top'); return h ? h.offsetHeight : 64; };
+  var docTop = function (el) { var y = 0; while (el) { y += el.offsetTop; el = el.offsetParent; } return y; };
+
+  var stage = $('#stage'), cv = $('#world'), rail = $('#rail'), pauseBtn = $('#pause');
+  if (!stage || !cv) return;
+  var beats = $$('[data-beat]').sort(function (a, b) { return +a.getAttribute('data-beat') - +b.getAttribute('data-beat'); });
+  var NB = 6; // beats 0..5 are the story; 6 is the close
+  var copies = beats.map(function (b) { return $('.copy', b); });
+  var appBody = $('.app-body'), cta = $('.cta'), railItems = rail ? $$('li', rail) : [], railOl = rail ? $('ol', rail) : null;
+  var logLis = $$('#ban-log li'), banIP = $('#ban-ip'), banNote = $('#ban-ip-note'), banSaid = banIP ? banIP.parentNode : null;
+  // where each log line starts, as a share of the ban beat; the scene uses the same marks
+  var LINES = [0, .12, .26, .4, .62, .74, .86];
+
+  var tall = function () { return innerWidth < 640 || (innerWidth / innerHeight < .9 && innerWidth < 1000); };
+
+  /* ------------------------------------------------------------ where the story is, from the scroll */
+  // each beat holds the camera while its text is read: an anchor (or, for the ban, a stretch) in scroll px
+  var A = [], ctaAt = 0, ctaH = 0, storyEnd = 0, H = innerHeight;
+  function measure() {
+    H = innerHeight;
+    var T = tall();
+    A = beats.slice(0, NB).map(function (b, i) {
+      var c = copies[i], bt = docTop(b), bh = b.offsetHeight, ch = c ? c.offsetHeight : 0;
+      if (i === 0) return { s: 0, e: 0 };
+      if (b.classList.contains('beat-long')) {
+        c.style.setProperty('--ch', ch + 'px');
+        if (T) return { s: Math.max(0, bt + ch + 24 - H, docTop(copies[i - 1]) + copies[i - 1].offsetHeight - topH()), e: bt + bh - H };
+        var stuck = topH() + Math.max(16, (H - topH() - ch) / 2);
+        return { s: bt + 32 - stuck, e: bt + bh - ch - stuck - 32 };
+      }
+      var ct = docTop(c);
+      var a = T ? ct + ch - H + 12 : ct + ch / 2 - H / 2;
+      return { s: a, e: a };
+    });
+    // a beat never anchors before the one above it
+    for (var i = 1; i < A.length; i++) { A[i].s = Math.max(A[i].s, A[i - 1].e + 1); A[i].e = Math.max(A[i].e, A[i].s); }
+    // the story ends when the page's own app window docks where the 3D screen is
+    var wr = winRect();
+    storyEnd = wr ? docTop(fig) - wr.fig : (appBody ? docTop(appBody) : 1e9);
+    ctaAt = cta ? docTop(cta) : 1e9; ctaH = cta ? cta.offsetHeight : 0;
+  }
+  function where(y) {
+    if (cta && y > ctaAt - H) return { p: NB, sub: 1, cta: 1 };
+    for (var i = 0; i < A.length; i++) {
+      if (y <= A[i].e) {
+        if (y >= A[i].s) return { p: i, sub: A[i].e > A[i].s ? (y - A[i].s) / (A[i].e - A[i].s) : 0 };
+        if (i === 0) return { p: 0, sub: 0 };
+        var g = A[i].s - A[i - 1].e;
+        return { p: i - 1 + clamp((y - A[i - 1].e) / g), sub: i - 1 === 4 ? 1 : 0 };
+      }
+    }
+    return { p: NB - 1, sub: 1 };
+  }
+
+  /* ------------------------------------------------------------ the scene */
+  var api = null, still = !FX, held = false;
+  try { held = localStorage.getItem('cs2-motion') === 'paused'; } catch (x) {}
+  // the free part of the screen for a shot: right of the copy column on a PC, above the beat's card held upright
+  // where the app window sits once it is stuck: the camera flies into the 3D screen until it covers that same rectangle
+  var fig = $('#win-fig'), win = fig ? $('.win', fig) : null;
+  function winRect() {
+    if (!fig || !win) return null;
+    var th = topH(), r = fig.getBoundingClientRect(), wr = win.getBoundingClientRect();
+    var top = getComputedStyle(fig).position === 'sticky' ? parseFloat(getComputedStyle(fig).top) || th : th;
+    var pad = wr.top - r.top;
+    return { fig: top, l: wr.left, t: top + pad, w: wr.width, h: wr.height };
+  }
+  function frame(Wd, Hh, shot, layout) {
+    var th = topH();
+    if (shot === 5) { var q = winRect(); if (q && q.w > 50) return { box: [q.l, q.t, q.l + q.w, q.t + q.h], bias: [.5, .5] }; }
+    if (layout === 'tall') {
+      var i = Math.min(shot, NB - 1), c = shot === NB ? $('.copy', cta) : copies[i];
+      var ch = c ? c.offsetHeight : Hh * .45;
+      if (shot === 4) ch = Math.min(ch, Hh * .62);
+      var bot = Hh - ch - (shot === 0 ? 56 : 24);
+      if (bot - th < 150) bot = Math.min(Hh * .5, th + 260);
+      return { box: [10, th + 60, Wd - 10, bot], bias: [.5, .55] };
+    }
+    var col = shot === NB ? $('.copy', cta) : copies[Math.min(shot, NB - 1)];
+    var r = col ? col.getBoundingClientRect() : null;
+    var right = r && r.width ? r.left + r.width : Wd * .4;
+    var land = innerHeight < 541;
+    return { box: [right + Math.max(24, Wd * .025), th + (land ? 8 : 18), Wd - Math.max(16, Wd * .02), Hh - (land ? 12 : 70)], bias: [.5, .5] };
+  }
+  // what the scene's labels must not sit under: the beat cards on screen and the pause button (css px of the canvas)
+  var pauseRect = null; addEventListener('resize', function () { pauseRect = null; });
+  function avoid() {
+    var out = [], y = scrollY;
+    if (tall()) for (var i = 0; i < copies.length; i++) { var c = copies[i]; if (!c) continue; var r = c.getBoundingClientRect(); if (r.bottom > 0 && r.top < H) out.push([r.left, r.top, r.right, r.bottom]); }
+    if (pauseBtn && !pauseBtn.hidden && !pauseBtn.classList.contains('under')) { if (!pauseRect) { var q = pauseBtn.getBoundingClientRect(); pauseRect = [q.left - 6, q.top - 6, q.right + 6, q.bottom + 6]; } out.push(pauseRect); }
+    return out;
+  }
+  function veil() {
+    if (tall()) return;
+    var c = copies[0], r = c.getBoundingClientRect();
+    var b = (r.left + r.width) / innerWidth * 100;
+    stage.style.setProperty('--veil-a', Math.max(10, b - 14).toFixed(1) + '%');
+    stage.style.setProperty('--veil-b', (b + 6).toFixed(1) + '%');
+  }
+
+  function start() {
+    if (api || !W.WorldScene) return;
+    try { api = W.WorldScene.mount(cv, { still: still, frame: frame, avoid: avoid, lit: true }); } catch (x) { api = null; }
+    if (!api) { root.classList.add('no-gl'); return; }
+    W.__world = api;
+    cv.addEventListener('worldready', function () { stage.classList.add('ready'); root.classList.add('gl'); update(); }, { once: true });
+    if (held) api.pause();
+    update();
+  }
+
+  var railGo = null;
+  if (rail) rail.addEventListener('click', function (e) { var a = e.target.closest && e.target.closest('a'); if (!a) return; var i = railItems.indexOf(a.parentNode); if (i >= 0) { railGo = { p: i, until: performance.now() + 1300, first: true }; requestAnimationFrame(update); } });
+
+  /* ------------------------------------------------------------ every scroll: the scene, the rail, the log */
+  var lastLine = -2, uq = 0, onStage = true;
+  function snap(s) { for (var k = LINES.length - 1; k >= 0; k--) if (s >= LINES[k]) return LINES[k] + .001; return 0; }
+  function update() {
+    uq = 0;
+    var y = scrollY, w = where(y), p = w.p, sub = w.sub;
+    if (!FX || held) { p = Math.round(p); if (p === 4) sub = snap(sub); else if (p > 4) sub = 1; }
+    if (p < 4) sub = 0;
+    // the stage is seen while the story is on screen and again at the close; under the plain sections it rests
+    var vis = y < storyEnd || (cta && y > ctaAt - H - 10);
+    // the page's window takes over from the 3D screen the moment it docks on the same rectangle
+    if (fig && api) fig.classList.toggle('docked', y >= storyEnd - 1);
+    if (vis !== onStage) { onStage = vis; stage.classList.toggle('off', !vis); if (api) api.hide(!vis); }
+    root.classList.toggle('story-off', !vis || (y > storyEnd - H * .6 && y < ctaAt - H) || (cta && y > ctaAt + ctaH - H * .6));
+    var jump = 0;
+    if (railGo) { if (performance.now() < railGo.until) { p = railGo.p; sub = 0; jump = railGo.first ? 1 : 0; railGo.first = false; } else railGo = null; }
+    if (api) api.set({ p: p, sub: sub, cta: w.cta || 0, jump: jump });
+    // flying into the monitor: the screen passes under the copy column, so the veil is denser for that stretch
+    stage.style.setProperty('--veil-x', (p > 4.4 && p < 5 ? 16 * Math.sin((p - 4.4) / .6 * Math.PI) : 0).toFixed(1) + '%');
+    // held upright, the ground under the cover's text stays plain; past the cover each beat has its own card
+    if (tall()) { var cr = copies[0].getBoundingClientRect(), on0 = cr.bottom > 0; stage.style.setProperty('--vt', (on0 ? Math.max(0, cr.top / innerHeight * 100) : 100).toFixed(1) + '%'); stage.style.setProperty('--vb', (on0 ? Math.max(0, cr.bottom / innerHeight * 100) : 100).toFixed(1) + '%'); }
+    // the pause button sits on the free part of the scene; while a card passes under it, it steps aside
+    if (pauseBtn && tall()) { var pt = topH() + 10; pauseBtn.classList.toggle('under', copies.concat([$('.copy', cta)]).some(function (c) { if (!c) return false; var r = c.getBoundingClientRect(); return r.top < pt + 44 && r.bottom > pt; })); }
+    // the rail: which beat, and how far along the route
+    if (railOl) {
+      railOl.style.setProperty('--p', clamp(p / (NB - 1)).toFixed(4));
+      railItems.forEach(function (li, i) { var on = Math.abs(Math.min(p, NB - 1) - i) < .5, a = li.firstElementChild; li.classList.toggle('on', on); if (on) a.setAttribute('aria-current', 'step'); else a.removeAttribute('aria-current'); });
+    }
+    // the ban: the log line on screen, and the IP the server sees
+    var line = -1;
+    if (p > 3.5 && p < 4.5) { for (var k = 0; k < LINES.length; k++) if (sub >= LINES[k]) line = k; }
+    else if (p >= 4.5) line = LINES.length;
+    if (line !== lastLine) {
+      lastLine = line;
+      logLis.forEach(function (li, k) { li.classList.toggle('now', k === line); li.classList.toggle('past', k < line); });
+      if (banIP) {
+        var st = line < 3 ? 'banned' : line < 4 ? 'wait' : 'new';
+        if (banSaid.getAttribute('data-st') !== st) {
+          banSaid.setAttribute('data-st', st);
+          banSaid.classList.toggle('banned', st === 'banned'); banSaid.classList.toggle('wait', st === 'wait');
+          var ip = st === 'banned' ? '198.51.100.23' : st === 'wait' ? '•••.•.•.•••' : '192.0.2.140';
+          banNote.textContent = st === 'banned' ? 'IP servers see. Example, banned on this server' : st === 'wait' ? 'Mobile data off, then on: getting a new IP' : 'New IP, new /16 range. Example IP';
+          var R = W.CS2Readout && W.CS2Readout.Readout;
+          if (R && FX) { if (!banIP.__r) banIP.__r = new R(banIP); banIP.__r.set(ip, { blank: st === 'wait' }); } else banIP.textContent = ip;
+        }
+      }
+    }
+  }
+  W.__story = function () { return { A: A, ctaAt: ctaAt, storyEnd: storyEnd }; };
+  function onScroll() { if (!uq) { uq = 1; requestAnimationFrame(update); } }
+  addEventListener('scroll', onScroll, { passive: true });
+  var rq = 0;
+  var lastW = innerWidth;
+  addEventListener('resize', function () { var coarse = matchMedia('(pointer:coarse)').matches; if (coarse && innerWidth === lastW) { measure(); update(); return; } lastW = innerWidth; clearTimeout(rq); rq = setTimeout(function () { var w0 = where(scrollY), inStory = scrollY < storyEnd; measure(); veil(); if (api) api.resize(); if (inStory && A.length) { var i = Math.min(Math.round(w0.p), A.length - 1), a = A[i]; scrollTo(0, Math.round(a.s + (a.e - a.s) * (i === 4 ? w0.sub : 0))); } update(); }, 120); });
+  d.addEventListener('visibilitychange', function () { if (api) api.hide(d.hidden || !onStage); });
+  measure(); veil(); update();
+  if (d.fonts && d.fonts.ready) d.fonts.ready.then(function () { measure(); veil(); if (api) api.resize(); update(); });
+  addEventListener('load', function () { measure(); update(); });
+
+  /* ------------------------------------------------------------ keyboard in the ban: one log line per PageDown or Space */
+  d.addEventListener('keydown', function (e) {
+    if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || !A[4]) return;
+    var t = e.target; if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(t.tagName))) return;
+    var down = e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey), up = e.key === 'PageUp' || (e.key === ' ' && e.shiftKey);
+    if (!down && !up) return;
+    var a = A[4], y = scrollY, span = a.e - a.s; if (y < a.s - 2 || y > a.e + 2 || span <= 0) return;
+    var k = (y - a.s) / span, next = null;
+    if (down) { for (var i = 0; i < LINES.length; i++) if (LINES[i] > k + .01) { next = LINES[i]; break; } if (next === null) return; }
+    else { for (var j = LINES.length - 1; j >= 0; j--) if (LINES[j] < k - .01) { next = LINES[j]; break; } if (next === null) return; }
+    e.preventDefault();
+    var to = Math.round(a.s + span * (next + .02));
+    if (W.__lenis) W.__lenis.scrollTo(to, { duration: .7 }); else scrollTo({ top: to, behavior: FX ? 'smooth' : 'auto' });
+  });
+
+  /* ------------------------------------------------------------ Pause motion: remembered, and it stops the scene's own loops */
+  if (pauseBtn && FX) {
+    pauseBtn.hidden = false; pauseBtn.setAttribute('aria-pressed', held);
+    pauseBtn.addEventListener('click', function () {
+      held = !held; pauseBtn.setAttribute('aria-pressed', held);
+      try { localStorage.setItem('cs2-motion', held ? 'paused' : ''); } catch (x) {}
+      if (api) { if (held) api.pause(); else api.resume(); }
+      update();
+    });
+  }
+
+  /* ------------------------------------------------------------ the app's six pages: the window shows the page being read */
+  if (fig) {
+    var pics = $$('.views picture', fig), zl = $('.views', fig), pages = $$('#pages li'), cur = 'connection';
+    var show = function (pg) {
+      if (pg === cur) return; cur = pg;
+      pics.forEach(function (pc) {
+        var on = pc.getAttribute('data-pg') === pg; pc.classList.toggle('on', on);
+        if (on) { pc.removeAttribute('aria-hidden'); var im = $('img', pc); if (im.loading === 'lazy') im.loading = 'eager'; zl.href = 'img/' + pg + '.png'; }
+        else pc.setAttribute('aria-hidden', 'true');
+      });
+      pages.forEach(function (li) { li.classList.toggle('on', li.getAttribute('data-pg') === pg); });
+      if (win) win.setAttribute('data-pg', pg);
+    };
+    var centres = [], line0 = 0;
+    var mPages = function () { centres = pages.map(function (li) { return docTop(li) + li.offsetHeight / 2; }); line0 = tall() ? Math.min(innerHeight * .78, topH() + fig.offsetHeight + innerHeight * .25) : innerHeight * .5; };
+    var pick = function () {
+      var line = scrollY + line0, best = -1, bd = 1e9;
+      centres.forEach(function (c, i) { var dd = Math.abs(c - line); if (dd < bd) { bd = dd; best = i; } });
+      if (best >= 0) show(pages[best].getAttribute('data-pg'));
+    };
+    var pq = 0, onPg = function () { if (!pq) { pq = 1; requestAnimationFrame(function () { pq = 0; pick(); }); } };
+    mPages(); addEventListener('resize', mPages); addEventListener('load', mPages); if (d.fonts && d.fonts.ready) d.fonts.ready.then(mPages);
+    if ('IntersectionObserver' in W) new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { mPages(); addEventListener('scroll', onPg, { passive: true }); } else removeEventListener('scroll', onPg); }); }).observe($('#pages'));
+    else addEventListener('scroll', onPg, { passive: true });
+    pages.forEach(function (li) { li.addEventListener('focusin', function () { show(li.getAttribute('data-pg')); }); });
+    fig.addEventListener('focusin', function () { if (scrollY < storyEnd) scrollTo(0, Math.ceil(storyEnd)); });
+    var setWin = function () { fig.style.setProperty('--win-h', fig.offsetHeight + 'px'); };
+    setWin(); addEventListener('resize', setWin);
+  }
+
+  /* ------------------------------------------------------------ start the scene once its script is in */
+  var idle = W.requestIdleCallback || function (fn) { return setTimeout(fn, 600); };
+  // after the cover has come in (its lines take about 1.3 s), so building the world never takes a frame from it
+  var later = function () { setTimeout(function () { idle(start, { timeout: 1200 }); }, FX ? 900 : 0); };
+  if (W.WorldScene) later(); else W.__worldReady = later;
+})();

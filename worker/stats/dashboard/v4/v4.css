@@ -110,3 +110,13 @@ table.t td.wrap { white-space: normal; min-width: 200px; }
   body[data-page="hoje"] .g > .live4 { order: -1; }
   body[data-page="hoje"] .g > .kpis4 { order: -2; }
 }
+
+/* v5 (5 nov. 2026): a página Brief da página de dados (/data) */
+.brief-wrap { overflow-x: auto; }
+table.brief-t td { white-space: normal; vertical-align: top; }
+table.brief-t td.mono { white-space: nowrap; }
+table.brief-t .r { text-align: right; }
+table.brief-t tr.bad td:first-child, table.brief-t tr.high td:first-child { color: var(--bad); font-weight: 600; }
+table.brief-t tr.medium td:first-child, table.brief-t tr.warn td:first-child { color: var(--warn); font-weight: 600; }
+table.brief-t tr.ok td:first-child { color: var(--good); }
+pre.md { margin: 0; font-family: var(--mono); font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; color: var(--ink); max-height: none; }

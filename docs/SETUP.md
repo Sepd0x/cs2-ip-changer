@@ -16,6 +16,9 @@ Already used it from another folder? Close it and copy `CS2IPChanger.exe` togeth
 
 - **The phone's Wi-Fi.** It has to be off, so the phone shares mobile data and not your home Wi-Fi. While it's on, the app keeps your servers and CS2 blocked.
 - **Windows Firewall has to be on.** Third-party firewalls that turn it off (some antivirus suites) leave the app without a kill switch, and it says so.
+- **An iPhone.** Turn on Personal Hotspot and plug it in by USB (Windows needs Apple's driver, which comes with Apple's Devices app), or join its Wi-Fi hotspot. Protection works the same as on Android. For a new IP you switch Airplane Mode on and off on the iPhone: only Android lets a PC do it.
+- **A VPN on the PC.** Turn it off before you turn on protection. The app hasn't been tested alongside one.
+- **Your server's address.** Servers takes the `IP:port` of the servers you play on. In CS2's console, `status` shows it for the server you're on.
 - **Change IP from the PC.** Also turn on USB debugging on the phone. If ADB isn't installed, the app can download Google's platform-tools for you (about 7 MB).
 - **Launch options.** To spot kicks and bans, CS2 needs `-condebug -conclearlog` (the second one starts `console.log` fresh each time, so it doesn't grow forever). The app adds both when it opens CS2, and tells you if they're missing when you start the game from Steam.
 - **Hotkeys.** <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F9</kbd> for New IP + next account and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> for Change IP and rejoin. Change them in Settings > New IP + next account. The app won't take Ctrl+Alt combinations: on many keyboards that's AltGr, which types @ and €.

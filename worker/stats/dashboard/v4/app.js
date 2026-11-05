@@ -169,7 +169,9 @@
   const SHOWN = /^(ip_changed|ip_same|ip_no_network|ip_home_back|log_error|app_start|crash|first_start|min_prot|min_cs2|cs2_start|kick_seen|vpn_seen|ban_seen|rej_try|rej_back|rej_wait|leak_ok|leak_bad|unclean_exit|cable_hint|rep_exit|(m|ping|jit|jitd|late|loss|sess|st|tp|start|upd|updfrom|phone_setup|phone_left|chg|chgt|chga|chgq|drop|data|scl|fs|chk)_.*)$/;
 
   // ------------------------------------------------ estado e navegação
+  // v5 (5 nov. 2026): esta é a página de dados (/data), para quem faz a app; a do dono é o /dashboard. Abre no Brief.
   const PAGES = [
+    ['brief', 'Brief', '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 12h7M9 16h7"/>'],
     ['hoje', 'Hoje', '<path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="5"/>'],
     ['funil', 'Funil', '<path d="M3 5h18l-7 8v6l-4-2v-4z"/>'],
     ['crescimento', 'Crescimento', '<path d="M3 20h18M5 16l5-5 4 3 6-7"/><path d="M16 7h4v4"/>'],
@@ -190,7 +192,7 @@
   let DATA = null;   // { R: resumo do período, H: resumo de 30 dias, L: ao vivo, G: GitHub, B: brief }
   let seq = 0;
 
-  const pageNow = () => { const p = location.hash.slice(1).split('/')[0]; return PAGES.some((x) => x[0] === p) ? p : 'hoje'; };
+  const pageNow = () => { const p = location.hash.slice(1).split('/')[0]; return PAGES.some((x) => x[0] === p) ? p : 'brief'; };
   async function load() {
     const my = ++seq;
     const page = pageNow();
@@ -200,9 +202,11 @@
     const G0 = V4.githubNow(), B0 = V4.briefNow();
     const ghP = G0 === undefined ? V4.github() : null;
     const brP = B0 === undefined ? V4.brief() : null;
-    const [R, H, L, G] = await Promise.all([V4.summary(st.f, st.period), need30 ? V4.summary(st.f, 30) : null, V4.live().catch(() => null), page === 'aquisicao' && ghP ? ghP : G0]);
+    // v5: a página Brief mostra também o Markdown do brief (null se falhar)
+    const [R, H, L, G, M] = await Promise.all([V4.summary(st.f, st.period), need30 ? V4.summary(st.f, 30) : null, V4.live().catch(() => null), page === 'aquisicao' && ghP ? ghP : G0,
+      page === 'brief' ? V4.briefMd().catch(() => null) : undefined]);
     if (my !== seq) return false;
-    DATA = { R, H: H || R, L, G, B: B0 };
+    DATA = { R, H: H || R, L, G, B: B0, M };
     const again = () => { if (my !== seq || !DATA) return; const y = scrollY; render(); scrollTo(0, y); };
     if (G === undefined && ghP) ghP.then((g) => { if (DATA && my === seq) { DATA.G = g; again(); } });
     if (B0 === undefined && brP) brP.then((b) => { if (DATA && my === seq) { DATA.B = b; again(); } });
@@ -254,7 +258,7 @@
     st.page = pageNow();
     document.body.classList.toggle('nosrc', !$('#srcs').checked);
     document.body.dataset.page = st.page;
-    for (const b of $$('#period button')) { b.setAttribute('aria-pressed', String(+b.dataset.p === st.period)); b.disabled = st.page === 'hoje'; }
+    for (const b of $$('#period button')) { b.setAttribute('aria-pressed', String(+b.dataset.p === st.period)); b.disabled = st.page === 'hoje' || st.page === 'brief'; }
     $('#health').innerHTML = healthStrip(D);
     const B = D.B;
     const cnt = {};
@@ -262,11 +266,11 @@
     if (B && B.health.status !== 'ok') cnt.sistema = B.health.checks.filter((c) => c.status !== 'ok').length;
     $('#nav').innerHTML = PAGES.map(([id, label, icon]) => `<a href="#${id}"${id === st.page ? ' aria-current="page"' : ''}><svg viewBox="0 0 24 24">${icon}</svg>${label}${cnt[id] ? `<span class="cnt ${id === 'sistema' && B.health.status === 'warn' ? 'warn' : 'bad'}">${cnt[id]}</span>` : ''}</a>`).join('')
       + '<div class="foot">Unidade: a instalação (ID fixo desde a beta.9); instalação-dia só onde o diz. Dias em UTC, horas de Lisboa. Só tu vês este painel: números exatos.</div>'
-      + '<div class="links"><a href="/v3">v3</a><a href="/v2">v2</a><a href="/classic">clássico</a></div>';
+      + '<div class="links"><a href="/dashboard">← Resumo (a página do dono)</a></div>';
     $('#crumbPage').textContent = PAGES.find((p) => p[0] === st.page)[1];
-    document.title = `${PAGES.find((p) => p[0] === st.page)[1]} · CS2 IP Changer stats`;
+    document.title = `${PAGES.find((p) => p[0] === st.page)[1]} · CS2 IP Changer dados`;
     renderFilters(D);
-    const fn = { hoje: pHoje, funil: pFunil, crescimento: pGrowth, encalham: pStuck, qualidade: pQual, aquisicao: pAcq, app: pApp, sistema: pSys }[st.page];
+    const fn = { brief: pBrief, hoje: pHoje, funil: pFunil, crescimento: pGrowth, encalham: pStuck, qualidade: pQual, aquisicao: pAcq, app: pApp, sistema: pSys }[st.page];
     const devband = V4.DEV ? '<div class="devband">Só os teus PCs: builds de desenvolvimento e os IDs de EXCLUDE_IDS. Os números de toda a gente ficam de fora.<a href="?">ver toda a gente</a></div>' : '';
     $('#main').innerHTML = devband + fn(D) + foot(D);
     bindPage();
@@ -760,6 +764,28 @@
   }
 
   // ------------------------------------------------ Sistema e dados: a saúde completa, versões, ambiente, definições
+  /**
+   * v5: o brief inteiro numa página, para quem faz a app: o Markdown do /api/brief tal como o agente o lê, as verificações de
+   * saúde com a regra de cada uma, as anomalias com a regra e a base, e as definições. Sem contas à parte: é o mesmo JSON.
+   */
+  function pBrief(D) {
+    const B = D.B;
+    const links = '<a href="/api/brief" target="_blank" rel="noopener">JSON</a> · <a href="/api/brief?format=md" target="_blank" rel="noopener">Markdown</a> · <a href="/api/brief?definitions=0" target="_blank" rel="noopener">JSON sem definições</a>';
+    if (B === undefined || D.M === undefined) return `<div class="g">${box('Brief', 'a ler…', [['b', 'brief']], empty('A ler o /api/brief…'), 's12')}</div>`;
+    if (!B) return `<div class="g">${box('Brief', '', [['b', 'brief']], empty('O /api/brief não respondeu', 'Tenta outra vez daqui a um minuto.'), 's12')}</div>`;
+    const sev = { bad: 0, high: 1, medium: 2, warn: 3, info: 4 };
+    const an = [...B.anomalies].sort((a, b) => (sev[a.severity] ?? 9) - (sev[b.severity] ?? 9));
+    const hc = B.health.checks;
+    // Os valores tal como vêm no JSON (0,857 não é "1"); listas e sim/não em JSON
+    const val = (c) => (c.value == null ? '—' : typeof c.value === 'number' ? `${esc(Number.isInteger(c.value) ? nf.format(c.value) : String(c.value))}${c.unit ? ' ' + esc(c.unit) : ''}` : typeof c.value === 'string' ? esc(c.value) : `<span class="mono">${esc(JSON.stringify(c.value))}</span>`);
+    return title('Brief', `${esc(B.schema)} · gerado ${esc(B.generated_at)} · hoje UTC ${esc(B.window.today)} · Lisboa ${esc(B.window.lisbon_now)} · ${links}`) + `<div class="g">
+      ${box('Anomalias', `${an.length} de ${B.rules_checked} regras · ordenadas por gravidade`, [['b', 'anomalies']], an.length ? `<div class="brief-wrap"><table class="t brief-t"><thead><tr><th>gravidade</th><th>tipo</th><th>id</th><th>o que diz</th><th class="r">observado</th><th class="r">esperado</th><th class="r">base</th><th>página</th><th>regra</th></tr></thead><tbody>${an.map((a) => `<tr class="${esc(a.severity)}"><td>${esc(a.severity)}</td><td>${esc(a.kind)}</td><td class="mono">${esc(a.id)}</td><td>${esc(a.text_pt || a.message)}${a.action_pt ? `<div class="dim">→ ${esc(a.action_pt)}</div>` : ''}</td><td class="r num">${a.observed == null ? '—' : esc(a.observed)}</td><td class="r num">${a.expected == null ? '—' : esc(a.expected)}</td><td class="r num">${a.base == null ? '—' : N(a.base)}</td><td>${a.page ? `<a href="${esc(a.page)}">${esc(a.page.slice(1))}</a>` : ''}</td><td class="dim">${esc(a.rule)}</td></tr>`).join('')}</tbody></table></div>` : empty('Nenhuma regra disparou'), 's12')}
+      ${box('Saúde dos dados', `${esc(B.health.status)} · ${hc.length} verificações`, [['b', 'health.checks']], `<div class="brief-wrap"><table class="t brief-t"><thead><tr><th>estado</th><th>id</th><th class="r">valor</th><th>regra</th><th>impacto</th></tr></thead><tbody>${hc.map((c) => `<tr class="${esc(c.status)}"><td>${esc(c.status)}</td><td class="mono">${esc(c.id)}</td><td class="r num">${val(c)}</td><td class="dim">${esc(c.rule || '')}</td><td>${esc(c.impact || '')}</td></tr>`).join('')}</tbody></table></div>`, 's12')}
+      ${box('O brief em Markdown', 'o texto que o agente lê, tal como vem', [['b', 'format=md']], `<pre class="md">${esc(D.M || '')}</pre>`, 's12')}
+      ${box('Definições', `${Object.keys(B.definitions || {}).length} · as mesmas do JSON, em inglês`, [['b', 'definitions']], `<details class="box"><summary>Mostrar as ${Object.keys(B.definitions || {}).length} definições</summary><dl class="defs">${Object.entries(B.definitions || {}).map(([k2, v]) => `<dt>${esc(k2)}</dt><dd>${esc(v)}</dd>`).join('')}</dl></details>`, 's12')}
+    </div>`;
+  }
+
   function pSys(D) {
     const R = D.R, B = D.B, G = D.G;
     const fr = R.fresh || {};

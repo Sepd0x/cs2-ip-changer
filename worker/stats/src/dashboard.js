@@ -108,8 +108,10 @@ export default {
     }
     // Only the packed files: a name like __proto__ or toString is not one of them (Object.hasOwn)
     const file = (name) => (Object.hasOwn(ASSETS, name) ? ASSETS[name] : null);
-    // Nov. 2026: /dashboard is the v4 page (its files under /d/v4/); the v3 stays at /v3 and the v2 at /v2 for the owner to compare
-    const PAGES = { '/dashboard': 'v4/index.html', '/v3': 'index.html', '/v2': 'v2/index.html' };
+    // 5 Nov. 2026 (v5): two pages. /dashboard is the owner's page (v5/: a few big numbers, one chart, plain sentences); /data (and
+    // /dados) is the developer's page with every detail (the v4, its files under /d/v4/, now opening on the brief). The v3 (/v3),
+    // the v2 (/v2) and /classic still answer by address, but no page links to them any more.
+    const PAGES = { '/dashboard': 'v5/index.html', '/data': 'v4/index.html', '/dados': 'v4/index.html', '/v3': 'index.html', '/v2': 'v2/index.html' };
     const asset = Object.hasOwn(PAGES, url.pathname) ? file(PAGES[url.pathname]) : url.pathname.startsWith('/d/') ? file(url.pathname.slice(3))
       : url.pathname.startsWith('/ui/') ? file(url.pathname.slice(1)) : null;
     if (asset) return serveAsset(request, asset, url);

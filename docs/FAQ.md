@@ -11,10 +11,10 @@ Every question and answer in one place. The most common ones are also in the [RE
 ## The basics
 
 **Is it a VPN? Does it work on servers that block VPNs?**<br>
-No, it isn't a VPN, and yes, it works there. A VPN sends your traffic through a datacenter, and many community servers block datacenter and VPN IP ranges. This app sends CS2 and Steam through your own phone's mobile data, so the server sees an ordinary mobile connection from your carrier, the same as someone playing on a phone hotspot. There's no VPN server in between and no subscription.
+It isn't a VPN. A VPN sends your traffic through a datacenter, and many community servers run anti-VPN plugins that check each player's IP against lists of VPN and datacenter addresses; one CS2 plugin ([CS2-AntiVPN](https://github.com/daffyyyy/CS2-AntiVPN)) bans by default. This app sends CS2 and Steam through your own phone's mobile data, so the server sees an ordinary mobile connection from your carrier, the same as someone playing on a phone hotspot, and it usually gets in where a VPN doesn't. It's not a promise: carriers share each IP between many phones, so an IP someone else misused can be flagged; Change IP gets you another one. There's no VPN server in between and no subscription.
 
 **Can this get me VAC banned?**<br>
-It never touches the game process, its memory or its program files. It changes Windows routing and firewall rules and which Steam account logs in. The rest is in [Is it safe?](../README.md#is-it-safe)
+It never touches the game process, its memory or its program files. It changes Windows routing and firewall rules and which Steam account logs in, and switching accounts never asks for your Steam password. It won't hide a cheat from VAC, and we can't speak for Valve or for a server's admins, who set their own rules. The rest is in [Is it safe?](../README.md#is-it-safe)
 
 **Will my ping be worse?**<br>
 Usually, yes. Mobile data adds latency and jitter, and some cells drop packets when they're busy, so expect a higher ping than at home and a game that can feel less smooth. A good 5G or 4G signal helps a lot: put the phone near a window, keep it charging and don't run other heavy stuff on it. The ping column in Servers is measured through the phone, so it shows what you'll get before you join, and Connection quality in Checks tells you when the connection itself is weak. What to do when it stays weak is under [Phone and connection](#phone-and-connection).
@@ -31,7 +31,7 @@ Connect an Android phone by USB with tethering on, then click Change IP (or pres
 No root and nothing to install on the phone. Change IP uses ADB with USB debugging on (Google's official tool, which the app can download). Without ADB, protection still works; you change the IP by hand with airplane mode.
 
 **Does it work with an iPhone?**<br>
-The protection does: an iPhone's USB tethering shows up in Windows like an Android one. Change IP from the PC needs ADB, which only Android has, so on an iPhone you switch airplane mode on and off yourself.
+Yes, the protection does: an iPhone's USB tethering (Personal Hotspot) shows up in Windows like an Android one, and so does its Wi-Fi hotspot. Change IP from the PC needs ADB, which only Android has, so on an iPhone you switch airplane mode on and off yourself.
 
 **Is it malware? Why does my antivirus flag it?**<br>
 It runs as admin, changes network settings and isn't code-signed, which is what some heuristics look for. Every release is built by GitHub Actions from this source and attested, and [Privacy and security](PRIVACY-AND-SECURITY.md) lists every Windows function it uses with admin rights and why. [Check your download](../README.md#check-your-download) before you run it.

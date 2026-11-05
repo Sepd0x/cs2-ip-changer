@@ -18,7 +18,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="../fonts/funnel-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
-<script>document.documentElement.classList.add('js')</script>
+<link rel="preload" href="../fonts/fragment-mono.woff2" as="font" type="font/woff2" crossorigin>
+<script>document.documentElement.classList.add('js');if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('fx')</script>
 <script type="application/ld+json">
 {
  "@context": "https://schema.org",
@@ -40,7 +41,7 @@
     "@id": "https://sepd0x.github.io/cs2-ip-changer/#author"
    },
    "datePublished": "2026-10-31",
-   "dateModified": "2026-11-04",
+   "dateModified": "2026-11-05",
    "breadcrumb": {
     "@id": "https://sepd0x.github.io/cs2-ip-changer/is-it-safe/#crumbs"
    },
@@ -113,161 +114,221 @@
 @font-face{font-family:"Funnel Display";src:url(../fonts/funnel-display.woff2) format("woff2");font-weight:300 800;font-style:normal;font-display:swap}
 @font-face{font-family:"Fragment Mono";src:url(../fonts/fragment-mono.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
 :root{/* tokens: tools/design-tokens.mjs, from src/Theme.xaml */--t-bg:#0e0e0e;--t-side:#0b0b0b;--t-edge:#050505;--t-surface:#171717;--t-surface2:#1d1d1d;--t-surface3:#262626;--t-line:#2a2a2a;--t-line-strong:#383838;--t-text:#dddddd;--t-muted:#adadad;--t-faint:#888888;--t-good:#7cc95a;--t-warn:#e3bf4b;--t-bad:#f05a4f;--t-accent:#5ba8f0;--t-accent-light:#7ebcf5;--t-accent-dark:#3e87d0;--t-accent-deep:#2b74c2;--t-top1:#3bb4e5;--t-top2:#c64fc6;--t-top3:#d8e03a;--t-accent-rgb:91,168,240;--t-top:linear-gradient(90deg,#3bb4e5,#c64fc6 50%,#d8e03a);/* /tokens */
-  --bg:var(--t-bg);--bg2:var(--t-surface);--bg3:var(--t-surface2);--line:var(--t-line);--line2:var(--t-line-strong);--ink:#e4e4e4;--ink2:var(--t-muted);--ink3:var(--t-faint);--sand:var(--t-accent-deep);--sand-hi:#3a84d4;--on-sand:#ffffff;--plate:#121212;--area:rgba(var(--t-accent-rgb),.05);--area-line:rgba(var(--t-accent-rgb),.16);--glow:rgba(var(--t-accent-rgb),.10);--route:var(--t-accent);--accent:var(--t-accent);--route-soft:rgba(var(--t-accent-rgb),.22);--shadow:rgba(0,0,0,.55);
+  --bg:var(--t-bg);--bg2:var(--t-surface);--bg3:var(--t-surface2);--line:var(--t-line);--line2:var(--t-line-strong);--ink:#e8e8e8;--ink2:var(--t-muted);--ink3:var(--t-faint);--sand:var(--t-accent-deep);--route:var(--t-accent);--accent:var(--t-accent);
+  --ease-out:cubic-bezier(.16,1,.3,1);--ease-in-out:cubic-bezier(.65,0,.35,1);--ease-spring:linear(0,.009,.035 2.1%,.141,.281 6.7%,.723 12.9%,.938 16.7%,1.017,1.077,1.121,1.149 24.3%,1.159,1.163,1.161,1.154 29.9%,1.129 32.8%,1.051 39.6%,1.017 43.1%,.991,.977 51%,.974 53.8%,.975 57.1%,.997 69.8%,1.003 76.9%,1);
+  --gutter:clamp(1.25rem,.4rem + 4.2vw,5rem);--max:88rem;--top-h:4rem;
   --sans:"Funnel Sans","Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
   --disp:"Funnel Display","Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
-  --mono:"Fragment Mono","Cascadia Mono",Consolas,ui-monospace,"SFMono-Regular",Menlo,monospace}
+  --mono:"Fragment Mono","Cascadia Mono",Consolas,ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --h2:clamp(2.2rem,1rem + 3.6vw,4.8rem)}
 *{box-sizing:border-box}
-html{color-scheme:dark;scroll-behavior:smooth;font-size:100%;-webkit-text-size-adjust:100%}
+html{color-scheme:dark;font-size:100%;-webkit-text-size-adjust:100%;scrollbar-color:var(--line2) var(--bg);scroll-padding-top:calc(var(--top-h) + 1rem)}
 @media (min-width:1600px){html{font-size:clamp(1rem,1vw,1.125rem)}}
 @media (min-width:1915px){html{font-size:clamp(1.125rem,.94vw,1.5rem)}}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.6 var(--sans);-webkit-font-smoothing:antialiased}
-main{overflow-x:clip}
-a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--line2);text-decoration-thickness:1px;text-underline-offset:.22em}
-a:hover{text-decoration-color:var(--sand)}
-:focus-visible{outline:2px solid var(--sand);outline-offset:3px;border-radius:2px}
+html:not(.fx){scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after,::details-content{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+@media (prefers-reduced-motion:reduce){html:not(.fx){scroll-behavior:auto}}
+html.lenis,html.lenis body{height:auto}.lenis.lenis-smooth{scroll-behavior:auto!important}.lenis.lenis-stopped{overflow:hidden}
+body{margin:0;border-top:2px solid transparent;border-image:var(--t-top) 1;background:var(--bg);color:var(--ink);font:400 1rem/1.6 var(--sans);-webkit-font-smoothing:antialiased;overflow-wrap:break-word}
+::selection{background:rgba(var(--t-accent-rgb),.34);color:#fff}
+main{overflow-x:clip;position:relative}
+a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--t-faint);text-decoration-thickness:1px;text-underline-offset:.22em;transition:text-decoration-color .15s,color .15s}
+a:hover{text-decoration-color:var(--accent)}
+:focus-visible{outline:2px solid var(--t-accent-light);outline-offset:3px;border-radius:2px}
+a.zoom:focus-visible,.copyrow .btn:focus-visible{outline-offset:-3px}
+@media (pointer:coarse){.instr p a,.vs .src a,.setup-foot a,details p a,.rel a{display:inline-block;padding-block:.6em;margin-block:-.6em}footer nav li a{display:inline-flex;align-items:center;min-height:44px}}
 img{max-width:100%;height:auto;display:block}
 picture{display:block}
 code,kbd{font-family:var(--mono);font-size:.86em}
 code{color:var(--ink)}
-kbd{border:1px solid var(--line2);border-bottom-width:2px;border-radius:3px;padding:0 .35em;background:var(--bg3);color:var(--ink);font-size:.8em}
+kbd{border:1px solid var(--line2);border-bottom-width:2px;border-radius:3px;padding:0 .35em;background:var(--bg3);color:var(--ink);font-size:.8em;white-space:nowrap}
 h1,h2,h3{text-wrap:balance}
-.skip{position:absolute;left:-999px;top:8px;background:var(--sand);color:var(--on-sand);padding:8px 14px;border-radius:5px;z-index:10}
+p,li,dd{text-wrap:pretty}
+.skip{position:absolute;left:-999px;top:8px;background:var(--t-accent);color:var(--t-bg);padding:8px 14px;border-radius:5px;z-index:60}
 .skip:focus{left:12px}
-.wrap{max-width:72.5rem;margin:0 auto;padding:0 1.25rem}
-.top{border-bottom:1px solid var(--line)}
-.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:1rem;height:4rem}
-.brand{display:flex;align-items:center;gap:10px;color:var(--ink);font:600 1rem/1 var(--disp);letter-spacing:-.01em;text-decoration:none;white-space:nowrap}
-.brand img{width:28px;height:28px;border-radius:6px}
-.top nav{display:flex;align-items:center;gap:1.4rem;font-size:.94rem}
-.top nav a:not(.btn){color:var(--ink2);text-decoration:none}
+[hidden]{display:none!important}
+.intro #h1,.intro .hero-side>*,.intro .hero .ro{visibility:hidden}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.wrap{max-width:calc(var(--max) + 2*var(--gutter));margin-inline:auto;padding-inline:var(--gutter)}
+/* the drafting grid: twelve hairline columns behind the whole page, the same grid everything sits on */
+.cols{position:fixed;inset:0 0 auto;height:100lvh;z-index:0;pointer-events:none}
+.cols i{display:block;height:100%;max-width:calc(var(--max) + 2*var(--gutter));margin-inline:auto;padding-inline:var(--gutter);background-clip:content-box;background-image:linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:calc(100%/12) 100%}
+.cols i::after{content:"";display:block;height:100%;border-right:1px solid rgba(255,255,255,.035)}
+main>*,footer{position:relative;z-index:1}
+/* things come in as they reach the screen; without JS or with reduced motion they are just there */
+.fx .rv{opacity:0;transform:translateY(24px);transition:opacity .9s var(--ease-out),transform 1.05s var(--ease-out);transition-delay:calc(var(--i,0)*80ms)}
+.fx .rv.in{opacity:1;transform:none}
+/* header: glass, the app's top line as its last pixel row while you read */
+.top{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 80%,transparent);border-bottom:1px solid var(--line)}
+@supports (backdrop-filter:blur(1px)){.top{background:color-mix(in srgb,var(--bg) 66%,transparent);backdrop-filter:saturate(1.4) blur(18px)}}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:1rem;height:var(--top-h)}
+.prog{position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--t-top);transform-origin:0 50%;transform:scaleX(0);pointer-events:none}
+.brand{display:flex;align-items:center;gap:10px;color:var(--ink);font:600 1rem/1 var(--disp);letter-spacing:-.01em;text-decoration:none;white-space:nowrap;min-width:0;flex-shrink:0}
+.brand img{width:28px;height:28px;border-radius:6px;flex:none}
+.top nav{display:flex;align-items:center;gap:1.5rem;font-size:.94rem}
+.top nav a:not(.btn){color:var(--ink2);text-decoration:none;padding-block:.6rem}
 .top nav a:not(.btn):hover{color:var(--ink)}
-.eyebrow{font:400 .75rem/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:0 0 1rem}
-.lead{color:var(--ink2);font-size:1.1rem;line-height:1.55;margin:0 0 1.75rem;max-width:62ch}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--sand);color:var(--on-sand);font:600 1rem/1.2 var(--sans);padding:.9rem 1.35rem;border:0;border-radius:6px;text-decoration:none;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 1px 0 rgba(0,0,0,.4),0 10px 30px -12px var(--glow);transition:background-color .15s}
-.btn:hover{background:var(--sand-hi)}
-.btn:active{transform:translateY(1px)}
+.top nav a,.top nav .btn{white-space:nowrap}
+/* buttons: the app's accent with dark text (7.6:1), a hairline ghost, and a spring on press */
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;background:var(--t-accent);color:var(--t-bg);font:600 1rem/1.2 var(--sans);padding:.85rem 1.4rem;border:0;border-radius:999px;text-decoration:none;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 0 1px rgba(var(--t-accent-rgb),.5);transition:background-color .2s,box-shadow .25s,transform .5s var(--ease-spring)}
+.btn:hover{background:var(--t-accent-light)}
+.btn:active{transform:scale(.96);transition-duration:.06s}
 .btn svg{width:1.125em;height:1.125em;flex:none}
-.btn-s{padding:.55rem .85rem;font-size:.9rem;border-radius:5px}
-.link{color:var(--ink2);font-weight:500}
+.btn-s{min-height:38px;padding:.55rem 1rem;font-size:.9rem}
+.btn-ghost{background:rgba(255,255,255,.03);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line2)}
+.btn-ghost:hover{background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px var(--ink3)}
+.btn-ghost svg{width:1.05em;height:1.05em}
+.link{color:var(--ink2);font-weight:500;display:inline-flex;align-items:center;min-height:44px}
 .link:hover{color:var(--ink)}
-.actions{display:flex;flex-wrap:wrap;align-items:center;gap:1rem 1.6rem}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1.6rem}
+.rel{color:var(--ink2);font-size:.86rem;line-height:1.5;margin:.75rem 0 0}
+.rel a{color:var(--ink2);display:inline-block;padding-block:.25rem}
+.rel a:hover{color:var(--ink)}
+.nowrap-bits a{white-space:nowrap}
+.req,.safe{color:var(--ink3);font-size:.88rem;line-height:1.5;margin:.8rem 0 0}
+.req{margin-top:.45rem}
+.safe a{color:var(--ink2)}
 .checks{list-style:none;margin:1.5rem 0 0;padding:0;display:flex;flex-wrap:wrap;gap:.4rem 1.15rem;font-size:.9rem;line-height:1.5;color:var(--ink2)}
 .checks li{display:inline-flex;align-items:center;gap:.5rem}
-.checks li::before{content:"";width:.4rem;height:.4rem;background:var(--sand);flex:none}
+.checks li::before{content:"";width:.4rem;height:.4rem;border-radius:50%;background:var(--accent);flex:none}
 .checks a{color:var(--ink2)}
-.checks a:hover{color:var(--ink)}
-.req,.safe{color:var(--ink3);font-size:.88rem;line-height:1.5;margin:.8rem 0 0}
-.req{font:400 .78rem/1.65 var(--mono);margin-top:.45rem}
-.safe a{color:var(--ink2)}
-.safe a:hover{color:var(--ink)}
-.shot{border-radius:10px;overflow:hidden;background:var(--bg2);box-shadow:0 0 0 1px var(--line2),0 30px 70px -30px var(--shadow)}
-section{padding:4.5rem 0;border-top:1px solid var(--line)}
-h2{font:500 clamp(1.65rem,2.9vw,2.3rem)/1.1 var(--disp);letter-spacing:-.025em;margin:0 0 .7rem}
-h3{font:500 1.06rem/1.35 var(--disp);letter-spacing:-.01em;margin:0 0 .35rem}
-.sub{color:var(--ink2);max-width:62ch;margin:0 0 2.25rem}
+/* send to the PC: on a touch screen the Windows download makes no sense, the link goes to the PC instead */
+.get-phone{display:none}
+.get-note{margin:0;font-size:.95rem;color:var(--ink2)}
+.copyrow{display:flex;align-items:stretch;min-width:0;border:1px solid var(--line2);border-radius:999px;overflow:hidden;background:var(--bg2)}
+.copyrow .url{flex:1 1 0;width:0;min-width:0;padding:.85rem 1rem;font-size:.8rem;color:var(--ink2);overflow-wrap:anywhere;align-self:center}
+.copyrow .btn{display:none;border-radius:999px;padding:.7rem 1.1rem;flex:none;box-shadow:none;margin:3px}
+.js .copyrow .btn{display:inline-flex}
+@media (max-width:480px){.copyrow{flex-direction:column;border-radius:16px}.copyrow .url{flex:none;width:auto;padding:.8rem 1rem .3rem;overflow-wrap:normal}.copyrow .btn{margin:6px}}
+.get-top{display:none}
+@media (pointer:coarse){.get-desk{display:none!important}.get-top{display:inline-flex}.get-phone{display:flex;flex-direction:column;align-items:stretch;gap:.7rem;min-width:0}}
+/* sections: big two-tone titles on the grid, nothing above them */
+section{padding-block:clamp(5rem,3rem + 6vw,10rem);border-top:1px solid var(--line)}
+h2{font:500 var(--h2)/1 var(--disp);letter-spacing:-.04em;margin:0 0 1.2rem}
+h2 .m{color:var(--ink3)}
+h3{font:500 1.12rem/1.35 var(--disp);letter-spacing:-.01em;margin:0 0 .35rem}
+.lead{color:var(--ink2);font-size:1.12rem;line-height:1.55;margin:0 0 1.75rem;max-width:60ch}
+.sub{color:var(--ink2);max-width:58ch;margin:0 0 2.75rem;font-size:1.06rem}
+.mono{font-family:var(--mono)}
+.tag{display:inline-block;padding:.12rem .5rem;border-radius:5px;background:rgba(var(--t-accent-rgb),.12);color:var(--t-accent-light);box-shadow:inset 0 0 0 1px rgba(var(--t-accent-rgb),.3);font:400 .8rem/1.5 var(--mono)}
+/* the readout: a number on a ruler, the same instrument on every page */
+.ro{position:relative}
+.ro-head,.ro-foot{display:flex;align-items:center;justify-content:space-between;gap:.5rem 1.5rem;flex-wrap:wrap;font:400 .8rem/1.4 var(--mono);color:var(--ink3)}
+.ro-head b,.ro-foot b{font-weight:400;color:var(--ink2)}
+.ro-state{display:inline-flex;align-items:center;gap:.55rem;color:var(--ink2)}
+.led{width:.55rem;height:.55rem;border-radius:2px;background:var(--t-good);flex:none;transition:background-color .3s}
+.led.off{background:var(--t-bad)}.led.on{background:var(--t-warn)}.led.idle{background:var(--t-faint)}
+.ro-num{position:relative;margin:.15em 0 0;font:400 var(--ro-size,min(12.4vw,24svh))/.82 var(--mono);letter-spacing:-.045em;color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums}
+.digits{display:inline-flex;transform-origin:0 0}
+.digits .ch{display:inline-block;position:relative;width:.6em;height:.86em;overflow:hidden;text-align:center}
+.digits .strip{display:block}
+.digits .g{display:block;height:.86em;line-height:.86em}
+.digits .dot{display:inline-flex;justify-content:center;overflow:visible;width:.34em}
+.digits .ch.sp{width:.34em}.digits .ch.sl{width:.44em}
+.digits .oct{display:inline-flex}
+.digits.home{color:var(--ink3)}
+.digits .ch.hot .g:last-child{color:var(--t-accent-light)}
+.digits .g:last-child{transition:color .9s var(--ease-out)}
+.ro-rule{position:relative;height:1.4rem;margin-top:.9rem;border-top:1px solid var(--line2);background:repeating-linear-gradient(90deg,var(--line2) 0 1px,transparent 1px calc(100%/60)) 0 0/100% 6px no-repeat,repeating-linear-gradient(90deg,var(--ink3) 0 1px,transparent 1px calc(100%/12)) 0 0/100% 12px no-repeat}
+.ro-rule::after{content:"";position:absolute;left:0;right:0;top:-1px;height:2px;background:var(--t-top);transform-origin:0 50%;transform:scaleX(var(--fill,1));transition:transform .9s var(--ease-out)}
+.ro-foot{margin-top:.25rem}
+.ro canvas.dust{position:absolute;left:-4%;top:-60%;width:108%;height:220%;pointer-events:none;z-index:2}
+/* the phone, drawn as the app's own status: bars, Mobile data, USB tethering */
+.phone{display:inline-flex;align-items:center;gap:.7rem;padding:.35rem .7rem .35rem .45rem;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line2);background:rgba(255,255,255,.02);color:var(--ink2);white-space:nowrap}
+.phone .bars{display:inline-flex;align-items:flex-end;gap:2px;height:.85rem}
+.phone .bars i{width:3px;border-radius:1px;background:var(--ink);transition:opacity .25s steps(2)}
+.phone .bars i:nth-child(1){height:30%}.phone .bars i:nth-child(2){height:55%}.phone .bars i:nth-child(3){height:78%}.phone .bars i:nth-child(4){height:100%}
+.phone .tg{display:inline-flex;align-items:center;gap:.4rem}
+.phone .tg s{position:relative;width:1.7rem;height:.95rem;border-radius:999px;background:var(--t-accent);text-decoration:none;transition:background-color .25s}
+.phone .tg s::after{content:"";position:absolute;top:.15rem;left:.9rem;width:.65rem;height:.65rem;border-radius:50%;background:#fff;transition:left .45s var(--ease-spring)}
+.phone.down .bars i{opacity:.18}
+.phone.down .tg.md s{background:var(--line2)}.phone.down .tg.md s::after{left:.15rem}
+.phone.down .bars i:nth-child(1){transition-delay:.18s}.phone.down .bars i:nth-child(2){transition-delay:.12s}.phone.down .bars i:nth-child(3){transition-delay:.06s}
+/* the demo button: it plays Change IP on this picture with example IPs */
+.demo{display:inline-flex;align-items:center;gap:.6rem;min-height:44px;padding:.55rem 1.05rem .55rem .8rem;border:0;border-radius:999px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px var(--line2);color:var(--ink);font:500 .92rem/1.2 var(--sans);cursor:pointer;transition:background-color .2s,box-shadow .2s,transform .5s var(--ease-spring)}
+.demo:hover{background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px var(--ink3)}
+.demo:active{transform:scale(.96);transition-duration:.06s}
+.demo i{width:1.4rem;height:1.4rem;border-radius:50%;display:grid;place-items:center;background:var(--t-accent);color:var(--t-bg)}
+.demo i svg{width:.7rem;height:.7rem}
+
+/* the app window, as the real screenshot with a few live values on top */
+.win{position:relative;container-type:inline-size;border-radius:12px;overflow:hidden;background:var(--t-bg);box-shadow:0 0 0 1px rgba(255,255,255,.09),0 80px 160px -60px rgba(0,0,0,.95),0 30px 70px -30px rgba(0,0,0,.75)}
+.win img{display:block;width:100%;height:auto}
+.patch{position:absolute;display:flex;align-items:center;white-space:nowrap;overflow:hidden;visibility:hidden}
+.live .patch{visibility:visible}
+.pg-other .patch{visibility:hidden!important}
+.p-ip span{transition:opacity .2s}.await .p-ip span{opacity:0}
+.p-ip{left:9%;top:20.1%;width:15%;height:3.9%;gap:1.05cqw;background:var(--t-surface);font:600 1.53cqw/1 "Cascadia Mono","Cascadia Code",Consolas,var(--mono);color:#e8e8e8;letter-spacing:.01em}
+.ring{position:absolute;border:1px solid var(--t-accent);border-radius:4px;opacity:0;transition:opacity .3s,left .5s var(--ease-out),top .5s var(--ease-out),width .5s var(--ease-out),height .5s var(--ease-out);pointer-events:none;left:var(--rx);top:var(--ry);width:var(--rw);height:var(--rh)}
+.stage .ring{opacity:1}
+.win[data-pg=connection] .ring,.win:not([data-pg]) .ring{--rx:8.7%;--ry:19.8%;--rw:13.2%;--rh:4%}
+.win[data-pg=servers] .ring{--rx:58.9%;--ry:27.6%;--rw:5.6%;--rh:3%}
+.win[data-pg=accounts] .ring{--rx:73.6%;--ry:9.4%;--rw:8.6%;--rh:3%}
+.win[data-pg=regions] .ring{--rx:8.8%;--ry:8.6%;--rw:15.4%;--rh:3%}
+.win[data-pg=configs] .ring{--rx:54.2%;--ry:59.4%;--rw:8%;--rh:2.8%}
+.win[data-pg=profiles] .ring{--rx:51%;--ry:12.4%;--rw:6.4%;--rh:3%}
+.p-bar{left:70.8%;top:2.2%;width:7.6%;height:2.3%;background:var(--t-bg);font:600 .93cqw/1 "Cascadia Mono","Cascadia Code",Consolas,var(--mono);color:#cfcfcf}
+/* FAQ */
+:root{interpolate-size:allow-keywords}
+details{position:relative;border-top:1px solid var(--line);counter-increment:q}
+.faq details::before{content:counter(q,decimal-leading-zero) / "";position:absolute;left:0;top:1.75rem;font:400 .8rem/1 var(--mono);color:var(--ink3)}
+.faq summary{padding-left:3.5rem}.faq details p{padding-left:3.5rem}
+.faq .qs{counter-reset:q}
+.faq details[open] summary{background:linear-gradient(90deg in oklch,var(--t-top1),var(--t-top2) 50%,var(--t-top3)) 3.5rem 100%/calc(100% - 3.5rem) 1px no-repeat}
+details:last-of-type{border-bottom:1px solid var(--line)}
+details::details-content{block-size:0;overflow:hidden;transition:block-size .5s var(--ease-out),content-visibility .5s allow-discrete}
+details[open]::details-content{block-size:auto}
+summary{cursor:pointer;list-style:none;padding:1.45rem 3.5rem 1.45rem 0;position:relative;font:500 clamp(1.12rem,1rem + .45vw,1.45rem)/1.3 var(--disp);letter-spacing:-.018em;color:var(--ink2);transition:color .2s}
+summary::-webkit-details-marker{display:none}
+summary::before,summary::after{content:"";position:absolute;right:.35rem;top:50%;width:16px;height:1.5px;margin-top:-.75px;background:currentColor;transition:transform .5s var(--ease-out)}
+summary::before{transform:rotate(90deg)}
+details[open] summary::before{transform:rotate(135deg)}
+details[open] summary::after{transform:rotate(45deg)}
+summary:hover,details[open] summary{color:var(--ink)}
+details p{margin:0;padding:0 3.5rem 1.7rem 0;color:var(--ink2);max-width:68ch}
+/* tables */
 .tbl{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:.95rem}
+table{width:100%;border-collapse:collapse;font-size:.95rem;font-variant-numeric:tabular-nums}
 th,td{text-align:left;padding:1rem 1.25rem 1rem 0;border-bottom:1px solid var(--line);vertical-align:top}
-thead th,thead td{font:400 .72rem/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);padding-bottom:.85rem}
+thead th,thead td{font:500 .85rem/1.4 var(--sans);color:var(--ink3);padding-bottom:.85rem}
 tbody th{font-weight:500;color:var(--ink)}
 td{color:var(--ink2)}
 .us{padding-left:1.25rem;background:linear-gradient(90deg,rgba(var(--t-accent-rgb),.075),transparent 90%)}
 td.us{color:var(--ink)}
-thead .us{color:var(--accent);box-shadow:inset 0 2px 0 var(--sand)}
-#vpn table{table-layout:fixed}#vpn thead td{width:24%}
-details{border-top:1px solid var(--line)}
-details:last-of-type{border-bottom:1px solid var(--line)}
-summary{cursor:pointer;list-style:none;padding:1rem 2.5rem 1rem 0;position:relative;font:500 1.06rem/1.4 var(--disp);letter-spacing:-.005em}
-summary::-webkit-details-marker{display:none}
-summary::before,summary::after{content:"";position:absolute;right:.4rem;top:50%;width:12px;height:1.5px;background:var(--ink3);transition:transform .25s}
-summary::before{transform:rotate(90deg)}
-details[open] summary::before{transform:rotate(0)}
-summary:hover{color:var(--accent)}
-details p{margin:0;padding:0 0 1.25rem;color:var(--ink2);max-width:66ch}
-footer{border-top:1px solid var(--line);padding:2rem 0 2.5rem;color:var(--ink3);font-size:.86rem}
-footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between}
-footer a{color:var(--ink2);text-decoration:none}
+thead .us{color:var(--accent);box-shadow:inset 0 2px 0 var(--accent)}
+/* footer: columns, then the name in outline the width of the screen, lit by the app's top line */
+footer{position:relative;border-top:1px solid var(--line);color:var(--ink3);font-size:.9rem;overflow:hidden;background:var(--bg)}
+.fgrid{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(0,1fr));gap:2.5rem 2rem;padding-block:clamp(3rem,2rem + 3vw,5rem) 0}
+.fbrand p{margin:.9rem 0 1.2rem;max-width:30ch;line-height:1.55}
+.fstat{display:inline-flex;align-items:center;gap:.55rem;padding:.42rem .8rem .42rem .65rem;border-radius:999px;background:rgba(255,255,255,.035);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);color:var(--ink2);font:400 .8rem/1.4 var(--mono);white-space:nowrap}
+.fstat i{width:.5rem;height:.5rem;border-radius:2px;background:var(--t-good)}
+footer nav h3{font:500 .9rem/1.4 var(--sans);color:var(--ink);margin:0 0 1rem}
+footer nav ul{list-style:none;margin:0;padding:0;display:grid;gap:0}
+footer a{color:var(--ink3);text-decoration:none;transition:color .15s;display:inline-block;padding-block:.55rem}
 footer a:hover{color:var(--ink)}
-.btn-ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line2)}
-.btn-ghost:hover{background:var(--bg3)}
-.btn-ghost svg{width:1.05em;height:1.05em}
-.top nav a.btn-ghost{color:var(--ink)}
-.rel{color:var(--ink3);font-size:.86rem;line-height:1.5;margin:.7rem 0 0}
-.rel a{color:var(--ink2)}
-.rel a:hover{color:var(--ink)}
+.wordmark{position:relative;margin-top:clamp(2.5rem,2rem + 3vw,5rem);height:.7em;font:600 min(12.6vw,16rem)/1 var(--disp);letter-spacing:-.055em;text-align:center;white-space:nowrap;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.12);border-bottom:1px solid var(--line2);user-select:none;overflow:hidden}
+@supports not (-webkit-text-stroke:1px #000){.wordmark{color:rgba(255,255,255,.05)}}
+.wordmark span{display:block;background:linear-gradient(90deg in oklch,var(--t-top1),var(--t-top2) 50%,var(--t-top3));-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:0;color:transparent;clip-path:inset(0 calc(100% - var(--wm,0%)) 86% 0);position:absolute;inset:0}
+.legal{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.6rem 2rem;padding-block:1.6rem 2.2rem;font-size:.84rem}
+@media (max-width:900px){.fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.fbrand{grid-column:1/-1}}
+@media (max-width:420px){.fgrid{grid-template-columns:minmax(0,1fr)}}
 a.zoom{display:block;cursor:zoom-in}
 .lightbox{padding:0;border:0;background:transparent;max-width:96vw;max-height:94vh;overflow:visible}
-.lightbox::backdrop{background:rgba(0,0,0,.86)}
+.lightbox::backdrop{background:rgba(0,0,0,.88)}
+.lb-x{position:fixed;right:1rem;top:1rem;min-height:44px;padding:.5rem 1rem;border:0;border-radius:999px;background:var(--t-surface2);color:var(--ink);font:500 .95rem var(--sans);box-shadow:inset 0 0 0 1px var(--line2);cursor:pointer}
+@media (pointer:coarse){.lightbox{overflow:auto;max-width:100vw}.lightbox img{max-width:none!important;width:1240px}}
 .lightbox img{display:block;width:auto;height:auto;max-width:96vw;max-height:94vh;border-radius:8px;box-shadow:0 0 0 1px var(--line2),0 30px 80px -20px #000;cursor:zoom-out}
+@media (max-width:900px){.top nav .hide-s{display:none}}
 @media (max-width:1000px){
-  .hero{grid-template-columns:1fr;gap:2.25rem;padding-top:2.25rem;padding-bottom:3rem}
-  .hero-copy{padding-top:0}
-  .hero-scene{max-width:44rem;padding-bottom:6rem}
-  .who ul,ul.guides{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .who .wrap{grid-template-columns:1fr}
-  .viewer{grid-template-columns:1fr;gap:1rem}
-  .tabs{flex-direction:row;overflow-x:auto;gap:.4rem;border-top:0;padding-bottom:4px;scrollbar-width:none}
-  .tabs::-webkit-scrollbar{display:none}
-  .tabs label{flex:none;padding:.4rem .9rem;border:1px solid var(--line);border-radius:999px}
-  .tabs label::before{display:none}
-  .tabs label b{font-size:.95rem}
-  .tabs label span{display:none!important}
-  #pg-connection:checked~.tabs [for=pg-connection],#pg-servers:checked~.tabs [for=pg-servers],#pg-accounts:checked~.tabs [for=pg-accounts],#pg-regions:checked~.tabs [for=pg-regions],#pg-configs:checked~.tabs [for=pg-configs],#pg-profiles:checked~.tabs [for=pg-profiles]{border-color:var(--sand);background:rgba(var(--t-accent-rgb),.1)}
-  .views figcaption .fd{display:inline;color:var(--ink2)}
-  .also,.split{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .cta .wrap{grid-template-columns:1fr}
-  .faq{grid-template-columns:1fr}
+  section{padding-block:clamp(4rem,2.5rem + 6vw,6rem)}
+  .sub{margin-bottom:2rem}
 }
 @media (max-width:760px){
-  .top .wrap{height:3.5rem}
-  .top nav{gap:1.1rem}
-  .top nav .hide-s{display:none}
-  .hero{padding-top:1.75rem;gap:1.75rem}
-  .hero h1{font-size:clamp(2.1rem,9.6vw,2.6rem);line-height:1.03;margin-bottom:1rem}
+  .top .wrap{height:var(--top-h)}
+  .top nav{gap:1rem}
   .lead{font-size:1.04rem}
-  .get-desk{display:none}
-  .get-phone{display:flex;flex-direction:column;align-items:stretch;gap:.75rem}
-  .get-note{margin:0;font-size:.95rem;color:var(--ink)}
-  .copyrow{display:flex;align-items:stretch;border:1px solid var(--line2);border-radius:7px;overflow:hidden;background:var(--bg2)}
-  .copyrow .url{flex:1;min-width:0;padding:.85rem .8rem;font-size:.8rem;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-self:center}
-  .copyrow .btn{display:none;border-radius:0;padding:.85rem 1rem;flex:none;box-shadow:none}
-  .js .copyrow .btn{display:inline-flex}
-  .get-phone .link{font-size:.92rem;align-self:flex-start}
-  .checks{font-size:.86rem;gap:.35rem 1rem;margin-top:1.25rem}
-  .req{font-size:.74rem}
-  .hero-scene{padding-bottom:0}
-  .hero-scene::before,.float-app{display:none}
-  .radar-head{font-size:.66rem;padding-bottom:.6rem}
-  .radar-plate{aspect-ratio:360/498;--mx:24%;--my:15%}
-  .topo{background-image:url(../assets/topo-phone.svg)}
-  .r-desk{display:none}
-  .r-phone{display:block}
-  .phone-app{display:block;position:relative;z-index:3;margin:-2.5rem .75rem 0;border-radius:8px;overflow:hidden;box-shadow:0 0 0 1px var(--line2),0 24px 50px -16px rgba(0,0,0,.75)}
-  section{padding:2.5rem 0}
-  .who{padding:1.6rem 0}
-  .who .wrap{gap:.7rem}
-  .who ul{grid-template-columns:1fr;gap:.45rem;font-size:.92rem;line-height:1.45}
-  .who li b{display:inline}
-  .top nav .btn-ghost{padding:.5rem .75rem}
-  .sub{margin-bottom:1.5rem}
-  #setup .sub{display:none}
-  .shot{border-radius:7px}
-  .also{grid-template-columns:repeat(2,minmax(0,1fr));gap:1.1rem 1.25rem;margin-top:2.25rem}
-  .also p{font-size:.88rem;line-height:1.5}
-  .also kbd{padding:0 3px}
-  .how-img{margin-bottom:1.75rem}
-  .how-img .how-d{display:none}
-  .how-img .how-p{display:block}
-  .steps,.split{grid-template-columns:1fr}
-  .steps{gap:1rem}
-  .steps li::before{display:inline;margin:0 .5rem 0 0}
-  .steps b{display:inline}
-  ul.guides{gap:1rem 1.25rem}
-  ul.guides span{display:none}
-  .faq{margin-top:2.75rem}
-  summary{font-size:1rem}
+  details p{padding-right:0}
+  summary{font-size:1.06rem;padding-right:2.6rem}
   /* tables: one block per row, each cell with its column's name */
   .tbl{overflow:visible}
   .tbl table,.tbl tbody,.tbl tr,.tbl th,.tbl td{display:block;width:auto}
@@ -276,79 +337,206 @@ a.zoom{display:block;cursor:zoom-in}
   .tbl tr:last-child{border-bottom:1px solid var(--line)}
   .tbl th,.tbl td{border:0;padding:0}
   .tbl tbody th{padding-bottom:.45rem;font-size:.95rem}
-  .tbl td{font-size:.9rem;line-height:1.45;padding:0 0 .55rem}
+  .tbl td{font-size:1rem;line-height:1.45;padding:0 0 .55rem}
   .tbl td:last-child{padding-bottom:0}
-  .tbl td.us{padding-left:.7rem;box-shadow:inset 2px 0 0 var(--sand);background:none}
-  .tbl td[data-label]::before{content:attr(data-label);display:block;font:400 .64rem/1.6 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+  .tbl td.us{padding-left:.7rem;box-shadow:inset 1px 0 0 var(--accent);background:none}
+  .tbl td[data-label]::before{content:attr(data-label);display:block;font:500 .78rem/1.6 var(--sans);color:var(--ink3)}
   .tbl td.us[data-label]::before{color:var(--accent)}
   #vpn tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:.9rem}
   #vpn tbody th{grid-column:1/-1}
   #vpn td{padding-bottom:0}
+  #vpn .us{padding-inline:.7rem;border-radius:0!important}
 }
-body{border-top:2px solid transparent;border-image:var(--t-top) 1}
-@media (max-width:360px){.top .wrap{gap:.6rem}.top nav{gap:.7rem}}
-@media (max-width:300px){.top nav a:not(.btn){display:none}}
+@media (max-width:440px){.top nav .btn-ghost span{display:none}.top nav .btn-ghost{padding-inline:.75rem}}
+@media (max-width:380px){.top .wrap{gap:.6rem}.top nav{gap:.7rem}.brand{font-size:.94rem}.top nav .btn-ghost{display:none}}
+@media (pointer:coarse){.top .btn-s{min-height:44px}.top .btn-ghost{min-width:44px}.brand{min-height:44px}}
 /* guides */
-.gl{display:grid;grid-template-columns:minmax(0,1fr) 19rem;column-gap:3.5rem;padding-top:2.75rem;padding-bottom:4.5rem}
-.gl>*{grid-column:1}
-.ghead{padding-bottom:2.5rem}
-.crumbs{font:400 .75rem/1.4 var(--mono);letter-spacing:.06em;color:var(--ink3);margin:0 0 1.4rem}.crumbs a{color:var(--ink2)}.crumbs a:hover{color:var(--ink)}
-.ghead h1{font:500 clamp(2rem,3.7vw,2.75rem)/1.06 var(--disp);letter-spacing:-.03em;margin:0 0 1.1rem;max-width:24ch}
-.ghead .lead{margin:0}
-.rail{grid-column:2;grid-row:1/span 4}
-.rail-in{position:sticky;top:1.5rem;display:flex;flex-direction:column;gap:1.9rem}
-.rail .btn{width:100%}
-.rail .copyrow .btn,.gmore .end .copyrow .btn{width:auto}
-.rail .checks{margin-top:1.1rem;font-size:.86rem;gap:.35rem 1rem}
-@media (min-width:761px){.get-phone{display:none}}
-.gstar{color:var(--ink3);font-size:.95rem;margin:1.6rem 0 0}
-.gstar a{color:var(--ink2)}
-.gtext ol.howto{padding-left:0;list-style:none;counter-reset:hs}
-.gtext ol.howto li{position:relative;padding-left:2.4rem;margin-bottom:.8rem}
-.gtext ol.howto li::before{counter-increment:hs;content:counter(hs);position:absolute;left:0;top:.05rem;width:1.6rem;height:1.6rem;display:flex;align-items:center;justify-content:center;border:1px solid var(--line2);border-radius:50%;font:400 .72rem/1 var(--mono);color:var(--ink)}
-.toc h2{font:400 .72rem/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:0 0 .6rem}
-.toc ul{list-style:none;margin:0;padding:0 0 0 .9rem;border-left:1px solid var(--line)}
-.toc li{margin:.35rem 0;font-size:.92rem;line-height:1.4}
-.toc a{color:var(--ink2);text-decoration:none}.toc a:hover{color:var(--ink)}
-.crop{display:block;overflow:hidden;border-radius:8px;background:var(--bg2);box-shadow:0 0 0 1px var(--line2),0 24px 50px -24px var(--shadow)}
-.crop img{max-width:none}
-.cropcap{display:block;color:var(--ink3);font-size:.85rem;margin-top:.6rem}
-.gtext{color:var(--ink2)}
-.gtext h2{color:var(--ink);font-size:clamp(1.4rem,2.3vw,1.7rem);margin:2.75rem 0 .8rem}
-.gtext h2:first-child{margin-top:0}
-.gtext p,.gtext ul,.gtext ol{max-width:68ch;margin:0 0 .9rem}
-.gtext ul,.gtext ol{padding-left:1.3em}
-.gtext li{margin:0 0 .5rem}
+/* a fallback with Funnel Display's width, so the H1 breaks in the same place before the font arrives (no shift) */
+@font-face{font-family:"Funnel Display fb";src:local("Segoe UI Variable Display"),local("Segoe UI"),local("Arial");size-adjust:105.5%}
+@font-face{font-family:"Funnel Sans fb";src:local("Segoe UI Variable Text"),local("Segoe UI"),local("Arial");size-adjust:101.4%}
+:root{--sans:"Funnel Sans","Funnel Sans fb","Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;--disp:"Funnel Display","Funnel Display fb","Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif}
+.gmain{container-type:inline-size}
+/* the stage: this page's piece of proposal A's world behind the hero, under the glass header as on the home cover */
+.gstage{position:relative;overflow:hidden;margin-top:calc(-1*var(--top-h));padding-top:var(--top-h)}
+.gw{position:absolute;inset:0;z-index:0;pointer-events:none}
+.gw canvas{display:block;width:100%;height:100%;opacity:0;transition:opacity 1.4s var(--ease-out)}
+.gw.ready canvas{opacity:1}
+/* the veil: text never sits on the picture without the page's own ground behind it */
+.gw::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 0,color-mix(in srgb,var(--bg) 86%,transparent) calc(var(--gw-l,44%) - 8%),transparent calc(var(--gw-l,44%) + 5%)),linear-gradient(transparent 84%,var(--bg))}
+.ghero{position:relative;z-index:1;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));align-items:center;min-height:min(calc(100svh - var(--top-h)),64rem);padding-block:clamp(2.25rem,1rem + 3.2vw,4.5rem) clamp(5.5rem,4rem + 3vw,7.5rem)}
+.ghero-copy{grid-column:1/7;min-width:0;padding-right:clamp(0rem,2vw,2.5rem)}
+.ghero-copy>*{position:relative;z-index:2}
+.groom{display:none}
+.skip{min-height:44px;display:inline-flex;align-items:center}
+@media (pointer:coarse){.gstar a,.crumbs a,.checks a{display:inline-flex;align-items:center;min-height:44px;margin-block:-.7rem}}
+@media (min-width:600px) and (max-width:900px){.top nav a.hide-s[href$="is-it-safe/"]{display:inline-flex;align-items:center;min-height:44px}}
+.crumbs{font:400 .86rem/1.4 var(--sans);color:var(--ink3);margin:0 0 1.5rem;display:flex;flex-wrap:wrap;gap:.2rem .6rem}
+.crumbs a{color:var(--ink2);text-decoration:none;display:inline-flex;align-items:center;min-height:24px}.crumbs a:hover{color:var(--ink)}
+@media (pointer:coarse){.crumbs a{min-height:44px}}
+.crumbs i{font-style:normal;color:var(--line2)}
+.ghero h1{font:500 clamp(2.4rem,1rem + 3.1vw,4.9rem)/.98 var(--disp);letter-spacing:-.045em;margin:0 0 1.4rem;max-width:16ch}
+@media (min-width:1100px){.ghero h1{max-width:18ch}.ghero h1.long{max-width:21ch;font-size:clamp(2.4rem,1rem + 2.7vw,4.4rem)}}
+.ghero .lead{margin:0;font-size:clamp(1.04rem,.98rem + .25vw,1.16rem);max-width:56ch}
+/* under the picture: what it shows in words, and its two buttons */
+.gw-foot{position:absolute;right:var(--gutter);bottom:clamp(1.25rem,3svh,2.25rem);width:min(50%,46rem);display:flex;align-items:flex-end;justify-content:flex-end;gap:.75rem 1rem;flex-wrap:wrap}
+.gw-cap{flex:1 1 18rem;margin:0;max-width:42ch;font:400 .86rem/1.5 var(--sans);color:var(--ink2);padding:.6rem .85rem;border-radius:8px;background:color-mix(in srgb,var(--bg) 90%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--t-text) 10%,transparent)}
+.gw-ctl{display:flex;flex-wrap:wrap;gap:.6rem}
+/* with motion the two buttons keep their place before the picture is up, so nothing moves when they appear */
+html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
+.gw-ctl .demo{background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.gw-pause{width:44px;padding:0;gap:0;justify-content:center;font-size:0;color:var(--ink3)}.gw-pause:hover,.gw-pause:focus-visible{color:var(--ink)}
+.gw-pause::before{content:"";flex:none;width:8px;height:10px;border-inline:2.5px solid currentColor}
+.gw-pause[aria-pressed=true]::before{border:0;border-left:9px solid currentColor;border-block:5px solid transparent;width:0;height:0}
+.gw-pause[aria-pressed=true]{background:color-mix(in srgb,var(--t-accent) 16%,transparent);box-shadow:inset 0 0 0 1px var(--t-accent)}
+.no-gl .gw,.no-gl .groom,.no-gl .gw-ctl{display:none}
+@media (max-width:760px){.gw .wd-lab>div{padding:.4rem .55rem;width:max-content;max-width:min(11.5rem,46vw);white-space:normal}.gw .wd-lab b{font-size:.82rem}.gw .wd-lab span,.gw .wd-lab small{font-size:.8125rem}}
+/* the app's own screen, at the top of the text: the real screenshot, the crop this page is about */
+.gshot{margin:0 0 clamp(2.5rem,1.6rem + 2vw,3.75rem);max-width:42rem}
+.gwin{position:relative;margin:0;border-radius:12px;overflow:hidden;background:var(--t-surface);box-shadow:0 0 0 1px rgba(255,255,255,.08),0 40px 90px -40px rgba(0,0,0,.9)}
+.gwin::before{content:"";display:block;height:2px;background:var(--t-top)}
+.gwin-bar{display:flex;align-items:center;gap:.5rem;padding:.6rem .9rem;background:var(--t-side);border-bottom:1px solid var(--line);font:500 .8rem/1 var(--sans);color:var(--ink2);white-space:nowrap}
+.gwin-bar img{width:16px;height:16px;border-radius:4px;flex:none}
+.gwin-bar i{font-style:normal;color:var(--ink3)}
+.gwin-bar b{font-weight:500;color:var(--ink)}
+.gwin-view:focus-visible{outline-offset:-3px}
+.gwin-view{display:block;overflow:hidden;aspect-ratio:var(--pa);background:var(--t-side)}
+.gwin-view img{max-width:none;width:var(--pw);margin:var(--py) 0 0 var(--px)}
+.gshot-cap{padding:.75rem .9rem .8rem;background:var(--t-side);border-top:1px solid var(--line);margin:0;font:400 .8rem/1.5 var(--mono);color:var(--ink3)}
+/* contents on a phone (the rail is a PC thing): a short numbered list before the text */
+.gtoc-m{display:none}
+/* the page's readout: the same instrument as the home page, with one number from this page of the app */
+.ro-sig{margin-top:clamp(1.25rem,.8rem + 1.2vw,2rem)}
+/* the state beside the number in the ink colour: the scene's light can come through the veil (AA) */
+.ghero .ro-state{color:var(--ink);padding:.15rem .45rem;margin:-.15rem -.45rem;border-radius:4px;background:color-mix(in srgb,var(--bg) 88%,transparent)}
+.ro-sig .ro-head{padding-top:.9rem;border-top:1px solid var(--line)}
+.ro-sig .ro-foot p{margin:0}
+.ro-sig .led{background:var(--t-accent)}
+.fx .ro-sig .digits{visibility:hidden}
+@media (min-width:760px){.ro-sig .ro-num{--ro-size:min(calc((min(100vw,var(--max) + 2*var(--gutter)) - 2*var(--gutter))*6/12/var(--em) - .08em),16svh)}}
+/* the number keeps its height while readout.js builds its digits (no shift) */
+.ro-sig .ro-num{min-height:.87em}
+/* the article on the left, the rail (download and contents) on the right */
+.gl{display:grid;grid-template-columns:minmax(0,1fr) 19rem;column-gap:clamp(2.5rem,1rem + 4vw,7rem);align-items:start;padding-top:clamp(2.75rem,1.5rem + 3vw,5rem);padding-bottom:clamp(3.5rem,2rem + 4vw,7rem)}
+.gline{border-top:1px solid var(--line)}
+.gl>*{grid-column:1;min-width:0}
+.rail{grid-column:2;grid-row:1/span 4;align-self:stretch}
+.rail-in{position:sticky;top:5.5rem;display:flex;flex-direction:column;gap:2.25rem}
+.gcard{position:relative;padding:1.2rem 0 1.1rem;border-top:2px solid transparent;border-image:var(--t-top) 1;border-bottom:1px solid var(--line)}
+.rail .btn,.gget .btn{width:100%}
+.rail .copyrow .btn,.gget .copyrow .btn,.gmore .end .copyrow .btn{width:auto}
+.gcard .checks{margin-top:1.1rem;font-size:.86rem;gap:.35rem 1rem;padding:0}
+.gcard .checks li{margin:0}
+@media (pointer:fine){.get-phone{display:none}}
+.toc h2{font:500 .86rem/1.4 var(--sans);color:var(--ink3);margin:0 0 .8rem}
+.toc ul{list-style:none;margin:0;padding:0 0 0 1rem;border-left:1px solid var(--line)}
+.toc li{position:relative;margin:.45rem 0;font-size:.92rem;line-height:1.4}
+.toc a{color:var(--ink3);text-decoration:none;transition:color .2s}
+.toc a:hover{color:var(--ink)}
+.toc a::before{content:"";position:absolute;left:calc(-1rem - 1px);top:.1em;bottom:.1em;width:2px;border-radius:2px;background:var(--accent);transform:scaleY(0);transition:transform .3s var(--ease-out)}
+.toc a.on{color:var(--ink)}
+.toc a.on::before{transform:none}
+/* the text: a 68ch column, numbered sections */
+.gtext{color:var(--ink2);max-width:42rem;counter-reset:sec}
+.gtext h2::before{content:counter(sec,decimal-leading-zero);content:counter(sec,decimal-leading-zero) / "";display:inline-block;width:3.2rem;font:400 .8rem/1 var(--mono);letter-spacing:0;color:var(--ink3);vertical-align:.55em}
+.gtext h2{background:var(--t-top) 0 0/3rem 2px no-repeat;counter-increment:sec;color:var(--ink);font:500 clamp(1.7rem,1.1rem + 1.7vw,2.8rem)/1.06 var(--disp);letter-spacing:-.035em;margin:clamp(3.25rem,2.4rem + 2.6vw,5rem) 0 1.2rem;padding-top:clamp(1rem,.8rem + .6vw,1.4rem);border-top:0}
+.gtext h2:first-child{margin-top:0;padding-top:clamp(1rem,.8rem + .6vw,1.4rem)}
+.gtext h2::before{color:var(--accent)}
+.gtext p,.gtext ul,.gtext ol{max-width:none;margin:0 0 1rem}
+/* lists read as ledger rows: a hairline between items, no bullets */
+.gtext ul{list-style:none;padding:0;border-top:1px solid var(--line)}
+.gtext ul>li{margin:0;padding:.85rem 0;border-bottom:1px solid var(--line)}
+.gtext ol:not(.tl){padding-left:1.3em}.gtext ol:not(.tl)>li{margin:0 0 .6rem}
 .gtext li::marker{color:var(--ink3)}
-.gtext ol li::marker{font-family:var(--mono);font-size:.85em}
 .gtext b,.gtext strong{color:var(--ink);font-weight:500}
-.gtext .tbl{margin:1.2rem 0 1rem}
-@media (min-width:761px){.gtext td.us{padding-left:0;background:none;font-weight:500}}
-.gfaq,.gmore{border-top:1px solid var(--line);margin-top:3rem;padding:2.5rem 0 0}
-.gfaq h2,.gmore h2{font-size:clamp(1.4rem,2.3vw,1.7rem);margin-bottom:1.1rem}
-.gfaq{max-width:calc(68ch + 2.5rem)}
-.gmore ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem 2rem}
-.gmore li{border-top:1px solid var(--line);padding-top:.8rem}
-.gmore a{font:500 1.04rem/1.35 var(--disp);text-decoration:none}
-.gmore a:hover{color:var(--sand-hi)}
-.gmore span{display:block;color:var(--ink3);font-size:.9rem;line-height:1.45;margin-top:.2rem}
+.gtext code{overflow-wrap:anywhere}
+/* steps: numbered dots on a line that fills as each step reaches the screen */
+.gtext ol.tl{list-style:none;padding:0;margin:1.6rem 0 1.4rem;counter-reset:hs}
+.gtext ol.tl>li{counter-increment:hs;position:relative;padding:0 0 1.5rem 3.4rem;margin:0;background:linear-gradient(var(--line),var(--line)) no-repeat .6rem 1.9rem/1px calc(100% - 2.1rem)}
+.gtext ol.tl>li:last-child{padding-bottom:0;background:none}
+.gtext ol.tl>li::before{content:counter(hs,decimal-leading-zero);content:counter(hs,decimal-leading-zero) / "";position:absolute;left:0;top:.15rem;width:2.2rem;font:400 .8rem/1.4 var(--mono);color:var(--ink3);font-variant-numeric:tabular-nums;transition:color .6s .15s}
+.gtext ol.tl>li::after{content:"";position:absolute;left:.6rem;top:1.9rem;bottom:.2rem;width:1px;background:linear-gradient(var(--accent),color-mix(in srgb,var(--t-top2) 70%,transparent));transform-origin:50% 0;transition:transform 1.2s var(--ease-out) .35s}
+.gtext ol.tl>li:last-child::after{display:none}
+.gtext ol.tl>li.in::before{color:var(--accent)}
+@media (prefers-reduced-motion:no-preference){.js .gtext ol.tl>li.rv:not(.in)::after{transform:scaleY(0)}}
+.gtext ol.howto>li>b:first-child{display:block;font:500 1.08rem/1.35 var(--disp);letter-spacing:-.01em;margin-bottom:.3rem}
+/* tables in a frame on a PC */
+.gtext .tbl{margin:1.5rem 0 1.25rem}
+@media (min-width:761px){
+  .gtext .tbl{padding:0;border-block:1px solid var(--line)}
+  .gtext tbody tr:last-child>*{border-bottom:0}
+  .gtext td.us{padding-left:0;background:none;font-weight:500}
+}
+/* FAQ and related guides */
+.gl .gfaq{max-width:44rem;margin-top:clamp(3.25rem,2.4rem + 2.6vw,5rem);padding:clamp(2rem,1.6rem + 1.4vw,3rem) 0 0;border-top:1px solid var(--line)}
+.gfaq h2,.gmore h2{font:500 clamp(1.6rem,1.15rem + 1.4vw,2.4rem)/1.08 var(--disp);letter-spacing:-.03em;margin:0 0 1.4rem}
+.gfaq details[open] summary{color:var(--ink)}
+.gmore{grid-column:1/-1;margin-top:clamp(4rem,2.6rem + 4vw,7rem);padding-top:clamp(2rem,1.6rem + 1.4vw,3rem);border-top:1px solid var(--line)}
+.gmore ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr);border-top:1px solid var(--line)}
+.gmore li{margin:0;min-width:0}
+.gmore ul a{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 1.25rem;gap:1.5rem;align-items:baseline;padding:1.25rem 0;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}
+.gmore ul a::before{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--t-top);transform:scaleX(0);transform-origin:left;transition:transform .55s var(--ease-out)}
+.gmore ul a b{font:500 clamp(1.12rem,1rem + .4vw,1.35rem)/1.25 var(--disp);letter-spacing:-.015em}
+.gmore ul a span{color:var(--ink3);font-size:.92rem;line-height:1.45}
+.gmore ul a svg{width:1.1rem;height:1.1rem;align-self:center;justify-self:end;color:var(--ink3);transition:transform .45s var(--ease-out),color .3s}
+@media (hover:hover){
+  .gmore ul a:hover::before{transform:scaleX(1)}
+  .gmore ul a:hover svg{transform:translateX(6px);color:var(--accent)}
+}
+.gmore ul a:focus-visible::before{transform:scaleX(1)}
 .gmore .end{display:none}
 .gmore .end .btn{width:100%}
 .gmore .end .link,.gstar a{font:inherit;text-decoration:underline;text-decoration-color:var(--line2);text-decoration-thickness:1px;text-underline-offset:.22em}
 .gmore .end .link{font-weight:500;font-size:.92rem}
-.gtext code{overflow-wrap:anywhere}
+.gstar{color:var(--ink3);font-size:.95rem;margin:2rem 0 0}
+.gstar a{color:var(--ink2)}
+/* on a phone the download comes after the first answer, inside the text */
+.gget{display:none}
+.gget p{max-width:none}
+.gget .rel,.gget .safe{margin:.8rem 0 0}
+.gget .req{margin:.45rem 0 0}
+/* contents: the line beside them fills in the three colours as you read */
+.toc ul::after{content:"";position:absolute;left:-1px;top:0;width:1px;height:100%;background:linear-gradient(var(--t-top1),var(--t-top2),var(--t-top3));transform-origin:50% 0;transform:scaleY(var(--rp,0))}
+.toc ul{position:relative}
+@media (max-width:999px){
+  /* phone and tablet: title and answer first, then the picture in its own band (never under the text), then the number */
+  .gstage{margin-top:0;padding-top:0}
+  .ghero{display:block;min-height:0;padding-block:1.75rem 2rem}
+  .ghero h1{max-width:22ch}
+  .groom{display:block;height:min(clamp(17rem,84vw,31rem),62svh);margin:1.25rem calc(-1*var(--gutter)) 0}
+  .gw{inset:auto 0;top:var(--gw-top,0px);height:var(--gw-h,0px)}
+  .gw::after{background:linear-gradient(var(--bg),transparent 12%,transparent 88%,var(--bg))}
+  .gw-foot{position:static;width:auto;margin-top:.9rem;justify-content:flex-start}
+  .gw-cap{flex-basis:100%;max-width:none;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;padding:0}
+}
 @media (max-width:900px){
-  .gl{grid-template-columns:minmax(0,1fr);padding-top:1.75rem;padding-bottom:3rem}
-  .rail{grid-column:1;grid-row:auto;order:1}
-  .ghead{order:0;padding-bottom:1.5rem}.gtext{order:2}.gfaq{order:3}.gmore{order:4}
-  .rail-in{position:static;gap:1.4rem;margin-bottom:2.5rem}
-  .toc{display:none}
-  .gfaq,.gmore{margin-top:2.25rem;padding:2rem 0 0}
+  .gwin{border-radius:10px}
+  .gwin-bar{padding:.5rem .75rem;font-size:.76rem}
+  .gl{grid-template-columns:minmax(0,1fr);padding-top:1.9rem;padding-bottom:3rem}
+  .rail{display:none}
+  .gget{display:block;margin:2.25rem 0 0}
+  .gmore ul{grid-template-columns:repeat(2,minmax(0,1fr))}
   .gmore .end{display:block;margin-top:2rem}
+  .gtoc-m{display:block;margin:0 0 2.5rem;padding-top:1rem;border-top:2px solid transparent;border-image:var(--t-top) 1}
+  .gtoc-m p{margin:0 0 .3rem;font:500 .86rem/1.4 var(--sans);color:var(--ink3)}
+  .gtoc-m ol{list-style:none;margin:0;padding:0;counter-reset:t;border-bottom:1px solid var(--line)}
+  .gtoc-m li{counter-increment:t;margin:0}
+  .gtoc-m a{display:flex;gap:1rem;align-items:baseline;min-height:44px;padding:.65rem 0;color:var(--ink2);text-decoration:none;border-top:1px solid var(--line);font-size:.98rem;line-height:1.4}
+  .gtoc-m li:first-child a{border-top:0}
+  .gtoc-m a::before{content:counter(t,decimal-leading-zero);flex:none;width:1.6rem;font:400 .78rem/1 var(--mono);color:var(--ink3)}
 }
 @media (max-width:760px){
-  .gmore ul{grid-template-columns:1fr;gap:.8rem}
-  .gtext h2{margin-top:2.1rem}
+  .crumbs{margin-bottom:1.1rem}
+  .ghero h1{font-size:clamp(2rem,1.2rem + 4.2vw,2.5rem);line-height:1.04;margin-bottom:1rem}
+  .gtext h2,.gfaq h2,.gmore h2{font-size:clamp(1.5rem,1.1rem + 2vw,1.8rem)}
+  .gtext h2{margin-top:2.75rem;padding-top:1.9rem}
+  .gtext h2::before{display:block;margin-bottom:.75rem}
+  .gtext ol.tl>li{padding-left:2.9rem}
+  .gmore ul{grid-template-columns:minmax(0,1fr);gap:.75rem}
+  .gmore ul a{padding:1.15rem 3.2rem 1.15rem 1.2rem}
+  .gmore ul a svg{position:absolute;right:1.1rem;top:50%;margin:-.6rem 0 0;padding:0}
+  .gl .gfaq{margin-top:2.75rem;padding-top:1.9rem}
+  .gmore{margin-top:3rem;padding-top:1.9rem}
+  .gcard{padding:1rem 0}
 }
 </style>
 </head>
@@ -359,29 +547,49 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
     <a class="brand" href="../"><img src="../img/icon.png" alt="" width="28" height="28">CS2 IP Changer</a>
     <nav aria-label="Main">
       <a class="hide-s" href="../#features">Features</a>
-      <a class="hide-s" href="../#guides">Guides</a>
+      <a class="hide-s" href="../#how">How it works</a>
       <a class="hide-s" href="../is-it-safe/">Is it safe?</a>
+      <a class="hide-s" href="../#guides">Guides</a>
       <a class="btn btn-s btn-ghost" href="https://github.com/Sepd0x/cs2-ip-changer" title="Star CS2 IP Changer on GitHub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg><span>Star<span class="hide-s"> on GitHub</span></span></a>
       <a class="btn btn-s get-desk" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download</a>
+      <button class="btn btn-s get-top" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/">Send to PC</button>
     </nav>
   </div>
+  <span class="prog" aria-hidden="true"></span>
 </header>
-<main id="main">
-  <div class="wrap gl">
-    <div class="ghead">
-      <p class="crumbs"><a href="../">CS2 IP Changer</a> / Is it safe?</p>
-      <p class="eyebrow">Built to be checked</p>
+<main id="main" class="gmain">
+  <div class="gstage" data-world="safe">
+  <div class="gw" aria-hidden="true"><canvas class="gw-cv"></canvas></div>
+  <div class="wrap ghero">
+    <div class="ghero-copy">
+      <p class="crumbs"><a href="../">CS2 IP Changer</a><i aria-hidden="true">/</i><span>Is it safe?</span></p>
       <h1>Is CS2 IP Changer safe?</h1>
       <p class="lead">A tool that asks for admin and changes your network should explain itself. Here is what CS2 IP Changer changes on your PC, what it never touches, and how you can check every release yourself.</p>
+      <div class="groom" aria-hidden="true"></div>
+      <div class="gw-foot">
+        <p class="gw-cap">Public source, a GitHub Actions build with an attestation, a SHA-256 and a VirusTotal scan for each release.</p>
+        <div class="gw-ctl"><button class="demo gw-pause" type="button" hidden aria-pressed="false" title="Pause motion">Pause motion</button><button class="demo gw-play" type="button" hidden><i><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 1.5v7l6-3.5z" fill="currentColor"/></svg></i>Play it again</button></div>
+        <p class="vh" role="status" aria-live="polite"></p>
+      </div>
+      <div class="ro ro-sig">
+      <div class="ro-head"><span>VirusTotal engines that flag it</span><span class="ro-state"><i class="led"></i>v0.1.0-beta.10</span></div>
+      <p class="ro-num" style="--em:2.24"><span class="vh">VirusTotal engines that flag it: 0 of 68</span><span class="digits" aria-hidden="true">0/68</span></p>
+      <div class="ro-rule" aria-hidden="true"></div>
+      <div class="ro-foot"><p>The latest release, scanned when it comes out.</p></div>
+      </div>
     </div>
+  </div>
+  </div>
+  <div class="gline">
+  <div class="wrap gl">
     <aside class="rail" aria-label="Download and contents">
       <div class="rail-in">
-        <div>
+        <div class="gcard">
           <div class="get-desk"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a><p class="rel">v0.1.0-beta.10 · 63.4 MB · 4 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Release notes and checksums</a></p></div>
-          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">sepd0x.github.io/cs2-ip-changer/is-it-safe</code><button class="btn" type="button" data-copy="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/">Copy link</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div>
-          <ul class="checks" aria-label="At a glance"><li>Free</li><li>Public source</li><li>No account</li><li>Doesn't touch cs2.exe</li><li>Signed updates</li><li><a href="https://www.virustotal.com/gui/file/fae35fdfe338757fbed1813feb0d90be9552f5e3f09c7e1a6fe5b1f32bf3407b/detection">VirusTotal report</a></li></ul>
-          <p class="safe">Not code-signed, so SmartScreen warns the first time: <a href="#check-your-download">check your download</a></p>
-          <p class="req">Beta · Windows 10/11 · Android phone + USB cable or hotspot · uses mobile data · admin</p>
+          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">sepd0x.github.io/<wbr>cs2-ip-changer/<wbr>is-it-safe</code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/">Send to my PC</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div>
+          <ul class="checks" aria-label="At a glance"><li>Free</li><li>Public source</li><li>No account</li><li>Doesn't touch cs2.exe</li><li><a href="https://www.virustotal.com/gui/file/fae35fdfe338757fbed1813feb0d90be9552f5e3f09c7e1a6fe5b1f32bf3407b/detection">VirusTotal report</a></li></ul>
+          <p class="safe">Windows warns once: the .exe isn't code-signed yet. Updates are checked with a signature. <a href="#check-your-download">Check your download</a></p>
+          <p class="req">Beta · Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin</p>
         </div>
         <nav class="toc" aria-labelledby="toc-h">
           <h2 id="toc-h">On this page</h2>
@@ -393,16 +601,30 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
             <li><a href="#faq">FAQ</a></li>
           </ul>
         </nav>
-        <figure style="margin:0"><a class="crop zoom" href="../img/connection.png" style="aspect-ratio:569/322" aria-label="The Connection page: live checks for Windows Firewall, Block if the phone drops, the routes and the IP servers see (full screenshot)"><picture><source type="image/webp" srcset="../img/connection.webp"><img src="../img/connection.png" alt="The Connection page: live checks for Windows Firewall, Block if the phone drops, the routes and the IP servers see" width="1240" height="800" loading="eager" fetchpriority="high" style="width:217.93%;margin:-7.73% 0 0 -115.99%"></picture></a><figcaption class="cropcap">The Connection page of the app</figcaption></figure>
       </div>
     </aside>
+    <nav class="gtoc-m" aria-label="On this page"><p aria-hidden="true">On this page</p><ol>
+      <li><a href="#what-it-changes-and-what-it-never-touches">What it changes, and what it never touches</a></li>
+      <li><a href="#check-your-download">Check your download</a></li>
+      <li><a href="#your-data">Your data</a></li>
+      <li><a href="#undo-everything">Undo everything</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ol></nav>
+    <div class="gshot"><figure class="gwin" style="--pa:569/322;--pw:217.93%;--px:-115.99%;--py:-7.73%;--da:579/322;--dw:214.16%;--dx:-113.99%;--dy:-7.60%;--dk:1.106;--wmax:869px"><div class="gwin-bar" aria-hidden="true"><img src="../img/icon.png" alt="" width="16" height="16">CS2 IP Changer <i>/</i> <b>Connection</b></div><a class="gwin-view zoom" href="../img/connection.png"><picture><source type="image/webp" srcset="../img/connection.webp"><img src="../img/connection.png" alt="The Connection page: live checks for Windows Firewall, Block if the phone drops, the routes and the IP servers see" width="1240" height="800" loading="eager" fetchpriority="high"></picture><span class="vh">, open full size</span></a><figcaption class="gshot-cap">The Connection page of the app, a real screenshot with example IPs. Select it to see it full size.</figcaption></figure></div>
     <article class="gtext">
       <h2 id="what-it-changes-and-what-it-never-touches">What it changes, and what it never touches</h2>
       <ul><li><b>Changes:</b> Windows routes and Windows Firewall rules (all named with the app's prefix), which saved Steam account logs in, and, only if you use those pages, CS2's config files and your Steam profiles.</li><li><b>Never touches:</b> the game process, its memory or its program files. It hides nothing from VAC or any anti-cheat.</li><li><b>Why admin:</b> routes and firewall rules are system settings, and Windows only lets admins change them. Steam, CS2, your browser and the programs it opens for you still run as you, not as admin.</li></ul>
+      <aside class="gget gcard" aria-label="Download">
+          <div class="get-desk"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a><p class="rel">v0.1.0-beta.10 · 63.4 MB · 4 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Release notes and checksums</a></p></div>
+          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">sepd0x.github.io/<wbr>cs2-ip-changer/<wbr>is-it-safe</code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/">Send to my PC</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div>
+          <ul class="checks" aria-label="At a glance"><li>Free</li><li>Public source</li><li>No account</li><li>Doesn't touch cs2.exe</li><li><a href="https://www.virustotal.com/gui/file/fae35fdfe338757fbed1813feb0d90be9552f5e3f09c7e1a6fe5b1f32bf3407b/detection">VirusTotal report</a></li></ul>
+          <p class="safe">Windows warns once: the .exe isn't code-signed yet. Updates are checked with a signature. <a href="#check-your-download">Check your download</a></p>
+          <p class="req">Beta · Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin</p>
+      </aside>
       <h2 id="check-your-download">Check your download</h2>
-      <ul><li>Every release is built by GitHub Actions from the public source and comes with a <b>build attestation</b>. With the GitHub CLI: <code>gh attestation verify CS2IPChanger.exe -R Sepd0x/cs2-ip-changer</code>.</li><li>Each exe has a <b>SHA-256</b> file next to it in the release. In PowerShell: <code>Get-FileHash .\CS2IPChanger.exe</code>, and compare.</li><li><b>Signed updates.</b> The app only installs an update whose SHA-256 matches the release and is signed with the project's offline key, with the version inside so an old release can't come back under a new tag. The key isn't on GitHub, so access to the repo alone can't push an exe to installed copies.</li><li><b>VirusTotal</b> for each release: <a href="https://www.virustotal.com/gui/file/fae35fdfe338757fbed1813feb0d90be9552f5e3f09c7e1a6fe5b1f32bf3407b/detection">0 of 68 engines</a> flag beta.10 (SHA-256 <code>fae35fdfe338…</code>, the same as its <code>.sha256</code> file).</li><li>The exe isn't code-signed, so Windows SmartScreen may warn the first time. More info &gt; Run anyway.</li></ul>
+      <ul><li>Every release is built by GitHub Actions from the public source and comes with a <b>build attestation</b>. With the GitHub CLI: <code>gh attestation verify CS2IPChanger.exe -R Sepd0x/cs2-ip-changer</code>.</li><li>Each exe has a <b>SHA-256</b> file next to it in the release. In PowerShell: <code>Get-FileHash .\CS2IPChanger.exe</code>, and compare.</li><li><b>Updates checked with a signature.</b> The app only installs an update whose SHA-256 matches the release and is signed with the project's offline key, with the version inside so an old release can't come back under a new tag. The key isn't on GitHub, so access to the repo alone can't push an exe to installed copies.</li><li><b>VirusTotal</b> for each release: <a href="https://www.virustotal.com/gui/file/fae35fdfe338757fbed1813feb0d90be9552f5e3f09c7e1a6fe5b1f32bf3407b/detection">0 of 68 engines</a> flag beta.10 (SHA-256 <code>fae35fdfe338…</code>, the same as its <code>.sha256</code> file).</li><li>The exe isn't code-signed, so Windows SmartScreen may warn the first time. More info &gt; Run anyway.</li></ul>
       <h2 id="your-data">Your data</h2>
-      <ul><li>No account, and no passwords kept. The account switcher uses the logins Steam already saved.</li><li>Usage stats, required to use the app in the beta: the first start shows what is sent, with Accept and Quit (Quit closes the app without changing anything). Then once when it has been open for 20 seconds, when it closes and once a day: a random ID made for this install, with no name (Settings > Delete my stats deletes everything kept under it), versions, your country, the mode, how the phone is connected, minutes open, button counts, where on each screen people click (a coarse grid, added up with everyone, with no ID), a few counters, list sizes and errors, and in rough bands how long ago the app was set up, each CS2 match's ping, jitter and lag (never the server), session length and crashes. Once a day a separate report with no ID and no country says the Windows language, window and screen scale, the Windows build, the phone's brand (never the model), Android version and 4G or 5G, and is only added into counts. Never IPs, servers, accounts or names. The server code is public (<a href="https://github.com/Sepd0x/cs2-ip-changer/tree/main/worker/stats">worker/stats</a>).</li><li>Who keeps them: the author of this project (Sepd0x on GitHub), only to find and fix bugs and make the app better, never sold or shared. The basis is that you accept the notice. They are stored on Cloudflare, which processes them for the project. Rows with an ID are deleted after 12 months; counts with no ID stay. Delete my stats deletes yours at once; for anything else, open an <a href="https://github.com/Sepd0x/cs2-ip-changer/issues">issue on GitHub</a>, or complain to your data protection authority.</li><li>This website counts visits and clicks on Download with no cookies and no ID: the page, the name of the site you came from and the country, only as counts per day. With Do Not Track or Global Privacy Control on, it sends nothing. GitHub Pages, which hosts it, keeps its own logs.</li><li>To show the carrier and city, the app asks ipwho.is about your home IP and the phone's IP, so ipwho.is receives both, each one only through its own connection. Your public IP is measured with ipify, icanhazip, Amazon and Cloudflare. The full list, and what the app does with admin rights: <a href="https://github.com/Sepd0x/cs2-ip-changer/blob/main/docs/PRIVACY-AND-SECURITY.md">Privacy and security</a>.</li><li>Save bug report saves a .zip on your Desktop and sends nothing. It leaves out your current and last home IP, API key, logins, names, SteamIDs, e-mails, Wi-Fi names and your Windows user; look through it before you post it.</li></ul>
+      <ul><li>No account, and no passwords kept. The account switcher uses the logins Steam already saved.</li><li>Usage stats, required to use the app in the beta: the first start shows what is sent, with Accept and Quit (Quit closes the app without changing anything). It sends them when the app has been open for 20 seconds, every 30 minutes while it stays open and when it closes, with a short signal every 5 minutes of what is on (protection, CS2 open, the screen): a random ID made for this install, with no name (Settings > Delete my stats deletes everything kept under it), versions, your country, the mode, how the phone is connected, minutes open, button counts, where on each screen people click (a coarse grid, added up with everyone, with no ID), a few counters, list sizes and errors, and in rough bands how long ago the app was set up, each CS2 match's ping, jitter and lag (never the server), session length and crashes. Once a day a separate report with no ID and no country says the Windows language, window and screen scale, the Windows build, the phone's brand (never the model), Android version and 4G or 5G, and is only added into counts. Never IPs, servers, accounts or names. The server code is public (<a href="https://github.com/Sepd0x/cs2-ip-changer/tree/main/worker/stats">worker/stats</a>).</li><li>Who keeps them: the author of this project (Sepd0x on GitHub), only to find and fix bugs and make the app better, never sold or shared. The basis is that you accept the notice. They are stored on Cloudflare, which processes them for the project. Rows with an ID are deleted after 12 months; counts with no ID stay. Delete my stats deletes yours at once; for anything else, open an <a href="https://github.com/Sepd0x/cs2-ip-changer/issues">issue on GitHub</a>, or complain to your data protection authority.</li><li>This website counts visits and clicks on Download with no cookies and no ID: the page, the name of the site you came from and the country, only as counts per day. With Do Not Track or Global Privacy Control on, it sends nothing. GitHub Pages, which hosts it, keeps its own logs.</li><li>To show the carrier and city, the app asks ipwho.is about your home IP and the phone's IP, so ipwho.is receives both, each one only through its own connection. Your public IP is measured with ipify, icanhazip, Amazon and Cloudflare. The full list, and what the app does with admin rights: <a href="https://github.com/Sepd0x/cs2-ip-changer/blob/main/docs/PRIVACY-AND-SECURITY.md">Privacy and security</a>.</li><li>Save bug report saves a .zip on your Desktop and sends nothing. It leaves out your current and last home IP, API key, logins, names, SteamIDs, e-mails, Wi-Fi names and your Windows user; look through it before you post it.</li></ul>
       <h2 id="undo-everything">Undo everything</h2>
       <p>Turn off protection (on the Connection page, or in the icon&#39;s menu next to the clock) removes the routes and the kill switch, and Allow all (block off) on the Regions page lifts the region block. To remove everything at once, run <code>CS2IPChanger.exe --restore</code> (or <code>tools/restore.cmd</code> from the repo): every route and firewall rule the app made is removed. To uninstall, use Uninstall in Windows Settings &gt; Installed apps, or Remove CS2 IP Changer at the bottom of Settings: it removes the rules, routes, the Start with Windows task, <code>C:\ProgramData\CS2IPChanger</code> and the app, and you pick whether <code>SRT_Dados</code> (settings and accounts) stays.</p>
     </article>
@@ -415,26 +637,43 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
     <nav class="gmore" aria-labelledby="more-h">
       <h2 id="more-h">Related guides</h2>
       <ul>
-        <li><a href="../change-ip-with-phone/">Change IP with your phone</a><span>Setup, game-only routing and a new IP in one click.</span></li>
-        <li><a href="../hide-ip-cs2/">Hide your IP without a VPN</a><span>Who sees your IP, and every method compared.</span></li>
-        <li><a href="../steam-account-switcher/">Steam account switcher</a><span>No passwords, ban marks per server.</span></li>
+        <li class="rv" style="--i:0"><a href="../change-ip-with-phone/"><b>Change IP with your phone</b><span>Setup, game-only routing and a new IP in one click.</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="m14 6 6 6-6 6"/></svg></a></li>
+        <li class="rv" style="--i:1"><a href="../hide-ip-cs2/"><b>Hide your IP without a VPN</b><span>Who sees your IP, and every method compared.</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="m14 6 6 6-6 6"/></svg></a></li>
+        <li class="rv" style="--i:2"><a href="../steam-account-switcher/"><b>Steam account switcher</b><span>No passwords, ban marks per server.</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="m14 6 6 6-6 6"/></svg></a></li>
       </ul>
       <div class="end"><div class="get-desk"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a><p class="rel">v0.1.0-beta.10 · 63.4 MB · 4 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Release notes and checksums</a></p></div>
-          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">sepd0x.github.io/cs2-ip-changer/is-it-safe</code><button class="btn" type="button" data-copy="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/">Copy link</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div><p class="req">Free beta · Windows 10/11 · Android phone + USB cable or hotspot · uses mobile data · admin</p></div>
+          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">sepd0x.github.io/<wbr>cs2-ip-changer/<wbr>is-it-safe</code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/">Send to my PC</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div><p class="req">Free beta · Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin</p></div>
       <p class="gstar">Useful? A <a href="https://github.com/Sepd0x/cs2-ip-changer">star on GitHub</a> helps other players find it.</p>
     </nav>
   </div>
+  </div>
 </main>
 <footer>
-  <div class="wrap">
-    <span>CS2 IP Changer by Sepd0x. Not affiliated with Valve. Counter-Strike and Steam are trademarks of Valve Corporation.</span>
-    <span><a href="https://github.com/Sepd0x/cs2-ip-changer">Source</a> · <a href="https://github.com/Sepd0x/cs2-ip-changer/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/Sepd0x/cs2-ip-changer#privacy">Privacy</a> · <a href="https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose">Report a bug</a></span>
+  <h2 class="vh">Site links</h2>
+  <div class="wrap fgrid">
+    <div class="fbrand">
+      <a class="brand" href="../"><img src="../img/icon.png" alt="" width="28" height="28">CS2 IP Changer</a>
+      <p>Free Windows app that sends CS2 and Steam through your phone's mobile data.</p>
+      <span class="fstat"><i></i>Latest: <!--rel:ver-->v0.1.0-beta.10<!--/rel--></span>
+    </div>
+    <nav aria-labelledby="f1"><h3 id="f1">Product</h3><ul><li><a href="../#features">Features</a></li><li><a href="../#how">How it works</a></li><li><a href="../#vpn">CS2 IP Changer or a VPN?</a></li><li><a href="../#setup">Setup</a></li><li><a href="../#faq">FAQ</a></li></ul></nav>
+    <nav aria-labelledby="f2"><h3 id="f2">Guides</h3><ul><li><a href="../change-ip-with-phone/">Change IP with your phone</a></li><li><a href="../cs2-iphone-hotspot/">CS2 with an iPhone</a></li><li><a href="../cs2-ip-ban/">CS2 IP ban</a></li><li><a href="../hide-ip-cs2/">Hide your IP without a VPN</a></li><li><a href="../is-it-safe/">Is it safe?</a></li><li><a href="../steam-account-switcher/">Steam account switcher</a></li><li><a href="../copy-cs2-config/">Copy CS2 settings</a></li><li><a href="../cs2-region-picker/">CS2 region picker</a></li><li><a href="../steam-profile-editor/">Steam profile editor</a></li></ul></nav>
+    <nav aria-labelledby="f3"><h3 id="f3">Project</h3><ul><li><a href="https://github.com/Sepd0x/cs2-ip-changer">Source on GitHub</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/releases">Releases</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/blob/main/CHANGELOG.md">Changelog</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer#privacy">Privacy</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose">Report a bug</a></li></ul></nav>
   </div>
+  <div class="wordmark" aria-hidden="true">CS2 IP Changer<span>CS2 IP Changer</span></div>
+  <div class="wrap legal"><span>CS2 IP Changer by Sepd0x. Not affiliated with Valve. Counter-Strike and Steam are trademarks of Valve Corporation.</span><span>Made for community servers.</span></div>
 </footer>
+<script>
+(function(){var b='../assets/js/',l=(document.documentElement.classList.contains('fx')?(matchMedia('(pointer: fine)').matches?['gsap.min.js','ScrollTrigger.min.js','lenis.min.js']:[]):[]).concat(['readout.js','../guides/world.min.js']);l.forEach(function(f){var s=document.createElement('script');s.src=b+f;s.async=false;if(/world/.test(f)){s.onload=function(){window.__gw&&window.__gw()};s.onerror=function(){document.documentElement.classList.add('no-gl')}}document.body.appendChild(s)})})();
+</script>
 <script>
 (function(){
   var d=document;
-  /* on a phone: copy this page's link to open it on the PC */
+  /* on a touch screen, Send the link opens the phone's share sheet (to Discord, email, your PC); without one it copies the link */
+  if(navigator.share&&matchMedia('(pointer: coarse)').matches){
+    d.querySelectorAll('[data-share]').forEach(function(send){send.addEventListener('click',function(e){e.stopImmediatePropagation();navigator.share({title:'CS2 IP Changer',url:send.getAttribute('data-copy')}).catch(function(x){if(x&&x.name!=='AbortError'&&navigator.clipboard)navigator.clipboard.writeText(send.getAttribute('data-copy')).then(function(){var l=send.textContent;send.textContent='Copied';setTimeout(function(){send.textContent=l},1800)},function(){})})},true)});
+  }
+  /* copy this page's link to open it on the PC */
   d.querySelectorAll('[data-copy]').forEach(function(b){
     b.addEventListener('click',function(){
       var label=b.textContent,done=function(ok){b.textContent=ok?'Copied':'Copy failed';setTimeout(function(){b.textContent=label},1800)};
@@ -447,8 +686,8 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
     var a=e.target.closest&&e.target.closest('a.zoom');
     if(!a||e.button||e.ctrlKey||e.metaKey||e.shiftKey||!window.HTMLDialogElement)return;
     e.preventDefault();
-    if(!box){box=d.createElement('dialog');box.className='lightbox';box.setAttribute('aria-label','Screenshot');box.innerHTML='<img alt="">';box.addEventListener('click',function(){box.close()});d.body.appendChild(box)}
-    var img=box.querySelector('img'),src=a.querySelector('img');img.src=a.getAttribute('href');img.alt=src?src.alt:'';box.showModal();
+    if(!box){box=d.createElement('dialog');box.className='lightbox';box.setAttribute('aria-label','Screenshot');box.innerHTML='<button type="button" class="lb-x">Close</button><img alt="Screenshot of CS2 IP Changer">';box.addEventListener('click',function(){box.close()});d.body.appendChild(box)}
+    var img=box.querySelector('img'),src=a.querySelector('picture.on img')||a.querySelector('img');img.src=src?src.currentSrc||src.src:a.getAttribute('href');img.alt=src?src.alt:'';box.showModal();
   });
   /* visit counter: which page, the site you came from (its name only) and clicks on Download, added up per day. No cookies,
      no ID, nothing kept in your browser. Off with Do Not Track or Global Privacy Control. Code: worker/stats/src/index.js */
@@ -461,7 +700,50 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
     hit('view');
     d.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&/\/releases\/(latest\/)?download\//.test(a.href))hit('download')});
   }
-  })();
+  /* if the motion script could not load, show the page as it is */
+  addEventListener('load',function(){if(!window.CS2Readout)d.documentElement.classList.remove('fx')});
+  /* /shared */
+  /* guides: the contents mark the section you are reading (the last heading above the top third of the screen) */
+  var tl=[].slice.call(d.querySelectorAll('.toc a')),hs=tl.map(function(a){return d.getElementById(a.getAttribute('href').slice(1))});
+  if(tl.length&&'IntersectionObserver' in window&&hs.every(Boolean)){
+    var on=-1,mark=function(){var y=innerHeight*.34,k=0;hs.forEach(function(h,i){if(h.getBoundingClientRect().top<y)k=i});if(k!==on){if(on>=0){tl[on].classList.remove('on');tl[on].removeAttribute('aria-current')}tl[k].classList.add('on');tl[k].setAttribute('aria-current','location');on=k}};
+    var tio=new IntersectionObserver(mark,{rootMargin:'0px 0px -66% 0px'});
+    hs.forEach(function(h){tio.observe(h)});
+  }
+  /* guides: the line beside the contents fills as you read the text */
+  var tu=d.querySelector('.toc ul'),art=d.querySelector('.gtext');
+  if(tu&&art){var rq=0,rp=function(){rq=0;var r=art.getBoundingClientRect(),k=(innerHeight*.34-r.top)/Math.max(1,r.height);tu.style.setProperty('--rp',Math.min(1,Math.max(0,k)).toFixed(3))};addEventListener('scroll',function(){if(!rq){rq=1;requestAnimationFrame(rp)}},{passive:true});rp()}
+  /* guides: this page's piece of proposal A's world, fitted to the free part of the hero (the right side on a PC, its own band on a phone) */
+  var stg=d.querySelector('.gstage');
+  window.__gw=function(){
+    if(!stg||!window.GuideWorld||window.__gwOn)return;
+    if(!window.__gwIdle){window.__gwIdle=1;(window.requestIdleCallback||function(f){setTimeout(f,150)})(function(){window.__gw()},{timeout:400});return}
+    window.__gwOn=1;
+    var gw=stg.querySelector('.gw'),cv=gw.querySelector('canvas'),room=stg.querySelector('.groom'),copy=stg.querySelector('.ghero-copy'),foot=stg.querySelector('.gw-foot'),top=d.querySelector('.top'),
+      wide=function(){return innerWidth>=1000},
+      place=function(){
+        if(wide()){gw.style.removeProperty('--gw-top');gw.style.removeProperty('--gw-h');var sr=stg.getBoundingClientRect(),cr=copy.getBoundingClientRect();gw.style.setProperty('--gw-l',((cr.right-sr.left)/Math.max(1,sr.width)*100).toFixed(1)+'%');return}
+        var s=stg.getBoundingClientRect(),r=room.getBoundingClientRect();gw.style.setProperty('--gw-top',(r.top-s.top)+'px');gw.style.setProperty('--gw-h',r.height+'px');
+      },
+      frame=function(W,H){
+        if(!wide())return{box:[14,14,W-14,H-10]};
+        var sr=cv.getBoundingClientRect(),cr=copy.getBoundingClientRect(),fr=foot.getBoundingClientRect(),th=top?top.offsetHeight:64;
+        return{box:[cr.right-sr.left+24,th+18,W-Math.max(20,(W-cr.right+sr.left)*.04),fr.top-sr.top-14]};
+      };
+    place();addEventListener('resize',place);
+    var fx=d.documentElement.classList.contains('fx'),api=null,live=stg.querySelector('[role=status]'),pz=stg.querySelector('.gw-pause'),pl=stg.querySelector('.gw-play'),held=false;
+    try{held=localStorage.getItem('cs2-motion')==='paused'}catch(x){}
+    var vt={"flagged":0,"engines":68};
+    try{api=window.GuideWorld.mount(cv,{scene:stg.getAttribute('data-world'),still:!fx,img:'../img/',vt:vt,frame:frame})}catch(x){api=null}
+    if(!api){d.documentElement.classList.add('no-gl');return}
+    cv.addEventListener('worldready',function(){gw.classList.add('ready')},{once:true});
+    if(held)api.pause();
+    if(!api.still)pl.hidden=false;
+    pl.addEventListener('click',function(){api.play();if(held){held=false;api.resume();if(pz){pz.setAttribute('aria-pressed','false')}try{localStorage.setItem('cs2-motion','')}catch(x){}}live.textContent='';setTimeout(function(){live.textContent='Playing it again.'},60)});
+    if(fx&&pz){pz.hidden=false;pz.setAttribute('aria-pressed',held);pz.addEventListener('click',function(){held=!held;pz.setAttribute('aria-pressed',held);try{localStorage.setItem('cs2-motion',held?'paused':'')}catch(x){}if(held)api.pause();else api.resume()})}
+  };
+  if(window.GuideWorld)window.__gw();
+})();
 </script>
 </body>
 </html>

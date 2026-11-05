@@ -22,7 +22,7 @@ export const FORGET_ROWS = 2000;
 export const SITE_ROWS = 3000;
 // The website: the only origin that may send visits, and its pages (site/ and tools/site-pages.mjs; a test checks the list)
 export const SITE_ORIGIN = 'https://sepd0x.github.io';
-export const SITE_PAGES = ['/', '/change-ip-with-phone/', '/copy-cs2-config/', '/cs2-ip-ban/', '/cs2-region-picker/', '/hide-ip-cs2/', '/is-it-safe/',
+export const SITE_PAGES = ['/', '/change-ip-with-phone/', '/copy-cs2-config/', '/cs2-ip-ban/', '/cs2-iphone-hotspot/', '/cs2-region-picker/', '/hide-ip-cs2/', '/is-it-safe/',
   '/steam-account-switcher/', '/steam-profile-editor/'];
 const SITE_TABLE = 'CREATE TABLE IF NOT EXISTS site (day TEXT NOT NULL, page TEXT NOT NULL, ref TEXT NOT NULL, country TEXT NOT NULL, event TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (day, page, ref, country, event))';
 const HOSTNAME = /^(?=.{3,80}$)[a-z0-9-]+(\.[a-z0-9-]+)+$/;

@@ -62,6 +62,11 @@ const vtLinks = (s) => s.replace(/https:\/\/www\.virustotal\.com\/gui\/file\/[0-
   const file = join(site, 'index.html');
   let s = readFileSync(file, 'utf8');
   s = fill(s, 'line', relLine, 'site/index.html');
+  s = fill(s, 'vt', `${rel.virustotal.flagged} of ${rel.virustotal.engines}`, 'site/index.html');
+  s = fill(s, 'ver', `v${rel.version}`, 'site/index.html');
+  s = fill(s, 'sha', rel.sha256, 'site/index.html');
+  if (!/data-peek="\d+\/\d+\|engines/.test(s)) throw new Error('site/index.html: the guides index has no VirusTotal peek');
+  s = s.replace(/data-peek="\d+\/\d+\|engines/, `data-peek="${rel.virustotal.flagged}/${rel.virustotal.engines}|engines`);
   s = vtLinks(s)
     .replaceAll(/https:\/\/github\.com\/Sepd0x\/cs2-ip-changer\/releases\/latest\/download\/[^"<\s]+/g, EXE)
     .replace(/("softwareVersion": )"[^"]*"/, `$1"${rel.version}"`)
@@ -96,66 +101,192 @@ const home = readFileSync(join(site, 'index.html'), 'utf8');
 const themeColor = home.match(/<meta name="theme-color" content="([^"]+)">/)[1];   // from src/Theme.xaml (tools/design-tokens.mjs)
 // The home page's own blocks (hero map, viewer, sections) are left out; its media queries stay, they hold the table rules too.
 const style = home.match(/<style>[\s\S]*?<\/style>/)[0].replace(/\/\* home: [\s\S]*?(?=@media \(max-width:1000px\))/, '').replace(/url\((fonts|assets)\//g, 'url(../$1/').replace('</style>', `/* guides */
-.gl{display:grid;grid-template-columns:minmax(0,1fr) 19rem;column-gap:3.5rem;padding-top:2.75rem;padding-bottom:4.5rem}
-.gl>*{grid-column:1}
-.ghead{padding-bottom:2.5rem}
-.crumbs{font:400 .75rem/1.4 var(--mono);letter-spacing:.06em;color:var(--ink3);margin:0 0 1.4rem}.crumbs a{color:var(--ink2)}.crumbs a:hover{color:var(--ink)}
-.ghead h1{font:500 clamp(2rem,3.7vw,2.75rem)/1.06 var(--disp);letter-spacing:-.03em;margin:0 0 1.1rem;max-width:24ch}
-.ghead .lead{margin:0}
-.rail{grid-column:2;grid-row:1/span 4}
-.rail-in{position:sticky;top:1.5rem;display:flex;flex-direction:column;gap:1.9rem}
-.rail .btn{width:100%}
-.rail .copyrow .btn,.gmore .end .copyrow .btn{width:auto}
-.rail .checks{margin-top:1.1rem;font-size:.86rem;gap:.35rem 1rem}
-@media (min-width:761px){.get-phone{display:none}}
-.gstar{color:var(--ink3);font-size:.95rem;margin:1.6rem 0 0}
-.gstar a{color:var(--ink2)}
-.gtext ol.howto{padding-left:0;list-style:none;counter-reset:hs}
-.gtext ol.howto li{position:relative;padding-left:2.4rem;margin-bottom:.8rem}
-.gtext ol.howto li::before{counter-increment:hs;content:counter(hs);position:absolute;left:0;top:.05rem;width:1.6rem;height:1.6rem;display:flex;align-items:center;justify-content:center;border:1px solid var(--line2);border-radius:50%;font:400 .72rem/1 var(--mono);color:var(--ink)}
-.toc h2{font:400 .72rem/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:0 0 .6rem}
-.toc ul{list-style:none;margin:0;padding:0 0 0 .9rem;border-left:1px solid var(--line)}
-.toc li{margin:.35rem 0;font-size:.92rem;line-height:1.4}
-.toc a{color:var(--ink2);text-decoration:none}.toc a:hover{color:var(--ink)}
-.crop{display:block;overflow:hidden;border-radius:8px;background:var(--bg2);box-shadow:0 0 0 1px var(--line2),0 24px 50px -24px var(--shadow)}
-.crop img{max-width:none}
-.cropcap{display:block;color:var(--ink3);font-size:.85rem;margin-top:.6rem}
-.gtext{color:var(--ink2)}
-.gtext h2{color:var(--ink);font-size:clamp(1.4rem,2.3vw,1.7rem);margin:2.75rem 0 .8rem}
-.gtext h2:first-child{margin-top:0}
-.gtext p,.gtext ul,.gtext ol{max-width:68ch;margin:0 0 .9rem}
-.gtext ul,.gtext ol{padding-left:1.3em}
-.gtext li{margin:0 0 .5rem}
+/* a fallback with Funnel Display's width, so the H1 breaks in the same place before the font arrives (no shift) */
+@font-face{font-family:"Funnel Display fb";src:local("Segoe UI Variable Display"),local("Segoe UI"),local("Arial");size-adjust:105.5%}
+@font-face{font-family:"Funnel Sans fb";src:local("Segoe UI Variable Text"),local("Segoe UI"),local("Arial");size-adjust:101.4%}
+:root{--sans:"Funnel Sans","Funnel Sans fb","Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;--disp:"Funnel Display","Funnel Display fb","Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif}
+.gmain{container-type:inline-size}
+/* the stage: this page's piece of proposal A's world behind the hero, under the glass header as on the home cover */
+.gstage{position:relative;overflow:hidden;margin-top:calc(-1*var(--top-h));padding-top:var(--top-h)}
+.gw{position:absolute;inset:0;z-index:0;pointer-events:none}
+.gw canvas{display:block;width:100%;height:100%;opacity:0;transition:opacity 1.4s var(--ease-out)}
+.gw.ready canvas{opacity:1}
+/* the veil: text never sits on the picture without the page's own ground behind it */
+.gw::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 0,color-mix(in srgb,var(--bg) 86%,transparent) calc(var(--gw-l,44%) - 8%),transparent calc(var(--gw-l,44%) + 5%)),linear-gradient(transparent 84%,var(--bg))}
+.ghero{position:relative;z-index:1;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));align-items:center;min-height:min(calc(100svh - var(--top-h)),64rem);padding-block:clamp(2.25rem,1rem + 3.2vw,4.5rem) clamp(5.5rem,4rem + 3vw,7.5rem)}
+.ghero-copy{grid-column:1/7;min-width:0;padding-right:clamp(0rem,2vw,2.5rem)}
+.ghero-copy>*{position:relative;z-index:2}
+.groom{display:none}
+.skip{min-height:44px;display:inline-flex;align-items:center}
+@media (pointer:coarse){.gstar a,.crumbs a,.checks a{display:inline-flex;align-items:center;min-height:44px;margin-block:-.7rem}}
+@media (min-width:600px) and (max-width:900px){.top nav a.hide-s[href$="is-it-safe/"]{display:inline-flex;align-items:center;min-height:44px}}
+.crumbs{font:400 .86rem/1.4 var(--sans);color:var(--ink3);margin:0 0 1.5rem;display:flex;flex-wrap:wrap;gap:.2rem .6rem}
+.crumbs a{color:var(--ink2);text-decoration:none;display:inline-flex;align-items:center;min-height:24px}.crumbs a:hover{color:var(--ink)}
+@media (pointer:coarse){.crumbs a{min-height:44px}}
+.crumbs i{font-style:normal;color:var(--line2)}
+.ghero h1{font:500 clamp(2.4rem,1rem + 3.1vw,4.9rem)/.98 var(--disp);letter-spacing:-.045em;margin:0 0 1.4rem;max-width:16ch}
+@media (min-width:1100px){.ghero h1{max-width:18ch}.ghero h1.long{max-width:21ch;font-size:clamp(2.4rem,1rem + 2.7vw,4.4rem)}}
+.ghero .lead{margin:0;font-size:clamp(1.04rem,.98rem + .25vw,1.16rem);max-width:56ch}
+/* under the picture: what it shows in words, and its two buttons */
+.gw-foot{position:absolute;right:var(--gutter);bottom:clamp(1.25rem,3svh,2.25rem);width:min(50%,46rem);display:flex;align-items:flex-end;justify-content:flex-end;gap:.75rem 1rem;flex-wrap:wrap}
+.gw-cap{flex:1 1 18rem;margin:0;max-width:42ch;font:400 .86rem/1.5 var(--sans);color:var(--ink2);padding:.6rem .85rem;border-radius:8px;background:color-mix(in srgb,var(--bg) 90%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--t-text) 10%,transparent)}
+.gw-ctl{display:flex;flex-wrap:wrap;gap:.6rem}
+/* with motion the two buttons keep their place before the picture is up, so nothing moves when they appear */
+html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
+.gw-ctl .demo{background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.gw-pause{width:44px;padding:0;gap:0;justify-content:center;font-size:0;color:var(--ink3)}.gw-pause:hover,.gw-pause:focus-visible{color:var(--ink)}
+.gw-pause::before{content:"";flex:none;width:8px;height:10px;border-inline:2.5px solid currentColor}
+.gw-pause[aria-pressed=true]::before{border:0;border-left:9px solid currentColor;border-block:5px solid transparent;width:0;height:0}
+.gw-pause[aria-pressed=true]{background:color-mix(in srgb,var(--t-accent) 16%,transparent);box-shadow:inset 0 0 0 1px var(--t-accent)}
+.no-gl .gw,.no-gl .groom,.no-gl .gw-ctl{display:none}
+@media (max-width:760px){.gw .wd-lab>div{padding:.4rem .55rem;width:max-content;max-width:min(11.5rem,46vw);white-space:normal}.gw .wd-lab b{font-size:.82rem}.gw .wd-lab span,.gw .wd-lab small{font-size:.8125rem}}
+/* the app's own screen, at the top of the text: the real screenshot, the crop this page is about */
+.gshot{margin:0 0 clamp(2.5rem,1.6rem + 2vw,3.75rem);max-width:42rem}
+.gwin{position:relative;margin:0;border-radius:12px;overflow:hidden;background:var(--t-surface);box-shadow:0 0 0 1px rgba(255,255,255,.08),0 40px 90px -40px rgba(0,0,0,.9)}
+.gwin::before{content:"";display:block;height:2px;background:var(--t-top)}
+.gwin-bar{display:flex;align-items:center;gap:.5rem;padding:.6rem .9rem;background:var(--t-side);border-bottom:1px solid var(--line);font:500 .8rem/1 var(--sans);color:var(--ink2);white-space:nowrap}
+.gwin-bar img{width:16px;height:16px;border-radius:4px;flex:none}
+.gwin-bar i{font-style:normal;color:var(--ink3)}
+.gwin-bar b{font-weight:500;color:var(--ink)}
+.gwin-view:focus-visible{outline-offset:-3px}
+.gwin-view{display:block;overflow:hidden;aspect-ratio:var(--pa);background:var(--t-side)}
+.gwin-view img{max-width:none;width:var(--pw);margin:var(--py) 0 0 var(--px)}
+.gshot-cap{padding:.75rem .9rem .8rem;background:var(--t-side);border-top:1px solid var(--line);margin:0;font:400 .8rem/1.5 var(--mono);color:var(--ink3)}
+/* contents on a phone (the rail is a PC thing): a short numbered list before the text */
+.gtoc-m{display:none}
+/* the page's readout: the same instrument as the home page, with one number from this page of the app */
+.ro-sig{margin-top:clamp(1.25rem,.8rem + 1.2vw,2rem)}
+/* the state beside the number in the ink colour: the scene's light can come through the veil (AA) */
+.ghero .ro-state{color:var(--ink);padding:.15rem .45rem;margin:-.15rem -.45rem;border-radius:4px;background:color-mix(in srgb,var(--bg) 88%,transparent)}
+.ro-sig .ro-head{padding-top:.9rem;border-top:1px solid var(--line)}
+.ro-sig .ro-foot p{margin:0}
+.ro-sig .led{background:var(--t-accent)}
+.fx .ro-sig .digits{visibility:hidden}
+@media (min-width:760px){.ro-sig .ro-num{--ro-size:min(calc((min(100vw,var(--max) + 2*var(--gutter)) - 2*var(--gutter))*6/12/var(--em) - .08em),16svh)}}
+/* the number keeps its height while readout.js builds its digits (no shift) */
+.ro-sig .ro-num{min-height:.87em}
+/* the article on the left, the rail (download and contents) on the right */
+.gl{display:grid;grid-template-columns:minmax(0,1fr) 19rem;column-gap:clamp(2.5rem,1rem + 4vw,7rem);align-items:start;padding-top:clamp(2.75rem,1.5rem + 3vw,5rem);padding-bottom:clamp(3.5rem,2rem + 4vw,7rem)}
+.gline{border-top:1px solid var(--line)}
+.gl>*{grid-column:1;min-width:0}
+.rail{grid-column:2;grid-row:1/span 4;align-self:stretch}
+.rail-in{position:sticky;top:5.5rem;display:flex;flex-direction:column;gap:2.25rem}
+.gcard{position:relative;padding:1.2rem 0 1.1rem;border-top:2px solid transparent;border-image:var(--t-top) 1;border-bottom:1px solid var(--line)}
+.rail .btn,.gget .btn{width:100%}
+.rail .copyrow .btn,.gget .copyrow .btn,.gmore .end .copyrow .btn{width:auto}
+.gcard .checks{margin-top:1.1rem;font-size:.86rem;gap:.35rem 1rem;padding:0}
+.gcard .checks li{margin:0}
+@media (pointer:fine){.get-phone{display:none}}
+.toc h2{font:500 .86rem/1.4 var(--sans);color:var(--ink3);margin:0 0 .8rem}
+.toc ul{list-style:none;margin:0;padding:0 0 0 1rem;border-left:1px solid var(--line)}
+.toc li{position:relative;margin:.45rem 0;font-size:.92rem;line-height:1.4}
+.toc a{color:var(--ink3);text-decoration:none;transition:color .2s}
+.toc a:hover{color:var(--ink)}
+.toc a::before{content:"";position:absolute;left:calc(-1rem - 1px);top:.1em;bottom:.1em;width:2px;border-radius:2px;background:var(--accent);transform:scaleY(0);transition:transform .3s var(--ease-out)}
+.toc a.on{color:var(--ink)}
+.toc a.on::before{transform:none}
+/* the text: a 68ch column, numbered sections */
+.gtext{color:var(--ink2);max-width:42rem;counter-reset:sec}
+.gtext h2::before{content:counter(sec,decimal-leading-zero);content:counter(sec,decimal-leading-zero) / "";display:inline-block;width:3.2rem;font:400 .8rem/1 var(--mono);letter-spacing:0;color:var(--ink3);vertical-align:.55em}
+.gtext h2{background:var(--t-top) 0 0/3rem 2px no-repeat;counter-increment:sec;color:var(--ink);font:500 clamp(1.7rem,1.1rem + 1.7vw,2.8rem)/1.06 var(--disp);letter-spacing:-.035em;margin:clamp(3.25rem,2.4rem + 2.6vw,5rem) 0 1.2rem;padding-top:clamp(1rem,.8rem + .6vw,1.4rem);border-top:0}
+.gtext h2:first-child{margin-top:0;padding-top:clamp(1rem,.8rem + .6vw,1.4rem)}
+.gtext h2::before{color:var(--accent)}
+.gtext p,.gtext ul,.gtext ol{max-width:none;margin:0 0 1rem}
+/* lists read as ledger rows: a hairline between items, no bullets */
+.gtext ul{list-style:none;padding:0;border-top:1px solid var(--line)}
+.gtext ul>li{margin:0;padding:.85rem 0;border-bottom:1px solid var(--line)}
+.gtext ol:not(.tl){padding-left:1.3em}.gtext ol:not(.tl)>li{margin:0 0 .6rem}
 .gtext li::marker{color:var(--ink3)}
-.gtext ol li::marker{font-family:var(--mono);font-size:.85em}
 .gtext b,.gtext strong{color:var(--ink);font-weight:500}
-.gtext .tbl{margin:1.2rem 0 1rem}
-@media (min-width:761px){.gtext td.us{padding-left:0;background:none;font-weight:500}}
-.gfaq,.gmore{border-top:1px solid var(--line);margin-top:3rem;padding:2.5rem 0 0}
-.gfaq h2,.gmore h2{font-size:clamp(1.4rem,2.3vw,1.7rem);margin-bottom:1.1rem}
-.gfaq{max-width:calc(68ch + 2.5rem)}
-.gmore ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem 2rem}
-.gmore li{border-top:1px solid var(--line);padding-top:.8rem}
-.gmore a{font:500 1.04rem/1.35 var(--disp);text-decoration:none}
-.gmore a:hover{color:var(--sand-hi)}
-.gmore span{display:block;color:var(--ink3);font-size:.9rem;line-height:1.45;margin-top:.2rem}
+.gtext code{overflow-wrap:anywhere}
+/* steps: numbered dots on a line that fills as each step reaches the screen */
+.gtext ol.tl{list-style:none;padding:0;margin:1.6rem 0 1.4rem;counter-reset:hs}
+.gtext ol.tl>li{counter-increment:hs;position:relative;padding:0 0 1.5rem 3.4rem;margin:0;background:linear-gradient(var(--line),var(--line)) no-repeat .6rem 1.9rem/1px calc(100% - 2.1rem)}
+.gtext ol.tl>li:last-child{padding-bottom:0;background:none}
+.gtext ol.tl>li::before{content:counter(hs,decimal-leading-zero);content:counter(hs,decimal-leading-zero) / "";position:absolute;left:0;top:.15rem;width:2.2rem;font:400 .8rem/1.4 var(--mono);color:var(--ink3);font-variant-numeric:tabular-nums;transition:color .6s .15s}
+.gtext ol.tl>li::after{content:"";position:absolute;left:.6rem;top:1.9rem;bottom:.2rem;width:1px;background:linear-gradient(var(--accent),color-mix(in srgb,var(--t-top2) 70%,transparent));transform-origin:50% 0;transition:transform 1.2s var(--ease-out) .35s}
+.gtext ol.tl>li:last-child::after{display:none}
+.gtext ol.tl>li.in::before{color:var(--accent)}
+@media (prefers-reduced-motion:no-preference){.js .gtext ol.tl>li.rv:not(.in)::after{transform:scaleY(0)}}
+.gtext ol.howto>li>b:first-child{display:block;font:500 1.08rem/1.35 var(--disp);letter-spacing:-.01em;margin-bottom:.3rem}
+/* tables in a frame on a PC */
+.gtext .tbl{margin:1.5rem 0 1.25rem}
+@media (min-width:761px){
+  .gtext .tbl{padding:0;border-block:1px solid var(--line)}
+  .gtext tbody tr:last-child>*{border-bottom:0}
+  .gtext td.us{padding-left:0;background:none;font-weight:500}
+}
+/* FAQ and related guides */
+.gl .gfaq{max-width:44rem;margin-top:clamp(3.25rem,2.4rem + 2.6vw,5rem);padding:clamp(2rem,1.6rem + 1.4vw,3rem) 0 0;border-top:1px solid var(--line)}
+.gfaq h2,.gmore h2{font:500 clamp(1.6rem,1.15rem + 1.4vw,2.4rem)/1.08 var(--disp);letter-spacing:-.03em;margin:0 0 1.4rem}
+.gfaq details[open] summary{color:var(--ink)}
+.gmore{grid-column:1/-1;margin-top:clamp(4rem,2.6rem + 4vw,7rem);padding-top:clamp(2rem,1.6rem + 1.4vw,3rem);border-top:1px solid var(--line)}
+.gmore ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr);border-top:1px solid var(--line)}
+.gmore li{margin:0;min-width:0}
+.gmore ul a{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 1.25rem;gap:1.5rem;align-items:baseline;padding:1.25rem 0;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}
+.gmore ul a::before{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--t-top);transform:scaleX(0);transform-origin:left;transition:transform .55s var(--ease-out)}
+.gmore ul a b{font:500 clamp(1.12rem,1rem + .4vw,1.35rem)/1.25 var(--disp);letter-spacing:-.015em}
+.gmore ul a span{color:var(--ink3);font-size:.92rem;line-height:1.45}
+.gmore ul a svg{width:1.1rem;height:1.1rem;align-self:center;justify-self:end;color:var(--ink3);transition:transform .45s var(--ease-out),color .3s}
+@media (hover:hover){
+  .gmore ul a:hover::before{transform:scaleX(1)}
+  .gmore ul a:hover svg{transform:translateX(6px);color:var(--accent)}
+}
+.gmore ul a:focus-visible::before{transform:scaleX(1)}
 .gmore .end{display:none}
 .gmore .end .btn{width:100%}
 .gmore .end .link,.gstar a{font:inherit;text-decoration:underline;text-decoration-color:var(--line2);text-decoration-thickness:1px;text-underline-offset:.22em}
 .gmore .end .link{font-weight:500;font-size:.92rem}
-.gtext code{overflow-wrap:anywhere}
+.gstar{color:var(--ink3);font-size:.95rem;margin:2rem 0 0}
+.gstar a{color:var(--ink2)}
+/* on a phone the download comes after the first answer, inside the text */
+.gget{display:none}
+.gget p{max-width:none}
+.gget .rel,.gget .safe{margin:.8rem 0 0}
+.gget .req{margin:.45rem 0 0}
+/* contents: the line beside them fills in the three colours as you read */
+.toc ul::after{content:"";position:absolute;left:-1px;top:0;width:1px;height:100%;background:linear-gradient(var(--t-top1),var(--t-top2),var(--t-top3));transform-origin:50% 0;transform:scaleY(var(--rp,0))}
+.toc ul{position:relative}
+@media (max-width:999px){
+  /* phone and tablet: title and answer first, then the picture in its own band (never under the text), then the number */
+  .gstage{margin-top:0;padding-top:0}
+  .ghero{display:block;min-height:0;padding-block:1.75rem 2rem}
+  .ghero h1{max-width:22ch}
+  .groom{display:block;height:min(clamp(17rem,84vw,31rem),62svh);margin:1.25rem calc(-1*var(--gutter)) 0}
+  .gw{inset:auto 0;top:var(--gw-top,0px);height:var(--gw-h,0px)}
+  .gw::after{background:linear-gradient(var(--bg),transparent 12%,transparent 88%,var(--bg))}
+  .gw-foot{position:static;width:auto;margin-top:.9rem;justify-content:flex-start}
+  .gw-cap{flex-basis:100%;max-width:none;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;padding:0}
+}
 @media (max-width:900px){
-  .gl{grid-template-columns:minmax(0,1fr);padding-top:1.75rem;padding-bottom:3rem}
-  .rail{grid-column:1;grid-row:auto;order:1}
-  .ghead{order:0;padding-bottom:1.5rem}.gtext{order:2}.gfaq{order:3}.gmore{order:4}
-  .rail-in{position:static;gap:1.4rem;margin-bottom:2.5rem}
-  .toc{display:none}
-  .gfaq,.gmore{margin-top:2.25rem;padding:2rem 0 0}
+  .gwin{border-radius:10px}
+  .gwin-bar{padding:.5rem .75rem;font-size:.76rem}
+  .gl{grid-template-columns:minmax(0,1fr);padding-top:1.9rem;padding-bottom:3rem}
+  .rail{display:none}
+  .gget{display:block;margin:2.25rem 0 0}
+  .gmore ul{grid-template-columns:repeat(2,minmax(0,1fr))}
   .gmore .end{display:block;margin-top:2rem}
+  .gtoc-m{display:block;margin:0 0 2.5rem;padding-top:1rem;border-top:2px solid transparent;border-image:var(--t-top) 1}
+  .gtoc-m p{margin:0 0 .3rem;font:500 .86rem/1.4 var(--sans);color:var(--ink3)}
+  .gtoc-m ol{list-style:none;margin:0;padding:0;counter-reset:t;border-bottom:1px solid var(--line)}
+  .gtoc-m li{counter-increment:t;margin:0}
+  .gtoc-m a{display:flex;gap:1rem;align-items:baseline;min-height:44px;padding:.65rem 0;color:var(--ink2);text-decoration:none;border-top:1px solid var(--line);font-size:.98rem;line-height:1.4}
+  .gtoc-m li:first-child a{border-top:0}
+  .gtoc-m a::before{content:counter(t,decimal-leading-zero);flex:none;width:1.6rem;font:400 .78rem/1 var(--mono);color:var(--ink3)}
 }
 @media (max-width:760px){
-  .gmore ul{grid-template-columns:1fr;gap:.8rem}
-  .gtext h2{margin-top:2.1rem}
+  .crumbs{margin-bottom:1.1rem}
+  .ghero h1{font-size:clamp(2rem,1.2rem + 4.2vw,2.5rem);line-height:1.04;margin-bottom:1rem}
+  .gtext h2,.gfaq h2,.gmore h2{font-size:clamp(1.5rem,1.1rem + 2vw,1.8rem)}
+  .gtext h2{margin-top:2.75rem;padding-top:1.9rem}
+  .gtext h2::before{display:block;margin-bottom:.75rem}
+  .gtext ol.tl>li{padding-left:2.9rem}
+  .gmore ul{grid-template-columns:minmax(0,1fr);gap:.75rem}
+  .gmore ul a{padding:1.15rem 3.2rem 1.15rem 1.2rem}
+  .gmore ul a svg{position:absolute;right:1.1rem;top:50%;margin:-.6rem 0 0;padding:0}
+  .gl .gfaq{margin-top:2.75rem;padding-top:1.9rem}
+  .gmore{margin-top:3rem;padding-top:1.9rem}
+  .gcard{padding:1rem 0}
 }
 </style>`);
 
@@ -166,13 +297,15 @@ const icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 const star = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>';
 // On a PC: the exe itself, with what you get under it. On a phone (a Windows app is no use there): copy this page's link for the PC.
 const download = (url) => `<div class="get-desk"><a class="btn" href="${EXE}">${icon}Download for Windows</a><p class="rel">${relLine}</p></div>
-          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">${url.replace(/^https:\/\//, '').replace(/\/$/, '')}</code><button class="btn" type="button" data-copy="${url}">Copy link</button></div><a class="link" href="${EXE}">Download the .exe anyway</a></div>`;
-const req = 'Windows 10/11 · Android phone + USB cable or hotspot · uses mobile data · admin';
+          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">${url.replace(/^https:\/\//, '').replace(/\/$/, '').replace(/\//g, '/<wbr>')}</code><button class="btn" type="button" data-share data-copy="${url}">Send to my PC</button></div><a class="link" href="${EXE}">Download the .exe anyway</a></div>`;
+const req = 'Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin';
 // The copy button and the screenshot viewer: the same code as the home page (between its /* shared */ marks).
 const shared = readFileSync(join(site, 'index.html'), 'utf8').match(/\/\* shared \*\/([\s\S]*?)\/\* \/shared \*\//)[1];
+// The footer is the home page's, with its links pointing one folder up.
+const footer = home.match(/<footer>[\s\S]*?<\/footer>/)[0].replace(/(href|src)="(?!https?:|#|\.\.\/)([^"]*)"/g, (m, a, u) => `${a}="../${u.replace(/^\.\//, '')}"`);
 // The trust line, the same as under the home page's buttons. Facts as in the README (the license isn't open source, so "Public source").
-const checks = `<ul class="checks" aria-label="At a glance"><li>Free</li><li>Public source</li><li>No account</li><li>Doesn't touch cs2.exe</li><li>Signed updates</li><li><a href="${VT}">VirusTotal report</a></li></ul>`;
-const safe = (here) => `Not code-signed, so SmartScreen warns the first time: ${here ? '<a href="#check-your-download">check your download</a>' : '<a href="../is-it-safe/">how to check it</a>'}`;
+const checks = `<ul class="checks" aria-label="At a glance"><li>Free</li><li>Public source</li><li>No account</li><li>Doesn't touch cs2.exe</li><li><a href="${VT}">VirusTotal report</a></li></ul>`;
+const safe = (here) => `Windows warns once: the .exe isn't code-signed yet. Updates are checked with a signature. ${here ? '<a href="#check-your-download">Check your download</a>' : '<a href="../is-it-safe/">How to check it</a>'}`;
 
 // On a phone the tables turn into one block per row, so each body cell gets its column's name (from the table head) as data-label.
 const labelTables = (html) => html.replace(/<table>([\s\S]*?)<\/table>/g, (table, inner) => {
@@ -198,12 +331,12 @@ const crop = ([name, x, y, w, h, alt]) => `<a class="crop zoom" href="../img/${n
 export const pages = [
   {
     slug: 'cs2-region-picker',
-    title: 'CS2 region picker: how to change your region in CS2',
+    title: 'CS2 server picker and region picker: change your region in CS2',
     desc: 'Pick your CS2 matchmaking region: block the ones you don\'t want and see the ping of each. Free Windows app, one firewall rule for cs2.exe on Valve relays.',
     nav: 'CS2 region picker',
     blurb: 'How to change your region in CS2.',
     eyebrow: 'CS2 server picker',
-    h1: 'How to change your region in CS2, with a free region picker',
+    h1: 'CS2 server picker: how to change your region in CS2, free',
     lead: 'CS2 has no region setting: matchmaking picks the region for you, by ping. The Regions page of CS2 IP Changer lists Valve\'s matchmaking regions with the ping of each one, and blocks the ones you turn off. Premier, Competitive, Casual, Deathmatch and Wingman then only find matches in the regions you left on.',
     crop: ['regions', 91, 44, 760, 466,'The Regions page: Valve\'s matchmaking regions by continent, each with its ping, and the ones turned off blocked for cs2.exe'],
     related: ['copy-cs2-config', 'steam-account-switcher', 'is-it-safe'],
@@ -214,8 +347,11 @@ export const pages = [
       ['Things to know', `<ul><li>Changes apply at once, and CS2 measures the regions again on its next start. Don't change them during a match.</li><li>Blocking too much means long queues or no match at all, and Premier can take longer. Leave a few regions on; the app won't let you turn them all off.</li><li>CS2's Max Acceptable Matchmaking Ping still counts. If it's lower than the ping of your slowest region left on, CS2 never uses that region, and the page tells you which number to set.</li><li>Windows Firewall has to be on. If it's off, the page says the rule is in place but not enforced until the Firewall is back on.</li><li>It works with or without the phone. Regions don't depend on protection: they stay off until you click Allow all (block off).</li></ul>`],
     ],
     // A how-to, as steps on the page and as HowTo in the JSON-LD. It goes after the first section.
-    howto: { h: 'Change your region, step by step', steps: [
-      ['Get the app', 'Download CS2IPChanger.exe and run it. It asks for admin, because firewall rules are a system setting. For Regions you don\'t need the phone or protection.'],
+    // id: the anchor stays the one the page always had, so old links to it still land. A step's third item is its text on
+    // the page with links; the JSON-LD keeps the plain text.
+    howto: { h: 'How to use the CS2 server picker, step by step', id: 'change-your-region-step-by-step', steps: [
+      ['Get the app', 'Download CS2IPChanger.exe and run it. It asks for admin, because firewall rules are a system setting. For Regions you don\'t need the phone or protection.',
+        'Download CS2IPChanger.exe and run it. It asks for admin, because firewall rules are a system setting (<a href="../is-it-safe/">what it changes on your PC</a>). For Regions you don\'t need the phone or protection.'],
       ['Open Regions and measure the ping', 'The list comes from Valve\'s own relay list, by continent and city. Press Refresh: the app pings each region the way the game will reach it.'],
       ['Turn off the regions you don\'t want', 'Untick them one by one, or use a shortcut: Only this region, Closest 3, your continent only (like Europe only) or Ping under X ms. Keep at least one region on.'],
       ['Check the block', 'Under the list the page says how many regions CS2 can play in, and "Block is on. Only CS2 is affected."'],
@@ -269,7 +405,7 @@ export const pages = [
     related: ['cs2-ip-ban', 'copy-cs2-config', 'steam-profile-editor'],
     sections: [
       ['What it does', `<ul><li><b>No passwords.</b> It uses the logins Steam already saved (the accounts where you ticked Remember me). Switching never asks for or stores a password.</li><li><b>Bans and cooldowns at a glance:</b> VAC, game and trade bans and the competitive cooldown of each account, with tabs for No bans, Banned, Cooldown and Not in rotation.</li><li><b>Server ban marks.</b> When CS2's console shows a ban, the account in use is marked for that server and for the rest of the same community. New IP + next account skips accounts on cooldown or marked on that server, and joining there with a marked account asks first.</li><li><b>In rotation.</b> Untick In rotation on an account's card and New IP + next account never picks it. The Not in rotation tab lists those accounts.</li><li><b>New IP + next account.</b> The button names the account it will use, like New IP + atlas, and gets a new IP, logs into that account and joins the last server again. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F9</kbd> (you can change it) does it from inside the game. In Settings &gt; New IP + next account you pick which of those steps it does.</li><li><b>Checks the result.</b> CS2 only opens once Steam is really on the new account; if Steam logs in to another one, the app tells you.</li><li><b>Backups of Steam's account list.</b> Before each switch the app keeps a copy of <code>loginusers.vdf</code>, and a failed switch puts Steam's previous account back.</li></ul>`],
-      ['Made for community servers', `<p>A ban on a community server is usually on your Steam account, your IP, or both. The switcher pairs with the rest of the app: after a ban, a new IP from your phone's mobile data and the next account that server hasn't banned, in one step. <a href="../cs2-ip-ban/">How to tell which ban you have</a>.</p>`],
+      ['Made for community servers', `<p>A ban on a community server is usually on your Steam account, your IP, or both. The switcher pairs with the rest of the app: after a ban, a new IP from your phone's mobile data and the next account that server hasn't banned, in one step. Your crosshair, binds and video settings can follow you to every account (<a href="../copy-cs2-config/">copy your CS2 config between accounts</a>), and so can a name and avatar (<a href="../steam-profile-editor/">Steam profile editor</a>). <a href="../cs2-ip-ban/">How to tell which ban you have</a>.</p>`],
     ],
     faq: [
       ['How do I switch Steam accounts without typing my password?', 'Log in to each account once with Remember me ticked. After that the app switches between them in one click, or with Ctrl+Shift+F9 from inside the game, without asking for a password.'],
@@ -308,11 +444,11 @@ export const pages = [
     h1: "Use your phone's mobile data for CS2 only, and change IP in one click",
     lead: 'The whole setup, start to finish: the phone shares its mobile data over USB, only CS2, Steam and your servers use it, and Change IP gets a new carrier IP from the PC.',
     crop: ['connection', 91, 44, 569, 428,'The Connection page: protection status, the IP servers see next to your home IP, and the phone ready to change IP'],
-    related: ['cs2-ip-ban', 'hide-ip-cs2', 'is-it-safe'],
+    related: ['cs2-iphone-hotspot', 'cs2-ip-ban', 'is-it-safe'],
     sections: [
-      ['What you need', `<ul><li>Windows 10 or 11 (64-bit) and admin rights: routes and firewall rules are system settings.</li><li>Windows Firewall turned on. Third-party firewalls that turn it off (some antivirus suites) leave the app without a kill switch, and it says so.</li><li>An Android phone with mobile data, and a USB cable or the phone's Wi-Fi hotspot.</li><li>USB debugging on the phone, only if you want to change IP from the PC.</li></ul>`],
-      ['Set it up', `<ol><li><b>Download <code>CS2IPChanger.exe</code></b> from the <a href="${LATEST}">latest release</a> into a folder only admins can change, like <code>C:\\Program Files\\CS2 IP Changer</code>. It runs as admin, so it doesn't run from Downloads: started there, it offers to install itself in that folder in one click. The exe isn't code-signed, so SmartScreen warns the first time: More info &gt; Run anyway, or <a href="../is-it-safe/#check-your-download">check the download</a> first.</li><li><b>Plug the phone in by USB,</b> turn on USB tethering and turn off the phone's Wi-Fi, so it shares mobile data and not your home Wi-Fi. While the phone's Wi-Fi is on, the app keeps your servers and CS2 blocked.</li><li><b>Run the app.</b> Protection starts off, so nothing is blocked yet. Paste the servers you play on into Servers: <code>IP:port</code>, <code>connect IP:port</code> or <code>steam://connect</code> links (an IP without a port gets the Default port, 27015 unless you change it).</li><li><b>Something missing?</b> Phone setup under Phone lists the steps (the cable and its driver, USB debugging, tethering, the phone's Wi-Fi, where other apps go). Each one checks itself and turns green, and where the app can do it there is a button.</li><li><b>Turn on protection</b> in Status on Connection. With CS2 and Steam running, every check should be green, including Phone IP is not your home IP. Run leak test to be sure.</li></ol><p>On the hotspot instead of a cable? Connect the PC to it and pick it under Connection &gt; How the PC connects to the phone.</p>`],
-      ['Change IP from the PC', `<p>Turn on USB debugging on the phone and allow the PC when the phone asks. If ADB isn't installed, the app can download Google's platform-tools for you (about 7 MB).</p><p>Change IP then turns mobile data (or airplane mode) off and on until the carrier hands you a new IP, and keeps the old IPs in a list so you can see it changed. It also tells you if the new IP is in a new /16 range, because some admins ban whole ranges; Settings &gt; Keep changing until the IP is in a new range keeps going until it is. On the hotspot, Change IP works if the phone is also plugged in by USB with USB debugging on.</p>`],
+      ['What you need', `<ul><li>Windows 10 or 11 (64-bit) and admin rights: routes and firewall rules are system settings.</li><li>Windows Firewall turned on. Third-party firewalls that turn it off (some antivirus suites) leave the app without a kill switch, and it says so.</li><li>An Android phone or iPhone with mobile data, and a USB cable or the phone's Wi-Fi hotspot.</li><li>USB debugging on the phone, only if you want to change IP from the PC.</li></ul>`],
+      ['Set it up', `<ol><li><b>Download <code>CS2IPChanger.exe</code></b> from the <a href="${LATEST}">latest release</a> into a folder only admins can change, like <code>C:\\Program Files\\CS2 IP Changer</code>. It runs as admin, so it doesn't run from Downloads: started there, it offers to install itself in that folder in one click. Windows warns once: the exe isn't code-signed yet, so SmartScreen asks first. More info &gt; Run anyway, or <a href="../is-it-safe/#check-your-download">check the download</a> first. Updates are checked with a signature.</li><li><b>Plug the phone in by USB,</b> turn on USB tethering (Personal Hotspot on an iPhone) and turn off the phone's Wi-Fi, so it shares mobile data and not your home Wi-Fi. While the phone's Wi-Fi is on, the app keeps your servers and CS2 blocked.</li><li><b>Run the app.</b> Protection starts off, so nothing is blocked yet. Paste the servers you play on into Servers: <code>IP:port</code>, <code>connect IP:port</code> or <code>steam://connect</code> links (an IP without a port gets the Default port, 27015 unless you change it).</li><li><b>Something missing?</b> Phone setup under Phone lists the steps (the cable and its driver, USB debugging, tethering, the phone's Wi-Fi, where other apps go). Each one checks itself and turns green, and where the app can do it there is a button.</li><li><b>Turn on protection</b> in Status on Connection. With CS2 and Steam running, every check should be green, including Phone IP is not your home IP. Run leak test to be sure.</li></ol><p>On the hotspot instead of a cable? Connect the PC to it and pick it under Connection &gt; How the PC connects to the phone.</p>`],
+      ['Change IP from the PC', `<p>On an iPhone, switch Airplane Mode on and off on the phone instead: only Android lets a PC do it (<a href="../cs2-iphone-hotspot/">CS2 with an iPhone</a>). On Android, turn on USB debugging on the phone and allow the PC when the phone asks. If ADB isn't installed, the app can download Google's platform-tools for you (about 7 MB).</p><p>Change IP then turns mobile data (or airplane mode) off and on until the carrier hands you a new IP, and keeps the old IPs in a list so you can see it changed. It also tells you if the new IP is in a new /16 range, because some admins ban whole ranges; Settings &gt; Keep changing until the IP is in a new range keeps going until it is. On the hotspot, Change IP works if the phone is also plugged in by USB with USB debugging on.</p>`],
       ['Game only, whole PC or no phone', `<ul><li><b>Game only:</b> CS2, Steam and your servers use the phone. The browser, Discord and downloads stay on your home connection and don't eat mobile data.</li><li><b>Whole PC:</b> everything goes through the phone, DNS included, and IPv6 is blocked so nothing leaves from home.</li><li><b>No phone:</b> play on your home connection. Nothing is blocked, servers see your home IP, and the app says so. Accounts, Configs, Profiles and Regions keep working.</li></ul><p>Once a phone has been connected, the kill switch (Block if the phone drops, in Checks) keeps your servers and CS2's game traffic on it: a pulled cable cuts CS2 off instead of falling back to your home IP. Before that, CS2 isn't locked, so trying the app without a phone never leaves CS2 unable to connect at home.</p>`],
     ],
     faq: [
@@ -323,14 +459,44 @@ export const pages = [
     ],
   },
   {
+    // Facts only from README.md (Quick start, the FAQ "Does it work with an iPhone?" and the VPN table). The iPhone steps of
+    // Phone setup come with beta.11, so this page doesn't mention them until that release is out.
+    slug: 'cs2-iphone-hotspot',
+    title: "Play CS2 on your iPhone's mobile data, not your home IP",
+    desc: "CS2 IP Changer works with an iPhone: Personal Hotspot by USB or Wi-Fi, only CS2 and Steam on it, a kill switch, and a new IP with Airplane Mode.",
+    nav: 'CS2 with an iPhone',
+    blurb: 'Personal Hotspot, and a new IP by Airplane Mode.',
+    h1: "Play CS2 on your iPhone's mobile data, not your home IP",
+    lead: "Yes, it works with an iPhone. The iPhone's USB tethering (Personal Hotspot) shows up in Windows like an Android phone, and so does its Wi-Fi hotspot, so community servers see your carrier's IP and not your home IP. One thing is different: for a new IP you switch Airplane Mode on and off on the iPhone yourself.",
+    crop: ['connection', 91, 44, 569, 180, 'The Connection page: the IP servers see next to your masked home IP'],
+    related: ['change-ip-with-phone', 'cs2-ip-ban', 'is-it-safe'],
+    sections: [
+      ['What works with an iPhone', `<ul><li><b>The protection, the same as on Android.</b> CS2, Steam and your servers go through the iPhone's mobile data (or the whole PC if you pick it), and Windows Firewall blocks them on your home connection, so those servers only see the carrier's IP.</li><li><b>The kill switch.</b> If the iPhone drops, CS2 loses the connection instead of using your home IP.</li><li><b>Live checks and the leak test</b> on the Connection page show the IP servers see.</li><li><b>Everything that doesn't need a phone:</b> Servers, Accounts, Configs, Profiles and Regions work the same.</li></ul>`],
+      ['Set it up', `<ol><li><b>Download <code>CS2IPChanger.exe</code></b> from the <a href="${LATEST}">latest release</a> and put it in a folder only admins can change, like <code>C:\\Program Files\\CS2 IP Changer</code>. Started from Downloads or the Desktop, it offers to install itself there in one click. Windows warns once: the exe isn't code-signed yet, so SmartScreen asks first (<a href="../is-it-safe/#check-your-download">check the download</a>).</li><li><b>Plug the iPhone in by USB</b> and turn on Personal Hotspot, then turn off the iPhone's Wi-Fi, so it shares mobile data.</li><li><b>Open the app</b> (it asks for admin). Paste the servers you play on into Servers, then press Turn on protection in Status.</li><li><b>Check.</b> Open Connection with CS2 and Steam running. Every check should be green, and the IP servers see must not be your home IP.</li></ol>`],
+      ['A new IP on an iPhone', `<p>Change IP from the PC needs ADB, which only Android has. On an iPhone, switch Airplane Mode on, then off again: when the iPhone is back on mobile data, the carrier usually hands out a new IP. The Connection page shows the IP servers see, so you can check it changed before you join again.</p><p>Carriers share each IP between many phones, so the same IP can come back; switch Airplane Mode on and off again. On Android, one click does all of this, and Change IP and rejoin (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd>) joins the server again (<a href="../change-ip-with-phone/">the Android setup</a>).</p>`],
+      ['iPhone or Android', `<div class="tbl"><table><thead><tr><td></td><th scope="col">iPhone</th><th scope="col">Android</th></tr></thead><tbody>
+<tr><th scope="row">Server sees</th><td class="us">Your carrier's mobile IP</td><td class="us">Your carrier's mobile IP</td></tr>
+<tr><th scope="row">How it connects</th><td>Personal Hotspot, by USB cable or Wi-Fi</td><td>USB tethering or the hotspot</td></tr>
+<tr><th scope="row">Kill switch</th><td>Yes, in Windows Firewall</td><td>Yes, in Windows Firewall</td></tr>
+<tr><th scope="row">New IP</th><td>Airplane Mode on and off, on the iPhone</td><td>One click from the PC (mobile data off and on over ADB)</td></tr>
+</tbody></table></div>`],
+    ],
+    faq: [
+      ['Does CS2 IP Changer work with an iPhone?', "Yes, the protection does: an iPhone's USB tethering (Personal Hotspot) shows up in Windows like an Android one, and so does its Wi-Fi hotspot. Change IP from the PC needs ADB, which only Android has, so on an iPhone you switch Airplane Mode on and off yourself."],
+      ['Why can\'t the app change the IP on my iPhone?', 'Change IP turns mobile data off and on from the PC over ADB, and only Android has ADB. On an iPhone, Airplane Mode on and off does the same by hand.'],
+      ['Is it a VPN?', "No. Servers see an ordinary mobile connection from your carrier, the same as someone playing on a phone hotspot, so it usually gets in on servers that block VPNs. It's not a promise: carriers share each IP between many phones, so an IP someone else misused can be flagged."],
+    ],
+  },
+  {
     slug: 'cs2-ip-ban',
-    title: 'CS2 community server IP ban: how to get back in',
-    desc: 'IP banned on a CS2 community server? Tell an IP ban from a SteamID or range ban, see what a new IP fixes, and get back in with your phone\'s mobile data.',
+    title: 'Does CS2 IP ban? Community server bans and getting back in',
+    desc: 'Does CS2 IP ban? Valve doesn\'t, community servers can. Tell an IP ban from a SteamID or range ban, see what a new IP fixes, and get back in with your phone\'s mobile data.',
     nav: 'CS2 IP ban',
     blurb: 'Which ban you have and how to get back in.',
     eyebrow: 'CS2 IP ban bypass',
-    h1: 'CS2 community server IP ban: how to get back in',
-    lead: 'Valve\'s bans are on your Steam account. Community servers run their own admins and plugins, and those can ban your account, your IP or a whole range. Find out which one you have first; when it\'s the IP, a new one gets you back in.',
+    h1: 'Does CS2 IP ban? VAC no, community servers yes',
+    lead: 'Valve doesn\'t IP ban: VAC bans, game bans and cooldowns are on your Steam account, not your IP. Community servers can: their admins and plugins ban your account, your IP or a whole range. Find out which one you have first; when it\'s the IP, a new one gets you back in, for example by changing your IP with your phone.',
+    leadHtml: 'Valve doesn\'t IP ban: VAC bans, game bans and cooldowns are on your Steam account, not your IP. Community servers can: their admins and plugins ban your account, your IP or a whole range. Find out which one you have first; when it\'s the IP, a new one gets you back in, for example by <a href="../change-ip-with-phone/">changing your IP with your phone</a>.',
     crop: ['accounts', 655, 146, 552, 192, 'The Accounts page: one account banned on one server and on cooldown, another with a VAC ban'],
     related: ['change-ip-with-phone', 'steam-account-switcher', 'hide-ip-cs2'],
     sections: [
@@ -340,8 +506,8 @@ export const pages = [
 <tr><td>The same account is refused from another connection</td><td>Ban on that SteamID</td><td class="us">Another account; a new IP won't lift it</td></tr>
 <tr><td>VAC or game ban on the profile, or a competitive cooldown</td><td>Valve ban on the account</td><td>Nothing on this page: a new IP doesn't change it</td></tr>
 </tbody></table></div><p>If CS2's console shows <code>NETWORK_DISCONNECT_STEAM_BANNED</code>, that's the server's own ban list refusing your SteamID, not Steam or VAC. Many servers ban the IP and the account together.</p>`],
-      ['Get back in, step by step', `<ol><li><b>Without any app:</b> restarting the router sometimes gives you a new IP, if your provider hands out dynamic IPs, but it's still your home line. Playing on your phone's hotspot works too, since the server then sees the carrier's IP.</li><li><b>With CS2 IP Changer:</b> plug in the phone once (<a href="../change-ip-with-phone/">setup</a>), and from then on Change IP and rejoin does it in one click: mobile data off and on over ADB, a new carrier IP, and back on the server. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> does it from inside the game.</li><li><b>The account too:</b> after a ban the app logs into the next account that server hasn't banned, because the ban is often on the IP and the account.</li><li><b>Range ban:</b> the app tells you whether the new IP is in a new /16 and can keep trying until it is.</li><li><b>Valve ban:</b> when Steam or VAC refuses the account instead, the app says so and doesn't offer a new IP, because it wouldn't help.</li></ol>`],
-      ['What the app remembers', `<ul><li>The account in use is marked as banned on that server and on the rest of the same community (the same tag in the server name, or a community name you set). New IP + next account skips it there, and joining with it asks first.</li><li>Your home IP never reaches the server, so it never lands on a ban list. No app can stop an admin from banning you; this keeps the ban off your house.</li></ul>`],
+      ['Get back in, step by step', `<ol><li><b>Without any app:</b> restarting the router sometimes gives you a new IP, if your provider hands out dynamic IPs, but it's still your home line. Playing on your phone's hotspot works too, since the server then sees the carrier's IP. Before you download anything, <a href="../is-it-safe/">check that it is safe</a>.</li><li><b>With CS2 IP Changer:</b> plug in the phone once (<a href="../change-ip-with-phone/">setup</a>), and from then on Change IP and rejoin does it in one click: mobile data off and on over ADB, a new carrier IP, and back on the server. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> does it from inside the game.</li><li><b>The account too:</b> after a ban the app logs into the next account that server hasn't banned, because the ban is often on the IP and the account.</li><li><b>Range ban:</b> the app tells you whether the new IP is in a new /16 and can keep trying until it is.</li><li><b>Valve ban:</b> when Steam or VAC refuses the account instead, the app says so and doesn't offer a new IP, because it wouldn't help.</li></ol>`],
+      ['What the app remembers', `<ul><li>The account in use is marked as banned on that server and on the rest of the same community (the same tag in the server name, or a community name you set). New IP + next account skips it there, and joining with it asks first.</li><li>Your home IP never reaches the server, so it never lands on a ban list (<a href="../hide-ip-cs2/">every way to hide your IP from CS2 servers, compared</a>). No app can stop an admin from banning you; this keeps the ban off your house.</li></ul>`],
     ],
     faq: [
       ['Does CS2 IP ban?', 'Valve\'s bans (VAC bans, game bans and cooldowns) are on your Steam account, not your IP. Community servers are different: their admin plugins can ban a SteamID, an IP address or a whole IP range.'],
@@ -370,11 +536,13 @@ export const pages = [
 <tr><th scope="row">SOCKS or HTTP proxy</th><td>Your home IP (game traffic is UDP)</td><td>Not useful</td><td>Varies</td></tr>
 <tr><th scope="row">Restarting the router</th><td>A new home IP, still yours</td><td>Yes, but it's still your home line</td><td>Free, if your IP is dynamic</td></tr>
 </tbody></table></div>`],
-      ['Why mobile data', `<p>The server sees an ordinary mobile connection from your carrier, not a datacenter, so VPN blocks don't apply. Playing on the phone's hotspot by hand gets you that much. The app adds what is hard by hand: only the game uses the phone, a kill switch keeps it there if the cable comes out, live checks and a leak test show the IP servers see, and Change IP gets a new one. <a href="../change-ip-with-phone/">Set it up</a>.</p>`],
+      ['Why mobile data', `<p>The server sees an ordinary mobile connection from your carrier, not a datacenter, so it usually gets past anti-VPN plugins. Playing on the phone's hotspot by hand gets you that much. It works with an Android phone or an iPhone (on an iPhone the new IP comes from Airplane Mode: <a href="../cs2-iphone-hotspot/">CS2 with an iPhone</a>). The app adds what is hard by hand: only the game uses the phone, a kill switch keeps it there if the cable comes out, live checks and a leak test show the IP servers see, and Change IP gets a new one. <a href="../change-ip-with-phone/">Set it up</a>.</p>`],
     ],
     faq: [
       ['Does official matchmaking show my IP?', 'Valve\'s matchmaking goes through Steam Datagram Relay, so other players don\'t get your IP there. Community servers you join directly are the ones that see it.'],
       ['Can a community server admin see my IP?', 'Yes. The server needs your IP to send you game packets, so the admins and their plugins can see it, log it and ban it. With your phone\'s mobile data, what they get is your carrier\'s IP.'],
+      ['What does cl_hideserverip do?', 'It is a console setting for streamers: with cl_hideserverip 1, CS2 hides the IP of the server you are on from your own screen (console and status), so viewers can\'t see it. It doesn\'t hide your IP: the server still sees your home IP. To hide that, the server has to see another connection, like your phone\'s mobile data.',
+        'It is a console setting for streamers: with <code>cl_hideserverip 1</code>, CS2 hides the IP of the server you are on from your own screen (console and status), so viewers can\'t see it. It doesn\'t hide your IP: the server still sees your home IP. To hide that, the server has to see another connection, like <a href="../change-ip-with-phone/">your phone\'s mobile data</a>.'],
     ],
   },
   {
@@ -390,8 +558,8 @@ export const pages = [
     related: ['change-ip-with-phone', 'hide-ip-cs2', 'steam-account-switcher'],
     sections: [
       ['What it changes, and what it never touches', `<ul><li><b>Changes:</b> Windows routes and Windows Firewall rules (all named with the app's prefix), which saved Steam account logs in, and, only if you use those pages, CS2's config files and your Steam profiles.</li><li><b>Never touches:</b> the game process, its memory or its program files. It hides nothing from VAC or any anti-cheat.</li><li><b>Why admin:</b> routes and firewall rules are system settings, and Windows only lets admins change them. Steam, CS2, your browser and the programs it opens for you still run as you, not as admin.</li></ul>`],
-      ['Check your download', `<ul><li>Every release is built by GitHub Actions from the public source and comes with a <b>build attestation</b>. With the GitHub CLI: <code>gh attestation verify CS2IPChanger.exe -R Sepd0x/cs2-ip-changer</code>.</li><li>Each exe has a <b>SHA-256</b> file next to it in the release. In PowerShell: <code>Get-FileHash .\\CS2IPChanger.exe</code>, and compare.</li><li><b>Signed updates.</b> The app only installs an update whose SHA-256 matches the release and is signed with the project's offline key, with the version inside so an old release can't come back under a new tag. The key isn't on GitHub, so access to the repo alone can't push an exe to installed copies.</li><li><b>VirusTotal</b> for each release: <a href="${VT}">${vtText}</a> flag ${short} (SHA-256 <code>${rel.sha256.slice(0, 12)}…</code>, the same as its <code>.sha256</code> file).</li><li>The exe isn't code-signed, so Windows SmartScreen may warn the first time. More info &gt; Run anyway.</li></ul>`],
-      ['Your data', `<ul><li>No account, and no passwords kept. The account switcher uses the logins Steam already saved.</li><li>Usage stats, required to use the app in the beta: the first start shows what is sent, with Accept and Quit (Quit closes the app without changing anything). Then once when it has been open for 20 seconds, when it closes and once a day: a random ID made for this install, with no name (Settings > Delete my stats deletes everything kept under it), versions, your country, the mode, how the phone is connected, minutes open, button counts, where on each screen people click (a coarse grid, added up with everyone, with no ID), a few counters, list sizes and errors, and in rough bands how long ago the app was set up, each CS2 match's ping, jitter and lag (never the server), session length and crashes. Once a day a separate report with no ID and no country says the Windows language, window and screen scale, the Windows build, the phone's brand (never the model), Android version and 4G or 5G, and is only added into counts. Never IPs, servers, accounts or names. The server code is public (<a href="${REPO}/tree/main/worker/stats">worker/stats</a>).</li><li>Who keeps them: the author of this project (Sepd0x on GitHub), only to find and fix bugs and make the app better, never sold or shared. The basis is that you accept the notice. They are stored on Cloudflare, which processes them for the project. Rows with an ID are deleted after 12 months; counts with no ID stay. Delete my stats deletes yours at once; for anything else, open an <a href="${REPO}/issues">issue on GitHub</a>, or complain to your data protection authority.</li><li>This website counts visits and clicks on Download with no cookies and no ID: the page, the name of the site you came from and the country, only as counts per day. With Do Not Track or Global Privacy Control on, it sends nothing. GitHub Pages, which hosts it, keeps its own logs.</li><li>To show the carrier and city, the app asks ipwho.is about your home IP and the phone's IP, so ipwho.is receives both, each one only through its own connection. Your public IP is measured with ipify, icanhazip, Amazon and Cloudflare. The full list, and what the app does with admin rights: <a href="${REPO}/blob/main/docs/PRIVACY-AND-SECURITY.md">Privacy and security</a>.</li><li>Save bug report saves a .zip on your Desktop and sends nothing. It leaves out your current and last home IP, API key, logins, names, SteamIDs, e-mails, Wi-Fi names and your Windows user; look through it before you post it.</li></ul>`],
+      ['Check your download', `<ul><li>Every release is built by GitHub Actions from the public source and comes with a <b>build attestation</b>. With the GitHub CLI: <code>gh attestation verify CS2IPChanger.exe -R Sepd0x/cs2-ip-changer</code>.</li><li>Each exe has a <b>SHA-256</b> file next to it in the release. In PowerShell: <code>Get-FileHash .\\CS2IPChanger.exe</code>, and compare.</li><li><b>Updates checked with a signature.</b> The app only installs an update whose SHA-256 matches the release and is signed with the project's offline key, with the version inside so an old release can't come back under a new tag. The key isn't on GitHub, so access to the repo alone can't push an exe to installed copies.</li><li><b>VirusTotal</b> for each release: <a href="${VT}">${vtText}</a> flag ${short} (SHA-256 <code>${rel.sha256.slice(0, 12)}…</code>, the same as its <code>.sha256</code> file).</li><li>The exe isn't code-signed, so Windows SmartScreen may warn the first time. More info &gt; Run anyway.</li></ul>`],
+      ['Your data', `<ul><li>No account, and no passwords kept. The account switcher uses the logins Steam already saved.</li><li>Usage stats, required to use the app in the beta: the first start shows what is sent, with Accept and Quit (Quit closes the app without changing anything). It sends them when the app has been open for 20 seconds, every 30 minutes while it stays open and when it closes, with a short signal every 5 minutes of what is on (protection, CS2 open, the screen): a random ID made for this install, with no name (Settings > Delete my stats deletes everything kept under it), versions, your country, the mode, how the phone is connected, minutes open, button counts, where on each screen people click (a coarse grid, added up with everyone, with no ID), a few counters, list sizes and errors, and in rough bands how long ago the app was set up, each CS2 match's ping, jitter and lag (never the server), session length and crashes. Once a day a separate report with no ID and no country says the Windows language, window and screen scale, the Windows build, the phone's brand (never the model), Android version and 4G or 5G, and is only added into counts. Never IPs, servers, accounts or names. The server code is public (<a href="${REPO}/tree/main/worker/stats">worker/stats</a>).</li><li>Who keeps them: the author of this project (Sepd0x on GitHub), only to find and fix bugs and make the app better, never sold or shared. The basis is that you accept the notice. They are stored on Cloudflare, which processes them for the project. Rows with an ID are deleted after 12 months; counts with no ID stay. Delete my stats deletes yours at once; for anything else, open an <a href="${REPO}/issues">issue on GitHub</a>, or complain to your data protection authority.</li><li>This website counts visits and clicks on Download with no cookies and no ID: the page, the name of the site you came from and the country, only as counts per day. With Do Not Track or Global Privacy Control on, it sends nothing. GitHub Pages, which hosts it, keeps its own logs.</li><li>To show the carrier and city, the app asks ipwho.is about your home IP and the phone's IP, so ipwho.is receives both, each one only through its own connection. Your public IP is measured with ipify, icanhazip, Amazon and Cloudflare. The full list, and what the app does with admin rights: <a href="${REPO}/blob/main/docs/PRIVACY-AND-SECURITY.md">Privacy and security</a>.</li><li>Save bug report saves a .zip on your Desktop and sends nothing. It leaves out your current and last home IP, API key, logins, names, SteamIDs, e-mails, Wi-Fi names and your Windows user; look through it before you post it.</li></ul>`],
       ['Undo everything', `<p>Turn off protection (on the Connection page, or in the icon&#39;s menu next to the clock) removes the routes and the kill switch, and Allow all (block off) on the Regions page lifts the region block. To remove everything at once, run <code>CS2IPChanger.exe --restore</code> (or <code>tools/restore.cmd</code> from the repo): every route and firewall rule the app made is removed. To uninstall, use Uninstall in Windows Settings &gt; Installed apps, or Remove CS2 IP Changer at the bottom of Settings: it removes the rules, routes, the Start with Windows task, <code>C:\\ProgramData\\CS2IPChanger</code> and the app, and you pick whether <code>SRT_Dados</code> (settings and accounts) stays.</p>`],
     ],
     faq: [
@@ -406,8 +574,38 @@ const bySlug = Object.fromEntries(pages.map((p) => [p.slug, p]));
 
 // The page's sections, with the how-to (if any) after the first one.
 const sectionsOf = (p) => p.howto
-  ? [p.sections[0], [p.howto.h, `<ol class="howto">${p.howto.steps.map(([n, t], i) => `<li id="step-${i + 1}"><b>${esc(n)}.</b> ${esc(t)}</li>`).join('')}</ol>`], ...p.sections.slice(1)]
+  ? [p.sections[0], [p.howto.h, `<ol class="howto">${p.howto.steps.map(([n, t, html], i) => `<li id="step-${i + 1}"><b>${esc(n)}.</b> ${html || esc(t)}</li>`).join('')}</ol>`, p.howto.id], ...p.sections.slice(1)]
   : p.sections;
+
+// Each guide's readout: one number from its page of the app (example values, as on the screenshots) or the release itself.
+const SIG = {
+  'change-ip-with-phone': ['198.51.100.23', 'IP servers see', 'Example IP, not yours', 'From the Connection page of the app. Example IPs only.'],
+  'cs2-iphone-hotspot': ['192.0.2.140', 'IP servers see after Airplane Mode', 'Example IP, not yours', 'Airplane Mode on and off on the iPhone. Example IPs only.'],
+  'cs2-ip-ban': ['192.0.2.140', 'New IP after a ban', 'Example IP, new range (was 198.51)', 'From the log of Change IP and rejoin. Example IPs only.'],
+  'hide-ip-cs2': ['203.0.•••.•••', 'Your home IP, as the app shows it', 'Masked', "Servers see the carrier's IP; your home IP stays masked in the app too."],
+  'is-it-safe': [`${rel.virustotal.flagged}/${rel.virustotal.engines}`, 'VirusTotal engines that flag it', rel.tag, 'The latest release, scanned when it comes out.'],
+  'steam-account-switcher': ['8/8', 'Accounts saved on this PC', 'Example', 'From the Accounts page of the app, with example names.'],
+  'copy-cs2-config': ['7', 'Settings that differ between two accounts', 'Example', 'From Compare on the Configs page of the app.'],
+  'cs2-region-picker': ['8/30', 'Regions CS2 can play in', 'Example', 'From the Regions page of the app.'],
+  'steam-profile-editor': ['6/8', 'Accounts picked for one template', 'Example', 'From the Profiles page of the app, with example names.'],
+};
+
+// Each guide's piece of proposal A's world (site/assets/guides/src/world.js): the scene, what it shows in words (on screen
+// under the picture, and the canvas's text for screen readers), and its replay button. Example values only, as in the README.
+const WORLD = {
+  'change-ip-with-phone': ['phone', "Only CS2, Steam and your servers take the phone; the browser, Discord and downloads stay home. Example IP.", 'Play it again'],
+  'cs2-iphone-hotspot': ['iphone', "Airplane Mode on and off on the iPhone, and the server usually sees another carrier IP. Example IPs.", 'Play it again'],
+  'cs2-ip-ban': ['ban', "Demo: banned, mobile data off and on (Airplane Mode on an iPhone), back on a new IP with the next account.", 'Play it again'],
+  'hide-ip-cs2': ['hide', "Windows Firewall blocks CS2 and your servers at home, so the server only sees the carrier's IP. Example IPs.", 'Play it again'],
+  'is-it-safe': ['safe', "Public source, a GitHub Actions build with an attestation, a SHA-256 and a VirusTotal scan for each release.", 'Play it again'],
+  'steam-account-switcher': ['accounts', "Example: the account banned on that server is skipped and the next one logs in, with no password typed.", 'Play it again'],
+  'copy-cs2-config': ['configs', "Example: binds, crosshair, settings, video and HUD go to another account, with a backup of each change.", 'Play it again'],
+  'cs2-region-picker': ['regions', "Example: the regions you turn off go dark, blocked for cs2.exe only; CS2 matches in the ones left on.", 'Play it again'],
+  'steam-profile-editor': ['profiles', "Example: one template goes onto the accounts you pick, one after another, after a preview.", 'Play it again'],
+};
+
+// The caption under the app's own screen in the text: which page of the app it is, and that it is the real one.
+const capOf = (p) => `The ${p.crop[0][0].toUpperCase() + p.crop[0].slice(1)} page of the app, a real screenshot${/accounts|profiles|configs/.test(p.crop[0]) ? ' with example names' : p.crop[0] === 'connection' ? ' with example IPs' : ''}. Select it to see it full size.`;
 
 function render(p, modified) {
   const url = `${BASE}${p.slug}/`;
@@ -430,9 +628,29 @@ function render(p, modified) {
       ...(p.faq?.length ? [{ '@type': 'FAQPage', '@id': `${url}#faq`, mainEntity: p.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }] : []),
     ],
   };
+  const sig = SIG[p.slug], world = WORLD[p.slug];
+  if (!world) throw new Error(`${p.slug}: no scene in WORLD`);
+  if (!sig) throw new Error(`${p.slug}: no readout in SIG`);
   const sections = sectionsOf(p);
-  const toc = [...sections.map(([h]) => [slug(h), h]), ...(p.faq?.length ? [['faq', 'FAQ']] : [])];
+  const toc = [...sections.map(([h, , id]) => [id || slug(h), h]),...(p.faq?.length ? [['faq', 'FAQ']] : [])];
   const related = p.related.map((s) => bySlug[s]);
+  // The hero shot: the app's screen in a window. On a phone it shows the crop; on a PC it starts at the crop and runs on to
+  // the screenshot's right edge, sized so the crop fills ~92% of the column and the rest runs off the screen, never
+  // scaled past 1.5x (then it moves right, so it still runs off).
+  const [cn, cx, cy, cw, ch, calt] = p.crop;
+  const vx = cx, vw = 1239 - vx, pc = (n) => `${(n * 100).toFixed(2)}%`;
+  const shotVars = [`--pa:${cw}/${ch}`, `--pw:${pc(1240 / cw)}`, `--px:${pc(-cx / cw)}`, `--py:${pc(-cy / cw)}`,
+    `--da:${vw}/${ch}`, `--dw:${pc(1240 / vw)}`, `--dx:${pc(-vx / vw)}`, `--dy:${pc(-cy / vw)}`,
+    `--dk:${(vw / (cx + cw - vx) / 0.92).toFixed(3)}`, `--wmax:${Math.round(vw * 1.5)}px`].join(';');
+  const page = cn[0].toUpperCase() + cn.slice(1);
+  const shot = `<figure class="gwin" style="${shotVars}"><div class="gwin-bar" aria-hidden="true"><img src="../img/icon.png" alt="" width="16" height="16">CS2 IP Changer <i>/</i> <b>${esc(page)}</b></div><a class="gwin-view zoom" href="../img/${cn}.png"><picture><source type="image/webp" srcset="../img/${cn}.webp"><img src="../img/${cn}.png" alt="${esc(calt)}" width="1240" height="800" loading="eager" fetchpriority="high"></picture><span class="vh">, open full size</span></a><figcaption class="gshot-cap">${esc(capOf(p))}</figcaption></figure>`;
+  // Steps (every ordered list in the text) become a timeline: each step comes in, and the line to the next one fills.
+  const steps = (html) => html.replace(/<ol( class="howto")?>([\s\S]*?)<\/ol>/g, (m, howto, inner) => `<ol class="tl${howto ? ' howto' : ''}">${inner.replace(/<li( |>)/g, '<li class="rv"$1')}</ol>`);
+  const getBlock = `${download(url)}
+          ${checks}
+          <p class="safe">${safe(p.slug === 'is-it-safe')}</p>
+          <p class="req">Beta · ${req}</p>`;
+  const arrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="m14 6 6 6-6 6"/></svg>';
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -453,7 +671,8 @@ function render(p, modified) {
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="../fonts/funnel-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
-<script>document.documentElement.classList.add('js')</script>
+<link rel="preload" href="../fonts/fragment-mono.woff2" as="font" type="font/woff2" crossorigin>
+<script>document.documentElement.classList.add('js');if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('fx')</script>
 <script type="application/ld+json">
 ${JSON.stringify(ld, null, 1)}
 </script>
@@ -466,28 +685,45 @@ ${style}
     <a class="brand" href="../"><img src="../img/icon.png" alt="" width="28" height="28">CS2 IP Changer</a>
     <nav aria-label="Main">
       <a class="hide-s" href="../#features">Features</a>
-      <a class="hide-s" href="../#guides">Guides</a>
+      <a class="hide-s" href="../#how">How it works</a>
       <a class="hide-s" href="../is-it-safe/">Is it safe?</a>
+      <a class="hide-s" href="../#guides">Guides</a>
       <a class="btn btn-s btn-ghost" href="${REPO}" title="Star CS2 IP Changer on GitHub">${star}<span>Star<span class="hide-s"> on GitHub</span></span></a>
       <a class="btn btn-s get-desk" href="${EXE}">Download</a>
+      <button class="btn btn-s get-top" type="button" data-share data-copy="${url}">Send to PC</button>
     </nav>
   </div>
+  <span class="prog" aria-hidden="true"></span>
 </header>
-<main id="main">
-  <div class="wrap gl">
-    <div class="ghead">
-      <p class="crumbs"><a href="../">CS2 IP Changer</a> / ${esc(p.nav)}</p>
-      <p class="eyebrow">${esc(p.eyebrow)}</p>
-      <h1>${esc(p.h1)}</h1>
-      <p class="lead">${esc(p.lead)}</p>
+<main id="main" class="gmain">
+  <div class="gstage" data-world="${world[0]}">
+  <div class="gw" aria-hidden="true"><canvas class="gw-cv"></canvas></div>
+  <div class="wrap ghero">
+    <div class="ghero-copy">
+      <p class="crumbs"><a href="../">CS2 IP Changer</a><i aria-hidden="true">/</i><span>${esc(p.nav)}</span></p>
+      <h1${p.h1.length > 56 ? ' class="long"' : ''}>${esc(p.h1)}</h1>
+      <p class="lead">${p.leadHtml || esc(p.lead)}</p>
+      <div class="groom" aria-hidden="true"></div>
+      <div class="gw-foot">
+        <p class="gw-cap">${esc(world[1])}</p>
+        <div class="gw-ctl"><button class="demo gw-pause" type="button" hidden aria-pressed="false" title="Pause motion">Pause motion</button><button class="demo gw-play" type="button" hidden><i><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 1.5v7l6-3.5z" fill="currentColor"/></svg></i>${esc(world[2])}</button></div>
+        <p class="vh" role="status" aria-live="polite"></p>
+      </div>
+      <div class="ro ro-sig">
+      <div class="ro-head"><span>${esc(sig[1])}</span><span class="ro-state"><i class="led"></i>${esc(sig[2])}</span></div>
+      <p class="ro-num" style="--em:${[...sig[0]].reduce((a, c) => a + (c === '.' || c === ' ' ? .34 : c === '/' ? .44 : .6), 0).toFixed(2)}"><span class="vh">${esc(sig[1])}: ${esc(sig[0].replace("/", " of "))}${/example/i.test(sig[2]) ? ' (example)' : ''}</span><span class="digits" aria-hidden="true">${esc(sig[0])}</span></p>
+      <div class="ro-rule" aria-hidden="true"></div>
+      <div class="ro-foot"><p>${esc(sig[3])}</p></div>
+      </div>
     </div>
+  </div>
+  </div>
+  <div class="gline">
+  <div class="wrap gl">
     <aside class="rail" aria-label="Download and contents">
       <div class="rail-in">
-        <div>
-          ${download(url)}
-          ${checks}
-          <p class="safe">${safe(p.slug === 'is-it-safe')}</p>
-          <p class="req">Beta · ${req}</p>
+        <div class="gcard">
+          ${getBlock}
         </div>
         <nav class="toc" aria-labelledby="toc-h">
           <h2 id="toc-h">On this page</h2>
@@ -495,36 +731,82 @@ ${style}
             ${toc.map(([id, h]) => `<li><a href="#${id}">${esc(h)}</a></li>`).join('\n            ')}
           </ul>
         </nav>
-        <figure style="margin:0">${crop(p.crop)}<figcaption class="cropcap">The ${esc(p.crop[0][0].toUpperCase() + p.crop[0].slice(1))} page of the app</figcaption></figure>
       </div>
     </aside>
+    <nav class="gtoc-m" aria-label="On this page"><p aria-hidden="true">On this page</p><ol>
+      ${toc.map(([id, h]) => `<li><a href="#${id}">${esc(h)}</a></li>`).join('\n      ')}
+    </ol></nav>
+    <div class="gshot">${shot}</div>
     <article class="gtext">
-${sections.map(([h, html]) => `      <h2 id="${slug(h)}">${esc(h)}</h2>
-      ${labelTables(html)}`).join('\n')}
+${sections.map(([h, html, id], i) => `      <h2 id="${id || slug(h)}">${esc(h)}</h2>
+      ${steps(labelTables(html))}${i ? '' : `
+      <aside class="gget gcard" aria-label="Download">
+          ${getBlock}
+      </aside>`}`).join('\n')}
     </article>
 ${p.faq?.length ? `    <section class="gfaq" aria-labelledby="faq">
       <h2 id="faq">FAQ</h2>
-      ${p.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('\n      ')}
+      ${p.faq.map(([q, a, html]) => `<details><summary>${esc(q)}</summary><p>${html || esc(a)}</p></details>`).join('\n      ')}
     </section>` : ''}
     <nav class="gmore" aria-labelledby="more-h">
       <h2 id="more-h">Related guides</h2>
       <ul>
-        ${related.map((r) => `<li><a href="../${r.slug}/">${esc(r.nav)}</a><span>${esc(r.blurb)}</span></li>`).join('\n        ')}
+        ${related.map((r, i) => `<li class="rv" style="--i:${i}"><a href="../${r.slug}/"><b>${esc(r.nav)}</b><span>${esc(r.blurb)}</span>${arrow}</a></li>`).join('\n        ')}
       </ul>
       <div class="end">${download(url)}<p class="req">Free beta · ${req}</p></div>
       <p class="gstar">Useful? A <a href="${REPO}">star on GitHub</a> helps other players find it.</p>
     </nav>
   </div>
-</main>
-<footer>
-  <div class="wrap">
-    <span>CS2 IP Changer by Sepd0x. Not affiliated with Valve. Counter-Strike and Steam are trademarks of Valve Corporation.</span>
-    <span><a href="${REPO}">Source</a> · <a href="${REPO}/blob/main/CHANGELOG.md">Changelog</a> · <a href="${REPO}#privacy">Privacy</a> · <a href="${REPO}/issues/new/choose">Report a bug</a></span>
   </div>
-</footer>
+</main>
+${footer}
+<script>
+(function(){var b='../assets/js/',l=(document.documentElement.classList.contains('fx')?(matchMedia('(pointer: fine)').matches?['gsap.min.js','ScrollTrigger.min.js','lenis.min.js']:[]):[]).concat(['readout.js','../guides/world.min.js']);l.forEach(function(f){var s=document.createElement('script');s.src=b+f;s.async=false;if(/world/.test(f)){s.onload=function(){window.__gw&&window.__gw()};s.onerror=function(){document.documentElement.classList.add('no-gl')}}document.body.appendChild(s)})})();
+</script>
 <script>
 (function(){
-  var d=document;${shared}})();
+  var d=document;${shared}/* /shared */
+  /* guides: the contents mark the section you are reading (the last heading above the top third of the screen) */
+  var tl=[].slice.call(d.querySelectorAll('.toc a')),hs=tl.map(function(a){return d.getElementById(a.getAttribute('href').slice(1))});
+  if(tl.length&&'IntersectionObserver' in window&&hs.every(Boolean)){
+    var on=-1,mark=function(){var y=innerHeight*.34,k=0;hs.forEach(function(h,i){if(h.getBoundingClientRect().top<y)k=i});if(k!==on){if(on>=0){tl[on].classList.remove('on');tl[on].removeAttribute('aria-current')}tl[k].classList.add('on');tl[k].setAttribute('aria-current','location');on=k}};
+    var tio=new IntersectionObserver(mark,{rootMargin:'0px 0px -66% 0px'});
+    hs.forEach(function(h){tio.observe(h)});
+  }
+  /* guides: the line beside the contents fills as you read the text */
+  var tu=d.querySelector('.toc ul'),art=d.querySelector('.gtext');
+  if(tu&&art){var rq=0,rp=function(){rq=0;var r=art.getBoundingClientRect(),k=(innerHeight*.34-r.top)/Math.max(1,r.height);tu.style.setProperty('--rp',Math.min(1,Math.max(0,k)).toFixed(3))};addEventListener('scroll',function(){if(!rq){rq=1;requestAnimationFrame(rp)}},{passive:true});rp()}
+  /* guides: this page's piece of proposal A's world, fitted to the free part of the hero (the right side on a PC, its own band on a phone) */
+  var stg=d.querySelector('.gstage');
+  window.__gw=function(){
+    if(!stg||!window.GuideWorld||window.__gwOn)return;
+    if(!window.__gwIdle){window.__gwIdle=1;(window.requestIdleCallback||function(f){setTimeout(f,150)})(function(){window.__gw()},{timeout:400});return}
+    window.__gwOn=1;
+    var gw=stg.querySelector('.gw'),cv=gw.querySelector('canvas'),room=stg.querySelector('.groom'),copy=stg.querySelector('.ghero-copy'),foot=stg.querySelector('.gw-foot'),top=d.querySelector('.top'),
+      wide=function(){return innerWidth>=1000},
+      place=function(){
+        if(wide()){gw.style.removeProperty('--gw-top');gw.style.removeProperty('--gw-h');var sr=stg.getBoundingClientRect(),cr=copy.getBoundingClientRect();gw.style.setProperty('--gw-l',((cr.right-sr.left)/Math.max(1,sr.width)*100).toFixed(1)+'%');return}
+        var s=stg.getBoundingClientRect(),r=room.getBoundingClientRect();gw.style.setProperty('--gw-top',(r.top-s.top)+'px');gw.style.setProperty('--gw-h',r.height+'px');
+      },
+      frame=function(W,H){
+        if(!wide())return{box:[14,14,W-14,H-10]};
+        var sr=cv.getBoundingClientRect(),cr=copy.getBoundingClientRect(),fr=foot.getBoundingClientRect(),th=top?top.offsetHeight:64;
+        return{box:[cr.right-sr.left+24,th+18,W-Math.max(20,(W-cr.right+sr.left)*.04),fr.top-sr.top-14]};
+      };
+    place();addEventListener('resize',place);
+    var fx=d.documentElement.classList.contains('fx'),api=null,live=stg.querySelector('[role=status]'),pz=stg.querySelector('.gw-pause'),pl=stg.querySelector('.gw-play'),held=false;
+    try{held=localStorage.getItem('cs2-motion')==='paused'}catch(x){}
+    var vt=${JSON.stringify(rel.virustotal)};
+    try{api=window.GuideWorld.mount(cv,{scene:stg.getAttribute('data-world'),still:!fx,img:'../img/',vt:vt,frame:frame})}catch(x){api=null}
+    if(!api){d.documentElement.classList.add('no-gl');return}
+    cv.addEventListener('worldready',function(){gw.classList.add('ready')},{once:true});
+    if(held)api.pause();
+    if(!api.still)pl.hidden=false;
+    pl.addEventListener('click',function(){api.play();if(held){held=false;api.resume();if(pz){pz.setAttribute('aria-pressed','false')}try{localStorage.setItem('cs2-motion','')}catch(x){}}live.textContent='';setTimeout(function(){live.textContent='Playing it again.'},60)});
+    if(fx&&pz){pz.hidden=false;pz.setAttribute('aria-pressed',held);pz.addEventListener('click',function(){held=!held;pz.setAttribute('aria-pressed',held);try{localStorage.setItem('cs2-motion',held?'paused':'')}catch(x){}if(held)api.pause();else api.resume()})}
+  };
+  if(window.GuideWorld)window.__gw();
+})();
 </script>
 </body>
 </html>
@@ -538,7 +820,8 @@ for (const p of pages) {
   mkdirSync(dirname(file), { recursive: true });
   const old = existsSync(file) ? readFileSync(file, 'utf8') : '';
   const was = (old.match(/"dateModified": "(\d{4}-\d\d-\d\d)"/) || [])[1];
-  let html = was ? render(p, was) : '';
+  // a new page (no file yet, or no date in it) is rendered with today's date
+  let html = was ? render(p, was) : null;
   p.modified = html === old ? was : today;
   if (html !== old) html = render(p, today);
   writeFileSync(file, html);

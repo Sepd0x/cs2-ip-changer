@@ -290,11 +290,13 @@ export function buildBrief({ S, L = null, G = null, GH = { days: [] }, tables = 
   const versions = { latest_release: rel[0] ? String(rel[0].tag).replace(/^v/, '') : null, latest_release_date: rel[0] ? rel[0].date : null,
     share_today: vt.users ? vt.versions.map((x) => ({ version: x.k, n: x.n, of: vt.users, share: r3(x.n / vt.users) })) : [] };
 
-  // ---------------- the last 15 days, for the rules and for the agent's own comparisons
-  const last15 = D.slice(-22);
+  // ---------------- the last 30 days (v5: all of them, for the owner's page; it was 22), for the rules and the agent's own comparisons
+  const last15 = D.slice(-30);
   const series = { days: last15.map((x) => x.date), new_installs: last15.map((x) => x.fresh), active_installs: last15.map((x) => x.users),
     exe_downloads: last15.map((x) => { const p = pics.find((q) => q.day === addD(x.date, 1)); return p && p.exeDay != null ? p.exeDay : null; }),
-    site_visits: siteMissing ? null : last15.map((x) => siteDay(x.date).views), sessions: last15.map((x) => x.sessions), crashes: last15.map((x) => x.crashes) };
+    site_visits: siteMissing ? null : last15.map((x) => siteDay(x.date).views), sessions: last15.map((x) => x.sessions), crashes: last15.map((x) => x.crashes),
+    // v5: CS2 matches that ended with the app open, and minutes with the app open (both added up per day; the owner's page)
+    matches: last15.map((x) => x.matches || 0), minutes: last15.map((x) => x.minutes || 0) };
 
   const out = {
     schema: BRIEF_SCHEMA, generated_at: iso(now), tz: TZ,
@@ -307,7 +309,7 @@ export function buildBrief({ S, L = null, G = null, GH = { days: [] }, tables = 
     definitions: definitions ? DEFINITIONS : {},
     definitions_omitted: !definitions,
   };
-  const R = rules(out, { releases: rel, now });
+  const R = rules(out, { releases: rel, now, byRelease: (GH && GH.byRelease) || {} });
   out.anomalies = R.anomalies; out.suggested_actions = R.actions; out.rules_checked = R.checked;
   return out;
 }
@@ -335,7 +337,7 @@ const dPt = (d) => { if (!d) return '?'; const [, m, x] = String(d).split('-'); 
  * Every rule on the brief JSON: the anomalies (ranked: severity, then size) and up to 3 suggested actions. Each rule has a minimum
  * n; below it the rule stays silent. kind: data (is the data fine) or product (what changed). page: where the detail is.
  */
-export function rules(b, { releases = [], now = Date.now() } = {}) {
+export function rules(b, { releases = [], now = Date.now(), byRelease = {} } = {}) {
   const out = [];
   let checked = 0;
   const rule = (fn) => { checked++; fn(); };
@@ -403,7 +405,10 @@ export function rules(b, { releases = [], now = Date.now() } = {}) {
       else if (dir === 'both' && v < m - 3.5 * sd) A({ id: `metric_drop:${key}@${day}`, kind: 'product', severity: 'medium', metric: key, rule: 'outside the 14-day median +- 3.5 scaled MAD (median 5 or more)', observed: v, expected: m, base: base.length, page: '#hoje',
         message: `${key} on ${day}: ${v}, against a 14-day median of ${m}.`, text_pt: `${label} a ${dPt(day)}: ${v}, contra uma mediana de 14 dias de ${m}.` });
     } } });
-  rule(() => { const r = releases[0]; if (!r || !r.date) return; const age = now - Date.parse(r.date + 'T00:00:00Z'); if (age > 864e5 * 1.5 && r.exe === 0) A({ id: `release_no_downloads:${r.tag}`, kind: 'product', severity: 'medium', metric: 'exe_downloads', rule: 'the newest release older than a day with 0 exe downloads', observed: 0, expected: 1, page: '#aquisicao',
+  rule(() => { const r = releases[0]; if (!r || !r.date) return; const age = now - Date.parse(r.date + 'T00:00:00Z'); // v5: GitHub's public answer can say 0 while the daily pictures already counted downloads of that release (4 Nov. 2026:
+    // beta.10 had 2): only when both say 0
+    const kept = (byRelease[r.tag] || []).some((x) => x && x.n > 0);
+    if (age > 864e5 * 1.5 && r.exe === 0 && !kept) A({ id: `release_no_downloads:${r.tag}`, kind: 'product', severity: 'medium', metric: 'exe_downloads', rule: 'the newest release older than a day with 0 exe downloads', observed: 0, expected: 1, page: '#aquisicao',
     message: `${r.tag} (${r.date}) has 0 exe downloads.`, text_pt: `A ${String(r.tag).replace(/^v/, '')} (${dPt(r.date)}) tem 0 downloads do exe.`, action: 'Check the release has the .exe asset and the site links to it.', action_pt: 'Vê se a release tem o .exe e se o site aponta para ela.' }); });
   rule(() => { const y = K.exe_downloads.yesterday, n = K.new_installs.yesterday; if (y != null && y >= 10 && n === 0) A({ id: 'zero_new_after_downloads', kind: 'product', severity: 'medium', metric: 'new_installs', rule: '10 or more exe downloads yesterday and 0 new installs', observed: 0, expected: 1, base: y, page: '#funil',
     message: `${y} exe downloads yesterday and no new install: the first start may be failing (SmartScreen, the notice, a crash before the report).`, text_pt: `${y} downloads do exe ontem e nenhuma instalação nova: o 1.º arranque pode estar a falhar (SmartScreen, o aviso, um crash antes do relatório).` }); });

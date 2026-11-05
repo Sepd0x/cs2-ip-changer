@@ -23,7 +23,7 @@
 
 <p align="center">
   <a href="https://github.com/Sepd0x/cs2-ip-changer/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/Sepd0x/cs2-ip-changer?include_prereleases&label=release&style=flat-square&labelColor=1b1f24&color=2B74C2"></a>
-  <img alt="Needs Windows 10 or 11, 64-bit, and an Android phone" src="https://img.shields.io/badge/needs-Windows%2010%2F11%20x64%20%2B%20Android%20phone-3A3A3A?style=flat-square&labelColor=1b1f24">
+  <img alt="Needs Windows 10 or 11, 64-bit, and an Android phone or iPhone" src="https://img.shields.io/badge/needs-Windows%2010%2F11%20x64%20%2B%20Android%20or%20iPhone-3A3A3A?style=flat-square&labelColor=1b1f24">
   <a href="https://github.com/Sepd0x/cs2-ip-changer/attestations"><img alt="Builds: attested by GitHub Actions" src="https://img.shields.io/badge/builds-attested-3A3A3A?style=flat-square&labelColor=1b1f24"></a>
 </p>
 
@@ -31,6 +31,8 @@
   <a href="https://sepd0x.github.io/cs2-ip-changer/">Website</a>
   &nbsp;·&nbsp;
   <a href="https://sepd0x.github.io/cs2-ip-changer/#guides">Guides</a>
+  &nbsp;·&nbsp;
+  <a href="https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/">Does CS2 IP ban?</a>
   &nbsp;·&nbsp;
   <a href="#faq">FAQ</a>
   &nbsp;·&nbsp;
@@ -57,9 +59,9 @@
   <sub>The Connection page: the IP servers see next to your home IP (masked), the phone and the live checks.</sub>
 </p>
 
-CS2 IP Changer sends CS2 and Steam through your Android phone's mobile data, so community servers see your carrier's IP and not your home IP. Got IP banned? Change the IP from the app and join again; after a ban it can also log into the next account that server hasn't banned.
+CS2 IP Changer sends CS2 and Steam through your phone's mobile data (Android or iPhone), so community servers see your carrier's IP and not your home IP. Got IP banned? Change the IP from the app and join again; after a ban it can also log into the next account that server hasn't banned.
 
-It isn't a VPN: servers see an ordinary mobile connection, so it also works on servers that block VPNs and datacenter IPs. In the same app: a Steam account switcher, a CS2 config manager, a Steam profile editor and a matchmaking region picker.
+It isn't a VPN: servers see an ordinary mobile connection, so it usually gets in on servers that block VPNs and datacenter IPs. In the same app: a Steam account switcher, a CS2 config manager, a Steam profile editor and a matchmaking region picker.
 
 | Your problem | What the app does |
 |---|---|
@@ -72,15 +74,15 @@ It isn't a VPN: servers see an ordinary mobile connection, so it also works on s
 
 ## Quick start
 
-You need Windows 10 or 11 (64-bit), admin rights and an Android phone with mobile data.
+You need Windows 10 or 11 (64-bit), admin rights, a phone with mobile data (Android, or an iPhone where you change the IP by hand) and the IP:port of the server you play on (in CS2's console: `status`). Using a VPN on the PC? Turn it off first.
 
 1. **Download** [`CS2IPChanger.exe`](https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe) (<!--rel:size-->63.4 MB<!--/rel-->, from the [latest release](https://github.com/Sepd0x/cs2-ip-changer/releases/latest)) and put it in a folder only admins can change, like `C:\Program Files\CS2 IP Changer`. Started from Downloads or the Desktop, it offers to install itself there in one click.
-2. **Connect the phone.** Plug it in by USB, turn on USB tethering and turn off the phone's Wi-Fi.
+2. **Connect the phone.** Plug it in by USB, turn on USB tethering (Personal Hotspot on an iPhone) and turn off the phone's Wi-Fi.
 3. **Open the app** (it asks for admin). Open **Phone setup** (under Phone): each step checks itself and turns green, and where the app can do a step it has a button. Paste the servers you play on into **Servers**, then press **Turn on protection** in Status. Protection starts off each time the app opens (Settings > Protection can turn it on by itself).
 4. **Check.** Open **Connection** with CS2 and Steam running. Every check should be green, and the IP servers see must not be your home IP.
 
 > [!NOTE]
-> The exe isn't code-signed, so Windows SmartScreen may warn you the first time you run it. Click **More info > Run anyway**, or [check your download](#check-your-download) first.
+> Windows warns once: the exe isn't code-signed yet, so SmartScreen may stop it the first time. Click **More info > Run anyway**, or [check your download](#check-your-download) first. Updates are another matter: the app checks them with a signature ([below](#is-it-safe)).
 
 > [!WARNING]
 > This is a beta, so expect bugs. If something breaks your connection, **Turn off protection** (on Connection, or in the icon's menu next to the clock) removes the routes and firewall rules (`CS2IPChanger.exe --restore` removes the region block too).
@@ -93,9 +95,9 @@ Every detail of the setup (where the exe can run, the phone, ADB, launch options
 
 **Why it needs admin.** Routes and firewall rules are system settings, and Windows only lets admins change them. That's also why the exe has to live in a folder only admins can change: from Downloads or the Desktop it doesn't start.
 
-**Updates are signed.** Once a day at most the app checks for a new version (you can turn this off). It installs one only if the exe matches the release's SHA-256 and that `.sha256` file is signed with the project's own key, which is kept off GitHub. So someone who got into this repo or its releases still couldn't push an exe of their own to your PC.
+**Updates are checked with a signature.** Once a day at most the app checks for a new version (you can turn this off). It installs one only if the exe matches the release's SHA-256 and that `.sha256` file is signed with the project's own key, which is kept off GitHub. So someone who got into this repo or its releases still couldn't push an exe of their own to your PC.
 
-**No account. Usage stats, required to use the app.** At the first start the beta shows what it sends once a day (Accept or Quit): a random ID made for this install, with no name, versions, your country as two letters, the mode and counters. Never IPs, accounts, names or server addresses. Nothing is sent before you accept, and Quit closes the app without changing anything. [What is sent](#telemetry).
+**No account. Usage stats, required to use the app.** At the first start the beta shows what it sends when it opens, every 30 minutes and when it closes (Accept or Quit): a random ID made for this install, with no name, versions, your country as two letters, the mode and counters. Never IPs, accounts, names or server addresses. Nothing is sent before you accept, and Quit closes the app without changing anything. [What is sent](#telemetry).
 
 **Easy to undo.** Turn off protection removes the routes and firewall rules and checks that they're gone. `CS2IPChanger.exe --restore` removes everything, the region block too. More in [If something goes wrong](#if-something-goes-wrong).
 
@@ -144,8 +146,8 @@ The phone shares its mobile data with the PC over USB tethering (or its hotspot)
 | | CS2 IP Changer | VPN or proxy |
 |---|---|---|
 | Server sees | Your carrier's mobile IP, like any player on a phone hotspot | An IP from the VPN's datacenter |
-| Servers that block VPNs | Works: it's an ordinary mobile connection | Often blocked |
-| New IP | One click: mobile data off and on over ADB | Connect to another VPN server |
+| Servers that block VPNs | Usually gets in: it's a mobile IP, not a datacenter | Often kicked or banned by an anti-VPN plugin |
+| New IP | One click on Android (mobile data off and on over ADB); Airplane Mode on an iPhone | Connect to another VPN server |
 | Cost | Free, uses your phone's data plan | Usually a subscription |
 | What goes through | CS2, Steam and your servers, or the whole PC if you pick it | Usually the whole PC |
 | If it drops | Windows Firewall blocks it (a kill switch): CS2 loses the connection instead of using your home IP | Depends on the VPN app |
@@ -166,10 +168,10 @@ Every feature in detail, with screenshots of each page: [docs/FEATURES.md](docs/
 ## FAQ
 
 **Is it a VPN? Does it work on servers that block VPNs?**<br>
-No, it isn't a VPN, and yes, it works there. A VPN sends your traffic through a datacenter, and many community servers block datacenter and VPN IP ranges. This app sends CS2 and Steam through your own phone's mobile data, so the server sees an ordinary mobile connection from your carrier, the same as someone playing on a phone hotspot. There's no VPN server in between and no subscription.
+It isn't a VPN. A VPN sends your traffic through a datacenter, and many community servers run anti-VPN plugins that check each player's IP against lists of VPN and datacenter addresses; one CS2 plugin ([CS2-AntiVPN](https://github.com/daffyyyy/CS2-AntiVPN)) bans by default. This app sends CS2 and Steam through your own phone's mobile data, so the server sees an ordinary mobile connection from your carrier, the same as someone playing on a phone hotspot, and it usually gets in where a VPN doesn't. It's not a promise: carriers share each IP between many phones, so an IP someone else misused can be flagged; Change IP gets you another one. There's no VPN server in between and no subscription.
 
 **Can this get me VAC banned?**<br>
-It never touches the game process, its memory or its program files. It changes Windows routing and firewall rules and which Steam account logs in. The rest is in [Is it safe?](#is-it-safe)
+It never touches the game process, its memory or its program files. It changes Windows routing and firewall rules and which Steam account logs in, and switching accounts never asks for your Steam password. It won't hide a cheat from VAC, and we can't speak for Valve or for a server's admins, who set their own rules. The rest is in [Is it safe?](#is-it-safe)
 
 **Will my ping be worse?**<br>
 Usually, yes. Mobile data adds latency and jitter, so expect a higher ping than at home. A good 5G or 4G signal helps a lot: put the phone near a window and keep it charging. The ping column in Servers is measured through the phone, so it shows what you'll get before you join. More in the [FAQ](docs/FAQ.md#phone-and-connection).
@@ -181,7 +183,7 @@ No. It uses the logins Steam already saved on your PC (the accounts where you ti
 Connect an Android phone by USB with tethering on, then click Change IP (or press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> in game to change it and rejoin). The phone's mobile data goes off and on until the carrier hands out a new IP.
 
 **Does it work with an iPhone?**<br>
-The protection does: an iPhone's USB tethering shows up in Windows like an Android one. Change IP from the PC needs ADB, which only Android has, so on an iPhone you switch airplane mode on and off yourself.
+Yes, the protection does: an iPhone's USB tethering (Personal Hotspot) shows up in Windows like an Android one, and so does its Wi-Fi hotspot. Change IP from the PC needs ADB, which only Android has, so on an iPhone you switch airplane mode on and off yourself.
 
 **Is it malware? Why does my antivirus flag it?**<br>
 It runs as admin, changes network settings and isn't code-signed, which is what some heuristics look for. Every release is built by GitHub Actions from this source and attested. [Check your download](#check-your-download) before you run it.

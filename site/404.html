@@ -6,23 +6,168 @@
 <title>Page not found · CS2 IP Changer</title>
 <meta name="robots" content="noindex">
 <link rel="icon" href="/cs2-ip-changer/img/icon.png">
+<link rel="preload" href="/cs2-ip-changer/fonts/funnel-sans.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/cs2-ip-changer/fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/cs2-ip-changer/fonts/fragment-mono.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+/* fallbacks with the site fonts' widths, so the lines break in the same place before the fonts arrive (no shift) */
+@font-face{font-family:"Funnel Display fb";src:local("Segoe UI Variable Display"),local("Segoe UI"),local("Arial");size-adjust:105.5%}
+@font-face{font-family:"Funnel Sans fb";src:local("Segoe UI Variable Text"),local("Segoe UI"),local("Arial");size-adjust:101.4%}
 @font-face{font-family:"Funnel Sans";src:url(/cs2-ip-changer/fonts/funnel-sans.woff2) format("woff2");font-weight:300 800;font-display:swap}
 @font-face{font-family:"Funnel Display";src:url(/cs2-ip-changer/fonts/funnel-display.woff2) format("woff2");font-weight:300 800;font-display:swap}
-:root{/* tokens: tools/design-tokens.mjs, from src/Theme.xaml */--t-bg:#0e0e0e;--t-side:#0b0b0b;--t-edge:#050505;--t-surface:#171717;--t-surface2:#1d1d1d;--t-surface3:#262626;--t-line:#2a2a2a;--t-line-strong:#383838;--t-text:#dddddd;--t-muted:#adadad;--t-faint:#888888;--t-good:#7cc95a;--t-warn:#e3bf4b;--t-bad:#f05a4f;--t-accent:#5ba8f0;--t-accent-light:#7ebcf5;--t-accent-dark:#3e87d0;--t-accent-deep:#2b74c2;--t-top1:#3bb4e5;--t-top2:#c64fc6;--t-top3:#d8e03a;--t-accent-rgb:91,168,240;--t-top:linear-gradient(90deg,#3bb4e5,#c64fc6 50%,#d8e03a);/* /tokens */}
-html{color-scheme:dark}
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--t-bg);color:#e4e4e4;font:16px/1.6 "Funnel Sans","Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;text-align:center;padding:20px}
-h1{font:500 1.9rem/1.15 "Funnel Display","Segoe UI",system-ui,sans-serif;letter-spacing:-.025em;margin:0 0 10px}
-p{color:var(--t-muted);margin:0 0 24px}
-a{color:#e4e4e4;text-decoration:underline;text-decoration-color:var(--t-line-strong);text-underline-offset:.22em}
+@font-face{font-family:"Fragment Mono";src:url(/cs2-ip-changer/fonts/fragment-mono.woff2) format("woff2");font-weight:400;font-display:swap}
+:root{/* tokens: tools/design-tokens.mjs, from src/Theme.xaml */--t-bg:#0e0e0e;--t-side:#0b0b0b;--t-edge:#050505;--t-surface:#171717;--t-surface2:#1d1d1d;--t-surface3:#262626;--t-line:#2a2a2a;--t-line-strong:#383838;--t-text:#dddddd;--t-muted:#adadad;--t-faint:#888888;--t-good:#7cc95a;--t-warn:#e3bf4b;--t-bad:#f05a4f;--t-accent:#5ba8f0;--t-accent-light:#7ebcf5;--t-accent-dark:#3e87d0;--t-accent-deep:#2b74c2;--t-top1:#3bb4e5;--t-top2:#c64fc6;--t-top3:#d8e03a;--t-accent-rgb:91,168,240;--t-top:linear-gradient(90deg,#3bb4e5,#c64fc6 50%,#d8e03a);/* /tokens */
+  --ink:#e8e8e8;--ink2:var(--t-muted);--ink3:var(--t-faint);--ease-out:cubic-bezier(.16,1,.3,1);--ease-spring:linear(0,.009,.035 2.1%,.141,.281 6.7%,.723 12.9%,.938 16.7%,1.017,1.077,1.121,1.149 24.3%,1.159,1.163,1.161,1.154 29.9%,1.129 32.8%,1.051 39.6%,1.017 43.1%,.991,.977 51%,.974 53.8%,.975 57.1%,.997 69.8%,1.003 76.9%,1);
+  --g:clamp(1.25rem,.4rem + 4.2vw,5rem);
+  --sans:"Funnel Sans","Funnel Sans fb","Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --disp:"Funnel Display","Funnel Display fb","Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --mono:"Fragment Mono","Cascadia Mono",Consolas,ui-monospace,Menlo,monospace}
+*{box-sizing:border-box}
+html{color-scheme:dark;-webkit-text-size-adjust:100%}
+@media (min-width:1600px){html{font-size:clamp(1rem,1vw,1.125rem)}}
+@media (min-width:1915px){html{font-size:clamp(1.125rem,.94vw,1.5rem)}}
+body{margin:0;min-height:100svh;display:grid;grid-template-rows:auto 1fr;background:var(--t-bg);color:var(--ink);font:400 1rem/1.6 var(--sans);-webkit-font-smoothing:antialiased;border-top:2px solid transparent;border-image:var(--t-top) 1;overflow-x:clip}
+a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--t-line-strong);text-underline-offset:.22em;transition:color .15s,text-decoration-color .15s}
 a:hover{text-decoration-color:var(--t-accent)}
+:focus-visible{outline:2px solid var(--t-accent-light);outline-offset:3px;border-radius:2px}
+.cols{position:fixed;inset:0;z-index:0;pointer-events:none;padding-inline:var(--g)}
+.cols i{display:block;height:100%;max-width:88rem;margin-inline:auto;background-image:linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:calc(100%/12) 100%;border-right:1px solid rgba(255,255,255,.035)}
+.top{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;height:4rem;padding-inline:var(--g);border-bottom:1px solid var(--t-line)}
+.brand{display:flex;align-items:center;gap:10px;font:600 1rem/1 var(--disp);letter-spacing:-.01em;text-decoration:none}
+.brand img{width:28px;height:28px;border-radius:6px}
+.nf{position:relative;z-index:1;display:grid;align-content:stretch;overflow:hidden;max-width:calc(88rem + 2*var(--g));width:100%;margin-inline:auto;padding:clamp(2.5rem,2rem + 4vw,6rem) var(--g)}
+/* the readout: 404 where the IP would be, on the same ruler as every page */
+.ro-head,.ro-foot{display:flex;justify-content:space-between;gap:.5rem 1.5rem;flex-wrap:wrap;font:400 .8rem/1.4 var(--mono);color:var(--ink3)}
+.ro-head span{display:inline-flex;align-items:center;gap:.55rem}
+.led{width:.55rem;height:.55rem;border-radius:2px;background:var(--t-bad)}
+.num{margin:.1em 0 0;font:400 min(15vw,26svh)/.8 var(--mono);letter-spacing:-.06em;color:var(--ink);white-space:nowrap}
+.num span{display:inline-block;width:.6em;height:.86em;overflow:hidden;vertical-align:top;text-align:center}
+.num span b{display:block;font-weight:400}
+.num span i{display:block;height:.86em;line-height:.86em;font-style:normal}
+.rule{position:relative;overflow:visible;height:1.4rem;margin-top:.9rem;border-top:1px solid var(--t-line-strong);background:repeating-linear-gradient(90deg,var(--t-line-strong) 0 1px,transparent 1px calc(100%/60)) 0 0/100% 6px no-repeat,repeating-linear-gradient(90deg,var(--ink3) 0 1px,transparent 1px calc(100%/12)) 0 0/100% 12px no-repeat}
+.rule::after{content:"";position:absolute;left:0;top:-1px;height:2px;width:62%;background:linear-gradient(90deg,var(--t-top1),var(--t-top2))}
+.rule::before{content:"";position:absolute;left:62%;top:-7px;width:2px;height:14px;background:var(--t-bad)}
+/* proposal A's world behind the page: the route leaves the carrier and runs into the fog, with no server at the end */
+.gw{position:absolute;inset:0;z-index:0;pointer-events:none}
+.gw canvas{display:block;width:100%;height:100%;opacity:0;transition:opacity 1.4s var(--ease-out)}
+.gw.ready canvas{opacity:1}
+.gw::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--t-bg) 0,color-mix(in srgb,var(--t-bg) 86%,transparent) calc(var(--gw-l,46%) - 8%),transparent calc(var(--gw-l,46%) + 6%)),linear-gradient(transparent 80%,var(--t-bg))}
+.nf-in{position:relative;z-index:1;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:1fr auto auto;align-items:end;gap:1.5rem 0;min-height:100%}
+.cp{grid-column:1/7;grid-row:1/span 3;align-self:end;padding-right:2rem}
+.groom{display:none}
+.more{grid-column:9/13;grid-row:2;margin-top:1rem}
+.foot{grid-column:7/13;grid-row:3;align-self:end;display:flex;justify-content:flex-end;align-items:center;gap:.75rem 1rem;flex-wrap:wrap}
+.cap{flex:1 1 18rem;margin:0;max-width:42ch;font:400 .86rem/1.5 var(--sans);color:var(--ink2);padding:.6rem .85rem;border-radius:8px;background:color-mix(in srgb,var(--t-bg) 90%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--t-text) 10%,transparent)}
+.demo{display:inline-flex;align-items:center;gap:.6rem;min-height:44px;padding:.55rem 1.1rem .55rem 1rem;border:0;border-radius:999px;background:color-mix(in srgb,var(--t-bg) 88%,transparent);box-shadow:inset 0 0 0 1px var(--t-line-strong);color:var(--ink);font:500 .92rem/1.2 var(--sans);cursor:pointer}
+.demo[hidden]{visibility:hidden}@media (prefers-reduced-motion:reduce){.demo[hidden]{display:none}}
+.demo:hover{box-shadow:inset 0 0 0 1px var(--ink3)}
+.demo::before{content:"";flex:none;width:8px;height:10px;border-inline:2.5px solid currentColor}
+.demo[aria-pressed=true]::before{border:0;border-left:9px solid currentColor;border-block:5px solid transparent;width:0;height:0}
+.demo[aria-pressed=true]{background:color-mix(in srgb,var(--t-accent) 16%,transparent);box-shadow:inset 0 0 0 1px var(--t-accent)}
+.no-gl .gw,.no-gl .groom,.no-gl .demo{display:none}
+@media (max-width:760px){.gw .wd-lab>div{padding:.4rem .55rem;width:max-content;max-width:min(11.5rem,46vw);white-space:normal}.gw .wd-lab b{font-size:.82rem}.gw .wd-lab span,.gw .wd-lab small{font-size:.8125rem}}
+.ro{margin-bottom:2.25rem}
+h1{font:500 clamp(2.2rem,1.2rem + 3vw,4.4rem)/.98 var(--disp);letter-spacing:-.045em;margin:0 0 1rem}
+.cp>p{margin:0 0 1.8rem;color:var(--ink2);font-size:1.08rem;max-width:44ch}
+.acts{display:flex;flex-wrap:wrap;gap:.75rem 1rem}
+.btn{display:inline-flex;align-items:center;gap:.6rem;min-height:44px;padding:.8rem 1.35rem;border-radius:999px;background:var(--t-accent);color:var(--t-bg);font:600 1rem/1.2 var(--sans);text-decoration:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 14px 34px -14px rgba(var(--t-accent-rgb),.8);transition:background-color .2s}
+.btn:hover{background:var(--t-accent-light)}
+.btn svg{width:1.1em;height:1.1em}
+.btn.ghost{background:rgba(255,255,255,.03);color:var(--ink);box-shadow:inset 0 0 0 1px var(--t-line-strong)}
+.btn.ghost:hover{background:rgba(255,255,255,.07)}
+.btn.sm{min-height:44px;padding:.5rem 1rem;font-size:.9rem}
+.get-top,.get-phone{display:none}
+@media (pointer:coarse){.get-top,.get-phone{display:inline-flex}.get-desk{display:none}}
+.more h2{font:500 .9rem/1.4 var(--sans);color:var(--ink);margin:0 0 .4rem}
+.more ul{list-style:none;margin:0;padding:0;border-top:1px solid var(--t-line)}
+.more li{border-bottom:1px solid var(--t-line)}
+.more a{display:flex;justify-content:space-between;align-items:center;padding:.85rem 0;color:var(--ink2);text-decoration:none;font:500 1.05rem/1.3 var(--disp);letter-spacing:-.01em}
+.more a::after{content:"";width:.5rem;height:.5rem;border-top:1.5px solid var(--ink3);border-right:1.5px solid var(--ink3);transform:rotate(45deg);transition:transform .35s var(--ease-out)}
+.more a:hover{color:var(--ink)}.more a:hover::after{transform:translateX(4px) rotate(45deg)}
+.skip{position:absolute;left:-999px;top:8px;z-index:60;display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:5px;background:var(--t-accent);color:var(--t-bg);font-weight:600;text-decoration:none}.skip:focus{left:12px}
+main:focus{outline:0}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media (max-width:999px){.nf-in{display:block}.cp{padding:0}.groom{display:block;height:min(clamp(16rem,74vw,28rem),62svh);margin:1.75rem calc(-1*var(--g)) 0}.gw{inset:auto 0;top:var(--gw-top,0px);height:var(--gw-h,0px)}.gw::after{background:linear-gradient(var(--t-bg),transparent 14%,transparent 86%,var(--t-bg))}.foot{justify-content:flex-start;margin-top:.75rem}.cap{background:none;box-shadow:none;padding:0;-webkit-backdrop-filter:none;backdrop-filter:none}.more{margin-top:2.5rem}}
+@media (max-width:760px){.num{font-size:min(44vw,30svh)}}
+@media (max-height:640px){.num{font-size:min(44vw,17svh)}}
+@media (max-height:500px){.num{font-size:min(18vw,30svh)}}
+@media (max-height:500px) and (orientation:landscape){.nf{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 2rem;align-items:center;padding-top:1rem}.ro{margin:0}.cp{margin-top:0;grid-template-columns:minmax(0,1fr)}}
+@media (pointer:coarse){.brand{min-height:44px}}
 </style>
 </head>
 <body>
-<main>
-  <h1>This page doesn't exist</h1>
-  <p>The link may be old. Everything about CS2 IP Changer is on the home page.</p>
-  <a href="/cs2-ip-changer/">Go to CS2 IP Changer</a> · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Download</a>
+<a class="skip" href="#main">Skip to content</a>
+<div class="cols" aria-hidden="true"><i></i></div>
+<header class="top"><a class="brand" href="/cs2-ip-changer/"><img src="/cs2-ip-changer/img/icon.png" alt="" width="28" height="28">CS2 IP Changer</a><button class="btn sm get-top" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/">Send to PC</button></header>
+<main class="nf" id="main" tabindex="-1">
+  <div class="gw" aria-hidden="true"><canvas></canvas></div>
+  <div class="nf-in">
+    <div class="cp">
+      <div class="ro">
+        <div class="ro-head"><span>Page this link points to</span><span><i class="led"></i>Not found</span></div>
+        <p class="num" id="num"><span class="vh">404</span><span aria-hidden="true"><b><i>4</i></b></span><span aria-hidden="true"><b><i>0</i></b></span><span aria-hidden="true"><b><i>4</i></b></span></p>
+        <div class="rule" aria-hidden="true"></div>
+      </div>
+      <h1>This page doesn't exist</h1>
+      <p>The link may be old. Everything about CS2 IP Changer is on the home page.</p>
+      <div class="acts">
+        <a class="btn" href="/cs2-ip-changer/">Go to CS2 IP Changer</a>
+        <button class="btn ghost get-phone" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/">Send the link to my PC</button>
+        <a class="btn ghost get-desk" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download</a>
+      </div>
+      <div class="groom" aria-hidden="true"></div>
+    </div>
+    <div class="foot"><p class="cap">The route leaves your phone and your carrier and runs out with no server at the end: this link has no page.</p><button class="demo" type="button" hidden aria-pressed="false">Pause motion</button><p class="vh" role="status" aria-live="polite"></p></div>
+    <nav class="more" aria-labelledby="more-h">
+      <h2 id="more-h">Guides</h2>
+      <ul>
+        <li><a href="/cs2-ip-changer/change-ip-with-phone/">Change IP with your phone</a></li>
+        <li><a href="/cs2-ip-changer/cs2-ip-ban/">CS2 IP ban</a></li>
+        <li><a href="/cs2-ip-changer/cs2-region-picker/">CS2 region picker</a></li>
+        <li><a href="/cs2-ip-changer/is-it-safe/">Is it safe?</a></li>
+      </ul>
+    </nav>
+  </div>
 </main>
+<script>
+/* Send the link to my PC: the share sheet on a phone, or the link copied */
+(function(){document.querySelectorAll('[data-share]').forEach(function(b){b.addEventListener('click',function(){var u=b.getAttribute('data-copy'),l=b.textContent,c=function(){if(navigator.clipboard)navigator.clipboard.writeText(u).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent=l},1800)},function(){})};if(navigator.share)navigator.share({title:'CS2 IP Changer',url:u}).catch(function(x){if(x&&x.name!=='AbortError')c()});else c()})})})();
+/* 404 rolls in once from other digits, then stays */
+(function(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  var cells=document.querySelectorAll('#num span[aria-hidden] b');
+  cells.forEach(function(b,k){
+    var last=b.textContent,h='',n=6+k*2;
+    for(var i=0;i<n;i++)h+='<i>'+((i*7+k*3)%10)+'</i>';
+    b.innerHTML=h+'<i>'+last+'</i>';
+    b.animate([{transform:'translateY(0)'},{transform:'translateY('+(-100*n/(n+1))+'%)'}],{duration:1100+k*160,delay:200,easing:'cubic-bezier(.16,1,.3,1)',fill:'forwards'});
+  });
+})();
+</script>
+<script src="/cs2-ip-changer/assets/guides/world.min.js" async onload="window.__gw&&window.__gw()" onerror="document.documentElement.classList.add('no-gl')"></script>
+<script>
+/* proposal A's world, fitted to the free part of the page: right of the text on a PC, its own band on a phone */
+(function(){
+  var d=document,nf=d.querySelector('.nf');
+  window.__gw=function(){
+    if(!window.GuideWorld||window.__gwOn)return;
+    if(!window.__gwIdle){window.__gwIdle=1;(window.requestIdleCallback||function(f){setTimeout(f,150)})(function(){window.__gw()},{timeout:400});return}
+    window.__gwOn=1;
+    var gw=nf.querySelector('.gw'),cv=gw.querySelector('canvas'),room=nf.querySelector('.groom'),cp=nf.querySelector('.cp'),more=nf.querySelector('.more'),foot=nf.querySelector('.foot'),
+      wide=function(){return innerWidth>=1000},
+      place=function(){var n=nf.getBoundingClientRect();if(wide()){gw.style.removeProperty('--gw-top');gw.style.removeProperty('--gw-h');gw.style.setProperty('--gw-l',((cp.getBoundingClientRect().right-n.left)/Math.max(1,n.width)*100).toFixed(1)+'%');return}var r=room.getBoundingClientRect();gw.style.setProperty('--gw-top',(r.top-n.top)+'px');gw.style.setProperty('--gw-h',r.height+'px')},
+      frame=function(W,H){if(!wide())return{box:[14,14,W-14,H-10]};var c=cv.getBoundingClientRect(),r=cp.getBoundingClientRect(),f=foot.getBoundingClientRect();return{box:[r.right-c.left+24,18,W-24,more.getBoundingClientRect().top-c.top-24]}};
+    place();addEventListener('resize',place);
+    var fx=!matchMedia('(prefers-reduced-motion: reduce)').matches,api=null,pz=nf.querySelector('.demo'),live=nf.querySelector('[role=status]'),held=false;
+    try{held=localStorage.getItem('cs2-motion')==='paused'}catch(x){}
+    try{api=window.GuideWorld.mount(cv,{scene:'lost',still:!fx,img:'/cs2-ip-changer/img/',frame:frame})}catch(x){api=null}
+    if(!api){d.documentElement.classList.add('no-gl');return}
+    cv.addEventListener('worldready',function(){gw.classList.add('ready')},{once:true});
+    if(held)api.pause();
+    if(fx){pz.hidden=false;pz.setAttribute('aria-pressed',held);pz.addEventListener('click',function(){held=!held;pz.setAttribute('aria-pressed',held);try{localStorage.setItem('cs2-motion',held?'paused':'')}catch(x){}if(held)api.pause();else api.resume()})}
+  };
+  if(window.GuideWorld)window.__gw();
+})();
+</script>
 </body>
 </html>

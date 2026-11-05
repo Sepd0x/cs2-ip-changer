@@ -30,7 +30,8 @@
 <meta name="twitter:image:alt" content="CS2 IP Changer: IP banned on a CS2 server? New IP in one click, with the app's Connection screen">
 <link rel="preload" href="fonts/funnel-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
-<script>document.documentElement.classList.add('js')</script>
+<link rel="preload" href="fonts/fragment-mono.woff2" as="font" type="font/woff2" crossorigin>
+<script>(function(h){h.classList.add('js');if(!matchMedia('(prefers-reduced-motion: reduce)').matches)h.classList.add('fx')})(document.documentElement)</script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -54,11 +55,11 @@
       "@id": "https://sepd0x.github.io/cs2-ip-changer/#app",
       "name": "CS2 IP Changer",
       "alternateName": ["CS2IPChanger", "ServerRouteTool"],
-      "description": "Windows app that routes CS2 and Steam through your Android phone's mobile data, so Counter-Strike 2 community servers see your carrier's IP and not your home IP. Change IP over ADB and rejoin after an IP ban, Windows Firewall kill switch, Steam account switcher, CS2 config manager, Steam profile editor and matchmaking region picker.",
+      "description": "Windows app that routes CS2 and Steam through your phone's mobile data (Android or iPhone), so Counter-Strike 2 community servers see your carrier's IP and not your home IP. Change IP over ADB and rejoin after an IP ban, Windows Firewall kill switch, Steam account switcher, CS2 config manager, Steam profile editor and matchmaking region picker.",
       "applicationCategory": "UtilitiesApplication",
       "applicationSubCategory": "Network tool for games",
       "operatingSystem": "Windows 10, Windows 11 (64-bit)",
-      "softwareRequirements": "Administrator rights, Windows Firewall on, an Android phone with mobile data (USB tethering or Wi-Fi hotspot)",
+      "softwareRequirements": "Administrator rights, Windows Firewall on, an Android phone or iPhone with mobile data (USB tethering or Wi-Fi hotspot)",
       "url": "https://sepd0x.github.io/cs2-ip-changer/",
       "downloadUrl": "https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe",
       "installUrl": "https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/",
@@ -99,10 +100,11 @@
       "@type": "FAQPage",
       "@id": "https://sepd0x.github.io/cs2-ip-changer/#faq",
       "mainEntity": [
-        { "@type": "Question", "name": "Is it a VPN? Does it work on servers that block VPNs?", "acceptedAnswer": { "@type": "Answer", "text": "No, it isn't a VPN, and yes, it works there. A VPN sends your traffic through a datacenter, and many community servers block datacenter and VPN IP ranges. This app sends CS2 and Steam through your own phone's mobile data, so the server sees an ordinary mobile connection from your carrier. There's no VPN server in between and no subscription." } },
-        { "@type": "Question", "name": "What do I need?", "acceptedAnswer": { "@type": "Answer", "text": "Windows 10 or 11 (64-bit), admin rights, Windows Firewall turned on, and an Android phone with mobile data, connected by USB cable (USB tethering) or its Wi-Fi hotspot. USB debugging on the phone is only needed to change IP from the PC. CS2 and Steam then use the phone's data plan." } },
-        { "@type": "Question", "name": "Can I use the phone's Wi-Fi hotspot instead of a cable?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Connect the PC to the hotspot and pick it under Connection > How the PC connects to the phone. The app remembers the network name, and if Windows jumps back to your home router it blocks everything. Change IP works on the hotspot too if the phone is also plugged in by USB with USB debugging on." } },
-        { "@type": "Question", "name": "Does it send anything about me?", "acceptedAnswer": { "@type": "Answer", "text": "While the app is in beta it sends usage stats, which are required to use it: the first start shows what is sent, with Accept and Quit (Quit closes the app without changing anything). Then it sends them once when it has been open for 20 seconds and then once a day: a random ID made for this install, with no name (never from your PC or from you; Settings > Delete my stats deletes it all), versions, your country, the mode, how the phone is connected, minutes open, how often each button is used, a few counters, how long your lists are and errors. Never IPs, servers, accounts, names or anything you typed, and the server keeps no IP." } }
+        { "@type": "Question", "name": "Is it a VPN? Does it work on servers that block VPNs?", "acceptedAnswer": { "@type": "Answer", "text": "It isn't a VPN. A VPN sends your traffic through a datacenter, and many community servers run anti-VPN plugins that kick or ban datacenter and VPN IPs. This app sends CS2 and Steam through your own phone's mobile data, so the server sees an ordinary mobile connection from your carrier, and it usually gets in where a VPN doesn't. Not a promise: carriers share IPs between many phones, so an IP someone else misused can be flagged; Change IP gets you another one. There's no VPN server in between and no subscription." } },
+        { "@type": "Question", "name": "What do I need?", "acceptedAnswer": { "@type": "Answer", "text": "Windows 10 or 11 (64-bit), admin rights, Windows Firewall turned on, and an Android phone or iPhone with mobile data, connected by USB cable (USB tethering, or Personal Hotspot on an iPhone) or its Wi-Fi hotspot. Change IP from the PC needs an Android phone with USB debugging on; on an iPhone you switch Airplane Mode on and off yourself. CS2 and Steam then use the phone's data plan." } },
+        { "@type": "Question", "name": "Does it work with an iPhone?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, the protection does: an iPhone's USB tethering (Personal Hotspot) shows up in Windows like an Android one, and so does its Wi-Fi hotspot. Change IP from the PC needs ADB, which only Android has, so on an iPhone you get a new IP by switching Airplane Mode on and off on the phone." } },
+        { "@type": "Question", "name": "Can it get me VAC banned? Does it need my Steam password?", "acceptedAnswer": { "@type": "Answer", "text": "It never touches the game: not cs2.exe, its memory or its program files. It changes Windows routes and firewall rules, and which saved Steam account logs in. Switching accounts uses the logins Steam already saved and never asks for your Steam password. It won't hide a cheat from VAC or any anti-cheat, and we can't speak for Valve or for a server's admins, who set their own rules." } },
+        { "@type": "Question", "name": "Does it send anything about me?", "acceptedAnswer": { "@type": "Answer", "text": "While the app is in beta it sends usage stats, which are required to use it: the first start shows what is sent, with Accept and Quit (Quit closes the app without changing anything). It sends them when the app has been open for 20 seconds, every 30 minutes while it stays open and when it closes, with a short signal every 5 minutes of what is on: a random ID made for this install, with no name (never from your PC or from you; Settings > Delete my stats deletes it all), versions, your country, the mode, how the phone is connected, minutes open, how often each button is used, a few counters, how long your lists are and errors. Never IPs, servers, accounts, names or anything you typed, and the server keeps no IP. The full list is in the README." } }
       ]
     }
   ]
@@ -113,291 +115,645 @@
 @font-face{font-family:"Funnel Display";src:url(fonts/funnel-display.woff2) format("woff2");font-weight:300 800;font-style:normal;font-display:swap}
 @font-face{font-family:"Fragment Mono";src:url(fonts/fragment-mono.woff2) format("woff2");font-weight:400;font-style:normal;font-display:swap}
 :root{/* tokens: tools/design-tokens.mjs, from src/Theme.xaml */--t-bg:#0e0e0e;--t-side:#0b0b0b;--t-edge:#050505;--t-surface:#171717;--t-surface2:#1d1d1d;--t-surface3:#262626;--t-line:#2a2a2a;--t-line-strong:#383838;--t-text:#dddddd;--t-muted:#adadad;--t-faint:#888888;--t-good:#7cc95a;--t-warn:#e3bf4b;--t-bad:#f05a4f;--t-accent:#5ba8f0;--t-accent-light:#7ebcf5;--t-accent-dark:#3e87d0;--t-accent-deep:#2b74c2;--t-top1:#3bb4e5;--t-top2:#c64fc6;--t-top3:#d8e03a;--t-accent-rgb:91,168,240;--t-top:linear-gradient(90deg,#3bb4e5,#c64fc6 50%,#d8e03a);/* /tokens */
-  --bg:var(--t-bg);--bg2:var(--t-surface);--bg3:var(--t-surface2);--line:var(--t-line);--line2:var(--t-line-strong);--ink:#e4e4e4;--ink2:var(--t-muted);--ink3:var(--t-faint);--sand:var(--t-accent-deep);--sand-hi:#3a84d4;--on-sand:#ffffff;--plate:#121212;--area:rgba(var(--t-accent-rgb),.05);--area-line:rgba(var(--t-accent-rgb),.16);--glow:rgba(var(--t-accent-rgb),.10);--route:var(--t-accent);--accent:var(--t-accent);--route-soft:rgba(var(--t-accent-rgb),.22);--shadow:rgba(0,0,0,.55);
+  --bg:var(--t-bg);--bg2:var(--t-surface);--bg3:var(--t-surface2);--line:var(--t-line);--line2:var(--t-line-strong);--ink:#e8e8e8;--ink2:var(--t-muted);--ink3:var(--t-faint);--sand:var(--t-accent-deep);--route:var(--t-accent);--accent:var(--t-accent);
+  --ease-out:cubic-bezier(.16,1,.3,1);--ease-in-out:cubic-bezier(.65,0,.35,1);--ease-spring:linear(0,.009,.035 2.1%,.141,.281 6.7%,.723 12.9%,.938 16.7%,1.017,1.077,1.121,1.149 24.3%,1.159,1.163,1.161,1.154 29.9%,1.129 32.8%,1.051 39.6%,1.017 43.1%,.991,.977 51%,.974 53.8%,.975 57.1%,.997 69.8%,1.003 76.9%,1);
+  --gutter:clamp(1.25rem,.4rem + 4.2vw,5rem);--max:88rem;--top-h:4rem;
   --sans:"Funnel Sans","Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
   --disp:"Funnel Display","Segoe UI Variable Display","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
-  --mono:"Fragment Mono","Cascadia Mono",Consolas,ui-monospace,"SFMono-Regular",Menlo,monospace}
+  --mono:"Fragment Mono","Cascadia Mono",Consolas,ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --h2:clamp(2.2rem,1rem + 3.6vw,4.8rem)}
 *{box-sizing:border-box}
-html{color-scheme:dark;scroll-behavior:smooth;font-size:100%;-webkit-text-size-adjust:100%}
+html{color-scheme:dark;font-size:100%;-webkit-text-size-adjust:100%;scrollbar-color:var(--line2) var(--bg);scroll-padding-top:calc(var(--top-h) + 1rem)}
 @media (min-width:1600px){html{font-size:clamp(1rem,1vw,1.125rem)}}
 @media (min-width:1915px){html{font-size:clamp(1.125rem,.94vw,1.5rem)}}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.6 var(--sans);-webkit-font-smoothing:antialiased}
-main{overflow-x:clip}
-a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--line2);text-decoration-thickness:1px;text-underline-offset:.22em}
-a:hover{text-decoration-color:var(--sand)}
-:focus-visible{outline:2px solid var(--sand);outline-offset:3px;border-radius:2px}
+html:not(.fx){scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after,::details-content{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+@media (prefers-reduced-motion:reduce){html:not(.fx){scroll-behavior:auto}}
+html.lenis,html.lenis body{height:auto}.lenis.lenis-smooth{scroll-behavior:auto!important}.lenis.lenis-stopped{overflow:hidden}
+body{margin:0;border-top:2px solid transparent;border-image:var(--t-top) 1;background:var(--bg);color:var(--ink);font:400 1rem/1.6 var(--sans);-webkit-font-smoothing:antialiased;overflow-wrap:break-word}
+::selection{background:rgba(var(--t-accent-rgb),.34);color:#fff}
+main{overflow-x:clip;position:relative}
+a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--t-faint);text-decoration-thickness:1px;text-underline-offset:.22em;transition:text-decoration-color .15s,color .15s}
+a:hover{text-decoration-color:var(--accent)}
+:focus-visible{outline:2px solid var(--t-accent-light);outline-offset:3px;border-radius:2px}
+a.zoom:focus-visible,.copyrow .btn:focus-visible{outline-offset:-3px}
+@media (pointer:coarse){.instr p a,.vs .src a,.setup-foot a,details p a,.rel a{display:inline-block;padding-block:.6em;margin-block:-.6em}footer nav li a{display:inline-flex;align-items:center;min-height:44px}}
 img{max-width:100%;height:auto;display:block}
 picture{display:block}
 code,kbd{font-family:var(--mono);font-size:.86em}
 code{color:var(--ink)}
-kbd{border:1px solid var(--line2);border-bottom-width:2px;border-radius:3px;padding:0 .35em;background:var(--bg3);color:var(--ink);font-size:.8em}
+kbd{border:1px solid var(--line2);border-bottom-width:2px;border-radius:3px;padding:0 .35em;background:var(--bg3);color:var(--ink);font-size:.8em;white-space:nowrap}
 h1,h2,h3{text-wrap:balance}
-.skip{position:absolute;left:-999px;top:8px;background:var(--sand);color:var(--on-sand);padding:8px 14px;border-radius:5px;z-index:10}
+p,li,dd{text-wrap:pretty}
+.skip{position:absolute;left:-999px;top:8px;background:var(--t-accent);color:var(--t-bg);padding:8px 14px;border-radius:5px;z-index:60}
 .skip:focus{left:12px}
-.wrap{max-width:72.5rem;margin:0 auto;padding:0 1.25rem}
-.top{border-bottom:1px solid var(--line)}
-.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:1rem;height:4rem}
-.brand{display:flex;align-items:center;gap:10px;color:var(--ink);font:600 1rem/1 var(--disp);letter-spacing:-.01em;text-decoration:none;white-space:nowrap}
-.brand img{width:28px;height:28px;border-radius:6px}
-.top nav{display:flex;align-items:center;gap:1.4rem;font-size:.94rem}
-.top nav a:not(.btn){color:var(--ink2);text-decoration:none}
+[hidden]{display:none!important}
+.intro #h1,.intro .hero-side>*,.intro .hero .ro{visibility:hidden}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.wrap{max-width:calc(var(--max) + 2*var(--gutter));margin-inline:auto;padding-inline:var(--gutter)}
+/* the drafting grid: twelve hairline columns behind the whole page, the same grid everything sits on */
+.cols{position:fixed;inset:0 0 auto;height:100lvh;z-index:0;pointer-events:none}
+.cols i{display:block;height:100%;max-width:calc(var(--max) + 2*var(--gutter));margin-inline:auto;padding-inline:var(--gutter);background-clip:content-box;background-image:linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:calc(100%/12) 100%}
+.cols i::after{content:"";display:block;height:100%;border-right:1px solid rgba(255,255,255,.035)}
+main>*,footer{position:relative;z-index:1}
+/* things come in as they reach the screen; without JS or with reduced motion they are just there */
+.fx .rv{opacity:0;transform:translateY(24px);transition:opacity .9s var(--ease-out),transform 1.05s var(--ease-out);transition-delay:calc(var(--i,0)*80ms)}
+.fx .rv.in{opacity:1;transform:none}
+/* header: glass, the app's top line as its last pixel row while you read */
+.top{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 80%,transparent);border-bottom:1px solid var(--line)}
+@supports (backdrop-filter:blur(1px)){.top{background:color-mix(in srgb,var(--bg) 66%,transparent);backdrop-filter:saturate(1.4) blur(18px)}}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:1rem;height:var(--top-h)}
+.prog{position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--t-top);transform-origin:0 50%;transform:scaleX(0);pointer-events:none}
+.brand{display:flex;align-items:center;gap:10px;color:var(--ink);font:600 1rem/1 var(--disp);letter-spacing:-.01em;text-decoration:none;white-space:nowrap;min-width:0;flex-shrink:0}
+.brand img{width:28px;height:28px;border-radius:6px;flex:none}
+.top nav{display:flex;align-items:center;gap:1.5rem;font-size:.94rem}
+.top nav a:not(.btn){color:var(--ink2);text-decoration:none;padding-block:.6rem}
 .top nav a:not(.btn):hover{color:var(--ink)}
-.eyebrow{font:400 .75rem/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:0 0 1rem}
-.lead{color:var(--ink2);font-size:1.1rem;line-height:1.55;margin:0 0 1.75rem;max-width:62ch}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;background:var(--sand);color:var(--on-sand);font:600 1rem/1.2 var(--sans);padding:.9rem 1.35rem;border:0;border-radius:6px;text-decoration:none;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 1px 0 rgba(0,0,0,.4),0 10px 30px -12px var(--glow);transition:background-color .15s}
-.btn:hover{background:var(--sand-hi)}
-.btn:active{transform:translateY(1px)}
+.top nav a,.top nav .btn{white-space:nowrap}
+/* buttons: the app's accent with dark text (7.6:1), a hairline ghost, and a spring on press */
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;background:var(--t-accent);color:var(--t-bg);font:600 1rem/1.2 var(--sans);padding:.85rem 1.4rem;border:0;border-radius:999px;text-decoration:none;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 0 1px rgba(var(--t-accent-rgb),.5);transition:background-color .2s,box-shadow .25s,transform .5s var(--ease-spring)}
+.btn:hover{background:var(--t-accent-light)}
+.btn:active{transform:scale(.96);transition-duration:.06s}
 .btn svg{width:1.125em;height:1.125em;flex:none}
-.btn-s{padding:.55rem .85rem;font-size:.9rem;border-radius:5px}
-.link{color:var(--ink2);font-weight:500}
+.btn-s{min-height:38px;padding:.55rem 1rem;font-size:.9rem}
+.btn-ghost{background:rgba(255,255,255,.03);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line2)}
+.btn-ghost:hover{background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px var(--ink3)}
+.btn-ghost svg{width:1.05em;height:1.05em}
+.link{color:var(--ink2);font-weight:500;display:inline-flex;align-items:center;min-height:44px}
 .link:hover{color:var(--ink)}
-.actions{display:flex;flex-wrap:wrap;align-items:center;gap:1rem 1.6rem}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1.6rem}
+.rel{color:var(--ink2);font-size:.86rem;line-height:1.5;margin:.75rem 0 0}
+.rel a{color:var(--ink2);display:inline-block;padding-block:.25rem}
+.rel a:hover{color:var(--ink)}
+.nowrap-bits a{white-space:nowrap}
+.req,.safe{color:var(--ink3);font-size:.88rem;line-height:1.5;margin:.8rem 0 0}
+.req{margin-top:.45rem}
+.safe a{color:var(--ink2)}
 .checks{list-style:none;margin:1.5rem 0 0;padding:0;display:flex;flex-wrap:wrap;gap:.4rem 1.15rem;font-size:.9rem;line-height:1.5;color:var(--ink2)}
 .checks li{display:inline-flex;align-items:center;gap:.5rem}
-.checks li::before{content:"";width:.4rem;height:.4rem;background:var(--sand);flex:none}
+.checks li::before{content:"";width:.4rem;height:.4rem;border-radius:50%;background:var(--accent);flex:none}
 .checks a{color:var(--ink2)}
-.checks a:hover{color:var(--ink)}
-.req,.safe{color:var(--ink3);font-size:.88rem;line-height:1.5;margin:.8rem 0 0}
-.req{font:400 .78rem/1.65 var(--mono);margin-top:.45rem}
-.safe a{color:var(--ink2)}
-.safe a:hover{color:var(--ink)}
-.shot{border-radius:10px;overflow:hidden;background:var(--bg2);box-shadow:0 0 0 1px var(--line2),0 30px 70px -30px var(--shadow)}
-section{padding:4.5rem 0;border-top:1px solid var(--line)}
-h2{font:500 clamp(1.65rem,2.9vw,2.3rem)/1.1 var(--disp);letter-spacing:-.025em;margin:0 0 .7rem}
-h3{font:500 1.06rem/1.35 var(--disp);letter-spacing:-.01em;margin:0 0 .35rem}
-.sub{color:var(--ink2);max-width:62ch;margin:0 0 2.25rem}
+/* send to the PC: on a touch screen the Windows download makes no sense, the link goes to the PC instead */
+.get-phone{display:none}
+.get-note{margin:0;font-size:.95rem;color:var(--ink2)}
+.copyrow{display:flex;align-items:stretch;min-width:0;border:1px solid var(--line2);border-radius:999px;overflow:hidden;background:var(--bg2)}
+.copyrow .url{flex:1 1 0;width:0;min-width:0;padding:.85rem 1rem;font-size:.8rem;color:var(--ink2);overflow-wrap:anywhere;align-self:center}
+.copyrow .btn{display:none;border-radius:999px;padding:.7rem 1.1rem;flex:none;box-shadow:none;margin:3px}
+.js .copyrow .btn{display:inline-flex}
+@media (max-width:480px){.copyrow{flex-direction:column;border-radius:16px}.copyrow .url{flex:none;width:auto;padding:.8rem 1rem .3rem;overflow-wrap:normal}.copyrow .btn{margin:6px}}
+.get-top{display:none}
+@media (pointer:coarse){.get-desk{display:none!important}.get-top{display:inline-flex}.get-phone{display:flex;flex-direction:column;align-items:stretch;gap:.7rem;min-width:0}}
+/* sections: big two-tone titles on the grid, nothing above them */
+section{padding-block:clamp(5rem,3rem + 6vw,10rem);border-top:1px solid var(--line)}
+h2{font:500 var(--h2)/1 var(--disp);letter-spacing:-.04em;margin:0 0 1.2rem}
+h2 .m{color:var(--ink3)}
+h3{font:500 1.12rem/1.35 var(--disp);letter-spacing:-.01em;margin:0 0 .35rem}
+.lead{color:var(--ink2);font-size:1.12rem;line-height:1.55;margin:0 0 1.75rem;max-width:60ch}
+.sub{color:var(--ink2);max-width:58ch;margin:0 0 2.75rem;font-size:1.06rem}
+.mono{font-family:var(--mono)}
+.tag{display:inline-block;padding:.12rem .5rem;border-radius:5px;background:rgba(var(--t-accent-rgb),.12);color:var(--t-accent-light);box-shadow:inset 0 0 0 1px rgba(var(--t-accent-rgb),.3);font:400 .8rem/1.5 var(--mono)}
+/* the readout: a number on a ruler, the same instrument on every page */
+.ro{position:relative}
+.ro-head,.ro-foot{display:flex;align-items:center;justify-content:space-between;gap:.5rem 1.5rem;flex-wrap:wrap;font:400 .8rem/1.4 var(--mono);color:var(--ink3)}
+.ro-head b,.ro-foot b{font-weight:400;color:var(--ink2)}
+.ro-state{display:inline-flex;align-items:center;gap:.55rem;color:var(--ink2)}
+.led{width:.55rem;height:.55rem;border-radius:2px;background:var(--t-good);flex:none;transition:background-color .3s}
+.led.off{background:var(--t-bad)}.led.on{background:var(--t-warn)}.led.idle{background:var(--t-faint)}
+.ro-num{position:relative;margin:.15em 0 0;font:400 var(--ro-size,min(12.4vw,24svh))/.82 var(--mono);letter-spacing:-.045em;color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums}
+.digits{display:inline-flex;transform-origin:0 0}
+.digits .ch{display:inline-block;position:relative;width:.6em;height:.86em;overflow:hidden;text-align:center}
+.digits .strip{display:block}
+.digits .g{display:block;height:.86em;line-height:.86em}
+.digits .dot{display:inline-flex;justify-content:center;overflow:visible;width:.34em}
+.digits .ch.sp{width:.34em}.digits .ch.sl{width:.44em}
+.digits .oct{display:inline-flex}
+.digits.home{color:var(--ink3)}
+.digits .ch.hot .g:last-child{color:var(--t-accent-light)}
+.digits .g:last-child{transition:color .9s var(--ease-out)}
+.ro-rule{position:relative;height:1.4rem;margin-top:.9rem;border-top:1px solid var(--line2);background:repeating-linear-gradient(90deg,var(--line2) 0 1px,transparent 1px calc(100%/60)) 0 0/100% 6px no-repeat,repeating-linear-gradient(90deg,var(--ink3) 0 1px,transparent 1px calc(100%/12)) 0 0/100% 12px no-repeat}
+.ro-rule::after{content:"";position:absolute;left:0;right:0;top:-1px;height:2px;background:var(--t-top);transform-origin:0 50%;transform:scaleX(var(--fill,1));transition:transform .9s var(--ease-out)}
+.ro-foot{margin-top:.25rem}
+.ro canvas.dust{position:absolute;left:-4%;top:-60%;width:108%;height:220%;pointer-events:none;z-index:2}
+/* the phone, drawn as the app's own status: bars, Mobile data, USB tethering */
+.phone{display:inline-flex;align-items:center;gap:.7rem;padding:.35rem .7rem .35rem .45rem;border-radius:999px;box-shadow:inset 0 0 0 1px var(--line2);background:rgba(255,255,255,.02);color:var(--ink2);white-space:nowrap}
+.phone .bars{display:inline-flex;align-items:flex-end;gap:2px;height:.85rem}
+.phone .bars i{width:3px;border-radius:1px;background:var(--ink);transition:opacity .25s steps(2)}
+.phone .bars i:nth-child(1){height:30%}.phone .bars i:nth-child(2){height:55%}.phone .bars i:nth-child(3){height:78%}.phone .bars i:nth-child(4){height:100%}
+.phone .tg{display:inline-flex;align-items:center;gap:.4rem}
+.phone .tg s{position:relative;width:1.7rem;height:.95rem;border-radius:999px;background:var(--t-accent);text-decoration:none;transition:background-color .25s}
+.phone .tg s::after{content:"";position:absolute;top:.15rem;left:.9rem;width:.65rem;height:.65rem;border-radius:50%;background:#fff;transition:left .45s var(--ease-spring)}
+.phone.down .bars i{opacity:.18}
+.phone.down .tg.md s{background:var(--line2)}.phone.down .tg.md s::after{left:.15rem}
+.phone.down .bars i:nth-child(1){transition-delay:.18s}.phone.down .bars i:nth-child(2){transition-delay:.12s}.phone.down .bars i:nth-child(3){transition-delay:.06s}
+/* the demo button: it plays Change IP on this picture with example IPs */
+.demo{display:inline-flex;align-items:center;gap:.6rem;min-height:44px;padding:.55rem 1.05rem .55rem .8rem;border:0;border-radius:999px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px var(--line2);color:var(--ink);font:500 .92rem/1.2 var(--sans);cursor:pointer;transition:background-color .2s,box-shadow .2s,transform .5s var(--ease-spring)}
+.demo:hover{background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px var(--ink3)}
+.demo:active{transform:scale(.96);transition-duration:.06s}
+.demo i{width:1.4rem;height:1.4rem;border-radius:50%;display:grid;place-items:center;background:var(--t-accent);color:var(--t-bg)}
+.demo i svg{width:.7rem;height:.7rem}
+
+/* the app window, as the real screenshot with a few live values on top */
+.win{position:relative;container-type:inline-size;border-radius:12px;overflow:hidden;background:var(--t-bg);box-shadow:0 0 0 1px rgba(255,255,255,.09),0 80px 160px -60px rgba(0,0,0,.95),0 30px 70px -30px rgba(0,0,0,.75)}
+.win img{display:block;width:100%;height:auto}
+.patch{position:absolute;display:flex;align-items:center;white-space:nowrap;overflow:hidden;visibility:hidden}
+.live .patch{visibility:visible}
+.pg-other .patch{visibility:hidden!important}
+.p-ip span{transition:opacity .2s}.await .p-ip span{opacity:0}
+.p-ip{left:9%;top:20.1%;width:15%;height:3.9%;gap:1.05cqw;background:var(--t-surface);font:600 1.53cqw/1 "Cascadia Mono","Cascadia Code",Consolas,var(--mono);color:#e8e8e8;letter-spacing:.01em}
+.ring{position:absolute;border:1px solid var(--t-accent);border-radius:4px;opacity:0;transition:opacity .3s,left .5s var(--ease-out),top .5s var(--ease-out),width .5s var(--ease-out),height .5s var(--ease-out);pointer-events:none;left:var(--rx);top:var(--ry);width:var(--rw);height:var(--rh)}
+.stage .ring{opacity:1}
+.win[data-pg=connection] .ring,.win:not([data-pg]) .ring{--rx:8.7%;--ry:19.8%;--rw:13.2%;--rh:4%}
+.win[data-pg=servers] .ring{--rx:58.9%;--ry:27.6%;--rw:5.6%;--rh:3%}
+.win[data-pg=accounts] .ring{--rx:73.6%;--ry:9.4%;--rw:8.6%;--rh:3%}
+.win[data-pg=regions] .ring{--rx:8.8%;--ry:8.6%;--rw:15.4%;--rh:3%}
+.win[data-pg=configs] .ring{--rx:54.2%;--ry:59.4%;--rw:8%;--rh:2.8%}
+.win[data-pg=profiles] .ring{--rx:51%;--ry:12.4%;--rw:6.4%;--rh:3%}
+.p-bar{left:70.8%;top:2.2%;width:7.6%;height:2.3%;background:var(--t-bg);font:600 .93cqw/1 "Cascadia Mono","Cascadia Code",Consolas,var(--mono);color:#cfcfcf}
+/* FAQ */
+:root{interpolate-size:allow-keywords}
+details{position:relative;border-top:1px solid var(--line);counter-increment:q}
+.faq details::before{content:counter(q,decimal-leading-zero) / "";position:absolute;left:0;top:1.75rem;font:400 .8rem/1 var(--mono);color:var(--ink3)}
+.faq summary{padding-left:3.5rem}.faq details p{padding-left:3.5rem}
+.faq .qs{counter-reset:q}
+.faq details[open] summary{background:linear-gradient(90deg in oklch,var(--t-top1),var(--t-top2) 50%,var(--t-top3)) 3.5rem 100%/calc(100% - 3.5rem) 1px no-repeat}
+details:last-of-type{border-bottom:1px solid var(--line)}
+details::details-content{block-size:0;overflow:hidden;transition:block-size .5s var(--ease-out),content-visibility .5s allow-discrete}
+details[open]::details-content{block-size:auto}
+summary{cursor:pointer;list-style:none;padding:1.45rem 3.5rem 1.45rem 0;position:relative;font:500 clamp(1.12rem,1rem + .45vw,1.45rem)/1.3 var(--disp);letter-spacing:-.018em;color:var(--ink2);transition:color .2s}
+summary::-webkit-details-marker{display:none}
+summary::before,summary::after{content:"";position:absolute;right:.35rem;top:50%;width:16px;height:1.5px;margin-top:-.75px;background:currentColor;transition:transform .5s var(--ease-out)}
+summary::before{transform:rotate(90deg)}
+details[open] summary::before{transform:rotate(135deg)}
+details[open] summary::after{transform:rotate(45deg)}
+summary:hover,details[open] summary{color:var(--ink)}
+details p{margin:0;padding:0 3.5rem 1.7rem 0;color:var(--ink2);max-width:68ch}
+/* tables */
 .tbl{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:.95rem}
+table{width:100%;border-collapse:collapse;font-size:.95rem;font-variant-numeric:tabular-nums}
 th,td{text-align:left;padding:1rem 1.25rem 1rem 0;border-bottom:1px solid var(--line);vertical-align:top}
-thead th,thead td{font:400 .72rem/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);padding-bottom:.85rem}
+thead th,thead td{font:500 .85rem/1.4 var(--sans);color:var(--ink3);padding-bottom:.85rem}
 tbody th{font-weight:500;color:var(--ink)}
 td{color:var(--ink2)}
 .us{padding-left:1.25rem;background:linear-gradient(90deg,rgba(var(--t-accent-rgb),.075),transparent 90%)}
 td.us{color:var(--ink)}
-thead .us{color:var(--accent);box-shadow:inset 0 2px 0 var(--sand)}
-#vpn table{table-layout:fixed}#vpn thead td{width:24%}
-details{border-top:1px solid var(--line)}
-details:last-of-type{border-bottom:1px solid var(--line)}
-summary{cursor:pointer;list-style:none;padding:1rem 2.5rem 1rem 0;position:relative;font:500 1.06rem/1.4 var(--disp);letter-spacing:-.005em}
-summary::-webkit-details-marker{display:none}
-summary::before,summary::after{content:"";position:absolute;right:.4rem;top:50%;width:12px;height:1.5px;background:var(--ink3);transition:transform .25s}
-summary::before{transform:rotate(90deg)}
-details[open] summary::before{transform:rotate(0)}
-summary:hover{color:var(--accent)}
-details p{margin:0;padding:0 0 1.25rem;color:var(--ink2);max-width:66ch}
-footer{border-top:1px solid var(--line);padding:2rem 0 2.5rem;color:var(--ink3);font-size:.86rem}
-footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between}
-footer a{color:var(--ink2);text-decoration:none}
+thead .us{color:var(--accent);box-shadow:inset 0 2px 0 var(--accent)}
+/* footer: columns, then the name in outline the width of the screen, lit by the app's top line */
+footer{position:relative;border-top:1px solid var(--line);color:var(--ink3);font-size:.9rem;overflow:hidden;background:var(--bg)}
+.fgrid{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(0,1fr));gap:2.5rem 2rem;padding-block:clamp(3rem,2rem + 3vw,5rem) 0}
+.fbrand p{margin:.9rem 0 1.2rem;max-width:30ch;line-height:1.55}
+.fstat{display:inline-flex;align-items:center;gap:.55rem;padding:.42rem .8rem .42rem .65rem;border-radius:999px;background:rgba(255,255,255,.035);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);color:var(--ink2);font:400 .8rem/1.4 var(--mono);white-space:nowrap}
+.fstat i{width:.5rem;height:.5rem;border-radius:2px;background:var(--t-good)}
+footer nav h3{font:500 .9rem/1.4 var(--sans);color:var(--ink);margin:0 0 1rem}
+footer nav ul{list-style:none;margin:0;padding:0;display:grid;gap:0}
+footer a{color:var(--ink3);text-decoration:none;transition:color .15s;display:inline-block;padding-block:.55rem}
 footer a:hover{color:var(--ink)}
-.btn-ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line2)}
-.btn-ghost:hover{background:var(--bg3)}
-.btn-ghost svg{width:1.05em;height:1.05em}
-.top nav a.btn-ghost{color:var(--ink)}
-.rel{color:var(--ink3);font-size:.86rem;line-height:1.5;margin:.7rem 0 0}
-.rel a{color:var(--ink2)}
-.rel a:hover{color:var(--ink)}
+.wordmark{position:relative;margin-top:clamp(2.5rem,2rem + 3vw,5rem);height:.7em;font:600 min(12.6vw,16rem)/1 var(--disp);letter-spacing:-.055em;text-align:center;white-space:nowrap;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.12);border-bottom:1px solid var(--line2);user-select:none;overflow:hidden}
+@supports not (-webkit-text-stroke:1px #000){.wordmark{color:rgba(255,255,255,.05)}}
+.wordmark span{display:block;background:linear-gradient(90deg in oklch,var(--t-top1),var(--t-top2) 50%,var(--t-top3));-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:0;color:transparent;clip-path:inset(0 calc(100% - var(--wm,0%)) 86% 0);position:absolute;inset:0}
+.legal{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.6rem 2rem;padding-block:1.6rem 2.2rem;font-size:.84rem}
+@media (max-width:900px){.fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.fbrand{grid-column:1/-1}}
+@media (max-width:420px){.fgrid{grid-template-columns:minmax(0,1fr)}}
 a.zoom{display:block;cursor:zoom-in}
 .lightbox{padding:0;border:0;background:transparent;max-width:96vw;max-height:94vh;overflow:visible}
-.lightbox::backdrop{background:rgba(0,0,0,.86)}
+.lightbox::backdrop{background:rgba(0,0,0,.88)}
+.lb-x{position:fixed;right:1rem;top:1rem;min-height:44px;padding:.5rem 1rem;border:0;border-radius:999px;background:var(--t-surface2);color:var(--ink);font:500 .95rem var(--sans);box-shadow:inset 0 0 0 1px var(--line2);cursor:pointer}
+@media (pointer:coarse){.lightbox{overflow:auto;max-width:100vw}.lightbox img{max-width:none!important;width:1240px}}
 .lightbox img{display:block;width:auto;height:auto;max-width:96vw;max-height:94vh;border-radius:8px;box-shadow:0 0 0 1px var(--line2),0 30px 80px -20px #000;cursor:zoom-out}
-/* home: hero with the route map */
-.hero{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:3.5rem;align-items:start;padding-top:3.25rem;padding-bottom:4rem}
-.hero-copy{padding-top:2.6rem;position:relative;z-index:2}
-.hero h1{font:500 clamp(2.3rem,4vw,3.35rem)/1.02 var(--disp);letter-spacing:-.034em;margin:0 0 1.3rem}
-.get-phone{display:none}
-.hero-scene{position:relative;padding-bottom:7rem}
-.radar{margin:0}
-.radar-head{display:flex;justify-content:space-between;gap:1rem;font:400 .72rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);padding:0 .25rem .8rem}
-.radar-head b{font-weight:400;color:var(--route);letter-spacing:.04em}
-.radar-plate{position:relative;aspect-ratio:720/600;background:var(--plate);border:1px solid var(--line);border-radius:10px;overflow:hidden;--mx:78%;--my:20%;box-shadow:inset 0 1px 0 rgba(255,255,255,.03),0 40px 80px -40px var(--shadow)}
-.radar-plate::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle 22rem at var(--mx) var(--my),var(--glow),transparent 70%)}
-.topo{position:absolute;inset:0;background:url(assets/topo-desk.svg) center/cover no-repeat;opacity:.26}
-.lit{position:absolute;inset:0;-webkit-mask-image:radial-gradient(circle 13rem at var(--mx) var(--my),#000 0%,rgba(0,0,0,.4) 40%,transparent 72%);mask-image:radial-gradient(circle 13rem at var(--mx) var(--my),#000 0%,rgba(0,0,0,.4) 40%,transparent 72%)}
-.lit .topo{opacity:.7}
-.radar-map{position:absolute;inset:0;width:100%;height:100%;display:block}
-.r-phone{display:none}
-.r-area path{fill:var(--area);stroke:var(--area-line);stroke-width:1;vector-effect:non-scaling-stroke}
-.r-tick text{font:400 10px var(--mono);fill:var(--ink3);opacity:.55}
-.r-lbl{font:400 11.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;fill:var(--ink3)}
-.r-val{font:500 13.5px var(--sans);fill:var(--ink)}
-.r-ip{font:400 12px var(--mono);fill:var(--route)}
-.r-mid{text-anchor:middle}.r-end{text-anchor:end}
-.r-home{fill:none;stroke:var(--ink3);stroke-width:1.5;stroke-dasharray:3 5;opacity:.8}
-.r-gate path{stroke:var(--sand);stroke-width:2.5;stroke-linecap:round;fill:none}
-.r-gate-t{fill:var(--sand);font-size:10.5px}
-.r-router{fill:var(--plate);stroke:var(--ink3);stroke-width:1.5}
-.r-pc{fill:var(--ink)}
-.r-route{fill:none;stroke:var(--route);stroke-width:2.6;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:0}
-.r-glow{fill:none;stroke:var(--route-soft);stroke-width:10;stroke-linecap:round}
-.r-node{fill:var(--route);transform-box:fill-box;transform-origin:center}
-.r-ring{fill:none;stroke:var(--route);stroke-width:1.2;opacity:.45;transform-box:fill-box;transform-origin:center}
-.r-pkt{fill:var(--ink);opacity:0}
-@media (prefers-reduced-motion:no-preference){
-  .r-route{animation:draw 1.7s cubic-bezier(.45,.05,.35,1) .35s both}
-  .r-glow{animation:fadein .8s ease 1.6s both}
-  .r-ring{animation:pulse 1.1s ease-out both}
-  .r-ring.n1{animation-delay:.75s}.r-ring.n2{animation-delay:1.3s}.r-ring.n3{animation-delay:1.95s}
-  .r-node{animation:pop .45s cubic-bezier(.3,1.6,.5,1) both}
-  .r-node.n1{animation-delay:.7s}.r-node.n2{animation-delay:1.25s}.r-node.n3{animation-delay:1.9s}
-  .r-gate{animation:fadein .5s ease .2s both}
-}
-@media (prefers-reduced-motion:reduce){.r-pkt{display:none}}
-@keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
-@keyframes fadein{from{opacity:0}}
-@keyframes pulse{0%{transform:scale(.6);opacity:.9}70%{opacity:0}100%{transform:scale(2.6);opacity:0}}
-@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
-.hero-scene::before{content:"";position:absolute;right:0;bottom:-2rem;width:70%;height:60%;background:radial-gradient(closest-side,var(--glow),transparent);filter:blur(20px);pointer-events:none}
-.float-app{position:absolute;right:-8%;bottom:0;width:64%;perspective:2200px;z-index:3;pointer-events:none}
-.float-in{position:relative;border-radius:9px;overflow:hidden;transform:rotateY(-11deg) rotateX(6deg) rotateZ(1deg);transform-origin:70% 50%;box-shadow:0 0 0 1px rgba(255,255,255,.07),inset 0 2px 0 rgba(255,255,255,.04),-30px 50px 90px -30px var(--shadow),0 30px 60px -30px rgba(0,0,0,.7)}
-.float-in::after{content:"";position:absolute;inset:0;background:linear-gradient(118deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.02) 32%,transparent 50%,rgba(0,0,0,.18) 100%);pointer-events:none}
-.phone-app{display:none}
-.cut{position:relative;overflow:hidden;background:#1a1a1a}
-.cut img{position:absolute;max-width:none}
-.cut-status{aspect-ratio:569/236}
-.cut-status img{width:217.93%;left:-15.99%;top:-18.64%}
-/* home sections */
-.who{padding:2.25rem 0}
-.who .wrap{display:grid;grid-template-columns:11rem minmax(0,1fr);gap:1.5rem 2rem;align-items:baseline}
-.who h2{font:400 .75rem/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin:0}
-.who ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.8rem 2rem;color:var(--ink2);font-size:.95rem}
-.who li b{display:block;color:var(--ink);font-weight:500}
-.viewer{position:relative;display:grid;grid-template-columns:minmax(0,17rem) minmax(0,1fr);gap:2.75rem;align-items:start}
-.viewer>input{position:absolute;top:0;left:0;opacity:0;width:1px;height:1px;margin:0}
-.tabs{display:flex;flex-direction:column;border-top:1px solid var(--line)}
-.tabs label{display:block;position:relative;padding:.8rem .5rem .85rem 1rem;border-bottom:1px solid var(--line);cursor:pointer;color:var(--ink2);line-height:1.5}
-.tabs label::before{content:"";position:absolute;left:-1px;top:-1px;bottom:-1px;width:2px;background:var(--sand);transform:scaleY(0);transform-origin:top;transition:transform .3s ease}
-.tabs label b{display:block;color:var(--ink2);font:500 1.08rem/1.4 var(--disp);letter-spacing:-.01em}
-.tabs label span{display:none;font-size:.9rem;margin-top:.3rem}
-.tabs label:hover b{color:var(--ink)}
-@media (prefers-reduced-motion:reduce){.tabs label::before{transition:none}}
-.views figure{display:none;margin:0}
-.views figcaption{margin-top:1rem;font-size:.9rem;color:var(--ink3)}
-.views figcaption a{color:var(--ink2)}
-.views figcaption .fd{display:none}
-#pg-connection:checked~.tabs [for=pg-connection]::before,#pg-servers:checked~.tabs [for=pg-servers]::before,#pg-accounts:checked~.tabs [for=pg-accounts]::before,#pg-regions:checked~.tabs [for=pg-regions]::before,#pg-configs:checked~.tabs [for=pg-configs]::before,#pg-profiles:checked~.tabs [for=pg-profiles]::before{transform:scaleY(1)}
-#pg-connection:checked~.tabs [for=pg-connection] b,#pg-servers:checked~.tabs [for=pg-servers] b,#pg-accounts:checked~.tabs [for=pg-accounts] b,#pg-regions:checked~.tabs [for=pg-regions] b,#pg-configs:checked~.tabs [for=pg-configs] b,#pg-profiles:checked~.tabs [for=pg-profiles] b{color:var(--ink)}
-#pg-connection:checked~.tabs [for=pg-connection] span,#pg-servers:checked~.tabs [for=pg-servers] span,#pg-accounts:checked~.tabs [for=pg-accounts] span,#pg-regions:checked~.tabs [for=pg-regions] span,#pg-configs:checked~.tabs [for=pg-configs] span,#pg-profiles:checked~.tabs [for=pg-profiles] span{display:block}
-#pg-connection:focus-visible~.tabs [for=pg-connection],#pg-servers:focus-visible~.tabs [for=pg-servers],#pg-accounts:focus-visible~.tabs [for=pg-accounts],#pg-regions:focus-visible~.tabs [for=pg-regions],#pg-configs:focus-visible~.tabs [for=pg-configs],#pg-profiles:focus-visible~.tabs [for=pg-profiles]{outline:2px solid var(--sand);outline-offset:2px}
-#pg-connection:checked~.views .f-connection,#pg-servers:checked~.views .f-servers,#pg-accounts:checked~.views .f-accounts,#pg-regions:checked~.views .f-regions,#pg-configs:checked~.views .f-configs,#pg-profiles:checked~.views .f-profiles{display:block}
-.also{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.75rem 2.5rem;margin-top:3.5rem}
-.also>div{border-top:1px solid var(--line);padding-top:.9rem}
-.also p{margin:0;color:var(--ink2);font-size:.95rem}
-.how-img{margin:0 0 2.5rem;border:1px solid var(--line);border-radius:10px;background:radial-gradient(120% 90% at 85% 15%,var(--bg3),var(--bg2) 60%)}
-.how-img svg{display:block;width:100%;height:auto}
-.how-img .how-p{display:none}
-.h-node{fill:var(--bg);stroke:var(--line2);stroke-width:1}
-.h-node.on{stroke:var(--sand)}
-.h-wire{fill:none;stroke:var(--route);stroke-width:2.4;stroke-linecap:round}
-.h-home{fill:none;stroke:var(--ink3);stroke-width:1.5;stroke-dasharray:3 5}
-.h-gate path{stroke:var(--sand);stroke-width:2.5;stroke-linecap:round}
-.h-lbl{font:400 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;fill:var(--ink3)}
-.h-val{font:500 16px var(--sans);fill:var(--ink)}
-.h-ip{font:400 13.5px var(--mono);fill:var(--route)}
-.h-note{font:400 12.5px var(--mono);fill:var(--ink3)}
-.h-gate-t{fill:var(--sand)}
-.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5rem 2.5rem;counter-reset:s;margin:0;padding:0;list-style:none}
-.steps li{color:var(--ink2);border-top:1px solid var(--line);padding-top:.9rem}
-.steps li::before{counter-increment:s;content:counter(s,decimal-leading-zero);display:block;font:400 .75rem/1.4 var(--mono);color:var(--ink3);margin-bottom:.45rem}
-.steps b{display:block;color:var(--ink);font:500 1.06rem/1.35 var(--disp);margin-bottom:.2rem}
-.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:3rem 4.5rem;align-items:start}
-ol.setup{margin:0;padding:0;list-style:none;counter-reset:st}
-ol.setup li{position:relative;margin:0 0 1rem;padding-left:2.6rem;color:var(--ink2)}
-ol.setup li::before{counter-increment:st;content:counter(st);position:absolute;left:0;top:-.05rem;width:1.75rem;height:1.75rem;display:flex;align-items:center;justify-content:center;border:1px solid var(--line2);border-radius:50%;font:400 .72rem/1 var(--mono);color:var(--ink)}
-ol.setup li b{color:var(--ink);font-weight:500}
-.note{margin:1.4rem 0 0;color:var(--ink2);font-size:.95rem}
-dl.trust{margin:0}
-dl.trust dt{font:500 1.04rem/1.35 var(--disp);border-top:1px solid var(--line);padding-top:.9rem;margin-top:1rem}
-dl.trust dt:first-child{margin-top:0}
-dl.trust dd{margin:.25rem 0 0;color:var(--ink2);font-size:.95rem}
-ul.guides{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1.5rem 2rem;counter-reset:g}
-ul.guides li{border-top:1px solid var(--line);padding-top:.8rem;counter-increment:g}
-ul.guides li::before{content:counter(g,decimal-leading-zero);display:block;font:400 .7rem/1.4 var(--mono);color:var(--ink3);margin-bottom:.3rem}
-ul.guides a{font:500 1.04rem/1.35 var(--disp);text-decoration:none}
-ul.guides a:hover{color:var(--accent)}
-ul.guides span{display:block;color:var(--ink3);font-size:.9rem;line-height:1.45;margin-top:.25rem}
-.faq{margin-top:4rem;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,19rem);gap:1.5rem 4rem;align-items:start}
-.faq h2{margin-bottom:1.2rem;grid-column:1/-1}
-.faq .qs{min-width:0}
-.faq .more{border-top:1px solid var(--line);padding-top:1rem}
+@media (max-width:900px){.top nav .hide-s{display:none}}
+/* home: proposal A's one world. A fixed stage behind the page draws the route; the story's beats scroll over it, and the rest of the page slides over it on plain ground */
+.stage{position:fixed;top:0;left:0;width:100%;height:100lvh;z-index:0;pointer-events:none;overflow:hidden}
+.stage canvas{display:block;width:100%;height:100%;opacity:0;transition:opacity 1.6s var(--ease-out)}
+.stage.ready canvas{opacity:1}
+.stage{transition:opacity .3s}
+.stage.off{opacity:0;visibility:hidden;transition:opacity .3s,visibility 0s .3s}
+.stage-still,.stage-still img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%}
+.stage-still{transition:opacity 1.2s var(--ease-out)}
+.stage.ready .stage-still{opacity:0;transition-delay:1.6s}
+.stage:not(.ready) .wd-labels{opacity:0}
+@media (prefers-reduced-motion:reduce){.stage-still{transition:none}}
+
+.no-gl .stage canvas{display:none}
+/* the veil: the copy's side of the screen stays plain ground, the route has the rest */
+.stage::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,var(--bg) 0,color-mix(in srgb,var(--bg) 92%,transparent) calc(var(--veil-a,26%) + var(--veil-x,0%)),color-mix(in srgb,var(--bg) 40%,transparent) calc(var(--veil-b,40%) + var(--veil-x,0%) - 4%),transparent calc(var(--veil-b,40%) + var(--veil-x,0%)))}
+main{z-index:1}
+.solid{position:relative;background:var(--bg)}
+section.solid{border-top:1px solid var(--line)}
+.story,.app,.cta{padding-block:0;border-top:0}
+/* a beat: one screen, the copy in the left column, the camera holds while it is read */
+.beat{position:relative;min-height:100svh;display:flex;align-items:center}
+.beat>.wrap{width:100%}
+.beat .copy{width:min(32rem,36%);padding-block:3rem}
+.beat h2{font-size:clamp(2.2rem,1rem + 2.9vw,4.2rem);margin-bottom:1.3rem}
+.beat h3{font:500 clamp(2rem,1rem + 2.4vw,3.6rem)/1 var(--disp);letter-spacing:-.04em;margin:0 0 1.2rem}
+.beat p{margin:0 0 .9rem;color:var(--ink2);font-size:1.06rem;max-width:42ch}
+.beat .src{font-size:.92rem;color:var(--ink3)}
+.beat .sub{margin-bottom:1.4rem;font-size:1rem}
+/* the cover */
+.b-cover{min-height:calc(100svh - var(--top-h));align-items:center;padding-block:2rem 5rem}
+.b-cover .copy{width:min(36rem,40%);padding:0}
+.b-cover h1{margin:0 0 1.5rem;font:500 clamp(2.6rem,.6rem + 4.1vw,5.6rem)/.95 var(--disp);letter-spacing:-.045em;max-width:12ch}
+.b-cover .lead{font-size:clamp(1.02rem,.94rem + .25vw,1.18rem);margin-bottom:1.6rem;max-width:42ch}
+.b-cover .rel{font-size:.82rem}
+@media (min-width:1000px){.b-cover .rel{width:max-content;max-width:none}}
+.b-cover .facts{margin:1.2rem 0 0;font-size:.88rem;line-height:1.55;color:var(--ink3);max-width:30rem}
+.b-cover .facts b{color:var(--ink2);font-weight:500}
+.b-cover .get-phone .btn{width:100%}
+.b-cover .get-note{font-size:.88rem;color:var(--ink3)}
+.b-cover .get-note code{color:var(--ink2)}
+.get-note a{display:inline-block;padding-block:.85rem;margin-block:-.85rem}
+.cue{position:absolute;left:max(var(--gutter),(100% - var(--max))/2);bottom:1.4rem;display:inline-flex;align-items:center;gap:.6rem;min-height:44px;color:var(--ink3);font:400 .82rem/1 var(--mono);text-decoration:none}
+.cue svg{width:1rem;height:1rem}
+.cue:hover{color:var(--ink)}
+.fx .cue svg{animation:cue 2.4s var(--ease-in-out) 3 2.2s}
+@keyframes cue{50%{transform:translateY(4px)}}
+/* the cover comes in once, line by line, as the route draws itself */
+.fx .b-cover .copy>*{animation:rise .9s var(--ease-out) both;animation-delay:calc(var(--i,0)*90ms + .1s)}
+.fx .b-cover .copy>:nth-child(2){--i:1}.fx .b-cover .copy>:nth-child(3){--i:2}.fx .b-cover .copy>:nth-child(4){--i:3}.fx .b-cover .copy>:nth-child(5){--i:4}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+/* the key under How it works: what the two lines in the picture are */
+.key{list-style:none;margin:1.4rem 0 0;padding:0;display:grid;gap:.55rem;font:400 .86rem/1.4 var(--mono);color:var(--ink2)}
+.key li{display:flex;align-items:center;gap:.8rem}
+.key i{width:2.2rem;height:3px;border-radius:2px;flex:none}
+.k-route{background:var(--t-top)}
+.k-home{background:var(--t-faint)}
+/* an IP as the server sees it: mono, big, with its label next to it */
+.said{display:flex;flex-direction:column;gap:.35rem;margin:1.3rem 0 1rem}
+.said .ip{font:400 clamp(1.7rem,1.2rem + 1.1vw,2.5rem)/1 var(--mono);letter-spacing:-.04em;color:var(--t-accent-light);font-variant-numeric:tabular-nums}
+.said>span:last-child{font:400 .8rem/1.4 var(--mono);color:var(--ink3)}
+.said.big .ip{font-size:clamp(2rem,1.3rem + 1.6vw,3.2rem);min-height:1em}
+.said .digits .ch{height:1.1em}.said .digits .g{height:1.1em;line-height:1.1em}
+@media (max-height:400px){.log li{padding-block:.05rem}.beat-long .copy{padding-block:.4rem}}
+@media (min-width:1000px) and (max-height:820px){.said.big{margin:.6rem 0 .5rem}.said.big .ip{font-size:2.2rem}.log li{padding-block:.2rem}.beat-long .copy{padding-block:1rem}.beat-long h2{font-size:clamp(2rem,1rem + 2.2vw,3.2rem);margin-bottom:.8rem}.beat-long .sub{font-size:.92rem;margin-bottom:1rem}}
+.said.big.banned .ip{color:var(--ink3);text-decoration:line-through;text-decoration-thickness:1px;text-decoration-color:var(--t-bad)}
+.said.big.wait .ip{color:var(--ink3)}
+/* the ban: the log drives the scene, one line at a time, while the copy holds */
+.beat-long{min-height:260svh;align-items:stretch}
+.beat-long>.wrap{display:flex;flex-direction:column}
+.beat-long .copy{position:sticky;top:max(calc(var(--top-h) + 4px),min(calc(var(--top-h) + max(1rem,(100svh - var(--top-h) - var(--ch,40rem))/2)),calc(100svh - var(--ch,40rem) - 8px)));padding-block:2rem}
+.ban-cap-s{display:none}
+
+.pause.under{opacity:0;visibility:hidden}
+.log kbd{font-size:max(12px,.86em)}
+code{font-size:max(12px,.86em)}
+@media (pointer:coarse){.trust-foot a,.steps4 li a,.setup-foot a,.vs .src a,.instr p a{display:inline-block;padding-block:.85em;margin-block:-.85em}}
+.log{list-style:none;margin:0 0 1rem;padding:0;font:400 .86rem/1.45 var(--mono);color:var(--ink3)}
+.log li{display:grid;grid-template-columns:max-content minmax(0,1fr);transition:color .35s,padding .35s,box-shadow .35s;gap:.8rem;padding-block:.32rem;border-bottom:1px solid var(--line);transition:color .35s}
+.log time{color:var(--t-faint)}
+.log b{font-weight:400}
+.js .log li{color:var(--t-faint)}
+.js .log li.past{color:var(--ink2)}.js .log li.past b{color:var(--ink)}
+.js .log li.now{color:var(--ink);box-shadow:inset 3px 0 0 var(--t-accent-light);padding-left:.7rem}.js .log li.now b{color:var(--t-accent-light)}.js .log li.now time{color:var(--t-accent-light)}
+.log li .w,.js .log li.past .w,.js .log li.now .w{color:var(--t-warn)}
+.log li .g,.js .log li.past .g,.js .log li.now .g{color:var(--t-good)}
+.js .log li:not(.past):not(.now) .w,.js .log li:not(.past):not(.now) .g{color:var(--t-faint)}
+.ban-cap{margin:0;font-size:.86rem;color:var(--ink3);max-width:46ch}
+.ban-after{padding-block:2.5rem 3rem;border-top:1px solid var(--line)}
+.ban-after .wrap{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:.5rem 3rem}
+.ban-after p{margin:0;color:var(--ink2);max-width:72ch}
+/* the app: the screen the camera flew into, as the real window; six pages on the left */
+.app-body{background:none;padding-block:clamp(2rem,1rem + 3vw,4rem) clamp(5rem,3rem + 5vw,9rem)}
+.app-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));align-items:start}
+.pages{grid-column:1/5;grid-row:1;list-style:none;margin:0;padding:0 2rem 0 0}
+.pages li{min-height:44svh;display:flex;flex-direction:column;justify-content:center;padding-block:1.6rem;color:var(--ink3);transition:color .4s}
+.pages li h3{display:flex;align-items:baseline;gap:.9rem;font:500 clamp(1.6rem,1.1rem + 1.2vw,2.4rem)/1.1 var(--disp);letter-spacing:-.03em;color:var(--t-faint);transition:color .4s;margin:0 0 .7rem}
+.pages li h3 span{font:400 .8rem/1 var(--mono);color:var(--ink3);letter-spacing:0}
+.pages li p{margin:0 0 .5rem;max-width:40ch}
+.pages li .big{white-space:nowrap;font:400 clamp(1.8rem,1rem + 1.6vw,2.8rem)/1 var(--mono);letter-spacing:-.05em;color:var(--t-faint);margin:.3rem 0 .3rem;transition:color .4s}
+.pages li .big small{white-space:normal;display:block;font:400 .8rem/1.4 var(--mono);letter-spacing:0;color:var(--ink3);margin-top:.5rem}
+.pages li a{color:var(--ink2);font-size:.95rem;display:inline-flex;align-items:center;min-height:44px}
+.pages li.on{color:var(--ink2)}
+.pages li.on h3{color:var(--ink)}
+.pages li.on .big{color:var(--t-accent-light)}
+.win-fig{grid-column:5/13;grid-row:1;margin:0;position:sticky;top:calc(var(--top-h) + 2.5rem);margin-right:calc(-1*max(var(--gutter),(100vw - var(--max))/2))}
+.win{position:relative;border-radius:12px 0 0 12px;overflow:hidden;background:var(--t-bg);box-shadow:0 0 0 1px rgba(255,255,255,.09),0 80px 160px -60px rgba(0,0,0,.95),0 30px 70px -30px rgba(0,0,0,.75)}
+.win{container-type:inline-size}
+.gl .win-fig:not(.docked):not(:focus-within){opacity:0;pointer-events:none}
+.win img{display:block;width:100%;height:auto}
+/* the IP the story ended on, over the screenshot's own (the same places the 3D screen patches) */
+.patch{position:absolute;display:flex;align-items:center;white-space:nowrap;overflow:hidden;pointer-events:none}
+.win .patch{visibility:visible}
+.win[data-pg]:not([data-pg=connection]) .patch{visibility:hidden}
+.p-ip{left:9%;top:20.1%;width:15%;height:3.9%;background:var(--t-surface);font:600 1.53cqw/1 "Cascadia Mono","Cascadia Code",Consolas,var(--mono);color:var(--t-text);letter-spacing:.01em}
+.p-bar{left:70.8%;top:2.2%;width:7.6%;height:2.3%;background:var(--t-bg);font:600 .93cqw/1 "Cascadia Mono","Cascadia Code",Consolas,var(--mono);color:var(--t-muted)}
+.views{position:relative}
+.views picture+picture{position:absolute;inset:0}
+.views picture{transition:opacity .35s var(--ease-out)}
+.views picture:not(.on){opacity:0}
+.win-fig figcaption{margin-top:1rem;font-size:.86rem;color:var(--ink3);padding-right:var(--gutter)}
+.win-fig .tap{display:none}@media (pointer:coarse){.win-fig .tap{display:inline}}
+/* stills of the same world, one per section after the story, under the same light */
+.still{position:relative;margin:0 0 2.6rem;border-radius:14px;overflow:hidden;background:var(--t-edge);box-shadow:0 0 0 1px var(--line)}
+.still::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:var(--t-top);z-index:1}
+.still img{width:100%;aspect-ratio:16/7;object-fit:cover}
+.still figcaption{position:absolute;left:.8rem;bottom:.8rem;max-width:calc(100% - 1.6rem);padding:.45rem .65rem;border-radius:8px;background:color-mix(in srgb,var(--t-bg) 88%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font:400 .8rem/1.4 var(--mono);color:var(--ink2)}
+.still-45 img{aspect-ratio:4/5}
+.still-45 figcaption{position:static;max-width:none;margin:0;border-radius:0;background:var(--t-bg)}.still-11 img{aspect-ratio:1}.still-219 img{aspect-ratio:21/9}
+.trust-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,22rem);gap:2rem 4rem;align-items:end}
+.trust-head h2{align-self:start}
+.trust-head .still{margin:0}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.5rem;margin-bottom:2.6rem}
+.pair .still{margin:0}
+@media (max-width:759px){.trust-head{grid-template-columns:minmax(0,1fr)}.pair{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:759px){.still figcaption{position:static;max-width:none;margin:0;border-radius:0;background:var(--t-bg)}}
+.ph-still{width:100%;aspect-ratio:5/4;object-fit:cover;object-position:50% 42%;border-radius:12px;margin:0 0 1.2rem;box-shadow:0 0 0 1px var(--line)}
+.no-gl .stage-still{object-fit:cover;width:100%;height:100%;top:0;right:0;transform:none;opacity:.85}
+/* trust: four instruments on one line, hairlines between them */
+.trust{padding-block:clamp(5rem,3rem + 5vw,9rem)}
+.instr{list-style:none;margin:2.4rem 0 0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-block:1px solid var(--line)}
+.instr>li{position:relative;grid-template-columns:minmax(0,1fr);padding:1.6rem 1.5rem 1.8rem;border-left:1px solid var(--line);display:grid;grid-template-rows:auto minmax(3.2rem,auto) 1fr;gap:1.1rem;align-content:start;min-width:0}
+.instr>li:first-child{border-left:0;padding-left:0}
+.instr .rd{font:400 clamp(2rem,1.2rem + 2vw,3.4rem)/1 var(--mono);letter-spacing:-.05em;word-spacing:-.35em;color:var(--ink);white-space:nowrap}
+.instr .rd small{word-spacing:normal;display:block;margin-top:.55rem;font-size:.8rem;letter-spacing:0;color:var(--ink3)}
+.instr .rd.sm{letter-spacing:-.07em;font-size:clamp(1.5rem,.9rem + 1.3vw,2.4rem)}
+.instr p{margin:0;font-size:.95rem;line-height:1.5;color:var(--ink2)}
+.instr p b{color:var(--ink);font-weight:500}
+.instr p a{color:var(--ink2)}
+.trust-foot{margin:1.4rem 0 0;font-size:.9rem;color:var(--ink3);max-width:70ch}
+.trust-foot a{color:var(--ink2)}
+.vt-grid{display:grid;grid-template-columns:repeat(var(--cols,17),minmax(0,1fr));gap:3px;max-width:15rem}
+.vt-grid i{aspect-ratio:1;border-radius:1.5px;background:color-mix(in srgb,var(--t-good) 75%,transparent)}
+.vt-grid i.bad{background:var(--t-bad)}
+.fx .vt-grid i{background:rgba(255,255,255,.07);transition:background-color .4s;transition-delay:calc(var(--d)*16ms)}
+.fx .in .vt-grid i{background:color-mix(in srgb,var(--t-good) 75%,transparent)}
+.chipl{display:flex;flex-wrap:wrap;gap:.35rem}
+.chip{display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .6rem;border-radius:6px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);color:var(--ink2);font:400 .8rem/1.3 var(--mono);white-space:nowrap}
+.chip.no{color:var(--ink);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--t-good) 50%,transparent);background:color-mix(in srgb,var(--t-good) 9%,transparent)}
+.tape{overflow:hidden;border-block:1px solid var(--line);padding-block:.5rem;font:400 .8rem/1.4 var(--mono);color:var(--ink2);white-space:nowrap;-webkit-mask:linear-gradient(90deg,#000 70%,transparent);mask:linear-gradient(90deg,#000 70%,transparent)}
+.tape span{display:inline-block}
+.tape b{font-weight:400;color:var(--t-good)}
+.ss{width:100%;max-width:15rem;border-radius:4px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line2);font:400 .78rem/1.35 var(--sans);color:var(--ink2)}
+.ss b{display:block;padding:.6rem .7rem .2rem;font:600 .86rem/1.2 var(--sans);color:var(--ink)}
+.ss p{margin:0;padding:0 .7rem .55rem;font-size:.78rem;color:var(--ink2)}
+.ss div{display:flex;justify-content:flex-end;gap:.35rem;padding:.45rem .55rem;border-top:1px solid var(--line)}
+.ss span{padding:.24rem .55rem;border-radius:3px;box-shadow:inset 0 0 0 1px var(--line2)}
+.ss span.run{color:var(--ink);box-shadow:inset 0 0 0 1px var(--t-accent)}
+/* the rest: four small instruments in hairline cells */
+.kit{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-block:1px solid var(--line);margin-top:2.4rem}
+.kit>div{position:relative;padding:2rem 1.6rem 2.2rem;border-left:1px solid var(--line);display:grid;grid-template-rows:auto 1fr;gap:1.4rem;min-width:0}
+.kit>div:first-child{border-left:0;padding-left:0}
+.kit .art{min-height:7rem;display:grid;place-items:end start;font:400 .82rem/1.4 var(--mono);color:var(--ink3)}
+.kit h3{display:inline;font:500 1rem/1.5 var(--sans);letter-spacing:0;color:var(--ink)}
+.kit .tp{font-size:.95rem;line-height:1.55;color:var(--ink2);max-width:40ch}
+.slot{display:grid;gap:.5rem}
+.slot .n{font:400 clamp(2rem,1.5rem + 1.4vw,3.2rem)/1 var(--mono);color:var(--ink);letter-spacing:-.05em}.slot .n i{font-style:normal;color:var(--ink3)}
+.slot .st{color:var(--t-warn)}.slot .st.go{color:var(--t-good)}
+.slot .two{display:grid}.slot .two>*{grid-area:1/1}
+.slot .now{opacity:0}
+.fx .kit>div:not(.in) .slot .now{opacity:1}.fx .kit>div:not(.in) .slot .later{opacity:0}
+.fx .slot .now,.fx .slot .later{transition:opacity .5s var(--ease-out) 1.1s}
+.list{display:grid;gap:.5rem;font:400 .86rem/1 var(--sans);color:var(--ink2)}
+.list span{display:flex;align-items:center;gap:.6rem}
+.list i{width:.62rem;height:.62rem;border-radius:2px;background:var(--t-good)}
+.fx .list i{background:var(--line2);transition:background-color .35s;transition-delay:calc(.3s + var(--d)*.28s)}
+.fx .in .list i{background:var(--t-good)}
+.q{display:grid;gap:.8rem}
+.q .bars2{display:flex;align-items:flex-end;gap:5px;height:2.4rem}
+.q .bars2 i{width:.6rem;border-radius:2px;background:var(--t-good)}
+.q .bars2 i:nth-child(1){height:30%}.q .bars2 i:nth-child(2){height:55%}.q .bars2 i:nth-child(3){height:78%}.q .bars2 i:nth-child(4){height:100%;background:var(--line2)}
+.q span{color:var(--ink2)}.q b{color:var(--t-good);font-weight:400}
+.mask{display:grid;gap:.8rem}
+.mask .ip{font:400 clamp(1.3rem,1rem + .9vw,2rem)/1 var(--mono);color:var(--ink3);letter-spacing:-.02em}
+.sw{display:inline-flex;align-items:center;gap:.6rem;color:var(--ink);font:400 .86rem/1 var(--sans)}
+.sw i{position:relative;width:2.2rem;height:1.2rem;border-radius:999px;background:var(--t-accent)}
+.sw i::after{content:"";position:absolute;top:.2rem;left:1.2rem;width:.8rem;height:.8rem;border-radius:50%;background:var(--t-text)}
+/* phone or VPN */
+.vs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-block:1px solid var(--line);margin-bottom:3.5rem}
+.vs>div{padding:2rem 2rem 2.2rem 0;display:grid;gap:1.2rem;align-content:start}
+.vs>div+div{border-left:1px solid var(--line);padding-left:2rem}
+.vs h3{font:500 clamp(1.4rem,1rem + 1vw,2rem)/1.1 var(--disp);letter-spacing:-.03em;margin:0}
+.vs p{margin:0;color:var(--ink2);max-width:46ch}
+.vs svg{width:100%;height:auto;max-height:15rem}
+.vs .src{font-size:.86rem;color:var(--ink3)}
+.vs .src a{color:var(--ink2)}
+.cg-dot{fill:var(--ink3)}
+.cg-line{stroke:var(--ink3);stroke-width:1;opacity:.5}
+.cg-ip{font:400 15px var(--mono);fill:var(--ink)}
+.cg-lbl{font:400 12px var(--mono);fill:var(--ink3)}
+.cg-hub{fill:var(--bg);stroke:var(--t-top2);stroke-width:1.5}
+.dc-row{font:400 13px var(--mono);fill:var(--ink3)}
+.dc-row.hit{fill:var(--t-bad)}
+.dc-bar{fill:rgba(255,255,255,.035)}
+.dc-bar.hit{fill:color-mix(in srgb,var(--t-bad) 14%,transparent)}
+.fx .vs .cg-line{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 1.1s var(--ease-out);transition-delay:calc(var(--d)*40ms)}
+.fx .vs .in .cg-line{stroke-dashoffset:0}
+#vpn table{border-collapse:separate;border-spacing:0;table-layout:fixed}
+#vpn thead td{width:24%}
+#vpn th,#vpn td{border-bottom:1px solid rgba(255,255,255,.06);padding-block:1.15rem}
+#vpn tbody tr:last-child th,#vpn tbody tr:last-child td{border-bottom:0}
+#vpn .us{background:none;padding-inline:0 1.4rem;color:var(--ink)}
+#vpn td:not(.us){color:var(--ink3)}
+#vpn thead .us{border-top:2px solid transparent;border-image:var(--t-top) 1;color:var(--ink);font:500 .95rem/1.4 var(--disp)}
+#vpn tbody tr:hover th,#vpn tbody tr:hover td:not(.us){color:var(--ink)}
+/* setup */
+.steps4{list-style:none;margin:0 0 4rem;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line);counter-reset:st}
+.steps4 li{counter-increment:st;position:relative;padding:1.6rem 1.5rem 1.6rem 0;color:var(--ink2);font-size:.95rem;line-height:1.55;min-width:0}
+.steps4 li+li{border-left:1px solid var(--line);padding-left:1.5rem}
+.steps4 li::before{content:counter(st,decimal-leading-zero);display:block;font:400 clamp(3rem,2rem + 3vw,6rem)/.9 var(--mono);letter-spacing:-.06em;color:var(--ink);margin-bottom:1.4rem}
+.steps4 li:first-child::before{background:var(--t-top);-webkit-background-clip:text;background-clip:text;color:transparent}
+.steps4 b{color:var(--ink);font-weight:500}
+.duo-h{font:500 clamp(1.8rem,1rem + 2vw,3rem)/1.05 var(--disp);letter-spacing:-.035em;margin:0 0 .8rem}.duo-h .m{color:var(--ink3)}
+.duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;border-block:1px solid var(--line)}
+.duo>div{padding:2rem 2rem 2rem 0}
+.duo>div+div{border-left:1px solid var(--line);padding-left:2rem}
+.duo h4{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;font:500 clamp(1.4rem,1rem + 1vw,2rem)/1.1 var(--disp);letter-spacing:-.03em;margin:0 0 .8rem}
+.duo h4 span{font:400 .8rem/1 var(--mono);color:var(--ink3);letter-spacing:0}
+.duo p{margin:0;color:var(--ink2);max-width:46ch}
+.duo .mini{display:flex;align-items:center;gap:.7rem;margin:0 0 1.2rem;font:400 .8rem/1.4 var(--mono);color:var(--ink3)}
+.sw.off i{background:var(--t-warn)}
+.setup-foot{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem 2rem;margin-top:1.5rem}
+.setup-foot p{margin:0;color:var(--ink3);font-size:.9rem}
+.setup-foot a{color:var(--ink2)}
+/* guides and FAQ */
+ul.guides{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+ul.guides li{position:relative;display:grid;grid-template-columns:3.5rem minmax(0,1.2fr) minmax(0,1fr) 1.4rem;gap:1.5rem;align-items:baseline;padding:1.45rem 0;border-bottom:1px solid var(--line)}
+ul.guides li::before{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--t-top);transform:scaleX(0);transform-origin:left;transition:transform .6s var(--ease-out)}
+ul.guides li::after{content:"";width:.55rem;height:.55rem;border-top:1.5px solid var(--ink3);border-right:1.5px solid var(--ink3);transform:rotate(45deg);transition:transform .4s var(--ease-out),border-color .25s;justify-self:end}
+ul.guides li:hover::before,ul.guides li:focus-within::before{transform:scaleX(1)}
+ul.guides li:hover::after{transform:translateX(5px) rotate(45deg);border-color:var(--ink)}
+ul.guides .n{font:400 .8rem/1 var(--mono);color:var(--ink3)}
+ul.guides a{font:500 clamp(1.25rem,1rem + .8vw,2rem)/1.15 var(--disp);letter-spacing:-.03em;text-decoration:none}
+ul.guides a .t{display:inline-block;transition:transform .5s var(--ease-out)}
+ul.guides li:hover a .t{transform:translateX(.5rem)}
+ul.guides a::after{content:"";position:absolute;inset:0}
+ul.guides a:focus-visible{outline:0}ul.guides a:focus-visible::after{outline:2px solid var(--t-accent-light);outline-offset:2px}
+ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
+.peek{position:fixed;left:0;top:0;z-index:35;width:20rem;padding:1.1rem 1.2rem 1rem;border-radius:12px;background:color-mix(in srgb,var(--t-surface) 94%,transparent);box-shadow:0 0 0 1px var(--line2),0 40px 80px -30px #000;pointer-events:none;opacity:0;visibility:hidden;transform:translate(var(--x,0),var(--y,0)) translate(-50%,-104%) scale(.96);transition:opacity .25s,visibility .25s,transform .4s var(--ease-out)}
+.peek.on{visibility:visible;opacity:1;transform:translate(var(--x,0),var(--y,0)) translate(-50%,-112%) scale(1)}
+.peek::before{content:"";position:absolute;inset:0 0 auto;height:2px;border-radius:12px 12px 0 0;background:var(--t-top)}
+.peek b{display:block;font:400 2.6rem/1 var(--mono);letter-spacing:-.05em;color:var(--ink);white-space:nowrap}
+.peek span{display:block;margin-top:.5rem;font:400 .8rem/1.4 var(--mono);color:var(--ink3)}
+.faq{margin-top:clamp(5rem,3rem + 5vw,9rem);display:grid;grid-template-columns:repeat(12,minmax(0,1fr));align-items:start}
+.faq h2{grid-column:1/5;font-size:clamp(2rem,1rem + 2.2vw,3.4rem);padding-right:2rem}
+.faq .qs{grid-column:5/13;grid-row:1/span 2;min-width:0}
+.faq .more{grid-column:1/5;grid-row:2;border-top:1px solid var(--line);padding-top:1rem;margin-top:1rem;margin-right:2rem}
 .faq .more h3{margin-bottom:.6rem}
 .faq .more ul{list-style:none;margin:0;padding:0}
-.faq .more li{margin:0 0 .55rem;color:var(--ink3);font-size:.92rem;line-height:1.45}
-.faq .more a{color:var(--ink2)}
-.faq .more a:hover{color:var(--ink)}
-.cta .wrap{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1.5rem 3rem;align-items:center}
-.cta h2{margin-bottom:.5rem}
-.cta p.lead{margin:0;font-size:1rem}
-.cta .actions .btn-ghost{padding:.9rem 1.2rem}
-.cta .get-phone{margin-bottom:1rem}
-.cta .actions .btn-ghost svg{width:1.06em;height:1.06em}
+.faq .more li{margin:0 0 .2rem;color:var(--ink3);font-size:.95rem;line-height:1.45}
+.faq .more a{color:var(--ink2);display:inline-flex;align-items:center;min-height:44px}
+/* the close: back in the world, seen from high up, where the route is one line */
+.cta{position:relative;min-height:100svh;display:flex;align-items:center;padding-block:6rem;border-top:1px solid var(--line)}
+.cta>.wrap{width:100%}
+.cta .copy{width:min(38rem,44%)}
+.cta h2{margin:0 0 1.8rem;font-size:clamp(2.8rem,1rem + 4.6vw,6.6rem);line-height:.92;letter-spacing:-.055em;max-width:11ch}
+.cta .lead{margin:0 0 .4rem;max-width:44ch}
+.cta .req{margin:0 0 1.8rem}
+.cta .get-phone{max-width:26rem}
+/* the route's progress, as in the app's top line; links to each beat */
+.rail{position:fixed;right:max(var(--gutter),(100% - var(--max))/2);bottom:1.1rem;z-index:5;transition:opacity .4s,visibility .4s}
+.rail ol{display:flex;gap:1.3rem;list-style:none;margin:0 -.7rem;padding:.45rem .7rem .55rem;border-radius:8px;background:color-mix(in srgb,var(--t-bg) 86%,transparent);position:relative;font:400 .8rem/1 var(--mono)}
+.rail ol::before,.rail ol::after{content:"";position:absolute;left:.7rem;right:.7rem;bottom:.2rem;height:1px;background:var(--line2)}
+.rail ol::after{height:2px;bottom:-.5px;background:var(--t-top);transform-origin:0 50%;transform:scaleX(var(--p,0))}
+.rail a{display:inline-flex;align-items:center;min-height:32px;color:var(--ink2);text-decoration:none;transition:color .3s}
+.rail a:hover{color:var(--ink)}
+.rail li.on a{color:var(--ink);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.5em;text-decoration-color:currentColor}
+/* 5 Nov.: a quiet round icon, not a labelled pill (the owner found the pill tacky). The text stays as the accessible name. */
+.pause{position:fixed;right:max(var(--gutter),(100% - var(--max))/2);bottom:3.7rem;z-index:5;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;padding:0;gap:0;border:0;border-radius:50%;background:color-mix(in srgb,var(--t-surface) 70%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink3);font-size:0;cursor:pointer;opacity:.7;transition:opacity .4s,visibility .4s,color .2s,background-color .2s,box-shadow .2s}
+.pause:hover,.pause:focus-visible{opacity:1;color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink3)}
+.pause::before{content:"";flex:none;width:8px;height:10px;border-inline:2.5px solid currentColor}
+.pause[aria-pressed=true]{opacity:1;color:var(--ink);background:color-mix(in srgb,var(--t-accent) 16%,var(--t-surface));box-shadow:inset 0 0 0 1px var(--t-accent)}
+.pause[aria-pressed=true]::before{border:0;border-left:9px solid currentColor;border-block:5px solid transparent;width:0;height:0}
+.story-off .rail,.story-off .pause{opacity:0;visibility:hidden}
+@media (max-width:1199px){
+  .instr{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .instr>li:nth-child(3){border-left:0;padding-left:0;border-top:1px solid var(--line)}
+  .instr>li:nth-child(4){border-top:1px solid var(--line)}
+  .kit{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kit>div:nth-child(3){border-left:0;padding-left:0}
+  .kit>div:nth-child(n+3){border-top:1px solid var(--line)}
+  .steps4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .steps4 li:nth-child(3){border-left:0;padding-left:0}
+  .steps4 li:nth-child(n+3){border-top:1px solid var(--line);margin-top:1.6rem}
+  .beat .copy{width:min(30rem,40%)}
+  .b-cover .copy{width:min(32rem,44%)}
+}
+@media (max-width:999px){
+  .app-grid{display:block}
+  .win-fig{position:sticky;top:var(--top-h);z-index:2;margin:0 calc(-1*var(--gutter));padding:.75rem var(--gutter) .6rem;background:var(--bg);border-bottom:1px solid var(--line)}
+  .win{border-radius:8px}
+  .win-fig figcaption{padding-right:0;margin-top:.5rem;font-size:.8rem}
+  .pages{padding:0}
+  .pages li{min-height:auto;justify-content:flex-start;padding-block:2.2rem 3rem}
+  .vs{grid-template-columns:minmax(0,1fr)}
+  .vs>div+div{border-left:0;padding-left:0;border-top:1px solid var(--line)}
+  .duo{grid-template-columns:minmax(0,1fr)}
+  .duo>div+div{border-left:0;padding-left:0;border-top:1px solid var(--line)}
+  .faq{display:block}
+  .faq .more{margin-right:0}
+  ul.guides li{grid-template-columns:2.5rem minmax(0,1fr) 1.2rem}
+  ul.guides .n{grid-column:1;grid-row:1}ul.guides a{grid-column:2;grid-row:1}
+  ul.guides li>span:not(.n){grid-column:2;grid-row:2}
+  ul.guides li::after{grid-row:1;grid-column:3}
+  .rail{display:none}
+}
+/* held upright (a phone, a tablet): the route on top, each beat's text on its own plain card at the bottom */
+@media (max-width:999px) and (orientation:portrait){
+  .stage::after{background:linear-gradient(transparent calc(var(--vt,62%) - 14%),color-mix(in srgb,var(--bg) 88%,transparent) calc(var(--vt,62%) - 2%),var(--bg) var(--vt,62%),var(--bg) var(--vb,100%),transparent calc(var(--vb,100%) + 6%))}
+  .beat{align-items:flex-end;padding-bottom:max(12px,env(safe-area-inset-bottom))}
+  .beat .copy,.b-cover .copy,.cta .copy{width:auto;max-width:36rem}
+  .beat:not(.b-cover) .copy{padding:1.15rem 1.15rem 1.2rem;margin-inline:-.4rem;border-radius:16px;background:color-mix(in srgb,var(--bg) 95%,transparent);box-shadow:0 0 0 1px var(--line),0 -20px 50px -10px var(--bg)}
+  .beat .copy>:last-child{margin-bottom:0}
+  .b-cover{min-height:calc(100svh - var(--top-h));padding-block:0 3.4rem;align-items:flex-end}
+  .b-cover .copy{padding-top:1rem}
+  .b-cover h1{font-size:clamp(2.1rem,1rem + 5.4vw,3.4rem);margin-bottom:1rem;max-width:13ch}
+  .b-cover .lead{margin-bottom:1.1rem}
+  .b-cover .facts{margin-top:.9rem}
+  .cue{bottom:.4rem}
+  .beat h2{font-size:clamp(1.9rem,1rem + 4vw,2.8rem);margin-bottom:.9rem}
+  .beat h3{font-size:clamp(1.8rem,1rem + 3.6vw,2.6rem);margin-bottom:.8rem}
+  .beat p{font-size:1rem;margin-bottom:.7rem}
+  .beat-long{min-height:300svh;align-items:stretch}
+  .beat-long>.wrap{justify-content:flex-end}
+  .beat-long .copy{top:auto;bottom:max(12px,env(safe-area-inset-bottom));position:sticky}
+  /* the ban card holds the log and the IP; the Valve note and the made-up times note follow right after the beat */
+  .beat-long .sub,.beat-long .ban-cap{display:none}.ban-cap-s{display:block;margin-bottom:1rem}
+  .said.big{margin:.6rem 0 .7rem;flex-direction:row;align-items:baseline;flex-wrap:wrap;gap:.2rem .8rem}
+  .said.big .ip{font-size:1.6rem}
+  .log{font-size:.78rem;margin-bottom:0}.log li{padding-block:.15rem}
+  .ban-cap{font-size:.8rem}
+  .cta{align-items:flex-end;padding-block:4rem 2rem}
+  .cta .copy{padding:1.2rem;border-radius:16px;background:color-mix(in srgb,var(--bg) 95%,transparent);box-shadow:0 0 0 1px var(--line)}
+  .pause{right:10px;bottom:auto;top:calc(var(--top-h) + 10px);width:44px;height:44px;padding:0;justify-content:center;font-size:0;gap:0;background:var(--t-surface)}
+}
+/* a small phone held upright: the cards get tighter so the world still shows above them */
+@media (max-width:999px) and (orientation:portrait) and (max-height:700px){
+  .log time{display:none}.log li{grid-template-columns:minmax(0,1fr)}
+  .said.big .ip{font-size:1.3rem}
+  .beat:not(.b-cover) .copy{padding:.85rem .9rem}
+  .beat-long .ban-cap,.beat-long .sub{display:none}.ban-cap-s{display:block;margin-bottom:1rem}
+  .beat h2,.beat h3{font-size:1.55rem}
+  .beat p{font-size:.94rem;line-height:1.5}
+  .key{grid-template-columns:1fr 1fr;font-size:.75rem}
+}
+@media (max-width:759px){
+  :root{--top-h:3.5rem}
+  .instr{grid-template-columns:minmax(0,1fr)}
+  .instr>li:nth-child(n){border-left:0;padding-left:0;border-top:1px solid var(--line)}
+  .instr>li:first-child{border-top:0}
+  .kit{grid-template-columns:minmax(0,1fr)}
+  .kit>div:nth-child(n){border-left:0;padding-left:0;border-top:1px solid var(--line)}
+  .kit>div:first-child{border-top:0}
+  .kit .art{min-height:6rem}
+  .steps4{grid-template-columns:minmax(0,1fr)}
+  .steps4 li:nth-child(n){border-left:0;padding-left:0;border-top:1px solid var(--line);margin-top:0;padding-bottom:1.4rem}
+  .steps4 li::before{font-size:3rem;margin-bottom:.8rem}
+  .setup-foot{grid-template-columns:minmax(0,1fr)}
+  .kit .tp,.steps4 li,.instr p,.tbl td{font-size:1rem}
+  .src,.ban-cap{font-size:.9rem}
+  .get-note code{font-size:.9rem}
+  .cta h2{font-size:clamp(2.6rem,1rem + 8vw,3.6rem)}
+  ul.guides li{grid-template-columns:2rem minmax(0,1fr) 1rem;gap:.4rem 1rem;padding:1.15rem 0}
+  ul.guides li>span:not(.n){font-size:.88rem}
+  .ban-after .wrap{display:block}
+  /* the cover held upright: a tighter column, so the world gets the top of the screen */
+  .b-cover{padding-bottom:1.2rem}
+  .b-cover h1{font-size:clamp(1.85rem,1rem + 4.6vw,2.6rem);margin-bottom:.8rem}
+  .b-cover .lead{font-size:.95rem;line-height:1.5;margin-bottom:.9rem}
+  .b-cover .get-phone{gap:.5rem}
+  .b-cover .get-note{font-size:.82rem;line-height:1.45}
+  .b-cover .facts{font-size:.8rem;margin-top:.7rem}
+  .cue{display:none}
+}
+/* a phone on its side: copy on the left, the route on the right, as on a PC */
+@media (max-height:540px) and (orientation:landscape){
+  .beat .copy,.b-cover .copy{width:min(30rem,50%)}
+  .b-cover{min-height:auto;align-items:flex-start;padding-block:1rem 1.5rem}
+  .b-cover h1{max-width:20ch;font-size:clamp(1.6rem,1rem + 2.4vw,2.2rem);margin-bottom:.6rem}
+  .b-cover .lead{font-size:.9rem;margin-bottom:.6rem}
+  .b-cover .get-phone .btn{width:auto;align-self:flex-start}
+  .beat h2,.beat h3{font-size:clamp(1.6rem,1rem + 2vw,2.2rem)}
+  .beat p{font-size:.9rem;margin-bottom:.5rem}
+  .key{font-size:.75rem;margin-top:.8rem}
+  .beat-long{min-height:320svh}
+  .beat-long .copy{width:min(30rem,52%);padding-block:.5rem}
+  .beat-long h2{font-size:1.4rem;margin-bottom:.4rem}
+  .log time{display:none}.log li{grid-template-columns:minmax(0,1fr)}
+  .app-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr))}.pages{grid-column:1/6}.win-fig{grid-column:6/13;grid-row:1;position:sticky;top:calc(var(--top-h) + .75rem);margin:0;padding:0;background:none;border:0}.pages li{min-height:70svh;padding-block:1rem}
+  .beat-long .said.big,.beat-long .ban-cap{display:none}
+  .beat-long .sub{display:block;font-size:.75rem;line-height:1.4;margin-bottom:.35rem}
+  .ban-cap-s:not(.ban-sub-s){display:block;margin-bottom:1rem}
+  .beat h3{font-size:clamp(1.4rem,1rem + 1.6vw,1.9rem);margin-bottom:.5rem}.beat h2{font-size:1.5rem}.beat p{font-size:.85rem}
+  .beat .said{margin:.6rem 0 .5rem}
+  .log{font-size:.78rem}.log li{padding-block:.08rem}
+  .cue{display:none}
+  .pause{right:10px;bottom:10px;width:44px;height:44px;padding:0;justify-content:center;font-size:0;gap:0}
+}
+/* very small and on its side (a phone at 400 % zoom): one card across, the world above it */
+@media (max-width:639px) and (orientation:landscape){
+  .beat .copy,.b-cover .copy,.beat-long .copy,.cta .copy{width:auto;padding:.9rem;border-radius:12px;background:color-mix(in srgb,var(--bg) 95%,transparent)}
+  .beat{align-items:flex-end}
+}
+@media (max-width:359px){.key{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){.stage canvas{transition:none}}
 @media (max-width:1000px){
-  .hero{grid-template-columns:1fr;gap:2.25rem;padding-top:2.25rem;padding-bottom:3rem}
-  .hero-copy{padding-top:0}
-  .hero-scene{max-width:44rem;padding-bottom:6rem}
-  .who ul,ul.guides{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .who .wrap{grid-template-columns:1fr}
-  .viewer{grid-template-columns:1fr;gap:1rem}
-  .tabs{flex-direction:row;overflow-x:auto;gap:.4rem;border-top:0;padding-bottom:4px;scrollbar-width:none}
-  .tabs::-webkit-scrollbar{display:none}
-  .tabs label{flex:none;padding:.4rem .9rem;border:1px solid var(--line);border-radius:999px}
-  .tabs label::before{display:none}
-  .tabs label b{font-size:.95rem}
-  .tabs label span{display:none!important}
-  #pg-connection:checked~.tabs [for=pg-connection],#pg-servers:checked~.tabs [for=pg-servers],#pg-accounts:checked~.tabs [for=pg-accounts],#pg-regions:checked~.tabs [for=pg-regions],#pg-configs:checked~.tabs [for=pg-configs],#pg-profiles:checked~.tabs [for=pg-profiles]{border-color:var(--sand);background:rgba(var(--t-accent-rgb),.1)}
-  .views figcaption .fd{display:inline;color:var(--ink2)}
-  .also,.split{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .cta .wrap{grid-template-columns:1fr}
-  .faq{grid-template-columns:1fr}
+  section{padding-block:clamp(4rem,2.5rem + 6vw,6rem)}
+  .sub{margin-bottom:2rem}
 }
 @media (max-width:760px){
-  .top .wrap{height:3.5rem}
-  .top nav{gap:1.1rem}
-  .top nav .hide-s{display:none}
-  .hero{padding-top:1.75rem;gap:1.75rem}
-  .hero h1{font-size:clamp(2.1rem,9.6vw,2.6rem);line-height:1.03;margin-bottom:1rem}
+  .top .wrap{height:var(--top-h)}
+  .top nav{gap:1rem}
   .lead{font-size:1.04rem}
-  .get-desk{display:none}
-  .get-phone{display:flex;flex-direction:column;align-items:stretch;gap:.75rem}
-  .get-note{margin:0;font-size:.95rem;color:var(--ink)}
-  .copyrow{display:flex;align-items:stretch;border:1px solid var(--line2);border-radius:7px;overflow:hidden;background:var(--bg2)}
-  .copyrow .url{flex:1;min-width:0;padding:.85rem .8rem;font-size:.8rem;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;align-self:center}
-  .copyrow .btn{display:none;border-radius:0;padding:.85rem 1rem;flex:none;box-shadow:none}
-  .js .copyrow .btn{display:inline-flex}
-  .get-phone .link{font-size:.92rem;align-self:flex-start}
-  .checks{font-size:.86rem;gap:.35rem 1rem;margin-top:1.25rem}
-  .req{font-size:.74rem}
-  .hero-scene{padding-bottom:0}
-  .hero-scene::before,.float-app{display:none}
-  .radar-head{font-size:.66rem;padding-bottom:.6rem}
-  .radar-plate{aspect-ratio:360/498;--mx:24%;--my:15%}
-  .topo{background-image:url(assets/topo-phone.svg)}
-  .r-desk{display:none}
-  .r-phone{display:block}
-  .phone-app{display:block;position:relative;z-index:3;margin:-2.5rem .75rem 0;border-radius:8px;overflow:hidden;box-shadow:0 0 0 1px var(--line2),0 24px 50px -16px rgba(0,0,0,.75)}
-  section{padding:2.5rem 0}
-  .who{padding:1.6rem 0}
-  .who .wrap{gap:.7rem}
-  .who ul{grid-template-columns:1fr;gap:.45rem;font-size:.92rem;line-height:1.45}
-  .who li b{display:inline}
-  .top nav .btn-ghost{padding:.5rem .75rem}
-  .sub{margin-bottom:1.5rem}
-  #setup .sub{display:none}
-  .shot{border-radius:7px}
-  .also{grid-template-columns:repeat(2,minmax(0,1fr));gap:1.1rem 1.25rem;margin-top:2.25rem}
-  .also p{font-size:.88rem;line-height:1.5}
-  .also kbd{padding:0 3px}
-  .how-img{margin-bottom:1.75rem}
-  .how-img .how-d{display:none}
-  .how-img .how-p{display:block}
-  .steps,.split{grid-template-columns:1fr}
-  .steps{gap:1rem}
-  .steps li::before{display:inline;margin:0 .5rem 0 0}
-  .steps b{display:inline}
-  ul.guides{gap:1rem 1.25rem}
-  ul.guides span{display:none}
-  .faq{margin-top:2.75rem}
-  summary{font-size:1rem}
+  details p{padding-right:0}
+  summary{font-size:1.06rem;padding-right:2.6rem}
   /* tables: one block per row, each cell with its column's name */
   .tbl{overflow:visible}
   .tbl table,.tbl tbody,.tbl tr,.tbl th,.tbl td{display:block;width:auto}
@@ -406,273 +762,247 @@ ul.guides span{display:block;color:var(--ink3);font-size:.9rem;line-height:1.45;
   .tbl tr:last-child{border-bottom:1px solid var(--line)}
   .tbl th,.tbl td{border:0;padding:0}
   .tbl tbody th{padding-bottom:.45rem;font-size:.95rem}
-  .tbl td{font-size:.9rem;line-height:1.45;padding:0 0 .55rem}
+  .tbl td{font-size:1rem;line-height:1.45;padding:0 0 .55rem}
   .tbl td:last-child{padding-bottom:0}
-  .tbl td.us{padding-left:.7rem;box-shadow:inset 2px 0 0 var(--sand);background:none}
-  .tbl td[data-label]::before{content:attr(data-label);display:block;font:400 .64rem/1.6 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+  .tbl td.us{padding-left:.7rem;box-shadow:inset 1px 0 0 var(--accent);background:none}
+  .tbl td[data-label]::before{content:attr(data-label);display:block;font:500 .78rem/1.6 var(--sans);color:var(--ink3)}
   .tbl td.us[data-label]::before{color:var(--accent)}
   #vpn tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:.9rem}
   #vpn tbody th{grid-column:1/-1}
   #vpn td{padding-bottom:0}
+  #vpn .us{padding-inline:.7rem;border-radius:0!important}
 }
-body{border-top:2px solid transparent;border-image:var(--t-top) 1}
-@media (max-width:360px){.top .wrap{gap:.6rem}.top nav{gap:.7rem}}
-@media (max-width:300px){.top nav a:not(.btn){display:none}}
+@media (max-width:440px){.top nav .btn-ghost span{display:none}.top nav .btn-ghost{padding-inline:.75rem}}
+@media (max-width:380px){.top .wrap{gap:.6rem}.top nav{gap:.7rem}.brand{font-size:.94rem}.top nav .btn-ghost{display:none}}
+@media (pointer:coarse){.top .btn-s{min-height:44px}.top .btn-ghost{min-width:44px}.brand{min-height:44px}}
 </style>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
+<div class="cols" aria-hidden="true"><i></i></div>
 <header class="top">
   <div class="wrap">
     <a class="brand" href="./"><img src="img/icon.png" alt="" width="28" height="28">CS2 IP Changer</a>
     <nav aria-label="Main">
       <a class="hide-s" href="#features">Features</a>
       <a class="hide-s" href="#how">How it works</a>
-      <a class="hide-s" href="#setup">Setup</a>
+      <a class="hide-s" href="is-it-safe/">Is it safe?</a>
       <a class="hide-s" href="#guides">Guides</a>
       <a class="btn btn-s btn-ghost" href="https://github.com/Sepd0x/cs2-ip-changer" title="Star CS2 IP Changer on GitHub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg><span>Star<span class="hide-s"> on GitHub</span></span></a>
       <a class="btn btn-s get-desk" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download</a>
+      <button class="btn btn-s get-top" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/">Send to PC</button>
     </nav>
   </div>
+  <span class="prog" aria-hidden="true"></span>
 </header>
 
+<div class="stage" id="stage" aria-hidden="true">
+  <canvas id="world"></canvas>
+  <picture class="stage-still"><source media="(max-width:999px) and (orientation:portrait)" srcset="img/poster-390.webp"><source media="(min-width:1700px)" srcset="img/poster-1920.webp"><source media="(min-width:1501px)" srcset="img/poster-1536.webp"><source media="(min-width:1421px)" srcset="img/poster-1440.webp"><source media="(min-width:1331px)" srcset="img/poster-1366.webp"><source media="(min-width:1000px)" srcset="img/poster-1280.webp"><img src="img/poster-1440.webp" alt="" width="1440" height="900"></picture>
+</div>
 <main id="main">
-  <div class="wrap hero">
-    <div class="hero-copy">
-      <p class="eyebrow">CS2 IP ban bypass and home IP protection</p>
-      <h1>Change your CS2 IP with your phone's mobile data</h1>
-      <p class="lead">CS2 IP Changer sends CS2 and Steam through your Android phone, so community servers see your carrier's IP, not your home IP. IP banned? One click gets a new IP and rejoins the server, logged into the next account that server hasn't banned.</p>
+  <div class="beat b-cover" data-beat="0" id="top">
+    <div class="wrap"><div class="copy">
+      <h1 id="h1">Change your CS2 IP with your phone's mobile data</h1>
+      <p class="lead">CS2 and Steam go through your phone, so community servers see your carrier's IP, not your home IP. IP banned? One click gets a new IP and puts you back on the server.</p>
       <div class="get-desk">
         <div class="actions">
           <a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
             Download for Windows
           </a>
-          <a class="link" href="https://github.com/Sepd0x/cs2-ip-changer">Source on GitHub</a>
+          <a class="link" href="is-it-safe/">Is it safe?</a>
         </div>
-        <p class="rel"><!--rel:line-->v0.1.0-beta.10 · 63.4 MB · 4 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Release notes and checksums</a><!--/rel--></p>
+        <p class="rel nowrap-bits"><!--rel:line-->v0.1.0-beta.10 · 63.4 MB · 4 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Release notes and checksums</a><!--/rel--></p>
       </div>
       <div class="get-phone">
-        <p class="get-note">It's a Windows app. Open this page on your PC:</p>
-        <div class="copyrow">
-          <code class="url">sepd0x.github.io/cs2-ip-changer</code>
-          <button class="btn" type="button" data-copy="https://sepd0x.github.io/cs2-ip-changer/">Copy link</button>
-        </div>
-        <a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a>
+        <button class="btn" type="button" id="send-link" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/">Send the link to my PC</button>
+        <p class="get-note">It's a Windows app: open this page on your PC. <code>sepd0x.github.io/cs2-ip-changer</code> · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></p>
       </div>
-      <ul class="checks" aria-label="At a glance">
-        <li>Free</li>
-        <li>Public source</li>
-        <li>No account</li>
-        <li>Doesn't touch cs2.exe</li>
-        <li>Signed updates</li>
-        <li><a href="https://www.virustotal.com/gui/file/fae35fdfe338757fbed1813feb0d90be9552f5e3f09c7e1a6fe5b1f32bf3407b/detection">VirusTotal report</a></li>
-      </ul>
-      <p class="safe">Not code-signed, so SmartScreen warns the first time: <a href="is-it-safe/">how to check it</a></p>
-      <p class="req">Beta · Windows 10/11 · Android phone + USB cable or hotspot · uses mobile data · admin</p>
-    </div>
-    <div class="hero-scene">
-      <figure class="radar" aria-labelledby="radar-cap">
-        <div class="radar-head" aria-hidden="true"><span>Route</span><span>Server sees <b>198.51.100.23</b></span></div>
-        <div class="radar-plate">
-          <div class="topo" aria-hidden="true"></div>
-          <div class="lit" aria-hidden="true"><div class="topo"></div></div>
-          <svg class="radar-map r-desk" viewBox="0 0 720 600" aria-hidden="true">
-            <g class="r-area">
-              <path d="M52 424h128v26h110v78H52z"/>
-              <path d="M140 270h92v70h-92z"/>
-              <path d="M318 140h104v66h-40v34h-64z"/>
-              <path d="M506 64h176v128h-62v40H506z"/>
-            </g>
-            <g class="r-tick">
-              <text x="60" y="26">A</text><text x="146" y="26">B</text><text x="232" y="26">C</text><text x="318" y="26">D</text><text x="404" y="26">E</text><text x="490" y="26">F</text><text x="576" y="26">G</text><text x="662" y="26">H</text>
-              <text x="16" y="84">1</text><text x="16" y="164">2</text><text x="16" y="244">3</text><text x="16" y="324">4</text><text x="16" y="404">5</text><text x="16" y="484">6</text><text x="16" y="564">7</text>
-            </g>
-            <path class="r-home" d="M118 470H252"/>
-            <g class="r-gate"><path d="M181 455v30M191 455v30"/></g>
-            <text class="r-lbl r-mid r-gate-t" x="186" y="444">closed to CS2</text>
-            <rect class="r-router" x="252" y="462" width="16" height="16"/>
-            <text class="r-lbl r-mid" x="260" y="506">Home router</text>
-            <text class="r-val r-mid" x="260" y="524">203.0.&#8226;&#8226;&#8226;.&#8226;&#8226;&#8226;</text>
-            <path class="r-glow" d="M110 470C118 410 150 340 190 314C240 282 300 214 360 180C420 146 480 122 560 120"/>
-            <path id="route-desk" class="r-route" pathLength="1" d="M110 470C118 410 150 340 190 314C240 282 300 214 360 180C420 146 480 122 560 120"/>
-            <circle class="r-pkt" r="3"><set attributeName="opacity" to="1" begin="2.6s"/><animateMotion dur="2.8s" begin="2.6s" repeatCount="indefinite"><mpath href="#route-desk"/></animateMotion></circle>
-            <circle class="r-pkt" r="3"><set attributeName="opacity" to="1" begin="4s"/><animateMotion dur="2.8s" begin="4s" repeatCount="indefinite"><mpath href="#route-desk"/></animateMotion></circle>
-            <rect class="r-pc" x="102" y="462" width="16" height="16"/>
-            <text class="r-lbl r-mid" x="110" y="506">Your PC</text>
-            <text class="r-val r-mid" x="110" y="524">CS2 &#183; Steam</text>
-            <circle class="r-ring n1" cx="190" cy="314" r="12"/><circle class="r-node n1" cx="190" cy="314" r="5.5"/>
-            <text class="r-lbl r-end" x="172" y="310">Phone</text>
-            <text class="r-val r-end" x="172" y="328">USB tethering</text>
-            <circle class="r-ring n2" cx="360" cy="180" r="12"/><circle class="r-node n2" cx="360" cy="180" r="5.5"/>
-            <text class="r-lbl" x="378" y="204">Carrier</text>
-            <text class="r-val" x="378" y="222">mobile data</text>
-            <circle class="r-ring n3" cx="560" cy="120" r="14"/><circle class="r-node n3" cx="560" cy="120" r="6.5"/>
-            <text class="r-lbl" x="580" y="114">Server</text>
-            <text class="r-val" x="580" y="132">EU Retakes #1</text>
-            <text class="r-ip" x="580" y="151">sees 198.51.100.23</text>
-          </svg>
-          <svg class="radar-map r-phone" viewBox="0 20 360 498" aria-hidden="true">
-            <g class="r-area">
-              <path d="M30 380h290v52H30z"/>
-              <path d="M222 262h72v56h-72z"/>
-              <path d="M112 168h84v64h-84z"/>
-              <path d="M28 28h132v96H28z"/>
-            </g>
-            <path class="r-home" d="M280 404H84"/>
-            <g class="r-gate"><path d="M177 390v28M187 390v28"/></g>
-            <text class="r-lbl r-mid r-gate-t" x="182" y="379">closed to CS2</text>
-            <rect class="r-router" x="68" y="396" width="16" height="16"/>
-            <text class="r-lbl r-mid" x="76" y="440">Home router</text>
-            <text class="r-val r-mid" x="76" y="458">203.0.&#8226;&#8226;&#8226;.&#8226;&#8226;&#8226;</text>
-            <path class="r-glow" d="M288 404C290 356 282 314 262 292C232 258 200 228 170 200C136 168 102 130 72 96"/>
-            <path id="route-phone" class="r-route" pathLength="1" d="M288 404C290 356 282 314 262 292C232 258 200 228 170 200C136 168 102 130 72 96"/>
-            <circle class="r-pkt" r="3"><set attributeName="opacity" to="1" begin="2.6s"/><animateMotion dur="2.8s" begin="2.6s" repeatCount="indefinite"><mpath href="#route-phone"/></animateMotion></circle>
-            <rect class="r-pc" x="280" y="396" width="16" height="16"/>
-            <text class="r-lbl r-mid" x="288" y="440">Your PC</text>
-            <text class="r-val r-mid" x="288" y="458">CS2 &#183; Steam</text>
-            <circle class="r-ring n1" cx="262" cy="292" r="11"/><circle class="r-node n1" cx="262" cy="292" r="5"/>
-            <text class="r-lbl r-end" x="244" y="290">Phone</text>
-            <text class="r-val r-end" x="244" y="308">USB tethering</text>
-            <circle class="r-ring n2" cx="170" cy="200" r="11"/><circle class="r-node n2" cx="170" cy="200" r="5"/>
-            <text class="r-lbl r-end" x="152" y="222">Carrier</text>
-            <text class="r-val r-end" x="152" y="240">mobile data</text>
-            <circle class="r-ring n3" cx="72" cy="96" r="13"/><circle class="r-node n3" cx="72" cy="96" r="6"/>
-            <text class="r-lbl" x="96" y="66">Server</text>
-            <text class="r-val" x="96" y="84">EU Retakes #1</text>
-            <text class="r-ip" x="96" y="102">sees 198.51.100.23</text>
-          </svg>
-        </div>
-        <figcaption id="radar-cap" hidden>Your PC sends CS2 and Steam over USB to the phone, then over mobile data to the server, which sees the carrier's IP 198.51.100.23. The home router is closed to CS2.</figcaption>
-      </figure>
-      <div class="float-app">
-        <div class="float-in"><picture><source type="image/webp" srcset="img/connection.webp"><img src="img/connection.png" alt="The Connection page of CS2 IP Changer: protection status, the IP servers see next to your home IP, phone status and live checks" width="1240" height="800" fetchpriority="high"></picture></div>
-      </div>
-      <div class="phone-app" aria-hidden="true">
-        <div class="cut cut-status"><picture><source type="image/webp" srcset="img/connection.webp"><img src="img/connection.png" alt="" width="1240" height="800" loading="lazy"></picture></div>
-      </div>
-    </div>
+      <p class="facts">Free beta · Windows 10/11 · <b>Android or iPhone</b> · USB cable or hotspot · never touches cs2.exe · not for VAC or game bans</p>
+    </div></div>
+    <a class="cue" href="#how"><span>Follow the route</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M4 9l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
   </div>
 
-  <section class="who" aria-labelledby="who-h">
+  <nav class="rail" id="rail" aria-label="The route, step by step">
+    <ol>
+      <li><a href="#top">PC</a></li>
+      <li><a href="#how">Phone</a></li>
+      <li><a href="#carrier">Carrier</a></li>
+      <li><a href="#kill-switch">Kill switch</a></li>
+      <li><a href="#ban">New IP</a></li>
+      <li><a href="#features">The app</a></li>
+    </ol>
+  </nav>
+  <button class="pause" type="button" id="pause" hidden aria-pressed="false" title="Pause motion">Pause motion</button>
+
+  <section class="story" id="how" aria-labelledby="how-h">
+    <div class="beat" data-beat="1">
+      <div class="wrap"><div class="copy">
+        <h2 id="how-h">How it works. <span class="m">Only the game moves to the phone.</span></h2>
+        <p>Plug the phone in by USB and turn on USB tethering (Personal Hotspot on an iPhone), or use its Wi-Fi hotspot. Android or iPhone.</p>
+        <p>CS2, Steam and your servers use the phone's mobile data. Browser, Discord and downloads stay on your home internet, unless you pick Whole PC.</p>
+        <ul class="key">
+          <li><i class="k-route" aria-hidden="true"></i>The game's route, through the phone</li>
+          <li><i class="k-home" aria-hidden="true"></i>Home internet, for everything else</li>
+        </ul>
+      </div></div>
+    </div>
+    <div class="beat" data-beat="2" id="carrier">
+      <div class="wrap"><div class="copy">
+        <h3>The server sees your carrier.</h3>
+        <p>From the phone the game goes out over 4G or 5G. The server sees an ordinary mobile connection from your carrier, the same kind any player on a phone hotspot has.</p>
+        <p class="said"><span class="vh">Example IP servers see, your carrier's: 198.51.100.23</span><span class="ip" aria-hidden="true">198.51.100.23</span><span aria-hidden="true">IP servers see. Example IP, your carrier's</span></p>
+        <p class="src">Your home IP stays out of their logs and their ban lists.</p>
+      </div></div>
+    </div>
+    <div class="beat" data-beat="3" id="kill-switch">
+      <div class="wrap"><div class="copy">
+        <h3>Nothing falls back.</h3>
+        <p>Once a phone has been connected, a pulled cable cuts CS2 off instead of using your home IP.</p>
+        <p class="src">The kill switch is Windows Firewall rules on your PC, for CS2 and your servers. Turn off protection removes the routes and firewall rules.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="story" id="ban" aria-labelledby="ban-h">
+    <div class="beat beat-long" data-beat="4">
+      <div class="wrap"><div class="copy">
+        <h2 id="ban-h">IP banned? <span class="m">Back in with one click.</span></h2>
+        <p class="sub">How the CS2 IP ban bypass works on community servers. It's for a server's own IP ban, not for Valve: a new IP doesn't change a VAC or game ban.</p>
+        <div class="said big" aria-hidden="true"><span class="ip digits" id="ban-ip">198.51.100.23</span><span id="ban-ip-note">IP servers see. Example, banned on this server</span></div>
+        <ol class="log" id="ban-log">
+          <li><time>21:14:02</time><span class="w">Kicked from EU Retakes #1: banned</span></li>
+          <li><time>21:14:02</time><span><b>main</b> marked as banned on this server</span></li>
+          <li><time>21:14:03</time><span><kbd>Ctrl+Shift+F10</kbd> Change IP and rejoin</span></li>
+          <li><time>21:14:04</time><span>Android: mobile data off, then on</span></li>
+          <li><time>21:14:12</time><span>New IP <b>192.0.2.140</b>, new range (was 198.51)</span></li>
+          <li><time>21:14:20</time><span>After a ban: Steam logs in as <b>alt_2</b></span></li>
+          <li><time>21:14:41</time><span class="g">Back on EU Retakes #1</span></li>
+        </ol>
+        <p class="ban-cap">Shown on Android, with made-up times, names and IPs. On an iPhone you get the new IP with Airplane Mode on the phone.</p>
+      </div></div>
+    </div>
+    <div class="solid ban-after">
+      <div class="wrap">
+        <p class="ban-cap ban-cap-s ban-sub-s">It's for a server's own IP ban, not for Valve: a new IP doesn't change a VAC or game ban.</p>
+        <p class="ban-cap ban-cap-s">Shown on Android, with made-up times, names and IPs. On an iPhone you get the new IP with Airplane Mode on the phone.</p>
+        <p>The app sees the ban in CS2's console, marks that account as banned on that server and its community, and logs into the next account that server hasn't banned. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> works from inside the game.</p>
+        <a class="link" href="cs2-ip-ban/">Which ban do you have?</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="app" id="features" aria-labelledby="features-h">
+    <div class="beat" data-beat="5">
+      <div class="wrap"><div class="copy">
+        <h2 id="features-h">What it does. <span class="m">One window, six pages.</span></h2>
+        <p>The route you just followed shows on the Connection page: the IP servers see, the phone, the live checks and Change IP. Example IPs and names. Five more pages look after your servers, Steam accounts, regions, configs and profiles.</p>
+      </div></div>
+    </div>
+    <div class="solid app-body">
+      <div class="wrap app-grid">
+        <figure class="win-fig" id="win-fig" data-bleed>
+          <div class="win">
+            <a class="zoom views" href="img/connection.png">
+              <picture class="on" data-pg="connection"><source type="image/webp" srcset="img/connection.webp"><img src="img/connection.png" alt="The Connection page: Protected, the IP servers see is the phone carrier's, next to your masked home IP, the Change IP buttons and the live checks" width="1240" height="800"></picture>
+              <picture data-pg="servers" aria-hidden="true"><source type="image/webp" srcset="img/servers.webp"><img src="img/servers.png" alt="The Servers page: your server list with name, map, players and ping, and the players on one server" width="1240" height="800" loading="lazy"></picture>
+              <picture data-pg="accounts" aria-hidden="true"><source type="image/webp" srcset="img/accounts.webp"><img src="img/accounts.png" alt="The Accounts page: saved Steam accounts with ban status, cooldowns and the In rotation checkbox" width="1240" height="800" loading="lazy"></picture>
+              <picture data-pg="regions" aria-hidden="true"><source type="image/webp" srcset="img/regions.webp"><img src="img/regions.png" alt="The Regions page: Valve's matchmaking regions by continent, each with its ping through the phone, and the ones turned off blocked for cs2.exe" width="1240" height="800" loading="lazy"></picture>
+              <picture data-pg="configs" aria-hidden="true"><source type="image/webp" srcset="img/configs.webp"><img src="img/configs.png" alt="The Configs page: copy, sync mode, Backups (undo), snapshots and compare" width="1240" height="800" loading="lazy"></picture>
+              <picture data-pg="profiles" aria-hidden="true"><source type="image/webp" srcset="img/profiles.webp"><img src="img/profiles.png" alt="The Profiles page: a template on the left, and each account now and after on the right, with its sign-in" width="1240" height="800" loading="lazy"></picture>
+              <span class="vh">, open full size</span>
+            </a>
+            <div class="patch p-bar" aria-hidden="true"><span>192.0.2.140</span></div>
+            <div class="patch p-ip" aria-hidden="true"><span>192.0.2.140</span></div>
+          </div>
+          <figcaption>The real app, with example IPs and names. <span class="tap">Tap the picture to open it full size.</span></figcaption>
+        </figure>
+        <ol class="pages" id="pages">
+          <li class="on" data-pg="connection"><h3><span aria-hidden="true">01</span> Connection</h3><p class="big"><span class="bn">192.0.2.140</span><small>IP servers see after Change IP, example</small></p><p>Protection status, the IP servers see next to your home IP, the phone, live checks and a leak test. Change IP lives here.</p><a href="change-ip-with-phone/">Change IP with your phone</a></li>
+          <li data-pg="servers"><h3><span aria-hidden="true">02</span> Servers</h3><p class="big"><span class="bn">14/16</span><small>players on EU Retakes #1, example</small></p><p>Paste <code>IP:port</code> or <code>steam://connect</code> links. Name, map, players and ping through the phone, and it can wait for a slot on a full server.</p><a href="cs2-ip-ban/">Banned on one? CS2 IP ban</a></li>
+          <li data-pg="accounts"><h3><span aria-hidden="true">03</span> Accounts</h3><p class="big"><span class="bn">8/8</span><small>accounts saved on this PC, example</small></p><p>Switch between the Steam accounts saved on your PC without passwords. VAC, game and trade bans, cooldowns and server ban marks.</p><a href="steam-account-switcher/">Steam account switcher</a></li>
+          <li data-pg="regions"><h3><span aria-hidden="true">04</span> Regions</h3><p class="big"><span class="bn">8/30</span><small>regions CS2 can play in, example</small></p><p>Choose where matchmaking puts you, with each region's ping. One firewall rule for <code>cs2.exe</code> blocks the regions you turn off.</p><a href="cs2-region-picker/">CS2 region picker</a></li>
+          <li data-pg="configs"><h3><span aria-hidden="true">05</span> Configs</h3><p class="big"><span class="bn">7</span><small>settings differ between two accounts, example</small></p><p>Copy binds, crosshair, sensitivity and video between accounts. Never while CS2 is open, always with a backup.</p><a href="copy-cs2-config/">Copy CS2 settings</a></li>
+          <li data-pg="profiles"><h3><span aria-hidden="true">06</span> Profiles</h3><p class="big"><span class="bn">6/8</span><small>accounts picked for one template, example</small></p><p>Name, picture, bio and privacy on many Steam accounts from one template. Preview first; Restore original undoes it.</p><a href="steam-profile-editor/">Steam profile editor</a></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="trust solid" aria-labelledby="trust-h">
     <div class="wrap">
-      <h2 id="who-h">Who it's for</h2>
-      <ul>
-        <li><b>IP banned</b> on a community server and want back in</li>
-        <li><b>Home IP</b> you'd rather keep out of server logs and ban lists</li>
-        <li><b>Alt accounts</b> you switch between, with the same binds and crosshair</li>
-        <li><b>Streaming</b> with your home IP and Steam logins off screen</li>
+      <div class="trust-head">
+        <h2 class="rv" id="trust-h">Is it safe? <span class="m">What you can check yourself.</span></h2>
+        <figure class="still still-45 rv"><img src="img/world-tower.webp" alt="" width="1000" height="1250" loading="lazy" decoding="async"><figcaption>Your PC, from the same scene, with example IPs: the app changes routes, firewall rules and which Steam account logs in, never the game itself.</figcaption></figure>
+      </div>
+      <ul class="instr">
+        <li class="rv">
+          <span class="rd" aria-hidden="true" id="vt-rd"><!--rel:vt-->0 of 68<!--/rel--></span>
+          <div class="vt-grid" aria-hidden="true"></div>
+          <p><b>VirusTotal: <!--rel:vt-->0 of 68<!--/rel--> flag it.</b> The latest release, scanned when it comes out. <a href="https://www.virustotal.com/gui/file/fae35fdfe338757fbed1813feb0d90be9552f5e3f09c7e1a6fe5b1f32bf3407b/detection">See the report</a></p>
+        </li>
+        <li class="rv" style="--i:1">
+          <span class="rd" aria-hidden="true">cs2.exe<small> never touched</small></span>
+          <div class="chipl" aria-hidden="true"><span class="chip no">its memory</span><span class="chip no">its program files</span><span class="chip">routes</span><span class="chip">firewall rules</span><span class="chip">Steam login</span></div>
+          <p><b>Hands off the game.</b> It never touches cs2.exe, its memory or its program files. It changes routes, firewall rules and which saved Steam account logs in. Switching accounts uses the logins Steam saved and never asks for your Steam password.</p>
+        </li>
+        <li class="rv" style="--i:2">
+          <span class="rd sm" aria-hidden="true" id="ver-rd"><!--rel:ver-->v0.1.0-beta.10<!--/rel--></span>
+          <div class="tape" aria-hidden="true"><span>built by <b>GitHub Actions</b> · source Sepd0x/cs2-ip-changer · sha256 <!--rel:sha-->fae35fdfe338757fbed1813feb0d90be9552f5e3f09c7e1a6fe5b1f32bf3407b<!--/rel--></span></div>
+          <p><b>Built in public.</b> <span class="vh"><!--rel:ver-->v0.1.0-beta.10<!--/rel-->, sha256 <!--rel:sha-->fae35fdfe338757fbed1813feb0d90be9552f5e3f09c7e1a6fe5b1f32bf3407b<!--/rel-->. </span>GitHub Actions builds every release from the public source, with an attestation you can check.</p>
+        </li>
+        <li class="rv" style="--i:3">
+          <span class="rd" aria-hidden="true">1&times;<small> SmartScreen asks once</small></span>
+          <div class="ss" aria-hidden="true"><b>Windows protected your PC</b><p>SmartScreen prevented an unrecognized app from starting.</p><div><span class="run">Run anyway</span><span>Don't run</span></div></div>
+          <p><b>Windows warns once.</b> The .exe isn't code-signed yet, so SmartScreen asks first: More info, then Run anyway. Updates are checked with a signature. <a href="is-it-safe/">How to check it</a></p>
+        </li>
       </ul>
+      <p class="trust-foot rv">No account. Beta usage stats are required to use the app: the first start shows what is sent, with Accept and Quit. Never IPs, servers or accounts. <a href="https://github.com/Sepd0x/cs2-ip-changer#telemetry">What is sent</a></p>
     </div>
   </section>
 
-  <section id="features" aria-labelledby="features-h">
+  <section class="more-kit solid" aria-labelledby="kit-h">
     <div class="wrap">
-      <h2 id="features-h">What it does</h2>
-      <p class="sub">One window with six pages. Pick one to see it.</p>
-      <div class="viewer">
-        <input type="radio" name="pg" id="pg-connection" checked>
-        <input type="radio" name="pg" id="pg-servers">
-        <input type="radio" name="pg" id="pg-accounts">
-        <input type="radio" name="pg" id="pg-regions">
-        <input type="radio" name="pg" id="pg-configs">
-        <input type="radio" name="pg" id="pg-profiles">
-        <div class="tabs">
-          <label for="pg-connection"><b>Connection</b><span>Protection status, the IP servers see next to your home IP, the phone, live checks and a leak test. Change IP lives here.</span></label>
-          <label for="pg-servers"><b>Servers</b><span>Paste <code>IP:port</code> or <code>steam://connect</code> links. Name, map, players and ping through the phone, and it can wait for a slot on a full server.</span></label>
-          <label for="pg-accounts"><b>Accounts</b><span>Switch between the Steam accounts saved on your PC without passwords. VAC, game and trade bans, cooldowns and server ban marks.</span></label>
-          <label for="pg-regions"><b>Regions</b><span>Choose where matchmaking puts you, with each region's ping. One firewall rule for <code>cs2.exe</code> blocks the regions you turn off.</span></label>
-          <label for="pg-configs"><b>Configs</b><span>Copy binds, crosshair, sensitivity and video between accounts. Never while CS2 is open, always with a backup.</span></label>
-          <label for="pg-profiles"><b>Profiles</b><span>Name, picture, bio and privacy on many Steam accounts from one template. Preview first; Restore original undoes it.</span></label>
+      <h2 class="rv" id="kit-h">And the rest. <span class="m">Small things that matter mid-game.</span></h2>
+      <div class="kit">
+        <div class="rv"><div class="art" aria-hidden="true"><div class="slot"><span>EU Retakes #1</span><div class="two"><span class="now"><span class="n">32<i>/32</i></span></span><span class="later"><span class="n">31<i>/32</i></span></span></div><div class="two"><span class="st now">full, waiting for a slot</span><span class="st go later">slot open, joining</span></div></div></div><div class="tp"><h3>Full server? It waits.</h3> Servers can wait for a free slot on a full server and join you as soon as one opens, through the phone.</div></div>
+        <div class="rv" style="--i:1"><div class="art" aria-hidden="true"><div class="list"><span><i style="--d:0"></i>USB cable</span><span><i style="--d:1"></i>Driver</span><span><i style="--d:2"></i>USB debugging</span><span><i style="--d:3"></i>Tethering on, phone Wi-Fi off</span></div></div><div class="tp"><h3>Phone setup.</h3> Steps for the cable, driver, USB debugging, tethering and the phone's Wi-Fi that check themselves and turn green, with a button where the app can do it.</div></div>
+        <div class="rv" style="--i:2"><div class="art" aria-hidden="true"><div class="q"><span class="bars2"><i></i><i></i><i></i><i></i></span><span><b>Good</b> · 41 ms · jitter 5 ms · 0% loss</span></div></div><div class="tp"><h3>Connection quality.</h3> Ping, jitter and loss through the phone every 30 seconds, with a warning when it's weak.</div></div>
+        <div class="rv" style="--i:3"><div class="art" aria-hidden="true"><div class="mask"><span class="ip">203.0.&#8226;&#8226;&#8226;.&#8226;&#8226;&#8226;</span><span class="sw"><i></i>Hide usernames</span></div></div><div class="tp"><h3>Stream friendly.</h3> Your home IP stays masked in the app, and Hide usernames keeps them off screen, in the Log too.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="vpn" class="solid" aria-labelledby="vpn-h">
+    <div class="wrap">
+      <h2 class="rv" id="vpn-h">CS2 IP Changer or a VPN? <span class="m">Both change the IP a server sees.</span></h2>
+      <p class="sub rv" style="--i:1">Many community servers block VPNs; a phone's mobile data looks like any player on a hotspot.</p>
+      <div class="pair">
+        <figure class="still still-11 rv"><img src="img/world-mast.webp" alt="" width="1250" height="1250" loading="lazy" decoding="async"><figcaption>A carrier's mast: servers see the IP of an ordinary mobile connection.</figcaption></figure>
+        <figure class="still still-11 rv" style="--i:1"><img src="img/world-racks.webp" alt="" width="1250" height="1250" loading="lazy" decoding="async"><figcaption>Server racks in a datacenter. A VPN's IP comes from racks like these, and anti-VPN plugins look it up in lists of datacenter addresses.</figcaption></figure>
+      </div>
+      <div class="vs">
+        <div class="rv">
+          <svg viewBox="0 0 470 200" aria-hidden="true" id="cgnat"></svg>
+          <h3>Why a phone's IP is different</h3>
+          <p>Carriers share each IP between many phones (CGNAT), so blocking one IP can block many real players. It's not a promise: an IP someone else misused can still be flagged, and Change IP gets you another one.</p>
+          <span class="src">Source: <a href="https://iphub.info/residential-proxy-detection/best-practices">IPHub on shared (CGNAT) addresses</a></span>
         </div>
-        <div class="views">
-          <figure class="f-connection"><div class="shot"><a class="zoom" href="img/connection.png" aria-label="Open the connection screenshot at full size"><picture><source type="image/webp" srcset="img/connection.webp"><img src="img/connection.png" alt="The Connection page: protection status, the IP servers see next to your home IP, phone status and live checks" width="1240" height="800" loading="lazy"></picture></a></div><figcaption><span class="fd">Protection status, the IP servers see next to your home IP, the phone and live checks. </span><a href="change-ip-with-phone/">Change IP with your phone</a></figcaption></figure>
-          <figure class="f-servers"><div class="shot"><a class="zoom" href="img/servers.png" aria-label="Open the servers screenshot at full size"><picture><source type="image/webp" srcset="img/servers.webp"><img src="img/servers.png" alt="The Servers page: your server list with name, map, players and ping, and the players on one server" width="1240" height="800" loading="lazy"></picture></a></div><figcaption><span class="fd">Your servers with name, map, players and ping through the phone. </span><a href="cs2-ip-ban/">Banned on one? CS2 IP ban</a></figcaption></figure>
-          <figure class="f-accounts"><div class="shot"><a class="zoom" href="img/accounts.png" aria-label="Open the accounts screenshot at full size"><picture><source type="image/webp" srcset="img/accounts.webp"><img src="img/accounts.png" alt="The Accounts page: saved Steam accounts with ban status, cooldowns and the In rotation checkbox" width="1240" height="800" loading="lazy"></picture></a></div><figcaption><span class="fd">Saved Steam accounts with bans, cooldowns and server ban marks. </span><a href="steam-account-switcher/">Steam account switcher</a></figcaption></figure>
-          <figure class="f-regions"><div class="shot"><a class="zoom" href="img/regions.png" aria-label="Open the regions screenshot at full size"><picture><source type="image/webp" srcset="img/regions.webp"><img src="img/regions.png" alt="The Regions page: Valve's matchmaking regions by continent, each with its ping through the phone, and the ones turned off blocked for cs2.exe" width="1240" height="800" loading="lazy"></picture></a></div><figcaption><span class="fd">Matchmaking regions with their ping; the ones you turn off are blocked for cs2.exe. </span><a href="cs2-region-picker/">CS2 region picker</a></figcaption></figure>
-          <figure class="f-configs"><div class="shot"><a class="zoom" href="img/configs.png" aria-label="Open the configs screenshot at full size"><picture><source type="image/webp" srcset="img/configs.webp"><img src="img/configs.png" alt="The Configs page: copy, sync mode, Backups (undo), snapshots and compare" width="1240" height="800" loading="lazy"></picture></a></div><figcaption><span class="fd">Sync, copy and compare configs between accounts, with backups. </span><a href="copy-cs2-config/">Copy CS2 settings</a></figcaption></figure>
-          <figure class="f-profiles"><div class="shot"><a class="zoom" href="img/profiles.png" aria-label="Open the profiles screenshot at full size"><picture><source type="image/webp" srcset="img/profiles.webp"><img src="img/profiles.png" alt="The Profiles page: a template on the left, and each account now and after on the right, with its sign-in" width="1240" height="800" loading="lazy"></picture></a></div><figcaption><span class="fd">A template on the left, each account now and after on the right. </span><a href="steam-profile-editor/">Steam profile editor</a></figcaption></figure>
+        <div class="rv" style="--i:1">
+          <svg viewBox="0 0 420 200" aria-hidden="true" id="dclist"></svg>
+          <h3>Why servers block VPNs</h3>
+          <p>To stop banned players coming back, many community servers run an anti-VPN plugin. It looks up each player's IP in a list of VPN and datacenter addresses. One CS2 plugin's default answer to a VPN is a ban, not a kick.</p>
+          <span class="src">Example: <a href="https://github.com/daffyyyy/CS2-AntiVPN">CS2-AntiVPN</a>, whose default punishment is a ban (<code>css_ban</code>)</span>
         </div>
       </div>
-      <div class="also">
-        <div><h3>Change IP</h3><p>Mobile data off and on over ADB until the carrier hands you a new IP, with a check that it's in a new /16 range.</p></div>
-        <div><h3>Change IP and rejoin</h3><p>After a kick or ban: a new IP, the last server again, and the next account that server hasn't banned. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> in game.</p></div>
-        <div><h3>Kill switch</h3><p>A Windows Firewall rule keeps your servers and CS2's game traffic on the phone (Block if the phone drops, in Checks). No phone mode blocks nothing.</p></div>
-        <div><h3>Phone setup</h3><p>Steps for the cable, driver, USB debugging, tethering and the phone's Wi-Fi that check themselves and turn green, with a button where the app can do it.</p></div>
-        <div><h3>Connection quality</h3><p>Ping, jitter and loss through the phone every 30 seconds, with a warning when it's weak.</p></div>
-        <div><h3>Stream friendly</h3><p>Your home IP stays masked in the app, and Hide usernames keeps them off screen, in the Log too.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section id="how" aria-labelledby="how-h">
-    <div class="wrap">
-      <h2 id="how-h">How it works</h2>
-      <p class="sub">It isn't a VPN. The server sees an ordinary mobile connection from your carrier, so it also works on community servers that block VPNs and datacenter IPs.</p>
-      <div class="how-img" role="img" aria-label="Your PC sends CS2 and Steam over the USB cable to the phone, which uses mobile data to reach the server. The server sees the carrier's IP. Your home router still carries the browser, Discord and downloads, but it is blocked for CS2 and your servers.">
-        <svg class="how-d" viewBox="0 0 900 250" aria-hidden="true">
-          <path class="h-wire" d="M206 62H352"/>
-          <path class="h-wire" d="M548 62H694"/>
-          <text class="h-note" x="279" y="50" text-anchor="middle">USB or hotspot</text>
-          <text class="h-note" x="621" y="50" text-anchor="middle">4G / 5G</text>
-          <rect class="h-node" x="24" y="31" width="182" height="62" rx="6"/>
-          <text class="h-lbl" x="42" y="55">Your PC</text>
-          <text class="h-val" x="42" y="78">CS2 and Steam</text>
-          <rect class="h-node on" x="352" y="31" width="196" height="62" rx="6"/>
-          <text class="h-lbl" x="370" y="55">Phone</text>
-          <text class="h-val" x="370" y="78">mobile data</text>
-          <rect class="h-node" x="694" y="31" width="182" height="62" rx="6"/>
-          <text class="h-lbl" x="712" y="55">CS2 server</text>
-          <text class="h-ip" x="712" y="78">sees 198.51.100.23</text>
-          <path class="h-home" d="M115 93V187H352"/>
-          <path class="h-home" d="M548 187H785V93"/>
-          <g class="h-gate"><path d="M685 175v24M695 175v24"/></g>
-          <text class="h-note h-gate-t" x="690" y="223" text-anchor="middle">blocked for CS2 and your servers</text>
-          <rect class="h-node" x="352" y="156" width="196" height="62" rx="6"/>
-          <text class="h-lbl" x="370" y="180">Home router</text>
-          <text class="h-val" x="370" y="203">everything else</text>
-        </svg>
-        <svg class="how-p" viewBox="0 0 320 376" aria-hidden="true">
-          <path class="h-wire" d="M160 68V108"/>
-          <path class="h-wire" d="M160 160V200"/>
-          <text class="h-note" x="174" y="92">USB or hotspot</text>
-          <text class="h-note" x="174" y="184">4G / 5G</text>
-          <rect class="h-node" x="16" y="16" width="288" height="52" rx="6"/>
-          <text class="h-lbl" x="34" y="37">Your PC</text>
-          <text class="h-val" x="34" y="58">CS2 and Steam</text>
-          <rect class="h-node on" x="16" y="108" width="288" height="52" rx="6"/>
-          <text class="h-lbl" x="34" y="129">Phone</text>
-          <text class="h-val" x="34" y="150">mobile data</text>
-          <rect class="h-node" x="16" y="200" width="288" height="52" rx="6"/>
-          <text class="h-lbl" x="34" y="221">CS2 server</text>
-          <text class="h-ip" x="34" y="242">sees 198.51.100.23</text>
-          <path class="h-home" d="M16 268H304"/>
-          <rect class="h-node" x="16" y="284" width="288" height="76" rx="6"/>
-          <text class="h-lbl" x="34" y="305">Home router</text>
-          <text class="h-val" x="34" y="326">everything else</text>
-          <g class="h-gate"><path d="M36 337v15M43 337v15"/></g>
-          <text class="h-note h-gate-t" x="54" y="349">blocked for CS2 and your servers</text>
-        </svg>
-      </div>
-      <ol class="steps">
-        <li><b>Plug in the phone</b> USB tethering or its hotspot shares the phone's mobile data with the PC.</li>
-        <li><b>Only the game moves</b> CS2, Steam and your servers use the phone. Browser, Discord and downloads stay at home.</li>
-        <li><b>Nothing falls back</b> Once a phone has been connected, a pulled cable cuts CS2 off instead of using your home IP.</li>
-      </ol>
-    </div>
-  </section>
-
-  <section id="vpn" aria-labelledby="vpn-h">
-    <div class="wrap">
-      <h2 id="vpn-h">CS2 IP Changer or a VPN?</h2>
-      <p class="sub">Both change the IP a server sees. Only one looks like a normal player.</p>
-      <div class="tbl">
+      <div class="tbl rv">
         <table>
           <thead><tr><td></td><th scope="col" class="us">CS2 IP Changer</th><th scope="col">VPN or proxy</th></tr></thead>
           <tbody>
             <tr><th scope="row">IP the server sees</th><td class="us" data-label="CS2 IP Changer">Your carrier's mobile IP, like any player on a phone hotspot</td><td data-label="VPN or proxy">An IP from the VPN's datacenter</td></tr>
-            <tr><th scope="row">Servers that block VPNs</th><td class="us" data-label="CS2 IP Changer">Works: it's an ordinary mobile connection</td><td data-label="VPN or proxy">Often blocked</td></tr>
-            <tr><th scope="row">Getting a new IP</th><td class="us" data-label="CS2 IP Changer">One click: mobile data off and on over ADB</td><td data-label="VPN or proxy">Connect to another VPN server</td></tr>
+            <tr><th scope="row">Servers that block VPNs</th><td class="us" data-label="CS2 IP Changer">Usually gets in: it's a mobile IP, not a datacenter</td><td data-label="VPN or proxy">Often kicked or banned by an anti-VPN plugin</td></tr>
+            <tr><th scope="row">Getting a new IP</th><td class="us" data-label="CS2 IP Changer">One click on Android (mobile data off and on over ADB); Airplane Mode on an iPhone</td><td data-label="VPN or proxy">Connect to another VPN server</td></tr>
             <tr><th scope="row">Cost</th><td class="us" data-label="CS2 IP Changer">Free, uses your phone's data plan</td><td data-label="VPN or proxy">Usually a subscription</td></tr>
             <tr><th scope="row">What goes through it</th><td class="us" data-label="CS2 IP Changer">CS2, Steam and your servers, or the whole PC if you pick it</td><td data-label="VPN or proxy">Usually the whole PC</td></tr>
             <tr><th scope="row">If the connection drops</th><td class="us" data-label="CS2 IP Changer">Windows Firewall kill switch: CS2 loses the connection instead of using your home IP</td><td data-label="VPN or proxy">Depends on the VPN app</td></tr>
@@ -682,58 +1012,54 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
     </div>
   </section>
 
-  <section id="setup" aria-labelledby="setup-h">
-    <div class="wrap split">
-      <div>
-        <h2 id="setup-h">Setup</h2>
-        <p class="sub">Windows 10 or 11 (64-bit), admin rights, Windows Firewall on, and an Android phone with mobile data.</p>
-        <ol class="setup">
-          <li><b>Download <code>CS2IPChanger.exe</code></b> from the <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">latest release</a> into a folder only admins can change, like <code>C:\Program Files\CS2 IP Changer</code>. Started from Downloads, it offers to install itself there in one click.</li>
-          <li><b>Plug the phone in by USB,</b> turn on USB tethering and turn off the phone's Wi-Fi.</li>
-          <li><b>Run the app</b> as admin. <b>Phone setup</b> shows each step in green or red and what's missing. Paste the servers you play on into Servers, then press <b>Turn on protection</b>: it starts off each time the app opens.</li>
-          <li><b>Open Connection.</b> With CS2 and Steam running, every check should be green, including Phone IP is not your home IP.</li>
-        </ol>
-        <p class="note">Change IP also needs USB debugging on the phone. Turn off protection, on the Connection page or in the icon&#39;s menu next to the clock, undoes it all. Full walkthrough: <a href="change-ip-with-phone/">Change IP with your phone</a>.</p>
+  <section id="setup" class="solid" aria-labelledby="setup-h">
+    <div class="wrap">
+      <h2 class="rv" id="setup-h">Setup. <span class="m">One cable, four steps.</span></h2>
+      <p class="sub rv" style="--i:1">Windows 10 or 11 (64-bit), admin rights, Windows Firewall on, and a phone with mobile data.</p>
+      <figure class="still still-219 rv"><img src="img/world-plug.webp" alt="" width="2100" height="900" loading="lazy" decoding="async"><figcaption>One USB cable from the PC to the phone, with USB tethering on (Personal Hotspot on an iPhone).</figcaption></figure>
+      <ol class="steps4">
+        <li class="rv"><b>Download <code>CS2IPChanger.exe</code></b> from the <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">latest release</a>. Started from Downloads, it offers to install itself in <code>C:\Program Files\CS2 IP Changer</code> in one click.</li>
+        <li class="rv" style="--i:1"><b>Plug the phone in by USB,</b> turn on USB tethering (Personal Hotspot on an iPhone) and turn off the phone's Wi-Fi. Using a VPN on the PC? Turn it off first.</li>
+        <li class="rv" style="--i:2"><b>Run the app</b> as admin. <b>Phone setup</b> shows each step in green or red and what's missing. Paste the servers you play on into Servers (the <code>IP:port</code> from CS2's console, <code>status</code>), then press <b>Turn on protection</b>: it starts off each time the app opens.</li>
+        <li class="rv" style="--i:3"><b>Open Connection.</b> With CS2 and Steam running, every check should be green, including Phone IP is not your home IP.</li>
+      </ol>
+      <h3 class="duo-h rv" id="phones-h">Android or iPhone. <span class="m">Only Change IP differs.</span></h3>
+      <p class="sub rv">The protection is the same on both.</p>
+      <div class="duo" role="group" aria-labelledby="phones-h">
+        <div class="rv"><img class="ph-still" src="img/world-android.webp" alt="An Android phone on its stand: Mobile data on, USB tethering on" width="1250" height="1250" loading="lazy" decoding="async"><p class="mini" aria-hidden="true"><span class="sw"><i></i>Mobile data</span> off and on, from the PC</p><h4>Android <span>USB or hotspot</span></h4><p>Change IP in one click from the PC, and Change IP and rejoin from inside the game. Needs USB debugging on the phone.</p></div>
+        <div class="rv" style="--i:1"><img class="ph-still" src="img/world-iphone.webp" alt="An iPhone on its stand: Airplane Mode off, Personal Hotspot on" width="1250" height="1250" loading="lazy" decoding="async"><p class="mini" aria-hidden="true"><span class="sw off"><i></i>Airplane Mode</span> on and off, on the phone</p><h4>iPhone <span>USB or hotspot</span></h4><p>Protection, the kill switch and the other pages work. For a new IP you switch Airplane Mode on and off on the phone, because only Android lets a PC do it. Phone setup's steps are for Android in this version.</p></div>
       </div>
-      <div>
-        <h2 id="trust-h">Built to be checked</h2>
-        <p class="sub">It runs as admin, so you should know what it does to your PC.</p>
-        <dl class="trust">
-          <dt>Hands off the game</dt>
-          <dd>Never the game process, its memory or its files. It changes Windows routes, firewall rules and which Steam account logs in.</dd>
-          <dt>Public source, attested builds</dt>
-          <dd>GitHub Actions builds each release from the public source, with an attestation you can check with <code>gh attestation verify</code>.</dd>
-          <dt>Signed updates</dt>
-          <dd>An update installs only if its SHA-256 matches and is signed with the project's offline key, which isn't on GitHub.</dd>
-          <dt>No passwords kept</dt>
-          <dd>Switching uses the logins Steam already saved. Beta usage stats, required to use the app, with a random ID made for this install and no name: no IPs, servers, accounts or names. <a href="is-it-safe/">Is it safe?</a></dd>
-        </dl>
+      <div class="setup-foot">
+        <p>Turn off protection, on the Connection page or in the icon&#39;s menu next to the clock, removes the routes and firewall rules. Full walkthrough: <a href="change-ip-with-phone/">Change IP with your phone</a>.</p>
+        <p>Beta usage stats are required: a random ID made for this install, with no name, never IPs, servers or accounts. <a href="https://github.com/Sepd0x/cs2-ip-changer#telemetry">What is sent</a></p>
       </div>
     </div>
   </section>
 
-  <section id="guides" aria-labelledby="guides-h">
+  <section id="guides" class="solid" aria-labelledby="guides-h">
     <div class="wrap">
-      <h2 id="guides-h">Guides</h2>
-      <p class="sub">One page per job, with the details.</p>
+      <h2 class="rv" id="guides-h">Guides. <span class="m">One page per job.</span></h2>
       <ul class="guides">
-        <li><a href="change-ip-with-phone/">Change IP with your phone</a><span>Setup, game-only routing and a new IP in one click.</span></li>
-        <li><a href="cs2-ip-ban/">CS2 IP ban</a><span>Which ban you have and how to get back in.</span></li>
-        <li><a href="hide-ip-cs2/">Hide your IP without a VPN</a><span>Who sees your IP, and every method compared.</span></li>
-        <li><a href="is-it-safe/">Is it safe?</a><span>What it changes and how to check the download.</span></li>
-        <li><a href="steam-account-switcher/">Steam account switcher</a><span>No passwords, ban marks per server.</span></li>
-        <li><a href="copy-cs2-config/">Copy CS2 settings</a><span>Crosshair, binds and video on every account.</span></li>
-        <li><a href="cs2-region-picker/">CS2 region picker</a><span>Choose where matchmaking puts you.</span></li>
-        <li><a href="steam-profile-editor/">Steam profile editor</a><span>Name, avatar and privacy on many accounts.</span></li>
+        <li data-peek="198.51.100.23|IP servers see, example"><span class="n">01</span><a href="change-ip-with-phone/"><span class="t">Change IP with your phone</span></a><span>Setup, game-only routing and a new IP in one click.</span></li>
+        <li data-peek="198.51.100.23|IP servers see through an iPhone, example"><span class="n">02</span><a href="cs2-iphone-hotspot/"><span class="t">CS2 with an iPhone</span></a><span>Personal Hotspot, and a new IP by Airplane Mode.</span></li>
+        <li data-peek="192.0.2.140|new IP after a ban, example"><span class="n">03</span><a href="cs2-ip-ban/"><span class="t">CS2 IP ban</span></a><span>Which ban you have and how to get back in.</span></li>
+        <li data-peek="203.0.•••.•••|your home IP, masked"><span class="n">04</span><a href="hide-ip-cs2/"><span class="t">Hide your IP without a VPN</span></a><span>Who sees your IP, and every method compared.</span></li>
+        <li data-peek="0/68|engines flag the latest release"><span class="n">05</span><a href="is-it-safe/"><span class="t">Is it safe?</span></a><span>What it changes and how to check the download.</span></li>
+        <li data-peek="8/8|accounts saved on this PC, example"><span class="n">06</span><a href="steam-account-switcher/"><span class="t">Steam account switcher</span></a><span>No passwords, ban marks per server.</span></li>
+        <li data-peek="7|settings differ between two accounts, example"><span class="n">07</span><a href="copy-cs2-config/"><span class="t">Copy CS2 settings</span></a><span>Crosshair, binds and video on every account.</span></li>
+        <li data-peek="8/30|regions CS2 can play in, example"><span class="n">08</span><a href="cs2-region-picker/"><span class="t">CS2 region picker</span></a><span>Choose where matchmaking puts you.</span></li>
+        <li data-peek="6/8|accounts picked for one template, example"><span class="n">09</span><a href="steam-profile-editor/"><span class="t">Steam profile editor</span></a><span>Name, avatar and privacy on many accounts.</span></li>
       </ul>
+      <div class="peek" id="peek" aria-hidden="true"><b></b><span></span></div>
 
       <div class="faq" id="faq">
-        <h2 id="faq-h">FAQ</h2>
+        <h2 class="rv" id="faq-h">FAQ. <span class="m">The short answers.</span></h2>
         <div class="qs">
-        <details><summary>Is it a VPN? Does it work on servers that block VPNs?</summary><p>No, it isn't a VPN, and yes, it works there. A VPN sends your traffic through a datacenter, and many community servers block datacenter and VPN IP ranges. This app sends CS2 and Steam through your own phone's mobile data, so the server sees an ordinary mobile connection from your carrier. There's no VPN server in between and no subscription.</p></details>
-        <details><summary>What do I need?</summary><p>Windows 10 or 11 (64-bit), admin rights, Windows Firewall turned on, and an Android phone with mobile data, connected by USB cable (USB tethering) or its Wi-Fi hotspot. USB debugging on the phone is only needed to change IP from the PC. CS2 and Steam then use the phone's data plan.</p></details>
-        <details><summary>Can I use the phone's Wi-Fi hotspot instead of a cable?</summary><p>Yes. Connect the PC to the hotspot and pick it under Connection &gt; How the PC connects to the phone. The app remembers the network name, and if Windows jumps back to your home router it blocks everything. Change IP works on the hotspot too if the phone is also plugged in by USB with USB debugging on.</p></details>
-        <details><summary>Does it send anything about me?</summary><p>While the app is in beta it sends usage stats, which are required to use it: the first start shows what is sent, with Accept and Quit (Quit closes the app without changing anything). Then it sends them once when it has been open for 20 seconds and then once a day: a random ID made for this install, with no name (never from your PC or from you; Settings > Delete my stats deletes it all), versions, your country, the mode, how the phone is connected, minutes open, how often each button is used, a few counters, how long your lists are and errors. Never IPs, servers, accounts, names or anything you typed, and the server keeps no IP. The full list is in the <a href="https://github.com/Sepd0x/cs2-ip-changer#telemetry">README</a>.</p></details>
+        <details><summary>Is it a VPN? Does it work on servers that block VPNs?</summary><p>It isn't a VPN. A VPN sends your traffic through a datacenter, and many community servers run anti-VPN plugins that kick or ban datacenter and VPN IPs. This app sends CS2 and Steam through your own phone's mobile data, so the server sees an ordinary mobile connection from your carrier, and it usually gets in where a VPN doesn't. Not a promise: carriers share IPs between many phones, so an IP someone else misused can be flagged; Change IP gets you another one. There's no VPN server in between and no subscription.</p></details>
+        <details><summary>What do I need?</summary><p>Windows 10 or 11 (64-bit), admin rights, Windows Firewall turned on, and an Android phone or iPhone with mobile data, connected by USB cable (USB tethering, or Personal Hotspot on an iPhone) or its Wi-Fi hotspot. Change IP from the PC needs an Android phone with USB debugging on; on an iPhone you switch Airplane Mode on and off yourself. CS2 and Steam then use the phone's data plan.</p></details>
+        <details><summary>Does it work with an iPhone?</summary><p>Yes, the protection does: an iPhone's USB tethering (Personal Hotspot) shows up in Windows like an Android one, and so does its Wi-Fi hotspot. Change IP from the PC needs ADB, which only Android has, so on an iPhone you get a new IP by switching Airplane Mode on and off on the phone.</p></details>
+        <details><summary>Can it get me VAC banned? Does it need my Steam password?</summary><p>It never touches the game: not cs2.exe, its memory or its program files. It changes Windows routes and firewall rules, and which saved Steam account logs in. Switching accounts uses the logins Steam already saved and never asks for your Steam password. It won't hide a cheat from VAC or any anti-cheat, and we can't speak for Valve or for a server's admins, who set their own rules.</p></details>
+        <details><summary>Does it send anything about me?</summary><p>While the app is in beta it sends usage stats, which are required to use it: the first start shows what is sent, with Accept and Quit (Quit closes the app without changing anything). It sends them when the app has been open for 20 seconds, every 30 minutes while it stays open and when it closes, with a short signal every 5 minutes of what is on: a random ID made for this install, with no name (never from your PC or from you; Settings > Delete my stats deletes it all), versions, your country, the mode, how the phone is connected, minutes open, how often each button is used, a few counters, how long your lists are and errors. Never IPs, servers, accounts, names or anything you typed, and the server keeps no IP. The full list is in the <a href="https://github.com/Sepd0x/cs2-ip-changer#telemetry">README</a>.</p></details>
         </div>
         <aside class="more" aria-labelledby="more-h">
           <h3 id="more-h">More answers in the guides</h3>
@@ -749,57 +1075,59 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
     </div>
   </section>
 
-  <section class="cta" aria-labelledby="cta-h">
+  <section class="cta" data-beat="6" aria-labelledby="cta-h">
     <div class="wrap">
-      <div>
-        <h2 id="cta-h">Keep your home IP out of their logs</h2>
-        <p class="lead">Free and portable. Every release is built by GitHub Actions from the public source, and updates are signed.</p>
-      </div>
-      <div>
+      <div class="copy">
+        <h2 id="cta-h">Keep your home IP <span class="m">out of their logs.</span></h2>
+        <p class="lead">Free, one .exe. Every release is built by GitHub Actions from the public source, and updates are checked with a signature.</p>
+        <p class="req">Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin</p>
         <div class="get-phone">
           <div class="copyrow">
-            <code class="url">sepd0x.github.io/cs2-ip-changer</code>
-            <button class="btn" type="button" data-copy="https://sepd0x.github.io/cs2-ip-changer/">Copy link</button>
+            <code class="url">sepd0x.github.io/<wbr>cs2-ip-changer</code>
+            <button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/">Send to my PC</button>
           </div>
         </div>
-        <div class="actions">
-          <a class="btn get-desk" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">
+        <div class="actions get-desk">
+          <a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
             Download for Windows
           </a>
           <a class="btn btn-ghost" href="https://github.com/Sepd0x/cs2-ip-changer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>Star on GitHub</a>
         </div>
         <p class="rel get-desk"><!--rel:line-->v0.1.0-beta.10 · 63.4 MB · 4 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Release notes and checksums</a><!--/rel--></p>
-        <p class="req">Windows 10/11 · Android phone + USB cable or hotspot · uses mobile data · admin</p>
       </div>
     </div>
   </section>
 </main>
 
 <footer>
-  <div class="wrap">
-    <span>CS2 IP Changer by Sepd0x. Not affiliated with Valve. Counter-Strike and Steam are trademarks of Valve Corporation.</span>
-    <span><a href="https://github.com/Sepd0x/cs2-ip-changer">Source</a> · <a href="https://github.com/Sepd0x/cs2-ip-changer/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/Sepd0x/cs2-ip-changer#privacy">Privacy</a> · <a href="https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose">Report a bug</a></span>
+  <h2 class="vh">Site links</h2>
+  <div class="wrap fgrid">
+    <div class="fbrand">
+      <a class="brand" href="./"><img src="img/icon.png" alt="" width="28" height="28">CS2 IP Changer</a>
+      <p>Free Windows app that sends CS2 and Steam through your phone's mobile data.</p>
+      <span class="fstat"><i></i>Latest: <!--rel:ver-->v0.1.0-beta.10<!--/rel--></span>
+    </div>
+    <nav aria-labelledby="f1"><h3 id="f1">Product</h3><ul><li><a href="./#features">Features</a></li><li><a href="./#how">How it works</a></li><li><a href="./#vpn">CS2 IP Changer or a VPN?</a></li><li><a href="./#setup">Setup</a></li><li><a href="./#faq">FAQ</a></li></ul></nav>
+    <nav aria-labelledby="f2"><h3 id="f2">Guides</h3><ul><li><a href="change-ip-with-phone/">Change IP with your phone</a></li><li><a href="cs2-iphone-hotspot/">CS2 with an iPhone</a></li><li><a href="cs2-ip-ban/">CS2 IP ban</a></li><li><a href="hide-ip-cs2/">Hide your IP without a VPN</a></li><li><a href="is-it-safe/">Is it safe?</a></li><li><a href="steam-account-switcher/">Steam account switcher</a></li><li><a href="copy-cs2-config/">Copy CS2 settings</a></li><li><a href="cs2-region-picker/">CS2 region picker</a></li><li><a href="steam-profile-editor/">Steam profile editor</a></li></ul></nav>
+    <nav aria-labelledby="f3"><h3 id="f3">Project</h3><ul><li><a href="https://github.com/Sepd0x/cs2-ip-changer">Source on GitHub</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/releases">Releases</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/blob/main/CHANGELOG.md">Changelog</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer#privacy">Privacy</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose">Report a bug</a></li></ul></nav>
   </div>
+  <div class="wordmark" aria-hidden="true">CS2 IP Changer<span>CS2 IP Changer</span></div>
+  <div class="wrap legal"><span>CS2 IP Changer by Sepd0x. Not affiliated with Valve. Counter-Strike and Steam are trademarks of Valve Corporation.</span><span>Made for community servers.</span></div>
 </footer>
+<script>
+/* the motion libraries load only when motion is on; the shared script, the story and the world load either way, in this order */
+(function(){var b='assets/js/',l=(document.documentElement.classList.contains('fx')?['gsap.min.js','ScrollTrigger.min.js','lenis.min.js']:[]).concat(['readout.js','home.js','scenes.min.js']);l.forEach(function(f){var s=document.createElement('script');s.src=b+f;s.async=false;if(f==='scenes.min.js')s.onload=function(){if(window.__worldReady)window.__worldReady()};document.body.appendChild(s)})})();
+</script>
 <script>
 (function(){
   var d=document;
-  /* the light over the map follows the pointer; at rest it sits over the server */
-  var p=d.querySelector('.radar-plate');
-  if(p&&matchMedia('(hover: hover) and (pointer: fine)').matches&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
-    var cur={x:78,y:20},tgt={x:78,y:20},raf=0;
-    var tick=function(){
-      cur.x+=(tgt.x-cur.x)*.12;cur.y+=(tgt.y-cur.y)*.12;
-      p.style.setProperty('--mx',cur.x.toFixed(2)+'%');p.style.setProperty('--my',cur.y.toFixed(2)+'%');
-      raf=(Math.abs(tgt.x-cur.x)>.05||Math.abs(tgt.y-cur.y)>.05)?requestAnimationFrame(tick):0;
-    };
-    var go=function(){if(!raf)raf=requestAnimationFrame(tick)};
-    p.addEventListener('pointermove',function(e){var r=p.getBoundingClientRect();tgt.x=(e.clientX-r.left)/r.width*100;tgt.y=(e.clientY-r.top)/r.height*100;go()});
-    p.addEventListener('pointerleave',function(){tgt.x=78;tgt.y=20;go()});
-  }
   /* shared */
-  /* on a phone: copy this page's link to open it on the PC */
+  /* on a touch screen, Send the link opens the phone's share sheet (to Discord, email, your PC); without one it copies the link */
+  if(navigator.share&&matchMedia('(pointer: coarse)').matches){
+    d.querySelectorAll('[data-share]').forEach(function(send){send.addEventListener('click',function(e){e.stopImmediatePropagation();navigator.share({title:'CS2 IP Changer',url:send.getAttribute('data-copy')}).catch(function(x){if(x&&x.name!=='AbortError'&&navigator.clipboard)navigator.clipboard.writeText(send.getAttribute('data-copy')).then(function(){var l=send.textContent;send.textContent='Copied';setTimeout(function(){send.textContent=l},1800)},function(){})})},true)});
+  }
+  /* copy this page's link to open it on the PC */
   d.querySelectorAll('[data-copy]').forEach(function(b){
     b.addEventListener('click',function(){
       var label=b.textContent,done=function(ok){b.textContent=ok?'Copied':'Copy failed';setTimeout(function(){b.textContent=label},1800)};
@@ -812,8 +1140,8 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
     var a=e.target.closest&&e.target.closest('a.zoom');
     if(!a||e.button||e.ctrlKey||e.metaKey||e.shiftKey||!window.HTMLDialogElement)return;
     e.preventDefault();
-    if(!box){box=d.createElement('dialog');box.className='lightbox';box.setAttribute('aria-label','Screenshot');box.innerHTML='<img alt="">';box.addEventListener('click',function(){box.close()});d.body.appendChild(box)}
-    var img=box.querySelector('img'),src=a.querySelector('img');img.src=a.getAttribute('href');img.alt=src?src.alt:'';box.showModal();
+    if(!box){box=d.createElement('dialog');box.className='lightbox';box.setAttribute('aria-label','Screenshot');box.innerHTML='<button type="button" class="lb-x">Close</button><img alt="Screenshot of CS2 IP Changer">';box.addEventListener('click',function(){box.close()});d.body.appendChild(box)}
+    var img=box.querySelector('img'),src=a.querySelector('picture.on img')||a.querySelector('img');img.src=src?src.currentSrc||src.src:a.getAttribute('href');img.alt=src?src.alt:'';box.showModal();
   });
   /* visit counter: which page, the site you came from (its name only) and clicks on Download, added up per day. No cookies,
      no ID, nothing kept in your browser. Off with Do Not Track or Global Privacy Control. Code: worker/stats/src/index.js */
@@ -826,6 +1154,8 @@ body{border-top:2px solid transparent;border-image:var(--t-top) 1}
     hit('view');
     d.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&/\/releases\/(latest\/)?download\//.test(a.href))hit('download')});
   }
+  /* if the motion script could not load, show the page as it is */
+  addEventListener('load',function(){if(!window.CS2Readout)d.documentElement.classList.remove('fx')});
   /* /shared */
 })();
 </script>

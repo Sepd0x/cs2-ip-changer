@@ -5,7 +5,7 @@
 (function () {
   const DEV = new URLSearchParams(location.search).get('dev') === '1';
   const cache = new Map();
-  let GH, GHat = 0, GHp = null, LV = null, LVat = 0, BR, BRat = 0, BRp = null;
+  let GH, GHat = 0, GHp = null, LV = null, LVat = 0, BR, BRat = 0, BRp = null, MD, MDat = 0;
   const get = async (u) => {
     const r = await fetch(u, { credentials: 'same-origin', cache: 'no-store' });
     if (!r.ok) throw new Error(`${u.split('?')[0]} respondeu ${r.status}`);
@@ -41,7 +41,15 @@
       if (!BRp) BRp = get('/api/brief' + (DEV ? '?dev=1' : '')).catch(() => null).then((b) => { BR = b; BRat = Date.now(); BRp = null; return b; });
       return BRp;
     },
+    /** v5: o mesmo brief em Markdown (a página Brief da página de dados), guardado 5 min como o JSON. */
+    async briefMd() {
+      if (MD !== undefined && Date.now() - MDat < 300_000) return MD;
+      const r = await fetch('/api/brief?format=md' + (DEV ? '&dev=1' : ''), { credentials: 'same-origin', cache: 'no-store' });
+      if (!r.ok) throw new Error(`/api/brief respondeu ${r.status}`);
+      MD = await r.text(); MDat = Date.now();
+      return MD;
+    },
     briefNow() { return BR !== undefined && Date.now() - BRat < 300_000 ? BR : undefined; },
-    forget() { cache.clear(); GHat = 0; LVat = 0; BRat = 0; },
+    forget() { cache.clear(); GHat = 0; LVat = 0; BRat = 0; MDat = 0; },
   };
 })();
