@@ -41,13 +41,12 @@
   <sub>Official downloads only from this page's Releases and the website above. <a href="#check-your-download">Check your download</a>. If the app helps you, a star on GitHub (top right) helps other players find it.</sub>
 </p>
 
-<!--
-  Demo GIF goes here, above the screenshot, once docs/assets/demo.gif exists (10 to 15 s, no sound, 900 px wide, under 8 MB):
-  the ban message, Ctrl+Shift+F10, the new IP, back on the server. Then uncomment these lines:
 <p align="center">
-  <img src="docs/assets/demo.gif" alt="Banned on a community server, Change IP and rejoin, a new IP and back on the server" width="900">
+  <picture>
+    <source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/demo.png">
+    <img src="docs/assets/demo.gif" alt="Banned on a community server, on the IP and the Steam account. One click on Change IP and rejoin: the phone gets a new IP, the app logs in to the next account the server hasn't banned, and CS2 is back on the server. Your home IP never reaches the server." width="900">
+  </picture>
 </p>
--->
 
 <p align="center">
   <picture>
