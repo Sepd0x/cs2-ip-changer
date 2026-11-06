@@ -15,7 +15,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
   - Accounts has two boxes like Servers: Add and log in on top (On login, Add, New IP + next account), the list below with Refresh. Show hidden (was Settings > Maintenance > Show hidden accounts) is next to Refresh and only shows while some accounts are hidden.
   - Configs: Copy, Sync and Snapshots on the left; Account configs, Compare and Backups on the right. Both columns end on one line.
 - The usage stats also count whether Turn on protection when the app starts and Use the app with protection off are changed from their default.
-- When a Steam folder is a link or junction, Configs now says the same as the account switch, with the reason: "the Steam folder goes through a link or junction; the app only writes to a real folder".
+- When a Steam folder is a link or junction, Configs now says the same as the account switch, with the reason: "a Steam or CS2 config folder goes through a link or junction; the app only writes to a real folder".
 
 - README: a row of badges under the title (latest release, downloads, Windows 10 and 11, the VirusTotal result, build status, license), the "not for VAC or game bans" note as a highlighted box, and a Support section with where to report a bug, an idea or a security problem. The animated demo and the banner show the new logo.
 
@@ -40,6 +40,14 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Steam names with invisible characters (direction marks, Unicode tags) showed them in the Log and on screen. They are left out now.
 - With protection off, the Log said the phone's Wi-Fi blocked servers and CS2, and that CS2 went through the phone in Whole PC while CS2 is open. Neither is true with protection off; the Log now says what is.
 - Opening the app twice in a few minutes wrote "Usage stats: the report wasn't sent (the server answered 429)" in the Log. That answer only means "not yet" and the report goes later, so it no longer shows.
+- Configs: an account whose CS2 folder is a link or junction showed as "No CS2 config yet" and "gets the sync", but the sync never reaches it. It now says "CS2 folder is a link", stays out of the group of accounts with no config, and Save snapshot says why it can't read it.
+- Configs: clicking Undo last sync a second time put the sync back and said "Undone" again. After an undo the button is now greyed out (Backups still has everything). Undoing a Restore also removes a file the restore had to create.
+- Configs: when no account could be put back, Undo last sync said "Undone on 0 accounts". It now says nothing was undone.
+- Configs: with nothing ticked in Copy > What to copy, Sync now said there was no account to copy to. It now says to tick something there, and the line under Sync now says so too. Copy pointed to "Sync > What to copy"; it now says Copy > What to copy.
+- Configs: copying a part the source doesn't have (for example binds from a snapshot with only the game settings) said every account already had the same config. It now says the source has no binds.
+- Configs: Compare could start on two accounts it then showed as "Same settings." (the same crosshair written by an older CS2). It now starts on one that really differs.
+- Accounts > Use as main config said new accounts and logins get the config even with Configs > Sync > When turned off. It now says only what is on.
+- Configs: a snapshot with the HUD file said "HUD and audio"; it now says "HUD, radar and audio" like the rest of the app. The line under Copy points to Configs > Backups by name.
 
 ## [0.1.0-beta.11] - 2026-11-06
 
