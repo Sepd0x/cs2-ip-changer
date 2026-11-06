@@ -317,7 +317,7 @@
                     <DockPanel Margin="0,1,10,0" LastChildFill="True">
                         <TextBlock DockPanel.Dock="Left" Text="{Binding Key}" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Faint}"/>
                         <TextBlock DockPanel.Dock="Left" Text="{Binding BannedText}" Foreground="{StaticResource Bad}" FontSize="11" Margin="10,0,0,0"
-                                   Visibility="{Binding HasBans, Converter={StaticResource Vis}}" ToolTip="The account you're logged in with was banned here, or on another server of the same network (they usually share their ban list). New IP + next account skips it here."/>
+                                   Visibility="{Binding HasBans, Converter={StaticResource Vis}}" ToolTip="The account you're logged in with was banned here, or on another server of the same community (they usually share their ban list). New IP + next account skips it here."/>
                         <TextBlock DockPanel.Dock="Left" Text="{Binding FlaggedText}" Foreground="{Binding FlaggedBrush}" FontSize="11" Margin="10,0,0,0" MaxWidth="260" TextTrimming="CharacterEllipsis"
                                    Visibility="{Binding HasFlagged, Converter={StaticResource Vis}}" ToolTip="{Binding FlaggedText}"/>
                         <TextBlock Text="{Binding LastText}" Foreground="{StaticResource Info}" FontSize="11" Margin="10,0,0,0" TextTrimming="CharacterEllipsis"
@@ -575,14 +575,14 @@
                                                 <Button x:Name="RejoinBtn" Click="Rejoin_Click" Margin="0" Content="Change IP and rejoin"
                                                         ToolTip="Changes the IP, then joins the last server again. Only joins with protection confirmed. In game: the rejoin hotkey (Settings > Hotkeys and sounds)."/>
                                                 <TextBlock x:Name="RejoinHotkeyHint" FontSize="11" Foreground="{StaticResource Faint}" HorizontalAlignment="Center" Margin="0,4,0,0"
-                                                           ToolTip="Works while CS2 is in front. Change it in Settings > Hotkeys and sounds.">
+                                                           ToolTip="Works anywhere, also in game. Change it in Settings > Hotkeys and sounds.">
                                                     <Run x:Name="RejoinHotkeyKeys" Text="Ctrl+Shift+F10" FontFamily="{StaticResource Mono}"/><Run Text=" in game"/>
                                                 </TextBlock>
                                             </StackPanel>
                                             <Button x:Name="LeakBtn" Click="LeakTest_Click" Margin="0,0,6,6" VerticalAlignment="Top" Content="Run leak test"
                                                     ToolTip="Full test: Firewall, block, each server's route and whether the phone's IP really differs from your home IP."/>
                                             <Button x:Name="TurnOffBtn" Style="{StaticResource Danger}" Click="Restore_Click" Margin="0,0,0,6" VerticalAlignment="Top" Content="Turn off protection" Visibility="Collapsed"
-                                                    ToolTip="Removes the block, the routes and the CS2 lock. Use it if your internet stops working. Turn on protection brings it back. Your servers stay saved, and regions you turned off stay off (Allow all on Regions lifts them)."/>
+                                                    ToolTip="Removes the block, the routes and the CS2 lock. Use it if your internet stops working. Turn on protection brings it back. Your servers stay saved, and regions you turned off stay off (Regions > Allow all (block off) lifts them)."/>
                                         </WrapPanel>
 
                                         <Grid Grid.Row="2" x:Name="ProgressPanel" Margin="0,16,0,0" VerticalAlignment="Center" Visibility="Collapsed">
@@ -636,7 +636,7 @@
                                         <RadioButton x:Name="ModeServers" Style="{StaticResource Choice}" GroupName="mode" Checked="Mode_Checked">
                                             <StackPanel>
                                                 <TextBlock Text="Game only"/>
-                                                <TextBlock Text="CS2, Steam and the servers on your Servers page. You can only join those. The rest of the PC stays on your home network." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="CS2, Steam and the servers on your Servers page. Other servers are blocked while Settings > Protection > CS2 only through the phone is on. The rest of the PC stays on your home network." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </RadioButton>
                                         <RadioButton x:Name="ModeGame" Style="{StaticResource Choice}" GroupName="mode" Checked="Mode_Checked">
@@ -766,7 +766,7 @@
                                 <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="10,0,0,0">
                                     <Button Style="{StaticResource Primary}" Click="AddServers_Click" Content="Add" ToolTip="Adds those servers to the list (Ctrl+Enter). With protection on, they only go out through the phone."/>
                                     <Button Click="PasteServers_Click" Content="Paste" ToolTip="Adds whatever is on the clipboard"/>
-                                    <Button Click="ImportServers_Click" Margin="0" Content="Import" ToolTip="Reads every IP:port from a .txt, .csv or .cfg file"/>
+                                    <Button Click="ImportServers_Click" Margin="0" Content="Import" ToolTip="Reads every IP:port from a .txt, .csv, .cfg or .log file"/>
                                 </StackPanel>
                             </Grid>
                         </HeaderedContentControl>
@@ -855,7 +855,7 @@
                                          VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"/>
                                 <StackPanel x:Name="ServersEmpty" Grid.Row="3" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed">
                                     <TextBlock Text="No servers yet" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Paste the IP:port of the servers you play on, or import a .txt or .cfg file." Foreground="{StaticResource Muted}" Margin="0,4,0,0" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Paste the IP:port of the servers you play on, or import a .txt, .csv, .cfg or .log file." Foreground="{StaticResource Muted}" Margin="0,4,0,0" HorizontalAlignment="Center"/>
                                     <!-- beta.11, 2nd round of simulated users: they know the server's name, not its IP, and a banned player can't join it to type status -->
                                     <TextBlock x:Name="ServersEmptyHelp" Foreground="{StaticResource Faint}" FontSize="11" Margin="0,4,0,12" HorizontalAlignment="Center" TextAlignment="Center"
                                                Text="Only know its name? Join it once in CS2 with protection off (that join uses your home IP): the app offers to add it.&#x0a;Banned there? Ask on its Discord or website for the IP (it often reads connect 1.2.3.4:27015)."/>
@@ -1074,7 +1074,7 @@
                                     <TextBlock DockPanel.Dock="Left" Text="On login:" Foreground="{StaticResource Faint}" Margin="0,0,14,0" VerticalAlignment="Top"/>
                                     <WrapPanel VerticalAlignment="Center">
                                     <CheckBox x:Name="OptCs2" Style="{StaticResource Switch}" Content="Open CS2" Margin="0,0,18,0" Click="AccOpt_Click"
-                                              ToolTip="After logging in, Steam opens CS2 right away. New IP + next account always opens it."/>
+                                              ToolTip="After logging in, Steam opens CS2 right away. New IP + next account opens CS2 whatever this is set to, when it logs in to another account or rejoins."/>
                                     <CheckBox x:Name="OptSilent" Style="{StaticResource Switch}" Content="Start Steam minimized" Margin="0,0,18,0" Click="AccOpt_Click"
                                               ToolTip="Steam starts in the tray, without opening its window"/>
                                     <CheckBox x:Name="OptOffline" Style="{StaticResource Switch}" Content="Offline mode" Margin="0,0,18,0" Click="AccOpt_Click"
@@ -1270,8 +1270,8 @@
                                                 <TextBlock x:Name="CfgCopyHint" Style="{StaticResource OptSub}" VerticalAlignment="Center" Margin="0,0,10,0"
                                                            Text="Each account gets a backup first (Configs > Backups)."/>
                                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                                    <Button x:Name="CfgToAllBtn" Content="All" Click="CfgToAll_Click" ToolTip="Tick every other account"/>
-                                                    <Button x:Name="CfgToNoneBtn" Content="None" Click="CfgToNone_Click"/>
+                                                    <Button x:Name="CfgToAllBtn" Content="All" Click="CfgToAll_Click" ToolTip="Ticks every account shown, except the one you copy from"/>
+                                                    <Button x:Name="CfgToNoneBtn" Content="None" Click="CfgToNone_Click" ToolTip="Unticks every account, also the ones the search hides"/>
                                                     <Button x:Name="CfgCopyBtn" Style="{StaticResource Primary}" Content="Copy" Click="CfgCopy_Click" Margin="0"/>
                                                 </StackPanel>
                                             </Grid>
@@ -1415,7 +1415,7 @@
                                                                     <Image Source="{Binding CrosshairImage}" Width="26" Height="26" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
                                                                 </Border>
                                                                 <Button Grid.Column="3" Style="{StaticResource RowBtn}" Content="{Binding ToggleText}" Click="CfgGroupToggle_Click" MinWidth="58" Margin="0" VerticalAlignment="Center"
-                                                                        ToolTip="Show each account of this group (Sync on or off one by one)"/>
+                                                                        ToolTip="{Binding ToggleTip}"/>
                                                             </Grid>
                                                         </Border>
                                                     </DataTemplate>
@@ -1530,7 +1530,7 @@
                                     <HeaderedContentControl Grid.Row="2" Style="{StaticResource Group}" Header="Backups">
                                         <StackPanel>
                                             <TextBlock Style="{StaticResource OptSub}" Margin="0,0,0,8"
-                                                       Text="Saved before the app changes an account's files. The 20 newest per account are kept."/>
+                                                       Text="Saved before the app changes an account's files. The 20 newest per account are kept, and the first one (Original) for good."/>
                                             <TextBlock x:Name="CfgBackupEmpty" Text="No backups yet." Style="{StaticResource Sub}"/>
                                             <ScrollViewer MaxHeight="230" VerticalScrollBarVisibility="Auto">
                                                 <ItemsControl x:Name="CfgBackupList">
@@ -1615,7 +1615,7 @@
                                                             ToolTip="JPG, PNG, GIF or BMP, at least 184×184. It's cropped square and saved again as a clean JPG: no photo data (EXIF, GPS) goes to Steam."/>
                                                     <Button Content="Remove" Click="TplClearAvatar_Click" Padding="10,4"/>
                                                 </StackPanel>
-                                                <TextBlock Text="Square, 184 px or more." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="184×184 px or more. It's cropped square." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </Grid>
 
@@ -1985,7 +1985,7 @@
                                                   ToolTip="CS2 game traffic only goes through the phone. If the phone disconnects, CS2 goes offline instead of using your home network. Web content that CS2 or its add-ons load still uses your normal connection.">
                                             <StackPanel>
                                                 <TextBlock Text="CS2 only through the phone"/>
-                                                <TextBlock Text="If the phone disconnects, CS2 goes offline instead of using your home network." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="If the phone disconnects, CS2 goes offline instead of using your home network. Off: servers not on your Servers page can see your home IP." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
                                         <CheckBox x:Name="SteamEgressBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
@@ -2089,7 +2089,7 @@
                                 <HeaderedContentControl x:Name="SwitchGroup" Grid.Row="3" Style="{StaticResource Group}" Header="New IP + next account">
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource OptSub}" Margin="0,0,0,12" Background="Transparent"
-                                                   ToolTip="The steps ticked under Steps, in order. Both hotkeys work in game. The Change IP and rejoin hotkey is separate: it changes the IP and rejoins with the same account, or with the next one if that account is banned on the last server."
+                                                   ToolTip="The steps ticked in this group, in order. Both hotkeys work in game. The Change IP and rejoin hotkey is separate: it changes the IP when it can and rejoins with the same account, or with the next one if that account is banned on the last server."
                                                    Text="What the New IP + next account button and hotkey do, in order."/>
                                         <CheckBox x:Name="SwIpBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
                                             <StackPanel>
@@ -2212,7 +2212,7 @@
                                                             <ColumnDefinition Width="Auto"/>
                                                             <ColumnDefinition Width="Auto"/>
                                                         </Grid.ColumnDefinitions>
-                                                        <Button Grid.Column="1" Click="FlagEdit_Click" Cursor="Hand" VerticalAlignment="Center" Margin="0,0,12,0" ToolTip="Colour: click to change it">
+                                                        <Button Grid.Column="1" Click="FlagEdit_Click" Cursor="Hand" VerticalAlignment="Center" Margin="0,0,12,0" ToolTip="Color: click to change it">
                                                             <Button.Template>
                                                                 <ControlTemplate TargetType="Button">
                                                                     <Border Background="Transparent" Padding="0,4">
@@ -2242,8 +2242,8 @@
                                                 ToolTip="Paste a steamcommunity.com link or a SteamID64"/>
                                         <CheckBox x:Name="AutoJoinBox" Style="{StaticResource Switch}" Click="SettingChanged">
                                             <StackPanel>
-                                                <TextBlock Text="Join automatically when a followed player moves"/>
-                                                <TextBlock Text="Only while CS2 is open, and the app always asks first. It never opens CS2 or joins by itself." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="Ask to join when a followed player moves"/>
+                                                <TextBlock Text="Only while CS2 is open. It never opens CS2 or joins without your OK." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
                                     </StackPanel>
@@ -2298,9 +2298,8 @@
                                             </StackPanel>
                                         </CheckBox>
                                         <!-- Telemetry (beta): required, accepted once before the app opens (App.StatsGate), README > Telemetry -->
-                                        <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0" Background="Transparent"
-                                                   Text="Usage stats, required while the app is in beta, with a random ID made for this install, with no name (never from your PC or you). Never IPs, servers, accounts or names."
-                                                   ToolTip="Sent: the app and Windows versions, your country as two letters, the mode, how the phone is connected, minutes open, how often each button and hotkey is used, a few counters, how long your lists are, and errors as their type and place in the code. Details in the README, under Telemetry."/>
+                                        <TextBlock x:Name="StatsLine" Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0" Background="Transparent"
+                                                   Text="Usage stats, required while the app is in beta, with a random ID made for this install, with no name (never from your PC or you). Never IPs, servers, accounts or names."/>
                                         <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                             <Button Click="DeleteStats_Click" Margin="0,0,6,0" HorizontalAlignment="Left" Content="Delete my stats"
                                                     ToolTip="Deletes everything the stats server keeps under this install's ID, then the app starts over with a new ID."/>
@@ -2312,7 +2311,7 @@
                                 <HeaderedContentControl Grid.Row="4" Style="{StaticResource Group}" Header="App">
                                     <StackPanel>
                                         <CheckBox x:Name="StartWithWindowsBox" Style="{StaticResource Switch}" Click="StartWithWindows_Click" Margin="0,0,0,12" ToolTipService.ShowOnDisabled="True"
-                                                  ToolTip="A scheduled task named 'CS2 IP Changer' opens the app in the notification area when you sign in, with its admin rights and without the UAC prompt each time. Protection starts off, unless Settings > Protection > Turn on protection when the app starts is on. Only for the copy installed in C:\Program Files\CS2 IP Changer. Turning this off, Remove everything and --restore delete the task.">
+                                                  ToolTip="A scheduled task named 'CS2 IP Changer' opens the app in the notification area when you sign in, with its admin rights and without the UAC prompt each time. Protection starts off, unless Settings > Protection > Turn on protection when the app starts is on. Only for the copy installed in C:\Program Files\CS2 IP Changer. Turning this off, Settings > Remove the app and --restore delete the task.">
                                             <StackPanel>
                                                 <TextBlock Text="Start with Windows"/>
                                                 <TextBlock Text="Opens in the notification area when you sign in. Protection starts as set in Settings > Protection." Style="{StaticResource OptSub}"/>

@@ -235,7 +235,7 @@ public partial class MainWindow
                     _ = RetryFull(inList);
                     return;
                 }
-                Toast("The server stayed full for 2 minutes. Try another server, or Wait for a slot on the Servers page.", Tone.Info);
+                Toast("The server stayed full for 2 minutes. Try another server, or press Join on Servers: when it's full, Wait for a slot joins you as soon as one opens.", Tone.Info);
                 return;
             }
             Toast(d.Why == KickReason.ReservedSlot ?"The server kicked you to make room for a reserved slot. Not a ban: join again when there's space."
@@ -373,7 +373,7 @@ public partial class MainWindow
         ApplyServerBans();
         UpdateQuickInfo();
         var same = _servers.Count(x => x.Key != key && ServerNetwork.Same(key, name, network, x.Key, x.ServerName, x.Network));
-        Log.Warn($"{a.Name} marked as banned on {key}" + (same > 0 ? $" and {Fmt.Count(same, "other server")} of the same network" : "")
+        Log.Warn($"{a.Name} marked as banned on {key}" + (same > 0 ? $" and {Fmt.Count(same, "other server")} of the same community" : "")
             + (minutes > 0 ? $" until {DateTime.Now.AddMinutes(minutes.Value):g}" : "") + ". New IP + next account skips it there.");
         Diag.Write("server-ban", new { steamId = a.SteamId, server = key, name, minutes });
     }

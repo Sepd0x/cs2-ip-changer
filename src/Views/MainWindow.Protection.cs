@@ -1065,21 +1065,28 @@ public partial class MainWindow
                 Toast("No phone mode: there is no protection to test. CS2 and servers see your home IP.", false);
                 return false;
             }
-            var bad = _checks.Where(c => c.Ok == false).Select(c => c.Title).ToList();
-            Telemetry.LeakTest(bad.Count == 0);
-            if (bad.Count == 0)
-            {
-                Log.Ok("Leak test: everything confirmed.");
-                Toast(LeakOkText(_egressPublic, Blocked(_last, lower: true), _s.LockCs2 && !PhoneKnown), true);
-                return true;
-            }
-            else
-            {
-                Log.Warn("Leak test failed on: " + string.Join(", ", bad));
-                Toast("Warning: " + string.Join(", ", bad) + ". See Checks.", false);
-                return false;
-            }
+            var bad = LeakFailures(_checks, _last?.EffectiveMode == "all");
+            var (ok, text) = LeakResult(bad, _s.LockCs2, _cQuality.Ok == false, LeakOkText(_egressPublic, Blocked(_last, lower: true), _s.LockCs2 && !PhoneKnown));
+            Telemetry.LeakTest(ok);
+            if (ok) Log.Ok("Leak test: everything confirmed.");
+            else Log.Warn(bad.Count > 0 ? "Leak test failed on: " + string.Join(", ", bad) : "Leak test: CS2 only through the phone is off, so servers not in the list can see the home IP.");
+            Toast(text, ok);
+            return ok;
         }
         finally { HideProgress(); LeakBtn.IsEnabled = true; }
     }
+
+    /// <summary>
+    /// The Checks rows that fail the leak test: only leaks. A weak connection and the regions you turned off aren't, and Other apps
+    /// only is in Whole PC (in Game only red there means the whole PC is on mobile data, which costs data but leaks nothing).
+    /// </summary>
+    public static List<string> LeakFailures(IEnumerable<CheckItem> checks, bool wholePc) =>
+        checks.Where(c => c.Ok == false && c.Title is not ("Connection quality" or "Matchmaking regions") && (wholePc || c.Title != "Other apps"))
+            .Select(c => c.Title).ToList();
+
+    /// <summary>The leak test's toast: what failed, or with CS2 not locked a warning instead of "No leaks", or the OK text (a weak link said apart).</summary>
+    public static (bool Ok, string Text) LeakResult(IReadOnlyList<string> bad, bool lockCs2, bool weak, string okText) =>
+        bad.Count > 0 ? (false, "Warning: " + string.Join(", ", bad) + ". See Checks.")
+        : !lockCs2 ? (false, "Your servers are protected, but CS2 only through the phone is off: servers not in your list can see your home IP.")
+        : (true, okText + (weak ? " The connection is weak: see Checks." : ""));
 }

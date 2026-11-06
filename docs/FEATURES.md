@@ -55,7 +55,7 @@ The short version is in the [README](../README.md#features). This page has the d
 
 **Player flags.** Flag a player as Staff or with your own label and color, by name or by Steam profile link so the flag follows name changes. Servers only share names, so a flag without a profile matches anyone with that name.
 
-**Follow a player.** You get a sound and a notice with Join when a player you follow shows up on another server in your list. Joining them automatically is off by default and always asks while CS2 is open.
+**Follow a player.** You get a sound and a notice with Join when a player you follow shows up on another server in your list. With Ask to join when a followed player moves (off by default), the app asks you right away while CS2 is open; it never joins without your OK.
 
 **Server bans.** When CS2's console shows a ban, the account in use gets marked for that server and for the rest of the same community (the same tag in the name, or a community name you set with right-click > Set community name). Generic names like "Retakes" or "Mirage 24/7" don't count, and neither does a shared IP on its own. Joining there with it asks first.
 

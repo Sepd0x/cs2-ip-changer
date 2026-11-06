@@ -216,7 +216,7 @@ public partial class MainWindow
     }
 
     /// <summary>"Ready first" (many accounts, 3 nov.): ready now, then in cooldown (the one ending first on top), then out of rotation, then banned.</summary>
-    public static int ReadyRank(AccountItem a) => a.HasVac || a.HasGameBan ? 3 : a.Excluded ? 2 : a.InCooldown ? 1 : 0;
+    public static int ReadyRank(AccountItem a) => a.HasVac || a.HasGameBan ? 3 : !a.InRotation ? 2 : a.InCooldown ? 1 : 0;
 
     void ApplyAccountFilter()
     {
@@ -230,7 +230,7 @@ public partial class MainWindow
         if (FClean.IsChecked == true) list = list.Where(a => a.Clean);
         if (FBan.IsChecked == true) list = list.Where(a => a.HasVac || a.HasGameBan || a.HasTradeBan || a.HasCommunityBan);
         if (FCool.IsChecked == true) list = list.Where(a => a.InCooldown);
-        if (FOut.IsChecked == true) list = list.Where(a => a.Excluded);
+        if (FOut.IsChecked == true) list = list.Where(a => !a.InRotation);
 
         var ordered = list.OrderByDescending(a => a.Favorite);
         ordered = _s.AccountSort switch
@@ -359,7 +359,7 @@ public partial class MainWindow
         var skipped = _accounts.Where(a => !a.Usable).Select(a =>
             $"{a.Name} ({(a.Excluded ? "not in rotation" : a.InCooldown ? "cooldown" : "ban")})").ToList();
         if (skipped.Count > 0) Log.Info("Left out of the rotation: " + string.Join(", ", skipped));
-        if (next == null) { Toast(server == null ? "No account to switch to: all are out of rotation, on cooldown or banned." : $"No account left for {server.Title}: the others are out of rotation, on cooldown or banned (also by this server's network).", false); return null; }
+        if (next == null) { Toast(server == null ? "No account to switch to: all are out of rotation, on cooldown or banned." : $"No account left for {server.Title}: the others are out of rotation, on cooldown or banned (also by this server's community).", false); return null; }
         if (next.Meta.ExcludeQuick) { Log.Error("Picked an account that is not in rotation; cancelled."); return null; }
         return next;
     }

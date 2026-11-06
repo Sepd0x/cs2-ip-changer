@@ -127,7 +127,7 @@ public partial class MainWindow : Window
         _checks.Add(_cQuality = new CheckItem { Title = "Connection quality", Help = "Ping, jitter and loss through the phone, measured every 30 s. Weak means lag in game: the app warns, and can drop Whole PC to Game only while it lasts (Settings > Mobile data)." });
         _checks.Add(_cSteam = new CheckItem { Title = "Steam through the phone", Help = "steam.exe talks to Valve through the phone, like CS2. If Steam is on another network or reconnects mid-game, the server kicks you with \"No Steam logon\"." });
         _checks.Add(_cPc = new CheckItem { Title = "Other apps", Help = "Where the rest of the PC's traffic goes out (browser, Discord, downloads)." });
-        _checks.Add(_cRegions = new CheckItem { Title = "Matchmaking regions", Chosen = true, Help = "Regions you turned off on the Regions page stay blocked for CS2 matchmaking until you allow them again (Allow all). Turning protection off, closing the app and No phone mode don't change them." });
+        _checks.Add(_cRegions = new CheckItem { Title = "Matchmaking regions", Chosen = true, Help = "Regions you turned off on the Regions page stay blocked for CS2 matchmaking until you allow them again (Regions > Allow all (block off)). Turning protection off, closing the app and No phone mode don't change them." });
         UpdateRegionsCheck();
         HookChecksView();
 

@@ -51,6 +51,7 @@ public partial class MainWindow
             UseOffBox.IsChecked = _s.UseWithProtectionOff;
             CloseToTrayBox.IsChecked = _s.CloseToTray;
             AutoStreamerBox.IsChecked = _s.AutoStreamer;
+            StatsLine.ToolTip = Telemetry.NoticeSent + " Details in the README, under Telemetry.";
             LaunchOptsBox.IsChecked = _s.Cs2LaunchOptions;
             DataWarnBox.Text = _s.DataWarnGb > 0 ? _s.DataWarnGb.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) : "0";
             ApiKeyBox.Text = _s.SteamApiKey ?? "";
@@ -176,8 +177,13 @@ public partial class MainWindow
         ApiKeyPwd.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
         ApiKeyShowBtn.Content = show ? "Hide" : "Show";
         ApiKeyShowBtn.IsEnabled = !HideLogins;
-        ApiKeyShowBtn.ToolTip = HideLogins ? "Hide usernames is on (Accounts): the key stays hidden." : show ? "Hides the key" : "Shows the key";
+        ApiKeyShowBtn.ToolTip = ApiKeyShowTip(HideLogins, _s.StreamerMode || Rec.On, show);
     }
+
+    /// <summary>The Show button of the key: while usernames are hidden it says why, and where that is set (Settings > Privacy).</summary>
+    public static string ApiKeyShowTip(bool hide, bool optOn, bool show) =>
+        hide ? (optOn ? "Hide usernames is on (Settings > Privacy): the key stays hidden." : "OBS or Streamlabs is open (Settings > Privacy): the key stays hidden.")
+        : show ? "Hides the key" : "Shows the key";
 
     void SwitchSteps_Click(object sender, RoutedEventArgs e)
     {
@@ -209,7 +215,7 @@ public partial class MainWindow
     }
 
     const string TurnOffText = "Turns off the kill switch, the routes and the CS2 lock. Until you click Turn on protection (in Status, or the tray icon), servers see your home IP. " +
-        "Your servers stay saved, and the regions you turned off stay off (Allow all on Regions lifts them).";
+        "Your servers stay saved, and the regions you turned off stay off (Regions > Allow all (block off) lifts them).";
 
     /// <summary>The Turn off question. With CS2 open, the server you are on sees the home IP at once: said in the same question.</summary>
     public static string TurnOffAsk(bool cs2Open) => TurnOffText + (cs2Open ? "\n\n" + Cs2OpenHomeNow : "");

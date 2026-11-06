@@ -61,7 +61,8 @@ public partial class MainWindow
     {
         var kind = CancelNow;
         ActivityCancel.Visibility = kind == CancelKind.None ? Visibility.Collapsed : Visibility.Visible;
-        ActivityCancel.ToolTip = kind == CancelKind.AfterStep ? "Stops after the step that is running: the IP change or the login finishes first, then nothing else starts." : null;
+        ActivityCancel.ToolTip = kind == CancelKind.AfterStep ? "Stops after the step that is running: the IP change or the login finishes first, then nothing else starts."
+            : "Stops what the app is waiting for. Nothing that already happened is undone.";
     }
 
     void ActivityCancel_Click(object sender, MouseButtonEventArgs e)

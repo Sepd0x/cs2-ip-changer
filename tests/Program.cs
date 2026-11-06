@@ -641,6 +641,7 @@ RevisaoATests.Run(Check);
 RevisaoBTests.Run(Check);
 RevisaoCTests.Run(Check);
 RevisaoDTests.Run(Check);
+RevisaoHTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;
