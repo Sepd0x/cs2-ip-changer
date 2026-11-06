@@ -16,6 +16,61 @@ static class Untangle12Tests
         await RouteNotDeleted(check);
         PhoneLinkState(check);
         AppNames(check);
+        await Cs2OpenAndClose(check);
+    }
+
+    // B5: abrir e fechar o CS2 num só ajudante: os argumentos, o carimbo de "fechado pela app" com o motivo, o console.log
+    static async Task Cs2OpenAndClose(Action<string, bool, string> check)
+    {
+        check("B5: o Steam abre o CS2 com o console.log ligado", Cs2Launch.SteamArgs == "-applaunch 730 -condebug -conclearlog", Cs2Launch.SteamArgs);
+        check("B5: as opções que a app junta no Steam são as mesmas com que ela abre o CS2",
+            Cs2LaunchOptions.Has(Cs2Launch.SteamArgs) && Cs2LaunchOptions.Add("-novid") == "-novid " + string.Join(" ", Cs2Launch.ConsoleFlags), Cs2LaunchOptions.Add("-novid"));
+        check("B5: o Steam reaberto leva -silent à frente se for o caso",
+            Cs2Launch.SteamRestartArgs(true) == "-silent -applaunch 730 -condebug -conclearlog" && Cs2Launch.SteamRestartArgs(false) == Cs2Launch.SteamArgs, "");
+
+        var now = new DateTime(2026, 11, 6, 20, 0, 0);
+        int kills = 0, polls = 0;
+        var cs2 = new Cs2Launch(() => now, () => kills++, () => ++polls < 3);
+        check("B5: sem nada fechado pela app, uma saída do CS2 é dele", !cs2.ClosedByAppRecently && cs2.ClosedReason == null, "");
+        await cs2.Close("the Steam restart");
+        check("B5: fechar o CS2 carimba sempre, com o motivo", kills == 1 && cs2.ClosedByAppRecently && cs2.ClosedReason == "the Steam restart", cs2.ClosedReason);
+        check("B5: fechar espera que o CS2 saia", polls == 3, polls.ToString());
+        now = now.AddSeconds(59);
+        check("B5: ainda dentro do minuto conta como da app", cs2.ClosedByAppRecently, "");
+        now = now.AddSeconds(2);
+        check("B5: passado o minuto uma saída volta a ser do CS2", !cs2.ClosedByAppRecently && cs2.ClosedReason == null, "");
+        cs2.Closing("the launch options change");
+        check("B5: o Steam a fechar leva o CS2: carimba sem matar nada", kills == 1 && cs2.ClosedReason == "the launch options change", "");
+
+        check("B5: o console.log fica em game\\csgo ao lado do cs2.exe guardado",
+            Cs2Launch.ConsoleLog(new Settings { Cs2Path = @"D:\Steam\steamapps\common\Counter-Strike Global Offensive\game\bin\win64\cs2.exe" })
+            == @"D:\Steam\steamapps\common\Counter-Strike Global Offensive\game\csgo\console.log", "");
+        check("B5: o menu do CS2 é o loopback, um servidor não",
+            Cs2Console.IsMenu("CL:  Connected to 'loopback:0'") && !Cs2Console.IsMenu("CL:  Connected to '203.0.113.9:27015'") && !Cs2Console.IsMenu(null), "");
+
+        var dir = Path.Combine(Path.GetTempPath(), "srt-b5-" + Guid.NewGuid().ToString("N")[..8]);
+        Directory.CreateDirectory(dir);
+        try
+        {
+            var log = Path.Combine(dir, "console.log");
+            File.WriteAllText(log, "CL:  Connected to 'loopback:0'\nold line\n");
+            var tail = new ConsoleTail();
+            tail.StartAt(log);
+            check("B5: o que já estava no console.log antes de abrir o CS2 não conta", tail.ReadNew(log).Count == 0, "");
+            File.AppendAllText(log, "CL:  Connected to 'loopback:0'\n");
+            check("B5: o menu escrito depois de abrir o CS2 conta", tail.ReadNew(log).Any(Cs2Console.IsMenu), "");
+
+            File.WriteAllText(log, new string('x', 200) + "\n");
+            tail.StartAt(log);
+            File.WriteAllText(log, "CL:  Connected to 'loopback:0'\n");   // -conclearlog: CS2 starts the file again, shorter
+            check("B5: um console.log começado de novo lê-se do início", tail.ReadNew(log).Any(Cs2Console.IsMenu), "");
+
+            var later = Path.Combine(dir, "later.log");
+            tail.StartAt(later);
+            File.WriteAllText(later, "CL:  Connected to 'loopback:0'\n");
+            check("B5: sem console.log ao abrir, o que vier lê-se todo", tail.ReadNew(later).Any(Cs2Console.IsMenu), "");
+        }
+        finally { try { Directory.Delete(dir, true); } catch { } }
     }
 
     // B3: os nomes da app (exe, pastas, ficheiros, argumentos, regras, User-Agent) num só sítio, com os valores de sempre

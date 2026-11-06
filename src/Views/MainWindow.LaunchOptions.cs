@@ -78,7 +78,7 @@ public partial class MainWindow
         {
             if (reopen)
             {
-                _cs2ClosedByAppAt = DateTime.Now;   // closed on purpose: not a crash
+                _cs2.Closing("the launch options change");   // Steam takes CS2 along: not a crash
                 if (!await Steam.Close()) { Toast("Steam didn't close, so nothing was changed.", false); return; }
             }
             var r = await Task.Run(ApplyLaunchOptions);

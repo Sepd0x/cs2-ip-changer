@@ -139,6 +139,9 @@ public static class Cs2Console
     /// <summary>Any "Connected to '…'": a server, the main menu (loopback) or a Valve relay. CS2 is somewhere else now.</summary>
     public static bool IsConnectLine(string line) => AnyConnect.IsMatch(line ?? "");
 
+    /// <summary>CS2's main menu has loaded: it connects to its own "loopback" map. A join sent before this gets lost.</summary>
+    public static bool IsMenu(string line) => (line ?? "").Contains("Connected to 'loopback", StringComparison.OrdinalIgnoreCase);
+
     // Valve's own servers (matchmaking) are reached through Valve's relays (SDR) by an anonymous game server SteamID:
     // "Connected to '=[A:1:4005189648:51168]'". A community server is an address ("1.2.3.4:27015").
     static readonly Regex ValveConnect = new(@"Connected to '=?\[A:1:\d+:\d+\]", O);
@@ -469,6 +472,16 @@ public sealed class ConsoleTail
     long _pos = -1;
 
     public void Reset() { _path = null; _pos = -1; }
+
+    /// <summary>
+    /// The next <see cref="ReadNew"/> returns what comes after the file's end now (from the start if there is no file yet, or if it is
+    /// started again shorter). For a file about to be written: CS2 just being opened.
+    /// </summary>
+    public void StartAt(string path)
+    {
+        _path = path;
+        try { _pos = path != null && File.Exists(path) ? new FileInfo(path).Length : 0; } catch { _pos = 0; }
+    }
 
     public List<string> ReadNew(string path)
     {

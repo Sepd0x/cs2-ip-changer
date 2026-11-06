@@ -1,6 +1,5 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -355,13 +354,13 @@ public partial class MainWindow
             {
                 // With CS2 closed, a connect sent at launch gets lost while the main menu loads: open CS2, wait for the menu, then connect.
                 if (openWith) OpenWithCs2();
-                var log = Cs2Console.LogPath(_s.Cs2Path ?? Steam.Cs2Path(_s));
-                long from = 0;
-                try { from = log != null && File.Exists(log) ? new FileInfo(log).Length : 0; } catch { }
+                var log = Cs2Launch.ConsoleLog(_s);
+                var menu = new ConsoleTail();
+                menu.StartAt(log);
                 ConfigsBeforeCs2();
-                Steam.Launch("-applaunch 730 -condebug -conclearlog");
+                Steam.Launch(Cs2Launch.SteamArgs);
                 JoinStarted(s);
-                return await ConnectWhenMenuReady(s, log, from);
+                return await ConnectWhenMenuReady(s, log, menu);
             }
             Steam.OpenUrl($"steam://connect/{s.Key}");
             JoinStarted(s);
@@ -379,7 +378,7 @@ public partial class MainWindow
     }
 
     /// <summary>After opening CS2: waits for its main menu (the console shows the menu's "loopback" map), then joins. Up to 2 min.</summary>
-    async Task<bool> ConnectWhenMenuReady(ServerItem s, string log, long from)
+    async Task<bool> ConnectWhenMenuReady(ServerItem s, string log, ConsoleTail menu)
     {
         ShowProgress($"Opening CS2. It joins {s.Title} when the main menu is ready. Cancel at the top stops the join…");
         using var wait = CommandWait();
@@ -391,14 +390,7 @@ public partial class MainWindow
                 await Task.Delay(1000);
                 if (CommandCancelled) return false;
                 if (!Steam.Cs2Running || log == null) continue;
-                try
-                {
-                    using var f = new FileStream(log, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-                    if (f.Length < from) from = 0;   // a new console.log
-                    f.Seek(from, SeekOrigin.Begin);
-                    ready = new StreamReader(f).ReadToEnd().Contains("Connected to 'loopback", StringComparison.OrdinalIgnoreCase);
-                }
-                catch { }
+                ready = menu.ReadNew(log).Any(Cs2Console.IsMenu);   // a new console.log (-conclearlog) is read from its start
             }
             if (!Steam.Cs2Running) { Log.Warn($"CS2 didn't open, so {s.Key} wasn't joined."); Toast($"CS2 didn't open, so {s.Title} wasn't joined.", false); return false; }
             if (!OnHome && (!_protOn || _distrust)) { Log.Warn($"Not joining {s.Key}: protection changed while CS2 was opening."); Toast($"Not joining {s.Title}: protection changed while CS2 was opening.", false); return false; }
@@ -494,22 +486,20 @@ public partial class MainWindow
         ShowProgress("Restarting Steam through the phone…");
         try
         {
-            _cs2ClosedByAppAt = DateTime.Now;   // closed on purpose: that exit is not a crash
-            foreach (var p in Process.GetProcessesByName("cs2")) try { p.Kill(true); } catch { }
-            for (var i = 0; i < 20 && Steam.Cs2Running; i++) await Task.Delay(150);
+            await _cs2.Close("the Steam restart");
             // Valve routes already go through the phone: the new Steam connects that way, then CS2 opens and joins from its menu.
-            var log = Cs2Console.LogPath(_s.Cs2Path ?? Steam.Cs2Path(_s));
-            long from = 0;
-            try { from = log != null && File.Exists(log) ? new FileInfo(log).Length : 0; } catch { }
+            var log = Cs2Launch.ConsoleLog(_s);
+            var menu = new ConsoleTail();
+            menu.StartAt(log);
             ConfigsBeforeCs2();
-            await Steam.Restart((_s.SteamSilent ? "-silent " : "") + "-applaunch 730 -condebug -conclearlog");
+            await Steam.Restart(Cs2Launch.SteamRestartArgs(_s.SteamSilent));
             if (openWith) OpenWithCs2();
             Diag.Write("steam-restarted", new { server = s.Key });
             Log.Ok($"Steam restarted through the phone; CS2 opens and joins {s.Key}.");
             Toast($"Steam is restarting. CS2 opens and joins {s.Title}.", true);
             MarkLast(s);
             HideProgress();
-            return await ConnectWhenMenuReady(s, log, from);
+            return await ConnectWhenMenuReady(s, log, menu);
         }
         catch (Exception ex) { Log.Error("Restart Steam: " + ex.Message); Toast(ex.Message, Tone.Error); return false; }
         finally { HideProgress(); }

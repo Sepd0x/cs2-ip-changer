@@ -29,7 +29,7 @@ public partial class MainWindow
             copy.LastHomeIp = null;
             var json = JsonSerializer.Serialize(copy, new JsonSerializerOptions { WriteIndented = true });
             var steamDir = Steam.InstallDir();
-            var console = Cs2Console.LogPath(_s.Cs2Path ?? Steam.Cs2Path(_s));
+            var console = Cs2Launch.ConsoleLog(_s);
             var hide = new[] { _s.LastHomeIp, _homePublic };
             var personal = PersonalWords().Where(w => w != _homeInfo?.Country && w != _egressInfo?.Country).ToList();   // the country helps a bug report
             var path = await Task.Run(() => Report.Export(now, json, steamDir, console, hide, personal: personal));

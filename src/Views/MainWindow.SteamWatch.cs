@@ -21,7 +21,8 @@ public partial class MainWindow
     static readonly TimeSpan AfterCrashWait = TimeSpan.FromMinutes(5);
     DateTime? _cs2CrashAt;
     string _cs2CrashServer;
-    DateTime _cs2ClosedByAppAt;
+    /// <summary>Opens and closes CS2, and remembers when the app closed it (that exit is not a crash).</summary>
+    readonly Cs2Launch _cs2 = new();
 
     /// <summary>Steam has a Valve session and, if the IP changed, has already redone it on the new IP.</summary>
     /// <summary>
@@ -114,7 +115,7 @@ public partial class MainWindow
 
     void WatchCs2Exit()
     {
-        foreach (var p in Process.GetProcessesByName("cs2"))
+        foreach (var p in Cs2Launch.Processes())
         {
             if (_cs2Watched.Any(w => w.Id == p.Id)) { p.Dispose(); continue; }
             try
@@ -142,7 +143,7 @@ public partial class MainWindow
         var hex = code == null ? "?" : $"0x{(uint)code.Value:X8}";
         var name = code is int c && CrashCodes.TryGetValue((uint)c, out var n) ? n : null;
         Diag.Write("cs2-exit", new { code, hex, reason = name, minutes = min });
-        if ((DateTime.Now - _cs2ClosedByAppAt).TotalSeconds < 60) Log.Info($"CS2 closed by the account switch after {min} min.");
+        if (_cs2.ClosedReason is string why) Log.Info($"CS2 closed by {why} after {min} min.");
         else if (code == 0) Log.Info($"CS2 closed normally after {min} min.");
         else
         {

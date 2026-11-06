@@ -87,8 +87,8 @@ public partial class MainWindow
         try
         {
             FlushCfgQueue();
-            // Closed by the account switch: the switch already copied, and CS2 killed that way saved nothing new.
-            if (_s.ConfigMode != "latest" || (DateTime.Now - _cs2ClosedByAppAt).TotalSeconds < 60) return;
+            // Closed by the app (the account switch already copied): CS2 killed that way saved nothing new.
+            if (_s.ConfigMode != "latest" || _cs2.ClosedByAppRecently) return;
             RunCfgJobs(CfgPlan("closed", null, null), "closed", false);
         }
         catch (Exception ex) { Log.Warn("Config sync after CS2 closed: " + Cs2ConfigStore.Why(ex)); }

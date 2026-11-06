@@ -1,6 +1,5 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -312,10 +311,8 @@ public partial class MainWindow
         if (Steam.Cs2Running)
         {
             if (ask && !await Ask("CS2 is open", $"CS2 and Steam have to close to log in to {a.Name}. Continue?", "Close and log in")) return false;
-            // Stamped only now, right before the kill: a declined switch hides no crash, and a long wait on the dialog doesn't make this exit one
-            _cs2ClosedByAppAt = DateTime.Now; // the switch closes CS2 itself: that exit is not a crash
-            foreach (var p in Process.GetProcessesByName("cs2")) try { p.Kill(true); } catch { }
-            for (var i = 0; i < 20 && Steam.Cs2Running; i++) await Task.Delay(150);
+            // Closed only now: a declined switch hides no crash, and a long wait on the dialog doesn't make this exit one
+            await _cs2.Close("the account switch");
             // Right after CS2 closes Steam is busy (Cloud sync) and may not close cleanly; a Steam closed the hard way logs back in to
             // the old account. A moment first.
             await Task.Delay(3000);
@@ -358,7 +355,7 @@ public partial class MainWindow
                 if (got != null) { foreach (var x in _accounts) x.Active = x == got; UpdateQuickInfo(); }
                 return false;
             }
-            if (cs2) Steam.Launch("-applaunch 730 -condebug -conclearlog");
+            if (cs2) Steam.Launch(Cs2Launch.SteamArgs);
             if (cs2 && openWith) OpenWithCs2();
             // A switch you started here, with no CS2 to open: Steam's window came up in front, the app goes back on top.
             if (!cs2 && ask) _ = BackToFront();

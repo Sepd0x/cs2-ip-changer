@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Windows;
+﻿using System.Windows;
 using SRT.Core;
 
 namespace SRT;
@@ -23,7 +22,7 @@ public partial class MainWindow
         if (!Steam.Cs2Running)
         {
             // Quit straight from a match: CS2 wrote its network summary as it closed, and no line comes after it
-            if (_cs2StartedAt != null && Cs2Console.LogPath(_s.Cs2Path ?? Steam.Cs2Path(_s)) is string last)
+            if (_cs2StartedAt != null && Cs2Launch.ConsoleLog(_s) is string last)
                 foreach (var line in _cs2Console.ReadNew(last))
                     if (_netReport.Feed(line) is NetReport r) LogNetReport(r);
             if (_netReport.Flush() is NetReport pending) LogNetReport(pending);
@@ -35,8 +34,8 @@ public partial class MainWindow
             _cs2LogOk = false;
             return;
         }
-        _cs2StartedAt ??= Cs2StartedAt();
-        var path = Cs2Console.LogPath(_s.Cs2Path ?? Steam.Cs2Path(_s));
+        _cs2StartedAt ??= Cs2Launch.StartedAt();
+        var path = Cs2Launch.ConsoleLog(_s);
         if (path == null) return;
         CheckCondebug(path);
         // One disconnect writes several lines, and the first one isn't always the clearest ("kicked", then the ban code):
@@ -123,17 +122,6 @@ public partial class MainWindow
     }
 
     static string Cut(string line) => line.Length > 220 ? line[..220] + "…" : line;
-
-    static DateTime? Cs2StartedAt()
-    {
-        DateTime? t = null;
-        foreach (var p in Process.GetProcessesByName("cs2"))
-        {
-            try { t ??= p.StartTime; } catch { }
-            finally { p.Dispose(); }
-        }
-        return t;
-    }
 
     /// <summary>CS2 open for a while and console.log not written: it was started without -condebug.</summary>
     void CheckCondebug(string path)

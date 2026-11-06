@@ -14,7 +14,7 @@ namespace SRT.Core;
 /// </summary>
 public static class Cs2LaunchOptions
 {
-    public static readonly string[] Needed = { "-condebug", "-conclearlog" };
+    public static IReadOnlyList<string> Needed => Cs2Launch.ConsoleFlags;
 
     static string[] Words(string options) => (options ?? "").Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
 

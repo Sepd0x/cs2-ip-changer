@@ -242,7 +242,7 @@ public static partial class Steam
         string found = null;
         try
         {
-            foreach (var p in Process.GetProcessesByName("cs2"))
+            foreach (var p in Cs2Launch.Processes())
                 using (p) found ??= ImagePath(p.Id);
         }
         catch { }
@@ -282,7 +282,7 @@ public static partial class Steam
     }
 
     public static bool IsRunning => Process.GetProcessesByName("steam").Length > 0;
-    public static bool Cs2Running => Process.GetProcessesByName("cs2").Length > 0;
+    public static bool Cs2Running => Cs2Launch.Running;
 
     /// <summary>
     /// Closes Steam the clean way: "-shutdown", then up to 20 s for steam.exe and steamwebhelper.exe to exit by themselves. A Steam
