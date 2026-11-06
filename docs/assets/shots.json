@@ -1,7 +1,7 @@
 {
  "note": "Made by tools/shots.mjs. Do not edit: tests/DesignSyncTests.cs checks it against the app and the files.",
  "app": "0.1.0-beta.11",
- "ui": "ce1b519bf39fc8ace104218bbc2ff86827712665b80a07469a366e5c9519f2e5",
+ "ui": "c4c6dc9c20eae9e18204b070864eb6f46573b7ad0389012c0819dac91c7b831a",
  "uiFiles": [
   "src/App.xaml",
   "src/MainWindow.xaml",
@@ -26,7 +26,7 @@
   },
   {
    "file": "docs/screenshots/servers.png",
-   "sha256": "5f35f7823e82b92f13534c856133d7cea383290adad4683712b920921407e6e6",
+   "sha256": "d0a36435b03df2898f80046fe87f91f76e13c517105db85724cdc0b9c84cf4c2",
    "size": [
     2480,
     1600
@@ -50,7 +50,7 @@
   },
   {
    "file": "docs/screenshots/configs.png",
-   "sha256": "9ae556e231537b2679533d39099fa526f275c0e2e1e96a218eca97e3e7f247e8",
+   "sha256": "febad857e9a94a58450eaa5ca446ba28079102baba12f3bbad35e39d4e2576a4",
    "size": [
     2480,
     1600
@@ -78,7 +78,7 @@
   },
   {
    "file": "docs/assets/shots/configs.png",
-   "sha256": "a151ba4e2d6d5762e18cee322cdf46a518f584dedefd5514804f228450f02b37",
+   "sha256": "7899b0c1ddc292ff70aae905bfba8e69e81683e3f1cede3cf6194faee358d454",
    "size": [
     2572,
     1692
@@ -86,7 +86,7 @@
   },
   {
    "file": "docs/assets/shots/configs.webp",
-   "sha256": "b7635744f85bbc830c752ce9f7284e137b4a5a192719a4b886a8571832ac6fb9"
+   "sha256": "79a30e6ef19e230ad5977df3bd395f2ea34470b4fc9c238c0c1972fa82258a37"
   },
   {
    "file": "docs/assets/shots/connection.png",
@@ -222,7 +222,7 @@
   },
   {
    "file": "docs/assets/shots/servers.png",
-   "sha256": "b3e4cea81ce871cf539e8379ce9ac89307805da68892b7ea9b83e01348ed9e62",
+   "sha256": "32270436368645a264d8de50db90344866c2deb291b7a1c2ccaa82eda5310fca",
    "size": [
     2572,
     1692
@@ -230,7 +230,7 @@
   },
   {
    "file": "docs/assets/shots/servers.webp",
-   "sha256": "1f62b70cb5c1ad4a958e0ea520279f4f923e5765900a1f758674bb538f42fe3f"
+   "sha256": "efeb596241746f31cc352138f083c2293b2cc466dc5091ed2e5ac6373df97256"
   },
   {
    "file": "worker/stats/dashboard/ui/connection.png",
@@ -242,7 +242,7 @@
   },
   {
    "file": "worker/stats/dashboard/ui/servers.png",
-   "sha256": "b9059f0372551c79307c17636ccbc64d53ed2a6df72cff58fd2be789b97941ff",
+   "sha256": "1c1313386cd42a39cb7ca5f51369d6a45db02ba99eabadca760342a5a1f3c947",
    "size": [
     1240,
     800
@@ -266,7 +266,7 @@
   },
   {
    "file": "worker/stats/dashboard/ui/configs.png",
-   "sha256": "17c4f6dbc8977552088aea210aa888c8606ed968f91702637cca2b376170184e",
+   "sha256": "3f3a1a2a2d525a0a900f2070f410d6817ff7383df446529855b0d253b74a2736",
    "size": [
     1240,
     800
@@ -318,27 +318,27 @@
   "files": [
    {
     "file": "site/img/poster-1280.webp",
-    "sha256": "69d8b270ae99e7256fbb6e078ff22f6a79c873765f28776099846224a089d7aa"
+    "sha256": "ae7d3076f1545689250146fc1ffdbcb399971942e2e9c936842695cf652e49c3"
    },
    {
     "file": "site/img/poster-1366.webp",
-    "sha256": "18e57d8d32fa66427e35d061828297c6ca56434d079ecdef90b698ff3a81b24b"
+    "sha256": "1186c992c5f3d693c3f9fd45d5ddbe58fd67c0cce6b33f53333071ff630ef1ec"
    },
    {
     "file": "site/img/poster-1440.webp",
-    "sha256": "dd63071ac5dbc3ae2350bc68758e9f206a5b75e5302ec80f0548948cba19aa7b"
+    "sha256": "e1de0eba93a5e628a4bec35dfee4d9d3b94c3ffd7edd29b178d506c7d57722ea"
    },
    {
     "file": "site/img/poster-1536.webp",
-    "sha256": "1e6512c185e2864c8784a63f6405f75cd2c27cbd9c905fe7b166720f0cf495b2"
+    "sha256": "bd886e1686962cac765f3959ac998b472142ca725a803e7b2c04b88b339b07ab"
    },
    {
     "file": "site/img/poster-1920.webp",
-    "sha256": "744208f91dda242dbf2a7407d35388938d50d85b9adaf93b8a47bb27282b0c9c"
+    "sha256": "7317f6df2aa06689a7a72ec64f047abb410f5634235e1d67867b156656c21725"
    },
    {
     "file": "site/img/poster-390.webp",
-    "sha256": "ad6585fe052f42b3ffdc9575e3b17ea4d46a0b3ba30f474fea1f96d8988df501"
+    "sha256": "00faf45ef544bc6b4b2f6dd8b94b769d1ac7b39f64a744d70f4907f5ddb6638f"
    },
    {
     "file": "site/img/world-tower.webp",
