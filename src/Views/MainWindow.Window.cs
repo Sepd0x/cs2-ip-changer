@@ -147,7 +147,7 @@ public partial class MainWindow
             handled = true;
             Telemetry.Click("Hotkey_Switch");
             Log.Info($"Hotkey {_s.HotkeySwitch}: switch.");
-            _ = QuickSwitch($"Hotkey {_s.HotkeySwitch}");
+            _ = SwitchFromHotkey($"Hotkey {_s.HotkeySwitch}");
         }
         else if (msg == WM_HOTKEY && wParam.ToInt32() == RejoinHotkeyId)
         {

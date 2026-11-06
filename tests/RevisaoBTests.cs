@@ -48,6 +48,15 @@ static class RevisaoBTests
         check("Revisão B2: iPhone em casa (sem IP) ou depois de um ban (o IP fica), a hotkey corre",
             !MainWindow.RejoinHotkeyRefused(true, false, protOn: false, useWithOff: true, false) && !MainWindow.RejoinHotkeyRefused(true, false, true, false, bannedOnLast: true), "");
         check("Revisão B2: o toast diz que no iPhone se faz na app", MainWindow.IphoneHotkeyText == "On an iPhone, Change IP is done in the app: its Airplane Mode steps can't be seen in game.", "");
+        // Decisão do coordenador: a hotkey do switch no iPhone faz o mesmo, quando o clique mudaria o IP
+        check("Revisão B2: iPhone, a hotkey do switch sem conta recusa (o clique mudaria o IP)",
+            MainWindow.SwitchHotkeyRefused(iphoneByHand: true, MainWindow.QuickSteps(ipRejoin, false, true, adbReady: false), protOn: true, useWithOff: false), "");
+        check("Revisão B2: iPhone, com a conta o IP já fica, a hotkey do switch corre",
+            !MainWindow.SwitchHotkeyRefused(true, MainWindow.QuickSteps(new(true, true, true, true), false, true, adbReady: false), true, false), "");
+        check("Revisão B2: iPhone em casa com a opção (sem IP), a hotkey do switch corre; sem iPhone também",
+            !MainWindow.SwitchHotkeyRefused(true, ipRejoin, protOn: false, useWithOff: true) && !MainWindow.SwitchHotkeyRefused(false, ipRejoin, true, false), "");
+        check("Revisão B2: a hotkey do switch passa pela recusa e o botão não", Src("Views", "MainWindow.Window.cs").Contains("_ = SwitchFromHotkey($\"Hotkey {_s.HotkeySwitch}\");")
+            && acc.Contains("async void Quick_Click(object sender, RoutedEventArgs e) => await QuickSwitch(\"New IP + next account\");"), "");
         check("Revisão B2: a hotkey passa pela recusa e o botão não", Src("Views", "MainWindow.Window.cs").Contains("_ = RejoinFromHotkey($\"Hotkey {_s.HotkeyRejoin}\");")
             && kick.Contains("async void Rejoin_Click(object sender, RoutedEventArgs e) => await ChangeIpAndRejoin(\"Button\");"), "");
 

@@ -673,6 +673,22 @@ public partial class MainWindow
     public static bool RejoinHotkeyRefused(bool iphoneByHand, bool noPhone, bool protOn, bool useWithOff, bool bannedOnLast) =>
         iphoneByHand && !noPhone && !bannedOnLast && IpStep(protOn, useWithOff) != IpWhenOff.Skip;
 
+    /// <summary>
+    /// The switch hotkey on an iPhone, the same rule: refused when the click would change the IP (<paramref name="steps"/> from
+    /// <see cref="QuickSteps"/> still has it, and protection off with the option doesn't leave it out).
+    /// </summary>
+    public static bool SwitchHotkeyRefused(bool iphoneByHand, SwitchSteps steps, bool protOn, bool useWithOff) =>
+        iphoneByHand && steps.Ip && IpStep(protOn, useWithOff) != IpWhenOff.Skip;
+
+    /// <summary>The switch hotkey: as the button, except on an iPhone when it would change the IP, where nothing starts and a toast says why.</summary>
+    Task SwitchFromHotkey(string from)
+    {
+        if (!SwitchHotkeyRefused(IphoneByHand, QuickChoice, _protOn, _s.UseWithProtectionOff)) return QuickSwitch(from);
+        Log.Info($"{from}: not switching. {IphoneHotkeyText}");
+        Toast(IphoneHotkeyText, false);
+        return Task.CompletedTask;
+    }
+
     public const string IphoneHotkeyText = "On an iPhone, Change IP is done in the app: its Airplane Mode steps can't be seen in game.";
 
     /// <summary>The rejoin hotkey: as the button, except on an iPhone, where nothing starts and a toast says why.</summary>
