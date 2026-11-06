@@ -23,8 +23,35 @@ static class Untangle12Tests
         SteamIdsAndLinks(check);
         OneSameRule(check);
         ConfigFailuresSaid(check);
+        OneLinkedText(check);
         await PictureNotReadSaid(check);
         SendFailuresSaid(check);
+    }
+
+    // Os textos "Linked": os Configs dizem o mesmo que a troca de conta quando a pasta do Steam é uma junção (com o porquê)
+    static void OneLinkedText(Action<string, bool, string> check)
+    {
+        const string A = "76561198000000031", B = "76561198000000032";
+        const string KeysRel = @"local\cfg\cs2_user_keys_0_slot0.vcfg";
+        var tmp = Path.Combine(Path.GetTempPath(), "srt-linked-" + Guid.NewGuid().ToString("N")[..8]);
+        var ud = Path.Combine(tmp, "Steam", "userdata");
+        string Dir(string id) => Path.Combine(ud, Cs2Config.Id32(id), "730");
+        var keys = Cs2Config.Crlf("\"config\"\n{\n\t\"bindings\"\n\t{\n\t\t\"MOUSE4\"\t\t\"+jump\"\n\t}\n}\n");
+        Directory.CreateDirectory(Path.Combine(Dir(A), "local", "cfg"));
+        File.WriteAllText(Path.Combine(Dir(A), KeysRel), keys);
+        // A pasta 730 da conta B é uma junção para fora do userdata (mklink /J não precisa de admin)
+        var outside = Path.Combine(tmp, "fora");
+        Directory.CreateDirectory(Path.Combine(outside, "local", "cfg"));
+        Directory.CreateDirectory(Path.GetDirectoryName(Dir(B))!);
+        var mk = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe"),
+            $"/c mklink /J \"{Dir(B)}\" \"{outside}\"") { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true });
+        mk?.WaitForExit(10000);
+        if (!Directory.Exists(Dir(B))) { Console.WriteLine("SALTO Linked: não deu para criar a junção"); return; }
+        var store = new Cs2ConfigStore(ud, Path.Combine(tmp, "configs")) { Cs2Running = () => false };
+        var r = store.Push(new CfgJob { SourceId = A, Target = B, Categories = new() { "binds" }, Reason = CfgTrigger.Copy }, "l1");
+        check("Linked: uma cópia para uma junção é recusada com o texto da troca de conta (diz porquê)",
+            r.Outcome == CfgOutcome.Failed && r.Detail == SafeFile.SteamLinked && SafeFile.SteamLinked.EndsWith("the app only writes to a real folder"), r.Detail ?? r.Outcome.ToString());
+        check("Linked: e nada foi escrito do outro lado da junção", !File.Exists(Path.Combine(outside, KeysRel)), "");
     }
 
     // Os catch {} dos fluxos principais: o Restore que dizia que correu bem, o ReadText que tomava um erro por "não há ficheiro"

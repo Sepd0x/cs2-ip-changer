@@ -594,7 +594,7 @@ public sealed class Cs2ConfigStore
     // Every user can write in Steam's userdata, and a folder there swapped for a junction between a check and the write would send
     // the admin app somewhere else. So reads check where the open file really is, and writes hold the folders open while they run.
 
-    const string Linked = "the Steam folder goes through a link or junction";
+    const string Linked = SafeFile.SteamLinked;
 
     /// <summary>
     /// A short reason for the Log and the toasts. .NET's own messages carry the path, and the path has userdata\&lt;id32&gt;

@@ -317,7 +317,7 @@ public static partial class Steam
     /// <summary>Closes Steam the clean way (see <see cref="CloseSteam"/>); true when it is closed.</summary>
     public static async Task<bool> Close(Action whileClosed = null) { await CloseSteam(whileClosed); return SteamClosedNow(); }
 
-    const string Linked = "the Steam folder goes through a link or junction; the app only writes to a real folder";
+    const string Linked = SafeFile.SteamLinked;
 
     /// <summary>
     /// Switches account: AutoLoginUser in the registry and AutoLogin + timestamp in loginusers.vdf (see <see cref="MarkForLogin"/>), then

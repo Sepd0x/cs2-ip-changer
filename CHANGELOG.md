@@ -15,6 +15,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
   - Accounts has two boxes like Servers: Add and log in on top (On login, Add, New IP + next account), the list below with Refresh. Show hidden (was Settings > Maintenance > Show hidden accounts) is next to Refresh and only shows while some accounts are hidden.
   - Configs: Copy, Sync and Snapshots on the left; Account configs, Compare and Backups on the right. Both columns end on one line.
 - The usage stats also count whether Turn on protection when the app starts and Use the app with protection off are changed from their default.
+- When a Steam folder is a link or junction, Configs now says the same as the account switch, with the reason: "the Steam folder goes through a link or junction; the app only writes to a real folder".
 
 - README: a row of badges under the title (latest release, downloads, Windows 10 and 11, the VirusTotal result, build status, license), the "not for VAC or game bans" note as a highlighted box, and a Support section with where to report a bug, an idea or a security problem. The animated demo and the banner show the new logo.
 
