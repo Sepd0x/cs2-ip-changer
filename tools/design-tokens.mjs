@@ -29,6 +29,18 @@ export const WEB = {
     '--bg': 'bg', '--edge': 'edge', '--panel': 'surface', '--line': 'line', '--line2': 'line-strong',
     '--ink2': 'muted', '--ink3': 'faint', '--acc': 'accent', '--acc-d': 'accent-deep', '--good': 'good', '--warn': 'warn', '--gradient': 'top',
   },
+  // the dashboard's summary page (/dashboard): these in its dark palette (prefers-color-scheme: dark); its light "Papel" palette
+  // has its own greys and takes only the deep blue
+  dashboard5: {
+    '--bg': 'bg', '--card': 'surface', '--card2': 'surface2', '--line': 'line', '--line2': 'line-strong', '--ink2': 'muted', '--ink3': 'faint',
+    '--acc': 'accent', '--acc-bar': 'accent', '--good': 'good', '--bad': 'bad', '--warn': 'warn', '--live': 'good',
+  },
+  // the README's social preview card (docs/assets/src, rendered by render.cmd)
+  readme: {
+    '--bg': 'bg', '--side': 'side', '--surface': 'surface', '--surface2': 'surface2', '--surface3': 'surface3', '--edge': 'edge', '--line': 'line',
+    '--line2': 'line-strong', '--text': 'text', '--muted': 'muted', '--faint': 'faint', '--good': 'good', '--warn': 'warn', '--bad': 'bad',
+    '--acc': 'accent', '--top1': 'top1', '--top2': 'top2', '--top3': 'top3',
+  },
 };
 
 // The files with a block; min = the site's one-line CSS, css = the dashboard's spaced CSS.
@@ -36,6 +48,9 @@ export const FILES = [
   { path: 'site/index.html', style: 'min' },
   { path: 'site/404.html', style: 'min' },
   { path: 'worker/stats/dashboard/style.css', style: 'css' },
+  { path: 'worker/stats/dashboard/v5/home.css', style: 'css' },
+  { path: 'docs/assets/src/base.css', style: 'css' },
+  { path: 'docs/assets/src/social-preview.css', style: 'css' },
 ];
 
 export const BLOCK = /\/\* tokens:[\s\S]*?\/\* \/tokens \*\//;
@@ -92,6 +107,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     console.log(late.length ? `Written: ${late.join(', ')}` : 'Already up to date');
     const run = (tool) => { const r = spawnSync(process.execPath, [ROOT + tool], { stdio: 'inherit' }); if (r.status) process.exit(r.status); };
     if (late.includes('site/index.html')) run('tools/site-pages.mjs');
-    if (late.includes('worker/stats/dashboard/style.css')) run('tools/dashboard-assets.mjs');
+    if (late.some((p) => p.startsWith('worker/stats/dashboard/'))) run('tools/dashboard-assets.mjs');
+    if (late.some((p) => p.startsWith('docs/assets/src/'))) console.log('README images: run docs/assets/src/render.cmd (and upload social-preview.png by hand) if a color changed.');
   }
 }

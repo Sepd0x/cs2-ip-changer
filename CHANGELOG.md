@@ -25,6 +25,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - If an older copy left its protection on (after an update), the Install window now says so: CS2 and your servers stay blocked outside the phone until you install, and it gives the command that turns it off.
 
 ### Changed
+- The pictures of the app on the website and in the README now show this version, and stay sharp on high-resolution screens (they are twice as detailed).
 - Phone setup shows one step at a time: only the step to do now has its text and button. Done steps say "Done", the ones after it show only their name until it's their turn.
 - Phone setup's menu paths follow your phone: a Samsung gets the Samsung menus, every other phone the standard Android ones, with "Can't find it? Use the search at the top of Settings." Paths for other brands come once they are checked on a real phone.
 - Checks only show what needs you, with one line on top ("All 11 checks OK.", "1 check needs you.", "Protection is off, so there is little to check yet."). Show all brings every row back, and the app remembers it. Regions you turned off yourself don't count as a problem.

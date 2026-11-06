@@ -613,6 +613,8 @@ Beta11Tests.Run(Check);
 Beta11QualidadeTests.Run(Check);
 // auditoria de 4 nov.: quando a telemetria envia, a ligação, as regiões, os limites e o corpo do teste do Worker (TelemetryTests.cs)
 TelemetryTests.Run(Check);
+// sistema de design (5 nov.): as cores da app no site, na dashboard e no README, e as capturas da versão de agora (DesignSyncTests.cs)
+DesignSyncTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

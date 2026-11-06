@@ -3,21 +3,24 @@
 // Run with: node docs/assets/src/components.mjs
 // Colors come from src/Theme.xaml so the README looks like the app.
 import fs from 'node:fs';
+import { readTheme } from '../../../tools/design-tokens.mjs';
 
 const out = new URL('../', import.meta.url);
 const FONT = `'Segoe UI Variable Text','Segoe UI',-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif`;
 const MONO = `'Cascadia Mono',Consolas,'SFMono-Regular',Menlo,monospace`;
 
+// the app's colors from src/Theme.xaml (upper case, as the SVGs always had them); the greys are the README's own, for GitHub's pages
+const T = Object.fromEntries(Object.entries(readTheme()).map(([k, v]) => [k, v.toUpperCase()]));
 const themes = {
   dark: {
     bg: '#121212', panel: '#1D1D1D', node: '#242424', line: '#3A3A3A', strong: '#4A4A4A',
     text: '#E6E6E6', muted: '#9B9B9B', faint: '#6E6E6E',
-    accent: '#5BA8F0', good: '#7CC95A', bad: '#F05A4F',
+    accent: T.AccentColor, good: T.Good, bad: T.Bad,
   },
   light: {
     bg: '#FFFFFF', panel: '#F6F8FA', node: '#FFFFFF', line: '#D0D7DE', strong: '#B6BEC6',
     text: '#1F2328', muted: '#59636E', faint: '#8C959F',
-    accent: '#2B74C2', good: '#2DA44E', bad: '#CF222E',
+    accent: T.AccentDeepColor, good: '#2DA44E', bad: '#CF222E',
   },
 };
 
@@ -32,17 +35,17 @@ const logo = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" widt
 <mask id="shield"><path d="${SHIELD}" fill="#fff"/><rect x="104" y="84" width="48" height="84" rx="9" fill="#000"/><rect x="118" y="92" width="20" height="5" rx="2.5" fill="#fff"/></mask>
 </defs>
 <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#tile)" stroke="#3A3A3A" stroke-width="2"/>
-<rect width="256" height="256" fill="#5BA8F0" mask="url(#shield)"/>
+<rect width="256" height="256" fill="${T.AccentColor}" mask="url(#shield)"/>
 </svg>`;
 write('logo.svg', logo);
 
 // ------------------------------------------------------------------ download button (works on both themes)
 write('download.svg', `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 264 46" width="264" height="46" role="img" aria-label="Download for Windows">
-<rect width="264" height="46" rx="6" fill="#5BA8F0"/>
-<g fill="none" stroke="#0B0B0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<rect width="264" height="46" rx="6" fill="${T.AccentColor}"/>
+<g fill="none" stroke="${T.AccentText}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 <path d="M30 13 V27 M24.5 21.5 L30 27 L35.5 21.5"/><path d="M23 32 H37"/>
 </g>
-<text x="50" y="28.5" font-family="${FONT}" font-size="16" font-weight="600" fill="#0B0B0B">Download for Windows</text>
+<text x="50" y="28.5" font-family="${FONT}" font-size="16" font-weight="600" fill="${T.AccentText}">Download for Windows</text>
 </svg>`);
 
 // ------------------------------------------------------------------ how it works (animated route)
@@ -151,7 +154,7 @@ write('how-it-works-mobile.svg', routeMobile());
 write('line-sweep.svg', `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 888 8" width="888" height="8" preserveAspectRatio="none">
 <style>@media (prefers-reduced-motion: reduce){.sweep{display:none}}</style>
 <defs>
-<linearGradient id="skeet" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#3BB4E5"/><stop offset=".5" stop-color="#C64FC6"/><stop offset="1" stop-color="#D8E03A"/></linearGradient>
+<linearGradient id="skeet" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="${T.Top1}"/><stop offset=".5" stop-color="${T.Top2}"/><stop offset="1" stop-color="${T.Top3}"/></linearGradient>
 <linearGradient id="glint" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
 </defs>
 <rect width="888" height="8" fill="url(#skeet)"/>

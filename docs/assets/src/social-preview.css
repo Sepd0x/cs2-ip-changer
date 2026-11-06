@@ -1,10 +1,16 @@
-/* Cores do src/Theme.xaml (docs/DESIGN.md). Nada de cor nova. */
+/* Cores do src/Theme.xaml pelos tokens (node tools/design-tokens.mjs, docs/DESIGN.md). Nada de cor nova. */
 :root{
-  --bg:#0E0E0E; --side:#0B0B0B; --surface:#171717; --surface2:#1D1D1D; --surface3:#262626;
-  --edge:#050505; --line:#2A2A2A; --line2:#383838;
-  --text:#DDDDDD; --muted:#ADADAD; --faint:#888888; --white:#F2F2F2;
-  --good:#7CC95A; --warn:#E3BF4B; --bad:#F05A4F;
-  --acc:#5BA8F0; --top1:#3BB4E5; --top2:#C64FC6; --top3:#D8E03A;
+  /* tokens: tools/design-tokens.mjs, from src/Theme.xaml. Don't edit here: change Theme.xaml and run it again */
+  --t-bg: #0e0e0e; --t-side: #0b0b0b; --t-edge: #050505; --t-surface: #171717; --t-surface2: #1d1d1d; --t-surface3: #262626;
+  --t-line: #2a2a2a; --t-line-strong: #383838; --t-text: #dddddd; --t-muted: #adadad; --t-faint: #888888; --t-good: #7cc95a;
+  --t-warn: #e3bf4b; --t-bad: #f05a4f; --t-accent: #5ba8f0; --t-accent-light: #7ebcf5; --t-accent-dark: #3e87d0; --t-accent-deep: #2b74c2;
+  --t-top1: #3bb4e5; --t-top2: #c64fc6; --t-top3: #d8e03a; --t-accent-rgb: 91,168,240; --t-top: linear-gradient(90deg,#3bb4e5,#c64fc6 50%,#d8e03a);
+  /* /tokens */
+  --bg:var(--t-bg); --side:var(--t-side); --surface:var(--t-surface); --surface2:var(--t-surface2); --surface3:var(--t-surface3);
+  --edge:var(--t-edge); --line:var(--t-line); --line2:var(--t-line-strong);
+  --text:var(--t-text); --muted:var(--t-muted); --faint:var(--t-faint); --white:#F2F2F2;
+  --good:var(--t-good); --warn:var(--t-warn); --bad:var(--t-bad);
+  --acc:var(--t-accent); --top1:var(--t-top1); --top2:var(--t-top2); --top3:var(--t-top3);
   --sans:"Segoe UI Variable Text","Segoe UI",sans-serif;
   --disp:"Segoe UI Variable Display","Segoe UI Variable Text","Segoe UI",sans-serif;
   --mono:"Cascadia Mono",Consolas,monospace;
@@ -22,7 +28,7 @@ body{font-family:var(--sans);color:var(--text);-webkit-font-smoothing:antialiase
 .gb{position:relative;background:var(--surface);border:1px solid var(--line);box-shadow:0 0 0 1px var(--edge)}
 .gb>.lab{position:absolute;left:14px;top:-13px;padding:0 6px;background:var(--bg);font-weight:600;font-size:18px;color:var(--white);line-height:24px}
 .btn{display:inline-block;border:1px solid var(--line2);background:var(--surface2);color:var(--text);padding:8px 18px;font-size:19px;line-height:1.2}
-.btn.acc{border-color:#3C668E;background:#202A34;color:#7EBCF5}
+.btn.acc{border-color:#3C668E;background:#202A34;color:var(--t-accent-light)}
 .sq{display:inline-block;width:12px;height:12px;vertical-align:1px;margin-right:10px}
 .win{position:absolute;border:1px solid var(--line2);box-shadow:0 0 0 1px var(--edge),0 24px 60px rgba(0,0,0,.55);background:var(--bg)}
 .win img{display:block;width:100%;height:auto}

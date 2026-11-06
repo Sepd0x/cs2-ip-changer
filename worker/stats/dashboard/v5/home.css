@@ -1,11 +1,17 @@
 /* CS2 IP Changer · Resumo (dashboard v5, 5 nov. 2026). A página do dono: a frase da semana, o "agora", até 3 frases do que
    mudou, seis números que mudam o gráfico, como chegam e o que fazem depois de instalar. Direção "Papel" (escolhida pelos dois
-   críticos, publish/auditoria-2026-11-04/dashboard-v5/criticos/): clara, e escura quando o sistema está em modo escuro, com as
-   cores da app (src/Theme.xaml: azul #5ba8f0 / #2b74c2, verde #7cc95a, vermelho #f05a4f, fundo #0e0e0e). */
+   críticos, publish/auditoria-2026-11-04/dashboard-v5/criticos/): clara, e escura quando o sistema está em modo escuro. As cores
+   da app vêm dos tokens (--t-…, de src/Theme.xaml, docs/DESIGN.md); o claro "Papel" tem as suas, menos o azul. */
 :root {
+  /* tokens: tools/design-tokens.mjs, from src/Theme.xaml. Don't edit here: change Theme.xaml and run it again */
+  --t-bg: #0e0e0e; --t-side: #0b0b0b; --t-edge: #050505; --t-surface: #171717; --t-surface2: #1d1d1d; --t-surface3: #262626;
+  --t-line: #2a2a2a; --t-line-strong: #383838; --t-text: #dddddd; --t-muted: #adadad; --t-faint: #888888; --t-good: #7cc95a;
+  --t-warn: #e3bf4b; --t-bad: #f05a4f; --t-accent: #5ba8f0; --t-accent-light: #7ebcf5; --t-accent-dark: #3e87d0; --t-accent-deep: #2b74c2;
+  --t-top1: #3bb4e5; --t-top2: #c64fc6; --t-top3: #d8e03a; --t-accent-rgb: 91,168,240; --t-top: linear-gradient(90deg,#3bb4e5,#c64fc6 50%,#d8e03a);
+  /* /tokens */
   --bg: #f7f7f5; --card: #ffffff; --card2: #f1f1ee; --line: #e6e5e1; --line2: #d4d3ce;
   --ink: #141414; --ink2: #4c4b47; --ink3: #6c6b66;
-  --acc: #2b74c2; --acc-soft: rgba(43, 116, 194, .09); --acc-bar: #2b74c2; --acc-bar2: #8db6e3;
+  --acc: var(--t-accent-deep); --acc-soft: color-mix(in srgb, var(--t-accent-deep) 9%, transparent); --acc-bar: var(--t-accent-deep); --acc-bar2: #8db6e3;
   --good: #2b7a37; --good-soft: rgba(43, 122, 55, .1); --bad: #c0362c; --bad-soft: rgba(192, 54, 44, .08); --warn: #946500; --warn-soft: rgba(148, 101, 0, .09);
   --live: #2f9e44; --shadow: 0 1px 2px rgba(20, 20, 20, .04), 0 1px 1px rgba(20, 20, 20, .02);
   --r: 14px; --gap: 20px;
@@ -14,10 +20,10 @@
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #0e0e0e; --card: #151515; --card2: #1c1c1c; --line: #252525; --line2: #333333; --ink: #ededed; --ink2: #b4b4b4; --ink3: #8c8c8c;
-    --acc: #5ba8f0; --acc-soft: rgba(91, 168, 240, .1); --acc-bar: #5ba8f0; --acc-bar2: #2f5d88;
-    --good: #7cc95a; --good-soft: rgba(124, 201, 90, .12); --bad: #f05a4f; --bad-soft: rgba(240, 90, 79, .1); --warn: #e3bf4b; --warn-soft: rgba(227, 191, 75, .1);
-    --live: #7cc95a; --shadow: none; color-scheme: dark; }
+  :root { --bg: var(--t-bg); --card: var(--t-surface); --card2: var(--t-surface2); --line: var(--t-line); --line2: var(--t-line-strong); --ink: #ededed; --ink2: var(--t-muted); --ink3: var(--t-faint);
+    --acc: var(--t-accent); --acc-soft: rgba(var(--t-accent-rgb), .1); --acc-bar: var(--t-accent); --acc-bar2: #2f5d88;
+    --good: var(--t-good); --good-soft: color-mix(in srgb, var(--t-good) 12%, transparent); --bad: var(--t-bad); --bad-soft: color-mix(in srgb, var(--t-bad) 10%, transparent); --warn: var(--t-warn); --warn-soft: color-mix(in srgb, var(--t-warn) 10%, transparent);
+    --live: var(--t-good); --shadow: none; color-scheme: dark; }
 }
 * { box-sizing: border-box; }
 html { background: var(--bg); -webkit-text-size-adjust: 100%; }
@@ -35,7 +41,7 @@ h1, h2 { margin: 0; font-family: var(--font-d); }
 .top-in { max-width: 1160px; margin: 0 auto; padding: 10px max(20px, env(safe-area-inset-left)); display: flex; align-items: center; gap: 20px; }
 .brand { display: flex; align-items: center; gap: 9px; color: var(--ink); font-weight: 600; letter-spacing: -.01em; white-space: nowrap; }
 .brand:hover { text-decoration: none; }
-.mark { width: 18px; height: 18px; border-radius: 5px; background: linear-gradient(135deg, #3bb4e5, #c64fc6 55%, #d8e03a); flex: none; }
+.mark { width: 18px; height: 18px; border-radius: 5px; background: linear-gradient(135deg, var(--t-top1), var(--t-top2) 55%, var(--t-top3)); flex: none; }
 .tabs { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
 .tabs a { padding: 4px 12px; border-radius: 7px; color: var(--ink2); font-size: 13px; }
 .tabs a:hover { color: var(--ink); text-decoration: none; background: var(--card2); }

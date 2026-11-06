@@ -1,60 +1,136 @@
-# Design: one set of colors
+# Design: one system for the app, the site, the dashboard and the README
 
-The app, the site and the stats dashboard share one set of colors. The source is the app's
-[`src/Theme.xaml`](../src/Theme.xaml). The site and the dashboard never type those colors by hand: they read them as CSS tokens.
+The app is the source. Its colors live in [`src/Theme.xaml`](../src/Theme.xaml); the site, the stats dashboard and the
+README's pictures never type them by hand: they read them as CSS tokens (`--t-…`). The pictures of the app on the site,
+in the README and on the dashboard all come from one script, from the app as it is now. Two sets of tests fail when
+something is left behind (see [Checks](#checks)).
 
-## Where each color comes from
+## Tokens
 
-`node tools/design-tokens.mjs` reads `Theme.xaml` and writes the tokens (`--t-…`) between `/* tokens` and `/* /tokens */` in
-`site/index.html`, `site/404.html` and `worker/stats/dashboard/style.css`, and the home page's `theme-color`.
-The guide pages copy the home page's style (`tools/site-pages.mjs`), so they get the same tokens.
+### Colors (from `src/Theme.xaml`)
 
-| Token | Theme.xaml key | Site name | Dashboard name |
+`node tools/design-tokens.mjs` reads `Theme.xaml` and writes these between `/* tokens` and `/* /tokens */` in every file
+listed in `FILES` there. Values as of 5 Nov 2026:
+
+| Token | Theme.xaml key | Value | What for |
 |---|---|---|---|
-| `--t-bg` | `BgColor` | `--bg` | `--bg` |
-| `--t-edge` | `Edge` | | `--edge` |
-| `--t-surface` | `SurfaceColor` | `--bg2` | `--panel` |
-| `--t-surface2` | `Surface2` | `--bg3` | |
-| `--t-line` | `Line` | `--line` | `--line` |
-| `--t-line-strong` | `LineStrong` | `--line2` | `--line2` |
-| `--t-muted`, `--t-faint` | `Muted`, `Faint` | `--ink2`, `--ink3` | `--ink2`, `--ink3` |
-| `--t-good`, `--t-warn` | `Good`, `Warn` | | `--good`, `--warn` |
-| `--t-accent` | `AccentColor` | `--accent`, `--route` | `--acc` |
-| `--t-accent-deep` | `AccentDeepColor` (web only: filled buttons with white text) | `--sand` | `--acc-d` |
-| `--t-accent-rgb` | `AccentColor` as `r,g,b`, for `rgba(var(--t-accent-rgb),.1)` | | |
-| `--t-top1`…`--t-top3`, `--t-top` | `Top1`…`Top3`, the line at the top of the window | body top line | `--gradient` |
+| `--t-bg` | `BgColor` | `#0e0e0e` | the window, the page |
+| `--t-side` | `Side` | `#0b0b0b` | the app's sidebar |
+| `--t-edge` | `Edge` | `#050505` | the dark rim outside a group box |
+| `--t-surface` | `SurfaceColor` | `#171717` | group boxes, cards |
+| `--t-surface2`, `--t-surface3` | `Surface2`, `Surface3` | `#1d1d1d`, `#262626` | rows, fields, hover |
+| `--t-line`, `--t-line-strong` | `Line`, `LineStrong` | `#2a2a2a`, `#383838` | borders; button and input borders |
+| `--t-text`, `--t-muted`, `--t-faint` | `Text`, `Muted`, `Faint` | `#dddddd`, `#adadad`, `#888888` | body text, secondary, hints |
+| `--t-good`, `--t-warn`, `--t-bad` | `Good`, `Warn`, `Bad` | `#7cc95a`, `#e3bf4b`, `#f05a4f` | protected / attention / blocked, banned |
+| `--t-accent` | `AccentColor` | `#5ba8f0` | links, the selected page, Change IP and rejoin |
+| `--t-accent-light`, `--t-accent-dark` | `AccentLightColor`, `AccentDarkColor` | `#7ebcf5`, `#3e87d0` | hover, the accent gradient |
+| `--t-accent-deep` | `AccentDeepColor` | `#2b74c2` | web only: filled buttons with white text, the accent on light pages |
+| `--t-top1`, `--t-top2`, `--t-top3` | `Top1`…`Top3` | `#3bb4e5`, `#c64fc6`, `#d8e03a` | the line at the top of the window: blue, magenta, yellow |
+| `--t-top` | | `linear-gradient(90deg, top1, top2 50%, top3)` | that line, ready to use |
+| `--t-accent-rgb` | `AccentColor` | `91,168,240` | `rgba(var(--t-accent-rgb), .1)` |
 
-The block also has `--t-side`, `--t-surface3`, `--t-text`, `--t-bad`, `--t-accent-light` and `--t-accent-dark`, for new rules.
-The same table is `WEB` in `tools/design-tokens.mjs`.
+The app also has keys with alpha (`AccentSoft`, `GoodSoft`, `BadSoft`, …) and the button fills (`BtnFill`…); the web makes
+its soft colors with `color-mix(in srgb, var(--t-good) 12%, transparent)` or `rgba(var(--t-accent-rgb), …)`.
 
-Each page keeps its own colors where it needs them: the text grey of the site and the dashboard (`#e4e4e4`), the site's
-button hover, the dashboard's charts, its heat map and its two other palettes (`quente`, `contraste`). The dashboard's
-copy of the app (the sidebar and placeholders drawn over the captures) uses the tokens directly, so it stays the app's
-color under every palette.
+### Each page's own names
 
-## Change a color
+Each page keeps short names of its own; the shared ones must be `var(--t-…)` (the table is `WEB` in `tools/design-tokens.mjs`).
 
-1. Change it in `src/Theme.xaml` (the app picks it up on the next build).
-2. `node tools/design-tokens.mjs`: writes the tokens, then rebuilds the guide pages and the dashboard assets if needed.
-3. `node --test worker/stats/test/worker.test.mjs`: the `design:` tests fail if a file is behind `Theme.xaml`, if a
-   shared name stops pointing at its token, or if a page has a shared color (or a near copy of the accent or the top
-   line) typed by hand.
+| Token | Site (`site/index.html`, `404.html`, guides) | Dashboard `/data` (`style.css`, v4) | Dashboard `/dashboard` (v5, dark) | README card (`social-preview.css`) |
+|---|---|---|---|---|
+| `--t-bg` | `--bg` | `--bg` | `--bg` | `--bg` |
+| `--t-surface` / `surface2` | `--bg2` / `--bg3` | `--panel` | `--card` / `--card2` | `--surface` / `--surface2` |
+| `--t-line` / `line-strong` | `--line` / `--line2` | `--line` / `--line2` | `--line` / `--line2` | `--line` / `--line2` |
+| `--t-muted` / `faint` | `--ink2` / `--ink3` | `--ink2` / `--ink3` | `--ink2` / `--ink3` | `--muted` / `--faint` |
+| `--t-accent` | `--accent`, `--route` | `--acc` | `--acc`, `--acc-bar` | `--acc` |
+| `--t-accent-deep` | `--sand` | `--acc-d` | `--acc` in the light palette | |
+| `--t-good`, `warn`, `bad` | (used directly) | `--good`, `--warn` | `--good`, `--warn`, `--bad`, `--live` | `--good`, `--warn`, `--bad` |
+| `--t-top` | the page's top line | `--gradient` | the logo square (`.mark`) | `--top1`…`--top3` |
 
-`node tools/design-tokens.mjs --check` only checks.
+Kept on purpose, page by page: the text white (site `#e8e8e8`, dashboards `#ededed`, README `#f2f2f2`: a little brighter
+than the app's `#dddddd` on large screens); the dashboard's charts, heat map and its other palettes (`quente`, `contraste`);
+the v5 page's light "Papel" palette (its greys, green and red are made for a white page; only its blue is the app's
+`accent-deep`); the README SVGs' greys (`docs/assets/src/components.mjs`, tuned for GitHub's light and dark pages; their
+blue, green, red and top line come from `Theme.xaml`).
+
+### Type
+
+| | Text | Titles | Numbers, IPs, code |
+|---|---|---|---|
+| App | Segoe UI Variable Text, Segoe UI; 12 px, buttons 12, small 11 | the same, 16 to 20 px | Cascadia Mono, Consolas |
+| Site | Funnel Sans (`--sans`), then Segoe UI Variable | Funnel Display (`--disp`) | Fragment Mono (`--mono`); the copies of app text use Cascadia Mono |
+| Dashboards | Segoe UI Variable Text, system-ui (`--font`) | Segoe UI Variable Display (`--font-d`) | tabular numbers |
+| README pictures | Segoe UI Variable Text | Segoe UI Variable Display | Cascadia Mono |
+
+Icons: Segoe Fluent Icons in the app; the site and the dashboard draw their own SVGs.
+
+### Shape and space
+
+| | Corners | Borders | Spacing |
+|---|---|---|---|
+| App | square (no `CornerRadius`; the window chrome is 0) | 1 px `Line`; group boxes 1 px `Edge` outside, 1 px `Line` inside, the title on the line | group padding 14,16,14,12, 12 between groups; buttons 28 px high, padding 14,0, 6 apart |
+| Site | 999px pills (buttons, chips), 8 to 16 px cards, 2 to 6 px small parts | 1 px `--line` | `--gutter: clamp(1.25rem, .4rem + 4.2vw, 5rem)`, `--max: 88rem`, top bar `--top-h: 4rem` |
+| Dashboard v5 | `--r: 14px` cards, 10 px tabs, 999px chips | 1 px `--line` | `--gap: 20px` (14 px on phones) |
+| README pictures | 8 to 10 px frames around the captures, 8 px nodes | 1 px grey edge | |
+
+The line at the top (blue, magenta, yellow, `TopLine`) is the one shape all four share: 3 px in the app (2 px on its
+toasts), 3 to 5 px on the web.
+
+### Where they differ, and what was aligned (5 Nov 2026)
+
+Aligned: the v5 dashboard typed the app's colors by hand, and its dark palette had near copies (`#151515` for `#171717`,
+`#252525`/`#333333` for the lines, `#b4b4b4`/`#8c8c8c` for the greys): it now takes the tokens. The README card
+(`social-preview.css`), `base.css` and `components.mjs` typed the same values by hand: they now read them too (no picture
+changed). The dashboard's click map (`ui-map.js`) had five buttons in the beta.10 places and no box for Show all and What the app changed.
+
+Different on purpose (bigger than a token, a design call): the site's fonts (Funnel) and its round buttons (pills, filled
+accent) against the app's Segoe and square buttons; the web's brighter text white. Change these only with the owner.
 
 ## Captures
 
-`node tools/shots.mjs` takes every capture of the app from the demo of the dev build (needs `src/Privado`; the Debug
-build has no UAC prompt), at 1240x800:
+`node tools/shots.mjs` takes every capture of the app in one run, from the demo of the dev build (needs `src/Privado`;
+the Debug build has no UAC prompt). The window is 1240x800:
 
-- `docs/screenshots/`: README, `docs/FEATURES.md` and the site (the Pages workflow copies them to `img/`);
-- `worker/stats/dashboard/ui/`: the dashboard's "Na app" page, with Log and Settings;
-- `publish/ui-mapa/*.json`: every button's handler, text and box, to update `worker/stats/dashboard/ui-map.js` by hand.
+- `docs/screenshots/<page>.png` at **2x** (2480x1600, `--scale 2`): the site (the Pages workflow copies them to `img/`
+  with a WebP each; the pages show them at 1240x800, so they are sharp on 2x screens; the 3D monitor shows `connection`);
+- `docs/assets/shots/`: the framed copies for `README.md` and `docs/FEATURES.md` (`tools/readme-shots.py`, also at 2x);
+- `docs/assets/src/social-preview-status.png` and `docs/assets/social-preview.png`: the README/og card, rendered with
+  Chrome (upload it by hand on GitHub: Settings > General > Social preview);
+- `worker/stats/dashboard/ui/<page>.png` at 1x: the dashboard's click map (1x so the Worker bundle stays small), packed by
+  `tools/dashboard-assets.mjs`. The button boxes of each page go to `publish/ui-mapa/*.json`, and the script lists the
+  buttons of `ui-map.js` that moved: fix those by hand;
+- `docs/assets/shots.json`: the manifest. The app version, a fingerprint of every `src/*.xaml` and `src/Views/*.xaml`, and
+  each file's size and SHA-256.
 
-Then it frames the README copies (`python tools/readme-shots.py`) and packs the dashboard (`node tools/dashboard-assets.mjs`).
+The 3D posters and stills of the site (`site/img/poster-*.webp`, `world-tower.webp`, `world-plug.webp`) show the
+Connection capture on the monitor. `node tools/site-renders.mjs` renders them from the live scene: it serves `site/` as
+the Pages workflow builds it (on a free port, with a lab page that has only the scene for the stills), shoots them with
+Playwright's Chromium on the GPU, makes the WebP with ffmpeg and then runs `node tools/shots.mjs --renders`, which records
+which `connection.png` they show. It needs Playwright with its Chromium (`npm i playwright && npx playwright install
+chromium` in any folder, `PLAYWRIGHT=<that folder>` when it is not the repo or the global npm) and ffmpeg. `--all` also
+renders the stills without the monitor (mast, racks, iPhone, Android), `--out <folder>` is a trial and `--serve` only
+serves the site and the lab to look at.
+
 `node tools/shots.mjs --out <folder>` is a trial run that changes nothing in the repo.
+
+## Checks
+
+- `CI=true dotnet run --project tests` (`tests/DesignSyncTests.cs`): fails if a file's tokens are behind `Theme.xaml`, a
+  shared name stops pointing at its token, a page types an app color by hand (or a near copy of the accent or the top
+  line), the Worker serves an old CSS, map or capture; and if the captures are of another version or another XAML, a
+  capture changed outside the script, one the site or the README shows is missing from the manifest, or the 3D posters
+  show an older Connection.
+- `node --test worker/stats/test/worker.test.mjs`: the same color checks for the site and the `/data` dashboard.
+- `node tools/design-tokens.mjs --check` only checks the colors.
 
 ## When
 
-At every release, before the commit: `node tools/design-tokens.mjs --check`, the Worker tests, and `node tools/shots.mjs`
-if any screen changed. Look at the new captures before committing them.
+Any visual change to the app (a color, a text, a layout, anything in a `.xaml`) goes out in the same step as:
+
+1. this file, if a token, a font, a size or a rule changed;
+2. `node tools/design-tokens.mjs` (if `Theme.xaml` changed);
+3. `node tools/shots.mjs`, a look at the new captures, `ui-map.js` if it lists moved buttons, and `node tools/site-renders.mjs` (the 3D renders) if
+   Connection changed;
+4. the tests: `CI=true dotnet run --project tests` and `node --test worker/stats/test/`.
+
+At every release the version changes, so the captures (the sidebar shows it) are taken again before the release commit.

@@ -1,6 +1,7 @@
 """Framed screenshots and crops for the README and docs/FEATURES.md.
 
-Reads docs/screenshots/*.png (1240x800 captures of the app) and writes to docs/assets/shots/:
+Reads docs/screenshots/*.png (captures of the 1240x800 window, at 2x since 5 nov.: 2480x1600)
+and writes to docs/assets/shots/, at the captures' scale:
   <name>.png / <name>.webp           every screenshot, framed
   crop-<group>.png / crop-<group>.webp  one panel per feature group, framed
 
@@ -9,8 +10,9 @@ background, so the dark window sits on GitHub's light and dark pages alike.
 The WebP files are lossless (same pixels, about a quarter of the size).
 
 Run it again after new captures:  python tools/readme-shots.py
-Needs Pillow (pip install pillow). The crop rectangles are fixed, in pixels of the
-1240x800 capture: if the app's layout moves, fix CROPS below and run it again.
+Needs Pillow (pip install pillow). The crop rectangles and the frame are fixed, in pixels of
+the 1240x800 window (multiplied by the capture's scale): if the app's layout moves, fix CROPS
+below and run it again. node tools/shots.mjs runs this for you.
 """
 
 import sys
@@ -32,6 +34,10 @@ CROPS = {
     "regions": ("regions", (98, 262, 806, 650)),  # Europe with the ping of each region
     "configs": ("configs", (660, 192, 1227, 486)),  # Compare, with both crosshairs
 }
+
+# the social preview's piece of the Connection page, in pixels of the 1x capture (its border and top line included)
+STATUS = (82, 0, 662, 296)
+STATUS_OUT = ROOT / "docs" / "assets" / "src" / "social-preview-status.png"
 
 # frame for full screenshots, frame for crops
 FULL = dict(radius=10, margin=24, blur=12, offset=4, shadow=0.30)
@@ -83,29 +89,46 @@ def save(img, stem):
     print(f"  {png.relative_to(ROOT).as_posix()}  {img.size[0]}x{img.size[1]}  png {png.stat().st_size // 1024} KB, webp {webp.stat().st_size // 1024} KB")
 
 
+def scaled(params, k):
+    """The frame's sizes at the capture's scale (the shadow's strength stays)."""
+    return {n: (v if n == "shadow" else round(v * k)) for n, v in params.items()}
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     shots = sorted(SRC.glob("*.png"))
     if not shots:
         sys.exit(f"No screenshots in {SRC}")
-    loaded = {}
+    loaded, scale, raw = {}, {}, {}
     for p in shots:
         im = Image.open(p).convert("RGBA")
-        if im.size != SIZE:
-            print(f"  warning: {p.name} is {im.size[0]}x{im.size[1]}, the crops expect {SIZE[0]}x{SIZE[1]}")
-        # the capture has a 1 px dark border around the window; the frame draws its own edge
-        loaded[p.stem] = im.crop((1, 1, im.size[0] - 1, im.size[1] - 1))
-        save(frame(loaded[p.stem], **FULL), p.stem)
+        k = im.size[0] / SIZE[0]
+        if k not in (1, 2, 3) or im.size != (SIZE[0] * k, SIZE[1] * k):
+            sys.exit(f"{p.name} is {im.size[0]}x{im.size[1]}: expected {SIZE[0]}x{SIZE[1]} times 1, 2 or 3")
+        k = int(k)
+        raw[p.stem] = im
+        # the capture has a 1 px dark border around the window (k px at k x); the frame draws its own edge
+        loaded[p.stem], scale[p.stem] = im.crop((k, k, im.size[0] - k, im.size[1] - k)), k
+        save(frame(loaded[p.stem], **scaled(FULL, k)), p.stem)
 
     missing = []
     for group, (name, (l, t, r, b)) in CROPS.items():
         if name not in loaded:
             missing.append(f"{name}.png (for crop-{group})")
             continue
-        # the rectangles are in capture pixels; the loaded image lost 1 px on each side
-        save(frame(loaded[name].crop((l - 1, t - 1, r - 1, b - 1)), **CROP), f"crop-{group}")
+        # the rectangles are in 1x window pixels; the loaded image is k times bigger and lost k px on each side
+        k = scale[name]
+        save(frame(loaded[name].crop(((l - 1) * k, (t - 1) * k, (r - 1) * k, (b - 1) * k)), **scaled(CROP, k)), f"crop-{group}")
     if missing:
         sys.exit("Missing: " + ", ".join(missing))
+
+    # the social preview card (docs/assets/src/social-preview.html): the top line, the title bar and Status, unframed
+    if "connection" in loaded:
+        k = scale["connection"]
+        l, t, r, b = STATUS
+        status = raw["connection"].crop((l * k, t * k, r * k, b * k)).convert("RGB")
+        status.save(STATUS_OUT, optimize=True)
+        print(f"  {STATUS_OUT.relative_to(ROOT).as_posix()}  {status.size[0]}x{status.size[1]}")
 
 
 if __name__ == "__main__":
