@@ -125,6 +125,7 @@ public partial class MainWindow
         Log.Info(on ? "Use the app with protection off: on. With protection off, Servers, Join and Log in use your home connection."
                     : "Use the app with protection off: off. With protection off, Servers, Join and Log in wait for protection again.");
         UpdateQuickInfo();
+        UpdateStatusUi();   // the red "Home IP" warning in the top bar comes and goes with it
     }
 
     // ------------------------------------------------------------ Hotkeys: the box takes the combination you press

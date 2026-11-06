@@ -938,9 +938,15 @@ public static class Telemetry
         http.DefaultRequestHeaders.UserAgent.ParseAdd(AppIds.Name);
         using var resp = await http.PostAsync(url, new StringContent(body, Encoding.UTF8, "application/json")).ConfigureAwait(false);
         if (resp.IsSuccessStatusCode) { SentOk(url); return true; }
-        NotSent(url, "the server answered " + (int)resp.StatusCode);
+        if (!NotYet((int)resp.StatusCode)) NotSent(url, "the server answered " + (int)resp.StatusCode);
         return false;   // kept for the next try
     }
+
+    /// <summary>
+    /// 429 is the stats server's own "not yet": a report within 10 minutes of the last one, or the 5-minute signal sooner than
+    /// that, as when the app is opened twice in a row. Nothing is wrong and the data waits for the next send, so the Log stays quiet.
+    /// </summary>
+    public static bool NotYet(int status) => status == 429;
 
     const string NotSentKey = "stats-not-sent ";
 

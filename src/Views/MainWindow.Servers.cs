@@ -263,6 +263,7 @@ public partial class MainWindow
         // The kill switch stops covering these IPs only after their routes are gone (no leak window for the ones that stay).
         if (!_demo && gone.Count > 0) await _guard.RemoveIps(gone, _s);
         Log.Info($"Removed {Fmt.Count(sel.Count, "server")}.");
+        UpdateQuickInfo();   // the last server may be gone: no "+ rejoin" then
         await SyncNow(force: true);
         UpdateStatusUi();
     }
@@ -542,5 +543,6 @@ public partial class MainWindow
         ApplyServerBans();
         _serverView.Refresh();
         UpdateRejoinBtn();
+        UpdateQuickInfo();   // New IP + next account says "+ rejoin" only with a last server to go back to
     }
 }

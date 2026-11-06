@@ -479,11 +479,15 @@ public sealed class AccountItem : Observable
     public string QuickGlyph => "";
     public Brush QuickBrush => Excluded ? Ui.LineStrong : Ui.Muted;
     /// <summary>New IP + next account can pick this account (the "In rotation" box on the card).</summary>
-    public bool InRotation => !Excluded;
-    public string QuickTip => Excluded
+    public bool InRotation => !Excluded && !Meta.Hidden;   // a hidden account is never picked, even while Show hidden has it on the list
+    public string QuickTip => Meta.Hidden ? "Hidden: New IP + next account never picks a hidden account. Right-click > Show in list to bring it back."
+        : Excluded
         ? "Not in rotation: New IP + next account never picks this account. Tick to put it back."
         : "In rotation: New IP + next account can pick this account. Untick to leave it out.";
     public string QuickMenuText => Excluded ? "Put back in rotation" : "Take out of rotation";
+    /// <summary>Hidden from the list, on it only while Show hidden is on: dimmed, and its menu brings it back for good.</summary>
+    public double ListOpacity => Meta.Hidden ? 0.5 : 1;
+    public string HideMenuText => Meta.Hidden ? "Show in list" : "Hide from list";
     public bool HasLastServer => Meta.LastServer != null;
     public string LastServerText => Meta.LastServer == null ? null
         : $"Last: {(string.IsNullOrWhiteSpace(Meta.LastServerName) ? Meta.LastServer : Meta.LastServerName)} · {Fmt.Ago(Meta.LastServerAt)}";
@@ -554,7 +558,7 @@ public sealed class AccountItem : Observable
             nameof(Name), nameof(Initial), nameof(Checked), nameof(HasVac), nameof(HasGameBan), nameof(HasTradeBan), nameof(HasCommunityBan),
             nameof(Limited), nameof(Private), nameof(Clean), nameof(VacText), nameof(GameBanText), nameof(BanAgeText), nameof(LevelText),
             nameof(HoursText), nameof(HasLevel), nameof(HasHours), nameof(InCooldown), nameof(CooldownText), nameof(Tip), nameof(Note),
-            nameof(HasNote), nameof(Tags), nameof(HasTags), nameof(StarGlyph), nameof(Favorite), nameof(Excluded), nameof(InRotation), nameof(Usable), nameof(QuickGlyph), nameof(QuickBrush), nameof(QuickTip), nameof(QuickMenuText),
+            nameof(HasNote), nameof(Tags), nameof(HasTags), nameof(StarGlyph), nameof(Favorite), nameof(Excluded), nameof(InRotation), nameof(Usable), nameof(QuickGlyph), nameof(QuickBrush), nameof(QuickTip), nameof(QuickMenuText), nameof(ListOpacity), nameof(HideMenuText),
             nameof(HasLastServer), nameof(LastServerText), nameof(HasServerBans), nameof(ServerBansText), nameof(ServerBansTip),
         }) Raise(n);
     }

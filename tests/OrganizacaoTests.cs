@@ -35,7 +35,7 @@ static class OrganizacaoTests
         var xamlTxt = Txt("src/MainWindow.xaml");
         check("Organização: Hide usernames em Settings continua a usar o mesmo clique (AccOpt_Click)",
             Regex.IsMatch(xamlTxt, @"<CheckBox x:Name=""OptStreamer""[^>]*Click=""AccOpt_Click"""), "");
-        check("Organização: o Show hidden chama o mesmo UnhideAll_Click", xamlTxt.Contains(@"x:Name=""AccUnhideBtn"" Click=""UnhideAll_Click"""), "");
+        check("Organização: o Show hidden alterna com Hide hidden (ShowHidden_Click, ronda 2)", xamlTxt.Contains(@"x:Name=""AccUnhideBtn"" Click=""ShowHidden_Click"""), "");
 
         var sec = Regex.Match(Txt("docs/DESIGN.md"), @"\n## App layout\n([\s\S]*?)(?=\n## |$)");
         check("Organização: o DESIGN.md tem a secção App layout", sec.Success, "docs/DESIGN.md");

@@ -49,11 +49,11 @@
                 <MenuItem Header="Favorite (yes/no)" Tag="&#xE734;" Click="AccFav_Click"/>
                 <MenuItem Header="Note and tags…" Tag="&#xE70F;" Click="AccNote_Click"/>
                 <MenuItem Header="Refresh this one" Tag="&#xE72C;" Click="AccRefreshOne_Click"/>
-                <MenuItem Header="Hide from list" Tag="&#xED1A;" Click="AccHide_Click"/>
+                <MenuItem Header="{Binding HideMenuText}" Tag="&#xED1A;" Click="AccHide_Click"/>
             </ContextMenu>
 
         <DataTemplate x:Key="AccountCard">
-            <Border Margin="0,0,10,10" Style="{StaticResource Card}" BorderBrush="{Binding CardBorder}" ContextMenu="{StaticResource AccMenu}"
+            <Border Margin="0,0,10,10" Style="{StaticResource Card}" BorderBrush="{Binding CardBorder}" ContextMenu="{StaticResource AccMenu}" Opacity="{Binding ListOpacity}"
                     ToolTip="{Binding Tip}" ToolTipService.InitialShowDelay="700" ToolTipService.ShowDuration="30000">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -150,7 +150,7 @@
 
         <!-- Accounts as rows (4 nov.): picked in Accounts, offered from 12 accounts. The same menu, star, rotation and Log in as the card, on one line. -->
         <DataTemplate x:Key="AccountRow">
-            <Border Margin="0,0,10,3" Padding="10,3" Style="{StaticResource Card}" BorderBrush="{Binding CardBorder}" ContextMenu="{StaticResource AccMenu}"
+            <Border Margin="0,0,10,3" Padding="10,3" Style="{StaticResource Card}" BorderBrush="{Binding CardBorder}" ContextMenu="{StaticResource AccMenu}" Opacity="{Binding ListOpacity}"
                     ToolTip="{Binding Tip}" ToolTipService.InitialShowDelay="700" ToolTipService.ShowDuration="30000">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -486,6 +486,7 @@
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock x:Name="SideQuickLabel" Text="New IP + next account"/>
                                     <TextBlock x:Name="SideQuickNext" Text="" FontWeight="SemiBold" Margin="3,0,0,0" TextTrimming="CharacterEllipsis" MaxWidth="120"/>
+                                    <TextBlock x:Name="SideQuickTail" Text=""/>
                                 </StackPanel>
                             </Button>
                         </StackPanel>
@@ -1099,13 +1100,13 @@
                                 <Grid Margin="0,0,0,12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="180"/>
-                                        <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBox x:Name="AccSearch" Tag="Search accounts" TextChanged="AccFilter_Changed" VerticalAlignment="Center"
+                                    <TextBox x:Name="AccSearch" Tag="Search accounts" TextChanged="AccFilter_Changed" VerticalAlignment="Top"
                                              ToolTip="Name, username, SteamID, notes and tags"/>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
+                                    <!-- A WrapPanel: at the minimum width (1020) the filters go onto two lines instead of pushing Refresh and Show hidden off the page -->
+                                    <WrapPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Top">
                                         <RadioButton x:Name="FAll" Style="{StaticResource Seg}" GroupName="accf" Content="All" IsChecked="True" Checked="AccFilter_Changed"/>
                                         <RadioButton x:Name="FReady" Style="{StaticResource Seg}" GroupName="accf" Content="Ready" Checked="AccFilter_Changed"
                                                      ToolTip="Accounts New IP + next account can use now: in rotation, no cooldown, no VAC or game ban"/>
@@ -1116,10 +1117,10 @@
                                         <RadioButton x:Name="FCool" Style="{StaticResource Seg}" GroupName="accf" Content="Cooldown" Checked="AccFilter_Changed"/>
                                         <RadioButton x:Name="FOut" Style="{StaticResource Seg}" GroupName="accf" Content="Not in rotation" Checked="AccFilter_Changed"
                                                      ToolTip="Accounts New IP + next account never picks"/>
-                                    </StackPanel>
-                                    <TextBlock x:Name="AccCount" Grid.Column="2" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" Foreground="{StaticResource Faint}" VerticalAlignment="Center" HorizontalAlignment="Right"
-                                               TextTrimming="CharacterEllipsis" Margin="12,0,12,0"/>
-                                    <StackPanel Grid.Column="3" Orientation="Horizontal">
+                                        <!-- the count follows the filters; when they don't fit on one line it goes onto the next one, never cut -->
+                                        <TextBlock x:Name="AccCount" Foreground="{StaticResource Faint}" VerticalAlignment="Center" Margin="12,0,12,0"/>
+                                    </WrapPanel>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
                                     <Button x:Name="AccViewBtn" Style="{StaticResource IconBtn}" Click="AccView_Click" Content="&#xE8FD;" Margin="0,0,6,0" ToolTip="Show as rows: more accounts at once"/>
                                     <ComboBox x:Name="AccSort" Width="150" SelectionChanged="AccFilter_Changed" ToolTip="Order (favorites always come first)">
                                         <ComboBoxItem Content="Most recent" Tag="recent"/>
@@ -1132,7 +1133,7 @@
                                                     ToolTip="Visits each account's public profile to fetch avatar, name, bans, level and hours. One per second so Steam does not block you.">
                                                 <TextBlock x:Name="AccRefreshText" Text="Refresh"/>
                                             </Button>
-                                            <Button x:Name="AccUnhideBtn" Click="UnhideAll_Click" Margin="6,0,0,0" Visibility="Collapsed" Content="Show hidden" ToolTip="Only while some accounts are hidden: brings them all back"/>
+                                            <Button x:Name="AccUnhideBtn" Click="ShowHidden_Click" Margin="6,0,0,0" Visibility="Collapsed" Content="Show hidden" ToolTip="Shows the hidden accounts on the list, dimmed. They stay out of the rotation. Right-click one > Show in list to keep it."/>
                                     </StackPanel>
                                 </Grid>
                                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">

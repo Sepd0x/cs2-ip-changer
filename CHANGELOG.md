@@ -33,6 +33,13 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Configs: Restore and Undo last sync said the config was back even when a file the copy had made couldn't be removed (open in another program, or read-only), so the copied binds stayed. Now a read-only file stops it before anything changes, and a file that stays is named.
 - Configs: an account's config file that was there but couldn't be read (in use) counted as missing, so the account showed and copied a config with a part left out. Now nothing is read from it and the Log says why; an export never leaves a part out either.
 - Some failures in the background were silent and now go to the Log, once per kind instead of every few minutes: usage stats that couldn't be sent, a profile's current picture that couldn't be read for its undo copy, a template's picture that was left out, and a server that answered with something broken (one that just doesn't answer is still not a failure).
+- With Use the app with protection off on and protection off, the top bar only said "Protection off" in grey. It now says "Home IP: servers see it" in red, in the top bar and in Status, for as long as that lasts.
+- New IP + next account was named "Log in to <account>" even when it also joined the last server again. The name now says every step, for example "New IP + atlas + rejoin", and changes when the last server changes or leaves the list.
+- Show hidden on Accounts brought every hidden account back for good and then disappeared. It now switches: Show hidden puts the hidden accounts on the list, dimmed and out of the rotation, and Hide hidden takes them off again. Right-click one > Show in list keeps it.
+- At the smallest window size the Accounts list bar pushed Refresh and Show hidden off the page. The filters now go onto a second line instead, and the count of accounts is never cut.
+- Steam names with invisible characters (direction marks, Unicode tags) showed them in the Log and on screen. They are left out now.
+- With protection off, the Log said the phone's Wi-Fi blocked servers and CS2, and that CS2 went through the phone in Whole PC while CS2 is open. Neither is true with protection off; the Log now says what is.
+- Opening the app twice in a few minutes wrote "Usage stats: the report wasn't sent (the server answered 429)" in the Log. That answer only means "not yet" and the report goes later, so it no longer shows.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

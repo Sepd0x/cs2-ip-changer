@@ -32,7 +32,9 @@ public partial class MainWindow
         _accMeta ??= Store.Load(Paths.File("accounts.json"), () => new Dictionary<string, AccountMeta>());
         _accounts.Clear();
         // only hidden accounts Steam still has, not old entries in accounts.json
-        foreach (var item in AccountItems(locals, _accMeta, Steam.InUseSteamId(), HideLogins, out _accHidden)) _accounts.Add(item);
+        _accHiddenItems.Clear();
+        foreach (var item in AccountItems(locals, _accMeta, Steam.InUseSteamId(), HideLogins, out _accHidden, _accHiddenItems)) _accounts.Add(item);
+        if (_accHidden == 0) _showHidden = false;
         _steamIds = locals.Select(l => l.SteamId).ToList();
         AccountsEmptyText.Text = AccEmptyText();
         ApplyAccountFilter();
@@ -67,18 +69,25 @@ public partial class MainWindow
     /// a Refresh still running (it writes the profile and the bans into those objects) isn't lost when the list is built again (a kick
     /// on an account just logged in, a new account); a new account gets a new one. Hidden accounts are counted, not listed.
     /// </summary>
-    public static List<AccountItem> AccountItems(IEnumerable<LocalAccount> locals, Dictionary<string, AccountMeta> meta, string active, bool streamer, out int hidden)
+    public static List<AccountItem> AccountItems(IEnumerable<LocalAccount> locals, Dictionary<string, AccountMeta> meta, string active, bool streamer, out int hidden,
+        List<AccountItem> hiddenItems = null)
     {
         hidden = 0;
         var items = new List<AccountItem>();
         foreach (var l in locals)
         {
             if (!meta.TryGetValue(l.SteamId, out var m)) meta[l.SteamId] = m = new AccountMeta();
-            if (m.Hidden) { hidden++; continue; }
-            items.Add(new AccountItem(l, m) { Active = l.SteamId == active, Streamer = streamer });
+            var item = new AccountItem(l, m) { Active = l.SteamId == active, Streamer = streamer };
+            // Hidden ones are kept apart: Show hidden puts them on the list (dimmed), never in the rotation, Configs or Profiles
+            if (m.Hidden) { hidden++; hiddenItems?.Add(item); continue; }
+            items.Add(item);
         }
         return items;
     }
+
+    /// <summary>The hidden accounts Steam still has, and whether Show hidden has them on the Accounts list now (this run only).</summary>
+    readonly List<AccountItem> _accHiddenItems = new();
+    bool _showHidden;
 
     // Not read before the first LoadAccounts: saving then would write an empty list over the file
     void SaveAccounts() { if (!_demo && _accMeta != null) Store.Save(Paths.File("accounts.json"), _accMeta); }
@@ -128,7 +137,7 @@ public partial class MainWindow
         _activeSeen = active;
         if (active == null) return;   // Steam closed or logging in: keep the last one shown
         var changed = false;
-        foreach (var a in _accounts) { var me = a.SteamId == active; if (a.Active != me) { a.Active = me; changed = true; } }
+        foreach (var a in _accounts.Concat(_accHiddenItems)) { var me = a.SteamId == active; if (a.Active != me) { a.Active = me; changed = true; } }
         if (!changed) return;
         if (ActiveAccount() is AccountItem now) Log.Info($"Steam is now logged in to {now.Name}.");
         ApplyAccountFilter();
@@ -138,7 +147,7 @@ public partial class MainWindow
     int _accHidden;
 
     string AccEmptyText() => Steam.InstallDir() == null ? "Steam is not installed on this PC."
-        : _accounts.Count == 0 && _accHidden > 0 ? "All your accounts are hidden.\nShow hidden, next to Refresh, brings them back."
+        : _accounts.Count == 0 && _accHidden > 0 ? "All your accounts are hidden.\nShow hidden, next to Refresh, shows them again."
         : "No saved accounts found.\nLog in to Steam with \"Remember me\" checked, or use Add account.";
 
     void AccFilter_Changed(object sender, RoutedEventArgs e)
@@ -212,7 +221,7 @@ public partial class MainWindow
     void ApplyAccountFilter()
     {
         var q = AccSearch.Text.Trim();
-        IEnumerable<AccountItem> list = _accounts;
+        IEnumerable<AccountItem> list = _showHidden ? _accounts.Concat(_accHiddenItems) : _accounts;
         if (q.Length > 0)
             list = list.Where(a => (a.Name ?? "").Contains(q, StringComparison.OrdinalIgnoreCase) || (a.Login ?? "").Contains(q, StringComparison.OrdinalIgnoreCase)
                 || (a.Note ?? "").Contains(q, StringComparison.OrdinalIgnoreCase) || (a.Tags ?? "").Contains(q, StringComparison.OrdinalIgnoreCase) || a.SteamId.Contains(q));
@@ -240,12 +249,15 @@ public partial class MainWindow
         foreach (var id in ids) _accShown.Add(byId[id]);
         var bans = _accounts.Count(a => a.HasVac || a.HasGameBan);
         var hid = _accHidden > 0 ? $"{_accHidden} hidden" : null;
-        var core = _accounts.Count == 0 ? "" : $"{_accShown.Count} of {_accounts.Count}" + (bans > 0 ? $" · {bans} banned" : "");
+        // Shown hidden ones (Show hidden) are counted in "1 hidden", not in "7 of 7"
+        var core = _accounts.Count == 0 ? "" : $"{_accShown.Count(a => !a.Meta.Hidden)} of {_accounts.Count}" + (bans > 0 ? $" · {bans} banned" : "");
         AccCount.Text = string.Join(" · ", new[] { core, hid }.Where(s => !string.IsNullOrEmpty(s)));
         AccCount.ToolTip = _accHidden > 0
-            ? (core.Length > 0 ? core + "\n" : "") + $"{_accHidden} hidden. Show hidden brings {(_accHidden == 1 ? "it" : "them")} back."
+            ? (core.Length > 0 ? core + "\n" : "") + $"{_accHidden} hidden. " + HiddenBtnTip(_showHidden)
             : (core.Length > 0 ? core : null);
         AccUnhideBtn.Visibility = ShowUnhide(_accHidden) ? Visibility.Visible : Visibility.Collapsed;
+        AccUnhideBtn.Content = HiddenBtnText(_showHidden);
+        AccUnhideBtn.ToolTip = HiddenBtnTip(_showHidden);
         AccountsEmpty.Visibility = _accounts.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         AccRowsHint.Visibility = SuggestRows(_accounts.Count, _s.AccountsView) ? Visibility.Visible : Visibility.Collapsed;
         UpdateQuickInfo();
@@ -273,12 +285,15 @@ public partial class MainWindow
         var pool = _accounts.Count(a => a.Usable);
         // Named for what it does: a new IP first, then the account (or only one of them, if Settings leaves out a step).
         var who = c.Account ? next?.Name ?? "next account" : null;
-        var head = c.Ip && who != null ? "New IP + " : c.Ip ? "New IP" : who != null ? "Log in to " : "Switch";
+        // The rejoin is in the name too (6 nov.: "Log in to sepd" also opened CS2 and joined the server), when there is a server to rejoin
+        var rejoin = c.Rejoin && _s.LastServer != null && _servers.Any(x => x.Key == _s.LastServer);
+        var (head, tail) = QuickName(c.Ip, who, rejoin);
         SideQuickLabel.Text = head.TrimEnd();
         SideQuickNext.Text = who ?? "";
         SideQuickNext.Margin = new Thickness(who == null ? 0 : 4, 0, 0, 0);
+        SideQuickTail.Text = tail;
         // Shorter than the top bar: at the minimum width (1020) a longer name pushes the "On login:" row onto two lines. The tooltip has it whole.
-        QuickBtn.Content = head + (who == null ? "" : who.Length > 10 ? who.Substring(0, 9) + "…" : who);
+        QuickBtn.Content = head + (who == null ? "" : who.Length > 10 ? who.Substring(0, 9) + "…" : who) + tail;
         // With fewer than two accounts there is nothing to rotate to: the command isn't offered.
         var offered = !c.Account || _accounts.Count >= 2;
         SideQuick.Visibility = QuickBtn.Visibility = offered ? Visibility.Visible : Visibility.Collapsed;
@@ -295,6 +310,16 @@ public partial class MainWindow
         SideQuick.ToolTip = tip;
 
         ApplyServerBans();   // the ban marks on Servers follow the account in use
+    }
+
+    /// <summary>
+    /// The button's name, from the steps a click runs now: "New IP + Acc2 + rejoin", "Log in to Acc2 + rejoin", "New IP", "Rejoin".
+    /// Head goes before the account's name, Tail after it.
+    /// </summary>
+    public static (string Head, string Tail) QuickName(bool ip, string who, bool rejoin)
+    {
+        var head = ip && who != null ? "New IP + " : ip ? "New IP" : who != null ? "Log in to " : rejoin ? "Rejoin" : "Switch";
+        return (head, rejoin && (ip || who != null) ? " + rejoin" : "");
     }
 
     async void Quick_Click(object sender, RoutedEventArgs e) => await QuickSwitch("New IP + next account");
@@ -563,25 +588,44 @@ public partial class MainWindow
     void AccHide_Click(object sender, RoutedEventArgs e)
     {
         if (Acc(sender) is not AccountItem a) return;
-        a.Meta.Hidden = true;
-        _accounts.Remove(a);
-        _accHidden++;
+        if (a.Meta.Hidden)
+        {
+            // On the list only because Show hidden is on: Show in list keeps it there for good (rotation, Configs, Profiles again)
+            a.Meta.Hidden = false;
+            _accHiddenItems.Remove(a);
+            if (!_accounts.Contains(a)) _accounts.Add(a);
+            _accHidden = Math.Max(0, _accHidden - 1);
+            if (_accHidden == 0) _showHidden = false;
+            Toast($"{a.Name} is back on the list.", true);
+        }
+        else
+        {
+            a.Meta.Hidden = true;
+            _accounts.Remove(a);
+            if (!_accHiddenItems.Contains(a)) _accHiddenItems.Add(a);
+            _accHidden++;
+            Toast($"{a.Name} hidden. Show hidden, next to Refresh, shows the hidden accounts.", true);
+        }
+        a.RefreshAll();
         SaveAccounts();
-        if (_accounts.Count == 0) AccountsEmptyText.Text = AccEmptyText();
+        AccountsEmptyText.Text = AccEmptyText();
         ApplyAccountFilter();
-        Toast($"{a.Name} hidden. Show hidden, next to Refresh, brings it back.", true);
     }
 
     /// <summary>beta.12 (App layout): Show hidden sits in the Accounts list bar and only shows while some accounts are hidden.</summary>
     public static bool ShowUnhide(int hidden) => hidden > 0;
 
-    void UnhideAll_Click(object sender, RoutedEventArgs e)
+    /// <summary>One button that switches: Show hidden puts the hidden accounts on the list (dimmed), Hide hidden takes them off again.</summary>
+    public static string HiddenBtnText(bool showing) => showing ? "Hide hidden" : "Show hidden";
+    public static string HiddenBtnTip(bool showing) => showing
+        ? "Takes the hidden accounts off the list again. Right-click one > Show in list to keep it."
+        : "Shows the hidden accounts on the list, dimmed. They stay out of the rotation. Right-click one > Show in list to keep it.";
+
+    void ShowHidden_Click(object sender, RoutedEventArgs e)
     {
-        if (_demo) { Toast("Demo: all accounts are visible again.", true); return; }   // the demo never reads the real Steam accounts
-        foreach (var m in _accMeta?.Values ?? Enumerable.Empty<AccountMeta>()) m.Hidden = false;
-        SaveAccounts();
-        LoadAccounts();
-        Toast("All accounts are visible again.", true);
+        _showHidden = !_showHidden && _accHidden > 0;
+        _accResort = true;
+        ApplyAccountFilter();
     }
 
     void AccOpt_Click(object sender, RoutedEventArgs e)

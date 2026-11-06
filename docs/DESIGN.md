@@ -169,6 +169,11 @@ the rest of the height (since beta.9), so a list or a short group goes last, not
   Accounts); an option can't. Another page can point to it (the gear on Accounts opens Settings > New IP + next account,
   the grey line under the mode on Connection names Settings > Mobile data).
 - A button that only makes sense sometimes shows only then (Show hidden, while some accounts are hidden).
+- A button that shows something switches back with the opposite name (Show hidden, then Hide hidden), never a one-way
+  button that disappears.
+- A command's name says every step a click runs (New IP + atlas + rejoin), so it never does more than it says.
+- A state that exposes the home IP on purpose (Settings > Use the app with protection off, with protection off) is red
+  in the top bar and in Status for as long as it lasts: "Home IP: servers see it".
 - A group has something to do in it. Text that only explains goes under the option it explains (the grey line) or in its
   tooltip. The one exception is How it works, on Connection.
 

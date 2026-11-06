@@ -84,7 +84,7 @@ public partial class MainWindow
             if (cs2Running != _cs2WasRunning)
             {
                 _cs2WasRunning = cs2Running;
-                if (_s.GameMode && !_s.NoPhone) Log.Info(cs2Running ? "CS2 open: the whole PC goes through the phone." : "CS2 closed: the rest of the PC is back on the home network.");
+                if (_s.GameMode && !_s.NoPhone && _protOn) Log.Info(cs2Running ? "CS2 open: the whole PC goes through the phone." : "CS2 closed: the rest of the PC is back on the home network.");
                 if (!cs2Running) QualityOnCs2Closed();
                 force = true;
             }
@@ -457,8 +457,9 @@ public partial class MainWindow
         if (rep.FirewallProblem != null)
             SetHero("bad", "Windows Firewall is off", rep.FirewallProblem + ". " + FirewallHint("the Regions block does nothing"));
         else if (off)
-            SetHero("idle", "Protection off",
-                "CS2 and every server see your home IP, and nothing is blocked. Accounts, Configs, Profiles and Regions work as usual. "
+            SetHero(OffHeroKind(_s.UseWithProtectionOff), OffHeroTitle(_s.UseWithProtectionOff),
+                (_s.UseWithProtectionOff ? "Use the app with protection off is on: Servers, Join and Log in use your home connection. " : "")
+                + "CS2 and every server see your home IP, and nothing is blocked. Accounts, Configs, Profiles and Regions work as usual. "
                 + (phoneReady ? $"The phone is ready ({_egressPublic}): turn protection on to play through it."
                     : rep.Candidate != null ? "The phone is connected: its IP is being checked."
                     : "To play through the phone, connect it, then turn protection on."));
@@ -474,6 +475,13 @@ public partial class MainWindow
         QueryBtn.IsEnabled = CopyBtn.IsEnabled = ServerSearch.IsEnabled = _servers.Count > 0;
         ServerHeader.Visibility = _servers.Count == 0 ? Visibility.Hidden : Visibility.Visible;
     }
+
+    /// <summary>
+    /// Protection off. With "Use the app with protection off" on, the app joins servers on the home connection, so the top bar and
+    /// the Status box say it in red and keep saying it: every server sees the home IP. Without it, a quiet grey "Protection off".
+    /// </summary>
+    public static string OffHeroKind(bool useWithOff) => useWithOff ? "bad" : "idle";
+    public static string OffHeroTitle(bool useWithOff) => useWithOff ? "Home IP: servers see it" : "Protection off";
 
     /// <summary>Whole PC mode: what isn't confirmed yet (routes, DNS or IPv6).</summary>
     static string FullModeProblem(GuardReport rep)

@@ -432,8 +432,8 @@ public partial class MainWindow
         if (ip && steps.Account && !_demo && (_adb == null || _phone?.Ready != true || _s.NoPhone))
         {
             ip = false;
-            Log.Info(_s.NoPhone ? $"{from}: no phone mode, so only the account changes." : $"{from}: the phone isn't ready to change the IP, so only the account changes.");
-            Toast(_s.NoPhone ? "Switching the account only: no phone mode has no IP to change." : "Switching the account only: the phone isn't ready to change the IP.", false);
+            Log.Info(_s.NoPhone ? $"{from}: no phone mode, so the IP stays the same." : $"{from}: the phone isn't ready to change the IP, so the IP stays the same.");
+            Toast(_s.NoPhone ? "The IP stays the same: no phone mode has no IP to change." : "The IP stays the same: the phone isn't ready to change it.", false);
         }
         // The account first: protection isn't turned on for a switch that then has no account to go to
         AccountItem next = null;
@@ -446,8 +446,8 @@ public partial class MainWindow
             if (step == IpWhenOff.Skip)
             {
                 ip = false;
-                Log.Info($"{from}: protection is off, so servers see your home IP and only the " + (steps.Account ? "account changes." : "rejoin runs."));
-                Toast("Protection is off: servers see your home IP, so the IP isn't changed" + (steps.Account ? ", only the account." : "."), false);
+                Log.Info($"{from}: protection is off, so servers see your home IP and the IP stays the same.");
+                Toast("Protection is off: servers see your home IP, so the IP isn't changed.", false);
             }
             else
             {

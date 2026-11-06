@@ -80,7 +80,7 @@ const UI = {
         { id: 'AccFav', label: 'Favorita', r: [338,207,24,24], more: [[612,207,24,24],[886,207,24,24],[1160,207,24,24],[338,396,24,24],[612,396,24,24],[886,396,24,24],[1160,396,24,24]] },
         { id: 'AccToggleQuick', label: 'In rotation', r: [126,340,171,15], more: [[400,340,169,15],[674,340,169,15],[948,340,169,15],[126,529,169,15],[400,529,169,15],[674,529,169,15],[948,529,169,15]] },
         { id: 'AccSwitch', label: 'Log in', r: [305,336,59,24], more: [[577,336,61,24],[851,336,61,24],[1125,336,61,24],[303,525,61,24],[577,525,61,24],[851,525,61,24],[1125,525,61,24]] },
-        { id: 'UnhideAll', label: 'Show hidden', note: 'beta.12: na barra da lista, à direita do Refresh, só com contas escondidas (a captura não tem)' },
+        { id: 'ShowHidden', label: 'Show hidden / Hide hidden', note: 'beta.12: na barra da lista, à direita do Refresh, só com contas escondidas; alterna (a captura não tem)' },
       ],
       text: [
         { label: 'corpo do cartão da conta', r: [120,246,1070,80] },

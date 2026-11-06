@@ -42,8 +42,23 @@ public static partial class Steam
     /// </summary>
     public static string WebText(string s) => s == null ? null : System.Net.WebUtility.HtmlDecode(s).Trim();
 
-    /// <summary>A name worth showing: not empty, and not a bare SteamID64 (what a profile that was never set up can show instead of a name).</summary>
-    public static string ShownName(string s) => string.IsNullOrWhiteSpace(s) || SteamIds.IsId64(s.Trim()) ? null : s;
+    /// <summary>A name worth showing: not empty, and not a bare SteamID64 (what a profile that was never set up can show instead of a name).
+    /// Invisible characters (Unicode tags, direction marks and isolates, zero-width spaces) come out first, so the Log and the screen show "sepd", not "󠁳⁧⁧ sepd".</summary>
+    public static string ShownName(string s)
+    {
+        s = Visible(s);
+        return string.IsNullOrWhiteSpace(s) || SteamIds.IsId64(s) ? null : s;
+    }
+
+    /// <summary>The text without invisible format characters, trimmed. The zero-width joiner stays: emoji like 👨‍👩‍👧 need it.</summary>
+    public static string Visible(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return s;
+        var b = new System.Text.StringBuilder(s.Length);
+        foreach (var r in s.EnumerateRunes())
+            if (r.Value == 0x200D || System.Text.Rune.GetUnicodeCategory(r) != System.Globalization.UnicodeCategory.Format) b.Append(r.ToString());
+        return b.ToString().Trim();
+    }
 
     public const string BansUnknown = "Steam didn't answer with the bans (try again in a minute); the account keeps what it had.";
 

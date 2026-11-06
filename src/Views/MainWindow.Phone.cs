@@ -93,11 +93,19 @@ public partial class MainWindow
 
         if (PhoneWifiOn != wifiBefore)
         {
-            if (PhoneWifiOn) { Log.Warn("The phone's Wi-Fi is on" + (_phone.WifiSsid != null ? $" (connected to {_phone.WifiSsid})" : "") + ". Servers and CS2 blocked until it's off."); _verifiedKey = null; }
+            if (PhoneWifiOn) { if (PhoneWifiOnText(_phone.WifiSsid, _protOn, _s.NoPhone) is string t) Log.Warn(t); _verifiedKey = null; }
             else Log.Ok("The phone's Wi-Fi is off again. Checking the phone's IP before trusting it.");
             await SyncNow(force: true);
             if (!PhoneWifiOn) _ = RefreshPublicIps();
         }
+    }
+
+    /// <summary>What the Log says when the phone's Wi-Fi comes on. Only protection on blocks anything; in No phone mode the phone's Wi-Fi doesn't matter.</summary>
+    public static string PhoneWifiOnText(string ssid, bool protOn, bool noPhone)
+    {
+        if (noPhone) return null;
+        var on = "The phone's Wi-Fi is on" + (ssid != null ? $" (connected to {ssid})" : "") + ".";
+        return on + (protOn ? " Servers and CS2 blocked until it's off." : " Turn it off before you turn on protection.");
     }
 
     int? _usbProblem;

@@ -633,6 +633,9 @@ DesignSyncTests.Run(Check);
 OrganizacaoTests.Run(Check);
 // 6 nov.: o logo é o mesmo no ícone da app, no favicon, no README, no site, no canto da janela e no cartão (LogoTests.cs)
 LogoTests.Run(Check);
+// 6 nov. (ronda 2 no PC do dono): aviso vermelho com a opção sem proteção, nome do botão com o rejoin, Show/Hide hidden,
+// nomes do Steam sem invisíveis, Log certo com a proteção desligada (Ronda2Tests.cs)
+Ronda2Tests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;
