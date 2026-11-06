@@ -183,11 +183,12 @@ public partial class MainWindow
     {
         if (_demo || _querying) return;
         // No phone mode: the game uses the home connection, so the servers are asked from there too.
-        var egress = _s.NoPhone && _last?.EffectiveMode == "home" ? HomeAdapter : _last?.Egress;
+        // Protection off with "Use the app with protection off": the same, on purpose.
+        var egress = OnHome && _last?.Unprotected == true ? HomeAdapter : _last?.Egress;
         if (egress?.LocalIp == null)
         {
-            if (!quiet) Toast(_s.NoPhone ? "No connection to ask the servers through."
-                : !_protOn ? "Protection is off: the servers aren't asked over your home network. Turn it on to see players and ping."
+            if (!quiet) Toast(OnHome ? "No connection to ask the servers through."
+                : !_protOn ? "Protection is off: the servers aren't asked over your home network. Turn it on to see players and ping (or Settings > Use the app with protection off)."
                 : "Phone disconnected: not querying servers over your home network.", false);
             return;
         }
@@ -213,7 +214,7 @@ public partial class MainWindow
     /// <summary>Name, map, players and ping of one server, only through the phone. False if it didn't answer (or isn't routed).</summary>
     async Task<bool> QueryOne(ServerItem srv, Adapter egress)
     {
-        if (!_s.NoPhone && (_last?.RouteOk.TryGetValue(srv.Ip, out var routed) != true || !routed)) { srv.PingText = "—"; srv.Players = null; return false; }
+        if (!OnHome && (_last?.RouteOk.TryGetValue(srv.Ip, out var routed) != true || !routed)) { srv.PingText = "—"; srv.Players = null; return false; }
         try
         {
             var info = await A2S.Query(srv.Ip, srv.Port, egress.LocalIp);
@@ -301,15 +302,16 @@ public partial class MainWindow
         {
             // No phone mode: you chose the home connection, so there is no protection to wait for.
             // Protection off: joining would show the server your home IP. One question turns it on and goes on with the join.
-            if (!_protOn && !_s.NoPhone)
+            // With "Use the app with protection off" on, you chose that: the join goes ahead on the home connection.
+            if (!_protOn && !OnHome)
             {
                 if (!await Ask("Protection is off", $"{s.Title} would see your home IP. Turn protection on and join through the phone?", "Turn on and join")) return false;
                 if (!await TurnProtectionOn(ask: false)) return false;
             }
             await SyncNow(force: true);
-            if (!_s.NoPhone && (_distrust || _cDiff.Ok == false)) { Toast("Not joining: the phone IP is the same as your home IP.", false); return false; }
+            if (!OnHome && (_distrust || _cDiff.Ok == false)) { Toast("Not joining: the phone IP is the same as your home IP.", false); return false; }
             var fullOk = _last?.Egress != null && _last.EffectiveMode == "all" && _last.FullModeOk;
-            if (!_s.NoPhone && s.Protected != true && !fullOk)
+            if (!OnHome && s.Protected != true && !fullOk)
             {
                 Toast($"Not joining {s.Key}: protection is not confirmed ({s.RouteText}).", false);
                 return false;
@@ -325,7 +327,7 @@ public partial class MainWindow
                     "Join anyway"))
                 return false;
             if (!await WaitAfterCrash(s)) return false;
-            if (!fromSlotWait && (_s.NoPhone ? HomeAdapter : _last?.Egress) is Adapter eg && await QueryOne(s, eg) && s.MaxPlayers > 0 && s.PlayerCount >= s.MaxPlayers)
+            if (!fromSlotWait && (OnHome ? HomeAdapter : _last?.Egress) is Adapter eg && await QueryOne(s, eg) && s.MaxPlayers > 0 && s.PlayerCount >= s.MaxPlayers)
             {
                 if (await Ask("Server is full", FullText(s.Title, s.PlayersText), "Wait for a slot", "Join anyway")) { StartSlotWait(s); return true; }
                 if (!_dialogCancelClicked) return false;   // Escape: neither
@@ -367,7 +369,7 @@ public partial class MainWindow
     void JoinStarted(ServerItem s)
     {
         Diag.Write("join", new { server = s.Key, name = s.Title, isProtected = s.Protected, mode = _last?.EffectiveMode, steamOnEgress = _last?.SteamOnEgress, steamIps = _last?.Steam.LocalIps });
-        Log.Ok(_s.NoPhone ? $"Joining {s.Key} on your home connection (no phone mode)." : $"Joining {s.Key} through the phone.");
+        Log.Ok(_s.NoPhone ? $"Joining {s.Key} on your home connection (no phone mode)." : OnHome ? $"Joining {s.Key} on your home connection (protection is off)." : $"Joining {s.Key} through the phone.");
         Toast($"Opening {s.Title} in Steam…", true);
         MarkLast(s);
     }
@@ -395,7 +397,7 @@ public partial class MainWindow
                 catch { }
             }
             if (!Steam.Cs2Running) { Log.Warn($"CS2 didn't open, so {s.Key} wasn't joined."); Toast($"CS2 didn't open, so {s.Title} wasn't joined.", false); return false; }
-            if (!_s.NoPhone && (!_protOn || _distrust)) { Log.Warn($"Not joining {s.Key}: protection changed while CS2 was opening."); Toast($"Not joining {s.Title}: protection changed while CS2 was opening.", false); return false; }
+            if (!OnHome && (!_protOn || _distrust)) { Log.Warn($"Not joining {s.Key}: protection changed while CS2 was opening."); Toast($"Not joining {s.Title}: protection changed while CS2 was opening.", false); return false; }
             if (ready) await Task.Delay(2000);
             Steam.OpenUrl($"steam://connect/{s.Key}");
             Log.Info($"CS2 menu {(ready ? "ready" : "not seen after 2 min")}: joining {s.Key}.");

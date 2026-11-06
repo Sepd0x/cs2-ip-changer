@@ -94,7 +94,8 @@ export default {
         const b0 = await cachedBrief(env, { now: now0, dev: q.get('dev') === '1', date });
         // ?definitions=0: the same brief without the 6 KB of definitions (the agent keeps them from one full call)
         const b = q.get('definitions') === '0' ? { ...b0, definitions: {}, definitions_omitted: true } : b0;
-        const head = { ...SAFE, 'cache-control': 'private, max-age=300' };
+        // Nov. 2026 (security audit): signed-in data, so not kept by the browser either (SAFE says no-store, like the rest of the API)
+        const head = { ...SAFE };
         if (fmt === 'md') return new Response(request.method === 'HEAD' ? null : renderMd(b), { headers: { 'content-type': 'text/markdown; charset=utf-8', ...head } });
         return new Response(request.method === 'HEAD' ? null : JSON.stringify(b), { headers: { 'content-type': 'application/json; charset=utf-8', ...head } });
       } catch (e) { return json({ error: String(e?.message || e) }, 500); }

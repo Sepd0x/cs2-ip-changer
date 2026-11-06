@@ -613,6 +613,10 @@ Beta11Tests.Run(Check);
 Beta11QualidadeTests.Run(Check);
 // auditoria de 4 nov.: quando a telemetria envia, a ligação, as regiões, os limites e o corpo do teste do Worker (TelemetryTests.cs)
 TelemetryTests.Run(Check);
+// 6 nov.: Settings > Use the app with protection off, com aviso ao ligar (SemProtecaoTests.cs)
+SemProtecaoTests.Run(Check);
+// auditoria de segurança de 6 nov.: nada do dono nos ficheiros do git, a tarefa de Start with Windows (Seguranca1106Tests.cs)
+Seguranca1106Tests.Run(Check);
 // sistema de design (5 nov.): as cores da app no site, na dashboard e no README, e as capturas da versão de agora (DesignSyncTests.cs)
 DesignSyncTests.Run(Check);
 

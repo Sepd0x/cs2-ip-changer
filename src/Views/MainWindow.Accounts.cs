@@ -232,6 +232,8 @@ public partial class MainWindow
     void UpdateQuickInfo()
     {
         var c = SwitchChoice;
+        // The name says only what a click will do: no IP step in No phone mode, nor with protection off and "Use the app with protection off"
+        if (c.Ip && (_s.NoPhone || IpStep(_protOn, _s.UseWithProtectionOff) == IpWhenOff.Skip)) c = c with { Ip = false };
         var next = c.Account ? NextQuick() : null;
         var pool = _accounts.Count(a => a.Usable);
         // Named for what it does: a new IP first, then the account (or only one of them, if Settings leaves out a step).
@@ -320,7 +322,7 @@ public partial class MainWindow
         try
         {
             // Without CS2 locked to the phone connection, the game only opens with confirmed protection.
-            if (cs2 && !_s.LockCs2 && !_s.NoPhone && (_last?.Egress == null || _distrust))
+            if (cs2 && !_s.LockCs2 && !OnHome && (_last?.Egress == null || _distrust))
             {
                 cs2 = false;
                 Toast("Switched account but did not open CS2: protection is off and CS2 is not locked.", false);

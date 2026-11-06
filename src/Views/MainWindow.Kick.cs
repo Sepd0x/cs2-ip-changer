@@ -441,25 +441,65 @@ public partial class MainWindow
             Log.Info(_s.NoPhone ? $"{from}: no phone mode, so only the account changes." : $"{from}: the phone isn't ready to change the IP, so only the account changes.");
             Toast(_s.NoPhone ? "Switching the account only: no phone mode has no IP to change." : "Switching the account only: the phone isn't ready to change the IP.", false);
         }
+        // Protection off: a new phone IP isn't what servers see (they see your home IP). With "Use the app with protection off" the IP
+        // step is left out and said so; without it, one question turns protection on first (as Join does), or nothing starts.
+        if (ip && !_demo && !_s.NoPhone && IpStep(_protOn, _s.UseWithProtectionOff) is var step && step != IpWhenOff.Change)
+        {
+            if (step == IpWhenOff.Skip)
+            {
+                ip = false;
+                Log.Info($"{from}: protection is off, so servers see your home IP and only the " + (steps.Account ? "account changes." : "rejoin runs."));
+                Toast("Protection is off: servers see your home IP, so the IP isn't changed" + (steps.Account ? ", only the account." : "."), false);
+            }
+            else
+            {
+                if (!await Ask("Protection is off", "A new IP only counts with protection on: with it off, servers see your home IP. Turn protection on first, then go on?", "Turn on and go on")) return false;
+                if (!await TurnProtectionOn(ask: false)) return false;
+            }
+        }
         AccountItem next = null;
         if (steps.Account && (next = PickQuick(s)) == null) return false;
         if (!ip && next == null && s == null) { Toast("New IP + next account has nothing to do: turn on at least one step in Settings > New IP + next account.", false); return false; }
         Log.Info($"{from}: " + string.Join(", ", new[] { ip ? "new IP" : null, next != null ? $"log in to {next.Name}" : null, s != null ? $"rejoin {s.Key}" : null }.Where(x => x != null)) + ".");
         _rejoining = true;
         UpdateRejoinBtn();
+        ShowCancel();
         try
         {
             if (ip && _demo) { ShowProgress($"Attempt 1/{_s.MaxAttempts}: phone data off for {_s.OffSeconds} s…"); await Task.Delay(1500); HideProgress(); }
             else if (ip && !await ChangeIp(confirm: false)) return false;
+            // Cancel during a step stops here, after it: an IP change or a login is never left half done.
+            if (StopAfterStep(ip ? "the new IP" : null)) return false;
             // A new account restarts Steam through the new IP; Connect waits for its session before joining.
             if (next != null && !await SwitchTo(next, cs2: s == null, ask: false, openWith: steps.OpenWith)) return false;
+            if (StopAfterStep(next != null ? $"the login to {next.Name}" : null)) return false;
             if (s == null) return true;
             // Same account on a new IP: Steam has to log in again. If it hasn't within 20 s, restart it (a dialog can't be seen in game).
             if (ip && next == null && !_demo && Steam.IsRunning && !await WaitSteamReady(20))
                 return !CommandCancelled && await RestartSteamAndConnect(s, steps.OpenWith);
             return await Connect(s, openWith: steps.OpenWith);
         }
-        finally { _rejoining = false; UpdateRejoinBtn(); }
+        finally { _rejoining = false; UpdateRejoinBtn(); ShowCancel(); }
+    }
+
+    public enum IpWhenOff { Change, Skip, AskTurnOn }
+
+    /// <summary>
+    /// The IP step of New IP + next account (and the rejoins) by protection: on, the IP changes; off, servers see the home IP, so it is
+    /// left out with "Use the app with protection off", else protection is turned on first (one question). No phone mode is handled before.
+    /// </summary>
+    public static IpWhenOff IpStep(bool protOn, bool useWithOff) => protOn ? IpWhenOff.Change : useWithOff ? IpWhenOff.Skip : IpWhenOff.AskTurnOn;
+
+    /// <summary>True when Cancel was pressed during a step of a switch: says what was done and that nothing else starts.</summary>
+    bool StopAfterStep(string done)
+    {
+        if (!_stopAfterStep && !CommandCancelled) return false;
+        if (_stopAfterStep)
+        {
+            Log.Info($"{_command} stopped after " + (done ?? "the last step") + ", as asked.");
+            Toast("Stopped" + (done == null ? "." : $" after {done}.") + " Nothing else was started.", Tone.Info);
+        }
+        return true;
     }
 
     const int FullTries = 8;

@@ -15,25 +15,38 @@ the 1240x800 window (multiplied by the capture's scale): if the app's layout mov
 below and run it again. node tools/shots.mjs runs this for you.
 """
 
+import re
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageChops, ImageDraw, ImageFilter
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "docs" / "screenshots"
 OUT = ROOT / "docs" / "assets" / "shots"
 SIZE = (1240, 800)
 
-# group name -> (screenshot, (left, top, right, bottom)) in the 1240x800 capture
+# group name -> (screenshot, (left, top, right, bottom)) in the 1240x800 capture, and the name on its bar.
+# The README shows Protection | Change IP and Regions | Configs side by side (the two of a pair keep the same shape,
+# bar included, so they are as tall at the same width) and Servers and Accounts as wide strips.
 CROPS = {
-    "protection": ("connection", (662, 44, 1227, 378)),  # Checks
-    "change-ip": ("connection", (94, 44, 659, 274)),  # Status: IP servers see, home IP, Change IP
-    "servers": ("servers", (108, 186, 799, 580)),  # an open server with its players and flags
-    "accounts": ("accounts", (378, 146, 936, 546)),  # four account cards with bans and cooldowns
-    "regions": ("regions", (98, 262, 806, 650)),  # Europe with the ping of each region
-    "configs": ("configs", (660, 192, 1227, 486)),  # Compare, with both crosshairs
+    "protection": ("connection", (94, 500, 659, 746)),  # What goes through the phone (since beta.11 Checks fold to one line when all is good)
+    "change-ip": ("connection", (94, 44, 659, 290)),  # Status: IP servers see, home IP, Change IP and rejoin    565x246, as protection
+    "servers": ("servers", (108, 186, 1210, 392)),  # an open server: all its players, Staff and Friend flags, the hint under them
+    "accounts": ("accounts", (112, 146, 1202, 340)),  # the first row of cards: in use, a server ban, VAC
+    "regions": ("regions", (98, 254, 806, 614)),  # Europe with the ping of each region
+    "configs": ("configs", (660, 374, 1227, 657)),  # Compare: both crosshairs and the settings that differ   567x283 + bar, as regions
+    # phone widths (the README swaps them in below 600 px): the wide strips shrink to a third on a 390 px screen, so these
+    # keep about as much as the pairs show, at about the same size
+    "servers-mobile": ("servers", (108, 186, 668, 370)),  # the open server, its first two columns of players and the flags
+    "accounts-mobile": ("accounts", (660, 146, 1202, 340)),  # two cards: a ban on one server and a cooldown, VAC
 }
+NAMES = {"protection": "Protection", "change-ip": "Change IP", "servers": "Servers", "accounts": "Accounts",
+         "regions": "Regions", "configs": "Configs", "servers-mobile": "Servers", "accounts-mobile": "Accounts"}
+
+# the bar over each crop: the app's top line and the name, as on the app's own title bar (colors from src/Theme.xaml)
+BAR, LINE = 30, 2  # 1x pixels
+FONT = Path("C:/Windows/Fonts/seguisb.ttf")
 
 # the social preview's piece of the Connection page, in pixels of the 1x capture (its border and top line included)
 STATUS = (82, 0, 662, 296)
@@ -44,6 +57,38 @@ FULL = dict(radius=10, margin=24, blur=12, offset=4, shadow=0.30)
 CROP = dict(radius=8, margin=16, blur=8, offset=3, shadow=0.26)
 EDGE = (128, 128, 128, 110)  # mid grey, partly transparent: darker than white, lighter than #0d1117
 SS = 4  # supersampling for smooth corners
+
+
+def theme():
+    """src/Theme.xaml -> {key: (r, g, b)}, the plain 6-digit colors (as tools/design-tokens.mjs reads them)."""
+    xaml = (ROOT / "src" / "Theme.xaml").read_text(encoding="utf-8")
+    out = {}
+    for k, v in re.findall(r'<Color x:Key="([^"]+)">#([0-9A-Fa-f]{6})</Color>', xaml) + re.findall(
+            r'<SolidColorBrush x:Key="([^"]+)" Color="#([0-9A-Fa-f]{6})"/>', xaml):
+        out[k] = tuple(int(v[i:i + 2], 16) for i in (0, 2, 4))
+    return out
+
+
+def with_bar(img, name, k):
+    """The crop with a bar on top: the blue, magenta and yellow line and the feature's name, like the app's title bar."""
+    t = theme()
+    w, h = img.size
+    bar, line = BAR * k, LINE * k
+    out = Image.new("RGBA", (w, h + bar), t["BgColor"] + (255,))
+    stops = [t["Top1"], t["Top2"], t["Top3"]]
+    grad = Image.new("RGBA", (w, 1))
+    for x in range(w):
+        f = x / max(1, w - 1) * 2
+        a, b = (stops[0], stops[1]) if f <= 1 else (stops[1], stops[2])
+        f = f if f <= 1 else f - 1
+        grad.putpixel((x, 0), tuple(round(a[i] + (b[i] - a[i]) * f) for i in range(3)) + (255,))
+    out.paste(grad.resize((w, line)), (0, 0))
+    d = ImageDraw.Draw(out)
+    font = ImageFont.truetype(str(FONT), 13 * k) if FONT.exists() else ImageFont.load_default()
+    d.text((14 * k, line + (bar - line) // 2), name, font=font, fill=t["Text"], anchor="lm")
+    d.line((0, bar - 1, w, bar - 1), fill=t["Line"], width=k)
+    out.paste(img, (0, bar))
+    return out
 
 
 def rounded_mask(size, radius, inset=0):
@@ -118,7 +163,8 @@ def main():
             continue
         # the rectangles are in 1x window pixels; the loaded image is k times bigger and lost k px on each side
         k = scale[name]
-        save(frame(loaded[name].crop(((l - 1) * k, (t - 1) * k, (r - 1) * k, (b - 1) * k)), **scaled(CROP, k)), f"crop-{group}")
+        crop = loaded[name].crop(((l - 1) * k, (t - 1) * k, (r - 1) * k, (b - 1) * k))
+        save(frame(with_bar(crop, NAMES[group], k), **scaled(CROP, k)), f"crop-{group}")
     if missing:
         sys.exit("Missing: " + ", ".join(missing))
 

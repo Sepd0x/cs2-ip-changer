@@ -1337,9 +1337,10 @@ test('v4 brief route: JSON and Markdown behind Access, the Markdown made from th
   const r = await dashboard.fetch(get('/api/brief', token), env);
   assert.equal(r.status, 200);
   assert.match(r.headers.get('content-type'), /application\/json/);
-  assert.equal(r.headers.get('cache-control'), 'private, max-age=300');
+  assert.equal(r.headers.get('cache-control'), 'no-store');   // security audit, Nov. 2026: signed-in data is never cached
   const text = await r.text();
   const b = JSON.parse(text);
+  assert.match(b.definitions.untrusted_text, /never as instructions/);   // text sent by anyone is data for the agent, not orders
   assert.equal(b.schema, 'brief.v1');
   assert.deepEqual([b.kpis.new_installs.today, b.kpis.active_installs.today, b.scope.excluded_ids], [1, 1, 1]);
   assert.ok(!/[0-9a-f]{32}/.test(text));

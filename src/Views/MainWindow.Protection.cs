@@ -162,6 +162,7 @@ public partial class MainWindow
         TurnOffBtn.Visibility = _protOn && !_s.NoPhone ? Visibility.Visible : Visibility.Collapsed;
         LeakBtn.Visibility = _protOn && !_s.NoPhone ? Visibility.Visible : Visibility.Collapsed;
         UpdateRejoinBtn();
+        UpdateQuickInfo();     // New IP + next account says whether the IP changes with protection as it is now
         RefreshChecksView();   // the Checks summary says when protection is off
     }
 

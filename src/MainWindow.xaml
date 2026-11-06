@@ -1954,6 +1954,14 @@
                                                 <TextBlock Text="So the rest of the PC stops sharing a weak phone connection with CS2." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
+                                        <!-- beta.11: features without protection, only when you choose it (a warning when you turn it on) -->
+                                        <CheckBox x:Name="UseOffBox" Style="{StaticResource Switch}" Click="UseOff_Click" Margin="0,0,0,12"
+                                                  ToolTip="Off (the default): with protection off, Servers, Join and Log in with CS2 wait for protection. On: they work on your home connection and nothing is blocked, so servers see your home IP. Turn on protection whenever you want to play through the phone.">
+                                            <StackPanel>
+                                                <TextBlock Text="Use the app with protection off"/>
+                                                <TextBlock Text="Servers, Join and Log in work on your home connection. Servers see your home IP." Style="{StaticResource OptSub}"/>
+                                            </StackPanel>
+                                        </CheckBox>
                                         <!-- beta.10: when protection turns on and off by itself, apart from what it does -->
                                         <TextBlock Text="Start and close" Style="{StaticResource Key}" Margin="0,4,0,8"/>
                                         <CheckBox x:Name="ProtectOnStartBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12"

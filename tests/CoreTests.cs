@@ -392,7 +392,7 @@ static class CoreTests
         }
 
         // beta.8 (1 nov., lag no 4G): o resumo de rede que o CS2 escreve ao sair de um servidor. Formato real do console.log
-        // do outro PC do Rafael (bug report de 1 nov. 18:56); só os números e o IP são inventados.
+        // de um bug report de 1 nov. 18:56; só os números e o IP são inventados.
         {
             var excerto = """
                 11/01 18:40:51 [Client] Disconnected from server: NETWORK_DISCONNECT_TIMEDOUT

@@ -2,7 +2,7 @@ using System.IO;
 using System.Text;
 using SRT.Core;
 
-// beta.11: o teste do Rafael a 4 nov. (Turn on sem tethering, auto-join sozinho, perguntas sem saída, o IP em "—") e as
+// beta.11: o teste manual de 4 nov. (Turn on sem tethering, auto-join sozinho, perguntas sem saída, o IP em "—") e as
 // opções de arranque do CS2 (-condebug -conclearlog) postas pela app
 static class Beta11Tests
 {
@@ -37,13 +37,13 @@ static class Beta11Tests
         check("Servidor cheio: fechar sem escolher não espera nem entra", Src("Views", "MainWindow.Servers.cs").Contains("if (!_dialogCancelClicked) return false;"), "");
 
         // ---------------- d) O IP que os servidores veem
-        var (ip1, f1) = SRT.MainWindow.EgressAfterCheck("92.250.101.129", null, null, "8|192.168.58.226");
-        check("IP: uma medição boa mostra o IP", ip1 == "92.250.101.129" && !f1, ip1);
-        var (ip2, f2) = SRT.MainWindow.EgressAfterCheck(null, "92.250.101.129", "8|192.168.58.226", "8|192.168.58.226");
-        check("IP: uma medição falhada na mesma ligação guarda o último (esbatido), não volta a \"—\"", ip2 == "92.250.101.129" && f2, ip2);
-        var (ip3, _) = SRT.MainWindow.EgressAfterCheck(null, "92.250.101.129", "8|192.168.58.226", "9|192.168.42.10");
+        var (ip1, f1) = SRT.MainWindow.EgressAfterCheck("198.51.100.129", null, null, "8|192.168.42.129");
+        check("IP: uma medição boa mostra o IP", ip1 == "198.51.100.129" && !f1, ip1);
+        var (ip2, f2) = SRT.MainWindow.EgressAfterCheck(null, "198.51.100.129", "8|192.168.42.129", "8|192.168.42.129");
+        check("IP: uma medição falhada na mesma ligação guarda o último (esbatido), não volta a \"—\"", ip2 == "198.51.100.129" && f2, ip2);
+        var (ip3, _) = SRT.MainWindow.EgressAfterCheck(null, "198.51.100.129", "8|192.168.42.129", "9|192.168.42.10");
         check("IP: outra ligação limpa o IP antigo", ip3 == null, ip3);
-        var (ip4, _) = SRT.MainWindow.EgressAfterCheck(null, "92.250.101.129", "8|192.168.58.226", null);
+        var (ip4, _) = SRT.MainWindow.EgressAfterCheck(null, "198.51.100.129", "8|192.168.42.129", null);
         check("IP: sem telemóvel limpa", ip4 == null, ip4);
         check("IP: o tick espera pela medição anterior (antes a nova passava à frente e nenhuma chegava)",
             Src("MainWindow.xaml.cs").Contains("_ipRunning == 0 && (DateTime.Now - _lastIpCheck)"), "");

@@ -76,6 +76,12 @@ Icons: Segoe Fluent Icons in the app; the site and the dashboard draw their own 
 The line at the top (blue, magenta, yellow, `TopLine`) is the one shape all four share: 3 px in the app (2 px on its
 toasts), 3 to 5 px on the web.
 
+On the site (6 Nov 2026): where the line is drawn in SVG (the footer's name, its horizon and reflection), its middle stops
+are `color-mix(in oklch, top1, top2)` and `color-mix(in oklch, top2, top3)`, because SVG blends in sRGB and the plain
+three stops go muddy; CSS gradients of the line use `in oklch` for the same reason. The marks on the app window (Features)
+are 1.5 px `--t-accent` rings with a numbered `--t-accent` dot, and the same numbers in the page's text. The 3D scene's
+labels sit on a solid `--t-bg` (no blur behind them). The loading screen (home, guides, 404) is `--t-bg` with the top line, the name and a 2 px `--t-top` bar on a `--t-line` track.
+
 ### Where they differ, and what was aligned (5 Nov 2026)
 
 Aligned: the v5 dashboard typed the app's colors by hand, and its dark palette had near copies (`#151515` for `#171717`,
@@ -93,7 +99,10 @@ the Debug build has no UAC prompt). The window is 1240x800:
 
 - `docs/screenshots/<page>.png` at **2x** (2480x1600, `--scale 2`): the site (the Pages workflow copies them to `img/`
   with a WebP each; the pages show them at 1240x800, so they are sharp on 2x screens; the 3D monitor shows `connection`);
-- `docs/assets/shots/`: the framed copies for `README.md` and `docs/FEATURES.md` (`tools/readme-shots.py`, also at 2x);
+- `docs/assets/shots/`: the framed copies for `README.md` and `docs/FEATURES.md` (`tools/readme-shots.py`, also at 2x). The
+  six `crop-*` panels of the README's Features carry a 30 px bar on top, like the app's title bar: the 2 px top line and
+  the feature's name in `Text` on `BgColor` (Segoe UI Semibold 13 px). The two of a pair (Protection | Change IP,
+  Regions | Configs) keep the same shape; Servers and Accounts are wide strips;
 - `docs/assets/src/social-preview-status.png` and `docs/assets/social-preview.png`: the README/og card, rendered with
   Chrome (upload it by hand on GitHub: Settings > General > Social preview);
 - `worker/stats/dashboard/ui/<page>.png` at 1x: the dashboard's click map (1x so the Worker bundle stays small), packed by

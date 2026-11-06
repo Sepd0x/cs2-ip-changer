@@ -96,6 +96,11 @@ public sealed partial class Settings
     public bool CleanupOnExit { get; set; }
     /// <summary>Protection turns on by itself when the app starts (also with Windows). Off by default: you turn it on (Guard.OnAtStart).</summary>
     public bool ProtectOnStart { get; set; }
+    /// <summary>
+    /// With protection off, Servers, Join and Log in with CS2 work on the home connection and nothing is blocked (Settings > Protection,
+    /// with a warning when you turn it on). Off by default: then those wait for protection, as before.
+    /// </summary>
+    public bool UseWithProtectionOff { get; set; }
     /// <summary>The window's X hides it in the notification area; the app keeps running (Quit is in the icon's menu).</summary>
     public bool CloseToTray { get; set; }
     /// <summary>The "still running in the notification area" notice was shown once.</summary>

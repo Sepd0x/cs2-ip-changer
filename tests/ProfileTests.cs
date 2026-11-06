@@ -153,9 +153,9 @@ static class ProfileTests
 
         // ---------------- O formulário do Steam: o que não foi escolhido fica como está
         {
-            var cur = new EditConfig { PersonaName = "old", RealName = "Rafa", Summary = "bio", Country = "PT", State = "14", City = "123", CustomUrl = "oldurl" };
+            var cur = new EditConfig { PersonaName = "old", RealName = "Ana", Summary = "bio", Country = "PT", State = "14", City = "123", CustomUrl = "oldurl" };
             var f = ProfileForm.Build(cur, new ProfileJob { Fields = ProfileFields.Name, PersonaName = "new", RealName = "IGNORAR", Country = "DE" }, "sid").ToDictionary(k => k.Key, k => k.Value);
-            Check("Perfis: só o nome muda no formulário", f["personaName"] == "new" && f["real_name"] == "Rafa" && f["summary"] == "bio" && f["country"] == "PT" && f["state"] == "14" && f["city"] == "123" && f["customURL"] == "oldurl" && f["sessionID"] == "sid" && f["type"] == "profileSave", string.Join(";", f));
+            Check("Perfis: só o nome muda no formulário", f["personaName"] == "new" && f["real_name"] == "Ana" && f["summary"] == "bio" && f["country"] == "PT" && f["state"] == "14" && f["city"] == "123" && f["customURL"] == "oldurl" && f["sessionID"] == "sid" && f["type"] == "profileSave", string.Join(";", f));
             var g = ProfileForm.Build(cur, new ProfileJob { Fields = ProfileFields.Country | ProfileFields.Summary, Country = "DE", Summary = "" }, "sid").ToDictionary(k => k.Key, k => k.Value);
             Check("Perfis: outro país limpa estado e cidade, bio vazia é vazia", g["country"] == "DE" && g["state"] == "" && g["city"] == "" && g["summary"] == "" && g["personaName"] == "old", string.Join(";", g));
             var priv = new PrivacyState { Settings = System.Text.Json.Nodes.JsonNode.Parse("{\"PrivacyProfile\":3,\"PrivacyInventory\":3,\"PrivacyInventoryGifts\":1,\"PrivacyOwnedGames\":3,\"PrivacyPlaytime\":3,\"PrivacyFriendsList\":3}")!.AsObject(), CommentPermission = 1 };

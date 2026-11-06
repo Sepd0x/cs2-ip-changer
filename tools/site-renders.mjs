@@ -165,7 +165,7 @@ if (args.includes('--serve')) {
         await p.waitForFunction(() => document.querySelector('.stage.ready'), null, { timeout: 30000 });
         await p.waitForTimeout(2500);
         // only the scene: no page over it, no labels, no poster under it
-        await p.addStyleTag({ content: 'header,main,.rail,.pause,.cols,.wd-labels,.stage-still{visibility:hidden!important}.stage::after{display:none!important}' });
+        await p.addStyleTag({ content: 'header,main,.rail,.pause,.cols,.wd-labels,.stage-still,.ld-scr{visibility:hidden!important}.stage::after{display:none!important}' });
         await p.waitForTimeout(400);
         await p.screenshot({ path: png });
         await ctx.close();

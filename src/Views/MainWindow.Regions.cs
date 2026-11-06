@@ -172,6 +172,14 @@ public partial class MainWindow
 
     public static bool PingOnHome(bool noPhone, bool protOn) => noPhone || !protOn;
 
+    /// <summary>
+    /// The game uses the home connection on purpose: No phone mode, or protection off with Settings > Use the app with protection off.
+    /// Then Servers, Join and Log in with CS2 go ahead on the home connection instead of waiting for protection.
+    /// </summary>
+    public static bool HomeOnPurpose(bool noPhone, bool protOn, bool useWithOff) => noPhone || (!protOn && useWithOff);
+
+    bool OnHome => HomeOnPurpose(_s.NoPhone, _protOn, _s.UseWithProtectionOff);
+
     bool PingedOnHome => PingOnHome(_s.NoPhone, _protOn);
     bool _regionsPingedHome;
 

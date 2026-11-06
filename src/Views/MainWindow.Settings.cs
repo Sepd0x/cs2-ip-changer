@@ -48,6 +48,7 @@ public partial class MainWindow
             ApplyDevSettings();
             CleanupBox.IsChecked = _s.CleanupOnExit;
             ProtectOnStartBox.IsChecked = _s.ProtectOnStart;
+            UseOffBox.IsChecked = _s.UseWithProtectionOff;
             CloseToTrayBox.IsChecked = _s.CloseToTray;
             AutoStreamerBox.IsChecked = _s.AutoStreamer;
             LaunchOptsBox.IsChecked = _s.Cs2LaunchOptions;
@@ -100,6 +101,29 @@ public partial class MainWindow
         OffSecondsBox.Text = _s.OffSeconds.ToString();
         AttemptsBox.Text = _s.MaxAttempts.ToString();
         SaveSettings();
+        UpdateQuickInfo();
+    }
+
+    public const string UseOffWarning =
+        "While protection is off, Servers, Join and Log in with CS2 use your home connection and the app blocks nothing.\n\n" +
+        "Every server you join sees your home IP. A ban there can reach that IP, and changing the phone's IP won't help with it.\n\n" +
+        "Turn on protection (Status or the tray icon) whenever you want to play through the phone. You can turn this off again here.";
+
+    /// <summary>Settings > Use the app with protection off: a warning before it turns on; turning it off needs none.</summary>
+    async void UseOff_Click(object sender, RoutedEventArgs e)
+    {
+        if (_uiLock || !IsLoaded) return;
+        var on = UseOffBox.IsChecked == true;
+        if (on && !_s.UseWithProtectionOff && !await Ask("Use the app with protection off?", UseOffWarning, "Use without protection", danger: true))
+        {
+            UseOffBox.IsChecked = false;
+            return;
+        }
+        if (on == _s.UseWithProtectionOff) return;
+        _s.UseWithProtectionOff = on;
+        SaveSettings();
+        Log.Info(on ? "Use the app with protection off: on. With protection off, Servers, Join and Log in use your home connection."
+                    : "Use the app with protection off: off. With protection off, Servers, Join and Log in wait for protection again.");
         UpdateQuickInfo();
     }
 

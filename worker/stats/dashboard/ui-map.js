@@ -148,7 +148,8 @@ const UI = {
     { id: 'settings', name: 'Settings', img: 'ui/settings.png', icon: 'gear',
       buttons: [
         { id: 'Quick', label: 'New IP + atlas', r: [979,12,120,28] },
-        { id: 'SettingChanged', label: 'Opções (ligar/desligar)', r: [113,73,522,32], more: [[113,117,522,32],[113,161,522,32],[113,205,522,32],[113,276,522,32],[113,320,522,32],[113,463,522,46],[113,521,522,32],[113,708,522,46],[113,789,522,32],[679,458,522,32]] },
+        { id: 'SettingChanged', label: 'Opções (ligar/desligar)', r: [113,73,522,32], more: [[113,117,522,32],[113,161,522,32],[113,205,522,32],[113,320,522,32],[113,364,522,32],[113,507,522,46],[113,565,522,32],[113,752,522,46],[679,458,522,32]] },
+        { id: 'UseOff', label: 'Use the app with protection off', r: [113,249,522,32] },
         { id: 'StartWithWindows', label: 'Start with Windows', r: [679,73,522,32] },
         { id: 'CloseToTray', label: 'Close to the notification area', r: [679,117,522,32] },
         { id: 'FlagEdit', label: 'Editar flag', r: [890,301,16,28], more: [[986,301,28,28],[890,340,16,28],[986,340,28,28],[890,379,16,28],[986,379,28,28]] },

@@ -26,11 +26,11 @@ static class Beta10Tests
         // ---------------- Nomes do Steam: o XML do perfil traz entidades HTML; um perfil por configurar mostra o SteamID64
         check("Nome: &lt; blank &gt; aparece como < blank >", Steam.WebText("&lt; blank &gt;") == "< blank >", Steam.WebText("&lt; blank &gt;"));
         check("Nome: &amp; e acentos", Steam.WebText("Tom &amp; Jerry") == "Tom & Jerry" && Steam.WebText("João") == "João" && Steam.WebText(null) == null, "");
-        check("Nome: um SteamID64 não é nome", Steam.ShownName("76561199851023694") == null && Steam.ShownName("  ") == null && Steam.ShownName("8") == "8", "");
+        check("Nome: um SteamID64 não é nome", Steam.ShownName("76561198000000123") == null && Steam.ShownName("  ") == null && Steam.ShownName("8") == "8", "");
         var meta = new SRT.AccountMeta { Profile = new SteamProfile { Persona = "&lt; blank &gt;" } };
         check("Nome: um perfil guardado antes da beta.10 também sai decodificado",
             new SRT.AccountItem(new LocalAccount(a, "login1", "outro", false, 0), meta).Name == "< blank >", "");
-        var idName = new SRT.AccountItem(new LocalAccount(a, "login1", "nightfall", false, 0), new SRT.AccountMeta { Profile = new SteamProfile { Persona = "76561199851023694" } });
+        var idName = new SRT.AccountItem(new LocalAccount(a, "login1", "nightfall", false, 0), new SRT.AccountMeta { Profile = new SteamProfile { Persona = "76561198000000123" } });
         check("Nome: perfil por configurar mostra o nome do loginusers.vdf, não o ID", idName.Name == "nightfall", idName.Name);
         var noName = new SRT.AccountItem(new LocalAccount(a, "login1", "76561198000000001", false, 0), new SRT.AccountMeta());
         check("Nome: sem nome nenhum fica o login", noName.Name == "login1", noName.Name);

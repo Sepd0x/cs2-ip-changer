@@ -41,14 +41,41 @@ public partial class MainWindow
         return new Scope(() => { if (_commandCts == cts && _commandWaiting > 0) _commandWaiting--; ShowCancel(); });
     }
 
-    /// <summary>Cancel shows in the top bar only while the running command is waiting, never during an IP change or an account switch.</summary>
-    void ShowCancel() => ActivityCancel.Visibility = _command != null && _commandWaiting > 0 && !_changingIp && !_switching && !CommandCancelled
-        ? Visibility.Visible : Visibility.Collapsed;
+    public enum CancelKind { None, Now, AfterStep }
+
+    /// <summary>
+    /// What Cancel in the top bar does. While a command only waits (your answer, CS2, Steam): it stops now. During an IP change or an
+    /// account switch inside New IP + next account or a rejoin: it stops after that step, which always finishes (never cut in half).
+    /// </summary>
+    public static CancelKind CancelFor(bool command, bool waiting, bool midStep, bool inSwitch, bool cancelled) =>
+        !command || cancelled ? CancelKind.None : waiting && !midStep ? CancelKind.Now : inSwitch ? CancelKind.AfterStep : CancelKind.None;
+
+    CancelKind CancelNow => _stopAfterStep ? CancelKind.None : CancelFor(_command != null, _commandWaiting > 0, _changingIp || _switching, _rejoining, CommandCancelled);
+
+    /// <summary>Cancel was pressed during a step of a switch: it ends after that step (see <see cref="StopAfterStep"/>).</summary>
+    bool _stopAfterStep;
+
+    void ShowCancel()
+    {
+        var kind = CancelNow;
+        ActivityCancel.Visibility = kind == CancelKind.None ? Visibility.Collapsed : Visibility.Visible;
+        ActivityCancel.ToolTip = kind == CancelKind.AfterStep ? "Stops after the step that is running: the IP change or the login finishes first, then nothing else starts." : null;
+    }
 
     void ActivityCancel_Click(object sender, MouseButtonEventArgs e)
     {
         e.Handled = true;   // the pill itself opens the Log
-        if (_command == null || _commandWaiting <= 0 || _changingIp || _switching) return;
+        var kind = CancelNow;
+        if (kind == CancelKind.AfterStep)
+        {
+            Log.Info($"{_command}: Cancel pressed while {_commandStep ?? "running"}; it stops after this step.");
+            _stopAfterStep = true;
+            _commandDeclined = true;   // ends quietly
+            ShowCancel();
+            Toast("Stopping after this step: the IP change or login that is running finishes first.", Tone.Info);
+            return;
+        }
+        if (kind != CancelKind.Now) return;
         Log.Info($"{_command} cancelled while {_commandStep ?? "waiting"}.");
         _commandDeclined = true;   // ends quietly, like a "no" in a dialog
         _commandCts?.Cancel();
@@ -88,6 +115,7 @@ public partial class MainWindow
         if (Dialog.Visibility == Visibility.Visible) { Dialog.Visibility = Visibility.Collapsed; _dialogTcs?.TrySetResult(false); }
         _command = name;
         _commandDeclined = false;
+        _stopAfterStep = false;
         _commandCts = new CancellationTokenSource();
         _commandWaiting = 0;
         Sound(Tones.Kind.Start);

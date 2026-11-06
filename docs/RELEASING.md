@@ -12,7 +12,8 @@ It asks for a passphrase, saves the private key encrypted in your user folder (`
 
 ## Each release
 
-0. Colors ([DESIGN.md](DESIGN.md)): `node tools/design-tokens.mjs --check` and `node --test worker/stats/test/`.
+0. Colors ([DESIGN.md](DESIGN.md)): `node tools/design-tokens.mjs --check` and `node --test worker/stats/test/`. Then the
+   [smoke test](SMOKE.md) on the release candidate, on the real PC with the phone: nothing goes out that broke what worked before.
 1. Bump `<Version>` in `src/ServerRouteTool.csproj`, then `node tools/shots.mjs` (the app's sidebar shows the version, and `tests/DesignSyncTests.cs` fails in CI and in the Release workflow until the captures are of the new one; the 3D renders and `node tools/shots.mjs --renders` too if Connection changed). Add the CHANGELOG section, commit all of it, push the tag `v<version>`.
 2. The Release workflow runs the tests, builds the exe, attests it and puts the exe and its `.sha256` on a **draft** release.
 3. On your PC:
