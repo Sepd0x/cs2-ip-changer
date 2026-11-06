@@ -122,7 +122,7 @@ public static class SafeFile
     public static bool Linked(params string[] paths) => paths.Any(Paths.IsLink);
 
     /// <summary>What the account switch and the CS2 configs say when a Steam folder is a link or junction (one text, beta.12).</summary>
-    public const string SteamLinked = "the Steam folder goes through a link or junction; the app only writes to a real folder";
+    public const string SteamLinked = "a Steam or CS2 config folder goes through a link or junction; the app only writes to a real folder";
 
     /// <summary>Where an open file or folder really is, every link on the way resolved, or null.</summary>
     public static string FinalPath(SafeFileHandle h)

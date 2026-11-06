@@ -18,8 +18,14 @@ public partial class MainWindow
         if (open == _streamAppOpen) return;
         _streamAppOpen = open;
         ApplyHideLogins();
-        if (!_s.StreamerMode) Log.Info(open ? "A streaming program is open: usernames, your home IP and the API key are hidden." : "The streaming program closed: usernames show again.");
+        if (!_s.StreamerMode) Log.Info(StreamingLogLine(open, _s.AutoStreamer));
     }
+
+    /// <summary>The Log line when Hide usernames while OBS or Streamlabs is open changes what shows. Off by the switch, OBS is still open.</summary>
+    public static string StreamingLogLine(bool open, bool autoOn) =>
+        open ? "A streaming program is open: usernames, your home IP and the API key are hidden."
+        : autoOn ? "The streaming program closed: usernames show again."
+        : "Hide usernames while OBS or Streamlabs is open: off. Usernames show again.";
 
     void ApplyHideLogins()
     {
