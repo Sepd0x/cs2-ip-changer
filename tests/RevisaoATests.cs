@@ -137,6 +137,27 @@ static class RevisaoATests
         // A8: o Change IP do iPhone com a proteção desligada (sem Egress) e o NullReference do IsWifi
         check("Revisão A8: o Change IP do iPhone mede pela ligação do telemóvel, não só pela protegida",
               iphoneSrc[iphoneSrc.IndexOf("async Task<bool> IphoneChangeIp()")..] is var ich && !ich.Contains("_last?.Egress") && !ich.Contains("_last.Egress") && iphoneSrc.Contains("PhoneLink.Exit(_last) is not { } exit") && iphoneSrc.Contains("var connected = PhoneLink.Exit(_last) != null;"), "");
+        // A7 (decidido a 6 nov.): No phone desliga a proteção à vista; sair não a liga sozinha, pergunta
+        check("Revisão A7: No phone desliga a proteção, os outros modos deixam-na como está", !MainWindow.ProtOnAfterMode(true, "home") && MainWindow.ProtOnAfterMode(true, "servers")
+              && MainWindow.ProtOnAfterMode(true, "all") && !MainWindow.ProtOnAfterMode(false, "servers"), "");
+        check("Revisão A7: escolher No phone põe _protOn a false antes de mudar o modo", prot.IndexOf("_protOn = ProtOnAfterMode(_protOn, mode);") is var p7 && p7 > 0 && p7 < prot.IndexOf("_s.Mode = mode;"), "");
+        check("Revisão A7: a pergunta de No phone não promete que voltar protege", !MainWindow.NoPhoneAsk(false).Contains("to protect again.\"") && MainWindow.NoPhoneAsk(false).Contains("then turn protection on")
+              && !prot.Contains("Pick another option here to protect again.") && !prot.Contains("under What goes through the phone to protect again."), "");
+        check("Revisão A7: No phone com o CS2 pelo telemóvel diz que o servidor passa a ver o IP de casa (A3)", MainWindow.NoPhoneAsk(true).Contains(MainWindow.Cs2OpenHomeNow) && !MainWindow.NoPhoneAsk(false).Contains("CS2 is open"), "");
+        check("Revisão A7: sair de No phone pergunta Turn on / Not now, e com o CS2 aberto é a pergunta do Turn on",
+              prot.Contains("await Ask(\"Turn on protection now?\", LeaveNoPhoneAsk(Steam.Cs2Running, _s.LockCs2 && PhoneKnown), \"Turn on\", \"Not now\")")
+              && MainWindow.LeaveNoPhoneAsk(true, true) == MainWindow.TurnOnCs2Open(true) && MainWindow.LeaveNoPhoneAsk(false, true).Contains("Protection is off"), "");
+        check("Revisão A7: fechar em No phone com o CS2 aberto não pergunta pelo tráfego que já vai por casa",
+              Src("Views", "MainWindow.Window.cs").Contains("if (Steam.Cs2Running && !_restored && _protOn && _last?.Unprotected != true)"), "");
+
+        // A20 (decidido a 6 nov.): com a proteção desligada a linha Phone connection fica cinzenta e diz o estado
+        check("Revisão A20: proteção desligada, Phone connection diz que não está em uso", MainWindow.OffPhoneRow(null, null, false, Distrust.None) == "Not in use: protection is off"
+              && MainWindow.OffPhoneRow("USB", "192.0.2.5", true, Distrust.None).StartsWith("Ready (USB · 192.0.2.5)")
+              && MainWindow.OffPhoneRow("USB", "192.0.2.5", false, Distrust.SameIp).StartsWith("Not in use: protection is off."), "");
+        check("Revisão A20: proteção desligada, Phone connection e o IP igual nunca a vermelho",
+              prot.Contains("_cEgress.Ok = null;\n            _cEgress.Waiting = false;\n            _cEgress.Detail = OffPhoneRow(")
+              && prot.Contains("_cDiff.Ok = _egressPublic == null || _homePublic == null || same ? null : true;"), "");
+
         check("Revisão A8: o IP novo do iPhone só conta verificado (nunca o de casa)", iphoneSrc.Contains("_verifiedKey != null && _verifiedKey == _last?.CandidateKey ? _egressPublic : null"), "");
     }
 }

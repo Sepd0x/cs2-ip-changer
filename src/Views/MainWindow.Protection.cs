@@ -455,6 +455,17 @@ public partial class MainWindow
         ? $"The whole PC is using the phone, so CS2 and every server see its IP, but if the phone drops they see your home IP: {NothingBlocked(blockedRegions)}."
         : $"CS2 and every server see your home IP, and {NothingBlocked(blockedRegions)}.";
 
+    /// <summary>
+    /// The Phone connection row with protection off (always grey): not in use, and whether the phone is ready for when it is on.
+    /// <paramref name="kind"/> null = no phone connection.
+    /// </summary>
+    public static string OffPhoneRow(string kind, string localIp, bool ready, Distrust distrust) =>
+        kind == null ? "Not in use: protection is off"
+        : ready ? $"Ready ({kind} · {localIp}): not in use while protection is off"
+        : distrust == Distrust.Unchecked ? $"{kind} · {localIp} · checking its IP…"
+        : distrust != Distrust.None ? $"Not in use: protection is off. {DistrustText.Of(distrust)}"
+        : $"{kind} · {localIp} · not in use: protection is off";
+
     /// <summary>The Routes row with protection off: servers, not IPs (two servers can share one IP).</summary>
     public static string RoutesOffText(int servers) => servers == 1 ? "Off: 1 server sees your home IP" : $"Off: {servers} servers see your home IP";
 
@@ -478,13 +489,13 @@ public partial class MainWindow
         var phoneReady = PhoneReadyOff(rep);
         if (off)
         {
-            // The phone, as it would be used: checked here so Turn on protection trusts it at once
-            _cEgress.Ok = rep.Candidate == null ? null : phoneReady ? true : rep.Distrust is not (Distrust.None or Distrust.Unchecked) ? false : null;
-            _cEgress.Waiting = rep.Candidate != null && !phoneReady && rep.Distrust == Distrust.Unchecked;
-            _cEgress.Detail = rep.Candidate == null ? "No phone connected (protection is off)"
-                : $"{rep.Candidate.Kind} · {rep.Candidate.LocalIp}" + (phoneReady ? " · ready" : rep.Distrust == Distrust.Unchecked ? " · checking its IP…" : rep.Distrusted ? " · " + rep.DistrustReason : "");
+            // The phone, as it would be used: checked here so Turn on protection trusts it at once. Grey with protection off (6 nov.,
+            // red there didn't make sense): red is only for a problem while protection is on. The text says how it stands.
+            _cEgress.Ok = null;
+            _cEgress.Waiting = false;
+            _cEgress.Detail = OffPhoneRow(rep.Candidate?.Kind, rep.Candidate?.LocalIp, phoneReady, rep.Distrust);
             var same = _egressPublic != null && _homePublic != null && _egressPublic == _homePublic;
-            _cDiff.Ok = _egressPublic == null || _homePublic == null ? null : !same;
+            _cDiff.Ok = _egressPublic == null || _homePublic == null || same ? null : true;
             _cDiff.Detail = _egressPublic == null ? "Waiting for the phone's IP" : _homePublic == null ? "No home network to compare" : same ? "Same IP: the phone is sharing your Wi-Fi" : "Yes";
         }
         _cPc.Ok = null;
@@ -505,7 +516,7 @@ public partial class MainWindow
                     : "To play through the phone, connect it, then turn protection on."));
         else
             SetHero("warn", "Not protected · no phone",
-                "You picked No phone. " + OffSeen(onPhone, regions) + " Accounts, Configs, Profiles and Regions work as usual. Pick another option under What goes through the phone to protect again.");
+                "You picked No phone. " + OffSeen(onPhone, regions) + " Accounts, Configs, Profiles and Regions work as usual. To protect again, pick another option under What goes through the phone, then turn protection on.");
         ShowIps();
         UpdatePhoneCheck();
         PhoneNotInUse();
@@ -699,14 +710,16 @@ public partial class MainWindow
         var mode = ModeAll.IsChecked == true ? "all" : ModeHome.IsChecked == true ? "home" : "servers";
         var game = ModeGame.IsChecked == true;
         if (mode == _s.Mode && (mode != "servers" || game == _s.GameMode)) return;
-        if (mode == "home" && !_demo && !await Ask("No phone",
-                "CS2 and every server will see your home IP: no kill switch, no CS2 lock and no Change IP. Accounts, Configs, Profiles and Regions keep working.\n\n" +
-                "Pick another option here to protect again.", "Use my home connection"))
+        if (mode == "home" && !_demo && !await Ask("No phone", NoPhoneAsk(Steam.Cs2Running && _protOn), "Use my home connection"))
         {
             ApplySettingsToUi();
             return;
         }
         var wasHome = _s.NoPhone;
+        // No phone protects nothing (Guard), so protection is off there for real, never hidden: leaving it doesn't turn it on by itself
+        var protWas = _protOn;
+        _protOn = ProtOnAfterMode(_protOn, mode);
+        if (protWas && !_protOn) Log.Info("Protection is off: No phone mode.");
         _s.Mode = mode;
         if (mode == "servers") _s.GameMode = game;   // the no phone mode keeps the Whole PC choice for when you come back
         _s.WholePcBeforeWeak = null;   // your choice wins over a mode the app dropped because of a weak connection
@@ -721,7 +734,29 @@ public partial class MainWindow
         _ = RefreshPublicIps();
         _ = RefreshPhone();   // the Phone box says again whether the phone is in use
         ShowRegionsStatus();
+        // Back from No phone: protection is off and shown as off, and one question offers to turn it on (with CS2 open, the one
+        // Turn on protection asks, since a match drops)
+        if (wasHome && !_s.NoPhone && !_protOn && !_demo)
+        {
+            if (await Ask("Turn on protection now?", LeaveNoPhoneAsk(Steam.Cs2Running, _s.LockCs2 && PhoneKnown), "Turn on", "Not now"))
+                await RunCommand("Turn on protection", "turning on…", () => TurnProtectionOn(ask: false));
+            else Log.Info("Protection is off. Turn it on in Status when you want to play through the phone.");
+        }
     }
+
+    /// <summary>The question before No phone. Protection goes off with it, and coming back doesn't turn it on by itself.</summary>
+    public static string NoPhoneAsk(bool cs2OnPhoneNow) =>
+        "CS2 and every server will see your home IP: no kill switch, no CS2 lock and no Change IP. Accounts, Configs, Profiles and Regions keep working.\n\n"
+        + (cs2OnPhoneNow ? Cs2OpenHomeNow + "\n\n" : "")
+        + "Protection turns off. To protect again, pick another option here, then turn protection on.";
+
+    /// <summary>Leaving No phone: protection is off. With CS2 open the question is the one of Turn on protection (a match drops).</summary>
+    public static string LeaveNoPhoneAsk(bool cs2Open, bool cs2Blocks) => cs2Open
+        ? TurnOnCs2Open(cs2Blocks)
+        : "Protection is off, so servers still see your home IP. Turn it on to play through the phone.";
+
+    /// <summary>Protection after a mode is picked: No phone turns it off; any other mode leaves it as it is.</summary>
+    public static bool ProtOnAfterMode(bool protOn, string mode) => mode != "home" && protOn;
 
     /// <summary>Checks running now. The 15 s tick waits for the last one: a slow check (weak phone, home endpoints timing out)
     /// was always overtaken by the next and never landed, so the IP stayed on "Checking" (4 nov.).</summary>

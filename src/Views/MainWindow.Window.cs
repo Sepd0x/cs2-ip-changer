@@ -261,8 +261,9 @@ public partial class MainWindow
             return;
         }
         e.Cancel = true;
-        // Removing the block with CS2 still in a match would send its next packets out with the home IP.
-        if (Steam.Cs2Running && !_restored && _protOn)
+        // Removing the block with CS2 still in a match would send its next packets out with the home IP. In No phone mode it already
+        // goes through home, so there is nothing to ask (not ProtectionArmed: Whole PC with no servers and no CS2 lock still moves CS2).
+        if (Steam.Cs2Running && !_restored && _protOn && _last?.Unprotected != true)
         {
             await AfterCancelledClose();
             if (!await Ask("CS2 is still open", "Turning protection off now would send CS2's traffic through your home connection. Close CS2 first, or close the app and keep protection on this time.", "Keep protection and close")) { _quitting = false; return; }

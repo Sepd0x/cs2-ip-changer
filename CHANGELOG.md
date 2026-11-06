@@ -57,6 +57,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Every Change IP with protection on said "The phone connection dropped", played the error sound with CS2 open and then said "Protection is back". An IP change no longer counts as a drop, on Android or on the iPhone.
 - On the iPhone, the new IP of a Change IP showed in Previous IPs as "at startup", without turning green, and three changes in 10 minutes said the USB cable keeps dropping. It now shows as changed, and the cable hint only counts real drops (not the phone's Wi-Fi coming on either).
 - On the iPhone, Change IP with protection off (or right after plugging it in) said "Connect the iPhone first" although it was connected. It now works there too, and only a checked IP counts as the new one.
+- No phone mode left protection on out of sight, so leaving it turned protection on by itself, without the CS2 open question, or not, with nothing saying which. No phone now turns protection off, and leaving it asks "Turn on protection now?" (with CS2 open, the same question as Turn on protection). Closing the app in No phone mode with CS2 open no longer asks about sending CS2 home: it is already there.
+- With protection off, the Phone connection row of Checks could be red and the Phone IP is not your home IP row too. With protection off they are grey and say whether the phone is ready for when you turn it on.
 
 ## [0.1.0-beta.11] - 2026-11-06
 
