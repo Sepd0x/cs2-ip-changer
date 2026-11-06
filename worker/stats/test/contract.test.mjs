@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { counterOk, contract } from '../src/index.js';
-import { LABELS } from '../src/api.js';
+import { LABELS, COHORT } from '../src/api.js';
 
 const here = (p) => fileURLToPath(new URL(p, import.meta.url));
 
@@ -33,4 +33,10 @@ test('the click map has the contract screens and grid', () => {
   assert.deepEqual(UI.screens.map((s) => s.id), contract.screens);
   assert.equal(UI.COLS, contract.grid.cols);
   assert.equal(UI.ROWS, contract.grid.rows);
+});
+
+test('every install age band the Worker keeps has a cohort column, and 4 to 6 days counts in the 3 to 6 column', () => {
+  assert.deepEqual(Object.keys(COHORT), ['age_0', 'age_1', 'age_2_3', 'age_4_6', 'age_7_13', 'age_14_29', 'age_30p']);
+  assert.deepEqual(COHORT.age_4_6, [2, 4]);
+  assert.equal(COHORT.age_2_3[0], COHORT.age_4_6[0]);
 });

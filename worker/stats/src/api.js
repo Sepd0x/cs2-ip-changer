@@ -112,8 +112,9 @@ const CHECK_TITLE = { egress: 'Phone connection', routes: 'Servers through the p
   firewall: 'Windows Firewall', diff: 'Phone IP is not your home IP', data: 'Mobile data', quality: 'Connection quality',
   steam: 'Steam through the phone', pc: 'Other apps', regions: 'Matchmaking regions' };
 const CHECKS = contract.checks.map((k) => [k, CHECK_TITLE[k] ?? k]);
-// Install age bands to the cohort table's columns (days after the install: 0, 1, 3, 7, 14, 30) and the band's first day
-const COHORT = { age_0: [0, 0], age_1: [1, 1], age_2_3: [2, 2], age_7_13: [3, 7], age_14_29: [4, 14], age_30p: [5, 30] };
+// Install age bands to the cohort table's columns (days after the install: 0, 1, 3, 7, 14, 30; each column runs to the next) and
+// the band's first day. 2-3 and 4-6 both land in the "day 3" column (3 to 6 days).
+export const COHORT = { age_0: [0, 0], age_1: [1, 1], age_2_3: [2, 2], age_4_6: [2, 4], age_7_13: [3, 7], age_14_29: [4, 14], age_30p: [5, 30] };
 // Valve's public datacenter codes (Regions page) to the city, for the dashboard; any other shows as its code
 const CITY = { fra: 'Frankfurt', mad: 'Madrid', waw: 'Varsóvia', ams: 'Amesterdão', lhr: 'Londres', par: 'Paris', sto: 'Estocolmo', vie: 'Viena', hel: 'Helsínquia',
   iad: 'Sterling', ord: 'Chicago', atl: 'Atlanta', lax: 'Los Angeles', dfw: 'Dallas', sea: 'Seattle', gru: 'São Paulo', scl: 'Santiago', lim: 'Lima', eze: 'Buenos Aires',
