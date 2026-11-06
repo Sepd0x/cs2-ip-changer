@@ -54,6 +54,9 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - "Off: 3 servers see your home IP" counted IPs, not servers.
 - With Turn on protection when the app starts on, the question on the first close said the app starts with protection off.
 - The VPN app row of Checks said servers and CS2 still go through the phone with protection off. It now says they see the VPN's IP then.
+- Every Change IP with protection on said "The phone connection dropped", played the error sound with CS2 open and then said "Protection is back". An IP change no longer counts as a drop, on Android or on the iPhone.
+- On the iPhone, the new IP of a Change IP showed in Previous IPs as "at startup", without turning green, and three changes in 10 minutes said the USB cable keeps dropping. It now shows as changed, and the cable hint only counts real drops (not the phone's Wi-Fi coming on either).
+- On the iPhone, Change IP with protection off (or right after plugging it in) said "Connect the iPhone first" although it was connected. It now works there too, and only a checked IP counts as the new one.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

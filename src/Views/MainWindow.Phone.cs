@@ -546,6 +546,7 @@ public partial class MainWindow
         if (confirm && Steam.Cs2Running && IpChangeDrops && !await Ask("CS2 is open", "If you are on a server, you will be disconnected when the IP changes. Continue?", "Change IP")) return false;
 
         _changingIp = true;
+        _ipChangeQuiet = true;   // until the new IP is checked and synced (finally): the drop is on purpose
         // Protection off: the phone's IP changes all the same (servers see it once protection is on). The new IP isn't known yet: untrusted (servers and CS2 blocked) until it is measured again.
         _verifiedKey = null;
         await SyncNow(force: true);
@@ -644,7 +645,7 @@ public partial class MainWindow
                 var range = RangeNote(got, out var sameRange);
                 _egressPublic = got;
                 _egressInfo = await PhoneIpInfo(got);
-                AddHistory(got, _egressInfo, "trocado");
+                AddHistory(got, _egressInfo, "trocado", _ipChangedAt);
                 ResetQuality();
                 Log.Ok($"Mobile data back on: {got} (the IP before wasn't known, so it can't be compared). {range}");
                 Toast($"New IP: {got}. {range}" + (_protOn ? "" : " Protection is off: turn it on so servers see this IP."), !sameRange);
@@ -655,7 +656,7 @@ public partial class MainWindow
                 var range = RangeNote(got, out var sameRange);
                 _egressPublic = got;
                 _egressInfo = await PhoneIpInfo(got);
-                AddHistory(got, _egressInfo, "trocado");
+                AddHistory(got, _egressInfo, "trocado", _ipChangedAt);
                 ResetQuality();
                 if (sameRange) Log.Warn($"IP changed: {first} → {got}. {range}");
                 else Log.Ok($"IP changed: {first} → {got}. {range}");
@@ -681,9 +682,14 @@ public partial class MainWindow
             UpdatePhoneCheck();
             HideProgress();
             ShowIps();
-            await SyncNow(force: true);
-            // Measures the new connection: only a confirmed IP that isn't the home one lifts the block.
-            await RefreshPublicIps();
+            try
+            {
+                await SyncNow(force: true);
+                // Measures the new connection: only a confirmed IP that isn't the home one lifts the block.
+                await RefreshPublicIps();
+                await SyncNow();   // waits for the sync that trust started, so no report from before it raises the alarm
+            }
+            finally { _ipChangeQuiet = false; }
         }
     }
 

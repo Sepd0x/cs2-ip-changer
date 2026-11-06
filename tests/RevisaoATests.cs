@@ -106,5 +106,37 @@ static class RevisaoATests
         check("Revisão A25: sem derrubar, o Status da troca não diz 'you will drop'", !MainWindow.ChangingSub(false).Contains("drop") && MainWindow.ChangingSub(true).Contains("you will drop"), "");
         check("Revisão A25: a pergunta 'CS2 is open' do Change IP só quando derruba", phone.Contains("if (confirm && Steam.Cs2Running && IpChangeDrops && !await Ask(\"CS2 is open\",")
               && phone.Contains("var drop = IpChangeDrops ?") && iphoneSrc.Contains("(IpChangeDrops ? \"If you are on a server, you will drop.\""), "");
+
+        // A5: cada Change IP com a proteção ligada dizia "dropped", tocava o alarme e depois "Protection is back"
+        check("Revisão A5: uma troca de IP não dá o alarme de queda", !MainWindow.DropAlarm(true, false, changingIp: true) && MainWindow.DropAlarm(true, false, changingIp: false) && !MainWindow.DropAlarm(true, true, false), "");
+        check("Revisão A5: durante a troca o Log e o alarme calam-se e _wasProtected fica como estava",
+              prot.Contains("var quiet = _changingIp || _ipChangeQuiet;") && prot.Contains("if (egressChanged && _lastEgressKey != null && !home && !quiet)")
+              && prot.Contains("else if (quiet) { }") && prot.Contains("if (!quiet) _wasProtected = protectedNow;"), "");
+        check("Revisão A5: o silêncio da troca acaba só depois do IP novo verificado e sincronizado (Android)",
+              phone.IndexOf("_ipChangeQuiet = true;") > 0 && phone.IndexOf("_ipChangeQuiet = true;") < phone.IndexOf("_verifiedKey = null;\n        await SyncNow(force: true);")
+              && phone.IndexOf("await RefreshPublicIps();\n                await SyncNow();") < phone.IndexOf("finally { _ipChangeQuiet = false; }"), "");
+        check("Revisão A5: o Change IP guiado do iPhone também não dá o alarme", iphoneSrc.Contains("_ipChangeQuiet = true;") && iphoneSrc.Contains("finally { _ipChangeQuiet = false; }"), "");
+
+        // A11: no iPhone o IP novo ficava "at startup", sem o verde nem a contagem
+        var t0 = new DateTime(2026, 11, 6, 22, 0, 0);
+        var seenNow = new List<IpHistoryEntry> { new() { Time = t0.AddSeconds(30), Ip = "5.5.5.5", Reason = "detetado" } };
+        check("Revisão A11: o IP visto pela verificação durante a troca passa a ser a troca", MainWindow.SeenSinceChange(seenNow, "5.5.5.5", "trocado", t0), "");
+        check("Revisão A11: um IP de antes da troca, outro IP ou sem troca não muda",
+              !MainWindow.SeenSinceChange(seenNow, "5.5.5.5", "trocado", t0.AddMinutes(1)) && !MainWindow.SeenSinceChange(seenNow, "6.6.6.6", "trocado", t0)
+              && !MainWindow.SeenSinceChange(seenNow, "5.5.5.5", "detetado", t0) && !MainWindow.SeenSinceChange(seenNow, "5.5.5.5", "trocado", null)
+              && !MainWindow.SeenSinceChange(new List<IpHistoryEntry>(), "5.5.5.5", "trocado", t0), "");
+        check("Revisão A11: as duas trocas dizem quando começaram", iphoneSrc.Contains("AddHistory(now, _egressInfo, \"trocado\", since);") && phone.Contains("AddHistory(got, _egressInfo, \"trocado\", _ipChangedAt);")
+              && !phone.Contains("AddHistory(got, _egressInfo, \"trocado\");"), "");
+
+        // A12: três trocas no iPhone davam o aviso do cabo; desconfiança não é queda
+        check("Revisão A12: desconfiança (ligação ainda lá) não é queda", !MainWindow.IsDrop(true, false, exitNow: true, false), "");
+        check("Revisão A12: uma troca de IP não é queda", !MainWindow.IsDrop(true, false, false, changingIp: true), "");
+        check("Revisão A12: o adaptador a desaparecer é queda", MainWindow.IsDrop(true, false, false, false) && !MainWindow.IsDrop(false, false, false, false), "");
+        check("Revisão A12: o contador de quedas conta a troca do iPhone como troca", Src("Views", "MainWindow.Telemetry.cs").Contains("IsDrop(_egressUp, up, PhoneLink.Exit(rep) != null, _changingIp || _ipChangeQuiet)"), "");
+
+        // A8: o Change IP do iPhone com a proteção desligada (sem Egress) e o NullReference do IsWifi
+        check("Revisão A8: o Change IP do iPhone mede pela ligação do telemóvel, não só pela protegida",
+              iphoneSrc[iphoneSrc.IndexOf("async Task<bool> IphoneChangeIp()")..] is var ich && !ich.Contains("_last?.Egress") && !ich.Contains("_last.Egress") && iphoneSrc.Contains("PhoneLink.Exit(_last) is not { } exit") && iphoneSrc.Contains("var connected = PhoneLink.Exit(_last) != null;"), "");
+        check("Revisão A8: o IP novo do iPhone só conta verificado (nunca o de casa)", iphoneSrc.Contains("_verifiedKey != null && _verifiedKey == _last?.CandidateKey ? _egressPublic : null"), "");
     }
 }

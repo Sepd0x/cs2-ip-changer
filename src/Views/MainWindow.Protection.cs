@@ -197,6 +197,15 @@ public partial class MainWindow
         RefreshChecksView();   // the Checks summary says when protection is off
     }
 
+    /// <summary>
+    /// An IP change runs (Android or the iPhone's guided one) until its new IP was checked and synced: the connection drops on
+    /// purpose meanwhile, so it is no drop for the alarm or the cable hint. Unlike _changingIp, trust is given during it.
+    /// </summary>
+    bool _ipChangeQuiet;
+
+    /// <summary>The phone's protection went away: the alarm (toast, and the sound with CS2 open). Never for an IP change.</summary>
+    public static bool DropAlarm(bool wasProtected, bool protectedNow, bool changingIp) => wasProtected && !protectedNow && !changingIp;
+
     /// <summary>The trusted connection stays trusted only while the report still sees that same connection.</summary>
     public static string TrustAfter(string verifiedKey, string candidateKey) => candidateKey != null && candidateKey == verifiedKey ? verifiedKey : null;
 
@@ -206,7 +215,9 @@ public partial class MainWindow
         var egressKey = Guard.KeyOf(rep.Egress);
         var egressChanged = egressKey != _lastEgressKey;
         var home = rep.Unprotected;   // No phone, or protection off: nothing is blocked, so a drop is no drop
-        if (egressChanged && _lastEgressKey != null && !home)
+        // Change IP (Android or the iPhone's guided one) drops the connection on purpose: no "dropped", no alarm, no "Protection is back"
+        var quiet = _changingIp || _ipChangeQuiet;
+        if (egressChanged && _lastEgressKey != null && !home && !quiet)
         {
             if (rep.Egress == null) Log.Warn("The phone connection dropped. " + (rep.KillSwitchOk ? $"Kill switch on: {Blocked(rep, lower: true)} blocked." : "The block isn't confirmed."));
             else Log.Ok($"Phone connection: {rep.Egress.Name} ({rep.Egress.LocalIp}).");
@@ -222,7 +233,9 @@ public partial class MainWindow
         var protectedNow = rep.Egress != null && rep.FirewallProblem == null && rep.KillSwitchOk;
         // No phone mode is your choice, not a drop: no alarm, and none when you go back to the phone either.
         if (home) { _wasProtected = false; _everProtected = false; }
-        else if (_wasProtected && !protectedNow)
+        // Mid-change _wasProtected keeps what it was before: back with the new IP is no news, and not back after it, the alarm comes then
+        else if (quiet) { }
+        else if (DropAlarm(_wasProtected, protectedNow, quiet))
         {
             if (Steam.Cs2Running) System.Media.SystemSounds.Hand.Play();
             var safe = rep.KillSwitchOk && rep.FirewallProblem == null;
@@ -231,7 +244,7 @@ public partial class MainWindow
         else if (!_wasProtected && protectedNow && _lastEgressKey != null && _everProtected)
             Toast("Protection is back.", true);
         if (protectedNow) _everProtected = true;
-        _wasProtected = protectedNow;
+        if (!quiet) _wasProtected = protectedNow;
 
         FillEgressCombo(rep.Adapters);
 
@@ -942,8 +955,25 @@ public partial class MainWindow
         ShowIps();
     }
 
-    void AddHistory(string ip, Net.IpInfo info, string reason)
+    /// <summary>
+    /// The check through the phone saw the new IP before the change itself added it (the iPhone always, Android when a check lands
+    /// mid-change): that line, added since the change started, becomes the change, so it counts once and turns green.
+    /// </summary>
+    public static bool SeenSinceChange(IList<IpHistoryEntry> history, string ip, string reason, DateTime? since) =>
+        reason == "trocado" && since != null && history.Count > 0 && history[0].Ip == ip && history[0].Reason == "detetado" && history[0].Time >= since;
+
+    void AddHistory(string ip, Net.IpInfo info, string reason, DateTime? changeSince = null)
     {
+        if (SeenSinceChange(_history, ip, reason, changeSince))
+        {
+            var seen = _history[0];
+            _history[0] = new IpHistoryEntry { Time = seen.Time, Ip = ip, Isp = info?.Short ?? seen.Isp, Reason = reason };
+            Telemetry.Count("ip_changed");
+            FlashNewIp();
+            _s.IpHistory = _history.ToList();
+            SaveSettings();
+            return;
+        }
         if (_history.Count > 0 && _history[0].Ip == ip) return;
         if (reason == "trocado") { Telemetry.Count("ip_changed"); FlashNewIp(); }
         var h = new IpHistoryEntry { Time = DateTime.Now, Ip = ip, Isp = info?.Short, Reason = reason };
