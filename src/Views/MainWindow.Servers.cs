@@ -337,11 +337,15 @@ public partial class MainWindow
                     "Steam has not reconnected to Valve yet (for example, after you changed the IP). If you join now, the server kicks you with \"No Steam logon\" after a few minutes.",
                     "Join anyway"))
                 return false;
-            if (_s.SteamOnEgress && _last?.SteamOnEgress == false && await Ask("Steam is on another network",
-                    "CS2 goes through the phone, but Steam is connected through your home network. When Steam reconnects, the server kicks you with \"No Steam logon\".\n\n" +
-                    $"Restart Steam through the phone and join {s.Title}?" + (Steam.Cs2Running ? " CS2 closes and opens again." : ""),
-                    "Restart and join", "Join anyway"))
-                return await RestartSteamAndConnect(s, openWith);
+            if (_s.SteamOnEgress && _last?.SteamOnEgress == false)
+            {
+                if (await Ask("Steam is on another network",
+                        "CS2 goes through the phone, but Steam is connected through your home network. When Steam reconnects, the server kicks you with \"No Steam logon\".\n\n" +
+                        $"Restart Steam through the phone and join {s.Title}?" + (Steam.Cs2Running ? " CS2 closes and opens again." : ""),
+                        "Restart and join", "Join anyway"))
+                    return await RestartSteamAndConnect(s, openWith);
+                if (!_dialogCancelClicked) return false;   // X or Escape: neither, so no join
+            }
             if (CommandCancelled) return false;
         }
         if (_demo) { Toast($"Demo: joining {s.Title}.", true); MarkLast(s); return true; }
@@ -448,7 +452,8 @@ public partial class MainWindow
         var s = _slotServer;
         if (s == null || _slotChecking) return;
         if (!_servers.Contains(s)) { StopSlotWait(); return; }
-        if (_last?.Egress is not Adapter eg) { SlotText.Text = $"Waiting for a slot on {s.Title}: the phone is not connected."; return; }
+        // On the home connection on purpose (No phone, or protection off with the option) the slot is checked from there, as Connect does
+        if ((OnHome ? HomeAdapter : _last?.Egress) is not Adapter eg) { SlotText.Text = $"Waiting for a slot on {s.Title}: " + (OnHome ? "no connection." : "the phone is not connected."); return; }
         _slotChecking = true;
         try
         {

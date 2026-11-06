@@ -633,7 +633,7 @@ public partial class MainWindow
                 Toast($"New IP: {got}. {range}" + (_protOn ? "" : " Protection is off: turn it on so servers see this IP."), !sameRange);
                 return true;
             }
-            else if (got == first)
+            else if (got != null && got == first)
             {
                 Telemetry.Count("ip_same");
                 Toast("The carrier kept giving the same IP. Try airplane mode in Settings or wait a few minutes.", false);

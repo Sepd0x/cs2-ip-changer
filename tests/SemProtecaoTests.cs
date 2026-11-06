@@ -37,7 +37,22 @@ static class SemProtecaoTests
         check("Switch: desligada e com a opção, salta o IP (os servidores veem o de casa)", MainWindow.IpStep(false, true) == MainWindow.IpWhenOff.Skip, "");
         check("Switch: desligada sem a opção, pergunta para ligar a proteção primeiro", MainWindow.IpStep(false, false) == MainWindow.IpWhenOff.AskTurnOn, "");
         var kick = Src("Views", "MainWindow.Kick.cs");
-        check("Switch: o passo do IP decide-se antes de começar", kick.IndexOf("IpStep(_protOn, _s.UseWithProtectionOff) is var step") is var i1 && i1 > 0 && i1 < kick.IndexOf("ChangeIp(confirm: false)"), "");
+        check("Switch: o passo do IP decide-se antes de começar", kick.IndexOf("IpStep(_protOn, _s.UseWithProtectionOff, steps.Ban) is var step") is var i1 && i1 > 0 && i1 < kick.IndexOf("ChangeIp(confirm: false)"), "");
+
+        // Revisão de lógica de 6 nov.
+        check("Lógica: depois de um ban, com a opção, nunca volta do IP de casa (pede para ligar a proteção)", MainWindow.IpStep(false, true, afterBan: true) == MainWindow.IpWhenOff.AskTurnOn, "");
+        check("Lógica: o rejoin depois de um ban marca-se como ban", kick.Contains("RunSwitch(new SwitchSteps(true, true, true, true, Ban: true), from)"), "");
+        check("Lógica: a conta escolhe-se antes de ligar a proteção", kick.IndexOf("(next = PickQuick(s)) == null) return false;") < kick.IndexOf("is var step && step != IpWhenOff.Change"), "");
+        check("Lógica: Cancel durante o ligar da proteção não muda o IP", kick.Contains("if (!await TurnProtectionOn(ask: false) || CommandCancelled) return false;"), "");
+        check("Lógica: no switch, fora de um passo e sem espera, o Cancel não promete parar depois", MainWindow.CancelFor(true, false, false, true, false) == MainWindow.CancelKind.None, "");
+        check("Lógica: o nome do botão usa a mesma conta que o clique (último servidor)", Src("Views", "MainWindow.Accounts.cs").Contains("NextQuick(c.Rejoin ? _servers.FirstOrDefault(x => x.Key == _s.LastServer) : null)"), "");
+        check("Lógica: X ou Esc no aviso do crash não entra no servidor", Src("Views", "MainWindow.SteamWatch.cs").Contains("if (!wait && !_dialogCancelClicked) return false;"), "");
+        check("Lógica: X ou Esc no Steam noutra rede não entra no servidor", servers.Contains("if (!_dialogCancelClicked) return false;   // X or Escape: neither, so no join"), "");
+        check("Lógica: a espera por vaga funciona pela ligação de casa", servers.Contains("(OnHome ? HomeAdapter : _last?.Egress) is not Adapter eg"), "");
+        check("Lógica: sem proteção, um timeout do servidor conta (não é a ligação a mudar)", kick.Contains("_last?.Egress == null && _last?.Unprotected != true"), "");
+        check("Lógica: o relatório de rede em casa não fala do telemóvel", kick.Contains("var via = home ? \"home connection\""), "");
+        check("Lógica: rede que não volta não diz que a operadora deu o mesmo IP", Src("Views", "MainWindow.Phone.cs").Contains("else if (got != null && got == first)"), "");
+        check("Lógica: a troca de conta não escreve com o Steam ainda aberto", Src("Core", "Steam", "SteamAccounts.cs").Contains("if (!SteamClosedNow()) throw new InvalidOperationException(\"Steam didn't close"), "");
         check("Switch: o nome do botão tira o New IP quando o IP não muda", Src("Views", "MainWindow.Accounts.cs").Contains("IpStep(_protOn, _s.UseWithProtectionOff) == IpWhenOff.Skip)) c = c with { Ip = false }"), "");
         check("Switch: o botão atualiza quando a proteção muda", Src("Views", "MainWindow.Protection.cs").Contains("UpdateQuickInfo();     // New IP + next account"), "");
 

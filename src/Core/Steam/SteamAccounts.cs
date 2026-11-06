@@ -336,6 +336,8 @@ public static partial class Steam
         if (edit && Redirected(path)) throw new IOException(Linked);
         if (edit && !VdfNode.RoundTrips(File.ReadAllText(path))) throw new InvalidOperationException(NotUnderstood);
         await CloseSteam();
+        // A Steam still running would get "-login" while on the old account and write that account back over the switch
+        if (!SteamClosedNow()) throw new InvalidOperationException("Steam didn't close, so the account wasn't changed. Close Steam (or wait a moment) and try again.");
 
         string previous = null;
         var changed = false;

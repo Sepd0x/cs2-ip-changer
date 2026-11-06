@@ -48,9 +48,11 @@ public partial class MainWindow
     /// account switch inside New IP + next account or a rejoin: it stops after that step, which always finishes (never cut in half).
     /// </summary>
     public static CancelKind CancelFor(bool command, bool waiting, bool midStep, bool inSwitch, bool cancelled) =>
-        !command || cancelled ? CancelKind.None : waiting && !midStep ? CancelKind.Now : inSwitch ? CancelKind.AfterStep : CancelKind.None;
+        !command || cancelled ? CancelKind.None : waiting && !midStep ? CancelKind.Now : midStep && inSwitch ? CancelKind.AfterStep : CancelKind.None;
 
-    CancelKind CancelNow => _stopAfterStep ? CancelKind.None : CancelFor(_command != null, _commandWaiting > 0, _changingIp || _switching, _rejoining, CommandCancelled);
+    /// <summary>Once a stop after the step is asked for, Cancel stays for the waits after it (they stop at once).</summary>
+    CancelKind CancelNow => CancelFor(_command != null, _commandWaiting > 0, _changingIp || _switching, _rejoining, CommandCancelled) is var k
+        && k == CancelKind.AfterStep && _stopAfterStep ? CancelKind.None : k;
 
     /// <summary>Cancel was pressed during a step of a switch: it ends after that step (see <see cref="StopAfterStep"/>).</summary>
     bool _stopAfterStep;

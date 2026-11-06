@@ -234,7 +234,8 @@ public partial class MainWindow
         var c = SwitchChoice;
         // The name says only what a click will do: no IP step in No phone mode, nor with protection off and "Use the app with protection off"
         if (c.Ip && (_s.NoPhone || IpStep(_protOn, _s.UseWithProtectionOff) == IpWhenOff.Skip)) c = c with { Ip = false };
-        var next = c.Account ? NextQuick() : null;
+        // The same pick as the click: with the rejoin step, an account banned on the last server is skipped there too
+        var next = c.Account ? NextQuick(c.Rejoin ? _servers.FirstOrDefault(x => x.Key == _s.LastServer) : null) : null;
         var pool = _accounts.Count(a => a.Usable);
         // Named for what it does: a new IP first, then the account (or only one of them, if Settings leaves out a step).
         var who = c.Account ? next?.Name ?? "next account" : null;
@@ -314,6 +315,9 @@ public partial class MainWindow
             _cs2ClosedByAppAt = DateTime.Now; // the switch closes CS2 itself: that exit is not a crash
             foreach (var p in Process.GetProcessesByName("cs2")) try { p.Kill(true); } catch { }
             for (var i = 0; i < 20 && Steam.Cs2Running; i++) await Task.Delay(150);
+            // Right after CS2 closes Steam is busy (Cloud sync) and may not close cleanly; a Steam closed the hard way logs back in to
+            // the old account. A moment first.
+            await Task.Delay(3000);
         }
         _switching = true;
         a.Busy = true;
@@ -325,7 +329,8 @@ public partial class MainWindow
             if (cs2 && !_s.LockCs2 && !OnHome && (_last?.Egress == null || _distrust))
             {
                 cs2 = false;
-                Toast("Switched account but did not open CS2: protection is off and CS2 is not locked.", false);
+                Toast(_protOn ? "Switched account but did not open CS2: the phone isn't connected (or not trusted yet) and CS2 is not locked to it."
+                              : "Switched account but did not open CS2: protection is off and CS2 is not locked.", false);
             }
             ConfigsBeforeLogin(a);   // CS2 config copied in, while CS2 is closed (Configs page)
             // Steam first, CS2 only once Steam is really on this account: today's client can come up on another one.

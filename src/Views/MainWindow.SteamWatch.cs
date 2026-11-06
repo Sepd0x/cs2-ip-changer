@@ -170,6 +170,7 @@ public partial class MainWindow
             $"Wait until {until:HH:mm:ss} and join automatically? Another server is fine right away.", "Wait and join", "Join now");
         Diag.Write("wait-after-crash", new { server = s.Key, seconds = (int)(until - DateTime.Now).TotalSeconds, waited = wait });
         if (CommandCancelled) return false;
+        if (!wait && !_dialogCancelClicked) return false;   // X or Escape: neither, so no join (joining now is what this question avoids)
         if (!wait) return true;
         ShowProgress("Waiting for the server to drop the old session…");
         using var waiting = CommandWait();

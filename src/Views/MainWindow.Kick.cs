@@ -90,12 +90,14 @@ public partial class MainWindow
     /// </summary>
     void LogNetReport(NetReport r)
     {
-        var via = _s.NoPhone ? "home connection" : "phone IP " + (_egressPublic ?? "not measured");
+        // The home connection on purpose (No phone, or protection off with the option): no phone IP and no phone tips
+        var home = OnHome;
+        var via = home ? "home connection" : "phone IP " + (_egressPublic ?? "not measured");
         var line = r.Line(via, _consoleServer);
-        if (r.Laggy && !_s.NoPhone) Log.Warn(line + " To lag less: " + NetReport.Tips(_last?.Egress?.IsWifi == true));
+        if (r.Laggy && !home) Log.Warn(line + " To lag less: " + NetReport.Tips(_last?.Egress?.IsWifi == true));
         else if (r.Laggy) Log.Warn(line); else Log.Info(line);
         // Once per start: after the match, not in it (the line above is in the Log every time).
-        if (r.Laggy && !_s.NoPhone && !_lagTipShown)
+        if (r.Laggy && !home && !_lagTipShown)
         {
             _lagTipShown = true;
             Toast("That match lagged on the phone's connection. " + NetReport.Tips(_last?.Egress?.IsWifi == true), Tone.Info);
@@ -180,7 +182,7 @@ public partial class MainWindow
         var recent = (DateTime.Now - _lastKickAt).TotalSeconds < 20;
         if (recent && Cs2Console.Stronger(_lastKickKind, kind) == _lastKickKind) { Log.Info($"CS2 console ({what}): " + Cut(line)); return; }
         // The app's own IP change or the phone dropping also time the game out: that's not the server, and it doesn't count.
-        if (kind == KickKind.NoAnswer && (_changingIp || _rejoining || (_last?.Egress == null && !_s.NoPhone))) { Log.Info("CS2 lost the server while the connection was changing. Console: " + Cut(line)); return; }
+        if (kind == KickKind.NoAnswer && (_changingIp || _rejoining || (_last?.Egress == null && _last?.Unprotected != true))) { Log.Info("CS2 lost the server while the connection was changing. Console: " + Cut(line)); return; }
         _lastKickAt = DateTime.Now;
         _lastKickKind = kind;
         if (kind != KickKind.Full) System.Media.SystemSounds.Hand.Play();
@@ -299,7 +301,7 @@ public partial class MainWindow
     }
 
     /// <summary>New IP, the next account the server hasn't banned (nor its community), back to the last server.</summary>
-    Task RejoinAfterBan(string from) => RunCommand("Switch and rejoin", "starting…", () => RunSwitch(new SwitchSteps(true, true, true, true), from));
+    Task RejoinAfterBan(string from) => RunCommand("Switch and rejoin", "starting…", () => RunSwitch(new SwitchSteps(true, true, true, true, Ban: true), from));
 
     /// <summary>The account in use has a ban mark on the last server (or its community).</summary>
     bool BannedOnLast() =>
@@ -403,7 +405,8 @@ public partial class MainWindow
     {
         RejoinBtn.IsEnabled = !_changingIp && !_rejoining && _s.LastServer != null && _phone?.Ready == true && !_s.NoPhone;
         RejoinBtn.ToolTip = _s.NoPhone ? "Off in the no phone mode: there is no IP to change." : (_s.LastServer == null ? "Join a server from Servers first. " : $"Changes the IP, then joins {_s.LastServer} again (with another account if this one is banned there). ")
-            + $"Only joins with protection confirmed. In game: {_s.HotkeyRejoin}.";
+            + (_protOn ? "Only joins with protection confirmed." : _s.UseWithProtectionOff ? "Protection is off: it joins on your home connection without changing the IP (after a ban it asks to turn protection on first)." : "Protection is off: it asks to turn it on first.")
+            + $" In game: {_s.HotkeyRejoin}.";
         // After a kick the way back is the rejoin: with a last server it is the primary, and its hotkey shows under it. With protection
         // off, Turn on protection is the one primary (beta.10).
         var (rejoinStyle, changeStyle) = StatusPrimary(_protOn, _s.NoPhone, _s.LastServer != null, PhoneWifiOn || (_last != null && _last.Egress == null));
@@ -420,7 +423,8 @@ public partial class MainWindow
 
 
     /// <summary>What a switch does. Switch (button and hotkey) takes the steps from Settings; the rejoin hotkey is new IP, same account, rejoin.</summary>
-    readonly record struct SwitchSteps(bool Ip, bool Account, bool Rejoin, bool OpenWith);
+    /// <summary><paramref name="Ban"/>: the rejoin after a ban or a VPN block, where the home IP is the one the server refused.</summary>
+    readonly record struct SwitchSteps(bool Ip, bool Account, bool Rejoin, bool OpenWith, bool Ban = false);
 
     SwitchSteps SwitchChoice => new(_s.SwitchIp, _s.SwitchAccount, _s.SwitchRejoin, _s.SwitchOpenWith);
 
@@ -441,9 +445,13 @@ public partial class MainWindow
             Log.Info(_s.NoPhone ? $"{from}: no phone mode, so only the account changes." : $"{from}: the phone isn't ready to change the IP, so only the account changes.");
             Toast(_s.NoPhone ? "Switching the account only: no phone mode has no IP to change." : "Switching the account only: the phone isn't ready to change the IP.", false);
         }
+        // The account first: protection isn't turned on for a switch that then has no account to go to
+        AccountItem next = null;
+        if (steps.Account && (next = PickQuick(s)) == null) return false;
         // Protection off: a new phone IP isn't what servers see (they see your home IP). With "Use the app with protection off" the IP
-        // step is left out and said so; without it, one question turns protection on first (as Join does), or nothing starts.
-        if (ip && !_demo && !_s.NoPhone && IpStep(_protOn, _s.UseWithProtectionOff) is var step && step != IpWhenOff.Change)
+        // step is left out and said so; without it, or after a ban (the home IP is the banned one), one question turns protection on
+        // first, as Join does, or nothing starts.
+        if (ip && !_demo && !_s.NoPhone && IpStep(_protOn, _s.UseWithProtectionOff, steps.Ban) is var step && step != IpWhenOff.Change)
         {
             if (step == IpWhenOff.Skip)
             {
@@ -453,12 +461,11 @@ public partial class MainWindow
             }
             else
             {
-                if (!await Ask("Protection is off", "A new IP only counts with protection on: with it off, servers see your home IP. Turn protection on first, then go on?", "Turn on and go on")) return false;
-                if (!await TurnProtectionOn(ask: false)) return false;
+                var why = steps.Ban ? "After a ban the server knows your home IP, so going back from it bans the next account too. " : "";
+                if (!await Ask("Protection is off", why + "A new IP only counts with protection on: with it off, servers see your home IP. Turn protection on first, then go on?", "Turn on and go on")) return false;
+                if (!await TurnProtectionOn(ask: false) || CommandCancelled) return false;
             }
         }
-        AccountItem next = null;
-        if (steps.Account && (next = PickQuick(s)) == null) return false;
         if (!ip && next == null && s == null) { Toast("New IP + next account has nothing to do: turn on at least one step in Settings > New IP + next account.", false); return false; }
         Log.Info($"{from}: " + string.Join(", ", new[] { ip ? "new IP" : null, next != null ? $"log in to {next.Name}" : null, s != null ? $"rejoin {s.Key}" : null }.Where(x => x != null)) + ".");
         _rejoining = true;
@@ -486,9 +493,11 @@ public partial class MainWindow
 
     /// <summary>
     /// The IP step of New IP + next account (and the rejoins) by protection: on, the IP changes; off, servers see the home IP, so it is
-    /// left out with "Use the app with protection off", else protection is turned on first (one question). No phone mode is handled before.
+    /// left out with "Use the app with protection off", else protection is turned on first (one question). After a ban the home IP is
+    /// the refused one, so the option never skips the new IP there. No phone mode is handled before.
     /// </summary>
-    public static IpWhenOff IpStep(bool protOn, bool useWithOff) => protOn ? IpWhenOff.Change : useWithOff ? IpWhenOff.Skip : IpWhenOff.AskTurnOn;
+    public static IpWhenOff IpStep(bool protOn, bool useWithOff, bool afterBan = false) =>
+        protOn ? IpWhenOff.Change : useWithOff && !afterBan ? IpWhenOff.Skip : IpWhenOff.AskTurnOn;
 
     /// <summary>True when Cancel was pressed during a step of a switch: says what was done and that nothing else starts.</summary>
     bool StopAfterStep(string done)
