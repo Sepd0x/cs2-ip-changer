@@ -636,6 +636,11 @@ LogoTests.Run(Check);
 // 6 nov. (ronda 2 no PC do dono): aviso vermelho com a opção sem proteção, nome do botão com o rejoin, Show/Hide hidden,
 // nomes do Steam sem invisíveis, Log certo com a proteção desligada (Ronda2Tests.cs)
 Ronda2Tests.Run(Check);
+// 6 nov.: a revisão completa da app, uma área por ficheiro (RevisaoA a RevisaoDTests.cs)
+RevisaoATests.Run(Check);
+RevisaoBTests.Run(Check);
+RevisaoCTests.Run(Check);
+RevisaoDTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;
