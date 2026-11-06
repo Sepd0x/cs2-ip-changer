@@ -312,7 +312,7 @@
                 </Grid.ColumnDefinitions>
                 <Button Style="{StaticResource IconBtn}" Content="{Binding StarGlyph}" Click="SrvFav_Click" ToolTip="Favorite: stays at the top" Width="24" Height="24"/>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="4,0,0,0">
-                    <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" Margin="0,0,10,0"/>
+                    <TextBlock Text="{Binding RowTitle}" TextTrimming="CharacterEllipsis" Margin="0,0,10,0"/>
                     <!-- Narrow rows trim the "You played here" note first: the ban and the flag say more -->
                     <DockPanel Margin="0,1,10,0" LastChildFill="True">
                         <TextBlock DockPanel.Dock="Left" Text="{Binding Key}" FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource Faint}"/>
@@ -342,14 +342,14 @@
                     </StackPanel>
                 </Button>
                 <TextBlock Grid.Column="4" Text="{Binding PingText}" Foreground="{Binding PingBrush}" FontFamily="{StaticResource Mono}" FontSize="11" VerticalAlignment="Center"
-                           ToolTip="Measured through the phone, the same path the game uses"/>
+                           ToolTip="Measured on the connection the game uses now: the phone with protection on, your home connection otherwise."/>
                 <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center"
                             ToolTip="Protected = Windows sends this server through the phone and blocks it on the home network.">
                     <local:StatusMark Brush="{Binding RouteBrush}"/>
                     <TextBlock Text="{Binding RouteText}" Foreground="{Binding RouteTextBrush}" Margin="7,0,0,0" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
                 <Button Grid.Column="7" Style="{StaticResource RowBtn}" Margin="0" Click="SrvConnect_Click" HorizontalAlignment="Right" Content="Join"
-                        ToolTip="Checks this server's route first, then opens the game. If the check fails, the game does not open."/>
+                        ToolTip="Runs the checks for the way you play now (with protection on: this server's route through the phone), then opens the game. If a check fails, the game does not open."/>
             </Grid>
             <StackPanel Tag="players" Margin="32,8,0,4" Visibility="{Binding Expanded, Converter={StaticResource Vis}}">
                 <ItemsControl ItemsSource="{Binding Players}" ItemTemplate="{StaticResource PlayerChip}">
@@ -416,7 +416,7 @@
                             <RadioButton x:Name="NavNet" Style="{StaticResource Nav}" Tag="&#xEA18;" Content="Connection" IsChecked="True" Checked="Nav_Checked"
                                          ToolTip="The IP servers see, Change IP and the phone"/>
                             <RadioButton x:Name="NavServers" Style="{StaticResource Nav}" Tag="&#xE968;" Content="Servers" Checked="Nav_Checked"
-                                         ToolTip="Servers that go through the phone"/>
+                                         ToolTip="Your servers: players, ping and Join"/>
                             <RadioButton x:Name="NavRegions" Style="{StaticResource Nav}" Tag="&#xE909;" Content="Regions" Checked="Nav_Checked"
                                          ToolTip="Pick where CS2 matchmaking can play"/>
                             <RadioButton x:Name="NavAccounts" Style="{StaticResource Nav}" Tag="&#xE716;" Content="Accounts" Checked="Nav_Checked"
@@ -764,7 +764,7 @@
                                     <TextBox x:Name="DefaultPortBox" Width="64" Height="28" FontFamily="{StaticResource Mono}" VerticalContentAlignment="Center"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="10,0,0,0">
-                                    <Button Style="{StaticResource Primary}" Click="AddServers_Click" Content="Add" ToolTip="Adds those servers and routes them through the phone right away (Ctrl+Enter)"/>
+                                    <Button Style="{StaticResource Primary}" Click="AddServers_Click" Content="Add" ToolTip="Adds those servers to the list (Ctrl+Enter). With protection on, they only go out through the phone."/>
                                     <Button Click="PasteServers_Click" Content="Paste" ToolTip="Adds whatever is on the clipboard"/>
                                     <Button Click="ImportServers_Click" Margin="0" Content="Import" ToolTip="Reads every IP:port from a .txt, .csv or .cfg file"/>
                                 </StackPanel>
@@ -824,9 +824,9 @@
                                     <TextBlock x:Name="ServerCount" Grid.Column="1" Foreground="{StaticResource Faint}" VerticalAlignment="Center" Margin="12,0,0,0"/>
                                     <StackPanel Grid.Column="2" Orientation="Horizontal">
                                         <CheckBox x:Name="AutoQueryBox" Style="{StaticResource Switch}" Content="Refresh every 30 s" Margin="0,0,14,0" VerticalAlignment="Center" Click="AutoQuery_Click"
-                                                  ToolTip="Players, map and ping every 30 seconds, always through the phone"/>
-                                        <Button x:Name="QueryBtn" Click="QueryServers_Click" Content="Refresh all" ToolTip="Asks the marked servers, or all of them when none is marked, for their name, map, players and ping (through the phone, never the home network). Click a marked server again, or press Escape, to unmark it."/>
-                                        <Button x:Name="CopyBtn" Click="CopyServers_Click" Content="Copy IPs" ToolTip="Copies the selected servers (or all) as IP:port"/>
+                                                  ToolTip="Players, map and ping every 30 seconds, on the connection the game uses now"/>
+                                        <Button x:Name="QueryBtn" Click="QueryServers_Click" Content="Refresh all" ToolTip="Asks the marked servers, or all the ones shown when none is marked, for their name, map, players and ping. With protection on, only through the phone, never the home network. Click a marked server again, or press Escape, to unmark it."/>
+                                        <Button x:Name="CopyBtn" Click="CopyServers_Click" Content="Copy IPs" ToolTip="Copies the selected servers (or all the ones shown) as IP:port"/>
                                         <Border Width="1" Background="{StaticResource Line}" Margin="4,4,14,4"/>
                                         <Button x:Name="RemoveBtn" Style="{StaticResource Danger}" Margin="0" Click="RemoveServers_Click" Content="Remove" IsEnabled="False" ToolTipService.ShowOnDisabled="True" ToolTip="Removes the selected servers and their routes. Select first (Ctrl or Shift for several)."/>
                                     </StackPanel>
@@ -942,10 +942,10 @@
                                         <TextBlock x:Name="RegionsSource" Foreground="{StaticResource Faint}" FontSize="11" Margin="0,3,0,0" TextWrapping="Wrap" Visibility="Collapsed"/>
                                     </StackPanel>
                                     <Button x:Name="RegionsRefreshBtn" Grid.Column="1" Margin="0" VerticalAlignment="Top" Click="RegionsRefresh_Click" Content="Refresh"
-                                            ToolTip="Reads Valve's relay list again and measures the ping to every region through the phone"/>
+                                            ToolTip="Reads Valve's relay list again and measures the ping to every region on the connection the game uses now"/>
                                 </Grid>
                                 <WrapPanel Margin="0,12,0,0">
-                                    <Button x:Name="RegionsClosestBtn" IsEnabled="False" Click="RegionsClosest_Click" Content="Closest 3" ToolTip="Keeps the 3 regions with the lowest ping through the phone and turns the rest off"/>
+                                    <Button x:Name="RegionsClosestBtn" IsEnabled="False" Click="RegionsClosest_Click" Content="Closest 3" ToolTip="Keeps the 3 regions with the lowest ping and turns the rest off"/>
                                     <Button x:Name="RegionsContinentBtn" IsEnabled="False" Click="RegionsContinent_Click" Content="Europe only" Visibility="Collapsed" ToolTip="Keeps every region in your continent and turns the rest off"/>
                                     <Button x:Name="RegionsAllowAllBtn" IsEnabled="False" Click="RegionsAllowAll_Click" Content="Allow all (block off)" ToolTip="Turns every region back on and removes the Firewall rule. CS2 picks as usual."/>
                                     <Border Width="1" Background="{StaticResource Line}" Margin="4,4,14,4"/>
@@ -989,7 +989,7 @@
                                     <TextBlock Text="Allow" Style="{StaticResource CardTitle}" Margin="0"/>
                                     <TextBlock Grid.Column="1" Text="Region" Style="{StaticResource CardTitle}" Margin="0"/>
                                     <TextBlock Grid.Column="2" Text="Country" Style="{StaticResource CardTitle}" Margin="0"/>
-                                    <TextBlock Grid.Column="3" Text="Ping" Style="{StaticResource CardTitle}" Margin="0" ToolTip="Measured through the phone, the same path the game uses"/>
+                                    <TextBlock Grid.Column="3" Text="Ping" Style="{StaticResource CardTitle}" Margin="0" ToolTip="Measured on the connection the game uses now: the phone with protection on, your home connection otherwise."/>
                                     <!-- beta.10: Only this region shows on the row under the pointer or the one clicked; the header says so -->
                                     <TextBlock Grid.Column="5" Grid.ColumnSpan="2" Text="Just one region? Point at it: Only this region" Style="{StaticResource CardTitle}" Margin="0"
                                                HorizontalAlignment="Right" Foreground="{StaticResource Faint}"/>
@@ -1268,7 +1268,7 @@
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock x:Name="CfgCopyHint" Style="{StaticResource OptSub}" VerticalAlignment="Center" Margin="0,0,10,0"
-                                                           Text="Each account gets a backup first (see Backups)."/>
+                                                           Text="Each account gets a backup first (Configs > Backups)."/>
                                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                                                     <Button x:Name="CfgToAllBtn" Content="All" Click="CfgToAll_Click" ToolTip="Tick every other account"/>
                                                     <Button x:Name="CfgToNoneBtn" Content="None" Click="CfgToNone_Click"/>
@@ -1710,7 +1710,7 @@
                                         <TextBlock Text="Make the others look like" Foreground="{StaticResource Faint}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                         <ComboBox x:Name="IdentSource" Width="140" ToolTip="The account whose look the others get"/>
                                         <Button x:Name="ProfIdentBtn" Content="Preview" Click="ProfIdentical_Click" Margin="6,0,0,0"
-                                                ToolTip="Copies that account's name, picture, real name, bio and country into a new template (&quot;Look of …&quot;), picks every other account and shows the preview. Nothing changes until you click Apply."/>
+                                                ToolTip="Copies that account's name, picture, real name, bio and country (and privacy, if you signed in to it) into a new template (&quot;Look of …&quot;), picks every other account and shows the preview. Nothing changes until you click Apply."/>
                                     </StackPanel>
                                 </Grid>
 
@@ -2315,13 +2315,13 @@
                                                   ToolTip="A scheduled task named 'CS2 IP Changer' opens the app in the notification area when you sign in, with its admin rights and without the UAC prompt each time. Protection starts off, unless Settings > Protection > Turn on protection when the app starts is on. Only for the copy installed in C:\Program Files\CS2 IP Changer. Turning this off, Remove everything and --restore delete the task.">
                                             <StackPanel>
                                                 <TextBlock Text="Start with Windows"/>
-                                                <TextBlock Text="Opens in the notification area when you sign in, with protection off (see Protection)." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="Opens in the notification area when you sign in. Protection starts as set in Settings > Protection." Style="{StaticResource OptSub}"/>
                                                 <TextBlock x:Name="AutostartHint" Visibility="Collapsed" Style="{StaticResource OptSub}" Foreground="{StaticResource Warn}"
                                                            Text="Only for the installed copy: start the app from Downloads and click Install."/>
                                             </StackPanel>
                                         </CheckBox>
                                         <CheckBox x:Name="CloseToTrayBox" Style="{StaticResource Switch}" Click="CloseToTray_Click" Margin="0,0,0,12"
-                                                  ToolTip="The X hides the window and the app keeps protecting from the notification area (next to the clock). Click the icon to open it; right-click it for New IP, Change IP, Regions, Turn protection on or off and Quit.">
+                                                  ToolTip="The X hides the window and the app keeps running in the notification area (next to the clock). Click the icon to open it; right-click it for its menu, Quit included.">
                                             <StackPanel>
                                                 <TextBlock Text="Close to the notification area"/>
                                                 <TextBlock Text="The X hides the window. Quit is in the icon's menu." Style="{StaticResource OptSub}"/>

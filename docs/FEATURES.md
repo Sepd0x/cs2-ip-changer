@@ -145,7 +145,7 @@ For this the app only talks to Steam (steamcommunity.com, login.steampowered.com
 **Stream friendly.** Hide usernames keeps usernames off screen, also in the Log, and your home IP stays masked in the app. The Steam Web API key is hidden unless you click Show. While OBS Studio or Streamlabs is open, Hide usernames turns on by itself (Settings > Privacy).
 
 **In the background.** An icon next to the clock shows the protection state when you point at it; click it to open the app, right-click it for Turn protection on or off, New IP + next account, Change IP, Regions and Quit. While the window is hidden, the app's notices come as Windows notifications. In Settings > App, all off until you turn them on:
-- **Close to the notification area**: the X hides the window and protection carries on.
+- **Close to the notification area**: the X hides the window and the app keeps running next to the clock, with protection on or off as it was.
 - **Start with Windows**: a scheduled task named "CS2 IP Changer" opens the app in the notification area when you sign in, with its admin rights and without a UAC prompt each time. Like any start, protection is off until you turn it on, unless Settings > Protection > Turn on protection when the app starts is ticked. Only the copy in `C:\Program Files\CS2 IP Changer` can do this.
 - **Mobile data warning** (Settings > Mobile data): the Phone box on Connection counts what went through the phone's adapter since the app opened and this month, and the app warns once a month at the GB you pick. It counts everything on that adapter, not only CS2, and your carrier's count can differ a little.
 

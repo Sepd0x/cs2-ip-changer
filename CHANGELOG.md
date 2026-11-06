@@ -15,7 +15,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
   - Accounts has two boxes like Servers: Add and log in on top (On login, Add, New IP + next account), the list below with Refresh. Show hidden (was Settings > Maintenance > Show hidden accounts) is next to Refresh and only shows while some accounts are hidden.
   - Configs: Copy, Sync and Snapshots on the left; Account configs, Compare and Backups on the right. Both columns end on one line.
 - The usage stats also count whether Turn on protection when the app starts and Use the app with protection off are changed from their default.
-- When a Steam folder is a link or junction, Configs now says the same as the account switch, with the reason: "the Steam folder goes through a link or junction; the app only writes to a real folder".
+- When a Steam folder is a link or junction, Configs now says the same as the account switch, with the reason: "a Steam or CS2 config folder goes through a link or junction; the app only writes to a real folder".
 
 - README: a row of badges under the title (latest release, downloads, Windows 10 and 11, the VirusTotal result, build status, license), the "not for VAC or game bans" note as a highlighted box, and a Support section with where to report a bug, an idea or a security problem. The animated demo and the banner show the new logo.
 
@@ -45,7 +45,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - The hotspot tooltip said "everything is blocked" when the PC leaves the phone's network; it is your servers and CS2, while protection is on.
 - With protection off, a phone sharing your home Wi-Fi gave an error in the Log, the Windows error sound and the message "Servers and CS2 are now blocked", although nothing is blocked then. The Log now says to turn off the phone's Wi-Fi before you turn on protection, without the sound.
 - With protection off, the box under the IP servers see could show your home IP in full, next to "phone ready", while the phone wasn't ready. It now shows the phone's IP only once it is checked.
-- With protection off, Change IP, Phone setup and the tray balloon said servers were blocked, that servers see the phone's IP, or that protection carries on. They now say what happens with protection off.
+- With protection off, Change IP and Phone setup said servers were blocked, or that servers see the phone's IP. They now say what happens with protection off.
 - With protection off and CS2 on your home connection, Change IP asked "you will be disconnected" and said "If you are on a server, you will drop". It only asks that when CS2 really goes through the phone.
 - Turn off protection with CS2 open now says in the same question that the server you are on sees your home IP from then on.
 - With protection off or No phone, Status said "nothing is blocked" while regions you turned off stay blocked. It now says so, and so does the warning of Use the app with protection off.
@@ -65,6 +65,49 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - On the phone's hotspot, Turn off phone Wi-Fi showed as the main button, and on some phones it also stops the hotspot. It no longer shows there.
 - The tooltip of Turn on USB tethering said the app waits 15 s for Windows; it waits 30 s.
 - With protection on and a phone you used before gone, Status had no blue button. Phone setup is the blue one then.
+- Configs: an account whose CS2 folder is a link or junction showed as "No CS2 config yet" and "gets the sync", but the sync never reaches it. It now says "CS2 folder is a link", stays out of the group of accounts with no config, and Save snapshot says why it can't read it.
+- Configs: clicking Undo last sync a second time put the sync back and said "Undone" again. After an undo the button is now greyed out (Backups still has everything). Undoing a Restore also removes a file the restore had to create.
+- Configs: when no account could be put back, Undo last sync said "Undone on 0 accounts". It now says nothing was undone.
+- Configs: with nothing ticked in Copy > What to copy, Sync now said there was no account to copy to. It now says to tick something there, and the line under Sync now says so too. Copy pointed to "Sync > What to copy"; it now says Copy > What to copy.
+- Configs: copying a part the source doesn't have (for example binds from a snapshot with only the game settings) said every account already had the same config. It now says the source has no binds.
+- Configs: Compare could start on two accounts it then showed as "Same settings." (the same crosshair written by an older CS2). It now starts on one that really differs.
+- Accounts > Use as main config said new accounts and logins get the config even with Configs > Sync > When turned off. It now says only what is on.
+- Configs: a snapshot with the HUD file said "HUD and audio"; it now says "HUD, radar and audio" like the rest of the app. The line under Copy points to Configs > Backups by name.
+- With Close to the notification area on, the first X showed "Protection carries on" even with protection off or in No phone mode. The notice and the option's tooltip no longer talk about protection: the app keeps running, protected or not as it was.
+- Settings > App > Start with Windows said the app opens "with protection off", even with Turn on protection when the app starts on. It now says protection starts as set in Settings > Protection.
+- Settings > Maintenance > Open Windows Firewall: when the Firewall couldn't open, its error was replaced at once by a green "look for" message. The error now stays, and the message gives the start of every rule's name, not only the kill switch's (which isn't there with protection off).
+- With OBS or Streamlabs open, changing Open CS2, Start Steam minimized or Offline mode under Accounts > On login could turn Settings > Privacy > Hide usernames on for good, so usernames stayed hidden after OBS closed. The switch now shows only your own choice.
+- Turning off Hide usernames while OBS or Streamlabs is open wrote "The streaming program closed" in the Log while it was still open. It now says the option was turned off.
+- The mobile data warning never came when you set the limit below what you had already used this month. It now comes on the next data the app counts, once a month as before.
+- Profiles > Make the others look like: the Preview tooltip now says it also copies the privacy settings when you are signed in to that account.
+- After an update made with protection off, the usage stats notice (when it shows again) said the version before had left protection on. It now only says so when it did.
+- Update on a release the app won't install only said "Opened the release page on GitHub.", in green. It now says why (no exe, no .sha256, not signed, or a copy that can't replace itself), and the Log says it too.
+- Uninstall from Windows Settings with the app closed: if the removal stopped half-way, the window stayed on "Removing…" and the app closed without a word. It now says what stopped it and to run `--restore`.
+- `--restore`: when only the Start with Windows task couldn't be deleted, the message said to restart the PC to clear routes. It now says the network is restored and how to remove the task.
+- Install: when SRT_Dados couldn't be copied, the message could run two sentences together ("can't be removed Then start").
+- Adding servers always said "added and protected", also with protection off or in No phone mode, where they see your home IP. It now says what happens: they go through the phone, they stay blocked until the phone is connected and checked, or they see your home IP. The Add tooltip no longer promises the phone, and in No phone mode the offer to add a server you joined just asks to add it to the list.
+- With the phone plugged in but its IP still being checked (or its Wi-Fi on), Refresh on Servers said "Phone disconnected" and Join said "protection is not confirmed (Blocked)". Servers, Join, Wait for a slot and Regions now give the real reason, for example "The phone connection's public IP hasn't been checked yet." A slot wait with protection turned off says that.
+- A double click on a server's star, its player count or its Join button also joined the server (and with CS2 open, that can take you out of your match). Only a double click on the row itself joins now.
+- With Join automatically on, a free slot that opened while another command was running (Change IP, an account switch) was lost: the join was refused as busy and the wait was gone. With a question open, it closed your question. Now the app keeps the slot, says it is free and shows Join. The retry on a full server waits for the other command too.
+- After protection was turned off, the phone dropped, or a server had no route yet, Servers kept showing the last map, players and ping as if they were live. A row that isn't asked now shows dashes, and the Refresh count no longer counts servers it didn't ask as not responding ("3 of 5 servers responded (2 not asked: not routed through the phone yet)").
+- A server without a name was called "Server not responding" before it was ever asked, also in Join's messages and questions. The list now says "No name yet" until it is asked and "Not responding" only when it didn't answer; messages use its IP:port.
+- Tooltips on Servers and Regions said the ping, Refresh and Join always went through the phone. They now say what happens with protection on and off.
+- The ping on Servers came out about double on most CS2 servers (the ones that ask for a challenge first), so its color and the order were off too. It now counts one round trip.
+- Pasting a server name or an IPv6 address said "Those servers are already in the list." It now says no IPv4 address was found and that the app needs the IP:port.
+- Text copied from a server browser, like "1.2.3.4 35ms" or "1.2.3.4, 12, de_dust2", added the server with port 35 or 12. A number after a space or a comma only counts as the port when it has 4 or 5 digits; after ":" it works as before.
+- With a search on Servers and nothing marked, the button said Refresh all but only asked the servers shown. It now says Refresh shown, and the Refresh and Copy IPs tooltips say "the ones shown".
+- Servers added while the 30 s refresh was running stayed without name and ping until the next refresh (or for good with it off), and a Refresh click then did nothing. Both now run right after, and the click says the app is already asking.
+- At start, every address removed from an old server list was called a local network address. The Log now tells local addresses, other invalid ones, bad ports and repeats apart.
+- After a match played with protection off, the Log's network summary named the phone's IP and, if it lagged, blamed the phone's connection and gave phone tips. It now says "home connection" whenever protection is off.
+- With protection off, opening CS2 in Whole PC mode said the programs opened with it also go through the phone. That note now only shows with protection on.
+- The bug report's "IP servers see" line showed the phone's IP even with protection off or in No phone mode. It is now called what it is, "Phone public IP".
+- In No phone mode or with protection off on a PC whose only network is the phone, Join's Log line and the Regions ping line said "home connection" and "without the phone". They now say it went on the phone's connection because the PC has no other network.
+- Allow all on Regions with CS2 open said "the block is already on". It now says every region is allowed again and that CS2 only measures the regions when it starts.
+- After turning protection on or off, Regions kept the pings measured on the other path, said "through the phone" in one place and "without the phone" in another, and Closest 3 picked from them. The old pings now go, and with the page open the app measures again on the path the game uses.
+- Closest 3 said "Measure the ping first" when only 1 or 2 regions had answered. It now says how many answered and that there aren't 3 to keep; with none answering, it says so.
+- With cs2.exe not found, or a Firewall write that failed, Regions said "CS2 can play in 3 of 30 regions" and Checks "3 of 30 allowed", as if the block was on. They now say the regions are picked but not blocked yet (or that the Firewall rule didn't change), and a click on a shortcut says why.
+- Refresh on Regions without internet only showed the grey "Offline" line, and the Log didn't say Valve couldn't be reached. Now both say it.
+- Join with CS2 closed waited the full 2 minutes before joining when the app hadn't found cs2.exe yet. It now finds CS2 once it is open and joins when the main menu is ready.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

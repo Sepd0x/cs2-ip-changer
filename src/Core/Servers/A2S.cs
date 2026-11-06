@@ -34,6 +34,7 @@ public static class A2S
         {
             // Challenge: repeat the request with the 4 bytes received.
             req = req.Concat(data.Skip(5).Take(4)).ToArray();
+            sw.Restart();   // the ping is one round trip: the challenge's own one doesn't count (review C3, it came out about double)
             data = await Exchange(udp, ep, req, timeoutMs, 0x41, 0x49);
         }
         sw.Stop();

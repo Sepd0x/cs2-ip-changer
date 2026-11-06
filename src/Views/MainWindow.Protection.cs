@@ -436,13 +436,12 @@ public partial class MainWindow
         return (rep.Unprotected || rep.Egress == null ? null : true, $"Home network: {name}");
     }
 
-    /// <summary>The adapter Windows uses for the rest of the PC is the phone's (protected, still being checked, or any phone adapter).</summary>
-    public static bool PcOnPhone(GuardReport rep)
-    {
-        var pc = rep.Adapters.FirstOrDefault(a => a.Index == rep.PcDefaultIndex);
-        if (pc == null && rep.PcDefaultName is null or "—") return false;
-        return rep.PcDefaultIsEgress || pc?.IsPhone == true || (rep.PhoneIndex >= 0 && rep.PcDefaultIndex == rep.PhoneIndex);
-    }
+    /// <summary>
+    /// The adapter Windows uses for the rest of the PC is the phone's (HomeIsPhone), and there is an internet connection at all:
+    /// RestOfPc, Status with protection off, the IP box and Change IP read it.
+    /// </summary>
+    public static bool PcOnPhone(GuardReport rep) =>
+        !(rep.PcDefaultName is null or "—" && !rep.Adapters.Any(a => a.Index == rep.PcDefaultIndex)) && HomeIsPhone(rep);
 
     /// <summary>Protection off or No phone: whether anything is blocked. The Regions block stays in every state.</summary>
     public static string NothingBlocked(int blockedRegions) => blockedRegions > 0 ? "only the regions you turned off are blocked" : "nothing is blocked";

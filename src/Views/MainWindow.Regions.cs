@@ -53,12 +53,12 @@ public partial class MainWindow
 
     async void RegionsRefresh_Click(object sender, RoutedEventArgs e)
     {
-        await LoadRegions(atStart: false);
+        await LoadRegions(atStart: false, asked: true);
         await PingRegions(quiet: false);
     }
 
     /// <summary>Valve's list (or the saved copy), the rows, and the rule rebuilt when the list's revision changed.</summary>
-    async Task LoadRegions(bool atStart, bool quiet = false)
+    async Task LoadRegions(bool atStart, bool quiet = false, bool asked = false)
     {
         if (_regionsLoading) return;
         _regionsLoading = true;
@@ -79,6 +79,8 @@ public partial class MainWindow
                 else if (!atStart && !quiet) Toast("Couldn't reach Valve: still using the list from " + Fmt.When(_sdr.FetchedAt) + ".", false);
                 return;
             }
+            // Refresh offline said nothing about Valve (review C17); opening the page offline stays quiet (it tries every time)
+            if (cfg.FromCache && asked) Toast("Couldn't reach Valve: still using the list saved on " + Fmt.When(cfg.FetchedAt) + ".", false);
             var changed = _sdr != null && _sdr.Revision != cfg.Revision;
             _sdr = cfg;
             // Same list as before (the hourly read, mostly): the rows stay as they are, so the list doesn't jump to the top.
@@ -138,7 +140,7 @@ public partial class MainWindow
         if (local == null)
         {
             // Through the phone while protection is on (the number has to be what the game feels, never from the home IP), else at home
-            if (!quiet) Toast(PingedOnHome ? "No connection to measure the ping through." : "Protection is on and the phone is disconnected: the ping is measured through the phone. Turning regions on and off still works.", false);
+            if (!quiet) Toast(PingedOnHome ? "No connection to measure the ping through." : NoLinkWhy(_last) + " With protection on, the ping is only measured through the phone. Turning regions on and off still works.", false);
             ShowRegionsStatus();
             return;
         }
@@ -151,6 +153,7 @@ public partial class MainWindow
             foreach (var r in _regions) r.PingMs = pings.GetValueOrDefault(r.Id, -1);
             _regionsPingedAt = DateTime.Now;
             _regionsPingedHome = PingedOnHome;
+            _regionsHomeIsPhone = _regionsPingedHome && _last != null && HomeIsPhone(_last);
             _regionView?.Refresh();
             if (!quiet) Toast($"{pings.Count(p => p.Value >= 0)} of {pings.Count} regions answered.", pings.Any(p => p.Value >= 0));
         }
@@ -182,8 +185,15 @@ public partial class MainWindow
 
     bool PingedOnHome => PingOnHome(_s.NoPhone, _protOn);
     bool _regionsPingedHome;
+    /// <summary>Measured "without the phone", but the PC had no other network, so it went on the phone's connection (review C23).</summary>
+    bool _regionsHomeIsPhone;
 
-    string MeasureFirst => PingVia == null && !PingedOnHome ? "Measure the ping first: protection is on, so connect the phone and press Refresh." : "Measure the ping first: press Refresh.";
+    string MeasureFirst => PingVia == null && !PingedOnHome ? "Measure the ping first. " + NoLinkWhy(_last) + " With protection on, the ping is only measured through the phone." : "Measure the ping first: press Refresh.";
+
+    /// <summary>The page's grey line while protection is on and nothing can be measured: connect the phone, or wait for its check.</summary>
+    public static string NoPingSuffix(GuardReport rep) => rep?.Candidate != null
+        ? " · the ping waits until the phone's connection is checked (protection is on)"
+        : " · connect the phone to measure ping (protection is on)";
 
     Dictionary<string, int> MeasuredPings() => _regions.Where(r => r.PingMs >= 0).ToDictionary(r => r.Id, r => r.PingMs);
 
@@ -207,9 +217,18 @@ public partial class MainWindow
     {
         if (NoRegionList()) return;
         var closest = Regions.Closest(MeasuredPings(), 3);
-        if (closest.Count < 3) { Toast(MeasureFirst, false); return; }
+        if (closest.Count < 3) { Toast(ClosestText(_regions.Count(r => r.PingMs > -2), closest.Count, MeasureFirst), false); return; }
         _ = SetBlocked(Regions.AllExcept(_regionInfos, closest), keep: closest);
     }
+
+    /// <summary>
+    /// Closest 3 with fewer than 3 pings: measure first only when nothing was measured (review C15: with 2 answers it asked to measure,
+    /// and Refresh gave the same). <paramref name="measured"/> counts the regions pinged, answered or not.
+    /// </summary>
+    public static string ClosestText(int measured, int answered, string measureFirst) =>
+        measured == 0 ? measureFirst
+        : answered == 0 ? "No region answered the ping. Press Refresh to measure again."
+        : $"Only {Fmt.Count(answered, "region")} answered the ping, so there aren't 3 to keep. Use Only this region, or Refresh to measure again.";
 
     /// <summary>Your continent: from the lowest ping, else from your home country (null = the shortcut hides).</summary>
     string MyContinent => Regions.HomeContinent(_regions.Select(r => r.Info).ToList(), MeasuredPings(), _homeInfo?.Country ?? _egressInfo?.Country);
@@ -236,7 +255,7 @@ public partial class MainWindow
         SaveSettings();
         var max = (int)RegionsMaxPing.Value;
         var pings = MeasuredPings();
-        if (pings.Count == 0) { Toast(MeasureFirst, false); return; }
+        if (pings.Count == 0) { Toast(ClosestText(_regions.Count(r => r.PingMs > -2), 0, MeasureFirst), false); return; }
         var keep = pings.Where(p => p.Value <= max).Select(p => p.Key).ToList();
         if (keep.Count == 0) { Toast($"No region answered under {max} ms. Move the slider up.", false); return; }
         _ = SetBlocked(Regions.AllExcept(_regionInfos, keep), keep: keep);
@@ -272,8 +291,13 @@ public partial class MainWindow
         ShowRegionsStatus();
         if (_demo) return;
         await ApplyRegions(quiet: false);
-        if (_regionError == null && Steam.Cs2Running) Toast("CS2 is open: the block is already on, but CS2 only measures the regions when it starts. Restart it between matches.", Tone.Info);
+        if (_regionError == null && Steam.Cs2Running) Toast(Cs2OpenRegionsText(blocked.Count), Tone.Info);
     }
+
+    /// <summary>After a change with CS2 open (review C13: Allow all also said "the block is already on").</summary>
+    public static string Cs2OpenRegionsText(int blockedCount) => blockedCount == 0
+        ? "CS2 is open: every region is allowed again, but CS2 only measures the regions when it starts. Restart it between matches."
+        : "CS2 is open: the block is already on, but CS2 only measures the regions when it starts. Restart it between matches.";
 
     /// <summary>Puts the Firewall rule in line with the saved set (or removes it). One at a time, always the latest set.</summary>
     async Task ApplyRegions(bool quiet)
@@ -292,9 +316,13 @@ public partial class MainWindow
                 _regionError = "CS2 wasn't found on this PC, so there's nothing to block yet. Open CS2 once with the app running.";
                 _regionRuleOn = false;
                 _regionNoCs2 = true;
+                // A click on a shortcut said nothing before (review C16); the Log says it once until CS2 is found
+                Log.WarnOnce("regions-nocs2|", "Regions: " + _regionError);
+                if (!quiet) Toast(_regionError, false);
                 return;
             }
             _regionNoCs2 = false;
+            Log.Again("regions-nocs2|");
             var err = await Task.Run(() =>
             {
                 try
@@ -369,21 +397,49 @@ public partial class MainWindow
         if (_cRegions == null) return;
         var total = _regions.Count;
         var off = total > 0 ? _regions.Count(r => !r.Allowed) : _s.BlockedRegions.Count;
-        _cRegions.Detail = RegionsCheckText(total, off);
+        _cRegions.Detail = RegionsCheckText(total, off, _regionError != null, _regionNoCs2);
         _cRegions.Ok = null;
         _cRegions.Waiting = off > 0;   // grey when every region is allowed, amber while some are blocked
     }
 
     /// <summary>"8 of 30 allowed", "All 30 allowed"; before Valve's list is read, the count turned off.</summary>
-    public static string RegionsCheckText(int total, int off) =>
+    /// <remarks>Review C16: with cs2.exe not found there is no rule at all, and after a failed write the rule didn't change, so
+    /// "allowed" would read as a block that isn't there.</remarks>
+    public static string RegionsCheckText(int total, int off, bool failed = false, bool noCs2 = false) =>
         off == 0 ? (total > 0 ? $"All {total} allowed" : "All allowed")
+        : noCs2 ? "Not blocked yet: see Regions"
+        : failed ? "Firewall rule didn't change: see Regions"
         : total > 0 ? $"{total - off} of {total} allowed (Regions page)"
         : $"{off} turned off (Regions page)";
+
+    /// <summary>The page's title line: what CS2 can play in, or what you picked while the rule isn't there.</summary>
+    public static string RegionsTitle(int on, int total, bool failed, bool noCs2) =>
+        on >= total ? $"All {total} regions allowed: CS2 picks as usual"
+        : noCs2 ? $"{on} of {total} regions picked, not blocked yet"
+        : failed ? $"{on} of {total} regions picked: the Firewall rule didn't change"
+        : $"CS2 can play in {on} of {total} regions";
+
+    /// <summary>The pings on the page were measured on the other path (through the phone, or without it) than the game uses now.</summary>
+    public static bool PingsStale(bool anyPing, bool pingedHome, bool nowHome) => anyPing && pingedHome != nowHome;
+
+    /// <summary>
+    /// Protection or No phone changed since the ping (review C14: the line said "through the phone" while the game went home, and
+    /// Closest 3 picked from those numbers): the old pings go, and with the page open they are measured again on the new path.
+    /// </summary>
+    void RemeasureIfPathChanged()
+    {
+        if (_demo || _pingingRegions || !PingsStale(_regions.Any(r => r.PingMs >= 0), _regionsPingedHome, PingedOnHome)) return;
+        foreach (var r in _regions) r.PingMs = -2;
+        _regionsPingedAt = DateTime.MinValue;
+        _regionView?.Refresh();
+        if (PageRegions.IsVisible && PingVia?.LocalIp != null) _ = PingRegions(quiet: true);
+    }
 
     void ShowRegionsStatus()
     {
         UpdateRegionsCheck();
         if (RegionsStatus == null) return;
+        RemeasureIfPathChanged();
         // Nothing to act on until Valve's list is here (the buttons would only answer "No regions yet"). The demo fills the page itself.
         RegionsClosestBtn.IsEnabled = RegionsContinentBtn.IsEnabled = RegionsAllowAllBtn.IsEnabled = RegionsUnderBtn.IsEnabled = _regionInfos != null || (_demo && _sdr != null);
         // "<continent> only" for where you play from; hidden until the app knows it (a ping, or your home country).
@@ -408,7 +464,7 @@ public partial class MainWindow
             RegionsMaxPingHint.Visibility = Visibility.Collapsed;
             return;
         }
-        RegionsStatus.Text = off == 0 ? $"All {total} regions allowed: CS2 picks as usual" : $"CS2 can play in {on} of {total} regions";
+        RegionsStatus.Text = RegionsTitle(on, total, _regionError != null, _regionNoCs2);
         RegionsStatus.Foreground = off > 0 && on < 3 ? Ui.Warn : Ui.Text;
 
         // The rule is written and read back even while Windows Firewall is off, but then nothing enforces it.
@@ -424,11 +480,12 @@ public partial class MainWindow
         if (_sdr.FromCache) src = $"Offline: using the list saved on {Fmt.When(_sdr.FetchedAt)}";
         var pinged = _regions.Any(r => r.PingMs >= 0);
         src += _pingingRegions ? " · measuring ping…"
-            : pinged ? $" · ping measured {Fmt.Ago(_regionsPingedAt)}" + (_regionsPingedHome ? " without the phone" : " through the phone")
-            : PingVia == null && !PingedOnHome ? " · connect the phone to measure ping (protection is on)"
+            : pinged ? $" · ping measured {Fmt.Ago(_regionsPingedAt)}" + (_regionsHomeIsPhone ? " on the phone's connection (the PC has no other network)" : _regionsPingedHome ? " without the phone" : " through the phone")
+            : PingVia == null && !PingedOnHome ? NoPingSuffix(_last)
             : "";
         RegionsSource.Text = src;
-        RegionsSource.ToolTip = $"Valve list revision {_sdr.Revision}. Ping is measured " + (PingedOnHome ? "without the phone (protection off or No phone)" : "through the phone")
+        // The path of the pings shown (the same as the line), else the one the next measure takes
+        RegionsSource.ToolTip = $"Valve list revision {_sdr.Revision}. Ping is measured " + ((pinged ? _regionsPingedHome : PingedOnHome) ? "without the phone (protection off or No phone)" : "through the phone")
             + ", the same path the game uses now.";
 
         // CS2's own limit: a ping cap below the slowest region you allow means that region never comes up.

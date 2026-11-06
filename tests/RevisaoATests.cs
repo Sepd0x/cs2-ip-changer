@@ -70,7 +70,8 @@ static class RevisaoATests
         // A6: frases que diziam "blocked" ou "servers see it" com a proteção desligada
         check("Revisão A6: Change IP de volta com o IP de casa, sem proteção, não diz 'blocked'", !MainWindow.HomeBackText(false).Contains("blocked") && MainWindow.HomeBackText(true).Contains("blocked"), "");
         check("Revisão A6: Phone setup pronto, sem proteção, diz para a ligar", MainWindow.SetupReadyText(false).Contains("Turn on protection") && !MainWindow.SetupReadyText(false).Contains("then servers see it"), "");
-        check("Revisão A6: o balão do ícone só diz 'Protection carries on' com a proteção ligada", !MainWindow.TrayHintText(false).Contains("Protection") && MainWindow.TrayHintText(true).StartsWith("Protection carries on."), "");
+        // (o balão do ícone, A6.4, já ficou corrigido pela área D: não fala da proteção)
+        check("Revisão A6: o balão do ícone não diz 'Protection carries on'", !MainWindow.TrayHintText.Contains("Protection carries on"), "");
 
         // A14: as regiões continuam bloqueadas com a proteção desligada e em No phone
         check("Revisão A14: 'nothing is blocked' só sem regiões bloqueadas", MainWindow.NothingBlocked(0) == "nothing is blocked" && MainWindow.NothingBlocked(2).Contains("regions")

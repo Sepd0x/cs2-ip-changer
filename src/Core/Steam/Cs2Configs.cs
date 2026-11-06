@@ -478,6 +478,9 @@ public sealed class Cs2ConfigStore
 
     public bool HasConfig(string steamId) => Dir(steamId) is string d && !Redirected(d) && Enum.GetValues<CfgPart>().Any(p => File.Exists(Path.Combine(d, Cs2Config.PathsOf(p).Local)));
 
+    /// <summary>The account's CS2 folder (or one on the way) is a link or junction: the app neither reads nor writes it, so it isn't "no config yet".</summary>
+    public bool IsLinked(string steamId) => Dir(steamId) is string d && Redirected(d);
+
     /// <summary>The text of a small file. With <paramref name="real"/>: null unless the open file really is there (not reached through a link).</summary>
     /// <remarks>Null too when it isn't there or is too big; a file that is there but can't be read (in use, no permission) throws: that isn't "no file".</remarks>
     static string ReadText(string path, string real = null)
@@ -684,6 +687,10 @@ public sealed class Cs2ConfigStore
         if (dir == null) return new CfgResult(CfgOutcome.Failed, job.Target, cats, "no Steam userdata folder");
         var src = Source(job);
         if (src.Empty) return new CfgResult(CfgOutcome.Skipped, job.Target, cats, "the source has no CS2 config yet");
+        // A part the source doesn't have (a snapshot with some files only, an account that never saved its video) isn't "the same".
+        var missing = cats.Where(c => Cs2Config.PartsOf(c).All(p => src.Get(p) == null)).ToList();
+        if (missing.Count > 0 && missing.Count == cats.Count) return new CfgResult(CfgOutcome.Skipped, job.Target, cats, $"the source has no {Cs2Config.CategoryList(missing)}");
+        if (missing.Count > 0) Log.Info($"Config: the source has no {Cs2Config.CategoryList(missing)}, so that part was left out.");
 
         // What each file becomes (path under 730 -> text)
         var plan = new Dictionary<string, string>();
@@ -857,7 +864,8 @@ public sealed class Cs2ConfigStore
         try
         {
             var real = Pin(b.SteamId, rels, held);
-            Backup(b.SteamId, dir, rels.Where(r => File.Exists(Path.Combine(dir, r))), CfgTrigger.Restore, null, syncId, real);
+            // Every file the restore touches: one missing now goes in as created, so undoing the restore removes it again.
+            Backup(b.SteamId, dir, rels, CfgTrigger.Restore, null, syncId, real);
             foreach (var (rel, text) in saved) WriteHeld(real, rel, text);
             // Files the copy created didn't exist before it: the account goes back to CS2's defaults there (deleted as themselves,
             // only in 730's real folder). One still there afterwards (in use, refused) is said, not taken as done.
@@ -906,6 +914,13 @@ public sealed class Cs2ConfigStore
         {
             try { if (Restore(b, syncId)) done++; else failed?.Add(b.SteamId); }
             catch (Exception ex) { Log.Warn($"Config undo: an account stayed as it was: {Why(ex)}"); failed?.Add(b.SteamId); }
+        }
+        // The undo's own backups would make it "the last sync": a second Undo would put the sync back. Nothing left to undo
+        // (the button greys out); the undo itself can still be reverted from Backups. Untouched when nothing went back, to try again.
+        if (State.LastSyncId != last)
+        {
+            State.LastSyncId = null;
+            SaveState();
         }
         return done;
     }

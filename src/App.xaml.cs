@@ -43,7 +43,7 @@ public partial class App : Application
         var updated = args.Contains(AppIds.Args.Updated);
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
         var settingsFile = Paths.File(AppIds.Files.Settings);
-        var stats = StatsGate(args, () => StatsNoticeWindow(updated, StatsNoticeIn(settingsFile)).ShowAndWait(), settingsFile);
+        var stats = StatsGate(args, () => StatsNoticeWindow(ProtectionLeftOn(args), StatsNoticeIn(settingsFile)).ShowAndWait(), settingsFile);
         if (!stats.Go)
         {
             if (updated) UndoAfterUpdateQuit();
@@ -139,11 +139,13 @@ public partial class App : Application
         catch (Exception ex) { left = ex.Message; }
         // Start with Windows goes too: --restore is the way out, the task would start the app (and its rules) again at sign-in.
         // Off the UI thread: Proc.Run's awaits would come back to this thread, which is blocked waiting here.
-        try { if (Task.Run(Autostart.TurnOff).GetAwaiter().GetResult() is string task) left = left == null ? task : left + "; " + task; }
-        catch (Exception ex) { left = (left == null ? "" : left + "; ") + ex.Message; }
+        // Said on its own: "restart the PC to clear routes" is no help for a task.
+        string task;
+        try { task = Task.Run(Autostart.TurnOff).GetAwaiter().GetResult(); }
+        catch (Exception ex) { task = ex.Message; }
         var running = false;
         try { if (Mutex.TryOpenExisting(InstanceName, out var other)) { running = true; other.Dispose(); } } catch (UnauthorizedAccessException) { running = true; }
-        RestoredWindow(left, running).ShowAndWait();
+        RestoredWindow(left, running, task).ShowAndWait();
         Shutdown();
     }
 
@@ -166,8 +168,20 @@ public partial class App : Application
             {
                 w.Working = true;
                 w.Say("Removing the rules, routes, task and the app's files…");
-                var servers = Store.Load<List<ServerItem>>(Paths.File(AppIds.Files.Servers), () => new());
-                o = await Uninstall.Run(w.Choice == 1, () => new Guard().RestoreAll(servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: false));
+                try
+                {
+                    var servers = Store.Load<List<ServerItem>>(Paths.File(AppIds.Files.Servers), () => new());
+                    o = await Uninstall.Run(w.Choice == 1, () => new Guard().RestoreAll(servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: false));
+                }
+                catch (Exception ex)
+                {
+                    // As the Remove inside the app: never left in Working with no word (the UI error handler isn't set up on this path)
+                    Log.Error("Remove stopped: " + ex.Message);
+                    w.Working = false;
+                    w.Finish();
+                    w.Say("Remove stopped: " + ex.Message + $" Run {AppIds.ExeName} {AppIds.Args.Restore} to undo the network changes.", bad: true);
+                    return;
+                }
                 Log.Info(Uninstall.LogLine(o));
                 w.Working = false;
                 w.Close();
@@ -217,16 +231,24 @@ public partial class App : Application
     public static int StatsNoticeIn(string settingsFile) =>
         Store.Peek<Settings>(settingsFile) is { StatsAccepted: true } s ? Math.Max(s.StatsNotice, 1) : 0;
 
+    /// <summary>
+    /// Started by an update that left protection on: --updated with --on, or --updated alone (beta.9). With --off or --standby nothing
+    /// was on, so the notice doesn't say it was. The rule of <see cref="Guard.OnAtStart"/> for an update.
+    /// </summary>
+    public static bool ProtectionLeftOn(string[] args) =>
+        args.Contains(AppIds.Args.Updated) && Guard.OnAtStart(true, args, false, false, false, noPhone: false);
+
     /// <summary>The usage stats notice: the short text, the full list under See the full list, Accept and Quit.</summary>
+    /// <param name="leftOn">Started by an update that left protection on (<see cref="ProtectionLeftOn"/>): the notice says Quit turns it off.</param>
     /// <param name="had">The notice accepted before (<see cref="StatsNoticeIn"/>): above 0, what changed since then is added.</param>
-    internal static NoticeWindow StatsNoticeWindow(bool updated = false, int had = 0) =>
-        new(Telemetry.NoticeTitle, StatsNoticeBody(updated, had), "Accept", "Quit", more: Telemetry.NoticeList);
+    internal static NoticeWindow StatsNoticeWindow(bool leftOn = false, int had = 0) =>
+        new(Telemetry.NoticeTitle, StatsNoticeBody(leftOn, had), "Accept", "Quit", more: Telemetry.NoticeList);
 
     /// <summary>The notice's visible text (<see cref="StatsNoticeWindow"/>), without the full list.</summary>
-    public static string StatsNoticeBody(bool updated, int had)
+    public static string StatsNoticeBody(bool leftOn, int had)
     {
         var changed = Telemetry.NoticeChangedFor(had);
-        return Telemetry.NoticeShort + (changed != "" ? "\n\n" + changed : "") + (updated ? "\n\n" + Telemetry.NoticeAfterUpdate : "");
+        return Telemetry.NoticeShort + (changed != "" ? "\n\n" + changed : "") + (leftOn ? "\n\n" + Telemetry.NoticeAfterUpdate : "");
     }
 
     /// <summary>
@@ -251,18 +273,19 @@ public partial class App : Application
     internal static NoticeWindow AlreadyRunningWindow() =>
         new("CS2 IP Changer is already running", "Close the copy that is open first (look in the taskbar), then start the app again.", "Close");
 
-    internal static NoticeWindow RestoredWindow(string left, bool running)
+    internal static NoticeWindow RestoredWindow(string left, bool running, string task = null)
     {
-        var (title, text) = RestoredText(left, running);
-        return new(title, text, "Close", problem: left != null || running);
+        var (title, text) = RestoredText(left, running, task);
+        return new(title, text, "Close", problem: left != null || running || task != null);
     }
 
-    /// <summary>--restore's result: what is left (null = all clean) and whether another copy still runs.</summary>
-    public static (string Title, string Text) RestoredText(string left, bool running) =>
+    /// <summary>--restore's result: what is left of the network (null = all clean), whether another copy still runs, and why the Start with Windows task stayed (null = gone).</summary>
+    public static (string Title, string Text) RestoredText(string left, bool running, string task = null) =>
         (left == null && !running ? "Network restored" : "Network not fully restored",
             (left == null
                 ? "The Firewall rules and routes from CS2 IP Changer are gone."
                 : "Couldn't remove: " + left + ".\n\nRestart the PC to clear routes. Rules can be removed in Windows Firewall > Outbound Rules (names start with " + AppIds.RulePrefix + ").")
+            + (task != null ? "\n\nThe Start with Windows task wasn't removed: " + task.TrimEnd().TrimEnd('.') + ". Open the app and turn off Settings > App > Start with Windows, or delete the task \"CS2 IP Changer\" in Task Scheduler." : "")
             + (running ? "\n\nAnother copy of the app is still running: close it, or it puts the rules back." : ""));
 
     static void OnUiError(object sender, DispatcherUnhandledExceptionEventArgs e)

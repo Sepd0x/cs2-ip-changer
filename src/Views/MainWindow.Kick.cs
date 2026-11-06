@@ -73,13 +73,15 @@ public partial class MainWindow
     public static bool OffersAdd(string server, IEnumerable<string> listed, ICollection<string> offered) =>
         server != null && !listed.Contains(server) && !offered.Contains(server);
 
-    public static string AddJoinedText(string server) => $"You joined {server}, which isn't in your servers. Add it, to play it through the phone next time?";
+    public static string AddJoinedText(string server, bool noPhone = false) => noPhone
+        ? $"You joined {server}, which isn't in your servers. Add it to the list?"
+        : $"You joined {server}, which isn't in your servers. Add it, to play it through the phone next time?";
 
     void OfferAddJoined(string server)
     {
         if (!OffersAdd(server, _servers.Select(x => x.Key), _addOffered)) return;
         _addOffered.Add(server);
-        Toast(AddJoinedText(server), Tone.Info, "Add", () => AddFromText(server));
+        Toast(AddJoinedText(server, _s.NoPhone), Tone.Info, "Add", () => AddFromText(server));
     }
 
     readonly NetReportReader _netReport = new();
@@ -91,8 +93,8 @@ public partial class MainWindow
     /// </summary>
     void LogNetReport(NetReport r)
     {
-        // The home connection on purpose (No phone, or protection off with the option): no phone IP and no phone tips
-        var home = OnHome;
+        // The home connection (No phone, or protection off, with or without the option): no phone IP and no phone tips (review C11)
+        var home = PingOnHome(_s.NoPhone, _protOn);
         var via = home ? "home connection" : "phone IP " + (_egressPublic ?? "not measured");
         var line = r.Line(via, _consoleServer);
         if (r.Laggy && !home) Log.Warn(line + " To lag less: " + NetReport.Tips(_last?.Egress?.IsWifi == true));
@@ -510,7 +512,9 @@ public partial class MainWindow
     async Task RetryFull(ServerItem s)
     {
         await Task.Delay(15000);
-        if (_fullServer == s.Key && Steam.Cs2Running && _servers.Contains(s)) await Join(s, fromSlotWait: true);
+        // Another command or a question open: wait another round instead of being refused or closing the question (review C10)
+        for (var i = 0; i < FullTries && !SlotAutoJoins(true, CommandBusy, Dialog.Visibility == Visibility.Visible); i++) await Task.Delay(15000);
+        if (_fullServer == s.Key && Steam.Cs2Running && _servers.Contains(s) && SlotAutoJoins(true, CommandBusy, Dialog.Visibility == Visibility.Visible)) await Join(s, fromSlotWait: true);
     }
 
     /// <summary>CS2 connected to a server: the retry on the full one goes on only if it is that same server (or CS2 says no server).</summary>

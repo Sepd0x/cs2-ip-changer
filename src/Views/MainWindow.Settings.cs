@@ -60,7 +60,7 @@ public partial class MainWindow
             OptCs2.IsChecked = _s.LaunchCs2;
             OptSilent.IsChecked = _s.SteamSilent;
             OptOffline.IsChecked = _s.SteamOffline;
-            OptStreamer.IsChecked = HideLogins;
+            OptStreamer.IsChecked = Rec.On || _s.StreamerMode;   // the option, not its effect: OBS open hides usernames without turning this on
             OptStreamer.IsEnabled = !Rec.On;
             AccSort.SelectedItem = AccSort.Items.Cast<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == _s.AccountSort) ?? AccSort.Items[0];
             ApplyAccountView();
@@ -219,10 +219,12 @@ public partial class MainWindow
     void OpenFirewall_Click(object sender, RoutedEventArgs e)
     {
         try { Process.Start(FirewallConsole()); }
-        catch (Exception ex) { Toast("Couldn't open the Firewall: " + ex.Message, Tone.Error); }
-        Toast($"In Outbound Rules, look for '{Firewall.RuleName}'.", true);
-
+        catch (Exception ex) { Toast("Couldn't open the Firewall: " + ex.Message, Tone.Error); return; }
+        Toast(FirewallRulesHint, true);
     }
+
+    /// <summary>Every rule of the app starts with this (the kill switch rule is only there with protection on).</summary>
+    public static readonly string FirewallRulesHint =$"In Outbound Rules, the app's rules start with '{AppIds.RulePrefix}'.";
 
     /// <summary>
     /// mmc.exe from System32 with wf.msc, never "open wf.msc" through the shell: as admin, the shell looks up what opens a .msc

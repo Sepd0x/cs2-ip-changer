@@ -71,7 +71,7 @@ public partial class MainWindow
         sb.AppendLine($"Windows: {System.Runtime.InteropServices.RuntimeInformation.OSDescription} ({Environment.OSVersion.Version}) · {System.Globalization.CultureInfo.CurrentUICulture.Name}");
         sb.AppendLine($"Options: mode={_s.Mode} game={_s.GameMode} cs2Locked={_s.LockCs2} steamOnEgress={_s.SteamOnEgress} pcOffPhone={_s.KeepPcOffPhone} offline={_s.SteamOffline} method={_s.ChangeMethod}");
         sb.AppendLine($"Steam: {Steam.InstallDir() ?? "not found"} · open={Steam.IsRunning} · CS2: {_s.Cs2Path ?? "not found"} · open={Steam.Cs2Running}");
-        sb.AppendLine($"Phone: {_phone?.Summary ?? "none"} · ADB: {_adb ?? "not found"} · IP servers see: {_egressPublic ?? "not measured"}");
+        sb.AppendLine($"Phone: {_phone?.Summary ?? "none"} · ADB: {_adb ?? "not found"} · Phone public IP: {_egressPublic ?? "not measured"}");
         sb.AppendLine();
         sb.AppendLine("== Checks");
         foreach (var c in _checks) sb.AppendLine($"{(c.Ok == true ? "OK " : c.Ok == false ? "BAD" : " - ")} {c.Title}: {c.Detail}");

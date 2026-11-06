@@ -218,7 +218,8 @@ public partial class MainWindow
             Fill(CfgFromBox, all, "a:" + mainOrActive);
             Fill(CfgSnapFrom, accItems, "a:" + mainOrActive);
             Fill(CfgCmpA, all, "a:" + mainOrActive);
-            Fill(CfgCmpB, all, all.FirstOrDefault(i => i.SteamId != mainOrActive && i.IsAccount && !Cs2Config.SameText(Cfg.Read(i.SteamId).Get(CfgPart.Convars), Cfg.Read(mainOrActive).Get(CfgPart.Convars)) && Cfg.HasConfig(i.SteamId))?.Key
+            var mainConv = Cfg.Read(mainOrActive).Get(CfgPart.Convars);   // read once, not once per account
+            Fill(CfgCmpB, all, all.FirstOrDefault(i => i.SteamId != mainOrActive && i.IsAccount && !Cs2Config.SameSettings(CfgPart.Convars, Cfg.Read(i.SteamId).Get(CfgPart.Convars), mainConv) && Cfg.HasConfig(i.SteamId))?.Key
                 ?? all.FirstOrDefault(i => i.SteamId != mainOrActive)?.Key);
 
             var selected = _cfgRows.Where(r => r.Selected).Select(r => r.SteamId).ToHashSet();
@@ -228,6 +229,8 @@ public partial class MainWindow
                 var set = Cfg.Read(a.SteamId);
                 var changed = Cfg.Changed(a.SteamId);
                 var xh = Cs2Config.ReadCrosshair(set);
+                var linked = Cfg.IsLinked(a.SteamId);
+                var (xhText, changedText) = CfgRowText(set, linked, changed);
                 _cfgRows.Add(new CfgAccountRow
                 {
                     Acc = a,
@@ -235,8 +238,9 @@ public partial class MainWindow
                     Selected = selected.Contains(a.SteamId),
                     IsMain = _s.ConfigMode == CfgMode.Main &&a.SteamId == _s.ConfigMainId,
                     Pending = Cfg.State.Pending.Any(j => j.Target == a.SteamId),
-                    CrosshairText = set.Empty ? "No CS2 config yet" : Cs2Config.CrosshairSummary(set) ?? "Default crosshair",
-                    ChangedText = set.Empty ? "Opens with CS2's defaults (or gets the sync)" : changed != null ? "Changed in game " + Fmt.Ago(changed) : "Not changed in game since the last copy",
+                    Linked = linked,
+                    CrosshairText = xhText,
+                    ChangedText = changedText,
                     CrosshairImage = CrosshairImage(xh),
                     GroupKey = set.Empty ? CfgAccountRow.NoConfig : Cs2Config.CrosshairSummary(set) ?? "default",
                 });
@@ -251,7 +255,7 @@ public partial class MainWindow
             // No accounts: nothing to copy to or save, so the buttons don't look like they'd do something.
             var any = _cfgRows.Count > 0;
             CfgCopyBtn.IsEnabled = CfgToAllBtn.IsEnabled = CfgToNoneBtn.IsEnabled = CfgSnapSaveBtn.IsEnabled = any;
-            CfgCopyHint.Text = any ? "Each account gets a backup first (Backups, on the right)." : "No accounts to copy to yet.";
+            CfgCopyHint.Text = any ? "Each account gets a backup first (Configs > Backups)." : "No accounts to copy to yet.";
 
             CfgSnapList.ItemsSource = snaps.Select(s => new CfgSnapshotRow(s)).ToList();
             CfgSnapEmpty.Visibility = snaps.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -261,12 +265,40 @@ public partial class MainWindow
             CfgBackupList.ItemsSource = backups;
             CfgBackupEmpty.Visibility = backups.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             CfgUndoBtn.IsEnabled = Cfg.CanUndo;   // nothing to put back: greyed out like Sync now
-            ShowCfgResult(Cfg.State.LastResult ?? (_s.ConfigMode == CfgMode.Off ? "Sync is off. To copy once, use Copy." : "No sync yet."));
+            ShowCfgResult(CfgSyncLine(_s.ConfigMode, _s.ConfigCategories.Count > 0, Cfg.State.LastResult));
         }
         catch (Exception ex) { Log.Warn("Configs page: " + Cs2ConfigStore.Why(ex)); }
         finally { _cfgLoading = false; }
         UpdateCompare();
     }
+
+    /// <summary>
+    /// An account's two lines on the Configs page. A CS2 folder that is a link or junction is neither read nor written (the app runs as
+    /// admin), so it isn't "no config yet" and the sync never reaches it.
+    /// </summary>
+    public static (string Crosshair, string Changed) CfgRowText(CfgSet set, bool linked, DateTime? changed) =>
+        linked ? ("CS2 folder is a link", "The app doesn't read or write it")
+        : set.Empty ? ("No CS2 config yet", "Opens with CS2's defaults (or gets the sync)")
+        : (Cs2Config.CrosshairSummary(set) ?? "Default crosshair", changed != null ? "Changed in game " + Fmt.Ago(changed) : "Not changed in game since the last copy");
+
+    /// <summary>The line under Sync now: the last result, unless the sync is on with nothing ticked to copy.</summary>
+    public static string CfgSyncLine(string mode, bool anyTicked, string last) =>
+        mode != CfgMode.Off && !anyTicked ? "Sync is on, but nothing is ticked in Copy > What to copy."
+        : last ?? (mode == CfgMode.Off ? "Sync is off. To copy once, use Copy." : "No sync yet.");
+
+    /// <summary>Undo last sync when some accounts stayed as they were.</summary>
+    public static string UndoToast(int n, IReadOnlyList<string> names) => n == 0
+        ? $"Nothing was undone: {string.Join(", ", names)} stayed as they were. Restore them from Backups."
+        : $"Undone on {Fmt.Count(n, "account")}. {string.Join(", ", names)} stayed as they were: restore them from Backups.";
+
+    /// <summary>Accounts > Use as main config: what reaches the others, from the When boxes that are on.</summary>
+    public static string MainConfigToast(string name, bool onNew, bool onLogin) => $"{name} is the main config now. " + (onNew, onLogin) switch
+    {
+        (true, true) => "New accounts and logins through the app get it (Configs page).",
+        (true, false) => "New accounts get it (Configs page).",
+        (false, true) => "Logins through the app get it (Configs page).",
+        _ => "Turn on Configs > Sync > When so the sync uses it.",
+    };
 
     static void Fill(ComboBox box, List<CfgSourceItem> items, string key)
     {
@@ -304,6 +336,7 @@ public partial class MainWindow
     {
         _s.ConfigCategories = CfgCats.Children.OfType<CheckBox>().Where(c => c.IsChecked == true).Select(c => (string)c.Tag).ToList();
         SaveSettings();
+        ShowCfgResult(CfgSyncLine(_s.ConfigMode, _s.ConfigCategories.Count > 0, Cfg.State.LastResult));
     }
 
     void CfgWhen_Click(object sender, RoutedEventArgs e)
@@ -327,6 +360,7 @@ public partial class MainWindow
     {
         if (_s.ConfigMode == CfgMode.Off) { Toast("Pick a mode under Sync first, or use Copy.", false); return; }
         if (_s.ConfigMode == CfgMode.Main && _s.ConfigMainId == null) { Toast("Pick the main account first.", false); return; }
+        if (_s.ConfigCategories.Count == 0) { Toast("Tick something in Copy > What to copy first: the sync copies what is ticked there.", false); return; }
         var jobs = CfgPlan(CfgTrigger.Manual, null, _accounts.FirstOrDefault(a => a.Active)?.SteamId ?? PreviousAccount(null));
         if (jobs.Count == 0) { Toast(_s.ConfigMode == CfgMode.Latest ? "No account has a config changed in game yet." : "No account to copy to: turn Sync on for some.", false); return; }
         RunCfgJobs(jobs, CfgTrigger.Manual, true);
@@ -345,7 +379,7 @@ public partial class MainWindow
             {
                 var names = string.Join(", ", failed.Select(CfgName));
                 Log.Warn($"Config undo: {names} stayed as they were. Restore them from Backups.");
-                Toast($"Undone on {Fmt.Count(n, "account")}. {names} stayed as they were: restore them from Backups.", n == 0 ? Tone.Error : Tone.Warn);
+                Toast(UndoToast(n, failed.Select(CfgName).ToList()), n == 0 ? Tone.Error : Tone.Warn);
             }
             else Toast($"Undone: {Fmt.Count(n, "account")} back as {(n == 1 ? "it was" : "they were")} before the last sync.", true);
             ShowConfigs();
@@ -396,7 +430,7 @@ public partial class MainWindow
             res.AddRange(rows.Where(r => CfgAccountRow.Matches(r, query)));
             return res;
         }
-        bool Alone(CfgAccountRow r) => r.IsMain || r.Active || r.Pending || !r.Sync;
+        bool Alone(CfgAccountRow r) => r.IsMain || r.Active || r.Pending || !r.Sync || r.Linked;
         res.AddRange(rows.Where(r => r.IsMain).Concat(rows.Where(r => r.Active && !r.IsMain)));
         var mainKey = rows.FirstOrDefault(r => r.IsMain)?.GroupKey;
         var rest = rows.Where(r => !r.IsMain && !r.Active).ToList();
@@ -464,7 +498,7 @@ public partial class MainWindow
             Toast(_cfgRows.Any(r => r.Selected) ? "That is the account you copy from. Tick a different one under To." : "Tick at least one account under To.", false);
             return;
         }
-        if (_s.ConfigCategories.Count == 0) { Toast("Tick something in Sync > What to copy.", false); return; }
+        if (_s.ConfigCategories.Count == 0) { Toast("Tick something in Copy > What to copy.", false); return; }
         var jobs = targets.Select(t => new CfgJob { SourceId = from.SteamId, Snapshot = from.Snapshot, Target = t.SteamId, Categories = _s.ConfigCategories.ToList(), At = AppClock.Now }).ToList();
         RunCfgJobs(jobs, CfgTrigger.Copy, true);
     }
@@ -490,7 +524,7 @@ public partial class MainWindow
         _s.ConfigOptOut.Remove(a.SteamId);
         SaveSettings();
         Log.Info($"Config sync: from the main account ({a.Name}).");
-        Toast($"{a.Name} is the main config now. New accounts and logins through the app get it (Configs page).", true);
+        Toast(MainConfigToast(a.Name, _s.ConfigOnNewAccount, _s.ConfigOnLogin), _s.ConfigOnNewAccount || _s.ConfigOnLogin);
         if (PageConfigs.IsVisible) ShowConfigs();
     }
 
@@ -499,6 +533,7 @@ public partial class MainWindow
     async void CfgSnapSave_Click(object sender, RoutedEventArgs e)
     {
         if (CfgSnapFrom.SelectedItem is not CfgSourceItem from || from.SteamId == null) { Toast("Pick the account to save.", false); return; }
+        if (Cfg.IsLinked(from.SteamId)) { Toast("That account's CS2 folder is a link or junction, so the app doesn't read it.", false); return; }
         DialogInput.Text = "";
         DialogInput.Tag = "E.g. Main, Practice, Retakes";
         if (!await Ask($"Snapshot of {from.Label}", "Saves this account's CS2 config under a name. You can copy it to other accounts later, or export it to another PC.", "Save", "Cancel", inputs: 1, label1: "Name")) return;
@@ -575,8 +610,9 @@ public partial class MainWindow
         var sb = CfgRead(b);
         CfgCmpImgA.Source = CrosshairImage(Cs2Config.ReadCrosshair(sa));
         CfgCmpImgB.Source = CrosshairImage(Cs2Config.ReadCrosshair(sb));
-        CfgCmpXhA.Text = sa == null ? "" : sa.Empty ? "No CS2 config" : Cs2Config.CrosshairSummary(sa) ?? "Default crosshair";
-        CfgCmpXhB.Text = sb == null ? "" : sb.Empty ? "No CS2 config" : Cs2Config.CrosshairSummary(sb) ?? "Default crosshair";
+        string None(CfgSourceItem it) => it?.SteamId is string id && Cfg.IsLinked(id) ? "CS2 folder is a link" : "No CS2 config";
+        CfgCmpXhA.Text = sa == null ? "" : sa.Empty ? None(a) : Cs2Config.CrosshairSummary(sa) ?? "Default crosshair";
+        CfgCmpXhB.Text = sb == null ? "" : sb.Empty ? None(b) : Cs2Config.CrosshairSummary(sb) ?? "Default crosshair";
         // No empty preview boxes: a side without a crosshair shows only its text, and the row goes when nothing is picked.
         if (CfgCmpImgA.Parent is FrameworkElement boxA) boxA.Visibility = CfgCmpImgA.Source != null ? Visibility.Visible : Visibility.Collapsed;
         if (CfgCmpImgB.Parent is FrameworkElement boxB) boxB.Visibility = CfgCmpImgB.Source != null ? Visibility.Visible : Visibility.Collapsed;
@@ -670,6 +706,8 @@ public sealed class CfgAccountRow : Observable
     public bool Selected { get => _selected; set => Set(ref _selected, value); }
     public bool IsMain { get; init; }
     public bool Pending { get; init; }
+    /// <summary>Its CS2 folder is a link or junction: never read or written, so never folded in with the accounts that have no config.</summary>
+    public bool Linked { get; init; }
     public string CrosshairText { get; init; }
     public string ChangedText { get; init; }
     public ImageSource CrosshairImage { get; init; }
@@ -721,7 +759,8 @@ public sealed class CfgSnapshotRow
     public CfgSnapshotRow(CfgSnapshot s)
     {
         Name = s.Name;
-        var parts = s.Parts.Select(p => p switch { "Keys" => "binds", "Convars" => "game and crosshair", "Video" => "video", "Machine" => "HUD and audio", _ => p });
+        var parts = s.Parts.Select(p => p switch { "Keys" => "binds", "Convars" => "game and crosshair", "Video" => "video",
+            "Machine" => s.Parts.Count > 1 ? "HUD/radar/audio" : Cs2Config.CategoryName("hud"), _ => p });   // in a list, as Cs2Config.CategoryList says it
         When = Fmt.When(s.Created);
         What = string.Join(", ", parts) + (s.From == "imported" ? " · imported" : "");
         Detail = $"{When} · {What}";
