@@ -10,6 +10,28 @@ static class Untangle12Tests
     {
         await MetricBack(check);
         IphoneOnWifi(check);
+        StoppedClock(check);
+    }
+
+    // O relógio do demo parado: o que a app mostra e carimba lê o AppClock, por isso as capturas saem iguais em cada corrida
+    static void StoppedClock(Action<string, bool, string> check)
+    {
+        var at = new DateTime(2026, 11, 6, 16, 44, 0, DateTimeKind.Local);
+        LogEntry got = null;
+        void Seen(LogEntry e) { if (e.Text == "untangle12 clock") got = e; }
+        AppClock.StopAt(at);
+        try
+        {
+            Log.Added += Seen;
+            Log.Info("untangle12 clock");
+            check("Relógio: parado, diz sempre a mesma hora", AppClock.Now == at && AppClock.Today == at.Date, "");
+            check("Relógio: a linha do Log leva a hora do relógio da app", got?.Time == at, got?.Time.ToString("O") ?? "sem linha");
+            check("Relógio: \"há 5 min\" conta a partir do relógio da app", Fmt.Ago(at.AddMinutes(-5)) == "5 min ago", Fmt.Ago(at.AddMinutes(-5)));
+            check("Relógio: Previous IPs mostra a hora no dia do relógio", new IpHistoryEntry { Time = at.AddHours(-3) }.TimeText == "13:44"
+                && new IpHistoryEntry { Time = at.AddDays(-1) }.TimeText == "5 Nov", "");
+        }
+        finally { Log.Added -= Seen; AppClock.Run(); }
+        check("Relógio: volta a andar com o Windows", Math.Abs((AppClock.Now - DateTime.Now).TotalSeconds) < 5, "");
     }
 
     /// <summary>Um owned.json desta sessão do Windows (a métrica só vive até reiniciar).</summary>

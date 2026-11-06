@@ -328,7 +328,7 @@ public static class Cs2Config
         foreach (var t in targets.Where(t => t != null).Distinct())
         {
             if (t == source || optOut?.Contains(t) == true) continue;
-            list.Add(new CfgJob { SourceId = source, Target = t, Categories = cats, Reason = trigger, At = DateTime.Now });
+            list.Add(new CfgJob { SourceId = source, Target = t, Categories = cats, Reason = trigger, At = AppClock.Now });
         }
         return list;
     }
@@ -498,7 +498,7 @@ public sealed class Cs2ConfigStore
     string SnapshotRoot => Path.Combine(Root, "snapshots");
     const long MaxFile = 1024 * 1024;
     /// <summary>When this run of the app opened the store: a Copy or Sync now queued before it is from an earlier run.</summary>
-    readonly DateTime _opened = DateTime.Now;
+    readonly DateTime _opened = AppClock.Now;
 
     public Cs2ConfigStore(string userData, string root)
     {
@@ -724,7 +724,7 @@ public sealed class Cs2ConfigStore
         if (Cs2Running())
         {
             State.Pending.RemoveAll(j => j.Target == job.Target);   // the newest copy for an account replaces the older one
-            if (job.At == default) job.At = DateTime.Now;            // when it was decided: a change in game after that wins (FlushPending)
+            if (job.At == default) job.At = AppClock.Now;            // when it was decided: a change in game after that wins (FlushPending)
             State.Pending.Add(job);
             SaveState();
             return new CfgResult(CfgOutcome.Queued, job.Target, cats, "CS2 is open");
@@ -795,7 +795,7 @@ public sealed class Cs2ConfigStore
                 foreach (var p in Enum.GetValues<CfgPart>())
                     if (wrote.Contains(Cs2Config.PathsOf(p).Local)) mine[p.ToString()] = Cs2Config.Sha(plan[Cs2Config.PathsOf(p).Local]);
                 State.LastSyncId = syncId;
-                State.LastSyncAt = DateTime.Now;
+                State.LastSyncAt = AppClock.Now;
                 SaveState();
             }
         }
@@ -841,7 +841,7 @@ public sealed class Cs2ConfigStore
     /// <summary>Copies what is there now. <paramref name="real"/> is 730's real path: a file that turns out to be a link stops it.</summary>
     void Backup(string steamId, string dir, IEnumerable<string> rels, string reason, string from, string syncId, string real)
     {
-        var b = new CfgBackup { SteamId = steamId, At = DateTime.Now, Reason = reason, From = from, SyncId = syncId };
+        var b = new CfgBackup { SteamId = steamId, At = AppClock.Now, Reason = reason, From = from, SyncId = syncId };
         var bdir = Path.Combine(BackupRoot, Cs2Config.Id32(steamId), $"{b.At:yyyyMMdd-HHmmss-fff}");
         for (var i = 2; Directory.Exists(bdir); i++) bdir = Path.Combine(BackupRoot, Cs2Config.Id32(steamId), $"{b.At:yyyyMMdd-HHmmss-fff}-{i}");
         Directory.CreateDirectory(bdir);
@@ -920,7 +920,7 @@ public sealed class Cs2ConfigStore
             else if (b.Created.Contains(local)) mine.Remove(p.ToString());
         }
         State.LastSyncId = syncId;
-        State.LastSyncAt = DateTime.Now;
+        State.LastSyncAt = AppClock.Now;
         SaveState();
         return true;
     }
@@ -998,7 +998,7 @@ public sealed class Cs2ConfigStore
         if (set == null || set.Empty) throw new InvalidOperationException("That account has no CS2 config yet: open CS2 on it once.");
         var dir = SnapshotDir(name);
         Directory.CreateDirectory(dir);
-        var s = new CfgSnapshot { Name = name.Trim(), Created = DateTime.Now, From = from, Dir = dir };
+        var s = new CfgSnapshot { Name = name.Trim(), Created = AppClock.Now, From = from, Dir = dir };
         foreach (var (p, text) in set.Files)
         {
             WriteAtomic(Path.Combine(dir, Cs2Config.SnapshotFile(p)), Cs2Config.Crlf(text));

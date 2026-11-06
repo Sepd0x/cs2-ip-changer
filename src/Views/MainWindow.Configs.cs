@@ -169,7 +169,7 @@ public partial class MainWindow
         if (same > 0) parts.Add($"{same} already the same");
         if (queued > 0) parts.Add($"{queued} waiting for CS2 to close");
         if (failed > 0) parts.Add($"{failed} not changed (see Log)");
-        Cfg.State.LastResult = $"{Fmt.When(DateTime.Now)} · {char.ToUpper(reason[0]) + reason[1..]}: {string.Join(", ", parts)}.";
+        Cfg.State.LastResult = $"{Fmt.When(AppClock.Now)} · {char.ToUpper(reason[0]) + reason[1..]}: {string.Join(", ", parts)}.";
         Cfg.SaveState();
         if (manual) Toast(failed > 0 ? "Some accounts weren't changed. Details are in the Log." : queued > 0 ? "CS2 is open: the copy goes in when it closes." : copied > 0 ? $"Config copied to {Fmt.Count(copied, "account")}. " + (copied == 1 ? "Backup saved." : "Backups saved.") : "Every account already has the same config.", failed == 0);
         if (PageConfigs.IsVisible) ShowConfigs();
@@ -464,7 +464,7 @@ public partial class MainWindow
             return;
         }
         if (_s.ConfigCategories.Count == 0) { Toast("Tick something in Sync > What to copy.", false); return; }
-        var jobs = targets.Select(t => new CfgJob { SourceId = from.SteamId, Snapshot = from.Snapshot, Target = t.SteamId, Categories = _s.ConfigCategories.ToList(), At = DateTime.Now }).ToList();
+        var jobs = targets.Select(t => new CfgJob { SourceId = from.SteamId, Snapshot = from.Snapshot, Target = t.SteamId, Categories = _s.ConfigCategories.ToList(), At = AppClock.Now }).ToList();
         RunCfgJobs(jobs, "copy", true);
     }
 

@@ -288,20 +288,22 @@ public static class Log
 
     static void Write(LogLevel level, string text)
     {
-        var e = new LogEntry { Time = DateTime.Now, Level = level, Text = text };
+        // The line shows the app's clock (stopped in the demo); the repeat and notice rules measure real time
+        var now = DateTime.Now;
+        var e = new LogEntry { Time = AppClock.Now, Level = level, Text = text };
         LogEntry repeated = null;
-        _wroteHere = e.Time;
+        _wroteHere = now;
         if (Paths.ReadOnly) { Added?.Invoke(e); return; }   // nothing goes to the log file then
         lock (Lock)
         {
-            if (text == _lastText && level == _lastLevel && e.Time - _lastAt < TimeSpan.FromMinutes(1) && e.Time >= _lastAt)
+            if (text == _lastText && level == _lastLevel && now - _lastAt < TimeSpan.FromMinutes(1) && now >= _lastAt)
             {
                 _repeats++;
-                _lastAt = e.Time;
+                _lastAt = now;
                 return;
             }
             if (_repeats > 0) repeated = new LogEntry { Time = e.Time, Level = _lastLevel, Text = $"(the line above repeated {Fmt.Count(_repeats, "more time")})" };
-            _lastText = text; _lastLevel = level; _lastAt = e.Time; _repeats = 0;
+            _lastText = text; _lastLevel = level; _lastAt = now; _repeats = 0;
             try
             {
                 var path = Paths.NoLink(Paths.File("registo.log"));
@@ -437,14 +439,14 @@ public static class Fmt
 
     /// <summary>"1 account", "3 accounts": the right word for the number, never "account(s)".</summary>
     /// <summary>Older than <paramref name="age"/>, or in the future (the clock was ahead when it was saved): due again.</summary>
-    public static bool Stale(DateTime at, TimeSpan age) { var d = DateTime.Now - at; return d >= age || d < TimeSpan.Zero; }
+    public static bool Stale(DateTime at, TimeSpan age) { var d = AppClock.Now - at; return d >= age || d < TimeSpan.Zero; }
 
     public static string Count(int n, string one, string many = null) => n == 1 ? "1 " + one : $"{n} {many ?? one + "s"}";
 
     public static string Ago(DateTime? t)
     {
         if (t == null) return "never";
-        var d = DateTime.Now - t.Value;
+        var d = AppClock.Now - t.Value;
         if (d.TotalSeconds < 60) return "just now";
         if (d.TotalMinutes < 60) return $"{(int)d.TotalMinutes} min ago";
         if (d.TotalHours < 24) return $"{(int)d.TotalHours} h ago";

@@ -225,7 +225,7 @@ public partial class MainWindow : Window
         {
             var was = a.InCooldown;
             a.TickCooldown();
-            if (a.Meta.CooldownUntil <= DateTime.Now)
+            if (a.Meta.CooldownUntil <= AppClock.Now)
             {
                 a.Meta.CooldownUntil = null;
                 a.RefreshAll();

@@ -156,7 +156,7 @@ public sealed class IpHistoryEntry
     public string Ip { get; set; }
     public string Isp { get; set; }
     public string Reason { get; set; }
-    [JsonIgnore] public string TimeText => Time.ToString(Time.Date == DateTime.Today ? "HH:mm" : "d MMM", System.Globalization.CultureInfo.InvariantCulture);
+    [JsonIgnore] public string TimeText => Time.ToString(Time.Date == AppClock.Today ? "HH:mm" : "d MMM", System.Globalization.CultureInfo.InvariantCulture);
     [JsonIgnore] public string ReasonText => Reason switch { "trocado" => "changed", "detetado" => "at startup", _ => Reason };
     /// <summary>"ISP · City · Country" without the country, so the city still fits at the smallest window (the tooltip has it all).</summary>
     [JsonIgnore] public string IspShort => Isp?.Split(" · ") is { Length: >= 3 } p ? string.Join(" · ", p[..^1]) : Isp;
@@ -397,7 +397,7 @@ public sealed class ServerBan
     /// <summary>End of a timed ban the server said in the console (null: permanent, or the length wasn't said).</summary>
     public DateTime? Until { get; set; }
     /// <summary>A timed ban that has ended: it no longer counts, and the next look at the list drops it.</summary>
-    public bool Over => Until is DateTime u && u <= DateTime.Now;
+    public bool Over => Until is DateTime u && u <= AppClock.Now;
 }
 
 public sealed class AccountItem : Observable
@@ -474,7 +474,7 @@ public sealed class AccountItem : Observable
     public bool HasLevel => P?.Level != null;
     public bool HasHours => P?.Cs2Hours != null;
 
-    public bool InCooldown => Meta.CooldownUntil > DateTime.Now;
+    public bool InCooldown => Meta.CooldownUntil > AppClock.Now;
     public bool Excluded => Meta.ExcludeQuick;
     public string QuickGlyph => "";
     public Brush QuickBrush => Excluded ? Ui.LineStrong : Ui.Muted;
@@ -489,7 +489,7 @@ public sealed class AccountItem : Observable
         : $"Last: {(string.IsNullOrWhiteSpace(Meta.LastServerName) ? Meta.LastServer : Meta.LastServerName)} · {Fmt.Ago(Meta.LastServerAt)}";
     /// <summary>Eligible for Switch: not skipped, no cooldown, no VAC/game ban.</summary>
     public bool Usable => !Excluded && !InCooldown && !HasVac && !HasGameBan;
-    public string CooldownText => InCooldown ? "Cooldown " + Fmt.Left(Meta.CooldownUntil.Value - DateTime.Now) : null;
+    public string CooldownText => InCooldown ? "Cooldown " + Fmt.Left(Meta.CooldownUntil.Value - AppClock.Now) : null;
     public bool HasServerBans => Meta.ServerBans is { Count: > 0 };
     public string ServerBansText => !HasServerBans ? null : Meta.ServerBans.Count == 1 ? "banned on 1 server" : $"banned on {Meta.ServerBans.Count} servers";
     /// <summary>The ban that covers this server: on it, or on another server of the same network (see <see cref="ServerNetwork.Same"/>). Null if none.</summary>
