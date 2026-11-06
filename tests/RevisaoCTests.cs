@@ -38,6 +38,47 @@ static class RevisaoCTests
         check("Revisão C2: Refresh e Regions usam o mesmo motivo", servers.Contains("NoLinkWhy(_last)") && regions.Contains("NoLinkWhy(_last)") && !servers.Contains("Phone disconnected: not querying") && !regions.Contains("the phone is disconnected"), "");
         check("Revisão C2: a linha de Regions com o telemóvel por verificar não manda ligá-lo", !MainWindow.NoPingSuffix(unchecked_).Contains("connect the phone") && MainWindow.NoPingSuffix(null).Contains("connect the phone"), "");
 
+        // C3: o ping do A2S não conta a ida e volta do challenge
+        {
+            using var srv = new System.Net.Sockets.UdpClient(new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 0));
+            var port = ((System.Net.IPEndPoint)srv.Client.LocalEndPoint!).Port;
+            byte[] Str(string t) => System.Text.Encoding.UTF8.GetBytes(t + "\0");
+            byte[] FF = { 0xFF, 0xFF, 0xFF, 0xFF };
+            var info = FF.Concat(new byte[] { 0x49, 17 }).Concat(Str("Lento")).Concat(Str("de_inferno")).Concat(Str("csgo")).Concat(Str("CS2")).Concat(new byte[] { 0xDA, 0x02, 0, 10, 0 }).ToArray();
+            var fake = Task.Run(async () =>
+            {
+                for (var i = 0; i < 2; i++)
+                {
+                    var r = await srv.ReceiveAsync();
+                    if (r.Buffer.Length == 25) { await Task.Delay(300); await srv.SendAsync(FF.Concat(new byte[] { 0x41, 1, 2, 3, 4 }).ToArray(), r.RemoteEndPoint); }
+                    else await srv.SendAsync(info, r.RemoteEndPoint);
+                }
+            });
+            try
+            {
+                var q = A2S.Query("127.0.0.1", port, "127.0.0.1", 1500).GetAwaiter().GetResult();
+                check("Revisão C3: o ping não conta a ida e volta do challenge", q.Name == "Lento" && q.PingMs < 200, $"{q.PingMs} ms");
+            }
+            catch (Exception ex) { check("Revisão C3: A2S com challenge lento", false, ex.Message); }
+        }
+
+        // C4: um nome ou um IPv6 não "já está na lista"
+        check("Revisão C4: um nome não diz que já está na lista", MainWindow.NothingAdded(dupes: 0, ignored: 0) != "Those servers are already in the list." && MainWindow.NothingAdded(0, 0).Contains("No IPv4 address"), MainWindow.NothingAdded(0, 0));
+        check("Revisão C4: repetidos dizem que já estão", MainWindow.NothingAdded(2, 0) == "Those servers are already in the list.", "");
+        var ign = new List<string>();
+        var known = new HashSet<string> { "1.2.3.4:27015" };
+        var got = MainWindow.ParseServers("1.2.3.4:27015 play.example.com:27015 [2001:db8::1]:27015 5.6.7.8 5.6.7.8:27015", 27015, known, ign, out var dupes);
+        check("Revisão C4: os repetidos contam-se à parte", got.SequenceEqual(new[] { "5.6.7.8:27015" }) && dupes == 2 && ign.Count == 0, $"{string.Join(",", got)} dupes={dupes} ign={ign.Count}");
+
+        // C5: um número que não é porta não vira porta
+        check("Revisão C5: '1.2.3.4 35ms' usa a porta por omissão", MainWindow.ParseServers("1.2.3.4 35ms", 27015).Single() == "1.2.3.4:27015", string.Join(",", MainWindow.ParseServers("1.2.3.4 35ms", 27015)));
+        check("Revisão C5: '1.2.3.4, 12, de_dust2' usa a porta por omissão", MainWindow.ParseServers("1.2.3.4, 12, de_dust2", 27015).Single() == "1.2.3.4:27015", string.Join(",", MainWindow.ParseServers("1.2.3.4, 12, de_dust2", 27015)));
+        check("Revisão C5: '1.2.3.4:27016' continua a dar a porta", MainWindow.ParseServers("1.2.3.4:27016", 27015).Single() == "1.2.3.4:27016", "");
+        check("Revisão C5: listas por espaço e CSV continuam a dar a porta",
+            MainWindow.ParseServers("1.2.3.4 27016", 27015).Single() == "1.2.3.4:27016" && MainWindow.ParseServers("1.2.3.4,27017,de_dust2", 27015).Single() == "1.2.3.4:27017"
+            && MainWindow.ParseServers("1.2.3.4\t27018\r\n5.6.7.8;27019", 27015).SequenceEqual(new[] { "1.2.3.4:27018", "5.6.7.8:27019" }), "");
+        check("Revisão C5: 'connect IP:port' e steam://connect continuam", MainWindow.ParseServers("connect 1.2.3.4:27020 steam://connect/5.6.7.8:27021", 27015).SequenceEqual(new[] { "1.2.3.4:27020", "5.6.7.8:27021" }), "");
+
         // C6: o que não foi perguntado agora sai da linha
         var s6 = new ServerItem { Ip = "1.2.3.4", Port = 27015, PlayersText = "12/20", PingMs = 35, PingText = "35 ms", Map = "de_mirage", PlayerCount = 12, MaxPlayers = 20, PlayersHidden = true, ServerName = "Casa" };
         MainWindow.ClearLive(s6);
@@ -75,6 +116,17 @@ static class RevisaoCTests
         check("Revisão C10: livre e com a opção, entra", MainWindow.SlotAutoJoins(true, false, false) && !MainWindow.SlotAutoJoins(false, false, false), "");
         check("Revisão C10: a vaga e o servidor cheio usam a regra", servers.Contains("if (SlotAutoJoins(auto, CommandBusy, Dialog.Visibility == Visibility.Visible))")
             && Src("Views", "MainWindow.Kick.cs").Contains("SlotAutoJoins(true, CommandBusy, Dialog.Visibility == Visibility.Visible)"), "");
+
+        // C19
+        check("Revisão C19: com pesquisa o botão não diz all", MainWindow.RefreshLabel(0, filtered: true) == "Refresh shown" && MainWindow.RefreshLabel(0, false) == "Refresh all" && MainWindow.RefreshLabel(2, true) == "Refresh 2", "");
+        check("Revisão C19: a pesquisa atualiza o nome do botão", servers.Contains("QueryBtn.Content = RefreshLabel(ServerList.SelectedItems.Count, !string.IsNullOrEmpty(q));"), "");
+
+        // C20
+        check("Revisão C20: uma pergunta pedida durante outra corre a seguir", servers.Contains("_queryAgain = true;") && servers.Contains("if (_queryAgain) { _queryAgain = false; await QueryServers(true); }"), "");
+
+        // C21
+        check("Revisão C21: 224.0.0.1 não é contado como rede local", !MainWindow.IsLocalNet("224.0.0.1") && MainWindow.IsLocalNet("192.168.1.10") && MainWindow.IsLocalNet("100.64.0.1") && !MainWindow.IsLocalNet("8.8.8.8"), "");
+        check("Revisão C21: as regras do IP continuam iguais", !MainWindow.ValidIp("10.0.0.1") && !MainWindow.ValidIp("169.254.1.1") && MainWindow.ValidIp("100.128.0.1"), "");
 
     }
 }

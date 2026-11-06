@@ -47,6 +47,12 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - After protection was turned off, the phone dropped, or a server had no route yet, Servers kept showing the last map, players and ping as if they were live. A row that isn't asked now shows dashes, and the Refresh count no longer counts servers it didn't ask as not responding ("3 of 5 servers responded (2 not asked: not routed through the phone yet)").
 - A server without a name was called "Server not responding" before it was ever asked, also in Join's messages and questions. The list now says "No name yet" until it is asked and "Not responding" only when it didn't answer; messages use its IP:port.
 - Tooltips on Servers and Regions said the ping, Refresh and Join always went through the phone. They now say what happens with protection on and off.
+- The ping on Servers came out about double on most CS2 servers (the ones that ask for a challenge first), so its color and the order were off too. It now counts one round trip.
+- Pasting a server name or an IPv6 address said "Those servers are already in the list." It now says no IPv4 address was found and that the app needs the IP:port.
+- Text copied from a server browser, like "1.2.3.4 35ms" or "1.2.3.4, 12, de_dust2", added the server with port 35 or 12. A number after a space or a comma only counts as the port when it has 4 or 5 digits; after ":" it works as before.
+- With a search on Servers and nothing marked, the button said Refresh all but only asked the servers shown. It now says Refresh shown, and the Refresh and Copy IPs tooltips say "the ones shown".
+- Servers added while the 30 s refresh was running stayed without name and ping until the next refresh (or for good with it off), and a Refresh click then did nothing. Both now run right after, and the click says the app is already asking.
+- At start, every address removed from an old server list was called a local network address. The Log now tells local addresses, other invalid ones, bad ports and repeats apart.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

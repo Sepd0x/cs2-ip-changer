@@ -825,8 +825,8 @@
                                     <StackPanel Grid.Column="2" Orientation="Horizontal">
                                         <CheckBox x:Name="AutoQueryBox" Style="{StaticResource Switch}" Content="Refresh every 30 s" Margin="0,0,14,0" VerticalAlignment="Center" Click="AutoQuery_Click"
                                                   ToolTip="Players, map and ping every 30 seconds, on the connection the game uses now"/>
-                                        <Button x:Name="QueryBtn" Click="QueryServers_Click" Content="Refresh all" ToolTip="Asks the marked servers, or all of them when none is marked, for their name, map, players and ping. With protection on, only through the phone, never the home network. Click a marked server again, or press Escape, to unmark it."/>
-                                        <Button x:Name="CopyBtn" Click="CopyServers_Click" Content="Copy IPs" ToolTip="Copies the selected servers (or all) as IP:port"/>
+                                        <Button x:Name="QueryBtn" Click="QueryServers_Click" Content="Refresh all" ToolTip="Asks the marked servers, or all the ones shown when none is marked, for their name, map, players and ping. With protection on, only through the phone, never the home network. Click a marked server again, or press Escape, to unmark it."/>
+                                        <Button x:Name="CopyBtn" Click="CopyServers_Click" Content="Copy IPs" ToolTip="Copies the selected servers (or all the ones shown) as IP:port"/>
                                         <Border Width="1" Background="{StaticResource Line}" Margin="4,4,14,4"/>
                                         <Button x:Name="RemoveBtn" Style="{StaticResource Danger}" Margin="0" Click="RemoveServers_Click" Content="Remove" IsEnabled="False" ToolTipService.ShowOnDisabled="True" ToolTip="Removes the selected servers and their routes. Select first (Ctrl or Shift for several)."/>
                                     </StackPanel>

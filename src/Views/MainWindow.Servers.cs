@@ -32,8 +32,17 @@ public partial class MainWindow
             list = defaults.Select(d => new ServerItem { Ip = d.Ip, Port = d.Port }).ToList();
         }
         // Lists from before beta.6 could hold local addresses; they go, and the Log says so
-        var local = list.Count(s => s.Ip != null && !ValidIp(s.Ip));
+        // Review C21: only private, carrier NAT and link-local are "local"; the rest that isn't a public IPv4, the ports out of range
+        // and the repeats get their own line
+        var bad = list.Where(s => !ValidIp(s.Ip)).ToList();
+        var local = bad.Count(s => IsLocalNet(s.Ip));
         if (local > 0) Log.Warn($"Removed {Fmt.Count(local, "address", "addresses")} from the server list: local network addresses can't be game servers.");
+        if (bad.Count > local) Log.Warn($"Removed {Fmt.Count(bad.Count - local, "address", "addresses")} from the server list: not a valid public IPv4 ("
+            + string.Join(", ", bad.Where(s => !IsLocalNet(s.Ip)).Take(5).Select(s => s.Ip ?? "empty")) + (bad.Count - local > 5 ? "…" : "") + ").");
+        var badPort = list.Count(s => ValidIp(s.Ip) && s.Port is < 1 or > 65535);
+        var twice = list.Where(s => ValidIp(s.Ip) && s.Port is >= 1 and <= 65535).GroupBy(s => s.Key).Sum(g => g.Count() - 1);
+        if (badPort > 0) Log.Warn($"Removed {Fmt.Count(badPort, "server")} from the server list: the port isn't between 1 and 65535.");
+        if (twice > 0) Log.Info($"Removed {Fmt.Count(twice, "server")} from the server list that {(twice == 1 ? "was" : "were")} in it twice.");
         foreach (var s in list.Where(s => ValidIp(s.Ip) && s.Port is >= 1 and <= 65535).GroupBy(s => s.Key).Select(g => g.First()))
         {
             s.PlayersText = "—"; s.PingText = "—"; s.Map = "—";
@@ -47,10 +56,14 @@ public partial class MainWindow
         var n = ServerList.SelectedItems.Count;
         RemoveBtn.IsEnabled = n > 0;
         // The button says what it asks (3 nov.: with one server marked, Refresh only ever asked that one)
-        QueryBtn.Content = RefreshLabel(n);
+        QueryBtn.Content = RefreshLabel(n, !string.IsNullOrEmpty(ServerSearch.Text.Trim()));
     }
 
-    public static string RefreshLabel(int selected) => selected <= 0 ? "Refresh all" : selected == 1 ? "Refresh 1" : $"Refresh {selected}";
+    public static string RefreshLabel(int selected) => RefreshLabel(selected, false);
+
+    /// <summary>With a search, none marked asks only the servers shown (review C19: it said "Refresh all").</summary>
+    public static string RefreshLabel(int selected, bool filtered) =>
+        selected <= 0 ? (filtered ? "Refresh shown" : "Refresh all") : selected == 1 ? "Refresh 1" : $"Refresh {selected}";
 
     /// <summary>
     /// Unmarking a server (3 nov.: there was no way back to none marked): a click on the only marked row, a click on the empty
@@ -97,43 +110,80 @@ public partial class MainWindow
         if (p.Length != 4 || !p.All(x => x.Length is >= 1 and <= 3 && x.All(char.IsAsciiDigit) && (x.Length == 1 || x[0] != '0') && int.Parse(x) <= 255)) return false;
         int a = int.Parse(p[0]), b = int.Parse(p[1]);
         if (a == 0 || a == 127 || a >= 224) return false;
-        if (a == 10 || (a == 172 && b is >= 16 and <= 31) || (a == 192 && b == 168)) return false;   // private networks
-        if ((a == 100 && b is >= 64 and <= 127) || (a == 169 && b == 254)) return false;              // carrier NAT, link-local
+        if (IsLocalNet(ip)) return false;
         if (a == 198 && b is 18 or 19) return false;                                                   // benchmarking
         return ip != Net.EchoIp;                                                                       // the app's own IP test
     }
 
-    int ParseInto(string text, out List<string> ignored)
+    /// <summary>A local network address: private networks, carrier NAT and link-local (what the Log calls "local network").</summary>
+    public static bool IsLocalNet(string ip)
+    {
+        var p = ip?.Split('.');
+        if (p is not { Length: 4 } || !int.TryParse(p[0], out var a) || !int.TryParse(p[1], out var b)) return false;
+        return a == 10 || (a == 172 && b is >= 16 and <= 31) || (a == 192 && b == 168)   // private networks
+            || (a == 100 && b is >= 64 and <= 127) || (a == 169 && b == 254);            // carrier NAT, link-local
+    }
+
+    int ParseInto(string text, out List<string> ignored, out int dupes)
     {
         ignored = new();
         var port = int.TryParse(DefaultPortBox.Text.Trim(), out var dp) && dp is >= 1 and <= 65535 ? dp : 27015;
-        var added = 0;
+        var keys = ParseServers(text, port, _servers.Select(s => s.Key).ToHashSet(), ignored, out dupes);
+        foreach (var k in keys)
+        {
+            var at = k.LastIndexOf(':');
+            _servers.Add(new ServerItem { Ip = k[..at], Port = int.Parse(k[(at + 1)..]), PlayersText = "—", PingText = "—", Map = "—" });
+        }
+        return keys.Count;
+    }
+
+    public static List<string> ParseServers(string text, int defaultPort) => ParseServers(text, defaultPort, new HashSet<string>(), new List<string>(), out _);
+
+    /// <summary>
+    /// The new "IP:port" in a pasted text, in order. <paramref name="known"/> are the ones in the list (it grows with each new one, so
+    /// a repeat in the same text counts once); <paramref name="dupes"/> counts the ones already there (review C4: a text with no IPv4
+    /// said "already in the list"); what isn't a public IP:port goes to <paramref name="ignored"/>.
+    /// </summary>
+    public static List<string> ParseServers(string text, int defaultPort, ISet<string> known, List<string> ignored, out int dupes)
+    {
+        var added = new List<string>();
+        dupes = 0;
         foreach (Match m in ServerRegex.Matches(text ?? ""))
         {
             var ip = string.Join(".", m.Groups[1].Value.Split('.').Select(o => int.TryParse(o, out var n) ? n.ToString() : o));
             if (!ValidIp(ip)) { ignored.Add(m.Value.Trim()); continue; }
-            var p = port;
-            if (m.Groups[2].Success && (!int.TryParse(m.Groups[2].Value, out p) || p < 1 || p > 65535)) { ignored.Add(m.Value.Trim()); continue; }
-            if (_servers.Any(s => s.Ip == ip && s.Port == p)) continue;
-            _servers.Add(new ServerItem { Ip = ip, Port = p, PlayersText = "—", PingText = "—", Map = "—" });
-            added++;
+            var p = defaultPort;
+            if (m.Groups["port"].Success && (!int.TryParse(m.Groups["port"].Value, out p) || p < 1 || p > 65535)) { ignored.Add(m.Value.Trim()); continue; }
+            if (!known.Add($"{ip}:{p}")) { dupes++; continue; }
+            added.Add($"{ip}:{p}");
         }
         return added;
     }
 
+    /// <summary>Nothing new in the text: already in the list, not a public IP:port, or no IPv4 at all (a name or an IPv6).</summary>
+    public static string NothingAdded(int dupes, int ignored) =>
+        ignored > 0 ? "No valid IP:port." + (dupes > 0 ? $" {dupes} already in the list." : "")
+        : dupes > 0 ? "Those servers are already in the list."
+        : "No IPv4 address found. The app needs the server's IP:port, e.g. 1.2.3.4:27015 (names and IPv6 aren't supported).";
+
     async Task AddFromText(string text)
     {
         if (string.IsNullOrWhiteSpace(text)) { Toast("Nothing to add.", false); return; }
-        var n = ParseInto(text, out var ignored);
+        var n = ParseInto(text, out var ignored, out var dupes);
         SaveServers();
         ShowLastServer();
-        if (n == 0 && ignored.Count == 0) { Toast("Those servers are already in the list.", false); return; }
+        if (n == 0 && ignored.Count == 0)
+        {
+            if (dupes == 0) Log.Info("Add servers: no IPv4 address in the text (names and IPv6 aren't supported).");
+            Toast(NothingAdded(dupes, 0), false);
+            return;
+        }
         Log.Info($"Added {Fmt.Count(n, "server")}." + (ignored.Count > 0 ? " Ignored (not a public IP:port): " + string.Join(", ", ignored.Take(20)) + (ignored.Count > 20 ? $" and {ignored.Count - 20} more" : "") : ""));
-        Toast(n > 0 ? AddedText(n, ignored.Count, _protOn, _s.NoPhone, _last?.Egress != null) : "No valid IP:port.", n > 0);
+        Toast(n > 0 ? AddedText(n, ignored.Count, _protOn, _s.NoPhone, _last?.Egress != null) : NothingAdded(dupes, ignored.Count), n > 0);
         _s.DefaultPort = int.TryParse(DefaultPortBox.Text, out var dp) ? dp : 27015;
         SaveSettings();
         await SyncNow(force: true);
-        await QueryServers(true);
+        await QueryServers(true, queue: true);   // the new ones get asked even while the 30 s refresh runs
     }
 
     /// <summary>
@@ -192,6 +242,7 @@ public partial class MainWindow
             return s.Key.Contains(q, StringComparison.OrdinalIgnoreCase) || (s.ServerName ?? "").Contains(q, StringComparison.OrdinalIgnoreCase)
                 || (s.Map ?? "").Contains(q, StringComparison.OrdinalIgnoreCase) || (s.Label ?? "").Contains(q, StringComparison.OrdinalIgnoreCase);
         };
+        QueryBtn.Content = RefreshLabel(ServerList.SelectedItems.Count, !string.IsNullOrEmpty(q));
     }
 
     List<ServerItem> SelectedOrAll()
@@ -219,9 +270,18 @@ public partial class MainWindow
 
     async void QueryServers_Click(object sender, RoutedEventArgs e) => await QueryServers(false);
 
-    async Task QueryServers(bool quiet)
+    /// <summary>A Refresh or new servers came in while the servers were being asked: one more round right after (review C20).</summary>
+    bool _queryAgain;
+
+    async Task QueryServers(bool quiet, bool queue = false)
     {
-        if (_demo || _querying) return;
+        if (_demo) return;
+        if (_querying)
+        {
+            if (!quiet || queue) _queryAgain = true;
+            if (!quiet) Toast("Already asking the servers: one moment.", Tone.Info);
+            return;
+        }
         // No phone mode: the game uses the home connection, so the servers are asked from there too.
         // Protection off with "Use the app with protection off": the same, on purpose.
         var egress = OnHome && _last?.Unprotected == true ? HomeAdapter : _last?.Egress;
@@ -252,6 +312,7 @@ public partial class MainWindow
         finally { _querying = false; }
         ApplyServerBans();   // the network of a ban is known by name only after the server answers
         await CheckFollowed();
+        if (_queryAgain) { _queryAgain = false; await QueryServers(true); }
     }
 
     /// <summary>Name, map, players and ping of one server, only through the phone. False if it didn't answer (or isn't routed).</summary>
