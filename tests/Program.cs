@@ -302,16 +302,18 @@ Check(".sha256 curto ou lixo", Updater.ParseSha256(H[..63] + "  CS2IPChanger.exe
 var relJson = """
 [
   {"tag_name":"v0.1.0-alpha.11","draft":true,"html_url":"https://github.com/Sepd0x/cs2-ip-changer/releases/tag/v0.1.0-alpha.11","assets":[]},
-  {"tag_name":"v0.1.0-alpha.9","draft":false,"prerelease":true,"html_url":"https://github.com/Sepd0x/cs2-ip-changer/releases/tag/v0.1.0-alpha.9",
+  {"tag_name":"v0.1.0-alpha.12","draft":false,"prerelease":true,"html_url":"https://github.com/Sepd0x/cs2-ip-changer/releases/tag/v0.1.0-alpha.12",
+   "assets":[{"name":"CS2IPChanger.exe","browser_download_url":"https://github.com/Sepd0x/cs2-ip-changer/releases/download/v0.1.0-alpha.12/CS2IPChanger.exe"}]},
+  {"tag_name":"v0.1.0-alpha.9","draft":false,"prerelease":false,"html_url":"https://github.com/Sepd0x/cs2-ip-changer/releases/tag/v0.1.0-alpha.9",
    "assets":[{"name":"CS2IPChanger.exe","browser_download_url":"https://github.com/Sepd0x/cs2-ip-changer/releases/download/v0.1.0-alpha.9/CS2IPChanger.exe"}]},
-  {"tag_name":"v0.1.0-alpha.10","draft":false,"prerelease":true,"html_url":"https://github.com/Sepd0x/cs2-ip-changer/releases/tag/v0.1.0-alpha.10",
+  {"tag_name":"v0.1.0-alpha.10","draft":false,"prerelease":false,"html_url":"https://github.com/Sepd0x/cs2-ip-changer/releases/tag/v0.1.0-alpha.10",
    "assets":[{"name":"CS2IPChanger.exe","browser_download_url":"https://github.com/Sepd0x/cs2-ip-changer/releases/download/v0.1.0-alpha.10/CS2IPChanger.exe"},
              {"name":"CS2IPChanger.exe.sha256","browser_download_url":"https://evil.example/CS2IPChanger.exe.sha256"}]},
   {"tag_name":"nightly","draft":false,"assets":[]}
 ]
 """;
 var rel = Updater.PickLatest(relJson);
-Check("Release mais alta (sem rascunhos)", rel?.Version == "0.1.0-alpha.10", rel?.Version);
+Check("Release mais alta (sem rascunhos nem pre-releases, que são as retiradas)", rel?.Version == "0.1.0-alpha.10", rel?.Version);
 Check("Exe do próprio repo aceite", rel?.ExeUrl == "https://github.com/Sepd0x/cs2-ip-changer/releases/download/v0.1.0-alpha.10/CS2IPChanger.exe");
 Check("Link de fora do repo ignorado", rel?.ShaUrl == null);
 Check("Página da release", rel?.PageUrl == "https://github.com/Sepd0x/cs2-ip-changer/releases/tag/v0.1.0-alpha.10");
@@ -617,6 +619,8 @@ TelemetryTests.Run(Check);
 SemProtecaoTests.Run(Check);
 // auditoria de segurança de 6 nov.: nada do dono nos ficheiros do git, a tarefa de Start with Windows (Seguranca1106Tests.cs)
 Seguranca1106Tests.Run(Check);
+// 6 nov.: a análise do untangle-codebase, o que podia partir já na beta.11 (Untangle1106Tests.cs)
+Untangle1106Tests.Run(Check);
 // 6 nov.: numeração das versões (csproj, CHANGELOG, notas da release) (VersaoTests.cs)
 VersaoTests.Run(Check);
 // beta.11 (6 nov.): o aviso das estatísticas curto, com quem guarda e por quanto tempo, e a lista inteira em See the full list (AvisoTests.cs)

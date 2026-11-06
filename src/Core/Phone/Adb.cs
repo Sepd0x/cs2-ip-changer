@@ -451,8 +451,12 @@ public static class Adb
     /// <summary>The start of <see cref="Cycle"/>'s answer when the phone refused to turn data off (nothing changed on the phone).</summary>
     public const string Refused = "The phone refused the command: ";
 
-    /// <summary>Turns the phone's data connection off and on again. USB tethering stays on.</summary>
-    public static async Task<string> Cycle(string adb, string serial, Method method, int offSeconds)
+    /// <summary>
+    /// Turns the phone's data connection off and on again. USB tethering stays on. Returns the error (null when it worked) and the
+    /// method really used: where "svc data" is missing it falls back to airplane mode, unless <paramref name="allowAirplane"/> is
+    /// false (the phone's hotspot: airplane mode would drop it, and the PC with it).
+    /// </summary>
+    public static async Task<(string Error, Method Used)> Cycle(string adb, string serial, Method method, int offSeconds, bool allowAirplane = true)
     {
         string off, on;
         if (method == Method.Airplane)
@@ -469,8 +473,8 @@ public static class Adb
         if (!r1.Ok || r1.Output.Contains("Exception") || r1.Output.Contains("not found"))
         {
             // On some Android versions "svc data" is not available: try airplane mode.
-            if (method == Method.MobileData) return await Cycle(adb, serial, Method.Airplane, offSeconds);
-            return Refused + r1.Output;
+            if (method == Method.MobileData && allowAirplane) return await Cycle(adb, serial, Method.Airplane, offSeconds);
+            return (Refused + r1.Output, method);
         }
         await Task.Delay(TimeSpan.FromSeconds(offSeconds));
         // Turning data or airplane mode off can drop USB tethering, and ADB with it, for a few seconds: keep trying for about 20 s.
@@ -480,8 +484,8 @@ public static class Adb
             await Task.Delay(5000);
             r2 = await Run(adb, $"-s {serial} shell {on}");
         }
-        if (!r2.Ok) return "Turned data off but could not turn it back on: " + r2.Output + " (turn it on manually on the phone)";
-        return null;
+        if (!r2.Ok) return ("Turned data off but could not turn it back on: " + r2.Output + " (turn it on manually on the phone)", method);
+        return (null, method);
     }
 
     /// <summary>Turns off the phone's Wi-Fi so tethering uses mobile data.</summary>

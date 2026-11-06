@@ -74,7 +74,7 @@ public static partial class Updater
 
     // ------------------------------------------------------------ The release list
 
-    /// <summary>The highest version in the /releases answer (drafts left out). Links outside this repo are dropped.</summary>
+    /// <summary>The highest version in the /releases answer (drafts and pre-releases left out). Links outside this repo are dropped.</summary>
     public static Release PickLatest(string json)
     {
         Release best = null;
@@ -83,6 +83,9 @@ public static partial class Updater
         foreach (var r in doc.RootElement.EnumerateArray())
         {
             if (r.TryGetProperty("draft", out var d) && d.ValueKind == JsonValueKind.True) continue;
+            // A release marked pre-release is one taken back (docs/RELEASING.md, "If a release breaks something"): never offered.
+            // Betas go out as normal releases, so this only skips the ones pulled on purpose.
+            if (r.TryGetProperty("prerelease", out var pre) && pre.ValueKind == JsonValueKind.True) continue;
             var tag = Str(r, "tag_name");
             if (!IsValid(tag)) continue;
             string exe = null, sha = null, sig = null;
@@ -294,7 +297,10 @@ public static partial class Updater
         catch
         {
             hold?.Dispose(); hold = null;
-            try { File.Move(exe, NewExe, true); File.Move(OldExe, exe); } catch { }
+            // Two separate steps: if the new exe can't be moved aside, the old one must still go back in place
+            try { File.Move(exe, NewExe, true); } catch (Exception ex) { Log.Warn("Update rollback: could not move the new exe aside: " + ex.Message); }
+            try { if (!File.Exists(exe)) File.Move(OldExe, exe); }
+            catch (Exception ex) { Log.Error($"Update rollback failed: the app is at {OldExe}; rename it to {Path.GetFileName(exe)} to start it. ({ex.Message})"); }
             throw;
         }
         finally { hold?.Dispose(); }

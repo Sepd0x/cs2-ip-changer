@@ -39,7 +39,7 @@ The Log, the dashboard (crashes, errors by place in the code, where people stop)
 
 Installed copies only update to the release GitHub marks as **Latest**, and only when the user says yes. So:
 
-1. On GitHub, edit the broken release and tick **Set as a pre-release** (or untick Latest): the previous release becomes Latest again, new downloads and the update check go back to it. Nothing is deleted.
+1. Take the broken release back without deleting it: `gh release edit v<version> --draft=true` (a draft is left out by every copy's update check, and by the Download links). From beta.11 on, the update check also leaves out a release marked **pre-release**, so ticking that on GitHub is enough for copies of beta.11 or later; copies of beta.10 or older only skip drafts, so use the draft while any of them may still update. The previous release becomes Latest again.
 2. Users who already updated: the fix goes out as the next version (`-beta.N+1`). The updater never offers an older version, so a step back is not possible from inside the app; tell them in the release notes and the issue to download the previous exe by hand if they need it now.
 3. The site and the README show `site/release.json`: run `node tools/site-pages.mjs --release v<previous> --vt <its result>` so the download lines match the release that is Latest again.
 

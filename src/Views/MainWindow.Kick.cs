@@ -51,6 +51,8 @@ public partial class MainWindow
             {
                 _consoleServer = _kicks.Server;
                 if (_consoleServer != null) RejoinBack(_consoleServer);
+                // You went to another server yourself: the retry on the full one stops, or it would pull you out of this one
+                if (FullRetryStops(_fullServer, _consoleServer)) _fullServer = null;
                 OfferAddJoined(_consoleServer);
                 if (_kicks.OnValve && !valveBefore) Log.Info("CS2 joined a Valve server: kicks and bans there are left alone.");
                 continue;
@@ -522,6 +524,9 @@ public partial class MainWindow
         await Task.Delay(15000);
         if (_fullServer == s.Key && Steam.Cs2Running && _servers.Contains(s)) await Join(s, fromSlotWait: true);
     }
+
+    /// <summary>CS2 connected to a server: the retry on the full one goes on only if it is that same server (or CS2 says no server).</summary>
+    public static bool FullRetryStops(string fullServer, string connectedTo) => fullServer != null && connectedTo != null && connectedTo != fullServer;
 
     /// <summary>For the stats: a Rejoin counts as back when CS2 connects to that server within 3 minutes.</summary>
     void RejoinBack(string server)

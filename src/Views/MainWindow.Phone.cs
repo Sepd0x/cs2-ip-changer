@@ -497,6 +497,9 @@ public partial class MainWindow
 
     async void ChangeIp_Click(object sender, RoutedEventArgs e) => await RunCommand("Change IP", "starting…", () => ChangeIp(confirm: true));
 
+    /// <summary>The phone is used through its hotspot: a hotspot name is saved and the egress (when the report has one) is Wi-Fi.</summary>
+    public static bool IsHotspot(string egressSsid, bool? egressIsWifi) => !string.IsNullOrEmpty(egressSsid) && egressIsWifi != false;
+
     /// <summary>Cycles the phone's data until the carrier gives a new IP. True if the IP really changed (and isn't the home IP).</summary>
     async Task<bool> ChangeIp(bool confirm)
     {
@@ -506,7 +509,8 @@ public partial class MainWindow
         // beta.11: an iPhone has no ADB: the change is guided (you toggle Airplane Mode, the app waits and measures)
         if (_iphone && _phone?.Ready != true) return await IphoneChangeIp();
         // USB tethering, or the phone's hotspot (saved by name) with the cable plugged in only for ADB.
-        var hotspot = _last?.Egress is { IsWifi: true } && !string.IsNullOrEmpty(_s.EgressSsid);
+        // With protection off there is no egress in the report: the saved hotspot name decides, as Phone setup does
+        var hotspot = IsHotspot(_s.EgressSsid, _last?.Egress?.IsWifi);
         if (_last?.Egress != null && !_last.Egress.IsPhone && !hotspot)
         {
             Toast("The chosen connection is not a phone: the Change IP button only works with a phone over ADB (USB tethering, or its hotspot with the cable plugged in).", false);
@@ -555,14 +559,16 @@ public partial class MainWindow
                 afterBadLink = false;
                 ShowProgress(how != method ? $"Attempt {attempt}/{of}: airplane mode for {_s.OffSeconds} s, so the phone looks for another cell…"
                     : $"Attempt {attempt}/{of}: phone data off for {_s.OffSeconds} s…");
-                var err = await Adb.Cycle(_adb, _phone.Serial, how, Math.Clamp(_s.OffSeconds, 1, 60));
+                // On the hotspot airplane mode is never used, not even as the fallback where "svc data" is missing: it drops the hotspot
+                var (err, used) = await Adb.Cycle(_adb, _phone.Serial, how, Math.Clamp(_s.OffSeconds, 1, 60), allowAirplane: !hotspot);
                 // A phone that refuses airplane mode was left as it was: the retry goes the usual way
                 if (err != null && how != method && err.StartsWith(Adb.Refused))
                 {
                     Log.Info("The phone refused airplane mode: trying again with " + (method == Adb.Method.Airplane ? "airplane mode." : "mobile data off and on."));
                     how = method;
-                    err = await Adb.Cycle(_adb, _phone.Serial, how, Math.Clamp(_s.OffSeconds, 1, 60));
+                    (err, used) = await Adb.Cycle(_adb, _phone.Serial, how, Math.Clamp(_s.OffSeconds, 1, 60), allowAirplane: !hotspot);
                 }
+                how = used;   // the method the phone really went through (a fallback to airplane mode too), for the tethering check below
                 if (err != null) { Log.Error(err); Toast(err, Tone.Error); return false; }
 
                 ShowProgress($"Attempt {attempt}/{of}: waiting for the mobile network…");

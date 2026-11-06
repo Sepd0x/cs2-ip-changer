@@ -40,10 +40,13 @@ public static partial class Steam
     /// <summary>A name worth showing: not empty, and not a bare SteamID64 (what a profile that was never set up can show instead of a name).</summary>
     public static string ShownName(string s) => string.IsNullOrWhiteSpace(s) || Regex.IsMatch(s.Trim(), @"^7656119\d{10}\z") ? null : s;
 
+    public const string BansUnknown = "Steam didn't answer with the bans (try again in a minute); the account keeps what it had.";
+
     /// <summary>Public profile: XML (no key) + profile page (bans, level). With a Web API key, bans come from the official API.</summary>
     public static async Task<SteamProfile> FetchProfile(string steamId, string apiKey)
     {
         var p = new SteamProfile { Checked = DateTime.Now };
+        var bansKnown = false;
         var xml = await Http.GetStringAsync($"https://steamcommunity.com/profiles/{steamId}/?xml=1");
         var x = XDocument.Parse(xml).Root;
         if (x == null || x.Element("error") != null) throw new InvalidDataException("Profile not found");
@@ -73,6 +76,7 @@ public static partial class Steam
             var lv = LevelRe.Match(html);
             if (lv.Success) p.Level = int.Parse(lv.Groups[1].Value);
             p.CommunityBan = CommunityBanRe.IsMatch(html);
+            bansKnown = true;
         }
         catch { }
 
@@ -93,10 +97,14 @@ public static partial class Steam
                     p.DaysSinceLastBan = p.VacBans + p.GameBans > 0 ? days : null;
                     var eco = b.GetProperty("EconomyBan").GetString();
                     p.TradeBan = eco == "none" ? null : eco;
+                    bansKnown = true;
                 }
             }
             catch (Exception ex) { Log.Warn("Steam Web API: " + ex.Message); }
         }
+        // Neither the profile page nor the API answered (a 429 mid-refresh): a profile with no bans read would turn a banned account
+        // back into a usable one. The refresh counts it as an error and the account keeps what it had.
+        if (!bansKnown) throw new HttpRequestException(BansUnknown);
         return p;
     }
 
