@@ -151,6 +151,12 @@ static class DesignSyncTests
         check("Capturas: as do site, do README e da dashboard estão todas no manifesto", outside.Count == 0, string.Join(", ", outside) + (outside.Count > 0 ? redo : ""));
         check("Capturas: o site mostra as de 2x no tamanho de 1x", Regex.Matches(Txt("site/index.html"), @"<img src=""img/(connection|servers|accounts|regions|configs|profiles)\.png""[^>]*width=""1240"" height=""800""").Count == 6, "");
 
+        // o cartão social (og:image) mostra o Status de agora: sem Chrome o shots.mjs deixava o antigo e o manifesto dava-o como atual.
+        // Um manifesto de antes deste registo (6 nov.) ainda não o tem: passa até à próxima corrida do shots.mjs.
+        var social = man.TryGetProperty("social", out var so) && so.TryGetProperty("from", out var sf) ? sf.GetString() : "sem registo";
+        var sOk = social == "sem registo" || social == listed.GetValueOrDefault("docs/assets/src/social-preview-status.png");
+        check("Capturas: o cartão social mostra o Status de agora", sOk, sOk ? (social == "sem registo" ? social : "") : "corre docs/assets/src/render.cmd e depois node tools/shots.mjs --social");
+
         // os posters e stills 3D mostram a captura da Connection de agora
         var renders = man.GetProperty("renders");
         var from = renders.GetProperty("from").GetString();

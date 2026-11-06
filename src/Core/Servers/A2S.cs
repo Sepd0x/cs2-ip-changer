@@ -15,6 +15,13 @@ public static class A2S
 {
     static readonly byte[] Header = { 0xFF, 0xFF, 0xFF, 0xFF };
 
+    /// <summary>
+    /// The server just didn't answer (in time, or its port is closed): an everyday result, not a failure for the Log. Anything else
+    /// (a broken answer, the phone's IP gone, a bug) is.
+    /// </summary>
+    public static bool NoAnswer(Exception ex) => ex is OperationCanceledException or TimeoutException
+        || ex is SocketException { SocketErrorCode: SocketError.ConnectionReset or SocketError.TimedOut or SocketError.HostUnreachable or SocketError.NetworkUnreachable };
+
     public static async Task<ServerInfo> Query(string ip, int port, string bindLocalIp, int timeoutMs = 1500)
     {
         using var udp = new UdpClient(new IPEndPoint(bindLocalIp != null ? IPAddress.Parse(bindLocalIp) : IPAddress.Any, 0));

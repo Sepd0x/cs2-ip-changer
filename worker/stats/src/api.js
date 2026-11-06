@@ -633,7 +633,12 @@ export async function live(db, { dev, now, exclude = [] }) {
     ]);
     rows = r.results ?? [];
     lastTs = last?.ts ?? null;
-  } catch { rows = []; lastTs = null; }
+  } catch (e) {
+    // Only a database without the live table yet counts as nobody: any other error (a broken query, D1 down) goes up, so the
+    // page says it couldn't read instead of "0 now".
+    if (!/no such table/i.test(String(e && e.message))) throw e;
+    rows = []; lastTs = null;
+  }
   const count = (get) => { const m = {}; for (const r of rows) { const k = get(r) ?? '?'; m[k] = (m[k] || 0) + 1; } return Object.entries(m).map(([k, n]) => ({ k, n })).sort((a, b) => b.n - a.n); };
   return {
     now: rows.length, inGame: rows.filter((r) => r.cs2 === 1).length, protectedN: rows.filter((r) => r.prot === 1).length, lastTs,

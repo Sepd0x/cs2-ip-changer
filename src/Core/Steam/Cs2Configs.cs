@@ -479,6 +479,7 @@ public sealed class Cs2ConfigStore
     public bool HasConfig(string steamId) => Dir(steamId) is string d && !Redirected(d) && Enum.GetValues<CfgPart>().Any(p => File.Exists(Path.Combine(d, Cs2Config.PathsOf(p).Local)));
 
     /// <summary>The text of a small file. With <paramref name="real"/>: null unless the open file really is there (not reached through a link).</summary>
+    /// <remarks>Null too when it isn't there or is too big; a file that is there but can't be read (in use, no permission) throws: that isn't "no file".</remarks>
     static string ReadText(string path, string real = null)
     {
         try
@@ -488,14 +489,16 @@ public sealed class Cs2ConfigStore
             if (fs.Length > MaxFile || (real != null && !SamePath(FinalPath(fs.SafeFileHandle), real))) return null;
             return new StreamReader(fs, Encoding.UTF8).ReadToEnd();
         }
-        catch { return null; }
+        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException) { return null; }   // gone since the check
     }
 
     /// <summary>
     /// A file in the app's own folder (backups, snapshots), null unless the open file really is there: users can write in that
     /// folder too, and a link there would make the admin app read any file and copy it into an account.
     /// </summary>
-    string ReadOwn(string path)
+    /// <remarks>A file that is there but can't be read: with <paramref name="fail"/> it throws (a restore must not go half-way); otherwise it
+    /// reads as missing and the Log says so once per file (snapshots are read each time Compare changes).</remarks>
+    string ReadOwn(string path, bool fail = false)
     {
         try
         {
@@ -503,12 +506,20 @@ public sealed class Cs2ConfigStore
             var rel = Path.GetRelativePath(root, Path.GetFullPath(path));
             if (rel == "." || rel.StartsWith("..") || Path.IsPathRooted(rel)) return null;
             using var h = OpenDir(root);
-            return FinalPath(h) is string real ? ReadText(path, Path.Combine(real, rel)) : null;
+            var text = FinalPath(h) is string real ? ReadText(path, Path.Combine(real, rel)) : null;
+            lock (WarnedOwn) WarnedOwn.Remove(path);
+            return text;
         }
-        catch { return null; }
+        catch (Exception ex) when (!fail)
+        {
+            bool first;
+            lock (WarnedOwn) first = WarnedOwn.Add(path);
+            if (first) Log.Warn($"Config: a saved config file ({Path.GetFileName(path)}) couldn't be read ({Why(ex)}), so it was left out.");
+            return null;
+        }
     }
 
-    static readonly HashSet<string> WarnedLinked = new(), WarnedRead = new();
+    static readonly HashSet<string> WarnedLinked = new(), WarnedRead = new(), WarnedOwn = new(StringComparer.OrdinalIgnoreCase);
 
     public CfgSet Read(string steamId)
     {
@@ -531,8 +542,9 @@ public sealed class Cs2ConfigStore
             }
             lock (WarnedRead) WarnedRead.Remove(steamId);   // read fine again: the next failure is logged too
         }
-        catch (IOException ex)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            // A file in use or locked is not "no file": nothing is read rather than half a config (a copy from it would leave a part out).
             // Otherwise the page only says "No CS2 config" with no reason. Once per account until a read works again (pages read often).
             set.Files.Clear();
             bool first;
@@ -553,11 +565,21 @@ public sealed class Cs2ConfigStore
         {
             var path = Path.Combine(d, Cs2Config.PathsOf(p).Local);
             if (!File.Exists(path)) continue;
-            if (mine != null && mine.TryGetValue(p.ToString(), out var sha) && sha == Cs2Config.Sha(ReadText(path))) continue;
+            if (mine != null && mine.TryGetValue(p.ToString(), out var sha) && sha == ShaNow(path)) continue;
             var t = File.GetLastWriteTime(path);
             if (best == null || t > best) best = t;
         }
         return best;
+    }
+
+    /// <summary>
+    /// The SHA-1 of a config file as it is now. One that can't be read now (null) counts as changed in game, so its date is used;
+    /// reading that account's config (<see cref="Read"/>) says why in the Log.
+    /// </summary>
+    static string ShaNow(string path)
+    {
+        try { return Cs2Config.Sha(ReadText(path)); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return null; }
     }
 
     /// <summary>Latest change wins: the account changed most recently in game (null if none was).</summary>
@@ -824,33 +846,38 @@ public sealed class Cs2ConfigStore
         var dir = Dir(b.SteamId) ?? throw new IOException("no Steam userdata folder");
         if (Redirected(dir)) throw new IOException(Linked);
         // Read first: the backup made just below can push this one out of the kept ones.
-        var saved = b.Files.Where(Safe).Select(rel => (rel, text: ReadOwn(Path.Combine(b.Dir, rel)))).Where(x => x.text != null).ToList();
+        // A saved file that is there but can't be read stops it here, before anything is written (it was left out, and the restore said it went fine).
+        var saved = b.Files.Where(Safe).Select(rel => (rel, text: ReadOwn(Path.Combine(b.Dir, rel), fail: true))).Where(x => x.text != null).ToList();
         var rels = b.Files.Concat(b.Created).Where(Safe).ToList();
-        // Before anything is written: a read-only file would stop the restore half-way.
-        if (saved.FirstOrDefault(x => ReadOnly(Path.Combine(dir, x.rel))).rel is string ro)
+        // Before anything is written: a read-only file would stop the restore half-way (one the copy created too: it can't be deleted).
+        if (saved.Select(x => x.rel).Concat(b.Created.Where(Safe)).FirstOrDefault(r => ReadOnly(Path.Combine(dir, r))) is string ro)
             throw new IOException($"{Path.GetFileName(ro)} is read-only: clear that in its Properties first");
         var held = new List<SafeFileHandle>();
+        var left = new List<string>();
         try
         {
             var real = Pin(b.SteamId, rels, held);
             Backup(b.SteamId, dir, rels.Where(r => File.Exists(Path.Combine(dir, r))), CfgTrigger.Restore, null, syncId, real);
             foreach (var (rel, text) in saved) WriteHeld(real, rel, text);
             // Files the copy created didn't exist before it: the account goes back to CS2's defaults there (deleted as themselves,
-            // only in 730's real folder).
-            foreach (var rel in b.Created.Where(Safe)) { try { SafeFile.Delete(real, rel); } catch { } }
+            // only in 730's real folder). One still there afterwards (in use, refused) is said, not taken as done.
+            foreach (var rel in b.Created.Where(Safe))
+                if (!SafeFile.Delete(real, rel) && File.Exists(Path.Combine(real, rel))) left.Add(rel);
         }
         finally { foreach (var h in held) h.Dispose(); }
-        // What the restore wrote is the app's, not a change made in game (Latest change wins).
+        // What the restore wrote is the app's, not a change made in game (Latest change wins). A created file that stayed is still the app's copy.
         if (!State.Written.TryGetValue(b.SteamId, out var mine)) State.Written[b.SteamId] = mine = new();
         foreach (var p in Enum.GetValues<CfgPart>())
         {
             var local = Cs2Config.PathsOf(p).Local;
             if (saved.FirstOrDefault(x => x.rel == local).text is string t) mine[p.ToString()] = Cs2Config.Sha(t);
-            else if (b.Created.Contains(local)) mine.Remove(p.ToString());
+            else if (b.Created.Contains(local) && !left.Contains(local)) mine.Remove(p.ToString());
         }
         State.LastSyncId = syncId;
         State.LastSyncAt = AppClock.Now;
         SaveState();
+        // The caller logs and shows it (Restore and Undo last sync), like the other reasons a restore stops.
+        if (left.Count > 0) throw new IOException($"{Path.GetFileName(left[0])} couldn't be removed: close what has it open and restore again");
         return true;
     }
 
@@ -970,7 +997,7 @@ public sealed class Cs2ConfigStore
             }
             Add("snapshot.json", JsonSerializer.Serialize(new { s.Name, s.Created, s.Parts, App = "CS2 IP Changer " + AppInfo.Version }, new JsonSerializerOptions { WriteIndented = true }));
             foreach (var p in Enum.GetValues<CfgPart>())
-                if (ReadOwn(Path.Combine(s.Dir, Cs2Config.SnapshotFile(p))) is string t) Add(Cs2Config.SnapshotFile(p), t);
+                if (ReadOwn(Path.Combine(s.Dir, Cs2Config.SnapshotFile(p)), fail: true) is string t) Add(Cs2Config.SnapshotFile(p), t);   // never a zip with a part left out
         }
         SafeFile.Write(zipPath, ms.ToArray());
     }

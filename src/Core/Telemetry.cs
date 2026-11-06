@@ -387,7 +387,7 @@ public static class Telemetry
             });
             await Post(body, TimeSpan.FromSeconds(8), Url + "/live");
         }
-        catch { }
+        catch (Exception ex) { NotSent(Url + "/live", Kind(ex)); }
     }
 
     // ------------------------------------------------------------------ beta.9 part 2: matches, sessions, scroll, environment
@@ -666,7 +666,7 @@ public static class Telemetry
             var body = EnvBody(System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, w, s, Environment.OSVersion.Version.Build, _phoneEnv, dev);
             if (await Post(body, TimeSpan.FromSeconds(8), Url + "/env")) lock (Gate) { _st.EnvDay = today; try { Store.Save(File_, _st); } catch { } }
         }
-        catch { }
+        catch (Exception ex) { NotSent(Url + "/env", Kind(ex)); }
     }
 
     /// <summary>
@@ -933,11 +933,37 @@ public static class Telemetry
     /// <summary>No await comes back to the window's thread, so the close can wait for it.</summary>
     static async Task<bool> Post(string body, TimeSpan timeout, string url = null)
     {
+        url ??= Url;
         using var http = new HttpClient { Timeout = timeout };
         http.DefaultRequestHeaders.UserAgent.ParseAdd(AppIds.Name);
-        using var resp = await http.PostAsync(url ?? Url, new StringContent(body, Encoding.UTF8, "application/json")).ConfigureAwait(false);
-        return resp.IsSuccessStatusCode;   // otherwise kept for the next try
+        using var resp = await http.PostAsync(url, new StringContent(body, Encoding.UTF8, "application/json")).ConfigureAwait(false);
+        if (resp.IsSuccessStatusCode) { SentOk(url); return true; }
+        NotSent(url, "the server answered " + (int)resp.StatusCode);
+        return false;   // kept for the next try
     }
+
+    const string NotSentKey = "stats-not-sent ";
+
+    /// <summary>A send to <paramref name="url"/> went through: its failures are written again if they come back.</summary>
+    public static void SentOk(string url) => Log.Again(NotSentKey + url + "|");
+
+    /// <summary>What each address is, for the Log.</summary>
+    static string What(string url) => url == Url ? "report" : url.EndsWith("/live") ? "5-minute signal" : url.EndsWith("/env") ? "environment report" : "request";
+
+    /// <summary>
+    /// Why a send to <paramref name="url"/> didn't go, in the Log: once per kind of failure until one goes through again, so stats
+    /// that stop leave a trace without a line every 5 minutes. Only the Log: nothing more is sent.
+    /// </summary>
+    public static void NotSent(string url, string why) =>
+        Log.WarnOnce(NotSentKey + url + "|" + why, $"Usage stats: the {What(url)} wasn't sent ({why}). Tried again later; said once until one goes through.");
+
+    /// <summary>A failure as a kind, never with a path or an address in it.</summary>
+    public static string Kind(Exception ex) => ex switch
+    {
+        TaskCanceledException or TimeoutException => "no answer in time",
+        HttpRequestException h => "no connection" + (h.HttpRequestError == HttpRequestError.Unknown ? "" : ": " + h.HttpRequestError),
+        _ => ex.GetType().Name,
+    };
 
     /// <summary>Only what went out is taken away: anything counted while sending stays for next time.</summary>
     static void Sent(Snapshot s)
@@ -971,7 +997,7 @@ public static class Telemetry
             var s = Build();
             if (await Post(s.Body, TimeSpan.FromSeconds(8))) Sent(s);
         }
-        catch { }
+        catch (Exception ex) { NotSent(Url, Kind(ex)); }
         finally { End(); }
     }
 

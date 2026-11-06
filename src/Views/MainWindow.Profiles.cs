@@ -346,7 +346,12 @@ public partial class MainWindow
             _tplAvatarBytes = raw == null ? null : AvatarImage.Prepare(raw, out _);
             if (_tplAvatarBytes != null && !Rec.On) _tplAvatarImg = ToImage(_tplAvatarBytes);   // recording build: no pictures
         }
-        catch { _tplAvatarBytes = null; }
+        catch (Exception ex)
+        {
+            // Once per picture (the result is kept for this name): otherwise the template just goes out without its picture.
+            _tplAvatarBytes = null;
+            Log.Warn("Profiles: a template's picture couldn't be read (" + (ex is IOException or UnauthorizedAccessException ? "the file can't be opened" : ex.Message) + "), so it is left out.");
+        }
         return _tplAvatarBytes;
     }
 

@@ -12,6 +12,8 @@
 //   node tools/shots.mjs                  build Debug, capture, frame, pack, write the manifest
 //   node tools/shots.mjs --no-build       with the Debug build already there
 //   node tools/shots.mjs --out <folder>   a trial: everything under <folder>, nothing in the repo changes
+//   node tools/shots.mjs --social         after docs/assets/src/render.cmd: records which Status the social card shows (without
+//                                         Chrome the full run leaves the old card, says so and ends with an error)
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, copyFileSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -61,19 +63,29 @@ function entry(rel) {
 export const RENDERS = ['poster-1280', 'poster-1366', 'poster-1440', 'poster-1536', 'poster-1920', 'poster-390', 'world-tower', 'world-plug'].map((n) => `site/img/${n}.webp`);
 const CONNECTION = 'docs/screenshots/connection.png';
 
-/** The manifest of the captures as they are now in the repo; the renders keep the capture they were made from. */
-export function manifest(stampRenders = false) {
+// The social preview card (the site's og:image) is rendered by Chrome from the Status piece readme-shots.py cuts from connection.png.
+const STATUS = 'docs/assets/src/social-preview-status.png', SOCIAL = 'docs/assets/social-preview.png';
+
+/**
+ * Which Status piece the social preview card shows (SHA-256): the one it was just rendered from, else what the manifest had (null:
+ * not known). Without Chrome the old card stays, and the manifest must not say it shows the new Status.
+ */
+export function socialFrom(old, rendered, statusSha) { return rendered ? statusSha : old?.social?.from ?? null; }
+
+/** The manifest of the captures as they are now in the repo; the renders and the social card keep the capture they were made from. */
+export function manifest(stampRenders = false, socialRendered = false) {
   const old = existsSync(join(ROOT, MANIFEST)) ? JSON.parse(readFileSync(join(ROOT, MANIFEST), 'utf8')) : {};
   const renders = stampRenders || !old.renders ? { from: entry(CONNECTION).sha256, files: RENDERS.map(entry) } : old.renders;
+  const social = { from: socialFrom(old, socialRendered, entry(STATUS).sha256) };
   const files = [];
   for (const n of SITE) files.push(`docs/screenshots/${n}.png`);
   for (const n of readdirSync(join(ROOT, 'docs/assets/shots')).sort()) if (/\.(png|webp)$/.test(n)) files.push(`docs/assets/shots/${n}`);
   for (const n of Object.keys(PAGES)) files.push(`worker/stats/dashboard/ui/${n}.png`);
-  files.push('docs/assets/src/social-preview-status.png', 'docs/assets/social-preview.png');
+  files.push(STATUS, SOCIAL);
   return {
     note: 'Made by tools/shots.mjs. Do not edit: tests/DesignSyncTests.cs checks it against the app and the files.',
     app: appVersion(), ui: uiFingerprint(), uiFiles: uiFiles(), made: new Date().toISOString().slice(0, 10), scale: SCALE, base: SIZE,
-    files: files.map(entry), renders,
+    files: files.map(entry), renders, social,
   };
 }
 
@@ -110,6 +122,14 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
     console.log(`${MANIFEST}: the renders show ${CONNECTION} ${m.renders.from.slice(0, 12)}`);
     process.exit(0);
   }
+  if (args.includes('--social')) {
+    // after docs/assets/src/render.cmd made the social card by hand (no Chrome here when shots.mjs ran)
+    const old = JSON.parse(readFileSync(join(ROOT, MANIFEST), 'utf8'));
+    const m = { ...old, files: old.files.map((f) => (f.file === STATUS || f.file === SOCIAL ? entry(f.file) : f)), social: { from: entry(STATUS).sha256 } };
+    writeFileSync(join(ROOT, MANIFEST), JSON.stringify(m, null, 1) + '\n');
+    console.log(`${MANIFEST}: ${SOCIAL} shows ${STATUS} ${m.social.from.slice(0, 12)}`);
+    process.exit(0);
+  }
 
   if (!existsSync(join(ROOT, 'src/Privado'))) { console.error('The demo is in src/Privado (outside git): no captures without it.'); process.exit(1); }
   if (!args.includes('--no-build')) run('dotnet', ['build', 'src/ServerRouteTool.csproj', '-c', 'Debug', '-v', 'q', '-nologo']);
@@ -138,15 +158,21 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
     run('python', ['tools/readme-shots.py']);
     // the social preview card shows Status from the new connection capture (as docs/assets/src/render.cmd renders it)
     const chrome = join(process.env.ProgramFiles || 'C:/Program Files', 'Google/Chrome/Application/chrome.exe');
-    if (existsSync(chrome)) {
+    const socialRendered = existsSync(chrome);
+    if (socialRendered) {
       run(chrome, ['--headless=new', '--hide-scrollbars', '--disable-lcd-text', '--allow-file-access-from-files', '--force-device-scale-factor=1', '--window-size=1280,640',
-        `--screenshot=${join(ROOT, 'docs/assets/social-preview.png')}`, 'file:///' + join(ROOT, 'docs/assets/src/social-preview.html').replaceAll('\\', '/')]);
-      console.log('  docs/assets/social-preview.png (the site\'s og:image; upload it by hand on GitHub: Settings > General > Social preview)');
-    } else console.log('No Chrome: run docs/assets/src/render.cmd for docs/assets/social-preview.png.');
+        `--screenshot=${join(ROOT, SOCIAL)}`, 'file:///' + join(ROOT, 'docs/assets/src/social-preview.html').replaceAll('\\', '/')]);
+      console.log(`  ${SOCIAL} (the site's og:image; upload it by hand on GitHub: Settings > General > Social preview)`);
+    }
     run(process.execPath, ['tools/dashboard-assets.mjs']);
-    writeFileSync(join(ROOT, MANIFEST), JSON.stringify(manifest(), null, 1) + '\n');
+    writeFileSync(join(ROOT, MANIFEST), JSON.stringify(manifest(false, socialRendered), null, 1) + '\n');
     const m = JSON.parse(readFileSync(join(ROOT, MANIFEST), 'utf8'));
     if (m.renders.from !== entry(CONNECTION).sha256) console.log(`The 3D posters and stills still show the old ${CONNECTION}: render them with node tools/site-renders.mjs.`);
+    if (m.social.from !== entry(STATUS).sha256) {
+      // not a quiet line among the others: the card everyone sees when the site is shared would stay the old one
+      console.error(`No Chrome: ${SOCIAL} still shows the old Status. Run docs/assets/src/render.cmd, then node tools/shots.mjs --social.`);
+      process.exitCode = 1;
+    }
     console.log(`Done, ${MANIFEST} written. Compare the new captures before committing; publish/ui-mapa/*.json has the buttons for ui-map.js.`);
   }
 }

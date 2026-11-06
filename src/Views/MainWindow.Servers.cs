@@ -228,10 +228,12 @@ public partial class MainWindow
             if (info.PlayerList != null) { srv.Players = ToRows(srv, info.PlayerList); srv.PlayersAt = DateTime.Now; }
             else if (info.Players == 0 || DateTime.Now - srv.PlayersAt > TimeSpan.FromMinutes(2)) srv.Players = null;
             srv.PlayersHidden = info.Players > 0 && srv.Players == null;
+            Log.Again("servers-query|");
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            if (!A2S.NoAnswer(ex)) Log.WarnOnce("servers-query|" + ex.GetType().Name, $"Servers: asking a server failed ({ex.GetType().Name}: {ex.Message}), so it shows no ping or players.");
             srv.PingMs = -1;
             srv.PingText = "—";
             srv.PlayersText = "—";

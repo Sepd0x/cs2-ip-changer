@@ -22,6 +22,159 @@ static class Untangle12Tests
         KeyValuesSame(check);
         SteamIdsAndLinks(check);
         OneSameRule(check);
+        ConfigFailuresSaid(check);
+        await PictureNotReadSaid(check);
+        SendFailuresSaid(check);
+    }
+
+    // Os catch {} dos fluxos principais: o Restore que dizia que correu bem, o ReadText que tomava um erro por "não há ficheiro"
+    static void ConfigFailuresSaid(Action<string, bool, string> check)
+    {
+        const string A = "76561198000000021", B = "76561198000000022";
+        const string KeysRel = @"local\cfg\cs2_user_keys_0_slot0.vcfg", ConvRel = @"local\cfg\cs2_user_convars_0_slot0.vcfg";
+        var keys = Cs2Config.Crlf("\"config\"\n{\n\t\"bindings\"\n\t{\n\t\t\"MOUSE4\"\t\t\"+jump\"\n\t}\n}\n");
+        var conv = Cs2Config.Crlf("\"config\"\n{\n\t\"convars\"\n\t{\n\t\t\"sensitivity\"\t\t\"2\"\n\t}\n}\n");
+        var tmp = Path.Combine(Path.GetTempPath(), "srt-b8r-" + Guid.NewGuid().ToString("N")[..8]);
+        var ud = Path.Combine(tmp, "Steam", "userdata");
+        string P(string id, string rel) => Path.Combine(ud, Cs2Config.Id32(id), "730", rel);
+        void Put(string id, string rel, string text) { Directory.CreateDirectory(Path.GetDirectoryName(P(id, rel))!); File.WriteAllText(P(id, rel), text); }
+        var logged = new List<string>();
+        void OnLog(LogEntry e) { lock (logged) logged.Add(e.Text); }
+        Log.Added += OnLog;
+        try
+        {
+            Put(A, KeysRel, keys);
+            Put(A, ConvRel, conv);
+            Put(B, ConvRel, conv);
+            var store = new Cs2ConfigStore(ud, Path.Combine(tmp, "configs")) { Cs2Running = () => false };
+
+            // Um ficheiro que existe mas não se lê (preso por outro programa) não é "não há ficheiro"
+            using (new FileStream(P(A, KeysRel), FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                var set = store.Read(A);
+                check("Catch: uma config que não se lê não aparece como meia config (antes: sem binds e sem aviso)", set.Empty && logged.Any(l => l.Contains("couldn't be read")), string.Join(",", set.Files.Keys));
+            }
+            check("Catch: e volta a ler-se quando o ficheiro solta", store.Read(A).Get(CfgPart.Keys) == keys, "");
+
+            // O Restore apaga o que a cópia criou; se não consegue, diz (antes dizia que correu bem)
+            var r = store.Push(new CfgJob { SourceId = A, Target = B, Categories = new() { "binds" }, Reason = CfgTrigger.Copy }, "s1");
+            var bk = store.Backups().First(b => b.SteamId == B);
+            bool threw;
+            using (new FileStream(P(B, KeysRel), FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                try { store.Restore(bk, "s2"); threw = false; } catch (IOException) { threw = true; }
+            }
+            check("Catch: o Restore que não apaga o ficheiro criado diz que falhou", r.Outcome == CfgOutcome.Copied && bk.Created.Contains(KeysRel) && threw && File.Exists(P(B, KeysRel)), $"{r.Outcome} {threw}");
+            var again = store.Restore(store.Backups().Where(b => b.SteamId == B && b.Reason == CfgTrigger.Copy).OrderBy(b => b.At).First(), "s3");
+            check("Catch: com o ficheiro solto o mesmo Restore apaga-o", again && !File.Exists(P(B, KeysRel)), "");
+
+            // Só de leitura: parado antes de escrever (antes o Delete falhava calado)
+            store.Push(new CfgJob { SourceId = A, Target = B, Categories = new() { "binds" }, Reason = CfgTrigger.Copy }, "s4");
+            var bk2 = store.Backups().Where(b => b.SteamId == B && b.SyncId == "s4").First();
+            File.SetAttributes(P(B, KeysRel), FileAttributes.ReadOnly);
+            string why = null;
+            try { store.Restore(bk2, "s5"); } catch (IOException ex) { why = ex.Message; }
+            File.SetAttributes(P(B, KeysRel), FileAttributes.Normal);
+            check("Catch: um ficheiro criado só de leitura para o Restore antes de escrever", why?.Contains("read-only") == true && File.Exists(P(B, KeysRel)), why ?? "sem erro");
+        }
+        finally
+        {
+            Log.Added -= OnLog;
+            try { Directory.Delete(tmp, true); } catch { }
+        }
+    }
+
+    sealed class SteamFake : System.Net.Http.HttpMessageHandler
+    {
+        public Func<System.Net.Http.HttpRequestMessage, System.Net.Http.HttpResponseMessage> Answer;
+        protected override Task<System.Net.Http.HttpResponseMessage> SendAsync(System.Net.Http.HttpRequestMessage req, CancellationToken ct) =>
+            Task.FromResult(Answer(req) ?? new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.NotFound));
+    }
+
+    // O avatar atual que não se lê: a cópia para desfazer fica sem imagem, e agora o Log diz
+    static async Task PictureNotReadSaid(Action<string, bool, string> check)
+    {
+        const string Id = "76561198000000031";
+        var fakeSignIn = ProfileTests.FakeToken(Id, marker: "B8");   // made up by the test, signed by nobody
+        var cut = false;   // true: the picture server's connection drops (an exception), else it answers 500
+        static System.Net.Http.HttpResponseMessage Body(string text, string type) => new(System.Net.HttpStatusCode.OK) { Content = new System.Net.Http.StringContent(text, System.Text.Encoding.UTF8, type) };
+        static string Html(object o) => "<html><body><div id=\"profile_edit_config\" data-profile-edit=\"" + System.Net.WebUtility.HtmlEncode(System.Text.Json.JsonSerializer.Serialize(o)) + "\" data-profile-badges=\"{}\"></div></body></html>";
+        var fake = new SteamFake
+        {
+            Answer = req =>
+            {
+                var u = req.RequestUri!;
+                if (u.AbsolutePath == "/jwt/finalizelogin")
+                    return Body($"{{\"steamID\":\"{Id}\",\"transfer_info\":[{{\"url\":\"https://steamcommunity.com/login/settoken\",\"params\":{{\"nonce\":\"n\",\"auth\":\"a\"}}}}]}}", "application/json");
+                if (u.AbsolutePath == "/login/settoken")
+                {
+                    var r = Body("{\"result\":1}", "application/json");
+                    r.Headers.Add("Set-Cookie", $"steamLoginSecure={Id}%7C%7Cacc; Path=/; Secure; HttpOnly");
+                    return r;
+                }
+                if (u.AbsolutePath == "/my") { var r = new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.Found); r.Headers.Location = new Uri($"https://steamcommunity.com/profiles/{Id}/"); return r; }
+                if (u.AbsolutePath == $"/profiles/{Id}/edit/info")
+                    return Body(Html(new { strPersonaName = "old", strRealName = "", strSummary = "", strCustomURL = "", LocationData = new { locCountryCode = "", locStateCode = "", locCityCode = "" } }), "text/html");
+                if (u.AbsolutePath == $"/profiles/{Id}/edit/settings")
+                    return Body(Html(new { Privacy = new { PrivacySettings = new { PrivacyProfile = 3, PrivacyInventory = 3, PrivacyInventoryGifts = 1, PrivacyOwnedGames = 3, PrivacyPlaytime = 3, PrivacyFriendsList = 3 }, eCommentPermission = 1 } }), "text/html");
+                if (u.AbsolutePath == $"/profiles/{Id}/" && u.Query == "?xml=1")
+                    return Body($"<?xml version=\"1.0\"?><profile><steamID64>{Id}</steamID64><steamID><![CDATA[old]]></steamID><avatarFull><![CDATA[https://avatars.steamstatic.com/abc_full.jpg]]></avatarFull></profile>", "text/xml");
+                if (u.Host == "avatars.steamstatic.com")
+                    return cut ? throw new System.Net.Http.HttpRequestException("reset") : new System.Net.Http.HttpResponseMessage(System.Net.HttpStatusCode.InternalServerError);
+                if (u.AbsolutePath == $"/profiles/{Id}/edit/") return Body("{\"success\":1,\"errmsg\":\"\"}", "application/json");
+                return null;
+            },
+        };
+        var tmp = Path.Combine(Path.GetTempPath(), "srt-b8p-" + Guid.NewGuid().ToString("N")[..8]);
+        var logged = new List<string>();
+        void OnLog(LogEntry e) { lock (logged) logged.Add(e.Text); }
+        Log.Added += OnLog;
+        try
+        {
+            var snaps = new SnapshotStore(Path.Combine(tmp, "snapshots"));
+            var applier = new ProfileApplier(new SteamWeb(fake), id => id == Id ? fakeSignIn : null, snaps, (_, _) => Task.CompletedTask);
+            var jobs = ProfilePlan.Make(new ProfileTemplate { Name = "nv" }, ProfileFields.Name, new List<ProfileTarget> { new(Id, "loginb8", "old") }, null, false);
+            var res = await applier.Apply(jobs, null, null, default);
+            check("Catch: o avatar atual que o Steam não manda fica no Log (a cópia para desfazer fica sem imagem)",
+                res[0].Ok && snaps.Original(Id)?.Avatar == null && logged.Any(l => l.Contains("current picture of an account couldn't be read (Steam's picture server didn't send it)") && l.Contains("undo copy")), res[0].Message);
+            cut = true;
+            var res2 = await applier.Apply(jobs, null, null, default);
+            check("Catch: e o que falha pela rede também", res2[0].Ok && logged.Any(l => l.Contains("current picture of an account couldn't be read (Couldn't reach Steam")), res2[0].Message);
+        }
+        finally
+        {
+            Log.Added -= OnLog;
+            try { Directory.Delete(tmp, true); } catch { }
+        }
+    }
+
+    // A telemetria e os servidores que falham em segundo plano: uma linha por tipo de falha, não uma a cada 5 minutos
+    static void SendFailuresSaid(Action<string, bool, string> check)
+    {
+        var logged = new List<string>();
+        void OnLog(LogEntry e) { lock (logged) logged.Add(e.Text); }
+        Log.Added += OnLog;
+        try
+        {
+            const string Url = "https://stats.example/v1-test-b8";
+            Telemetry.NotSent(Url, "the server answered 503");
+            Telemetry.NotSent(Url, "the server answered 503");
+            Telemetry.NotSent(Url + "/live", "the server answered 503");
+            Telemetry.NotSent(Url, Telemetry.Kind(new TaskCanceledException()));
+            var first = logged.Count(l => l.StartsWith("Usage stats:"));
+            Telemetry.SentOk(Url);
+            Telemetry.NotSent(Url, "the server answered 503");
+            Telemetry.NotSent(Url + "/live", "the server answered 503");
+            var after = logged.Count(l => l.StartsWith("Usage stats:"));
+            check("Catch: as estatísticas que não saem ficam no Log, uma vez por tipo de falha", first == 3 && after == 4
+                && logged.Any(l => l.Contains("wasn't sent (no answer in time)")), string.Join(" | ", logged));
+            check("Catch: os tipos de falha não levam endereços", Telemetry.Kind(new System.Net.Http.HttpRequestException("https://x/ boom")) == "no connection"
+                && Telemetry.Kind(new InvalidOperationException("C:\\Users\\Ana")) == "InvalidOperationException", "");
+            check("Catch: um servidor que não responde não é falha; uma resposta estragada é",
+                A2S.NoAnswer(new OperationCanceledException()) && A2S.NoAnswer(new System.Net.Sockets.SocketException((int)System.Net.Sockets.SocketError.ConnectionReset))
+                && !A2S.NoAnswer(new InvalidDataException("Invalid A2S response")) && !A2S.NoAnswer(new System.Net.Sockets.SocketException((int)System.Net.Sockets.SocketError.AddressNotAvailable)), "");
+        }
+        finally { Log.Added -= OnLog; }
     }
 
     // B8: o mapa categoria → ficheiro e a regra de "igual" escritos uma vez (a cópia e o Compare usavam regras diferentes)

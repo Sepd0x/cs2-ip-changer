@@ -29,6 +29,9 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Refresh on Accounts could lose the profiles and bans it had already read when the list was built again meanwhile (a kick or ban seen on an account just logged in, a new account added). What it reads now stays.
 - With Close to the notification area on, the X hid the window even when Windows hadn't shown the app's icon, so the app was running with nothing to click. It now only hides when the icon is there, and closes otherwise.
 - Configs: a copy rewrote an account's file (and made a backup) when Compare showed nothing different, for example the same crosshair written as "2.000000" by an older CS2 or in another order, and said it was copied. A copy now uses the same rule as Compare, so it only writes what really changes.
+- Configs: Restore and Undo last sync said the config was back even when a file the copy had made couldn't be removed (open in another program, or read-only), so the copied binds stayed. Now a read-only file stops it before anything changes, and a file that stays is named.
+- Configs: an account's config file that was there but couldn't be read (in use) counted as missing, so the account showed and copied a config with a part left out. Now nothing is read from it and the Log says why; an export never leaves a part out either.
+- Some failures in the background were silent and now go to the Log, once per kind instead of every few minutes: usage stats that couldn't be sent, a profile's current picture that couldn't be read for its undo copy, a template's picture that was left out, and a server that answered with something broken (one that just doesn't answer is still not a failure).
 
 ## [0.1.0-beta.11] - 2026-11-06
 

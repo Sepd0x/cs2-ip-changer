@@ -279,6 +279,25 @@ public static class Log
     public static void Warn(string t) => Write(LogLevel.Warn, t);
     public static void Error(string t) => Write(LogLevel.Error, t);
 
+    static readonly HashSet<string> Once = new();
+
+    /// <summary>
+    /// A warning for a failure that can come back every few seconds (a background send, a server asked over and over): written once per
+    /// <paramref name="key"/> until <see cref="Again"/> (it worked again), so a new kind of failure is still seen. False if it was already.
+    /// </summary>
+    public static bool WarnOnce(string key, string text)
+    {
+        lock (Once) if (!Once.Add(key)) return false;
+        Warn(text);
+        return true;
+    }
+
+    /// <summary>The failures under <paramref name="keyPrefix"/> are written again the next time (it worked meanwhile).</summary>
+    public static void Again(string keyPrefix)
+    {
+        lock (Once) Once.RemoveWhere(k => k.StartsWith(keyPrefix, StringComparison.Ordinal));
+    }
+
     /// <summary>
     /// A notification in the app goes to the log too, unless the code that showed it has just written its own line (on the same thread,
     /// in the last second, usually with more detail) or the same text went in the last few seconds. A line from another thread

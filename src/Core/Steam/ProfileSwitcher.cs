@@ -828,14 +828,18 @@ public sealed class ProfileApplier
         var nowDefault = false;
         if (!job.Restore || (job.Fields.HasFlag(ProfileFields.Avatar) && job.Avatar != null))
         {
+            // The change still goes on, but the undo copy has no picture (and the new one is sent even if it is the same): said, not hidden.
+            void NotRead(string why) => Log.Warn("Profiles: the current picture of an account couldn't be read (" + why + ")"
+                + (job.Restore ? ", so the picture is sent even if it is already the same." : ", so its undo copy has no picture."));
             try
             {
                 var look = await Retry(() => s.ReadLook(ct), ct);
                 nowDefault = CommunitySession.IsDefaultAvatar(look.AvatarUrl);
                 var raw = await CommunitySession.DownloadAvatar(_web, look.AvatarUrl, ct);
                 avatarNow = raw == null ? null : AvatarImage.Prepare(raw, out _);
+                if (raw == null) NotRead(look.AvatarUrl == null ? "the profile has no picture link" : "Steam's picture server didn't send it");
             }
-            catch (SteamWebException ex) when (!ex.Limited) { }
+            catch (SteamWebException ex) when (!ex.Limited) { NotRead(Secrets.Clean(ex.Message)); }
         }
         // The copy for undo comes before any change: name, fields, privacy and the picture as it is now.
         if (!job.Restore) _snaps.Save(job.SteamId, info, privacy == null ? null : PrivacyPreset.From(privacy), avatarNow, nowDefault);
