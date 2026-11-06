@@ -99,12 +99,15 @@ public static partial class Steam
     /// Who Steam logged in to after a switch. ActiveUser is the account id (SteamID64 - 76561197960265728) of the account in use; when Steam
     /// logs in it also rewrites loginusers.vdf, and the account with a timestamp newer than the app's own write is the one it took.
     /// <paramref name="activeTrusted"/>: ActiveUser may still hold the account from before the restart for a moment, so another account
-    /// there only counts once it has stayed (the file counts at once).
+    /// there only counts once it has stayed (the file counts at once). <paramref name="nowUnix"/>: a timestamp more than a minute after
+    /// it was written in the future (the PC's clock was ahead), not by this login, so it doesn't count (review F4).
     /// </summary>
-    public static (LoginState State, string Other) LoginDecision(string target, string activeId, IReadOnlyCollection<LocalAccount> accounts, long writtenAt, bool activeTrusted)
+    public static (LoginState State, string Other) LoginDecision(string target, string activeId, IReadOnlyCollection<LocalAccount> accounts, long writtenAt, bool activeTrusted,
+        long? nowUnix = null)
     {
         if (activeId == target) return (LoginState.Target, null);
-        var newest = (accounts ?? Array.Empty<LocalAccount>()).Where(a => a.Timestamp > writtenAt).OrderByDescending(a => a.Timestamp).FirstOrDefault();
+        var newest = (accounts ?? Array.Empty<LocalAccount>()).Where(a => a.Timestamp > writtenAt && (nowUnix == null || a.Timestamp <= nowUnix + 60))
+            .OrderByDescending(a => a.Timestamp).FirstOrDefault();
         if (newest != null) return newest.SteamId == target ? (LoginState.Target, null) : (LoginState.Other, newest.SteamId);
         if (activeId != null && activeTrusted) return (LoginState.Other, activeId);
         return (LoginState.Waiting, null);
@@ -127,10 +130,33 @@ public static partial class Steam
             try { accounts = ReadAccounts(); } catch { accounts = new(); }   // Steam may be writing it right now
             same = active != null && active != steamId && active == lastOther ? same + 1 : 0;
             lastOther = active;
-            var r = LoginDecision(steamId, active, accounts, writtenAt, sw.Elapsed > TimeSpan.FromSeconds(10) && same >= 2);
+            var r = LoginDecision(steamId, active, accounts, writtenAt, ActiveTrusted(sw.Elapsed, same, ActivePid(), IsSteamPid), DateTimeOffset.UtcNow.ToUnixTimeSeconds());
             if (r.State != LoginState.Waiting) return r;
         }
         return (LoginState.Waiting, null);
+    }
+
+    /// <summary>
+    /// Another account in ActiveUser counts after 10 s and three readings in a row, and only while ActiveProcess's pid is a steam.exe
+    /// that runs now: a Steam that was killed leaves its ActiveUser behind (review F11). No pid written: as before.
+    /// </summary>
+    public static bool ActiveTrusted(TimeSpan elapsed, int same, int? pid, Func<int, bool> isSteam) =>
+        elapsed > TimeSpan.FromSeconds(10) && same >= 2 && (pid is not int p || p == 0 || isSteam(p));
+
+    static int? ActivePid()
+    {
+        try
+        {
+            using var k = Registry.CurrentUser.OpenSubKey(@"Software\Valve\Steam\ActiveProcess");
+            return k?.GetValue("pid") is int p ? p : null;
+        }
+        catch { return null; }
+    }
+
+    static bool IsSteamPid(int pid)
+    {
+        try { using var p = Process.GetProcessById(pid); return p.ProcessName.Equals("steam", StringComparison.OrdinalIgnoreCase); }
+        catch { return false; }
     }
 
     /// <summary>
@@ -293,7 +319,8 @@ public static partial class Steam
     /// </summary>
     static async Task CloseSteam(Action whileClosed)
     {
-        if (SteamClosedNow()) return;
+        // Already closed (by you): the files are changed now all the same, before the app opens it again (review F10)
+        if (SteamClosedNow()) { await WhileClosed(whileClosed); return; }
         // "-shutdown" only signals the running Steam, but it is still steam.exe started by this process: through Explorer, like the rest.
         if (ShellLaunch.OpenAsUser(Exe, "-shutdown", InstallDir()) is string err) Log.Warn($"Could not ask Steam to close ({err}); closing it the hard way.");
         for (var i = 0; i < 80 && !SteamClosedNow(); i++) await Task.Delay(250);
@@ -307,7 +334,12 @@ public static partial class Steam
         }
         await Task.Delay(1000);
         // Files Steam rewrites when it exits (CS2's launch options) can only be changed now, before it starts again.
-        if (SteamClosedNow() && whileClosed != null)
+        if (SteamClosedNow()) await WhileClosed(whileClosed);
+    }
+
+    static async Task WhileClosed(Action whileClosed)
+    {
+        if (whileClosed != null)
             try { await Task.Run(whileClosed); } catch (Exception ex) { Log.Warn("While Steam was closed: " + ex.Message); }
     }
 
@@ -383,6 +415,7 @@ public static partial class Steam
                 var doc = VdfNode.Parse(text);
                 var users = doc.Child("users");
                 if (users != null)
+                try
                 {
                     MarkForLogin(users, steamId, offline, now);
                     var mine = new UTF8Encoding(false).GetBytes(doc.Write());
@@ -401,6 +434,12 @@ public static partial class Steam
                         var doc2 = VdfNode.Parse(t2);
                         if (doc2.Child("users") is VdfNode u2) { MarkForLogin(u2, steamId, offline, now); WriteAll(file, new UTF8Encoding(false).GetBytes(doc2.Write())); }
                     }
+                }
+                catch
+                {
+                    // A write that stopped half way (a full disk) leaves the file as it was, not empty or cut short (review F8)
+                    try { WriteAll(file, bytes); } catch (Exception ex) { Log.Warn("Could not put loginusers.vdf back as it was (a copy is next to it, .srt-backup-…): " + ex.Message); }
+                    throw;
                 }
                 TidyBackups(folder, name);
             }
@@ -539,6 +578,8 @@ public static partial class Steam
     {
         if (Exe == null || !File.Exists(Exe)) throw new InvalidOperationException("Could not find Steam installed on this PC.");
         await CloseSteam(whileClosed);
+        // A Steam still running would only get the arguments, on the network it was on (review F5)
+        if (!SteamClosedNow()) throw new InvalidOperationException("Steam didn't close, so it wasn't restarted. Close Steam yourself and try again.");
         Launch(args);
     }
 
@@ -558,6 +599,8 @@ public static partial class Steam
     public static async Task AddNew(Action whileClosed = null)
     {
         await CloseSteam(whileClosed);
+        // A Steam still running writes its own account back when it exits, and the login screen never opens (review F5)
+        if (!SteamClosedNow()) throw new InvalidOperationException("Steam didn't close, so the login screen can't open. Close Steam yourself and try again.");
         using (var k = Registry.CurrentUser.CreateSubKey(@"Software\Valve\Steam")) k.SetValue("AutoLoginUser", "", RegistryValueKind.String);
         Launch("");
     }
