@@ -278,8 +278,8 @@ public partial class MainWindow
 
     void UpdateQuickInfo()
     {
-        // The name says only what a click will do: the steps the click runs (QuickChoice: no IP step in No phone mode, nor on an iPhone with
-        // the account step), and none with protection off and "Use the app with protection off"
+        // The name says only what a click will do: the steps the click runs (QuickChoice: no IP step in No phone mode, on an iPhone with
+        // the account step or with the phone not ready on ADB), and none with protection off and "Use the app with protection off"
         var c = QuickChoice;
         if (c.Ip && (_s.NoPhone || IpStep(_protOn, _s.UseWithProtectionOff) == IpWhenOff.Skip)) c = c with { Ip = false };
         // The same pick as the click: with the rejoin step, an account banned on the last server is skipped there too
@@ -348,7 +348,7 @@ public partial class MainWindow
     {
         UpdateQuickInfo();
         var steps = QuickChoice;
-        return RunCommand(_quickName, "starting…", () => RunSwitch(steps, from, ipLeftOut: SwitchChoice.Ip && !steps.Ip));
+        return RunCommand(_quickName, "starting…", () => RunSwitch(steps, from, ipLeftOut: SwitchChoice.Ip && !steps.Ip ? IpLeftOutWhy : null));
     }
 
     /// <summary>The account quick switch would use now (also for Switch), or null with the reason shown.</summary>

@@ -22,7 +22,16 @@ static class RevisaoBTests
         check("Revisão B1: com o telemóvel, o IP fica", MainWindow.QuickSteps(ipRejoin, false, false).Ip && MainWindow.QuickSteps(new(true, true, true, true), false, false).Ip, "");
         check("Revisão B1: os outros passos ficam como estão", MainWindow.QuickSteps(new(true, true, true, false), true, false) == new MainWindow.SwitchSteps(false, true, true, false), "");
         check("Revisão B1: o nome e o clique usam os mesmos passos", acc.Contains("var c = QuickChoice;") && acc.Contains("var steps = QuickChoice;")
-            && acc.Contains("RunSwitch(steps, from, ipLeftOut: SwitchChoice.Ip && !steps.Ip)") && !acc.Contains("RunSwitch(SwitchChoice, from)"), "");
+            && acc.Contains("RunSwitch(steps, from, ipLeftOut: SwitchChoice.Ip && !steps.Ip ? IpLeftOutWhy : null)") && !acc.Contains("RunSwitch(SwitchChoice, from)"), "");
+        // Decisão do coordenador: o Android fora do ADB sem o passo da conta também salta o IP (como diz Settings) e o Log diz porquê
+        check("Revisão B1: Android fora do ADB, sem conta, o switch salta o IP", !MainWindow.QuickSteps(ipRejoin, noPhone: false, iphoneByHand: false, adbReady: false).Ip, "");
+        check("Revisão B1: Android fora do ADB, com conta, também", !MainWindow.QuickSteps(new(true, true, true, true), false, false, adbReady: false).Ip, "");
+        check("Revisão B1: Android pronto, o IP fica", MainWindow.QuickSteps(ipRejoin, false, false, adbReady: true).Ip, "");
+        check("Revisão B1: iPhone sem conta mantém o Change IP guiado", MainWindow.QuickSteps(ipRejoin, false, iphoneByHand: true, adbReady: false).Ip, "");
+        check("Revisão B1: o switch lê o ADB e o Log diz porquê", kick.Contains("QuickSteps(SwitchChoice, _s.NoPhone, IphoneByHand, _demo || _adb != null && _phone?.Ready == true)")
+            && kick.Contains("\"the phone isn't ready on ADB\"") && kick.Contains("if (ipLeftOut != null) Log.Info($\"{from}: {ipLeftOut}, so the IP stays the same.\");"), "");
+        check("Revisão B1: só com o IP e o telemóvel fora do ADB, diz porquê nada corre",
+            MainWindow.NothingText(true, false, "the phone isn't ready on ADB") == "Nothing to do now: the IP stays the same (the phone isn't ready on ADB).", MainWindow.NothingText(true, false, "the phone isn't ready on ADB"));
         check("Revisão B1: o rejoin do botão Status em No phone continua desligado de propósito",
             MainWindow.RejoinTip(true, "1.2.3.4:27015", true, false, false, "F10") == "Off in the no phone mode: there is no IP to change."
             && !MainWindow.RejoinEnabled(false, true, true, true, true), "");
@@ -33,6 +42,14 @@ static class RevisaoBTests
         check("Revisão B2: o toast do iPhone diz para usar Change IP", kick.Contains("\"The IP stays the same. The iPhone changes its IP by hand: use Change IP.\""), "");
         check("Revisão B2: o rejoin fica ativo com o iPhone ligado", kick.Contains("_phone?.Ready == true || IphoneByHand && _last?.Egress != null")
             && MainWindow.RejoinEnabled(busy: false, lastInList: true, noPhone: false, canChangeIp: true, homeNoBan: false), "");
+        // Decisão do coordenador: no iPhone a hotkey do rejoin recusa (o pedido do Airplane Mode não se vê no jogo); nada fica à espera
+        check("Revisão B2: iPhone, a hotkey do rejoin recusa", MainWindow.RejoinHotkeyRefused(iphoneByHand: true, noPhone: false, protOn: true, useWithOff: false, bannedOnLast: false), "");
+        check("Revisão B2: sem iPhone, a hotkey corre", !MainWindow.RejoinHotkeyRefused(false, false, true, false, false), "");
+        check("Revisão B2: iPhone em casa (sem IP) ou depois de um ban (o IP fica), a hotkey corre",
+            !MainWindow.RejoinHotkeyRefused(true, false, protOn: false, useWithOff: true, false) && !MainWindow.RejoinHotkeyRefused(true, false, true, false, bannedOnLast: true), "");
+        check("Revisão B2: o toast diz que no iPhone se faz na app", MainWindow.IphoneHotkeyText == "On an iPhone, Change IP is done in the app: its Airplane Mode steps can't be seen in game.", "");
+        check("Revisão B2: a hotkey passa pela recusa e o botão não", Src("Views", "MainWindow.Window.cs").Contains("_ = RejoinFromHotkey($\"Hotkey {_s.HotkeyRejoin}\");")
+            && kick.Contains("async void Rejoin_Click(object sender, RoutedEventArgs e) => await ChangeIpAndRejoin(\"Button\");"), "");
 
         // B3. O nome do comando no topo e no Log é o do botão; o rejoin sem IP chama-se Rejoin
         check("Revisão B3: o switch corre com o nome do botão", acc.Contains("return RunCommand(_quickName, \"starting…\"") && !acc.Contains("RunCommand(\"New IP + next account\""), "");
@@ -50,6 +67,12 @@ static class RevisaoBTests
         check("Revisão B4: o tooltip em casa não diz que muda o IP", homeTip.StartsWith("Joins 1.2.3.4:27015 again on your home connection") && !homeTip.Contains("Changes the IP"), homeTip);
         check("Revisão B4: com a proteção ligada, o tooltip de sempre", MainWindow.RejoinTip(false, "1.2.3.4:27015", true, true, true, "F10").StartsWith("Changes the IP, then joins 1.2.3.4:27015 again"), "");
         check("Revisão B4: depois de um ban em casa, o botão segue as regras do clique", kick.Contains("OnHome && !BannedOnLast()"), "");
+        // Decisão do coordenador: o botão de Status chama-se Rejoin em casa de propósito
+        check("Revisão B4: em casa com a opção, o botão chama-se Rejoin", MainWindow.RejoinBtnText(noPhone: false, protOn: false, useWithOff: true, bannedOnLast: false) == "Rejoin", "");
+        check("Revisão B4: com a proteção ligada, ou depois de um ban, Change IP and rejoin",
+            MainWindow.RejoinBtnText(false, true, true, false) == "Change IP and rejoin" && MainWindow.RejoinBtnText(false, false, true, bannedOnLast: true) == "Change IP and rejoin"
+            && MainWindow.RejoinBtnText(false, false, false, false) == "Change IP and rejoin" && MainWindow.RejoinBtnText(true, false, false, false) == "Change IP and rejoin", "");
+        check("Revisão B4: o botão muda de nome com o estado", kick.Contains("RejoinBtn.Content = RejoinBtnText(_s.NoPhone, _protOn, _s.UseWithProtectionOff, OnHome && BannedOnLast());"), "");
 
         // B5. Último servidor fora da lista: o rejoin pára antes de mudar o IP (o switch com o IP continua a mudá-lo)
         check("Revisão B5: o rejoin desliga-se sem o servidor na lista", !MainWindow.RejoinEnabled(false, lastInList: false, false, true, true), "");

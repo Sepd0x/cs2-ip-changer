@@ -452,6 +452,8 @@ public partial class MainWindow
         RejoinBtn.IsEnabled = RejoinEnabled(_changingIp || _rejoining, lastInList, _s.NoPhone,
             _phone?.Ready == true || IphoneByHand && _last?.Egress != null, OnHome && !BannedOnLast());
         RejoinBtn.ToolTip = RejoinTip(_s.NoPhone, _s.LastServer, lastInList, _protOn, _s.UseWithProtectionOff, _s.HotkeyRejoin);
+        // Named for what a click does: just "Rejoin" on the home connection on purpose (after a ban the click switches and asks first)
+        RejoinBtn.Content = RejoinBtnText(_s.NoPhone, _protOn, _s.UseWithProtectionOff, OnHome && BannedOnLast());
         // After a kick the way back is the rejoin: with a last server it is the primary, and its hotkey shows under it. With protection
         // off, Turn on protection is the one primary (beta.10).
         var (rejoinStyle, changeStyle) = StatusPrimary(_protOn, _s.NoPhone, _s.LastServer != null, PhoneWifiOn || (_last != null && _last.Egress == null));
@@ -496,20 +498,26 @@ public partial class MainWindow
 
     /// <summary>
     /// The switch's steps from Settings as the button names them and a click runs them: no IP step in No phone mode (there is none to
-    /// change, with or without the account step), nor on an iPhone with the account step (its IP changes by hand, with Change IP).
+    /// change, with or without the account step), nor on an iPhone with the account step (its IP changes by hand, with Change IP), nor
+    /// with an Android phone that isn't ready on ADB (<paramref name="adbReady"/> false): the other steps still run, as Settings says.
+    /// An iPhone without the account step keeps it: a click runs the guided Change IP in the app.
     /// </summary>
-    public static SwitchSteps QuickSteps(SwitchSteps choice, bool noPhone, bool iphoneByHand) =>
-        choice with { Ip = choice.Ip && !noPhone && !(iphoneByHand && choice.Account) };
+    public static SwitchSteps QuickSteps(SwitchSteps choice, bool noPhone, bool iphoneByHand, bool adbReady = true) =>
+        choice with { Ip = choice.Ip && !noPhone && !(iphoneByHand && choice.Account) && (adbReady || iphoneByHand) };
 
-    SwitchSteps QuickChoice => QuickSteps(SwitchChoice, _s.NoPhone, IphoneByHand);
+    SwitchSteps QuickChoice => QuickSteps(SwitchChoice, _s.NoPhone, IphoneByHand, _demo || _adb != null && _phone?.Ready == true);
+
+    /// <summary>Why <see cref="QuickSteps"/> left the IP step out now, for the Log and the "nothing to do" toast.</summary>
+    string IpLeftOutWhy => _s.NoPhone ? "no phone mode" : IphoneByHand ? "the iPhone changes its IP by hand" : "the phone isn't ready on ADB";
 
     /// <summary>
     /// The normal Change IP, the next account by the quick switch rules, then the normal join to the last server: each step only if asked.
-    /// <paramref name="ipLeftOut"/>: Settings has the IP step, but <see cref="QuickSteps"/> took it out (No phone mode, an iPhone).
+    /// <paramref name="ipLeftOut"/>: why Settings has the IP step but <see cref="QuickSteps"/> took it out (No phone mode, an iPhone, a
+    /// phone not ready on ADB), or null.
     /// </summary>
-    async Task<bool> RunSwitch(SwitchSteps steps, string from, bool ipLeftOut = false)
+    async Task<bool> RunSwitch(SwitchSteps steps, string from, string ipLeftOut = null)
     {
-        if (ipLeftOut) Log.Info($"{from}: {(_s.NoPhone ? "no phone mode" : "the iPhone changes its IP by hand")}, so the IP stays the same.");
+        if (ipLeftOut != null) Log.Info($"{from}: {ipLeftOut}, so the IP stays the same.");
         ServerItem s = null;
         if (steps.Rejoin && (s = _servers.FirstOrDefault(x => x.Key == _s.LastServer)) == null)
         {
@@ -549,7 +557,7 @@ public partial class MainWindow
                 if (!await TurnProtectionOn(ask: false) || CommandCancelled) return false;
             }
         }
-        if (!ip && next == null && s == null) { Toast(NothingText(steps.Ip || ipLeftOut, steps.Rejoin), false); return false; }
+        if (!ip && next == null && s == null) { Toast(NothingText(steps.Ip || ipLeftOut != null, steps.Rejoin, ipLeftOut), false); return false; }
         Log.Info($"{from}: " + string.Join(", ", new[] { ip ? "new IP" : null, next != null ? $"log in to {next.Name}" : null, s != null ? $"rejoin {s.Key}" : null }.Where(x => x != null)) + ".");
         _rejoining = true;
         UpdateRejoinBtn();
@@ -575,10 +583,12 @@ public partial class MainWindow
     /// <summary>
     /// A switch left with nothing to run. <paramref name="ipSkipped"/>: the IP step was on but the IP can't change now (said just before);
     /// <paramref name="serverMissing"/>: the rejoin step was on but there is no last server in your list. Only with every step off, Settings.
+    /// <paramref name="ipWhy"/>: why the IP stays, when nothing said it before (no phone mode, the phone not ready on ADB).
     /// </summary>
-    public static string NothingText(bool ipSkipped, bool serverMissing) => !ipSkipped && !serverMissing
+    public static string NothingText(bool ipSkipped, bool serverMissing, string ipWhy = null) => !ipSkipped && !serverMissing
         ? "New IP + next account has nothing to do: turn on at least one step in Settings > New IP + next account."
-        : "Nothing to do now: " + string.Join(" and ", new[] { ipSkipped ? "the IP stays the same" : null, serverMissing ? "the last server isn't in your list" : null }.Where(x => x != null)) + ".";
+        : "Nothing to do now: " + string.Join(" and ", new[] { ipSkipped ? "the IP stays the same" + (ipWhy != null ? $" ({ipWhy})" : "") : null,
+            serverMissing ? "the last server isn't in your list" : null }.Where(x => x != null)) + ".";
 
     public enum IpWhenOff { Change, Skip, AskTurnOn }
 
@@ -651,4 +661,26 @@ public partial class MainWindow
     /// <summary>The rejoin's name in the top bar and the Log: just "Rejoin" when the IP step is left out (protection off with the option).</summary>
     public static string RejoinName(bool noPhone, bool protOn, bool useWithOff) =>
         !noPhone && IpStep(protOn, useWithOff) == IpWhenOff.Skip ? "Rejoin" : "Change IP and rejoin";
+
+    /// <summary>The button in Status: the rejoin's name, but "Change IP and rejoin" after a ban there (the click gets a new IP first).</summary>
+    public static string RejoinBtnText(bool noPhone, bool protOn, bool useWithOff, bool bannedOnLast) =>
+        bannedOnLast ? "Change IP and rejoin" : RejoinName(noPhone, protOn, useWithOff);
+
+    /// <summary>
+    /// The rejoin hotkey on an iPhone, where the click would change the IP: refused, because the iPhone's Change IP is guided in the app
+    /// (Airplane Mode on and off) and that can't be seen in game. Not when the IP step is left out, nor after a ban (the IP stays then).
+    /// </summary>
+    public static bool RejoinHotkeyRefused(bool iphoneByHand, bool noPhone, bool protOn, bool useWithOff, bool bannedOnLast) =>
+        iphoneByHand && !noPhone && !bannedOnLast && IpStep(protOn, useWithOff) != IpWhenOff.Skip;
+
+    public const string IphoneHotkeyText = "On an iPhone, Change IP is done in the app: its Airplane Mode steps can't be seen in game.";
+
+    /// <summary>The rejoin hotkey: as the button, except on an iPhone, where nothing starts and a toast says why.</summary>
+    Task RejoinFromHotkey(string from)
+    {
+        if (!RejoinHotkeyRefused(IphoneByHand, _s.NoPhone, _protOn, _s.UseWithProtectionOff, BannedOnLast())) return ChangeIpAndRejoin(from);
+        Log.Info($"{from}: not rejoining. {IphoneHotkeyText}");
+        Toast(IphoneHotkeyText, false);
+        return Task.CompletedTask;
+    }
 }
