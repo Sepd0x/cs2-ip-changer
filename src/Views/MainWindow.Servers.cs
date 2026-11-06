@@ -18,11 +18,11 @@ public partial class MainWindow
 {
     void LoadServers()
     {
-        var list = _demo ? null : Store.Load<List<ServerItem>>(Paths.File("servers.json"), () => null);
+        var list = _demo ? null : Store.Load<List<ServerItem>>(Paths.File(AppIds.Files.Servers), () => null);
         if (list == null && !_demo)
         {
             // Migration: the v8 list (servers.json next to the .exe) moves to SRT_Dados.
-            var old = Path.Combine(Paths.AppDir, "servers.json");
+            var old = Path.Combine(Paths.AppDir, AppIds.Files.Servers);
             list = File.Exists(old) ? Store.Load<List<ServerItem>>(old, () => null) : null;
         }
         if (list == null)
@@ -75,7 +75,7 @@ public partial class MainWindow
         if (e.Key == Key.Escape && ServerList.SelectedItems.Count > 0) { ServerList.UnselectAll(); e.Handled = true; }
     }
 
-    void SaveServers() { if (!_demo) Store.Save(Paths.File("servers.json"), _servers.ToList()); }
+    void SaveServers() { if (!_demo) Store.Save(Paths.File(AppIds.Files.Servers), _servers.ToList()); }
 
     /// <summary>A public IPv4 a game server can have. Local network addresses (the home router, the phone, a LAN) are refused:
     /// the kill switch would block them on every adapter except the phone and route them through it, which can cut the PC's DNS.</summary>

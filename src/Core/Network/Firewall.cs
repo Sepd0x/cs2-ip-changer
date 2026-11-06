@@ -13,15 +13,15 @@ namespace SRT.Core;
 /// </summary>
 public static class Firewall
 {
-    public const string RuleName = "ServerRouteTool v9 - kill switch";
-    public const string EchoRuleName = "ServerRouteTool v9 - teste de IP";
-    public const string Cs2RuleName = "ServerRouteTool v9 - CS2 so pela saida";
+    public const string RuleName = AppIds.RulePrefix + " - kill switch";
+    public const string EchoRuleName = AppIds.RulePrefix + " - teste de IP";
+    public const string Cs2RuleName = AppIds.RulePrefix + " - CS2 so pela saida";
     // Whole PC mode: DNS only through the protected connection, and no IPv6 at all (the routes only move IPv4).
-    public const string DnsUdpRuleName = "ServerRouteTool v9 - DNS UDP so pela saida";
-    public const string DnsTcpRuleName = "ServerRouteTool v9 - DNS TCP so pela saida";
-    public const string Ipv6RuleName = "ServerRouteTool v9 - IPv6 bloqueado";
+    public const string DnsUdpRuleName = AppIds.RulePrefix + " - DNS UDP so pela saida";
+    public const string DnsTcpRuleName = AppIds.RulePrefix + " - DNS TCP so pela saida";
+    public const string Ipv6RuleName = AppIds.RulePrefix + " - IPv6 bloqueado";
     // Regions page: cs2.exe can't reach the Valve relays of the regions you turned off (see Regions.cs).
-    public const string RegionsRuleName = "ServerRouteTool v9 - CS2 regioes bloqueadas";
+    public const string RegionsRuleName = AppIds.RulePrefix + " - CS2 regioes bloqueadas";
 
     const int NET_FW_RULE_DIR_OUT = 2;
     const int NET_FW_ACTION_BLOCK = 0;
@@ -361,7 +361,7 @@ public static class Firewall
         try
         {
             foreach (var r in (IEnumerable)Get(Policy(), "Rules"))
-                if ((string)Get(r, "Name") is string n && n.StartsWith("ServerRouteTool v9")) left.Add(n);
+                if ((string)Get(r, "Name") is string n && n.StartsWith(AppIds.RulePrefix)) left.Add(n);
         }
         catch (Exception ex) { left.Add("(could not read the Firewall: " + ex.Message + ")"); }
         return left;
@@ -377,7 +377,7 @@ public static class Firewall
         try
         {
             foreach (var r in (IEnumerable)Get(Policy(), "Rules"))
-                if ((string)Get(r, "Name") is string n && n.StartsWith("ServerRouteTool v9")) list.Add(new RuleInfo(n, (string)Get(r, "RemoteAddresses")));
+                if ((string)Get(r, "Name") is string n && n.StartsWith(AppIds.RulePrefix)) list.Add(new RuleInfo(n, (string)Get(r, "RemoteAddresses")));
         }
         catch (Exception ex) { Log.Warn("Could not read the Firewall: " + ex.Message); }
         return list;
@@ -408,7 +408,7 @@ public static class Firewall
                 // Over COM, "Name" is the display name; old versions used "ServerRouteTool: ..." and the group "ServerRouteTool v…".
                 var name = (string)Get(r, "Name");
                 var group = (string)Get(r, "Grouping") ?? "";
-                if (name == null || name.StartsWith("ServerRouteTool v9")) continue;
+                if (name == null || name.StartsWith(AppIds.RulePrefix)) continue;
                 if (name.StartsWith("SRTv") || name.StartsWith("ServerRouteTool") || group.StartsWith("ServerRouteTool v6") ||
                     group.StartsWith("ServerRouteTool v7") || group.StartsWith("ServerRouteTool v8")) names.Add(name);
             }

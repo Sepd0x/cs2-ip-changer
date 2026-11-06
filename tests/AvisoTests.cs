@@ -73,7 +73,7 @@ static class AvisoTests
         finally { try { Directory.Delete(tmp, true); } catch { } }
 
         // a build de gravação continua sem enviar nada nem perguntar
-        check("Aviso: a build de gravação não pergunta nem envia", app.Contains("if (args.Contains(\"--demo\") || Rec.On) return true;")
+        check("Aviso: a build de gravação não pergunta nem envia", app.Contains("if (args.Contains(AppIds.Args.Demo) || Rec.On) return true;")
             && Src("Core", "Telemetry.cs").Contains("if (demo || Rec.On) return;"), "");
     }
 }

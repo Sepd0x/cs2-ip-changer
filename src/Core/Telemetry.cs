@@ -934,7 +934,7 @@ public static class Telemetry
     static async Task<bool> Post(string body, TimeSpan timeout, string url = null)
     {
         using var http = new HttpClient { Timeout = timeout };
-        http.DefaultRequestHeaders.UserAgent.ParseAdd("CS2IPChanger");
+        http.DefaultRequestHeaders.UserAgent.ParseAdd(AppIds.Name);
         using var resp = await http.PostAsync(url ?? Url, new StringContent(body, Encoding.UTF8, "application/json")).ConfigureAwait(false);
         return resp.IsSuccessStatusCode;   // otherwise kept for the next try
     }

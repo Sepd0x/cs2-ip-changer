@@ -71,9 +71,9 @@ public partial class MainWindow
         if (!_demo && Autostart.Allowed(Environment.ProcessPath ?? "") && await Autostart.IsOn(Environment.ProcessPath) == true)
             other.Add($"Start with Windows: the scheduled task \"{Autostart.TaskName}\".");
         var text = AppChanges.Text(rules, owned.Routes, owned.MetricIf, i => adapters.FirstOrDefault(a => a.Index == i)?.Name ?? (_demo && i == 21 ? "Phone (USB)" : null),
-            Environment.ProcessPath ?? "CS2IPChanger.exe", other);
+            Environment.ProcessPath ?? AppIds.ExeName, other);
         if (!await Ask("What the app changed", text, "Copy undo command", "Close")) return;
-        try { Clipboard.SetText(AppChanges.RestoreCommand(Environment.ProcessPath ?? "CS2IPChanger.exe")); Toast("Undo command copied.", true); }
+        try { Clipboard.SetText(AppChanges.RestoreCommand(Environment.ProcessPath ?? AppIds.ExeName)); Toast("Undo command copied.", true); }
         catch { Toast("Couldn't copy. Try again.", false); }
     }
 

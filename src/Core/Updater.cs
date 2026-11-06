@@ -17,7 +17,7 @@ public static partial class Updater
     public const string Repo = "Sepd0x/cs2-ip-changer";
     public const string ApiUrl = "https://api.github.com/repos/" + Repo + "/releases";
     public const string ReleasesPage = "https://github.com/" + Repo + "/releases";
-    public const string ExeName = "CS2IPChanger.exe";
+    const string ExeName = AppIds.ExeName;
 
     /// <summary>A release on GitHub. <see cref="Size"/> is the exe's size in bytes (0 = not known).</summary>
     public sealed record Release(string Version, string Tag, string PageUrl, string ExeUrl, string ShaUrl, long Size = 0, string SigUrl = null);
@@ -136,7 +136,7 @@ public static partial class Updater
     static HttpClient Http(int timeoutSec)
     {
         var h = new HttpClient { Timeout = TimeSpan.FromSeconds(timeoutSec) };
-        h.DefaultRequestHeaders.UserAgent.ParseAdd("CS2IPChanger/0.1");
+        h.DefaultRequestHeaders.UserAgent.ParseAdd(AppIds.UserAgent);
         h.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
         return h;
     }
@@ -161,7 +161,7 @@ public static partial class Updater
             try
             {
                 using var h = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }) { Timeout = TimeSpan.FromSeconds(15) };
-                h.DefaultRequestHeaders.UserAgent.ParseAdd("CS2IPChanger/0.1");
+                h.DefaultRequestHeaders.UserAgent.ParseAdd(AppIds.UserAgent);
                 using var resp = await h.GetAsync(LatestPage, HttpCompletionOption.ResponseHeadersRead, ct);
                 if (FromLatestRedirect(resp.Headers.Location) is { } r) return r;
             }
@@ -208,11 +208,11 @@ public static partial class Updater
 
     /// <summary>Only the single-file exe can replace itself (a dev build has its DLLs next to it).</summary>
     public static bool CanSelfUpdate => !Rec.On &&
-        Environment.ProcessPath != null && !File.Exists(Path.Combine(AppContext.BaseDirectory, "CS2IPChanger.dll"));
+        Environment.ProcessPath != null && !File.Exists(Path.Combine(AppContext.BaseDirectory, AppIds.DllName));
 
     static string Dir => Path.GetDirectoryName(Environment.ProcessPath)!;
-    static string NewExe => Path.Combine(Dir, "CS2IPChanger.new.exe");
-    static string OldExe => Environment.ProcessPath + ".old";
+    static string NewExe => Path.Combine(Dir, AppIds.NewExeName);
+    static string OldExe => Environment.ProcessPath + AppIds.OldSuffix;
 
     public static string Sha256Of(string path)
     {
@@ -267,14 +267,9 @@ public static partial class Updater
 
     /// <summary>
     /// Puts the new exe in place (the running one becomes .old) and starts it. beforeStart frees what the
-    /// new instance needs (the mutex, the hotkeys). Puts everything back if something fails.
+    /// new instance needs (the mutex, the hotkeys). Puts everything back if something fails. <paramref name="state"/>: protection
+    /// on or off (<see cref="AppIds.Args.UpdateState"/>), passed on after --updated.
     /// </summary>
-    /// <summary>
-    /// Passed to the new copy with --updated: protection was off (Guard.OnArg: on). --standby is what beta.9 passed while it waited for
-    /// the phone; the new copy still reads it (as off).
-    /// </summary>
-    public const string StandbyArg = "--standby", OffArg = "--off";
-
     public static void Install(string sha, Action beforeStart, string state = null)
     {
         var exe = Environment.ProcessPath!;
@@ -292,7 +287,7 @@ public static partial class Updater
             if (Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(hold)).ToLowerInvariant() != sha.ToLowerInvariant())
                 throw new InvalidDataException("the downloaded file changed after the check");
             beforeStart?.Invoke();
-            Process.Start(new ProcessStartInfo(exe, state is StandbyArg or OffArg or Guard.OnArg ? "--updated " + state : "--updated") { UseShellExecute = false, WorkingDirectory = Dir });
+            Process.Start(new ProcessStartInfo(exe, AppIds.Args.ForUpdate(state)) { UseShellExecute = false, WorkingDirectory = Dir });
         }
         catch
         {

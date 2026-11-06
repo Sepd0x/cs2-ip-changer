@@ -8,7 +8,7 @@ public static class AppChanges
 {
     const int MaxIps = 12;
 
-    public static string RestoreCommand(string exe) => $"\"{exe}\" --restore";
+    public static string RestoreCommand(string exe) => $"\"{exe}\" {AppIds.Args.Restore}";
 
     /// <summary>The addresses of a rule, short: a few IPs, or how many ranges ("*" is everything).</summary>
     public static string Blocks(string remote)

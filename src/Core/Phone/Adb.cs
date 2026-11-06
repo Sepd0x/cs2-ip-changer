@@ -75,7 +75,7 @@ public static class Adb
     {
         if (!Elevated) return adb;
         var from = Path.GetDirectoryName(adb)!;
-        var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CS2IPChanger");
+        var root = AppIds.ProgramDataDir;
         var dir = Path.Combine(root, "adb");
         SafeDir(root);
         SafeDir(dir);
@@ -356,7 +356,7 @@ public static class Adb
     public static void StopServer()
     {
         KillOwnServer();
-        var copy = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CS2IPChanger", "adb", "adb.exe");
+        var copy = Path.Combine(AppIds.ProgramDataDir, "adb", "adb.exe");
         if (File.Exists(copy)) { try { Run(copy, "kill-server", 3000).Wait(4000); } catch { } }
     }
 

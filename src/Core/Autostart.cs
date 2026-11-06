@@ -13,8 +13,6 @@ namespace SRT.Core;
 public static class Autostart
 {
     public const string TaskName = "CS2 IP Changer";
-    /// <summary>Starts hidden, in the notification area.</summary>
-    public const string TrayArg = "--tray";
 
     /// <summary>Only the installed copy may start with Windows.</summary>
     public static bool Allowed(string exe, string target = null) =>
@@ -59,7 +57,7 @@ public static class Autostart
               <Actions Context="Author">
                 <Exec>
                   <Command>"{X(exe)}"</Command>
-                  <Arguments>{TrayArg}</Arguments>
+                  <Arguments>{AppIds.Args.Tray}</Arguments>
                   <WorkingDirectory>{X(Path.GetDirectoryName(exe))}</WorkingDirectory>
                 </Exec>
               </Actions>
@@ -89,7 +87,7 @@ public static class Autostart
         var sid = WindowsIdentity.GetCurrent().User?.Value;
         if (sid == null) return "Couldn't read your Windows user.";
         // The XML goes through an admin-only folder: schtasks reads it from a file, and nobody else may change it in between.
-        var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CS2IPChanger");
+        var root = AppIds.ProgramDataDir;
         var dir = Path.Combine(root, "task");
         var file = Path.Combine(dir, "task.xml");
         try

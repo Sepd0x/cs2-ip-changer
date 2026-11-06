@@ -43,13 +43,13 @@ static class Beta10Tests
         check("Proteção: com a opção, liga sozinha no arranque (também com o Windows)", Guard.OnAtStart(false, none, true, false, false, false), "");
         check("Proteção: CS2 aberto com o bloqueio da última vez (Keep ou crash) fica ligada", Guard.OnAtStart(false, none, false, leftOn: true, cs2Running: true, noPhone: false), "");
         check("Proteção: o bloqueio da última vez sem CS2 aberto não a liga (desligada é desligada)", !Guard.OnAtStart(false, none, false, leftOn: true, cs2Running: false, noPhone: false), "");
-        check("Proteção: No phone nunca liga", !Guard.OnAtStart(false, none, true, true, true, noPhone: true) && !Guard.OnAtStart(true, new[] { "--updated", Guard.OnArg }, false, false, false, true), "");
+        check("Proteção: No phone nunca liga", !Guard.OnAtStart(false, none, true, true, true, noPhone: true) && !Guard.OnAtStart(true, new[] { "--updated", AppIds.Args.On }, false, false, false, true), "");
         check("Atualização: ligada continua ligada, desligada continua desligada",
-            Guard.OnAtStart(true, new[] { "--updated", Guard.UpdateArg(true) }, false, false, false, false) && !Guard.OnAtStart(true, new[] { "--updated", Guard.UpdateArg(false) }, true, false, false, false), "");
+            Guard.OnAtStart(true, new[] { "--updated", AppIds.Args.UpdateState(true) }, false, false, false, false) && !Guard.OnAtStart(true, new[] { "--updated", AppIds.Args.UpdateState(false) }, true, false, false, false), "");
         check("Atualização vinda da beta.9: sem nada estava protegida, --standby ainda esperava (fica desligada), --off desligada",
             Guard.OnAtStart(true, new[] { "--updated" }, false, false, false, false) && !Guard.OnAtStart(true, new[] { "--updated", "--standby" }, false, false, false, false)
             && !Guard.OnAtStart(true, new[] { "--updated", "--off" }, false, false, false, false), "");
-        check("Atualização: os argumentos que a cópia nova recebe", Guard.UpdateArg(true) == "--on" && Guard.UpdateArg(false) == Updater.OffArg && Updater.StandbyArg == "--standby", "");
+        check("Atualização: os argumentos que a cópia nova recebe", AppIds.Args.UpdateState(true) == "--on" && AppIds.Args.UpdateState(false) == "--off" && AppIds.Args.Standby == "--standby", "");
         check("Desligada: o resto do PC fica em casa também em Whole PC (mede o IP de casa, achado 7)",
             Guard.PcOffPhoneNext(true, "servers", "off", new Adapter { Index = 21, IsPhone = true }, true, -1, true, 999) == Guard.PcOffPhoneStep.Apply
             && Guard.NeedsPcOffPhone("off", true, 21, 21, true), "");

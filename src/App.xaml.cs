@@ -11,27 +11,27 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        var args = e.Args.Where(a => a != Program.Moved).ToArray();   // Program.Main's own marker, not an option
+        var args = e.Args.Where(a => a != AppIds.Args.NetMoved).ToArray();   // Program.Main's own marker, not an option
         // Before the single-instance lock: it's the way out when a stuck copy holds the lock and its window won't open.
-        if (args.Any(a => a.Equals("--restore", StringComparison.OrdinalIgnoreCase))) { Paths.Ensure(); RestoreAndExit(); return; }
+        if (AppIds.Args.IsRestore(args)) { Paths.Ensure(); RestoreAndExit(); return; }
         // One instance only: two would fight over the same Firewall rules (the demo touches nothing).
         var first = true;
-        if (!args.Contains("--demo")) _single = new Mutex(true, InstanceName, out first);
+        if (!args.Contains(AppIds.Args.Demo)) _single = new Mutex(true, InstanceName, out first);
         // Started by an update: the old copy is still closing, give it a few seconds.
-        if (!first && args.Contains("--updated"))
+        if (!first && args.Contains(AppIds.Args.Updated))
         {
             try { first = _single.WaitOne(10000); }
             catch (AbandonedMutexException) { first = true; }
         }
-        var uninstall = args.Contains(Uninstall.Arg);
+        var uninstall = args.Contains(AppIds.Args.Uninstall);
         if (!first)
         {
             // The copy that runs (maybe only in the notification area) brings its window back; the message only if it can't.
             // Not for an update or the sign-in task (--tray): those start a copy while one already runs, nobody asked for the window.
-            if (args.Contains(Autostart.TrayArg)) { Shutdown(); return; }
+            if (args.Contains(AppIds.Args.Tray)) { Shutdown(); return; }
             // Uninstall in Windows Settings while the app runs: the running copy opens the Remove question
             if (uninstall && Signal(UninstallEventName)) { Shutdown(); return; }
-            if (!args.Contains("--updated") && ShowRunning()) { Shutdown(); return; }
+            if (!args.Contains(AppIds.Args.Updated) && ShowRunning()) { Shutdown(); return; }
             AlreadyRunningWindow().ShowAndWait();
             Shutdown();
             return;
@@ -40,9 +40,9 @@ public partial class App : Application
         if (uninstall) { UninstallAndExit(); return; }
         // The usage stats notice, before the app makes a folder, a rule or a route: Quit (or Escape) leaves the PC as it was.
         // The notice would become the app's MainWindow and closing it would end the app, so the main window decides that again below.
-        var updated = args.Contains("--updated");
+        var updated = args.Contains(AppIds.Args.Updated);
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
-        var settingsFile = Paths.File("settings.json");
+        var settingsFile = Paths.File(AppIds.Files.Settings);
         if (!StatsGate(args, () => StatsNoticeWindow(updated, StatsNoticeIn(settingsFile)).ShowAndWait(), settingsFile))
         {
             if (updated) UndoAfterUpdateQuit();
@@ -53,7 +53,7 @@ public partial class App : Application
         Paths.Ensure();
         // This copy holds the lock, so no other copy runs from the older unpacked folders (the demo touches nothing).
         // The installed copy keeps its entry in Windows Settings > Installed apps (after an Install or an update: the version)
-        if (!args.Contains("--demo")) Task.Run(() =>
+        if (!args.Contains(AppIds.Args.Demo)) Task.Run(() =>
         {
             Program.CleanOldUnpacked();
             Installer.CleanStage();
@@ -61,7 +61,7 @@ public partial class App : Application
         });
         DispatcherUnhandledException += OnUiError;
         AppDomain.CurrentDomain.UnhandledException += (_, a) => { Crash.Write(a.ExceptionObject as Exception, "fatal"); Telemetry.Fatal(a.ExceptionObject as Exception); };
-        if (!args.Contains("--demo")) Crash.Started();
+        if (!args.Contains(AppIds.Args.Demo)) Crash.Started();
         Exit += (_, _) => { Crash.Ended(); Adb.KillOwnServer(); };
         TaskScheduler.UnobservedTaskException += (_, a) => { Log.Error("Task: " + a.Exception?.GetBaseException().Message); Crash.Write(a.Exception, "task"); Telemetry.Error(a.Exception); a.SetObserved(); };
         base.OnStartup(e);
@@ -132,7 +132,7 @@ public partial class App : Application
         string left;
         try
         {
-            var servers = Store.Load<List<ServerItem>>(Paths.File("servers.json"), () => new());
+            var servers = Store.Load<List<ServerItem>>(Paths.File(AppIds.Files.Servers), () => new());
             left = new Guard().RestoreAll(servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: false).GetAwaiter().GetResult();
         }
         catch (Exception ex) { left = ex.Message; }
@@ -165,7 +165,7 @@ public partial class App : Application
             {
                 w.Working = true;
                 w.Say("Removing the rules, routes, task and the app's files…");
-                var servers = Store.Load<List<ServerItem>>(Paths.File("servers.json"), () => new());
+                var servers = Store.Load<List<ServerItem>>(Paths.File(AppIds.Files.Servers), () => new());
                 o = await Uninstall.Run(w.Choice == 1, () => new Guard().RestoreAll(servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: false));
                 Log.Info(Uninstall.LogLine(o));
                 w.Working = false;
@@ -190,7 +190,7 @@ public partial class App : Application
     /// </summary>
     public static bool StatsGate(string[] args, Func<bool> ask, string settingsFile)
     {
-        if (args.Contains("--demo") || Rec.On) return true;
+        if (args.Contains(AppIds.Args.Demo) || Rec.On) return true;
         var had = StatsNoticeIn(settingsFile);
         if (had >= Telemetry.NoticeVersion) return true;
         if (!ask()) return false;
@@ -262,7 +262,7 @@ public partial class App : Application
         try
         {
             Paths.Ensure();
-            var servers = Store.Load<List<ServerItem>>(Paths.File("servers.json"), () => new());
+            var servers = Store.Load<List<ServerItem>>(Paths.File(AppIds.Files.Servers), () => new());
             var left = new Guard().RestoreAll(servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: true).GetAwaiter().GetResult();
             Log.Info("Usage stats notice: Quit after an update. " + (left == null ? "The protection the version before left on was turned off." : "Couldn't remove: " + left));
         }
@@ -284,7 +284,7 @@ public partial class App : Application
         (left == null && !running ? "Network restored" : "Network not fully restored",
             (left == null
                 ? "The Firewall rules and routes from CS2 IP Changer are gone."
-                : "Couldn't remove: " + left + ".\n\nRestart the PC to clear routes. Rules can be removed in Windows Firewall > Outbound Rules (names start with ServerRouteTool v9).")
+                : "Couldn't remove: " + left + ".\n\nRestart the PC to clear routes. Rules can be removed in Windows Firewall > Outbound Rules (names start with " + AppIds.RulePrefix + ").")
             + (running ? "\n\nAnother copy of the app is still running: close it, or it puts the rules back." : ""));
 
     static void OnUiError(object sender, DispatcherUnhandledExceptionEventArgs e)

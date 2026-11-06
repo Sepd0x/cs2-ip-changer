@@ -15,6 +15,51 @@ static class Untangle12Tests
         OursOnTheExit(check);
         await RouteNotDeleted(check);
         PhoneLinkState(check);
+        AppNames(check);
+    }
+
+    // B3: os nomes da app (exe, pastas, ficheiros, argumentos, regras, User-Agent) num só sítio, com os valores de sempre
+    static void AppNames(Action<string, bool, string> check)
+    {
+        var repo = SecurityTests.Repo();
+        var csproj = File.ReadAllText(Path.Combine(repo, "src", "ServerRouteTool.csproj"));
+        var names = System.Text.RegularExpressions.Regex.Matches(csproj, "<AssemblyName>([^<]+)</AssemblyName>").Select(m => m.Groups[1].Value).ToList();
+        check("B3: o exe publicado chama-se como o AssemblyName do csproj", names.Count > 0 && names[0] + ".exe" == AppIds.ExeName, string.Join(", ", names));
+        check("B3: o build Recording tem outro nome e não se atualiza sozinho", names.Skip(1).All(n => n != AppIds.Name) && names.Contains(AppIds.Name + "-Recording"), string.Join(", ", names));
+        check("B3: o update usa .new.exe e .old com o mesmo nome", AppIds.NewExeName == "CS2IPChanger.new.exe" && AppIds.ExeName + AppIds.OldSuffix == "CS2IPChanger.exe.old", "");
+
+        var cmd = File.ReadAllText(Path.Combine(repo, "tools", "restore.cmd"));
+        check("B3: o restore.cmd apaga as regras com o mesmo prefixo da app", cmd.Contains($"-DisplayName '{AppIds.RulePrefix}*'"), "");
+        check("B3: todas as regras da app começam pelo prefixo", new[] { Firewall.RuleName, Firewall.EchoRuleName, Firewall.Cs2RuleName, Firewall.DnsUdpRuleName,
+            Firewall.DnsTcpRuleName, Firewall.Ipv6RuleName, Firewall.RegionsRuleName }.All(n => n.StartsWith(AppIds.RulePrefix + " - ")) && Firewall.RuleName == "ServerRouteTool v9 - kill switch", "");
+
+        check("B3: a cópia nova recebe o estado da proteção depois de --updated",
+            AppIds.Args.ForUpdate(AppIds.Args.UpdateState(true)) == "--updated --on" && AppIds.Args.ForUpdate(AppIds.Args.UpdateState(false)) == "--updated --off"
+            && AppIds.Args.ForUpdate(AppIds.Args.Standby) == "--updated --standby", "");
+        check("B3: um estado que a cópia nova não conhece não passa", AppIds.Args.ForUpdate(null) == "--updated" && AppIds.Args.ForUpdate("--demo") == "--updated", "");
+        check("B3: --restore conta escrito à mão em qualquer caixa, os outros não",
+            AppIds.Args.IsRestore(new[] { "--RESTORE" }) && !AppIds.Args.IsRestore(new[] { "--demo", "restore" }) && SRT.Program.DllSearchProblem(false, true, new[] { "--Restore" }) == null, "");
+        check("B3: o comando de desfazer é o exe com --restore", AppChanges.RestoreCommand(@"C:\x\" + AppIds.ExeName) == "\"C:\\x\\CS2IPChanger.exe\" --restore", "");
+        check("B3: a pasta de instalação é a do Installer, em Program Files",
+            Installer.Target == AppIds.InstallDir && AppIds.InstallDir.EndsWith(@"\CS2 IP Changer")
+            && SRT.Program.FolderProblem(Path.GetTempPath(), Path.GetTempPath())?.Contains($"create the folder {AppIds.InstallDir}, copy CS2IPChanger.exe into it") == true, "");
+        check("B3: a pasta do ProgramData é a mesma para o Uninstall e o Install", Uninstall.Root == AppIds.ProgramDataDir && Installer.StageDir == Path.Combine(AppIds.ProgramDataDir, "install"), "");
+        check("B3: os pedidos da app levam o User-Agent de sempre", AppIds.UserAgent == "CS2IPChanger/0.1", "");
+
+        // O Install deixa de fora o que o Store deixa ao lado de um ficheiro estragado ou a meio
+        var dir = Path.Combine(Path.GetTempPath(), "srt-b3-" + Guid.NewGuid().ToString("N")[..8]);
+        Directory.CreateDirectory(dir);
+        try
+        {
+            var file = Path.Combine(dir, AppIds.Files.Settings);
+            File.WriteAllText(file, "{ cortado");
+            Store.Load(file, () => new Settings());
+            var left = Directory.GetFiles(dir).Select(Path.GetFileName).Where(n => n != AppIds.Files.Settings).ToList();
+            check("B3: o Install não copia o ficheiro estragado que o Store guardou", left.Count == 1 && left.All(Installer.Skip), string.Join(", ", left));
+            check("B3: o Install não copia o .tmp de um save, o owned.json nem o running.flag",
+                Installer.Skip(AppIds.Files.Servers + AppIds.Files.TmpSuffix) && Installer.Skip(AppIds.Files.Owned) && Installer.Skip(AppIds.Files.RunningFlag) && !Installer.Skip(AppIds.Files.Servers), "");
+        }
+        finally { try { Directory.Delete(dir, true); } catch { } }
     }
 
     // B2: um só estado da ligação do telemóvel (hotspot, Wi-Fi do telemóvel, internet de casa, modo efetivo) para toda a app

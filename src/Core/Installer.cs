@@ -11,19 +11,16 @@ namespace SRT.Core;
 /// Install (o192): run as admin from a folder other programs can change (Downloads, the Desktop), the app offers to copy itself to
 /// C:\Program Files\CS2 IP Changer and start from there. In two steps, so nothing of the app's window ever loads next to that exe:
 /// 1. The copy in Downloads only checks it is the file that is running, holds it, copies it to an admin-only folder in ProgramData
-///    (<see cref="StageDir"/>) and starts that copy with <see cref="FromArg"/>. No window, no log, nothing written next to it.
+///    (<see cref="StageDir"/>) and starts that copy with <see cref="AppIds.Args.InstallFrom"/>. No window, no log, nothing written next to it.
 /// 2. That copy shows the Install window. Install copies it to Program Files, copies SRT_Dados from the old folder without ever going
 ///    through a link, and starts the installed app. Nothing at the old place is moved or deleted; no Start menu shortcut.
 /// </summary>
 public static class Installer
 {
-    public static string Target => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "CS2 IP Changer");
+    public static string Target => AppIds.InstallDir;
 
     /// <summary>%ProgramData%\CS2IPChanger\install: admin-only, holds the copy that shows the Install window.</summary>
-    public static string StageDir => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CS2IPChanger", "install");
-
-    /// <summary>The argument the staged copy gets: the folder the app was started from (where SRT_Dados is copied from).</summary>
-    public const string FromArg = "--install-from";
+    public static string StageDir => Path.Combine(AppIds.ProgramDataDir, "install");
 
     /// <summary>The Install window replaces the error: the app's own folder is the problem, and it isn't the install folder already.</summary>
     public static bool Offer(string appDir, string target = null) =>
@@ -37,7 +34,7 @@ public static class Installer
     public static string StagedSource(IReadOnlyList<string> args, string appDir, string stageDir = null)
     {
         if (!SameDir(appDir, stageDir ?? StageDir)) return null;
-        var i = args.ToList().IndexOf(FromArg);
+        var i = args.ToList().IndexOf(AppIds.Args.InstallFrom);
         var from = i >= 0 && i + 1 < args.Count ? args[i + 1] : null;
         return from != null && Path.IsPathFullyQualified(from) && Directory.Exists(from) ? Path.TrimEndingDirectorySeparator(Path.GetFullPath(from)) : null;
     }
@@ -51,7 +48,7 @@ public static class Installer
         Adb.SafeDir(Path.GetDirectoryName(dir)!);
         Adb.SafeDir(dir);
         if (!Adb.AdminOnly(dir)) throw new IOException(dir + " can be changed by programs without admin rights");
-        var exe = Path.Combine(dir, Updater.ExeName);
+        var exe = Path.Combine(dir, AppIds.ExeName);
         CopyExe(self, exe);
         return exe;
     }
@@ -84,7 +81,7 @@ public static class Installer
     {
         try
         {
-            var exe = Path.Combine(target, Updater.ExeName);
+            var exe = Path.Combine(target, AppIds.ExeName);
             return File.Exists(exe) ? Updater.Clean(FileVersionInfo.GetVersionInfo(exe).ProductVersion) : null;
         }
         catch { return null; }
@@ -97,7 +94,7 @@ public static class Installer
     /// <summary>The staged copy is running (its Install window is open), so a second one can't be put there.</summary>
     public static bool StageBusy(string stageDir = null)
     {
-        var exe = Path.Combine(stageDir ?? StageDir, Updater.ExeName);
+        var exe = Path.Combine(stageDir ?? StageDir, AppIds.ExeName);
         if (!File.Exists(exe)) return false;
         try { using (new FileStream(exe, FileMode.Open, FileAccess.Read, FileShare.None)) return false; }
         catch (IOException) { return true; }
@@ -115,7 +112,7 @@ public static class Installer
         Directory.CreateDirectory(target);
         // Made now, it takes Program Files' permissions; checked again in case something was there first
         if (TargetProblem(target) is string after) throw new IOException(after);
-        var exe = Path.Combine(target, Updater.ExeName);
+        var exe = Path.Combine(target, AppIds.ExeName);
         var installed = InstalledVersion(target);
         var keepExe = KeepExe(installed, version);
         if (!keepExe)
@@ -139,8 +136,8 @@ public static class Installer
     /// </summary>
     public static (int Files, int Skipped, bool Kept) InstallData(string fromDir, string target)
     {
-        var data = Path.Combine(fromDir, "SRT_Dados");
-        var toData = Path.Combine(target, "SRT_Dados");
+        var data = Path.Combine(fromDir, AppIds.DataFolder);
+        var toData = Path.Combine(target, AppIds.DataFolder);
         if (Directory.Exists(toData))
         {
             // Moved there instead of copied, it keeps permissions that let other programs change it, and the app won't start with it
@@ -171,7 +168,7 @@ public static class Installer
         ("Publisher", "Sepd0x", RegistryValueKind.String),
         ("DisplayIcon", exe + ",0", RegistryValueKind.String),
         ("InstallLocation", Path.GetDirectoryName(exe)!, RegistryValueKind.String),
-        ("UninstallString", $"\"{exe}\" {Uninstall.Arg}", RegistryValueKind.String),
+        ("UninstallString", $"\"{exe}\" {AppIds.Args.Uninstall}", RegistryValueKind.String),
         ("EstimatedSize", (int)Math.Min(int.MaxValue, (bytes + 1023) / 1024), RegistryValueKind.DWord),   // in KB
         ("NoModify", 1, RegistryValueKind.DWord),
         ("NoRepair", 1, RegistryValueKind.DWord),
@@ -190,7 +187,7 @@ public static class Installer
         {
             using var hk = root == null ? RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64) : null;
             using var k = (root ?? hk).CreateSubKey(key, true);
-            if (k.GetValue("DisplayVersion") as string == version && k.GetValue("UninstallString") as string == $"\"{exe}\" {Uninstall.Arg}") return null;
+            if (k.GetValue("DisplayVersion") as string == version && k.GetValue("UninstallString") as string == $"\"{exe}\" {AppIds.Args.Uninstall}") return null;
             // The install date stays the first one (an update isn't a new install)
             var date = DateTime.TryParseExact(k.GetValue("InstallDate") as string, "yyyyMMdd", System.Globalization.CultureInfo.InvariantCulture,
                 System.Globalization.DateTimeStyles.None, out var d) ? d : DateTime.Today;
@@ -260,8 +257,8 @@ public static class Installer
     /// <summary>Files never copied: owned.json (the routes the app added, read only from an admin-only folder: one planted in the old
     /// folder must not become trusted), and leftovers of saves and starts.</summary>
     public static bool Skip(string name) =>
-        name.Equals("owned.json", StringComparison.OrdinalIgnoreCase) || name.Equals("running.flag", StringComparison.OrdinalIgnoreCase)
-        || name.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase) || name.Contains(".broken-", StringComparison.OrdinalIgnoreCase)
+        name.Equals(AppIds.Files.Owned, StringComparison.OrdinalIgnoreCase) || name.Equals(AppIds.Files.RunningFlag, StringComparison.OrdinalIgnoreCase)
+        || name.EndsWith(AppIds.Files.TmpSuffix, StringComparison.OrdinalIgnoreCase) || name.Contains(AppIds.Files.BrokenMark, StringComparison.OrdinalIgnoreCase)
         // beta.11 (audit P6): no program from the old folder goes into Program Files. The app downloads ADB again, checked
         || name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) || name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
         || name.EndsWith(".sys", StringComparison.OrdinalIgnoreCase) || name.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase)
@@ -281,9 +278,9 @@ public static class Installer
     {
         var list = new List<string>();
         if (r == null || r.DataError != null || r.DataKept || r.Files <= 0 || r.Skipped > 0) return list;
-        var data = Path.Combine(fromDir, "SRT_Dados");
+        var data = Path.Combine(fromDir, AppIds.DataFolder);
         if (Directory.Exists(data) && !Paths.IsLink(data)) list.Add(data);
-        var old = Path.Combine(fromDir, Updater.ExeName + ".old");
+        var old = Path.Combine(fromDir, AppIds.ExeName + AppIds.OldSuffix);
         if (File.Exists(old) && !Paths.IsLink(old)) list.Add(old);
         return list;
     }

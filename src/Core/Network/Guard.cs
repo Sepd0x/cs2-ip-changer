@@ -89,7 +89,7 @@ public sealed class Guard
     /// <summary>The Firewall errors of the last rewrite, so the same failure on every sync is logged once.</summary>
     string _fwErrors;
 
-    static readonly string[] SplitPrefixes = { "0.0.0.0/1", "128.0.0.0/1" };
+    public static readonly string[] SplitPrefixes = { "0.0.0.0/1", "128.0.0.0/1" };
 
     /// <summary>What the app changed in Windows, saved to disk so a crash or a kill doesn't leave orphans behind.</summary>
     public sealed class OwnedState
@@ -103,7 +103,7 @@ public sealed class Guard
     // In UTC: a clock change (summer time, a big NTP correction) must not look like a restart
     static DateTime BootTime => DateTime.UtcNow.AddMilliseconds(-Environment.TickCount64);
 
-    public Guard() : this(Paths.File("owned.json")) { }
+    public Guard() : this(Paths.File(AppIds.Files.Owned)) { }
 
     /// <summary>Runs PowerShell for the metric (Save mobile data). The tests pass one that fails, to see what the Guard does then.</summary>
     readonly Func<string, int, Task<ProcResult>> _powershell;
@@ -274,20 +274,14 @@ public sealed class Guard
     //     in place (the app closed with Keep, or crashed): the match isn't moved to the home IP behind your back.
     //  4. Closing with it on: the question asked once (keep the block or turn it off), the answer in Settings.
 
-    /// <summary>Passed to the new copy with --updated: protection was on in the old one (beta.9 passed nothing when it was protected).</summary>
-    public const string OnArg = "--on";
-
     /// <summary>Rule 3. <paramref name="leftOn"/>: the app's kill switch rule is still in the Firewall from the last run.</summary>
     public static bool OnAtStart(bool justUpdated, IReadOnlyCollection<string> args, bool onAtStart, bool leftOn, bool cs2Running, bool noPhone)
     {
         if (noPhone) return false;
         // From beta.9: nothing = it was protected, --standby = it was still waiting for the phone (never turned on), --off = off
-        if (justUpdated) return args.Contains(OnArg) || !(args.Contains(Updater.OffArg) || args.Contains(Updater.StandbyArg));
+        if (justUpdated) return args.Contains(AppIds.Args.On) || !(args.Contains(AppIds.Args.Off) || args.Contains(AppIds.Args.Standby));
         return onAtStart || (leftOn && cs2Running);
     }
-
-    /// <summary>The state the new copy gets from an update: the same as now.</summary>
-    public static string UpdateArg(bool on) => on ? OnArg : Updater.OffArg;
 
     /// <summary>
     /// Windows sends the rest of the PC through the phone while it shouldn't (game only or no phone): the phone's adapter gets a

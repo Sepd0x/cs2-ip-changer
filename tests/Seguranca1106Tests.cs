@@ -41,12 +41,12 @@ static class Seguranca1106Tests
         // caminho literal do exe instalado: uma variável (%windir%, %LOCALAPPDATA%) viria do ambiente do utilizador, que qualquer
         // programa dele muda (a falha da tarefa SilentCleanup do Windows). E não se arranca a pedido (schtasks /Run).
         {
-            var exe = Path.Combine(Installer.Target, Updater.ExeName);
+            var exe = Path.Combine(Installer.Target, AppIds.ExeName);
             var xml = Autostart.TaskXml(exe, "S-1-5-21-1-2-3-1001");
             check("Start with Windows: o comando é o caminho do exe, sem variáveis do ambiente",
                 Autostart.CommandIn(xml) == exe && !xml.Contains('%') && xml.Contains("<AllowStartOnDemand>false</AllowStartOnDemand>"), Autostart.CommandIn(xml));
             check("Start with Windows: só a cópia instalada pode ter a tarefa",
-                Autostart.Allowed(exe) && !Autostart.Allowed(Path.Combine(Path.GetTempPath(), Updater.ExeName)), "");
+                Autostart.Allowed(exe) && !Autostart.Allowed(Path.Combine(Path.GetTempPath(), AppIds.ExeName)), "");
         }
     }
 

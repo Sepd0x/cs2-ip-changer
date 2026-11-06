@@ -184,7 +184,7 @@ public partial class MainWindow
         Dispatcher.BeginInvoke(() => SwitchGroup.BringIntoView(), DispatcherPriority.Loaded);
     }
 
-    void SaveSettings() { if (!_demo) Store.Save(Paths.File("settings.json"), _s); }
+    void SaveSettings() { if (!_demo) Store.Save(Paths.File(AppIds.Files.Settings), _s); }
 
     async void Restore_Click(object sender, RoutedEventArgs e)
     {
@@ -214,7 +214,7 @@ public partial class MainWindow
     {
         try { Process.Start(FirewallConsole()); }
         catch (Exception ex) { Toast("Couldn't open the Firewall: " + ex.Message, Tone.Error); }
-        Toast("In Outbound Rules, look for 'ServerRouteTool v9 - kill switch'.", true);
+        Toast($"In Outbound Rules, look for '{Firewall.RuleName}'.", true);
 
     }
 

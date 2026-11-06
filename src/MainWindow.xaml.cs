@@ -65,7 +65,7 @@ public partial class MainWindow : Window
         ClampToWorkArea();   // before ParseDevArgs: a demo --size still wins
         ParseDevArgs(args);
         StartHiddenIfAsked(args);
-        _justUpdated = args.Contains("--updated");
+        _justUpdated = args.Contains(AppIds.Args.Updated);
         _startArgs = args;   // on or off is decided in Startup (Guard.OnAtStart), with the Firewall and CS2 read
         ShowVersion();
 
@@ -76,7 +76,7 @@ public partial class MainWindow : Window
             while (_log.Count > 600) _log.RemoveAt(_log.Count - 1);
         });
 
-        _s = _demo ? new Settings() : Store.Load(Paths.File("settings.json"), () => new Settings());
+        _s = _demo ? new Settings() : Store.Load(Paths.File(AppIds.Files.Settings), () => new Settings());
         // Before beta.6 there was no PhoneSeen: an IP history means a phone was already checked on this PC
         if (!_s.PhoneSeen && _s.IpHistory.Count > 0) _s.PhoneSeen = true;
         // beta.7 and before kept the Steam Web API key in plain text: saved twice, so the .prev copy loses it too

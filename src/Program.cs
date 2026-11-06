@@ -14,9 +14,6 @@ namespace SRT;
 /// </summary>
 public static class Program
 {
-    /// <summary>Internal argument of that second start: it is never shown to App or MainWindow.</summary>
-    public const string Moved = "--net-moved";
-
     [STAThread]
     static int Main(string[] args)
     {
@@ -42,7 +39,7 @@ public static class Program
         string folderWhy = null;
         var appDirUnsafe = false;
 #if !DEBUG
-        if (Adb.Elevated && !args.Any(a => a.Equals("--restore", StringComparison.OrdinalIgnoreCase))) folderWhy = FolderProblem(Paths.AppDir, Paths.Data);
+        if (Adb.Elevated && !AppIds.Args.IsRestore(args)) folderWhy = FolderProblem(Paths.AppDir, Paths.Data);
         appDirUnsafe = Adb.Elevated && Adb.UsersCanWrite(Paths.AppDir);   // --restore from Downloads too
 #endif
         var staged = Installer.SameDir(Paths.AppDir, Installer.StageDir);
@@ -62,7 +59,7 @@ public static class Program
         if (moveNet || runtimeVars.Count > 0)
         {
             // The second start still isn't safe: don't loop and don't load the DLLs.
-            if (args.Contains(Moved))
+            if (args.Contains(AppIds.Args.NetMoved))
             {
                 var what = moveNet ? "unpack its files to a folder only admins can change" : "start without the runtime variables " + string.Join(", ", runtimeVars);
                 if (folderWhy == null) Log.Error($"The app couldn't {what}. It didn't start.");
@@ -73,7 +70,7 @@ public static class Program
             {
                 var psi = new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false, WorkingDirectory = Environment.CurrentDirectory };
                 foreach (var a in args) psi.ArgumentList.Add(a);
-                psi.ArgumentList.Add(Moved);
+                psi.ArgumentList.Add(AppIds.Args.NetMoved);
                 foreach (var k in RuntimeVars(psi.Environment.Keys)) psi.Environment.Remove(k);
                 if (singleFile)
                 {
@@ -110,7 +107,7 @@ public static class Program
             string exe;
             using (var self = Installer.OpenSelf()) exe = Installer.Stage(self);
             var psi = new ProcessStartInfo(exe) { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(exe)! };
-            psi.ArgumentList.Add(Installer.FromArg);
+            psi.ArgumentList.Add(AppIds.Args.InstallFrom);
             psi.ArgumentList.Add(Paths.AppDir);
             foreach (var k in RuntimeVars(psi.Environment.Keys)) psi.Environment.Remove(k);
             if (singleFile)
@@ -167,7 +164,7 @@ public static class Program
 
     internal static NoticeWindow InstallWindow(string from, string target)
     {
-        var keep = Directory.Exists(Path.Combine(target, "SRT_Dados")) && Directory.Exists(Path.Combine(from, "SRT_Dados"));
+        var keep = Directory.Exists(Path.Combine(target, AppIds.DataFolder)) && Directory.Exists(Path.Combine(from, AppIds.DataFolder));
         // beta.11 (audit P5): an older copy updated itself and left its protection on, which stays until the installed app starts
         var blockLeft = Firewall.BlockLeft(Firewall.Remaining());
         return new NoticeWindow("Install CS2 IP Changer", InstallText(from, target, keep, Installer.InstalledVersion(target), AppInfo.Version, blockLeft), "Install", "Close", action: async w =>
@@ -188,7 +185,7 @@ public static class Program
                 // The exe is in place, but the app would start without your settings: it isn't started, the message says what to do
                 w.Working = false;
                 w.Finish();
-                w.Say($"CS2IPChanger.exe is installed, but SRT_Dados wasn't copied: {r.DataError} Then start {r.Exe}.", bad: true);
+                w.Say($"{AppIds.ExeName} is installed, but SRT_Dados wasn't copied: {r.DataError} Then start {r.Exe}.", bad: true);
                 return;
             }
             var note = (r.ExeKept != null ? $"Version {r.ExeKept} was already there and stays. " : "")
@@ -223,7 +220,7 @@ public static class Program
         if (blockLeft) return InstallText(from, target, keepData, installed, version) + "\n\n" + BlockLeftText(from);
         return $"CS2 IP Changer runs as admin, and programs without admin rights can change the folder it was started from:\n{from}\n\n"
             + "A file put next to the app there could run with admin rights, so the app doesn't run from it.\n\n"
-            + (installed == null ? $"Install copies CS2IPChanger.exe to {target}, where only admins can change files, "
+            + (installed == null ? $"Install copies {AppIds.ExeName} to {target}, where only admins can change files, "
                 : keepExe ? $"Version {installed} is already in {target}, the same or newer than this one, so Install keeps it, "
                 : $"Install replaces version {installed} in {target} (only admins can change files there) with this one, ")
             + (keepData ? "keeps the SRT_Dados that is already there (the one in that folder isn't copied), " : "copies your SRT_Dados folder too if there is one there, ")
@@ -233,7 +230,7 @@ public static class Program
     /// <summary>The old copy's protection is still in the Firewall: what that means, and how to lift it without installing.</summary>
     public static string BlockLeftText(string from) =>
         "Protection from the old copy is still on: CS2 and your servers stay blocked outside the phone. Install, and the app takes it over. "
-        + $"To turn it off without installing, run as admin:\n\"{Path.Combine(from, Updater.ExeName)}\" --restore";
+        + "To turn it off without installing, run as admin:\n" + AppChanges.RestoreCommand(Path.Combine(from, AppIds.ExeName));
 
     /// <summary>The DLL from System32, or nothing (then .NET's own search runs, for a name System32 doesn't have).</summary>
     public static IntPtr SystemDll(string name)
@@ -243,7 +240,7 @@ public static class Program
         return NativeLibrary.TryLoad(file, out var h) ? h : IntPtr.Zero;
     }
 
-    static string SafeBase => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CS2IPChanger", "net");
+    static string SafeBase => Path.Combine(AppIds.ProgramDataDir, "net");
 
     const string ExtractBaseVar = "DOTNET_BUNDLE_EXTRACT_BASE_DIR";
 
@@ -263,9 +260,9 @@ public static class Program
     /// DLL next to the exe or in the current folder run with admin rights. Without admin, or for --restore, it carries on.
     /// </summary>
     public static string DllSearchProblem(bool locked, bool elevated, IEnumerable<string> args) =>
-        locked || !elevated || args.Any(a => a.Equals("--restore", StringComparison.OrdinalIgnoreCase)) ? null
+        locked || !elevated || AppIds.Args.IsRestore(args) ? null
             : "Windows wouldn't limit where CS2 IP Changer loads its DLLs from, so a file next to the app could run with admin rights. "
-              + "The app didn't start.\n\nRestart the PC and try again. To undo the app's network changes, run CS2IPChanger.exe --restore.";
+              + $"The app didn't start.\n\nRestart the PC and try again. To undo the app's network changes, run {AppIds.ExeName} {AppIds.Args.Restore}.";
 
     /// <summary>
     /// The variables of the .NET runtime (CORECLR_, COR_, COMPlus_, DOTNET_): a profiler DLL, a diagnostics port, another GC or JIT.
@@ -283,9 +280,9 @@ public static class Program
     public static string FolderProblem(string appDir, string dataDir)
     {
         appDir = Path.TrimEndingDirectorySeparator(Path.GetFullPath(appDir));
-        const string Fix = "Close this, create the folder C:\\Program Files\\CS2 IP Changer, copy CS2IPChanger.exe into it (and your SRT_Dados folder, if you have one: copy it, don't move it) and start the app from there.";
+        var fix = $"Close this, create the folder {AppIds.InstallDir}, copy {AppIds.ExeName} into it (and your SRT_Dados folder, if you have one: copy it, don't move it) and start the app from there.";
         if (Adb.UsersCanWrite(appDir))
-            return $"CS2 IP Changer runs as admin, and this folder can be changed by programs without admin rights:\n{appDir}\n\nA file put next to the app there would run with admin rights, so the app doesn't start from it.\n\n{Fix}";
+            return $"CS2 IP Changer runs as admin, and this folder can be changed by programs without admin rights:\n{appDir}\n\nA file put next to the app there would run with admin rights, so the app doesn't start from it.\n\n{fix}";
         if ((Directory.Exists(dataDir) || File.Exists(dataDir)) && Adb.UsersCanWrite(dataDir))
             return $"CS2 IP Changer runs as admin, and its data folder can be changed by programs without admin rights:\n{dataDir}\n\nThis happens when SRT_Dados is moved instead of copied. Close this, copy SRT_Dados to another place, delete the one here and copy it back, then start the app again.";
         return null;

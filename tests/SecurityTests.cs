@@ -234,10 +234,10 @@ static class SecurityTests
                 // Revisão: a janela só abre na cópia de ProgramData, e só com uma pasta de origem completa que existe
                 var stage = Path.Combine(tmp, "stage");
                 Directory.CreateDirectory(stage);
-                check("Instalar: a cópia preparada lê a pasta de origem", Installer.StagedSource(new[] { Installer.FromArg, tmp + "\\", SRT.Program.Moved }, stage + "\\", stage) == tmp);
-                check("Instalar: fora da pasta preparada o argumento não conta", Installer.StagedSource(new[] { Installer.FromArg, tmp }, tmp, stage) == null);
-                check("Instalar: origem relativa, que não existe ou em falta não conta", Installer.StagedSource(new[] { Installer.FromArg, "Downloads" }, stage, stage) == null
-                    && Installer.StagedSource(new[] { Installer.FromArg, Path.Combine(tmp, "nao-existe") }, stage, stage) == null && Installer.StagedSource(new[] { Installer.FromArg }, stage, stage) == null);
+                check("Instalar: a cópia preparada lê a pasta de origem", Installer.StagedSource(new[] { AppIds.Args.InstallFrom, tmp + "\\", AppIds.Args.NetMoved }, stage + "\\", stage) == tmp);
+                check("Instalar: fora da pasta preparada o argumento não conta", Installer.StagedSource(new[] { AppIds.Args.InstallFrom, tmp }, tmp, stage) == null);
+                check("Instalar: origem relativa, que não existe ou em falta não conta", Installer.StagedSource(new[] { AppIds.Args.InstallFrom, "Downloads" }, stage, stage) == null
+                    && Installer.StagedSource(new[] { AppIds.Args.InstallFrom, Path.Combine(tmp, "nao-existe") }, stage, stage) == null && Installer.StagedSource(new[] { AppIds.Args.InstallFrom }, stage, stage) == null);
                 check("Instalar: a pasta preparada fica em ProgramData\\CS2IPChanger", Installer.StageDir.StartsWith(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), StringComparison.OrdinalIgnoreCase)
                     && Installer.StageDir.EndsWith(@"CS2IPChanger\install", StringComparison.OrdinalIgnoreCase));
 

@@ -86,7 +86,7 @@ public partial class MainWindow
             var sha = await Updater.Download(r, new Progress<string>(t => ProgressText.Text = t));
             Log.Ok($"Update {r.Version} downloaded, SHA-256 matches ({sha[..12]}…). Restarting.");
             ProgressText.Text = "Restarting…";
-            Updater.Install(sha, PrepareExitForUpdate, Guard.UpdateArg(_protOn));
+            Updater.Install(sha, PrepareExitForUpdate, AppIds.Args.UpdateState(_protOn));
             Application.Current.Shutdown();
         }
         catch (Exception ex)

@@ -194,7 +194,7 @@ static class Beta11QualidadeTests
             check("Install: copia só os dados (2 ficheiros)", files == 2 && skipped == 0, $"{files} {skipped}");
             check("Install: nem a DLL nem o platform-tools chegam", !File.Exists(Path.Combine(to, "evil.dll")) && !Directory.Exists(Path.Combine(to, "platform-tools")), "");
             var fromDir = Path.Combine(tmp, "from");
-            File.WriteAllText(Path.Combine(fromDir, Updater.ExeName + ".old"), "x");
+            File.WriteAllText(Path.Combine(fromDir, AppIds.ExeName + ".old"), "x");
             var good = new Installer.Result("x", null, 2, 0, false);
             check("Install: oferece o SRT_Dados e o .old depois de copiar tudo", Installer.OldCopy(fromDir, good).Count == 2, "");
             check("Install: com ficheiros por copiar não oferece", Installer.OldCopy(fromDir, good with { Skipped = 1 }).Count == 0, "");

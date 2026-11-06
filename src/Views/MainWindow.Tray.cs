@@ -93,7 +93,7 @@ public partial class MainWindow
     /// <summary>Started with --tray (Start with Windows): no window until you click the icon.</summary>
     void StartHiddenIfAsked(string[] args)
     {
-        _startHidden = !_demo && args.Contains(Autostart.TrayArg);
+        _startHidden = !_demo && args.Contains(AppIds.Args.Tray);
         if (!_startHidden) return;
         ShowActivated = false;
         ShowInTaskbar = false;
@@ -225,7 +225,7 @@ public partial class MainWindow
             // Never left half-way with the window stuck: say it, and the app closes (opening it again puts its protection back)
             Log.Error("Remove stopped: " + ex.Message);
             HideProgress();
-            new NoticeWindow("Not everything was removed", "Remove stopped: " + ex.Message + "\n\nOpen the app and try again, or run CS2IPChanger.exe --restore.", "Close", problem: true) { Owner = this }.ShowAndWait();
+            new NoticeWindow("Not everything was removed", "Remove stopped: " + ex.Message + $"\n\nOpen the app and try again, or run {AppIds.ExeName} {AppIds.Args.Restore}.", "Close", problem: true) { Owner = this }.ShowAndWait();
             Close();
             return;
         }

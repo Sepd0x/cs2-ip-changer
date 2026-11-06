@@ -53,7 +53,7 @@ public static partial class Net
             },
         };
         var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(timeoutSec + 1) };
-        http.DefaultRequestHeaders.UserAgent.ParseAdd("CS2IPChanger/0.1");
+        http.DefaultRequestHeaders.UserAgent.ParseAdd(AppIds.UserAgent);
         return http;
     }
 

@@ -34,7 +34,7 @@ public static class Paths
 {
     // Portable: everything sits next to the .exe, in its own folder.
     public static readonly string AppDir = AppContext.BaseDirectory;
-    public static readonly string Data = Path.Combine(AppDir, "SRT_Dados");
+    public static readonly string Data = Path.Combine(AppDir, AppIds.DataFolder);
     public static readonly string Avatars = Path.Combine(Data, "avatars");
     public static string File(string name) => Path.Combine(Data, name);
 
@@ -131,7 +131,7 @@ public static class Store
         if (TryParse(raw, out T value)) return value;
         // Empty, cut short by a power loss or not JSON: keep the broken file and use the last good copy
         var name = Path.GetFileName(path);
-        try { System.IO.File.Copy(path, $"{path}.broken-{DateTime.UtcNow:yyyyMMdd-HHmmss}", true); } catch { }
+        try { System.IO.File.Copy(path, $"{path}{AppIds.Files.BrokenMark}{DateTime.UtcNow:yyyyMMdd-HHmmss}", true); } catch { }
         try
         {
             if (System.IO.File.Exists(path + ".prev") && TryParse(System.IO.File.ReadAllText(path + ".prev", Encoding.UTF8), out value))
@@ -163,8 +163,8 @@ public static class Store
         lock (SaveLock)
         {
             lock (Unreadable) if (Unreadable.Contains(path)) return;
-            foreach (var f in new[] { path, path + ".tmp", path + ".prev" }) Paths.NoLink(f);
-            var tmp = path + ".tmp";
+            var tmp = path + AppIds.Files.TmpSuffix;
+            foreach (var f in new[] { path, tmp, path + ".prev" }) Paths.NoLink(f);
             var bytes = new UTF8Encoding(false).GetBytes(JsonSerializer.Serialize(value, Opt));
             using (var fs = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None))
             {
@@ -193,7 +193,7 @@ public static class Crash
 {
     static readonly object Lock = new();
     static readonly HashSet<string> Seen = new();
-    static string Marker => Paths.File("running.flag");
+    static string Marker => Paths.File(AppIds.Files.RunningFlag);
 
     public static void Write(Exception ex, string where)
     {

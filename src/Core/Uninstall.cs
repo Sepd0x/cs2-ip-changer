@@ -11,11 +11,8 @@ namespace SRT.Core;
 /// </summary>
 public static class Uninstall
 {
-    /// <summary>The argument Windows' Uninstall button starts the app with (the registry's UninstallString): the same question.</summary>
-    public const string Arg = "--uninstall";
-
     /// <summary>%ProgramData%\CS2IPChanger: the ADB copy, the unpacked files of each version, the Install copy, the task's XML.</summary>
-    public static string Root => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "CS2IPChanger");
+    public static string Root => AppIds.ProgramDataDir;
 
     /// <summary>What couldn't go yet because this copy still uses it: files, then folders (the deepest first).</summary>
     public sealed class Leftovers

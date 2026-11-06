@@ -56,12 +56,12 @@ public static class Report
         }
 
         AddText("now.txt", now ?? "");
-        AddText("settings.json", settingsJson ?? "");
+        AddText(AppIds.Files.Settings, settingsJson ?? "");
         AddTail("app/registo.log", Paths.File("registo.log"));
         AddTail("app/registo.log.old", Paths.File("registo.log.old"));
         AddTail("app/crash.txt", Paths.File("crash.txt"));
-        AddTail("app/servers.json", Paths.File("servers.json"));
-        AddTail("app/owned.json", Paths.File("owned.json"));
+        AddTail("app/" + AppIds.Files.Servers, Paths.File(AppIds.Files.Servers));
+        AddTail("app/" + AppIds.Files.Owned, Paths.File(AppIds.Files.Owned));
         if (steamDir != null)
         {
             var logs = Path.Combine(steamDir, "logs");
