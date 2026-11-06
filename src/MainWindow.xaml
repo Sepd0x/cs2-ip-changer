@@ -1710,7 +1710,7 @@
                                         <TextBlock Text="Make the others look like" Foreground="{StaticResource Faint}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                         <ComboBox x:Name="IdentSource" Width="140" ToolTip="The account whose look the others get"/>
                                         <Button x:Name="ProfIdentBtn" Content="Preview" Click="ProfIdentical_Click" Margin="6,0,0,0"
-                                                ToolTip="Copies that account's name, picture, real name, bio and country into a new template (&quot;Look of …&quot;), picks every other account and shows the preview. Nothing changes until you click Apply."/>
+                                                ToolTip="Copies that account's name, picture, real name, bio and country (and privacy, if you signed in to it) into a new template (&quot;Look of …&quot;), picks every other account and shows the preview. Nothing changes until you click Apply."/>
                                     </StackPanel>
                                 </Grid>
 
@@ -2315,13 +2315,13 @@
                                                   ToolTip="A scheduled task named 'CS2 IP Changer' opens the app in the notification area when you sign in, with its admin rights and without the UAC prompt each time. Protection starts off, unless Settings > Protection > Turn on protection when the app starts is on. Only for the copy installed in C:\Program Files\CS2 IP Changer. Turning this off, Remove everything and --restore delete the task.">
                                             <StackPanel>
                                                 <TextBlock Text="Start with Windows"/>
-                                                <TextBlock Text="Opens in the notification area when you sign in, with protection off (see Protection)." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="Opens in the notification area when you sign in. Protection starts as set in Settings > Protection." Style="{StaticResource OptSub}"/>
                                                 <TextBlock x:Name="AutostartHint" Visibility="Collapsed" Style="{StaticResource OptSub}" Foreground="{StaticResource Warn}"
                                                            Text="Only for the installed copy: start the app from Downloads and click Install."/>
                                             </StackPanel>
                                         </CheckBox>
                                         <CheckBox x:Name="CloseToTrayBox" Style="{StaticResource Switch}" Click="CloseToTray_Click" Margin="0,0,0,12"
-                                                  ToolTip="The X hides the window and the app keeps protecting from the notification area (next to the clock). Click the icon to open it; right-click it for New IP, Change IP, Regions, Turn protection on or off and Quit.">
+                                                  ToolTip="The X hides the window and the app keeps running in the notification area (next to the clock). Click the icon to open it; right-click it for its menu, Quit included.">
                                             <StackPanel>
                                                 <TextBlock Text="Close to the notification area"/>
                                                 <TextBlock Text="The X hides the window. Quit is in the icon's menu." Style="{StaticResource OptSub}"/>

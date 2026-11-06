@@ -48,6 +48,13 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Configs: Compare could start on two accounts it then showed as "Same settings." (the same crosshair written by an older CS2). It now starts on one that really differs.
 - Accounts > Use as main config said new accounts and logins get the config even with Configs > Sync > When turned off. It now says only what is on.
 - Configs: a snapshot with the HUD file said "HUD and audio"; it now says "HUD, radar and audio" like the rest of the app. The line under Copy points to Configs > Backups by name.
+- With Close to the notification area on, the first X showed "Protection carries on" even with protection off or in No phone mode. The notice and the option's tooltip no longer talk about protection: the app keeps running, protected or not as it was.
+- Settings > App > Start with Windows said the app opens "with protection off", even with Turn on protection when the app starts on. It now says protection starts as set in Settings > Protection.
+- Settings > Maintenance > Open Windows Firewall: when the Firewall couldn't open, its error was replaced at once by a green "look for" message. The error now stays, and the message gives the start of every rule's name, not only the kill switch's (which isn't there with protection off).
+- With OBS or Streamlabs open, changing Open CS2, Start Steam minimized or Offline mode under Accounts > On login could turn Settings > Privacy > Hide usernames on for good, so usernames stayed hidden after OBS closed. The switch now shows only your own choice.
+- Turning off Hide usernames while OBS or Streamlabs is open wrote "The streaming program closed" in the Log while it was still open. It now says the option was turned off.
+- The mobile data warning never came when you set the limit below what you had already used this month. It now comes on the next data the app counts, once a month as before.
+- Profiles > Make the others look like: the Preview tooltip now says it also copies the privacy settings when you are signed in to that account.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

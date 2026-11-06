@@ -633,7 +633,7 @@ public partial class MainWindow
         _s.LaunchCs2 = OptCs2.IsChecked == true;
         _s.SteamSilent = OptSilent.IsChecked == true;
         _s.SteamOffline = OptOffline.IsChecked == true;
-        _s.StreamerMode = OptStreamer.IsChecked == true;
+        if (sender == OptStreamer) _s.StreamerMode = OptStreamer.IsChecked == true;   // the other options share this handler
         foreach (var a in _accounts) a.Streamer = HideLogins;
         ShowApiKey(false);
         RemaskLog();

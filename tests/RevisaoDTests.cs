@@ -12,6 +12,51 @@ static class RevisaoDTests
         string Src(params string[] p) => File.ReadAllText(Path.Combine(new[] { repo, "src" }.Concat(p).ToArray())).Replace("\r\n", "\n");
         check("Revisão D: as fontes leem-se", Src("MainWindow.xaml").Length > 0, "");
         Configs(check, Src);
+        SettingsAndTray(check, Src);
+    }
+
+    static void SettingsAndTray(Action<string, bool, string> check, Func<string[], string> src)
+    {
+        string Src(params string[] p) => src(p);
+        var xaml = Src("MainWindow.xaml");
+
+        // D8. O aviso ao fechar para a área de notificação não promete proteção
+        check("Revisão D8: o aviso do X não diz que a proteção continua", !MainWindow.TrayHintText.Contains("carries on") && !MainWindow.TrayHintText.Contains("Protection") && !MainWindow.TrayHintText.Contains("New IP"), MainWindow.TrayHintText);
+        check("Revisão D8: o aviso usa esse texto", Src("Views", "MainWindow.Tray.cs").Contains("_tray?.Balloon(\"CS2 IP Changer is still running\", TrayHintText);"), "");
+        check("Revisão D8: o tooltip de Close to the notification area não diz que protege", !xaml.Contains("keeps protecting") && xaml.Contains("ToolTip=\"The X hides the window and the app keeps running in the notification area (next to the clock)."), "");
+
+        // D10. Start with Windows não diz "with protection off"
+        check("Revisão D10: Start with Windows diz que a proteção arranca como está em Settings > Protection",
+            !xaml.Contains("with protection off (see Protection)") && xaml.Contains("Text=\"Opens in the notification area when you sign in. Protection starts as set in Settings > Protection.\""), "");
+
+        // D11. Open Windows Firewall: o erro não é tapado e o nome das regras serve sempre
+        var settings = Src("Views", "MainWindow.Settings.cs");
+        var fw = settings[settings.IndexOf("void OpenFirewall_Click")..];
+        fw = fw[..fw.IndexOf("\n    }")];
+        check("Revisão D11: uma falha a abrir a Firewall para ali", fw.Contains("catch (Exception ex) { Toast(\"Couldn't open the Firewall: \" + ex.Message, Tone.Error); return; }"), "");
+        check("Revisão D11: o toast dá o começo de todos os nomes, não só o do kill switch",
+            MainWindow.FirewallRulesHint == $"In Outbound Rules, the app's rules start with '{AppIds.RulePrefix}'." && fw.Contains("Toast(FirewallRulesHint, true);") && !fw.Contains("Firewall.RuleName"), "");
+
+        // D12. O interruptor Hide usernames mostra a opção, não o efeito do OBS
+        check("Revisão D12: Hide usernames mostra a opção gravada", settings.Contains("OptStreamer.IsChecked = Rec.On || _s.StreamerMode;") && !settings.Contains("OptStreamer.IsChecked = HideLogins;"), "");
+        check("Revisão D12: um clique noutra opção não grava Hide usernames", Src("Views", "MainWindow.Accounts.cs").Contains("if (sender == OptStreamer) _s.StreamerMode = OptStreamer.IsChecked == true;"), "");
+
+        // D13. Desligar o Hide usernames do OBS não diz que o programa fechou
+        check("Revisão D13: desligar a opção com o OBS aberto diz isso", MainWindow.StreamingLogLine(false, false) == "Hide usernames while OBS or Streamlabs is open: off. Usernames show again.", MainWindow.StreamingLogLine(false, false));
+        check("Revisão D13: abrir e fechar o OBS ficam como eram",
+            MainWindow.StreamingLogLine(false, true) == "The streaming program closed: usernames show again." && MainWindow.StreamingLogLine(true, true).StartsWith("A streaming program is open"), "");
+        check("Revisão D13: o WatchStreaming usa essa frase", Src("Views", "MainWindow.Recording.cs").Contains("Log.Info(StreamingLogLine(open, _s.AutoStreamer));"), "");
+
+        // D16. O aviso de dados chega mesmo com o limite abaixo do que já se gastou
+        check("Revisão D16: limite abaixo do gasto avisa", MainWindow.WarnNow(5_000_000_000, 3, null, "2026-11"), "");
+        check("Revisão D16: uma vez por mês, e nada sem limite ou abaixo dele",
+            !MainWindow.WarnNow(5_000_000_000, 3, "2026-11", "2026-11") && !MainWindow.WarnNow(5_000_000_000, 0, null, "2026-11") && !MainWindow.WarnNow(2_000_000_000, 3, null, "2026-11") && MainWindow.WarnNow(3_000_000_000, 3, "2026-10", "2026-11"), "");
+        check("Revisão D16: o CountData usa essa regra", Src("Views", "MainWindow.Tray.cs").Contains("if (WarnNow(_s.DataMonthBytes, _s.DataWarnGb, _s.DataWarnedMonth, _s.DataMonth))"), "");
+
+        // D19. Make the others look like diz que também leva a privacidade
+        var ident = xaml[xaml.IndexOf("x:Name=\"ProfIdentBtn\"")..];
+        ident = ident[..ident.IndexOf("/>")];
+        check("Revisão D19: o tooltip do Preview diz a privacidade", ident.Contains("bio and country (and privacy, if you signed in to it) into a new template"), "");
     }
 
     const string KeysRel = @"local\cfg\cs2_user_keys_0_slot0.vcfg", ConvRel = @"local\cfg\cs2_user_convars_0_slot0.vcfg";

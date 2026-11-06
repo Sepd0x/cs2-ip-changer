@@ -76,8 +76,11 @@ public partial class MainWindow
         if (_s.TrayHinted) return;
         _s.TrayHinted = true;
         SaveSettings();
-        _tray?.Balloon("CS2 IP Changer is still running", "Protection carries on. Click the icon to open the app; right-click it for New IP, Regions or Quit.");
+        _tray?.Balloon("CS2 IP Changer is still running", TrayHintText);
     }
+
+    /// <summary>The first X to the notification area, shown once: it says nothing about protection, which may be off or in No phone mode.</summary>
+    public const string TrayHintText = "Click the icon to open the app; right-click it for Regions or Quit.";
 
     /// <summary>The X goes to the notification area: only with the option on and the icon there, never to quit, for an update or a Windows sign-out.</summary>
     public static bool GoesToTray(bool closeToTray, bool hasIcon, bool quitting, bool sessionEnding, bool closingDone, bool demo) =>
@@ -169,9 +172,8 @@ public partial class MainWindow
         {
             Telemetry.Data(added);
             var now = DateTime.Now;
-            var before = _s.DataMonth == DataMeter.Month(now) ? _s.DataMonthBytes : 0;
             (_s.DataMonth, _s.DataMonthBytes) = DataMeter.AddToMonth(_s.DataMonth, _s.DataMonthBytes, added, now);
-            if (DataMeter.Crossed(before, _s.DataMonthBytes, _s.DataWarnGb) && _s.DataWarnedMonth != _s.DataMonth)
+            if (WarnNow(_s.DataMonthBytes, _s.DataWarnGb, _s.DataWarnedMonth, _s.DataMonth))
             {
                 _s.DataWarnedMonth = _s.DataMonth;
                 SaveSettings();
@@ -181,6 +183,13 @@ public partial class MainWindow
         }
         ShowData();
     }
+
+    /// <summary>
+    /// The monthly warning is due: this month is at or past the limit and wasn't warned yet. Not only on the crossing: a limit set
+    /// below what was already used this month warns on the next tick with data.
+    /// </summary>
+    public static bool WarnNow(long monthBytes, double gb, string warnedMonth, string month) =>
+        gb > 0 && monthBytes >= DataMeter.Bytes(gb) && warnedMonth != month;
 
     void ShowData()
     {
