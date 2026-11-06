@@ -13,12 +13,13 @@ static class Untangle1106Tests
         string Src(params string[] p) => File.ReadAllText(Path.Combine(new[] { repo, "src" }.Concat(p).ToArray())).Replace("\r\n", "\n");
 
         // A4: com a proteção desligada não há egress no relatório: o nome do hotspot guardado decide
-        check("Hotspot: nome guardado e sem egress (proteção desligada) conta como hotspot", MainWindow.IsHotspot("Pixel", null), "");
-        check("Hotspot: nome guardado e egress Wi-Fi conta", MainWindow.IsHotspot("Pixel", true), "");
-        check("Hotspot: egress por cabo não é hotspot, mesmo com nome guardado", !MainWindow.IsHotspot("Pixel", false), "");
-        check("Hotspot: sem nome guardado nunca é hotspot", !MainWindow.IsHotspot(null, true) && !MainWindow.IsHotspot("", null), "");
+        // (beta.12, B2: a regra mudou-se para Core/Phone/PhoneLink.cs, a mesma para toda a app)
+        check("Hotspot: nome guardado e sem egress (proteção desligada) conta como hotspot", PhoneLink.IsHotspot("Pixel", null), "");
+        check("Hotspot: nome guardado e egress Wi-Fi conta", PhoneLink.IsHotspot("Pixel", true), "");
+        check("Hotspot: egress por cabo não é hotspot, mesmo com nome guardado", !PhoneLink.IsHotspot("Pixel", false), "");
+        check("Hotspot: sem nome guardado nunca é hotspot", !PhoneLink.IsHotspot(null, true) && !PhoneLink.IsHotspot("", null), "");
         var phone = Src("Views", "MainWindow.Phone.cs");
-        check("Hotspot: o Change IP usa a regra nova", phone.Contains("var hotspot = IsHotspot(_s.EgressSsid, _last?.Egress?.IsWifi);"), "");
+        check("Hotspot: o Change IP usa a regra nova", phone.Contains("var hotspot = PhoneLink.IsHotspot(_s.EgressSsid, PhoneLink.Exit(_last)?.IsWifi);"), "");
 
         // A3: no hotspot nunca modo de avião, nem como recurso; e o método usado de facto volta para a verificação do tethering
         var adb = Src("Core", "Phone", "Adb.cs");

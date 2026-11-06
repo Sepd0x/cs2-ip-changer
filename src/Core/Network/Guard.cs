@@ -342,7 +342,7 @@ public sealed class Guard
         if (distrust == null && candidate != null && KeyOf(candidate) != verifiedKey) distrust = WhyUnchecked;
         var egress = distrust != null ? null : candidate;
         if (distrust != null && candidate != null) problem = distrust;
-        var mode = !on && s.Mode != "home" ? "off" : ModeFor(s.Mode, s.GameMode, cs2Running);
+        var mode = PhoneLink.EffectiveMode(on, s.Mode, s.GameMode, cs2Running);
         // Off and No phone block nothing, so "Servers blocked" would be false there; back on protection the problem is said again.
         if (mode is "home" or "off") _lastProblem = null;
         else if (problem != _lastProblem) { if (problem != null) Log.Warn(problem + " Servers blocked."); _lastProblem = problem; }
@@ -477,7 +477,7 @@ public sealed class Guard
             SteamRoutesOk = steamRoutesOk,
             Steam = steam,
             SteamOnEgress = steamOnEgress,
-            HasHome = adapters.Any(a => a.Up && a.Gateway != null && a.Index != candidate?.Index && !a.IsPhone),
+            HasHome = PhoneLink.HasHome(adapters, candidate),
         };
     }
 
@@ -489,7 +489,7 @@ public sealed class Guard
     /// </summary>
     async Task KeepPcOffPhone(Settings s, string mode, Adapter phone, List<Adapter> adapters, string userMode = null)
     {
-        var other = phone != null && HasOtherInternet(adapters, phone);
+        var other = phone != null && PhoneLink.HasHome(adapters, phone);
         var onPhone = phone != null && Net.BestInterface(Net.PcProbeIp) == phone.Index;
         var step = PcOffPhoneNext(s.KeepPcOffPhone, userMode ?? s.Mode, mode, phone, other, _metricAppliedTo, onPhone, (DateTime.Now - _metricTriedAt).TotalSeconds);
         if (step == PcOffPhoneStep.Undo)
@@ -606,7 +606,7 @@ public sealed class Guard
             PcDefaultIndex = pcIdx,
             PhoneIndex = phone?.Index ?? -1,
             Steam = Net.ReadSteamLink(),
-            HasHome = adapters.Any(a => a.Up && a.Gateway != null && a.Index != phone?.Index && !a.IsPhone),
+            HasHome = PhoneLink.HasHome(adapters, phone),
         };
     }
 
@@ -636,9 +636,6 @@ public sealed class Guard
         last = now;
         return now != null ? $"Firewall: {now}. The rules were not written." : had ? "Firewall: rules written again." : null;
     }
-
-    static bool HasOtherInternet(List<Adapter> adapters, Adapter egress) =>
-        adapters.Any(a => a.Up && a.Gateway != null && a.Index != egress.Index && !a.IsPhone);
 
     /// <summary>Fast path: the Windows API says whether each IP already leaves through the adapter. Routes are only touched if one is missing.</summary>
     Task EnsureRoutes(List<string> ips, Adapter via, List<Adapter> adapters) =>

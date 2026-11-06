@@ -22,15 +22,11 @@ public partial class MainWindow
     /// <summary>The phone's IP was measured, but there is a home network whose IP was never read: nothing to compare with yet.</summary>
     bool _noHome;
 
-    /// <summary>
-    /// The USB phone is on a Wi-Fi network: tethering may be carrying the home network, so it isn't trusted.
-    /// Wi-Fi on but on no network doesn't count: some phones turn it on for a second or two to scan, and blocking then
-    /// moved Steam and the whole PC off the phone and back, cutting every connection. Unknown (old Android) still counts.
-    /// </summary>
     /// <summary>The adapter Windows uses for the rest of the PC (the home connection in the no phone mode).</summary>
     Adapter HomeAdapter => _last?.Adapters.FirstOrDefault(a => a.Index == _last.PcDefaultIndex);
 
-    bool PhoneWifiOn => _phone?.Ready == true && _phone.WifiOn && _phone.WifiConnected != false && _last?.Candidate?.IsWifi != true;
+    /// <summary>The USB phone is on a Wi-Fi network, so it isn't trusted (the rule: PhoneLink.WifiOn).</summary>
+    bool PhoneWifiOn => PhoneLink.WifiOn(_phone, PhoneLink.Exit(_last)?.IsWifi);
 
     TaskCompletionSource _syncRerun;
     bool _syncAgainForce;
@@ -129,7 +125,7 @@ public partial class MainWindow
         {
             if (_last?.Candidate != null) return;
             await RefreshPhone();
-            var next = NextAfterTurnOn(_last?.Candidate != null, !string.IsNullOrEmpty(_s.EgressSsid), _phone?.Ready == true, _phone?.Ready == true && _phone.WifiOn && _phone.WifiConnected != false);
+            var next = NextAfterTurnOn(_last?.Candidate != null, PhoneLink.IsHotspot(_s.EgressSsid, PhoneLink.Exit(_last)?.IsWifi), _phone?.Ready == true, PhoneWifiOn);
             if (next == TurnOnStep.None) return;
             if (next is TurnOnStep.Tether or TurnOnStep.WifiThenTether)
             {
@@ -172,7 +168,7 @@ public partial class MainWindow
     void ApplyReport(GuardReport rep)
     {
         if (rep.Error != null && rep.Adapters.Count == 0) { SetHero("bad", "Error applying protection", rep.Error); return; }
-        var egressKey = rep.Egress == null ? null : $"{rep.Egress.Index}|{rep.Egress.LocalIp}";
+        var egressKey = Guard.KeyOf(rep.Egress);
         var egressChanged = egressKey != _lastEgressKey;
         var home = rep.Unprotected;   // No phone, or protection off: nothing is blocked, so a drop is no drop
         if (egressChanged && _lastEgressKey != null && !home)

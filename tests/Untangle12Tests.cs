@@ -14,6 +14,33 @@ static class Untangle12Tests
         RouteKeys(check);
         OursOnTheExit(check);
         await RouteNotDeleted(check);
+        PhoneLinkState(check);
+    }
+
+    // B2: um só estado da ligação do telemóvel (hotspot, Wi-Fi do telemóvel, internet de casa, modo efetivo) para toda a app
+    static void PhoneLinkState(Action<string, bool, string> check)
+    {
+        var onHome = new PhoneInfo("S1", "device", "Pixel", "MEO", "5G", 80, WifiOn: true, WifiSsid: "Casa", WifiConnected: true);
+        check("B2: Wi-Fi do telemóvel numa rede, por cabo: não é de confiança", PhoneLink.WifiOn(onHome, null) && PhoneLink.WifiOn(onHome, false), "");
+        check("B2: no hotspot (a ligação é Wi-Fi) o Wi-Fi do telemóvel não conta", !PhoneLink.WifiOn(onHome, true), "");
+        check("B2: Wi-Fi ligado sem rede (a procurar) não conta", !PhoneLink.WifiOn(onHome with { WifiConnected = false }, null), "");
+        check("B2: Android antigo que não diz se está numa rede conta", PhoneLink.WifiOn(onHome with { WifiConnected = null }, null), "");
+        check("B2: telemóvel por autorizar ou sem telemóvel não conta", !PhoneLink.WifiOn(onHome with { State = "unauthorized" }, null) && !PhoneLink.WifiOn(null, null), "");
+
+        var phone = new Adapter { Index = 17, IsPhone = true, Up = true, LocalIp = "192.168.42.10", Gateway = "192.168.42.129" };
+        var hotspot = new Adapter { Index = 12, IsWifi = true, Up = true, LocalIp = "172.20.10.2", Gateway = "172.20.10.1" };
+        var home = new Adapter { Index = 5, Up = true, LocalIp = "192.168.1.40", Gateway = "192.168.1.1" };
+        check("B2: com a rede de casa ao lado há internet de casa", PhoneLink.HasHome(new[] { phone, home }, phone) && PhoneLink.HasHome(new[] { home }, null), "");
+        check("B2: o hotspot e outro telemóvel não são internet de casa", !PhoneLink.HasHome(new[] { hotspot, phone }, hotspot), "");
+        check("B2: um adaptador em baixo ou sem gateway não é internet de casa",
+            !PhoneLink.HasHome(new[] { phone, new Adapter { Index = 5, Up = false, Gateway = "192.168.1.1" }, new Adapter { Index = 6, Up = true } }, phone), "");
+
+        check("B2: proteção desligada é \"off\" em Game only e Whole PC", PhoneLink.EffectiveMode(false, "servers", true, true) == "off" && PhoneLink.EffectiveMode(false, "all", false, false) == "off", "");
+        check("B2: No phone continua \"home\" com a proteção desligada", PhoneLink.EffectiveMode(false, "home", false, false) == "home", "");
+        check("B2: ligada, o modo é o de sempre", PhoneLink.EffectiveMode(true, "servers", true, true) == "all" && PhoneLink.EffectiveMode(true, "servers", false, true) == "servers", "");
+
+        check("B2: a ligação do telemóvel num relatório é a protegida ou a que está a ser verificada",
+            PhoneLink.Exit(new GuardReport { Candidate = hotspot }) == hotspot && PhoneLink.Exit(new GuardReport { Egress = phone, Candidate = phone }) == phone && PhoneLink.Exit(null) == null, "");
     }
 
     // B1: a chave das rotas da app num só tipo, no formato que o owned.json sempre teve

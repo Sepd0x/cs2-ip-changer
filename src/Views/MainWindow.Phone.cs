@@ -79,7 +79,7 @@ public partial class MainWindow
         // Tethering on in the phone but Windows has no phone adapter: happens after the cable flickers.
         // No phone mode has no candidate, so the adapters say whether Windows sees the phone.
         if (info?.Ready == true && _last != null && _last.Candidate == null && !(_last.Adapters?.Any(a => a.IsPhone && a.Up && a.LocalIp != null) ?? false)
-            && string.IsNullOrEmpty(_s.EgressSsid) && await Adb.TetheringOn(_adb, info.Serial))
+            && !PhoneLink.IsHotspot(_s.EgressSsid, PhoneLink.Exit(_last)?.IsWifi) && await Adb.TetheringOn(_adb, info.Serial))
         {
             _tetherMissingSince ??= DateTime.UtcNow;
             if (!_tetherHinted && TetherHintDue(_tetherAskedAt, _tetherMissingSince.Value, DateTime.UtcNow))
@@ -129,7 +129,8 @@ public partial class MainWindow
     /// <summary>The Mobile data row of Checks. While an IP change runs it says the data is off (or coming back), never green.</summary>
     void UpdateDataCheck()
     {
-        var egress = _last?.Egress;
+        // The phone's connection, protected or still being checked: on the hotspot the phone's Wi-Fi says nothing (PhoneLink.WifiOn)
+        var egress = PhoneLink.Exit(_last);
         if (_changingData != null && !_s.NoPhone)
         {
             _cPhoneData.Ok = null;
@@ -157,7 +158,7 @@ public partial class MainWindow
         else
         {
             // Wi-Fi on with the block confirmed: blocked and safe (amber); without the block it's a real risk (red).
-            var wifi = _phone.WifiOn && _phone.WifiConnected != false;
+            var wifi = PhoneLink.WifiOn(_phone, egress?.IsWifi);
             _cPhoneData.Waiting = wifi && _last?.KillSwitchOk == true;
             _cPhoneData.Ok = _cPhoneData.Waiting ? null : !wifi;
             _cPhoneData.Detail = wifi ? $"Phone Wi-Fi is on{(_phone.WifiSsid != null ? $" ({_phone.WifiSsid})" : "")}" : $"{_phone.Carrier} · {_phone.NetType}".Trim(' ', '·');
@@ -479,10 +480,10 @@ public partial class MainWindow
         if (info != null) _phone = info;
         var usb = info?.Ready == true ? PhoneUsbState.None : await Task.Run(PhoneUsb.Scan);
         var adapters = await Task.Run(Net.Scan);
-        var hotspot = !string.IsNullOrEmpty(_s.EgressSsid);
         var phone = Net.PickEgress(adapters, _s.EgressAdapterId, _s.EgressSsid);
-        var other = phone != null && adapters.Any(a => a.Up && a.Gateway != null && a.Index != phone.Index && !a.IsPhone);
-        var mode = _protOn || _s.NoPhone ? Guard.ModeFor(_s.Mode, _s.GameMode, Steam.Cs2Running) : "off";
+        var hotspot = PhoneLink.IsHotspot(_s.EgressSsid, phone?.IsWifi);
+        var other = phone != null && PhoneLink.HasHome(adapters, phone);
+        var mode = PhoneLink.EffectiveMode(_protOn, _s.Mode, _s.GameMode, Steam.Cs2Running);
         return new PhoneSetupState
         {
             AdbTool = _adb != null,
@@ -490,16 +491,13 @@ public partial class MainWindow
             Usb = usb,
             Hotspot = hotspot,
             Tethered = phone != null && !hotspot,
-            WifiOn = info?.Ready == true && info.WifiOn && info.WifiConnected != false,
+            WifiOn = PhoneLink.WifiOn(info, phone?.IsWifi),
             PcOnPhone = Guard.NeedsPcOffPhone(mode, true, Net.BestInterface(Net.PcProbeIp), phone?.Index ?? -1, other),
             Iphone = NotePhoneKind(PhoneUsb.IphoneSeen(info?.Ready == true, usb, phone, _s.EgressSsid)),
         };
     }
 
     async void ChangeIp_Click(object sender, RoutedEventArgs e) => await RunCommand("Change IP", "starting…", () => ChangeIp(confirm: true));
-
-    /// <summary>The phone is used through its hotspot: a hotspot name is saved and the egress (when the report has one) is Wi-Fi.</summary>
-    public static bool IsHotspot(string egressSsid, bool? egressIsWifi) => !string.IsNullOrEmpty(egressSsid) && egressIsWifi != false;
 
     /// <summary>Cycles the phone's data until the carrier gives a new IP. True if the IP really changed (and isn't the home IP).</summary>
     async Task<bool> ChangeIp(bool confirm)
@@ -511,7 +509,7 @@ public partial class MainWindow
         if (_iphone && _phone?.Ready != true) return await IphoneChangeIp();
         // USB tethering, or the phone's hotspot (saved by name) with the cable plugged in only for ADB.
         // With protection off there is no egress in the report: the saved hotspot name decides, as Phone setup does
-        var hotspot = IsHotspot(_s.EgressSsid, _last?.Egress?.IsWifi);
+        var hotspot = PhoneLink.IsHotspot(_s.EgressSsid, PhoneLink.Exit(_last)?.IsWifi);
         if (_last?.Egress != null && !_last.Egress.IsPhone && !hotspot)
         {
             Toast("The chosen connection is not a phone: the Change IP button only works with a phone over ADB (USB tethering, or its hotspot with the cable plugged in).", false);
@@ -543,6 +541,7 @@ public partial class MainWindow
         try
         {
             // On the hotspot the phone's Wi-Fi is left alone: on some phones turning it off also stops the hotspot.
+            // Not PhoneLink.WifiOn on purpose: Wi-Fi on with no network also goes off, or the phone may join the home Wi-Fi while its data is off.
             if (_phone.WifiOn && !hotspot)
             {
                 ShowProgress("The phone's Wi-Fi is on: turning it off to use mobile data…");

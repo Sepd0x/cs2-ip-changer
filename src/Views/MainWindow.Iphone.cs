@@ -18,7 +18,7 @@ public partial class MainWindow
         var usb = adapter != null ? PhoneUsbState.None : await Task.Run(PhoneUsb.Scan);
         _iphone = NotePhoneKind(PhoneUsb.IphoneSeen(false, usb, adapter, _s.EgressSsid));
         if (adapter != null) return (_iphone, true);
-        var hotspot = (_last?.Egress ?? _last?.Candidate) is { IsWifi: true } && !string.IsNullOrEmpty(_s.EgressSsid);
+        var hotspot = PhoneLink.Exit(_last) is { } exit && PhoneLink.IsHotspot(_s.EgressSsid, exit.IsWifi);
         return (_iphone, _iphone && hotspot);
     }
 
