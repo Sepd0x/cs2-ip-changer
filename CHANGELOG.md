@@ -14,7 +14,13 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
   - How it works moved from Settings to the Connection page, between Checks and Previous IPs.
   - Accounts has two boxes like Servers: Add and log in on top (On login, Add, New IP + next account), the list below with Refresh. Show hidden (was Settings > Maintenance > Show hidden accounts) is next to Refresh and only shows while some accounts are hidden.
   - Configs: Copy, Sync and Snapshots on the left; Account configs, Compare and Backups on the right. Both columns end on one line.
+- The usage stats also count whether Turn on protection when the app starts and Use the app with protection off are changed from their default.
+
 - README: a row of badges under the title (latest release, downloads, Windows 10 and 11, the VirusTotal result, build status, license), the "not for VAC or game bans" note as a highlighted box, and a Support section with where to report a bug, an idea or a security problem. The animated demo and the banner show the new logo.
+
+### Fixed
+- An iPhone used only through its hotspot over Wi-Fi, with no cable, got the Android steps (install the phone tool, USB debugging) and Change IP stayed off. The app now remembers the phone is an iPhone (seen on the cable once, or from a hotspot named like an iPhone's) and shows the iPhone's steps and its guided Change IP.
+- If Windows refused to give the phone's adapter its default route back when the app closed, nothing said so and the next start forgot about it, so without the home network the PC had no internet through the phone until a restart. Now the Log says so, and the next start or `--restore` gives it back.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

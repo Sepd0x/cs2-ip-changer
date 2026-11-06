@@ -621,6 +621,8 @@ SemProtecaoTests.Run(Check);
 Seguranca1106Tests.Run(Check);
 // 6 nov.: a análise do untangle-codebase, o que podia partir já na beta.11 (Untangle1106Tests.cs)
 Untangle1106Tests.Run(Check);
+// beta.12 (6 nov.): o refactor do untangle-codebase, testes de comportamento (Untangle12Tests.cs)
+await Untangle12Tests.Run(Check);
 // 6 nov.: numeração das versões (csproj, CHANGELOG, notas da release) (VersaoTests.cs)
 VersaoTests.Run(Check);
 // beta.11 (6 nov.): o aviso das estatísticas curto, com quem guarda e por quanto tempo, e a lista inteira em See the full list (AvisoTests.cs)

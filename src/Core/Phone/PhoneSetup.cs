@@ -40,6 +40,23 @@ public static class PhoneUsb
     public static bool IsIphone(Adapter a) => a?.Description?.Contains("Apple Mobile Device Ethernet", StringComparison.OrdinalIgnoreCase) == true;
 
     /// <summary>
+    /// What the PC sees right now about the kind of phone: true for an iPhone (Apple on USB, Apple's adapter, or a hotspot named like
+    /// an iPhone's, "Ana's iPhone"), false for an Android (ready on ADB, or another phone vendor on USB), null when nothing says.
+    /// A hotspot over Wi-Fi with no cable says nothing by itself, so the last answer is kept (Settings.PhoneIsIphone).
+    /// </summary>
+    public static bool? IphoneSeen(bool adbReady, PhoneUsbState usb, Adapter adapter, string hotspotSsid) =>
+        adbReady ? false
+        : IsIphone(usb) || IsIphone(adapter) || hotspotSsid?.Contains("iPhone", StringComparison.OrdinalIgnoreCase) == true ? true
+        : usb?.Seen == true && usb.Vendor != null ? false
+        : null;
+
+    /// <summary>
+    /// The phone is an iPhone: what the PC sees, or else the saved answer while a hotspot is picked (an iPhone on Wi-Fi alone must
+    /// not get the Android steps, beta.12). Without a hotspot and without a cable nothing is assumed.
+    /// </summary>
+    public static bool IsIphoneNow(bool? seen, bool saved, string hotspotSsid) => seen ?? (saved && !string.IsNullOrEmpty(hotspotSsid));
+
+    /// <summary>
     /// The phone among the USB devices: a known phone vendor or a phone-like name. A device with a problem code (10 = it didn't start,
     /// 28 = no driver, 43 = it stopped responding) wins over a working one, so a failed composite device isn't hidden by a child.
     /// </summary>

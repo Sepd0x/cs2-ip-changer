@@ -81,9 +81,13 @@ public sealed class Guard
 
     public Guard() : this(Paths.File("owned.json")) { }
 
+    /// <summary>Runs PowerShell for the metric (Save mobile data). The tests pass one that fails, to see what the Guard does then.</summary>
+    readonly Func<string, int, Task<ProcResult>> _powershell;
+
     /// <summary>With owned.json somewhere else (the admin tests use an admin-only folder).</summary>
-    public Guard(string ownedFile)
+    public Guard(string ownedFile, Func<string, int, Task<ProcResult>> powershell = null)
     {
+        _powershell = powershell ?? ((args, ms) => Proc.Run("powershell", args, ms));
         _ownedFile = ownedFile;
         var st = LoadOwned(ownedFile);
         // From before a restart: Windows already dropped those routes, and the interface index may now be another adapter.
@@ -398,7 +402,7 @@ public sealed class Guard
         if (step != PcOffPhoneStep.Apply) return;
         if (_metricAppliedTo >= 0 && _metricAppliedTo != phone.Index) await RestoreMetric();
         _metricTriedAt = DateTime.Now;
-        var r = await Proc.Run("powershell", PcOffPhoneArgs(phone.Index, true), 20000);
+        var r = await _powershell(PcOffPhoneArgs(phone.Index, true), 20000);
         if (!r.Ok) { if (_warned.Add("metric")) Log.Warn("Couldn't keep the rest of the PC off the phone: " + PsError(r.Output)); return; }
         _warned.Remove("metric");
         _metricAppliedTo = phone.Index;
@@ -436,10 +440,19 @@ public sealed class Guard
         finally { _gate.Release(); }
     });
 
+    /// <summary>
+    /// Gives the phone's adapter its default route and automatic metric back. When PowerShell fails the adapter stays marked as
+    /// changed (in owned.json too), so the next start or --restore still gives it back, and the Log says so.
+    /// </summary>
     async Task RestoreMetric()
     {
         if (_metricAppliedTo < 0) return;
-        await Proc.Run("powershell", PcOffPhoneArgs(_metricAppliedTo, false), 20000);
+        var r = await _powershell(PcOffPhoneArgs(_metricAppliedTo, false), 20000);
+        if (!r.Ok)
+        {
+            Log.Warn($"Couldn't give the phone's adapter its default route back: {PsError(r.Output)} Without the home network the PC may have no internet through the phone until --restore or a restart.");
+            return;
+        }
         _metricAppliedTo = -1;
         SaveOwned();
     }
@@ -699,7 +712,8 @@ public sealed class Guard
             Firewall.RemoveAll(keepRegions);
             await RestoreMetric();
             var phones = adapters.Where(a => a.IsPhone).Select(a => a.Index).ToList();
-            if (!keepRegions && phones.Count > 0) await Proc.Run("powershell", ResetPhonesArgs(phones), 20000);
+            if (!keepRegions && phones.Count > 0 && await _powershell(ResetPhonesArgs(phones), 20000) is { Ok: false } reset)
+                Log.Warn("Couldn't give the phone adapters their default route back: " + PsError(reset.Output));
             _fwSignature = null;
 
             // Reads everything back: the restore only counts if nothing of ours is left.
@@ -712,6 +726,7 @@ public sealed class Guard
                 if (onPhone && (serverRoute || SplitPrefixes.Contains(rt.Prefix) || Net.ValvePrefixes.Contains(rt.Prefix))) left.Add("route " + rt.Prefix);
             }
             left.AddRange(Firewall.Remaining().Where(n => !keepRegions || !n.StartsWith(Firewall.RegionsRuleName)).Select(n => "rule \"" + n + "\""));
+            if (_metricAppliedTo >= 0) left.Add($"the metric of adapter {_metricAppliedTo}");
             if (left.Count == 0) { Log.Ok("Network restored: app rules and routes removed, checked."); return null; }
             var what = string.Join(", ", left.Take(5)) + (left.Count > 5 ? $" and {left.Count - 5} more" : "");
             Log.Error("Turn off protection couldn't remove: " + what + ".");

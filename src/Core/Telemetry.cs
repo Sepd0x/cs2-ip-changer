@@ -578,13 +578,13 @@ public static class Telemetry
 
     /// <summary>
     /// The settings changed from their factory value, by name (README > Telemetry lists them): only on/off settings and the mode,
-    /// never a text, a path or a list. Same list as worker/stats SETTINGS.
+    /// never a text, a path or a list. The tests check it against worker/stats/contract.json, which the Worker reads.
     /// </summary>
     public static readonly string[] SettingNames =
     {
         "GameMode", "SteamOnEgress", "KeepPcOffPhone", "RequireGoodLink", "CheckUpdates", "SteamSilent", "SteamOffline", "StreamerMode",
         "AutoStreamer", "AutoQuery", "CleanupOnExit", "CloseToTray", "AutoJoinFollowed", "SwitchIp", "SwitchAccount", "SwitchRejoin",
-        "SwitchOpenWith", "CommandSounds", "AutoModeByQuality", "NoPhone", "Mode",
+        "SwitchOpenWith", "CommandSounds", "AutoModeByQuality", "NoPhone", "Mode", "ProtectOnStart", "UseWithProtectionOff",
     };
 
     /// <summary>The names in SettingNames whose value in <paramref name="now"/> differs from <paramref name="factory"/> (a new Settings).</summary>

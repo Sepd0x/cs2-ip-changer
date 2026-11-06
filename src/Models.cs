@@ -18,6 +18,8 @@ public sealed partial class Settings
     /// <summary>A phone connection was checked at least once. Until then cs2.exe isn't locked, so trying the app without a phone
     /// (and closing it) never leaves CS2 unable to connect at home.</summary>
     public bool PhoneSeen { get; set; }
+    /// <summary>The phone was last seen as an iPhone (beta.12): a hotspot over Wi-Fi alone can't tell, so this decides there.</summary>
+    public bool PhoneIsIphone { get; set; }
     // CS2 open = whole PC through the phone connection. Off for new installs since beta.10: only CS2 (and Steam) use the phone,
     // so OBS, Discord and downloads stay at home, as the site says. Saved settings keep their value.
     public bool GameMode { get; set; }

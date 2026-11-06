@@ -33,6 +33,9 @@ static class TelemetryTests
         check("Contrato: as verificações (chk_) são as do contrato", Telemetry.CheckKeys.Values.OrderBy(k => k).SequenceEqual(Names(c.GetProperty("checks")).OrderBy(k => k)), "");
         check("Contrato: as marcas do telemóvel estão no contrato",
             new[] { "Samsung", "redmi", "HMD", "Fairphone", "google" }.Select(Telemetry.BrandOf).All(Names(c.GetProperty("brands")).Contains), "");
+        check("Contrato: as definições contadas são as do contrato, todas on/off ou texto curto da app",
+            Telemetry.SettingNames.SequenceEqual(Names(c.GetProperty("settings")))
+            && Telemetry.SettingNames.All(n => typeof(SRT.Settings).GetProperty(n)?.PropertyType is Type t && (t == typeof(bool) || t == typeof(string))), "");
         var lim = c.GetProperty("limits");
         check("Contrato: os minutos e o intervalo dos relatórios são os do contrato",
             Telemetry.MaxMinutes == lim.GetProperty("maxMinutes").GetInt32() && Telemetry.Gap == TimeSpan.FromMinutes(lim.GetProperty("reportGapMinutes").GetInt32()), "");

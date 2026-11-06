@@ -7,15 +7,26 @@ namespace SRT;
 // Airplane Mode on the iPhone, then waits for the connection to come back and measures the new IP.
 public partial class MainWindow
 {
-    /// <summary>(is it an iPhone, is its connection up). The tethering adapter is checked first; the USB scan only without it.</summary>
+    /// <summary>
+    /// (is it an iPhone, is its connection up). The tethering adapter is checked first; the USB scan only without it. An iPhone
+    /// used only through its hotspot over Wi-Fi is known from the saved answer (beta.12).
+    /// </summary>
     async Task<(bool Iphone, bool Tethered)> IphoneState()
     {
         if (_demo) return (_iphone, _iphone && _last?.Egress != null);
         var adapter = _last?.Adapters?.FirstOrDefault(a => a.IsPhone && a.Up && PhoneUsb.IsIphone(a));
-        if (adapter != null) { _iphone = true; return (true, true); }
-        var usb = await Task.Run(PhoneUsb.Scan);
-        _iphone = PhoneUsb.IsIphone(usb);
-        return (_iphone, false);
+        var usb = adapter != null ? PhoneUsbState.None : await Task.Run(PhoneUsb.Scan);
+        _iphone = NotePhoneKind(PhoneUsb.IphoneSeen(false, usb, adapter, _s.EgressSsid));
+        if (adapter != null) return (_iphone, true);
+        var hotspot = (_last?.Egress ?? _last?.Candidate) is { IsWifi: true } && !string.IsNullOrEmpty(_s.EgressSsid);
+        return (_iphone, _iphone && hotspot);
+    }
+
+    /// <summary>Keeps what the PC saw about the kind of phone (Settings.PhoneIsIphone) and says whether it is an iPhone now.</summary>
+    bool NotePhoneKind(bool? seen)
+    {
+        if (seen is bool b && b != _s.PhoneIsIphone) { _s.PhoneIsIphone = b; SaveSettings(); }
+        return PhoneUsb.IsIphoneNow(seen, _s.PhoneIsIphone, _s.EgressSsid);
     }
 
     /// <summary>How long the iPhone gets to come back after Airplane Mode (the hotspot needs a moment to share again).</summary>
@@ -42,7 +53,7 @@ public partial class MainWindow
         var first = _egressPublic;
         if (!await Ask("Change IP on the iPhone",
                 "1. On the iPhone, turn Airplane Mode on.\n2. Wait 3 seconds.\n3. Turn Airplane Mode off.\n\n"
-                + "Keep the cable plugged in. The app waits for the iPhone to come back (up to 90 s) and shows the new IP. "
+                + (_last.Egress.IsWifi ? "Keep Personal Hotspot on. " : "Keep the cable plugged in. ") + "The app waits for the iPhone to come back (up to 90 s) and shows the new IP. "
                 + "If you are on a server, you will drop.", "I'm doing it", "Cancel"))
             return false;
         using var wait = CommandWait();

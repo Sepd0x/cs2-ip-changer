@@ -51,6 +51,7 @@ public partial class MainWindow
         var info = Adb.SteadyWifi(await Adb.Status(_adb), _phone, ref _wifiOnReads);
         var wifiBefore = PhoneWifiOn;
         _phone = info;   // SetPhone below redraws the buttons for it (PhoneFirstRun)
+        if (info?.Ready == true) NotePhoneKind(false);
         Telemetry.Phone(info);
         DiagPhone(info);
         if (info == null) SetPhone(Ui.Bad, "ADB failed to start", "Try reinstalling ADB.");
@@ -491,7 +492,7 @@ public partial class MainWindow
             Tethered = phone != null && !hotspot,
             WifiOn = info?.Ready == true && info.WifiOn && info.WifiConnected != false,
             PcOnPhone = Guard.NeedsPcOffPhone(mode, true, Net.BestInterface("1.1.1.1"), phone?.Index ?? -1, other),
-            Iphone = info?.Ready != true && (PhoneUsb.IsIphone(usb) || PhoneUsb.IsIphone(phone)),
+            Iphone = NotePhoneKind(PhoneUsb.IphoneSeen(info?.Ready == true, usb, phone, _s.EgressSsid)),
         };
     }
 

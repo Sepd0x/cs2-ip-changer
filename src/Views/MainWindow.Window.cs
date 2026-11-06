@@ -250,7 +250,8 @@ public partial class MainWindow
             e.Cancel = true;
             _closingDone = true;
             _tick.Stop();
-            try { await _guard.ReleasePcOffPhone(); } catch { }
+            try { await _guard.ReleasePcOffPhone(); }
+            catch (Exception ex) { Log.Error("Closing: the phone's adapter didn't get its default route back: " + ex.Message); }
             Close();
             return;
         }
