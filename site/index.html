@@ -872,8 +872,9 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
    instead of 3 px in a window shrunk to the screen. The window above shows the page, a tap opens it whole */
 @media (max-width:759px) and (orientation:portrait){
   .js .app-body{padding-bottom:3rem}
-  .js .app-body .win-fig{position:relative;top:auto;z-index:auto;border-bottom:0;padding-bottom:0;scroll-snap-align:start;scroll-margin-top:var(--top-h)}
-  .pg-nav{display:flex;gap:.25rem;margin:1rem 0 .5rem;scroll-snap-align:start;scroll-margin-top:calc(var(--top-h) + .5rem)}
+  /* the snap rests the window right under the header and the numbers 8 px under it (the margins take back the page's scroll-padding of the header + 1rem) */
+  .js .app-body .win-fig{position:relative;top:auto;z-index:auto;border-bottom:0;padding-bottom:0;scroll-snap-align:start;scroll-margin-top:-1rem}
+  .pg-nav{display:flex;gap:.25rem;margin:1rem 0 .5rem;scroll-snap-align:start;scroll-margin-top:-.5rem}
   .pg-nav button{flex:1;min-width:44px;min-height:44px;padding:0;border:0;border-radius:10px;background:none;color:var(--ink3);font:400 .8rem/1 var(--mono);box-shadow:inset 0 -2px 0 var(--line);cursor:pointer;transition:color .3s,box-shadow .3s}
   .pg-nav button[aria-current]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--t-accent)}
   .pg-nav button:focus-visible{outline:2px solid var(--t-accent);outline-offset:-2px}

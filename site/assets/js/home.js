@@ -57,7 +57,8 @@
     if (fig) fig.style.position = 'static';
     var figTop = fig ? docTop(fig) : 0;
     if (fig) fig.style.position = fp;
-    storyEnd = wr ? figTop - wr.fig : (appBody ? docTop(appBody) : 1e9);
+    // whole px: the snap rests the window on a whole px, and half a px short left the 3D on and the window hidden (6 Nov.)
+    storyEnd = Math.floor(wr ? figTop - wr.fig : (appBody ? docTop(appBody) : 1e9));
     ctaAt = cta ? docTop(cta) : 1e9; ctaH = cta ? cta.offsetHeight : 0;
   }
   function where(y) {

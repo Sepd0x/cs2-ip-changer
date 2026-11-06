@@ -211,6 +211,9 @@ static class DesignSyncTests
         // cada recorte é a captura a 1240x800 (o tamanho da janela da app), com o anel no sítio das marcas do PC
         check("Site: os recortes das páginas são a captura a tamanho real, centrados nas marcas da janela",
             homeHtml.Contains(".cut-in{position:absolute;width:1240px;height:800px;") && homeJs.Contains("'.marks .mk[data-pg=\"' + pg + '\"]'") && homeJs.Contains("* 12.4).toFixed(1) + 'px'") && homeJs.Contains("* 8).toFixed(1) + 'px'"), "");
+        // o encaixe parava a janela 72 px abaixo do cabeçalho (o scroll-padding da página somava-se), com o 3D ainda por cima dela
+        check("Site: no telemóvel o encaixe pára a janela inteira logo por baixo do cabeçalho e a história acaba aí",
+            homeHtml.Contains("scroll-snap-align:start;scroll-margin-top:-1rem}") && homeHtml.Contains("scroll-padding-top:calc(var(--top-h) + 1rem)") && homeJs.Contains("storyEnd = Math.floor("), "");
         check("Site: um botão por página (44 px) e o endereço segue a página deslizada",
             homeJs.Contains("nav.className = 'pg-nav'") && homeHtml.Contains(".pg-nav button{flex:1;min-width:44px;min-height:44px;") && homeJs.Contains("take(stepAt(scrollY)); }, 160);"), "");
         check("Site: no telemóvel ao alto os passos da história mais juntos (o ban de 334 para 226 svh)",
