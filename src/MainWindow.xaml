@@ -2005,7 +2005,7 @@
                                         <!-- beta.10: when protection turns on and off by itself, apart from what it does -->
                                         <TextBlock Text="Start and close" Style="{StaticResource Key}" Margin="0,4,0,8"/>
                                         <CheckBox x:Name="ProtectOnStartBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12"
-                                                  ToolTip="Off (the default): the app always starts with protection off and you turn it on in Status or the tray icon. On: it turns on by itself at every start, also with Windows. With no phone connected, your servers and CS2 stay blocked until it is.">
+                                                  ToolTip="Off (the default): the app always starts with protection off and you turn it on in Status or the tray icon. On: it turns on by itself at every start, also with Windows. With no phone connected, your servers stay blocked until it is, and CS2 too once the app has checked a phone.">
                                             <StackPanel>
                                                 <TextBlock Text="Turn on protection when the app starts"/>
                                                 <TextBlock Text="Also with Windows. Without the phone, your servers and CS2 stay blocked until you connect it." Style="{StaticResource OptSub}"/>

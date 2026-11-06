@@ -40,6 +40,9 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Steam names with invisible characters (direction marks, Unicode tags) showed them in the Log and on screen. They are left out now.
 - With protection off, the Log said the phone's Wi-Fi blocked servers and CS2, and that CS2 went through the phone in Whole PC while CS2 is open. Neither is true with protection off; the Log now says what is.
 - Opening the app twice in a few minutes wrote "Usage stats: the report wasn't sent (the server answered 429)" in the Log. That answer only means "not yet" and the report goes later, so it no longer shows.
+- Before a phone was ever checked on the PC, Status, the Turn on protection message, the leak test and the tooltip of Turn on protection when the app starts said CS2 was blocked too. CS2 is only locked once the app has checked a phone, so they now say only your servers wait, and that CS2 isn't locked yet.
+- When the phone dropped, the message said "your IP can't leak" and Status said "You're safe" even with the CS2 lock off, and the Log always said servers and CS2 were blocked. They now name only what is blocked.
+- The hotspot tooltip said "everything is blocked" when the PC leaves the phone's network; it is your servers and CS2, while protection is on.
 
 ## [0.1.0-beta.11] - 2026-11-06
 
