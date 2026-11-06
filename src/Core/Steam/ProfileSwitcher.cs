@@ -536,7 +536,10 @@ public sealed class SessionStore
                 WriteBlob(FileOf(id), blob);
                 kept++;
             }
-            catch { }   // another user's, damaged or not ours: left behind with the old folder
+            // Another Windows user's, damaged or not ours: not moved, and deleted with the old folder below. Moving a blob the app
+            // can't open would let a program of that user's plant one in the locked folder (the entropy comes from the id), so that
+            // user signs in to those accounts again.
+            catch { }
         }
         // The old folder is still yours to change: only its own files are deleted, each as itself (SafeFile), never a subfolder,
         // which a program of yours could swap for a link mid-way.

@@ -77,7 +77,8 @@ public sealed class Tray : IDisposable
 
     void Add()
     {
-        _added = Notify(NimAdd, NifMessage | NifIcon | NifTip);
+        // NIM_ADD can time out with the icon put there anyway (or it is still there when Explorer says the taskbar is back): modifying it then works
+        _added = Notify(NimAdd, NifMessage | NifIcon | NifTip) || Notify(NimModify, NifMessage | NifIcon | NifTip);
     }
 
     bool Notify(uint what, uint flags)

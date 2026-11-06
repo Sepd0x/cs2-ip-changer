@@ -72,12 +72,26 @@ public static class Autostart
         return m.Success ? System.Net.WebUtility.HtmlDecode(m.Groups[1].Value).Trim('"') : null;
     }
 
-    /// <summary>The task is there and starts this exe. Null when Windows couldn't be asked.</summary>
+    /// <summary>
+    /// The task XML starts <paramref name="exe"/> for this Windows user: the task's name is the same for every user of the PC, so
+    /// another user turning it on replaces yours. Windows writes the user as the SID or as PC\name, so either counts.
+    /// </summary>
+    public static bool IsOnFor(string xml, string exe, string sid, string account)
+    {
+        if (!string.Equals(CommandIn(xml), exe, StringComparison.OrdinalIgnoreCase)) return false;
+        var users = Regex.Matches(xml ?? "", @"<UserId>\s*([^<]*?)\s*</UserId>").Select(m => System.Net.WebUtility.HtmlDecode(m.Groups[1].Value)).ToList();
+        var shortName = account?[(account.LastIndexOf('\\') + 1)..];
+        return users.All(u => string.Equals(u, sid, StringComparison.OrdinalIgnoreCase) || string.Equals(u, account, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(u, shortName, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>The task is there and starts this exe for this Windows user. Null when Windows couldn't be asked.</summary>
     public static async Task<bool?> IsOn(string exe)
     {
         var r = await Proc.Run("schtasks", $"/Query /TN \"{TaskName}\" /XML", 10000);
         if (r.Code < 0) return null;
-        return r.Code == 0 && string.Equals(CommandIn(r.Output), exe, StringComparison.OrdinalIgnoreCase);
+        using var me = WindowsIdentity.GetCurrent();
+        return r.Code == 0 && IsOnFor(r.Output, exe, me.User?.Value, me.Name);
     }
 
     /// <summary>Makes (or remakes) the task for this exe and checks it is there. Null = done, else what went wrong.</summary>

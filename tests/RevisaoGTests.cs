@@ -11,6 +11,77 @@ static class RevisaoGTests
         string Src(params string[] p) => File.ReadAllText(Path.Combine(new[] { repo, "src" }.Concat(p).ToArray())).Replace("\r\n", "\n");
         check("Revisão G: as fontes leem-se", Src("MainWindow.xaml").Length > 0, "");
         await Closing(check, Src);
+        Lifecycle(check, Src);
+    }
+
+    static void Lifecycle(Action<string, bool, string> check, Func<string[], string> src)
+    {
+        string Src(params string[] p) => src(p);
+
+        // G4. Remove com a rede por limpar não apaga a app: o --restore e o Remove continuam lá para tentar outra vez
+        check("Revisão G4: com a rede por limpar a app fica", Uninstall.KeepsApp("rule \"x\"") && !Uninstall.KeepsApp(null), "");
+        var run = Body(Src("Core", "Uninstall.cs"), "public static async Task<Outcome> Run(");
+        check("Revisão G4: o Remove volta antes de apagar a entrada em Installed apps e os ficheiros",
+            run.IndexOf("if (KeepsApp(network)) return") is var k && k > 0 && k < run.IndexOf("Installer.Unregister()") && k < run.IndexOf("RemoveFiles(") && k < run.IndexOf("Paths.ReadOnly = true"), "");
+        var kept = Uninstall.Result(new Uninstall.Outcome("rule \"x\"", null, null, new Uninstall.Files(false, false, false, new Uninstall.Leftovers()), true, false), @"C:\d\SRT_Dados");
+        check("Revisão G4: o resultado diz que a app ficou e como tentar outra vez",
+            kept.Problem && kept.Text.Contains("The app and its files stayed") && kept.Text.Contains(AppIds.Args.Restore) && !kept.Text.Contains("Kept: "), kept.Text);
+        var line = Uninstall.LogLine(new Uninstall.Outcome("rule \"x\"", null, null, new Uninstall.Files(false, false, false, new Uninstall.Leftovers()), true, false));
+        check("Revisão G4: e o Log não diz que os ficheiros saíram", line.Contains("the app and its files stayed to try again") && !line.Contains("files gone"), line);
+
+        // G5. Sem o ficheiro principal (corte a meio de um save) lê-se o .tmp ou o .prev, com uma linha no Log, em vez dos valores por defeito
+        check("Revisão G5: a escolha da cópia: o principal, o .tmp (o mais novo), o .prev, os valores por defeito",
+            Store.LoadFrom(true, true, true) == "main" && Store.LoadFrom(false, true, true) == "tmp" && Store.LoadFrom(false, false, true) == "prev" && Store.LoadFrom(false, false, false) == "default", "");
+        var dir = Path.Combine(Path.GetTempPath(), "srt-revisaog-" + Guid.NewGuid().ToString("N")[..8]);
+        Directory.CreateDirectory(dir);
+        var p1 = Path.Combine(dir, "settings.json");
+        File.WriteAllText(p1 + ".prev", "{\"Mode\":\"all\"}");
+        var said = 0;
+        void Seen(LogEntry e) { if (e.Text.StartsWith("settings.json was missing")) said++; }
+        Log.Added += Seen;
+        try
+        {
+            check("Revisão G5: sem o principal lê o .prev", Store.Load(p1, () => new Settings()).Mode == "all", "");
+            check("Revisão G5: e diz no Log porquê", said == 1, $"{said} linhas");
+        }
+        finally { Log.Added -= Seen; }
+        var p2 = Path.Combine(dir, "servers.json");
+        File.WriteAllText(p2 + AppIds.Files.TmpSuffix, "{\"Mode\":\"home\"}");
+        File.WriteAllText(p2 + ".prev", "{\"Mode\":\"all\"}");
+        check("Revisão G5: o .tmp que lê ganha ao .prev (foi escrito e gravado no disco antes da troca)", Store.Load(p2, () => new Settings()).Mode == "home", "");
+        File.WriteAllText(p2 + AppIds.Files.TmpSuffix, "{\"Mode\":\"ho");
+        check("Revisão G5: um .tmp cortado não conta", Store.Load(p2, () => new Settings()).Mode == "all", "");
+        check("Revisão G5: o Peek (aviso das estatísticas antes da janela) lê o mesmo", Store.Peek<Settings>(p1)?.Mode == "all", "");
+        check("Revisão G5: sem cópia nenhuma, os valores por defeito", Store.Load(Path.Combine(dir, "none.json"), () => new Settings()).Mode == "servers", "");
+
+        // G6. Depois de um update, a cópia nova tenta outra vez os eventos Show e Uninstall enquanto a antiga ainda fecha
+        check("Revisão G6: depois de um update tenta outra vez de 1 em 1 s, até 15 s", MainWindow.EventRetry(true, 0) && MainWindow.EventRetry(true, 14) && !MainWindow.EventRetry(true, 15), "");
+        check("Revisão G6: sem update, uma vez só (um evento de outro programa nunca se usa)", !MainWindow.EventRetry(false, 0), "");
+        var tray = Src("Views", "MainWindow.Tray.cs");
+        check("Revisão G6: o Show e o Uninstall usam essa espera",
+            Body(tray, "async void ListenForShow()").Contains("await ListenFor(App.ShowEventName") && Body(tray, "async void ListenForUninstall()").Contains("await ListenFor(App.UninstallEventName")
+            && Body(tray, "async Task<bool> ListenFor(").Contains("if (!EventRetry(_justUpdated, tries)) return false;"), "");
+
+        // G7. Start with Windows: a tarefa de outro utilizador do Windows não conta como ligada para ti
+        const string exe = @"C:\Program Files\CS2 IP Changer\CS2IPChanger.exe", sidA = "S-1-5-21-1-2-3-1001", sidB = "S-1-5-21-1-2-3-1002";
+        check("Revisão G7: a tarefa de outro utilizador não conta como ligada", !Autostart.IsOnFor(Autostart.TaskXml(exe, sidB), exe, sidA, @"PC\Ana"), "");
+        check("Revisão G7: a tua conta, pelo SID ou pelo nome que o Windows escreve", Autostart.IsOnFor(Autostart.TaskXml(exe, sidA), exe, sidA, @"PC\Ana")
+            && Autostart.IsOnFor(Autostart.TaskXml(exe, @"PC\Ana"), exe, sidA, @"PC\Ana"), "");
+        check("Revisão G7: outro exe continua a não contar", !Autostart.IsOnFor(Autostart.TaskXml(@"C:\x\CS2IPChanger.exe", sidA), exe, sidA, @"PC\Ana"), "");
+
+        // G8. --tray só esconde a janela com o ícone mesmo lá
+        check("Revisão G8: o arranque escondido só esconde com o ícone posto", Body(tray, "void StartHiddenIfAsked(").Contains("if (_tray?.Shown == true) Hide();")
+            && !tray.Contains("if (_tray != null) Hide();"), "");
+        check("Revisão G8: o ícone que o NIM_ADD não confirmou conta quando o NIM_MODIFY passa",
+            Src("Core", "Tray.cs").Contains("_added = Notify(NimAdd, NifMessage | NifIcon | NifTip) || Notify(NimModify, NifMessage | NifIcon | NifTip);"), "");
+
+        // G9. Uma cópia aberta noutra sessão do Windows: não manda procurar na barra de tarefas
+        check("Revisão G9: noutra sessão diz outro utilizador", App.RunningText(true).Contains("another Windows user") && !App.RunningText(true).Contains("taskbar"), "");
+        check("Revisão G9: na mesma sessão continua a mandar à barra de tarefas", App.RunningText(false).Contains("look in the taskbar"), "");
+        check("Revisão G9: o arranque vê a sessão da outra cópia", Src("App.xaml.cs").Contains("AlreadyRunningWindow(OpenInOtherSession()).ShowAndWait();"), "");
+
+        // G10. O comentário da migração dos sign-ins diz o que acontece (os de outro utilizador do Windows não passam e saem com a pasta)
+        check("Revisão G10: o comentário já não diz que ficam com a pasta antiga", !Src("Core", "Steam", "ProfileSwitcher.cs").Contains("left behind with the old folder"), "");
     }
 
     static string Body(string src, string start)

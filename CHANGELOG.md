@@ -131,6 +131,12 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Signing out of Windows or shutting down with Turn off protection when closing could leave the Firewall rules on (WPF closes the app without waiting). The rules now go first, right when Windows asks, and the "CS2 is still open" question no longer shows up then.
 - Closing the app during Change IP, while the phone's mobile data (or airplane mode) was being switched, could leave the phone with no mobile data or in airplane mode. The app now turns it back on before it exits.
 - With an Android phone used, the app stayed running about 4 seconds after its window closed.
+- Remove everything (or Uninstall in Windows Settings) deleted the app even when it couldn't remove all of its rules, so `--restore` and a second try were gone too. When the network isn't fully restored, the app and its files now stay, and the result says how to try again.
+- After a power loss in the middle of saving, the app could start with all its settings, servers and account notes back to the defaults, and lose them for good two saves later. It now loads the copy that was left and says so in the Log.
+- Right after an update, starting the app again (or Uninstall in Windows Settings) could say it was already running instead of bringing the window back, until the next start.
+- Start with Windows stayed ticked after another Windows user of the same PC turned it on for themselves (the task is one per PC). It now shows off for you.
+- Started with Windows while the notification area wasn't ready, the app could hide its window with no icon to bring it back. The window now stays open then.
+- With the app open in another Windows user's session, starting it said to look in the taskbar. It now says the copy is open in another user's session.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

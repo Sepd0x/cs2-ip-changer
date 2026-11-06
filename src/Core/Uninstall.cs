@@ -102,6 +102,9 @@ public static class Uninstall
         return await System.Threading.Tasks.Task.Run(() =>
         {
             Adb.StopServer();
+            // The network wasn't fully restored: the app, its Installed apps entry and SRT_Dados stay, so it can be opened (which takes
+            // its rules off at the start) or --restore run, and --restore still finds the servers and owned.json
+            if (KeepsApp(network)) return new Outcome(network, task, null, new Files(false, false, false, new Leftovers()), true, everything);
             var registry = installed ? Installer.Unregister() : null;   // a copy elsewhere leaves the installed copy's entry alone
             if (everything) Paths.ReadOnly = true;   // nothing writes to SRT_Dados again on the way out (log, settings, crash marker)
             var files = RemoveFiles(everything, exe, Paths.Data);
@@ -109,12 +112,16 @@ public static class Uninstall
         });
     }
 
+    /// <summary>With the network not fully restored (<paramref name="network"/> says what stayed), Remove leaves the app and its files.</summary>
+    public static bool KeepsApp(string network) => network != null;
+
     /// <summary>The line in the log (it only reaches the file with Keep: with everything, SRT_Dados is gone).</summary>
     public static string LogLine(Outcome o) =>
         "Remove (" + (o.Everything ? "everything" : "kept SRT_Dados") + "): " + (o.Network == null ? "rules and routes gone" : "couldn't remove " + o.Network)
         + "; task " + (o.Task ?? "gone") + (o.Registry == null ? "" : "; Installed apps entry stayed: " + o.Registry)
         + (o.Files.ProgramDataRefused ? $"; {Root} left alone (others can change it)" : "")
-        + (o.Files.Left.Count == 0 ? "; files gone" : $"; in use: {Fmt.Count(o.Files.Left.Count, "path")}, deleted " + (o.Helper ? "after the app closes" : "at the next restart")) + ".";
+        + (KeepsApp(o.Network) ? "; the app and its files stayed to try again"
+            : o.Files.Left.Count == 0 ? "; files gone" : $"; in use: {Fmt.Count(o.Files.Left.Count, "path")}, deleted " + (o.Helper ? "after the app closes" : "at the next restart")) + ".";
 
     // ------------------------------------------------------------ After the app closes
 
@@ -212,7 +219,8 @@ public static class Uninstall
         if (files.Left.Count > 0)
             lines.Add(helper ? "The last files go a few seconds after the app closes. If Windows still holds one, it goes at the next restart."
                 : "Some files are in use by this copy: Windows deletes them at the next restart.");
-        if (!everything) lines.Add($"Kept: {dataDir}. Delete that folder if you won't install the app again.");
+        if (KeepsApp(network)) lines.Add($"The app and its files stayed, so you can try again: open the app and Remove again, or run {AppIds.ExeName} {AppIds.Args.Restore}.");
+        else if (!everything) lines.Add($"Kept: {dataDir}. Delete that folder if you won't install the app again.");
         return (problem ? "Not everything was removed" : "CS2 IP Changer was removed", string.Join("\n\n", lines), problem);
     }
 
