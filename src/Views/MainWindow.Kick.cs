@@ -73,13 +73,15 @@ public partial class MainWindow
     public static bool OffersAdd(string server, IEnumerable<string> listed, ICollection<string> offered) =>
         server != null && !listed.Contains(server) && !offered.Contains(server);
 
-    public static string AddJoinedText(string server) => $"You joined {server}, which isn't in your servers. Add it, to play it through the phone next time?";
+    /// <summary><paramref name="home"/>: you play on the home connection on purpose (No phone, or protection off with the option), so no phone promise.</summary>
+    public static string AddJoinedText(string server, bool home = false) => home ? $"You joined {server}, which isn't in your servers. Add it?"
+        : $"You joined {server}, which isn't in your servers. Add it, to play it through the phone next time?";
 
     void OfferAddJoined(string server)
     {
         if (!OffersAdd(server, _servers.Select(x => x.Key), _addOffered)) return;
         _addOffered.Add(server);
-        Toast(AddJoinedText(server), Tone.Info, "Add", () => AddFromText(server));
+        Toast(AddJoinedText(server, OnHome), Tone.Info, "Add", () => AddFromText(server));
     }
 
     readonly NetReportReader _netReport = new();
@@ -118,8 +120,20 @@ public partial class MainWindow
         System.Media.SystemSounds.Hand.Play();
         Log.Warn("Kicked with \"No Steam logon\": Steam lost its session with Valve (it reconnected on another network, or after a crash). A new IP won't help. Console: " + Cut(line));
         Diag.Write("kick", new { kind = "no-steam-logon", line, server = _consoleServer });
-        Toast("Kicked with \"No Steam logon\": Steam lost its session. Wait for Steam to reconnect through the phone (Checks), then join again.", Tone.Error);
+        Toast(NoSteamLogonToast(OnHome), Tone.Error);
     }
+
+    public static string NoSteamLogonToast(bool home) =>
+        $"Kicked with \"No Steam logon\": Steam lost its session. Wait for Steam to reconnect{(home ? "" : " through the phone")} (Checks), then join again.";
+
+    /// <summary>A timeout: the connection, not the admin. On the home connection there is no phone to check.</summary>
+    public static string TimeoutToast(bool never, bool home) => never ? "The server never answered. If other servers work, it may be offline or blocking this IP."
+        : "Lost the connection to the server (timeout). That was the connection, not a kick: " + (home ? "check your internet." : "check the phone's signal and data.");
+
+    /// <summary>A VPN or proxy block. On the home connection it was the home IP, and a new phone IP only counts with the phone.</summary>
+    public static string VpnToast(bool home, bool noPhone) => !home
+        ? "The server blocked the phone's IP as a VPN or proxy. New IP + next account gets you back (if every IP is blocked, it blocks your carrier)."
+        : "The server blocked your home IP as a VPN or proxy. " + (noPhone ? "Pick Game only or Whole PC on Connection to play through the phone." : "Turn on protection to play through the phone.");
 
     static string Cut(string line) => line.Length > 220 ? line[..220] + "…" : line;
 
@@ -162,11 +176,14 @@ public partial class MainWindow
         var server = d.Server ?? _consoleServer
             ?? (_s.LastServerAt != null && _cs2StartedAt != null && _s.LastServerAt >= _cs2StartedAt ? _s.LastServer : null);
         var inList = _servers.FirstOrDefault(x => x.Key == server);
+        // A Join or Rejoin from the app a moment ago, read before a join from CS2's own browser becomes the last server below
+        var byApp = JoinedByApp(server, _s.LastServer, _s.LastServerAt, DateTime.Now);
         if (inList != null && server != _s.LastServer)
         {
             _s.LastServer = server;
             _s.LastServerAt = DateTime.Now;
             SaveSettings();
+            ShowLastServer();   // the "last" mark on Servers and the names that use the last server
         }
         // One disconnect can come over two reads: within 20 s only something stronger still counts (a ban after a kick or a timeout).
         var recent = (DateTime.Now - _lastKickAt).TotalSeconds < 20;
@@ -185,8 +202,7 @@ public partial class MainWindow
             var never = d.Why == KickReason.NeverAnswered;
             Log.Warn($"{server ?? "The server"} {(never ? "never answered" : "stopped answering")}: that's the connection, not a kick. Console: " + Cut(line));
             Diag.Write("kick", new { kind = "no-answer", line, server });
-            Toast(never ? "The server never answered. If other servers work, it may be offline or blocking this IP."
-                : "Lost the connection to the server (timeout). That was the connection, not a kick: check the phone's signal and data.", false);
+            Toast(TimeoutToast(never, OnHome), false);
             UpdateRejoinBtn();
             return;
         }
@@ -204,8 +220,7 @@ public partial class MainWindow
             Diag.Write("kick", new { kind = "full", line, server });
             // Turned away right after a Join or Rejoin from the app: the list's count can be old or count spectators (3 nov.: kicked
             // as a spectator for AFK, two left, Rejoin said full). So the app tries again every 15 s, 8 times (2 minutes).
-            if (inList != null && server == _s.LastServer && _s.LastServerAt is DateTime at && DateTime.Now - at < TimeSpan.FromMinutes(3)
-                && d.Why != KickReason.ReservedSlot)
+            if (inList != null && byApp && d.Why != KickReason.ReservedSlot)
             {
                 if (_fullServer != server || DateTime.Now - _fullSince > TimeSpan.FromMinutes(5)) { _fullServer = server; _fullSince = DateTime.Now; _fullTries = 0; }
                 if (_fullTries < FullTries)
@@ -251,8 +266,9 @@ public partial class MainWindow
             Toast($"You were {what} from the server{why}. It isn't in your list, so the app can't take you back. Add it for next time?", Tone.Warn, "Add", () => AddFromText(server));
         }
         else Toast(inList == null ? $"You were {what} from the server{why}."
-            : kind == KickKind.Vpn ? "The server blocked the phone's IP as a VPN or proxy. New IP + next account gets you back (if every IP is blocked, it blocks your carrier)."
-            : kind == KickKind.Ban ? BanToast(d.For, _s.HotkeyRejoin, NextQuick(inList)?.Name)
+            : kind == KickKind.Vpn ? VpnToast(OnHome, _s.NoPhone)
+            : kind == KickKind.Ban ? BanToast(d.For, _s.HotkeyRejoin, NextQuick(inList)?.Name, marked: acc != null, ipChanges: SwitchChangesIp,
+                asksProtection: SwitchChangesIp && IpStep(_protOn, _s.UseWithProtectionOff, afterBan: true) != IpWhenOff.Change)
             : $"You were kicked from the server{why}. Not a ban: you can rejoin.", false);
         UpdateRejoinBtn();
         if (inList != null && Dialog.Visibility != Visibility.Visible && !_changingIp && !_rejoining) _ = OfferRejoin(d);
@@ -260,11 +276,25 @@ public partial class MainWindow
 
     /// <summary>
     /// The ban toast (beta.11): says which account comes next before you press anything (Hugo: "F9 or F10, and as who?").
-    /// With no account left it says so, instead of a key that can't help.
+    /// With no account left it says so, instead of a key that can't help. It promises only what the key does now: <paramref name="marked"/>
+    /// false (the account isn't in Accounts) rejoins as the same account; <paramref name="ipChanges"/> false (no phone mode, a phone not
+    /// ready) keeps the IP; <paramref name="asksProtection"/> (protection off) asks in the app first, which can't be seen in game.
     /// </summary>
-    public static string BanToast(string forText, string hotkey, string next) => next != null
-        ? $"Banned{forText}. Press {hotkey} to rejoin with a new IP as {next}."
-        : $"Banned{forText}. No other account to rejoin with: the rest are out of rotation, on cooldown or banned there.";
+    public static string BanToast(string forText, string hotkey, string next, bool marked = true, bool ipChanges = true, bool asksProtection = false) =>
+        next == null ? $"Banned{forText}. No other account to rejoin with: the rest are out of rotation, on cooldown or banned there."
+        : !marked ? $"Banned{forText}. This account isn't in Accounts, so {hotkey} would rejoin with it: log in to another account first."
+        : !ipChanges ? $"Banned{forText}. Press {hotkey} to rejoin as {next} (the IP stays the same)."
+        : asksProtection ? $"Banned{forText}. Turn on protection in the app, then press {hotkey} to rejoin with a new IP as {next}."
+        : $"Banned{forText}. Press {hotkey} to rejoin with a new IP as {next}.";
+
+    /// <summary>
+    /// Whether the IP changes in a switch that also logs in to the next account: only with the phone ready on ADB (an iPhone changes its IP
+    /// by hand, and no phone mode has none). Without it the switch keeps the IP and the other steps run.
+    /// </summary>
+    bool SwitchChangesIp => _demo || !_s.NoPhone && _adb != null && _phone?.Ready == true;
+
+    /// <summary>An iPhone: no ADB, so its IP changes by hand (Change IP tells you when to toggle Airplane Mode).</summary>
+    bool IphoneByHand => _iphone && _phone?.Ready != true;
 
     async Task OfferRejoin(Disconnect d)
     {
@@ -283,11 +313,23 @@ public partial class MainWindow
             Toast($"{(d.Kind == KickKind.Vpn ? "Blocked on" : "Banned from")} {_s.LastServer}. No other account to rejoin with: the rest are out of rotation, on cooldown or banned there.", false);
             return;
         }
-        var text = d.Kind == KickKind.Vpn
-            ? $"{_s.LastServer} took the phone's IP for a VPN or proxy{(d.BanCode ? " and banned the account" : "")}.\n\nGet a new IP, log in to {next.Name} and rejoin?"
-            : $"CS2 says you were banned from {_s.LastServer}{d.For}. The ban is on your IP and on the account, so a new IP alone is not enough.\n\nGet a new IP, log in to {next.Name} and rejoin?";
+        var text = BanQuestion(d.Kind == KickKind.Vpn, _s.LastServer, d.BanCode, d.For, next.Name, OnHome, SwitchChangesIp);
         if (await Ask(title, text, "Switch and rejoin", "Not now"))
             await RejoinAfterBan(d.Kind == KickKind.Vpn ? "After the VPN block" : "After the ban");
+    }
+
+    /// <summary>The last line of Join's "banned here" question: on the home connection the switch can't change the IP.</summary>
+    public static string BanJoinTip(string hotkey, bool home) => home
+        ? $"On your home connection the IP stays: New IP + next account ({hotkey}) only logs in to another account."
+        : $"New IP + next account ({hotkey}) changes the IP and the account together.";
+
+    /// <summary>The question after a ban or a VPN block: the IP it names is the one the server saw, and "a new IP" only when the switch changes it.</summary>
+    public static string BanQuestion(bool vpn, string server, bool banCode, string forText, string next, bool home, bool ipChanges)
+    {
+        var go = ipChanges ? $"Get a new IP, log in to {next} and rejoin?" : $"Log in to {next} and rejoin?";
+        return vpn
+            ? $"{server} took {(home ? "your home IP" : "the phone's IP")} for a VPN or proxy{(banCode ? " and banned the account" : "")}.\n\n{go}"
+            : $"CS2 says you were banned from {server}{forText}. The ban is on your IP and on the account, so a new IP alone is not enough.\n\n{go}";
     }
 
     /// <summary>New IP, the next account the server hasn't banned (nor its community), back to the last server.</summary>
@@ -299,13 +341,25 @@ public partial class MainWindow
 
     // ------------------------------------------------------------ Bans by a server (on the account, not Steam)
 
-    AccountItem ActiveAccount()
+    /// <summary>The account in use, hidden ones too: a ban on a hidden account still counts (it stays out of the rotation all the same).</summary>
+    AccountItem ActiveAccount() => ActiveIn(_demo ? null : Steam.InUseSteamId(), _accounts, _accHiddenItems);
+
+    /// <summary>
+    /// The account Steam is on (<paramref name="id"/>) in the list or among the hidden ones. Steam on an account neither has yet: none,
+    /// not the old one (the next tick reloads the list). No id (Steam closed): the one marked in use.
+    /// </summary>
+    public static AccountItem ActiveIn(string id, IEnumerable<AccountItem> shown, IEnumerable<AccountItem> hidden)
     {
-        var id = _demo ? null : Steam.InUseSteamId();
-        // Steam logged in to an account the list doesn't have yet: not the old one (the next tick reloads the list).
-        if (id != null) return _accounts.FirstOrDefault(a => a.SteamId == id);
-        return _accounts.FirstOrDefault(a => a.Active);
+        var all = shown.Concat(hidden);
+        return id != null ? all.FirstOrDefault(a => a.SteamId == id) : all.FirstOrDefault(a => a.Active);
     }
+
+    /// <summary>
+    /// CS2 was turned away from <paramref name="server"/> right after a Join or Rejoin from the app: it is the last server the app
+    /// joined, within 3 minutes. Read before a join from CS2's own browser makes that server the last one.
+    /// </summary>
+    public static bool JoinedByApp(string server, string lastServer, DateTime? lastAt, DateTime now) =>
+        server != null && server == lastServer && lastAt is DateTime at && now - at < TimeSpan.FromMinutes(3);
 
     void MarkServerBan(AccountItem a, ServerItem s, int? minutes = null) => MarkServerBan(a, s.Key, s.ServerName, s.Network, minutes);
 
@@ -393,10 +447,11 @@ public partial class MainWindow
 
     void UpdateRejoinBtn()
     {
-        RejoinBtn.IsEnabled = !_changingIp && !_rejoining && _s.LastServer != null && _phone?.Ready == true && !_s.NoPhone;
-        RejoinBtn.ToolTip = _s.NoPhone ? "Off in the no phone mode: there is no IP to change." : (_s.LastServer == null ? "Join a server from Servers first. " : $"Changes the IP, then joins {_s.LastServer} again (with another account if this one is banned there). ")
-            + (_protOn ? "Only joins with protection confirmed." : _s.UseWithProtectionOff ? "Protection is off: it joins on your home connection without changing the IP (after a ban it asks to turn protection on first)." : "Protection is off: it asks to turn it on first.")
-            + $" In game: {_s.HotkeyRejoin}.";
+        var lastInList = _s.LastServer != null && _servers.Any(x => x.Key == _s.LastServer);
+        // The click works with the phone ready on ADB, an iPhone connected (guided in the app), or on the home connection with no ban there
+        RejoinBtn.IsEnabled = RejoinEnabled(_changingIp || _rejoining, lastInList, _s.NoPhone,
+            _phone?.Ready == true || IphoneByHand && _last?.Egress != null, OnHome && !BannedOnLast());
+        RejoinBtn.ToolTip = RejoinTip(_s.NoPhone, _s.LastServer, lastInList, _protOn, _s.UseWithProtectionOff, _s.HotkeyRejoin);
         // After a kick the way back is the rejoin: with a last server it is the primary, and its hotkey shows under it. With protection
         // off, Turn on protection is the one primary (beta.10).
         var (rejoinStyle, changeStyle) = StatusPrimary(_protOn, _s.NoPhone, _s.LastServer != null, PhoneWifiOn || (_last != null && _last.Egress == null));
@@ -411,33 +466,71 @@ public partial class MainWindow
         RejoinHotkeyHint.Visibility = _s.NoPhone ? Visibility.Collapsed : Visibility.Visible;
     }
 
+    /// <summary>
+    /// Change IP and rejoin can run: a last server still in your list, and the IP can change (<paramref name="canChangeIp"/>) or it
+    /// joins on the home connection (<paramref name="homeNoBan"/>: protection off with the option, and no ban there). Off in No phone mode.
+    /// </summary>
+    public static bool RejoinEnabled(bool busy, bool lastInList, bool noPhone, bool canChangeIp, bool homeNoBan) =>
+        !busy && lastInList && !noPhone && (canChangeIp || homeNoBan);
+
+    public static string RejoinTip(bool noPhone, string last, bool lastInList, bool protOn, bool useWithOff, string hotkey)
+    {
+        if (noPhone) return "Off in the no phone mode: there is no IP to change.";
+        if (last != null && lastInList && IpStep(protOn, useWithOff) == IpWhenOff.Skip)
+            return $"Joins {last} again on your home connection: protection is off, so the IP isn't changed. After a ban it asks to turn protection on first. In game: {hotkey}.";
+        return (last == null ? "Join a server from Servers first. " : !lastInList ? $"{last} is no longer in your list: join a server from Servers first. "
+                : $"Changes the IP, then joins {last} again (with another account if this one is banned there). ")
+            + (protOn ? "Only joins with protection confirmed." : useWithOff ? "Protection is off: it joins on your home connection without changing the IP (after a ban it asks to turn protection on first)." : "Protection is off: it asks to turn it on first.")
+            + $" In game: {hotkey}.";
+    }
+
+    /// <summary>Why there is no rejoin: no last server yet, or it left your list.</summary>
+    public static string NoRejoinWhy(string last) => last == null ? "No last server yet. Join one from Servers first." : $"The last server ({last}) is no longer in your list.";
+
 
     /// <summary>What a switch does. Switch (button and hotkey) takes the steps from Settings; the rejoin hotkey is new IP, same account, rejoin.</summary>
     /// <summary><paramref name="Ban"/>: the rejoin after a ban or a VPN block, where the home IP is the one the server refused.</summary>
-    readonly record struct SwitchSteps(bool Ip, bool Account, bool Rejoin, bool OpenWith, bool Ban = false);
+    public readonly record struct SwitchSteps(bool Ip, bool Account, bool Rejoin, bool OpenWith, bool Ban = false);
 
     SwitchSteps SwitchChoice => new(_s.SwitchIp, _s.SwitchAccount, _s.SwitchRejoin, _s.SwitchOpenWith);
 
-    /// <summary>The normal Change IP, the next account by the quick switch rules, then the normal join to the last server: each step only if asked.</summary>
-    async Task<bool> RunSwitch(SwitchSteps steps, string from)
+    /// <summary>
+    /// The switch's steps from Settings as the button names them and a click runs them: no IP step in No phone mode (there is none to
+    /// change, with or without the account step), nor on an iPhone with the account step (its IP changes by hand, with Change IP).
+    /// </summary>
+    public static SwitchSteps QuickSteps(SwitchSteps choice, bool noPhone, bool iphoneByHand) =>
+        choice with { Ip = choice.Ip && !noPhone && !(iphoneByHand && choice.Account) };
+
+    SwitchSteps QuickChoice => QuickSteps(SwitchChoice, _s.NoPhone, IphoneByHand);
+
+    /// <summary>
+    /// The normal Change IP, the next account by the quick switch rules, then the normal join to the last server: each step only if asked.
+    /// <paramref name="ipLeftOut"/>: Settings has the IP step, but <see cref="QuickSteps"/> took it out (No phone mode, an iPhone).
+    /// </summary>
+    async Task<bool> RunSwitch(SwitchSteps steps, string from, bool ipLeftOut = false)
     {
+        if (ipLeftOut) Log.Info($"{from}: {(_s.NoPhone ? "no phone mode" : "the iPhone changes its IP by hand")}, so the IP stays the same.");
         ServerItem s = null;
         if (steps.Rejoin && (s = _servers.FirstOrDefault(x => x.Key == _s.LastServer)) == null)
         {
-            var why = _s.LastServer == null ? "No last server yet. Join one from Servers first." : $"The last server ({_s.LastServer}) is no longer in your list.";
+            var why = NoRejoinWhy(_s.LastServer);
             if (!steps.Ip && !steps.Account) { Toast(why, false); return false; }
             Log.Info($"{from}: not rejoining. {why}");
         }
         var ip = steps.Ip;
-        if (ip && steps.Account && !_demo && (_adb == null || _phone?.Ready != true || _s.NoPhone))
+        if (ip && steps.Account && !SwitchChangesIp)
         {
             ip = false;
-            Log.Info(_s.NoPhone ? $"{from}: no phone mode, so the IP stays the same." : $"{from}: the phone isn't ready to change the IP, so the IP stays the same.");
-            Toast(_s.NoPhone ? "The IP stays the same: no phone mode has no IP to change." : "The IP stays the same: the phone isn't ready to change it.", false);
+            Log.Info(_s.NoPhone ? $"{from}: no phone mode, so the IP stays the same." : IphoneByHand ? $"{from}: the iPhone changes its IP by hand, so the IP stays the same."
+                : $"{from}: the phone isn't ready to change the IP, so the IP stays the same.");
+            Toast(_s.NoPhone ? "The IP stays the same: no phone mode has no IP to change." : IphoneByHand ? "The IP stays the same. The iPhone changes its IP by hand: use Change IP."
+                : "The IP stays the same: the phone isn't ready to change it.", false);
         }
         // The account first: protection isn't turned on for a switch that then has no account to go to
         AccountItem next = null;
         if (steps.Account && (next = PickQuick(s)) == null) return false;
+        // Steam has to let the switch happen before the IP changes or CS2 closes for it (a link, a loginusers.vdf it can't write back)
+        if (next != null && !_demo && SwitchProblem(next) is string cant) { Log.Warn($"{from}: {cant}"); Toast(cant, Tone.Error); return false; }
         // Protection off: a new phone IP isn't what servers see (they see your home IP). With "Use the app with protection off" the IP
         // step is left out and said so; without it, or after a ban (the home IP is the banned one), one question turns protection on
         // first, as Join does, or nothing starts.
@@ -456,7 +549,7 @@ public partial class MainWindow
                 if (!await TurnProtectionOn(ask: false) || CommandCancelled) return false;
             }
         }
-        if (!ip && next == null && s == null) { Toast("New IP + next account has nothing to do: turn on at least one step in Settings > New IP + next account.", false); return false; }
+        if (!ip && next == null && s == null) { Toast(NothingText(steps.Ip || ipLeftOut, steps.Rejoin), false); return false; }
         Log.Info($"{from}: " + string.Join(", ", new[] { ip ? "new IP" : null, next != null ? $"log in to {next.Name}" : null, s != null ? $"rejoin {s.Key}" : null }.Where(x => x != null)) + ".");
         _rejoining = true;
         UpdateRejoinBtn();
@@ -478,6 +571,14 @@ public partial class MainWindow
         }
         finally { _rejoining = false; UpdateRejoinBtn(); ShowCancel(); }
     }
+
+    /// <summary>
+    /// A switch left with nothing to run. <paramref name="ipSkipped"/>: the IP step was on but the IP can't change now (said just before);
+    /// <paramref name="serverMissing"/>: the rejoin step was on but there is no last server in your list. Only with every step off, Settings.
+    /// </summary>
+    public static string NothingText(bool ipSkipped, bool serverMissing) => !ipSkipped && !serverMissing
+        ? "New IP + next account has nothing to do: turn on at least one step in Settings > New IP + next account."
+        : "Nothing to do now: " + string.Join(" and ", new[] { ipSkipped ? "the IP stays the same" : null, serverMissing ? "the last server isn't in your list" : null }.Where(x => x != null)) + ".";
 
     public enum IpWhenOff { Change, Skip, AskTurnOn }
 
@@ -532,10 +633,22 @@ public partial class MainWindow
     /// </summary>
     Task ChangeIpAndRejoin(string from)
     {
+        // No server to go back to: nothing starts, so the IP doesn't change and drop you from the game for nothing
+        if (!_servers.Any(x => x.Key == _s.LastServer))
+        {
+            var why = NoRejoinWhy(_s.LastServer);
+            Log.Info($"{from}: not rejoining. {why}");
+            Toast(why, false);
+            return Task.CompletedTask;
+        }
         Telemetry.Rejoin("try");
         (_rejoinTarget, _rejoinAt) = (_s.LastServer, DateTime.Now);
-        if (!BannedOnLast()) return RunCommand("Change IP and rejoin", "starting…", () => RunSwitch(new SwitchSteps(true, false, true, true), from));
+        if (!BannedOnLast()) return RunCommand(RejoinName(_s.NoPhone, _protOn, _s.UseWithProtectionOff), "starting…", () => RunSwitch(new SwitchSteps(true, false, true, true), from));
         Log.Info($"{from}: {ActiveAccount()?.Name} is banned on {_s.LastServer}, so the rejoin also switches account.");
         return RejoinAfterBan(from);
     }
+
+    /// <summary>The rejoin's name in the top bar and the Log: just "Rejoin" when the IP step is left out (protection off with the option).</summary>
+    public static string RejoinName(bool noPhone, bool protOn, bool useWithOff) =>
+        !noPhone && IpStep(protOn, useWithOff) == IpWhenOff.Skip ? "Rejoin" : "Change IP and rejoin";
 }

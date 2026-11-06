@@ -26,15 +26,16 @@ public partial class MainWindow
 
     /// <summary>
     /// The menu, top to bottom: the state (not clickable), Open, the commands, Quit. Key null = separator. <paramref name="on"/>: protection
-    /// is on, so the line turns it off; off, it turns it on (greyed in No phone mode, where there is nothing to turn on).
+    /// is on, so the line turns it off; off, it turns it on (greyed in No phone mode, where there is nothing to turn on). <paramref name="quick"/>:
+    /// the switch's name as its button says it now ("Log in to atlas + rejoin" when the IP doesn't change).
     /// </summary>
-    public static List<(string Text, string Key, bool Enabled)> TrayLayout(string state, bool on, bool phone) =>
+    public static List<(string Text, string Key, bool Enabled)> TrayLayout(string state, bool on, bool phone, string quick = "New IP + next account") =>
     [
         (string.IsNullOrWhiteSpace(state) ? "CS2 IP Changer" : state, "state", false),
         (null, null, false),
         ("Open", "open", true),
         on ? ("Turn off protection", "off", true) : ("Turn on protection", "on", phone),
-        ("New IP + next account", "switch", true),
+        (string.IsNullOrWhiteSpace(quick) ? "New IP + next account" : quick, "switch", true),
         ("Change IP", "changeip", phone),
         ("Regions", "regions", true),
         (null, null, false),
@@ -42,11 +43,15 @@ public partial class MainWindow
     ];
 
     /// <summary>Built each time the menu opens, from the state of that moment. The state line has no command, so it is greyed.</summary>
-    public static List<Tray.Item> TrayItems(string state, bool on, bool phone, Action<string> command) =>
-        TrayLayout(state, on, phone).Select(l => l.Text == null ? new Tray.Item(null)
+    public static List<Tray.Item> TrayItems(string state, bool on, bool phone, Action<string> command, string quick = "New IP + next account") =>
+        TrayLayout(state, on, phone, quick).Select(l => l.Text == null ? new Tray.Item(null)
             : new Tray.Item(l.Text, l.Key == "state" ? null : () => command(l.Key), l.Enabled, l.Key == "open")).ToList();
 
-    IReadOnlyList<Tray.Item> TrayMenu() => TrayItems(SideState.Text, _protOn && !_s.NoPhone, !_s.NoPhone, TrayCommand);
+    IReadOnlyList<Tray.Item> TrayMenu()
+    {
+        UpdateQuickInfo();   // the switch's name as of now
+        return TrayItems(SideState.Text, _protOn && !_s.NoPhone, !_s.NoPhone, TrayCommand, _quickName);
+    }
 
     void TrayCommand(string key)
     {

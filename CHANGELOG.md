@@ -40,6 +40,21 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Steam names with invisible characters (direction marks, Unicode tags) showed them in the Log and on screen. They are left out now.
 - With protection off, the Log said the phone's Wi-Fi blocked servers and CS2, and that CS2 went through the phone in Whole PC while CS2 is open. Neither is true with protection off; the Log now says what is.
 - Opening the app twice in a few minutes wrote "Usage stats: the report wasn't sent (the server answered 429)" in the Log. That answer only means "not yet" and the report goes later, so it no longer shows.
+- In No phone mode, New IP + next account without the account step was named "Rejoin" but only showed "there is no IP to change" and didn't rejoin. It now rejoins.
+- On an iPhone, New IP + next account with the account step was named "New IP + <account>" but never changed the IP. It is now named for what it does, and says to use Change IP for the IP. Change IP and rejoin is no longer greyed out with an iPhone connected.
+- The top bar and the Log called the switch "New IP + next account" whatever it did. They now use the button's name, for example "Log in to atlas + rejoin · done", and the rejoin is just "Rejoin" when protection is off with Use the app with protection off. The notification area's menu uses the button's name too.
+- With protection off and Use the app with protection off, Change IP and rejoin was greyed out without the phone, and its tooltip said both that it changes the IP and that it doesn't. It now works on your home connection and says so.
+- When the last server was no longer in your list, the rejoin hotkey still changed the IP, dropped you from the game and didn't take you back. It now stops before anything changes and says why, and the button is greyed out.
+- Log in with Open CS2 opened CS2 on your home connection with protection off, but only when the CS2 lock option was on. It now doesn't open CS2 with protection off (unless Use the app with protection off is on), and says so once the login is done instead of before.
+- A ban on the account in use was not saved when that account was hidden from the list, so the rejoin came back with the banned account and the Log asked to log in with Remember me. Bans now count on hidden accounts too.
+- The ban message always promised "rejoin with a new IP as <account>". It now says what the key does: the IP stays the same in No phone mode, protection has to be turned on first when it is off, and an account that isn't in Accounts would rejoin as itself.
+- In No phone mode, or with protection off and Use the app with protection off, some messages talked about the phone: after a timeout, a "No Steam logon" kick, a VPN block, a server joined that isn't in your list, and Join on a server where you were banned. They now talk about your home connection. In Settings, Rejoin the last server and Change the IP say when they run.
+- An account switch that Steam can't do (loginusers.vdf behind a link, or with content the app can't write back) closed CS2 first, and in New IP + next account it changed the IP first. It now stops before anything is closed or changed.
+- With the IP and rejoin steps on and the last server gone, New IP + next account said "turn on at least one step". It now says the IP stays the same and the last server isn't in your list.
+- A server joined from CS2's own browser that said it was full started the app's retry every 15 s. Only a Join or Rejoin from the app does now, and the "last" mark on Servers follows the server you joined.
+- New IP + next account could name the account Steam had just logged in to, for a few seconds after a login, and didn't update when a cooldown ended.
+- Alt+F4, Alt+Space, Alt+Tab and Alt+Esc could be picked as a hotkey, which took them from every window (Alt+F4 stopped closing windows). They are refused now.
+- An account name with an emoji around the 9th letter could show a broken character on the New IP + next account button.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

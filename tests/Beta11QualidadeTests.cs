@@ -110,7 +110,7 @@ static class Beta11QualidadeTests
         // ---------------- 6. Toast do ban diz a conta seguinte
         check("Ban: diz a tecla e a conta seguinte", MainWindow.BanToast(" for 30 minutes", "Ctrl+Shift+F9", "atlas") == "Banned for 30 minutes. Press Ctrl+Shift+F9 to rejoin with a new IP as atlas.", "");
         check("Ban: sem conta seguinte não manda carregar na tecla", !MainWindow.BanToast("", "F9", null).Contains("Press") && MainWindow.BanToast("", "F9", null).Contains("No other account"), "");
-        check("Ban: o toast usa a conta seguinte do servidor", Src("Views", "MainWindow.Kick.cs").Contains("BanToast(d.For, _s.HotkeyRejoin, NextQuick(inList)?.Name)"), "");
+        check("Ban: o toast usa a conta seguinte do servidor", Src("Views", "MainWindow.Kick.cs").Contains("BanToast(d.For, _s.HotkeyRejoin, NextQuick(inList)?.Name, marked: acc != null"), "");
 
         // ---------------- 6b. Um só botão azul: com o Wi-Fi do telemóvel ligado ou sem telemóvel, o azul é o do arranjo
         check("Botão: com algo a bloquear, nem Change IP nem rejoin ficam azuis", MainWindow.StatusPrimary(true, false, true, fixFirst: true) == ("Btn", "Btn")
@@ -128,7 +128,7 @@ static class Beta11QualidadeTests
         var addText = MainWindow.AddJoinedText("1.2.3.4:27015");
         check("Servidor novo: não diz que entraste protegido", !addText.Contains("protected", StringComparison.OrdinalIgnoreCase) && addText.Contains("isn't in your servers"), addText);
         var kick = Src("Views", "MainWindow.Kick.cs");
-        check("Servidor novo: o toast tem o botão Add", kick.Contains("Toast(AddJoinedText(server), Tone.Info, \"Add\", () => AddFromText(server));"), "");
+        check("Servidor novo: o toast tem o botão Add", kick.Contains("Toast(AddJoinedText(server, OnHome), Tone.Info, \"Add\", () => AddFromText(server));"), "");
         var xamlSrv = Src("MainWindow.xaml");
         check("Servers vazio: quem só sabe o nome entra pelo CS2 e a app oferece juntá-lo (com a proteção desligada: em Game only os de fora da lista não ligam)",
             xamlSrv.Contains("Only know its name? Join it once in CS2 with protection off (that join uses your home IP): the app offers to add it."), "");

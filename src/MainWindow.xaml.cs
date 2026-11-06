@@ -243,7 +243,7 @@ public partial class MainWindow : Window
                 a.RefreshAll();
                 SaveAccounts();
                 Toast($"The cooldown for {a.Name} has ended.", true);
-
+                UpdateQuickInfo();   // it is back in the rotation: New IP + next account may name it now
             }
         }
     }
