@@ -128,7 +128,7 @@ static class Beta11QualidadeTests
         var addText = MainWindow.AddJoinedText("1.2.3.4:27015");
         check("Servidor novo: não diz que entraste protegido", !addText.Contains("protected", StringComparison.OrdinalIgnoreCase) && addText.Contains("isn't in your servers"), addText);
         var kick = Src("Views", "MainWindow.Kick.cs");
-        check("Servidor novo: o toast tem o botão Add", kick.Contains("Toast(AddJoinedText(server), Tone.Info, \"Add\", () => AddFromText(server));"), "");
+        check("Servidor novo: o toast tem o botão Add", kick.Contains("Toast(AddJoinedText(server, _s.NoPhone), Tone.Info, \"Add\", () => AddFromText(server));"), "");
         var xamlSrv = Src("MainWindow.xaml");
         check("Servers vazio: quem só sabe o nome entra pelo CS2 e a app oferece juntá-lo (com a proteção desligada: em Game only os de fora da lista não ligam)",
             xamlSrv.Contains("Only know its name? Join it once in CS2 with protection off (that join uses your home IP): the app offers to add it."), "");

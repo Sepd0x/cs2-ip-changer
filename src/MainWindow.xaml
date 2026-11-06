@@ -764,7 +764,7 @@
                                     <TextBox x:Name="DefaultPortBox" Width="64" Height="28" FontFamily="{StaticResource Mono}" VerticalContentAlignment="Center"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="10,0,0,0">
-                                    <Button Style="{StaticResource Primary}" Click="AddServers_Click" Content="Add" ToolTip="Adds those servers and routes them through the phone right away (Ctrl+Enter)"/>
+                                    <Button Style="{StaticResource Primary}" Click="AddServers_Click" Content="Add" ToolTip="Adds those servers to the list (Ctrl+Enter). With protection on, they only go out through the phone."/>
                                     <Button Click="PasteServers_Click" Content="Paste" ToolTip="Adds whatever is on the clipboard"/>
                                     <Button Click="ImportServers_Click" Margin="0" Content="Import" ToolTip="Reads every IP:port from a .txt, .csv or .cfg file"/>
                                 </StackPanel>

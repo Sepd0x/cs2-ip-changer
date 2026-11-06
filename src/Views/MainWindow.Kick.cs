@@ -73,13 +73,15 @@ public partial class MainWindow
     public static bool OffersAdd(string server, IEnumerable<string> listed, ICollection<string> offered) =>
         server != null && !listed.Contains(server) && !offered.Contains(server);
 
-    public static string AddJoinedText(string server) => $"You joined {server}, which isn't in your servers. Add it, to play it through the phone next time?";
+    public static string AddJoinedText(string server, bool noPhone = false) => noPhone
+        ? $"You joined {server}, which isn't in your servers. Add it to the list?"
+        : $"You joined {server}, which isn't in your servers. Add it, to play it through the phone next time?";
 
     void OfferAddJoined(string server)
     {
         if (!OffersAdd(server, _servers.Select(x => x.Key), _addOffered)) return;
         _addOffered.Add(server);
-        Toast(AddJoinedText(server), Tone.Info, "Add", () => AddFromText(server));
+        Toast(AddJoinedText(server, _s.NoPhone), Tone.Info, "Add", () => AddFromText(server));
     }
 
     readonly NetReportReader _netReport = new();

@@ -40,6 +40,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Steam names with invisible characters (direction marks, Unicode tags) showed them in the Log and on screen. They are left out now.
 - With protection off, the Log said the phone's Wi-Fi blocked servers and CS2, and that CS2 went through the phone in Whole PC while CS2 is open. Neither is true with protection off; the Log now says what is.
 - Opening the app twice in a few minutes wrote "Usage stats: the report wasn't sent (the server answered 429)" in the Log. That answer only means "not yet" and the report goes later, so it no longer shows.
+- Adding servers always said "added and protected", also with protection off or in No phone mode, where they see your home IP. It now says what happens: they go through the phone, they stay blocked until the phone is connected and checked, or they see your home IP. The Add tooltip no longer promises the phone, and in No phone mode the offer to add a server you joined just asks to add it to the list.
+- With the phone plugged in but its IP still being checked (or its Wi-Fi on), Refresh on Servers said "Phone disconnected" and Join said "protection is not confirmed (Blocked)". Servers, Join, Wait for a slot and Regions now give the real reason, for example "The phone connection's public IP hasn't been checked yet." A slot wait with protection turned off says that.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

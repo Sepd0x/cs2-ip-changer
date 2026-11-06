@@ -138,7 +138,7 @@ public partial class MainWindow
         if (local == null)
         {
             // Through the phone while protection is on (the number has to be what the game feels, never from the home IP), else at home
-            if (!quiet) Toast(PingedOnHome ? "No connection to measure the ping through." : "Protection is on and the phone is disconnected: the ping is measured through the phone. Turning regions on and off still works.", false);
+            if (!quiet) Toast(PingedOnHome ? "No connection to measure the ping through." : NoLinkWhy(_last) + " With protection on, the ping is only measured through the phone. Turning regions on and off still works.", false);
             ShowRegionsStatus();
             return;
         }
@@ -183,7 +183,12 @@ public partial class MainWindow
     bool PingedOnHome => PingOnHome(_s.NoPhone, _protOn);
     bool _regionsPingedHome;
 
-    string MeasureFirst => PingVia == null && !PingedOnHome ? "Measure the ping first: protection is on, so connect the phone and press Refresh." : "Measure the ping first: press Refresh.";
+    string MeasureFirst => PingVia == null && !PingedOnHome ? "Measure the ping first. " + NoLinkWhy(_last) + " With protection on, the ping is only measured through the phone." : "Measure the ping first: press Refresh.";
+
+    /// <summary>The page's grey line while protection is on and nothing can be measured: connect the phone, or wait for its check.</summary>
+    public static string NoPingSuffix(GuardReport rep) => rep?.Candidate != null
+        ? " · the ping waits until the phone's connection is checked (protection is on)"
+        : " · connect the phone to measure ping (protection is on)";
 
     Dictionary<string, int> MeasuredPings() => _regions.Where(r => r.PingMs >= 0).ToDictionary(r => r.Id, r => r.PingMs);
 
@@ -425,7 +430,7 @@ public partial class MainWindow
         var pinged = _regions.Any(r => r.PingMs >= 0);
         src += _pingingRegions ? " · measuring ping…"
             : pinged ? $" · ping measured {Fmt.Ago(_regionsPingedAt)}" + (_regionsPingedHome ? " without the phone" : " through the phone")
-            : PingVia == null && !PingedOnHome ? " · connect the phone to measure ping (protection is on)"
+            : PingVia == null && !PingedOnHome ? NoPingSuffix(_last)
             : "";
         RegionsSource.Text = src;
         RegionsSource.ToolTip = $"Valve list revision {_sdr.Revision}. Ping is measured " + (PingedOnHome ? "without the phone (protection off or No phone)" : "through the phone")

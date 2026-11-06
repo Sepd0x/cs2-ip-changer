@@ -119,11 +119,25 @@ public partial class MainWindow
         ShowLastServer();
         if (n == 0 && ignored.Count == 0) { Toast("Those servers are already in the list.", false); return; }
         Log.Info($"Added {Fmt.Count(n, "server")}." + (ignored.Count > 0 ? " Ignored (not a public IP:port): " + string.Join(", ", ignored.Take(20)) + (ignored.Count > 20 ? $" and {ignored.Count - 20} more" : "") : ""));
-        Toast(n > 0 ? $"{Fmt.Count(n, "server")} added and protected." + (ignored.Count > 0 ? $" {ignored.Count} ignored." : "") : "No valid IP:port.", n > 0);
+        Toast(n > 0 ? AddedText(n, ignored.Count, _protOn, _s.NoPhone, _last?.Egress != null) : "No valid IP:port.", n > 0);
         _s.DefaultPort = int.TryParse(DefaultPortBox.Text, out var dp) ? dp : 27015;
         SaveSettings();
         await SyncNow(force: true);
         await QueryServers(true);
+    }
+
+    /// <summary>
+    /// What adding means now (review C1: "added and protected" also showed with protection off and in No phone, where nothing is
+    /// blocked or routed): through the phone, blocked until the phone is ready, or on the home IP.
+    /// </summary>
+    public static string AddedText(int added, int ignored, bool protOn, bool noPhone, bool egress)
+    {
+        var one = added == 1;
+        var now = noPhone ? (one ? "No phone mode: it sees your home IP." : "No phone mode: they see your home IP.")
+            : !protOn ? (one ? "Protection is off: it sees your home IP until you turn it on." : "Protection is off: they see your home IP until you turn it on.")
+            : egress ? (one ? "It goes through the phone." : "They go through the phone.")
+            : one ? "It stays blocked until the phone is connected and checked." : "They stay blocked until the phone is connected and checked.";
+        return $"{Fmt.Count(added, "server")} added. {now}" + (ignored > 0 ? $" {ignored} ignored." : "");
     }
 
     async void AddServers_Click(object sender, RoutedEventArgs e) { var t = BulkInput.Text; BulkInput.Clear(); await AddFromText(t); }
@@ -176,6 +190,23 @@ public partial class MainWindow
         return sel.Count > 0 ? sel : _serverView.Cast<ServerItem>().ToList();
     }
 
+    /// <summary>
+    /// Why there is no protected connection, in the Guard's words (review C2: with the phone plugged in but its IP still being
+    /// checked, or its Wi-Fi on, the app said "Phone disconnected"). The Guard only leaves it empty when there is no phone at all.
+    /// </summary>
+    public static string NoLinkWhy(GuardReport rep) => rep?.EgressProblem ?? "The phone isn't connected.";
+
+    /// <summary>Join stopped with protection on: the connection's reason, or this server's route when the connection is there.</summary>
+    public static string JoinBlockedText(string title, GuardReport rep, string routeText) => rep?.Egress == null
+        ? $"Not joining {title}. {NoLinkWhy(rep)}"
+        : $"Not joining {title}: its route through the phone isn't confirmed ({routeText}).";
+
+    /// <summary>The slot wait can't ask the server now: no connection, protection turned off since, or the phone's reason.</summary>
+    public static string SlotNoLinkText(string title, bool onHome, bool protOn, GuardReport rep) =>
+        onHome ? $"Waiting for a slot on {title}: no connection."
+        : !protOn ? $"Waiting for a slot on {title}: protection is off."
+        : $"Waiting for a slot on {title}. {NoLinkWhy(rep)}";
+
     async void QueryServers_Click(object sender, RoutedEventArgs e) => await QueryServers(false);
 
     async Task QueryServers(bool quiet)
@@ -188,7 +219,7 @@ public partial class MainWindow
         {
             if (!quiet) Toast(OnHome ? "No connection to ask the servers through."
                 : !_protOn ? "Protection is off: the servers aren't asked over your home network. Turn it on to see players and ping (or Settings > Use the app with protection off)."
-                : "Phone disconnected: not querying servers over your home network.", false);
+                : NoLinkWhy(_last) + " Servers aren't asked over your home network.", false);
             return;
         }
         _querying = true;
@@ -315,7 +346,7 @@ public partial class MainWindow
             var fullOk = _last?.Egress != null && _last.EffectiveMode == "all" && _last.FullModeOk;
             if (!OnHome && s.Protected != true && !fullOk)
             {
-                Toast($"Not joining {s.Key}: protection is not confirmed ({s.RouteText}).", false);
+                Toast(JoinBlockedText(s.Title, _last, s.RouteText), false);
                 return false;
             }
             // The two known causes of the "No Steam logon" kick: Steam in offline mode, or Steam on a different network than CS2.
@@ -448,7 +479,7 @@ public partial class MainWindow
         if (s == null || _slotChecking) return;
         if (!_servers.Contains(s)) { StopSlotWait(); return; }
         // On the home connection on purpose (No phone, or protection off with the option) the slot is checked from there, as Connect does
-        if ((OnHome ? HomeAdapter : _last?.Egress) is not Adapter eg) { SlotText.Text = $"Waiting for a slot on {s.Title}: " + (OnHome ? "no connection." : "the phone is not connected."); return; }
+        if ((OnHome ? HomeAdapter : _last?.Egress) is not Adapter eg) { SlotText.Text = SlotNoLinkText(s.Title, OnHome, _protOn, _last); return; }
         _slotChecking = true;
         try
         {
