@@ -44,6 +44,9 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - With the phone plugged in but its IP still being checked (or its Wi-Fi on), Refresh on Servers said "Phone disconnected" and Join said "protection is not confirmed (Blocked)". Servers, Join, Wait for a slot and Regions now give the real reason, for example "The phone connection's public IP hasn't been checked yet." A slot wait with protection turned off says that.
 - A double click on a server's star, its player count or its Join button also joined the server (and with CS2 open, that can take you out of your match). Only a double click on the row itself joins now.
 - With Join automatically on, a free slot that opened while another command was running (Change IP, an account switch) was lost: the join was refused as busy and the wait was gone. With a question open, it closed your question. Now the app keeps the slot, says it is free and shows Join. The retry on a full server waits for the other command too.
+- After protection was turned off, the phone dropped, or a server had no route yet, Servers kept showing the last map, players and ping as if they were live. A row that isn't asked now shows dashes, and the Refresh count no longer counts servers it didn't ask as not responding ("3 of 5 servers responded (2 not asked: not routed through the phone yet)").
+- A server without a name was called "Server not responding" before it was ever asked, also in Join's messages and questions. The list now says "No name yet" until it is asked and "Not responding" only when it didn't answer; messages use its IP:port.
+- Tooltips on Servers and Regions said the ping, Refresh and Join always went through the phone. They now say what happens with protection on and off.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

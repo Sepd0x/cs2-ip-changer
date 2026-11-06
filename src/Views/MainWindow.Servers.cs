@@ -230,6 +230,8 @@ public partial class MainWindow
             if (!quiet) Toast(OnHome ? "No connection to ask the servers through."
                 : !_protOn ? "Protection is off: the servers aren't asked over your home network. Turn it on to see players and ping (or Settings > Use the app with protection off)."
                 : NoLinkWhy(_last) + " Servers aren't asked over your home network.", false);
+            // Nothing is asked now: the last answers would read as live (review C6)
+            foreach (var srv in _servers) ClearLive(srv);
             return;
         }
         _querying = true;
@@ -238,13 +240,14 @@ public partial class MainWindow
             var targets = quiet ? _servers.ToList() : SelectedOrAll();
             var gate = new SemaphoreSlim(8);
             var ok = 0;
+            var notAsked = OnHome ? 0 : targets.Count(srv => !Routed(srv));
             await Task.WhenAll(targets.Select(async srv =>
             {
                 await gate.WaitAsync();
                 try { if (await QueryOne(srv, egress)) Interlocked.Increment(ref ok); }
                 finally { gate.Release(); }
             }));
-            if (!quiet) Toast($"{ok} of {Fmt.Count(targets.Count, "server")} responded.", ok > 0);
+            if (!quiet) Toast(RespondedText(ok, targets.Count, notAsked), ok > 0);
         }
         finally { _querying = false; }
         ApplyServerBans();   // the network of a ban is known by name only after the server answers
@@ -254,7 +257,7 @@ public partial class MainWindow
     /// <summary>Name, map, players and ping of one server, only through the phone. False if it didn't answer (or isn't routed).</summary>
     async Task<bool> QueryOne(ServerItem srv, Adapter egress)
     {
-        if (!OnHome && (_last?.RouteOk.TryGetValue(srv.Ip, out var routed) != true || !routed)) { srv.PingText = "—"; srv.Players = null; return false; }
+        if (!OnHome && !Routed(srv)) { ClearLive(srv); return false; }
         try
         {
             var info = await A2S.Query(srv.Ip, srv.Port, egress.LocalIp);
@@ -269,19 +272,42 @@ public partial class MainWindow
             if (info.PlayerList != null) { srv.Players = ToRows(srv, info.PlayerList); srv.PlayersAt = DateTime.Now; }
             else if (info.Players == 0 || DateTime.Now - srv.PlayersAt > TimeSpan.FromMinutes(2)) srv.Players = null;
             srv.PlayersHidden = info.Players > 0 && srv.Players == null;
+            srv.Answered = true;
             Log.Again("servers-query|");
             return true;
         }
         catch (Exception ex)
         {
             if (!A2S.NoAnswer(ex)) Log.WarnOnce("servers-query|" + ex.GetType().Name, $"Servers: asking a server failed ({ex.GetType().Name}: {ex.Message}), so it shows no ping or players.");
-            srv.PingMs = -1;
-            srv.PingText = "—";
-            srv.PlayersText = "—";
-            srv.Players = null;
+            ClearLive(srv);
+            srv.Answered = false;
             return false;
         }
     }
+
+    /// <summary>With protection on, a server is only asked once Windows sends it through the phone.</summary>
+    bool Routed(ServerItem srv) => _last?.RouteOk.TryGetValue(srv.Ip, out var routed) == true && routed;
+
+    /// <summary>
+    /// A row without an answer now (not asked, or no answer): no map, players, bar or ping from an older answer. The name stays,
+    /// it is still that server (review C6: "12/20" and "35 ms" stayed for good after protection was turned off).
+    /// </summary>
+    public static void ClearLive(ServerItem srv)
+    {
+        srv.PingMs = -1;
+        srv.PingText = "—";
+        srv.PlayersText = "—";
+        srv.Map = "—";
+        srv.Players = null;
+        srv.PlayersHidden = false;
+        srv.PlayerCount = 0;
+        srv.MaxPlayers = 0;
+        srv.Answered = null;
+    }
+
+    /// <summary>The Refresh toast: servers not asked (no route through the phone yet) aren't counted as not answering.</summary>
+    public static string RespondedText(int ok, int total, int notAsked) =>
+        $"{ok} of {Fmt.Count(total, "server")} responded" + (notAsked > 0 ? $" ({notAsked} not asked: not routed through the phone yet)." : ".");
 
     void AutoQuery_Click(object sender, RoutedEventArgs e) { _s.AutoQuery = AutoQueryBox.IsChecked == true; SaveSettings(); }
 

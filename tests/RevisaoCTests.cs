@@ -38,6 +38,31 @@ static class RevisaoCTests
         check("Revisão C2: Refresh e Regions usam o mesmo motivo", servers.Contains("NoLinkWhy(_last)") && regions.Contains("NoLinkWhy(_last)") && !servers.Contains("Phone disconnected: not querying") && !regions.Contains("the phone is disconnected"), "");
         check("Revisão C2: a linha de Regions com o telemóvel por verificar não manda ligá-lo", !MainWindow.NoPingSuffix(unchecked_).Contains("connect the phone") && MainWindow.NoPingSuffix(null).Contains("connect the phone"), "");
 
+        // C6: o que não foi perguntado agora sai da linha
+        var s6 = new ServerItem { Ip = "1.2.3.4", Port = 27015, PlayersText = "12/20", PingMs = 35, PingText = "35 ms", Map = "de_mirage", PlayerCount = 12, MaxPlayers = 20, PlayersHidden = true, ServerName = "Casa" };
+        MainWindow.ClearLive(s6);
+        check("Revisão C6: sem pergunta, os jogadores, o mapa e o ping antigos saem", s6.PlayersText == "—" && s6.PingMs == -1 && s6.PingText == "—" && s6.Map == "—" && s6.PlayerCount == 0 && s6.MaxPlayers == 0 && !s6.HasPlayers && !s6.PlayersHidden && s6.Players == null, "");
+        check("Revisão C6: o nome fica", s6.ServerName == "Casa", "");
+        check("Revisão C6: o ramo sem rota e o catch limpam tudo", servers.Contains("ClearLive(srv); return false;") && servers.Contains("ClearLive(srv);\n            srv.Answered = false;"), "");
+        check("Revisão C6: os não perguntados não contam como sem resposta", MainWindow.RespondedText(3, 5, 2) == "3 of 5 servers responded (2 not asked: not routed through the phone yet).", MainWindow.RespondedText(3, 5, 2));
+        check("Revisão C6: sem ligação, as linhas perdem os valores antigos", servers.Contains("foreach (var srv in _servers) ClearLive(srv);"), "");
+
+        // C7: um servidor por perguntar não é "Server not responding"
+        var s7 = new ServerItem { Ip = "1.2.3.4", Port = 27015 };
+        check("Revisão C7: um servidor sem nome usa o IP:porta como título", s7.Title == "1.2.3.4:27015", s7.Title);
+        check("Revisão C7: a linha diz No name yet antes de perguntar", s7.RowTitle == "No name yet", s7.RowTitle);
+        s7.Answered = false;
+        check("Revisão C7: a linha diz Not responding depois de uma pergunta falhada", s7.RowTitle == "Not responding", s7.RowTitle);
+        s7.ServerName = "Casa";
+        check("Revisão C7: com nome, a linha e o título dizem o nome", s7.RowTitle == "Casa" && s7.Title == "Casa", "");
+        check("Revisão C7: a linha da lista usa o RowTitle", xaml.Contains("<TextBlock Text=\"{Binding RowTitle}\" TextTrimming=\"CharacterEllipsis\" Margin=\"0,0,10,0\"/>") && !Src("Models.cs").Contains("\"Server not responding\""), "");
+
+        // C8: tooltips que servem aos 4 estados
+        foreach (var t in new[] { "always through the phone", "(through the phone, never the home network)", "measures the ping to every region through the phone",
+                                  "Measured through the phone, the same path the game uses", "Servers that go through the phone", "lowest ping through the phone",
+                                  "Checks this server's route first" })
+            check($"Revisão C8: sem \"{t}\" (falso sem proteção e no No phone)", !xaml.Contains(t), "");
+
         // C9: duplo clique num botão da linha não entra no servidor
         var dbl = servers.IndexOf("void ServerList_DoubleClick");
         check("Revisão C9: duplo clique num botão da linha não entra no servidor",
