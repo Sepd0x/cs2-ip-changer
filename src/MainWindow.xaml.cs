@@ -21,7 +21,8 @@ public partial class MainWindow : Window
     readonly ObservableCollection<ServerItem> _servers = new();
     ICollectionView _serverView;
     readonly List<AccountItem> _accounts = new();
-    Dictionary<string, AccountMeta> _accMeta = new();
+    /// <summary>accounts.json, read once by the first LoadAccounts (null before): the AccountItems share these objects.</summary>
+    Dictionary<string, AccountMeta> _accMeta;
     readonly ObservableCollection<AccountItem> _accShown = new();
     readonly ObservableCollection<LogEntry> _log = new();
     readonly ObservableCollection<IpHistoryEntry> _history = new();
@@ -57,7 +58,8 @@ public partial class MainWindow : Window
 
     static readonly Regex ServerRegex = new(@"(?<![\d.])(\d{1,3}(?:\.\d{1,3}){3})(?!\d|\.\d)(?:[ \t]*[:,; \t][ \t]*(\d+)(?!\d|\.\d))?", RegexOptions.Compiled);
 
-    public MainWindow(string[] args)
+    /// <param name="stats">What the usage stats notice gave before the window (App.StatsGate).</param>
+    public MainWindow(string[] args, App.StatsConsent stats)
     {
         InitializeComponent();
         Rec.Install(this, PersonalWords);
@@ -87,7 +89,7 @@ public partial class MainWindow : Window
         }
         if (_s.ApiKeyLost) Log.Warn("The Steam Web API key in settings.json was saved by another Windows user or on another PC and can't be read here. Paste it again in Settings > Steam.");
         InitDev();
-        if (App.StatsJustAccepted && !_demo)
+        if (stats.JustAccepted && !_demo)
         {
             _s.StatsAccepted = true;
             _s.StatsNotice = Telemetry.NoticeVersion;
@@ -99,8 +101,8 @@ public partial class MainWindow : Window
         TelemetryHook();
         // The day the notice was accepted: the dashboard's "new users" (also once for someone coming from beta.7, who sees it once;
         // not for an older notice accepted again, that's no first start)
-        if (App.StatsJustAccepted && !App.StatsAskedAgain && !_demo) Telemetry.Count("first_start");
-        if (App.StatsJustAccepted && !App.StatsAskedAgain && !_demo && !Rec.On) Loaded += (_, _) => FirstStartCheck();   // Steam and CS2 found? (4 nov.)
+        if (stats.FirstStart && !_demo) Telemetry.Count("first_start");
+        if (stats.FirstStart && !_demo && !Rec.On) Loaded += (_, _) => FirstStartCheck();   // Steam and CS2 found? (4 nov.)
         LoadFlags();
         LoadOpenWith();
         LoadServers();

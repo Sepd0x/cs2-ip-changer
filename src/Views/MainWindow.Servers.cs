@@ -354,7 +354,7 @@ public partial class MainWindow
             {
                 // With CS2 closed, a connect sent at launch gets lost while the main menu loads: open CS2, wait for the menu, then connect.
                 if (openWith) OpenWithCs2();
-                var log = Cs2Launch.ConsoleLog(_s);
+                var log = Cs2ConsoleLog();
                 var menu = new ConsoleTail();
                 menu.StartAt(log);
                 ConfigsBeforeCs2();
@@ -488,11 +488,11 @@ public partial class MainWindow
         {
             await _cs2.Close("the Steam restart");
             // Valve routes already go through the phone: the new Steam connects that way, then CS2 opens and joins from its menu.
-            var log = Cs2Launch.ConsoleLog(_s);
+            var log = Cs2ConsoleLog();
             var menu = new ConsoleTail();
             menu.StartAt(log);
             ConfigsBeforeCs2();
-            await Steam.Restart(Cs2Launch.SteamRestartArgs(_s.SteamSilent));
+            await Steam.Restart(Cs2Launch.SteamRestartArgs(_s.SteamSilent), WhileSteamClosed);
             if (openWith) OpenWithCs2();
             Diag.Write("steam-restarted", new { server = s.Key });
             Log.Ok($"Steam restarted through the phone; CS2 opens and joins {s.Key}.");

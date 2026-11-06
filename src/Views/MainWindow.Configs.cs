@@ -40,11 +40,12 @@ public partial class MainWindow
         {
             FlushCfgQueue();   // copies left from an earlier run (nothing happens while CS2 is open)
             var st = Cfg.State;
-            if (st.Known == null) { st.Known = _accMeta.Keys.ToList(); Cfg.SaveState(); return; }
-            var fresh = _accounts.Where(a => !st.Known.Contains(a.SteamId)).ToList();
-            if (fresh.Count == 0) return;
-            st.Known.AddRange(fresh.Select(a => a.SteamId));
+            var known = st.Known;
+            var ids = NewAccounts(ref known, _steamIds);
+            if (st.Known == null) { st.Known = known; Cfg.SaveState(); return; }
+            if (ids.Count == 0) return;
             Cfg.SaveState();
+            var fresh = _accounts.Where(a => ids.Contains(a.SteamId)).ToList();   // a hidden account is remembered, never copied to
             if (!_s.ConfigOnNewAccount || _s.ConfigMode == CfgMode.Off) return;
             var jobs = fresh.SelectMany(a => CfgPlan(CfgTrigger.New, a.SteamId, PreviousAccount(a.SteamId))).ToList();
             RunCfgJobs(jobs, CfgTrigger.New, false);

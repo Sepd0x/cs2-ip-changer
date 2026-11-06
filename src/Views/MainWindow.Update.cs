@@ -18,12 +18,24 @@ public partial class MainWindow
         _checkingUpdate = true;
         try
         {
-            using var cts = new CancellationTokenSource(20000);
-            var r = await Updater.Latest(cts.Token);
+            Updater.Release r;
+            try
+            {
+                using var cts = new CancellationTokenSource(20000);
+                r = await Updater.Latest(cts.Token);
+            }
+            catch (Exception ex)
+            {
+                _updateRetryAt = DateTime.Now.AddHours(1);   // offline or rate-limited: not every tick
+                Log.Info("Update check failed: " + ex.Message);
+                return;
+            }
             _s.LastUpdateCheck = DateTime.Now;
             var wasKnown = _s.UpdateLatest;
             _s.UpdateLatest = r?.Version;
-            SaveSettings();
+            // The check itself worked: a settings file that can't be written is its own Log line, and the new version is still said
+            try { SaveSettings(); }
+            catch (Exception ex) { Log.Warn("Couldn't save the settings after the update check: " + ex.Message); }
             if (r != null && Updater.IsNewer(r.Version, AppInfo.Version))
             {
                 _update = r;
@@ -34,11 +46,6 @@ public partial class MainWindow
                     Toast($"CS2 IP Changer {r.Version} is available. Click Update under the version number.", Tone.Info);
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            _updateRetryAt = DateTime.Now.AddHours(1);   // offline or rate-limited: not every tick
-            Log.Info("Update check failed: " + ex.Message);
         }
         finally { _checkingUpdate = false; ShowUpdateNotice(); }
     }

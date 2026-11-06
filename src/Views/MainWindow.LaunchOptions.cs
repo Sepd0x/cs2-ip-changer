@@ -11,17 +11,21 @@ public partial class MainWindow
     /// <summary>The Settings button is running: the hook that runs when the app closes Steam leaves it to the button.</summary>
     volatile bool _launchOptsManual;
 
-    /// <summary>At start: the hook for each time the app closes Steam (account switch, Steam restarted through the phone), and a first
-    /// pass if Steam is closed now.</summary>
+    /// <summary>At start: a first pass if Steam is closed now.</summary>
     void InitLaunchOptions()
     {
         if (_demo) return;
-        Steam.WhileClosed = () =>
-        {
-            if (_s.Cs2LaunchOptions && !_launchOptsManual) LogLaunchOptions(ApplyLaunchOptions(), quiet: true);
-        };
         AddLaunchOptionsIfSteamClosed();
     }
+
+    /// <summary>
+    /// Passed to each Steam close the app makes (account switch, Steam restarted through the phone, adding an account): the launch
+    /// options go in while Steam is closed. Null in the demo.
+    /// </summary>
+    Action WhileSteamClosed => _demo ? null : () =>
+    {
+        if (_s.Cs2LaunchOptions && !_launchOptsManual) LogLaunchOptions(ApplyLaunchOptions(), quiet: true);
+    };
 
     /// <summary>With Steam closed, adds them now (in the background). With Steam open, the next time the app closes it.</summary>
     void AddLaunchOptionsIfSteamClosed()

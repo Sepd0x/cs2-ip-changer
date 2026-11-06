@@ -763,15 +763,14 @@ public partial class MainWindow
     async void WatchNewAccounts()
     {
         if (_demo || Rec.On || _profBusy || _accounts.Count == 0 || Dialog.Visibility == Visibility.Visible || OwnedWindows.Count > 0) return;
-        if (_profKnown == null)
-        {
-            _profKnown = Store.Load(ProfilePaths.Known, () => new List<string>());
-            if (_profKnown.Count == 0) { _profKnown = _accounts.Select(a => a.SteamId).ToList(); SaveKnown(); return; }   // first run: the ones there now are not "new"
-        }
-        var fresh = _accounts.Where(a => !_profKnown.Contains(a.SteamId)).ToList();
-        if (fresh.Count == 0) return;
-        _profKnown.AddRange(fresh.Select(a => a.SteamId));
+        // No file yet (or an empty one) is the first run: the ones there now are not "new"
+        if (_profKnown == null && Store.Load(ProfilePaths.Known, () => new List<string>()) is { Count: > 0 } saved) _profKnown = saved;
+        var first = _profKnown == null;
+        var ids = NewAccounts(ref _profKnown, _steamIds);
+        if (first) { SaveKnown(); return; }
+        if (ids.Count == 0) return;
         SaveKnown();
+        var fresh = _accounts.Where(a => ids.Contains(a.SteamId)).ToList();   // a hidden account is remembered, never offered
         var t = _templates.FirstOrDefault(x => x.T.Id == _s.ProfileAutoTemplateId)?.T;
         if (t == null) return;
         ShowProfiles();

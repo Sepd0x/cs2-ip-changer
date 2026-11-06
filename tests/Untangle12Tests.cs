@@ -18,6 +18,59 @@ static class Untangle12Tests
         AppNames(check);
         await Cs2OpenAndClose(check);
         TypedValues(check);
+        ExplicitState(check);
+    }
+
+    // B7: o Core não escreve nas Settings, as contas novas têm uma regra, a lista de contas não perde um Refresh a meio
+    static void ExplicitState(Action<string, bool, string> check)
+    {
+        var s = new Settings { Cs2Path = @"C:\Games\cs2.exe" };
+        check("B7: um sync sem nada de novo não mexe nas settings", !MainWindow.FromSync(s, new GuardReport()) && s.Cs2Path == @"C:\Games\cs2.exe" && !s.LegacyCleaned, "");
+        check("B7: o cs2.exe noutro sítio e as regras antigas limpas vêm no relatório e a janela guarda-os",
+            MainWindow.FromSync(s, new GuardReport { Cs2Found = @"D:\cs2.exe", LegacyCleaned = true }) && s.Cs2Path == @"D:\cs2.exe" && s.LegacyCleaned
+            && !MainWindow.FromSync(s, new GuardReport { Cs2Found = @"D:\cs2.exe", LegacyCleaned = true }), s.Cs2Path);
+        check("B7: o mesmo cs2.exe não é novidade", !MainWindow.NoteCs2(s, @"D:\cs2.exe") && !MainWindow.NoteCs2(s, null), "");
+        var req = new SyncRequest(new[] { "1.2.3.4" }) { Force = true, Distrust = Distrust.SameIp };
+        check("B7: o pedido de sync tem nomes, e ligado por defeito", req.On && req.Force && req.Distrust == Distrust.SameIp && !req.Cs2Running && req.VerifiedKey == null, "");
+
+        List<string> known = null;
+        var first = MainWindow.NewAccounts(ref known, new[] { "a", "b", "a" });
+        check("B7: na 1.ª vez as contas que há só ficam lembradas", first.Count == 0 && known.SequenceEqual(new[] { "a", "b" }), string.Join(",", known));
+        var later = MainWindow.NewAccounts(ref known, new[] { "a", "b", "c" });
+        check("B7: depois, uma conta que aparece é nova uma vez", later.SequenceEqual(new[] { "c" }) && known.Contains("c") && MainWindow.NewAccounts(ref known, new[] { "a", "b", "c" }).Count == 0, string.Join(",", later));
+        var empty = new List<string>();
+        check("B7: uma lista vazia já não é a 1.ª vez (a primeira conta num PC sem contas é nova)", MainWindow.NewAccounts(ref empty, new[] { "a" }).SequenceEqual(new[] { "a" }), "");
+
+        // O bug: LoadAccounts trocava os AccountMeta enquanto um Refresh ainda escrevia nos antigos, e o que ele escrevia perdia-se
+        var meta = new Dictionary<string, AccountMeta>();
+        var locals = new List<LocalAccount> { new("76561198000000001", "l1", "Ana", false, 0), new("76561198000000002", "l2", "Bia", false, 0) };
+        var before = MainWindow.AccountItems(locals, meta, null, false, out _);
+        var refreshing = before[0];   // o Refresh tem este item na mão
+        meta["76561198000000002"].Hidden = true;
+        var again = MainWindow.AccountItems(locals, meta, "76561198000000001", false, out var hidden);   // a lista feita de novo a meio (um kick, uma conta nova)
+        refreshing.Meta.Profile = new SteamProfile { VacBans = 1 };
+        check("B7: a lista feita de novo usa os mesmos dados de cada conta (o Refresh a meio não se perde)",
+            ReferenceEquals(again[0].Meta, refreshing.Meta) && again[0].Meta.Profile?.VacBans == 1 && meta["76561198000000001"].Profile?.VacBans == 1, "");
+        check("B7: as escondidas contam-se e não se listam", again.Count == 1 && hidden == 1 && again[0].Active, "");
+
+        var tmp = Path.Combine(Path.GetTempPath(), "srt-b7-" + Guid.NewGuid().ToString("N")[..8]);
+        Directory.CreateDirectory(tmp);
+        try
+        {
+            var lower = Path.Combine(tmp, "lower.json");
+            File.WriteAllText(lower, "{ \"statsaccepted\": true, \"statsnotice\": 3 }");
+            check("B7: o aviso lê o settings.json como a app o lê (sem olhar a maiúsculas)", App.StatsNoticeIn(lower) == 3 && Store.Load(lower, () => new Settings()).StatsAccepted, "");
+            var broken = Path.Combine(tmp, "broken.json");
+            File.WriteAllText(broken, "{ nao é json");
+            File.WriteAllText(broken + ".prev", "{ \"StatsAccepted\": true }");
+            check("B7: estragado usa o .prev e não escreve nada (nem a cópia .broken)", App.StatsNoticeIn(broken) == 1 && Directory.GetFiles(tmp).Length == 3,
+                string.Join(",", Directory.GetFiles(tmp).Select(Path.GetFileName)));
+            check("B7: sem ficheiro é \"ainda não\"", App.StatsNoticeIn(Path.Combine(tmp, "none.json")) == 0 && Store.Peek<Settings>(Path.Combine(tmp, "none.json")) == null, "");
+        }
+        finally { try { Directory.Delete(tmp, true); } catch { } }
+
+        check("B7: o 1.º arranque vem do aviso, passado à janela", new App.StatsConsent(true, JustAccepted: true).FirstStart
+            && !new App.StatsConsent(true, JustAccepted: true, AskedAgain: true).FirstStart && !new App.StatsConsent(true).FirstStart, "");
     }
 
     // B6: a app decide por valores tipados, não por cópias dos textos do ecrã; os textos ficam iguais
@@ -110,7 +163,7 @@ static class Untangle12Tests
         check("B5: o Steam a fechar leva o CS2: carimba sem matar nada", kills == 1 && cs2.ClosedReason == "the launch options change", "");
 
         check("B5: o console.log fica em game\\csgo ao lado do cs2.exe guardado",
-            Cs2Launch.ConsoleLog(new Settings { Cs2Path = @"D:\Steam\steamapps\common\Counter-Strike Global Offensive\game\bin\win64\cs2.exe" })
+            Cs2Launch.ConsoleLog(@"D:\Steam\steamapps\common\Counter-Strike Global Offensive\game\bin\win64\cs2.exe")
             == @"D:\Steam\steamapps\common\Counter-Strike Global Offensive\game\csgo\console.log", "");
         check("B5: o menu do CS2 é o loopback, um servidor não",
             Cs2Console.IsMenu("CL:  Connected to 'loopback:0'") && !Cs2Console.IsMenu("CL:  Connected to '203.0.113.9:27015'") && !Cs2Console.IsMenu(null), "");

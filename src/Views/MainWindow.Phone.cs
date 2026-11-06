@@ -229,7 +229,10 @@ public partial class MainWindow
     async void FirstStartCheck()
     {
         var steam = Steam.InstallDir() != null;
-        var cs2 = steam && await Task.Run(() => Steam.Cs2Path(_s)) != null;
+        var saved = _s.Cs2Path;
+        var found = steam ? await Task.Run(() => Steam.FindCs2(saved)) : null;
+        if (NoteCs2(_s, found)) SaveSettings();
+        var cs2 = found != null;
         var p = StartProblems(steam, cs2);
         if (p.Count == 0) { Log.Ok("First start: Steam and CS2 found."); return; }
         Log.Warn("First start: " + string.Join(" ", p));

@@ -50,8 +50,8 @@ public sealed class Cs2Launch
         return t;
     }
 
-    /// <summary>CS2's console.log: next to the saved cs2.exe, or the one found (<see cref="Steam.Cs2Path"/>). Null if CS2 isn't found.</summary>
-    public static string ConsoleLog(SRT.Settings s) => Cs2Console.LogPath(s.Cs2Path ?? Steam.Cs2Path(s));
+    /// <summary>CS2's console.log next to <paramref name="cs2Exe"/> (the saved cs2.exe, or the one found: <see cref="Steam.FindCs2"/>). Null if CS2 isn't found.</summary>
+    public static string ConsoleLog(string cs2Exe) => Cs2Console.LogPath(cs2Exe);
 
     readonly Func<DateTime> _now;
     readonly Action _kill;

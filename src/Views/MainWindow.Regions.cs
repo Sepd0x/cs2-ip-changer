@@ -286,7 +286,7 @@ public partial class MainWindow
             var infos = _regionInfos;
             var blocked = _s.BlockedRegions.ToList();
             var rev = _sdr.Revision;
-            var cs2 = blocked.Count > 0 ? Steam.Cs2Path(_s) : null;
+            var cs2 = blocked.Count > 0 ? Cs2Exe() : null;
             if (blocked.Count > 0 && cs2 == null)
             {
                 _regionError = "CS2 wasn't found on this PC, so there's nothing to block yet. Open CS2 once with the app running.";
@@ -347,7 +347,7 @@ public partial class MainWindow
             else if (Regions.ApplyDue(count, _regionRuleOn, _regionError, _regionNoCs2, DateTime.Now, _regionRetryAt)) await ApplyRegions(quiet: true);
             else if (_regionRuleOn && _regionGate.CurrentCount > 0)   // ApplyRegions running: it reads back its own write
             {
-                var infos = _regionInfos; var blocked = _s.BlockedRegions.ToList(); var cs2 = Steam.Cs2Path(_s);
+                var infos = _regionInfos; var blocked = _s.BlockedRegions.ToList(); var cs2 = Cs2Exe();
                 var gone = await Task.Run(() => { var rule = Regions.Rule(infos, blocked, cs2); return rule != null && !Firewall.Verify(rule); });
                 if (gone && _regionRuleOn && _regionGate.CurrentCount > 0)
                 {

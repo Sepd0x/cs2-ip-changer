@@ -16,6 +16,34 @@ namespace SRT;
 // Protection
 public partial class MainWindow
 {
+    /// <summary>A cs2.exe found somewhere new goes into the settings, with one Log line. True when the settings changed (the caller saves).</summary>
+    public static bool NoteCs2(Settings s, string found)
+    {
+        if (found == null || found == s.Cs2Path) return false;
+        s.Cs2Path = found;
+        Log.Info("CS2 found at " + found);
+        return true;
+    }
+
+    /// <summary>What a sync found that belongs in the settings (the Guard only reads them). True when they changed (the caller saves).</summary>
+    public static bool FromSync(Settings s, GuardReport rep)
+    {
+        var changed = NoteCs2(s, rep.Cs2Found);
+        if (rep.LegacyCleaned && !s.LegacyCleaned) { s.LegacyCleaned = true; changed = true; }
+        return changed;
+    }
+
+    /// <summary>cs2.exe (Steam.FindCs2), on the window thread: a new place is saved at once.</summary>
+    string Cs2Exe()
+    {
+        var found = Steam.FindCs2(_s.Cs2Path);
+        if (NoteCs2(_s, found)) SaveSettings();
+        return found;
+    }
+
+    /// <summary>CS2's console.log: next to the saved cs2.exe even if it is gone (CS2 may be updating), else next to the one found.</summary>
+    string Cs2ConsoleLog() => Cs2Launch.ConsoleLog(_s.Cs2Path ?? Cs2Exe());
+
     /// <summary>Why the phone's connection isn't trusted now, from what the window knows (the Guard adds Unchecked itself).</summary>
     public static Distrust DistrustNow(bool sameAsHome, bool phoneWifiOn, bool noHome) =>
         sameAsHome ? Distrust.SameIp : phoneWifiOn ? Distrust.PhoneWifi : noHome ? Distrust.NoHome : Distrust.None;
@@ -51,8 +79,6 @@ public partial class MainWindow
         try
         {
             var ips = _servers.Select(x => x.Ip).Distinct().ToList();
-            var legacyBefore = _s.LegacyCleaned;
-            var cs2Before = _s.Cs2Path;
             var cs2Running = Steam.Cs2Running;
             if (cs2Running) WatchCs2Exit();
             if (cs2Running != _cs2WasRunning)
@@ -62,8 +88,11 @@ public partial class MainWindow
                 if (!cs2Running) QualityOnCs2Closed();
                 force = true;
             }
-            var rep = await _guard.Sync(_s, ips, force, DistrustNow(_distrust, PhoneWifiOn, _noHome), cs2Running, _verifiedKey, _protOn);
-            if (legacyBefore != _s.LegacyCleaned || cs2Before != _s.Cs2Path) SaveSettings();
+            var rep = await _guard.Sync(_s, new SyncRequest(ips)
+            {
+                Force = force, Distrust = DistrustNow(_distrust, PhoneWifiOn, _noHome), Cs2Running = cs2Running, VerifiedKey = _verifiedKey, On = _protOn,
+            });
+            if (FromSync(_s, rep)) SaveSettings();
             ApplyReport(rep);
         }
         finally { _syncing = false; }

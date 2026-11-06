@@ -235,10 +235,13 @@ public static partial class Steam
     [DllImport("kernel32.dll")]
     static extern bool CloseHandle(IntPtr h);
 
-    /// <summary>Path to cs2.exe: the saved one, the one from the running process, or searched in the Steam libraries.</summary>
-    public static string Cs2Path(SRT.Settings s)
+    /// <summary>
+    /// Path to cs2.exe: <paramref name="saved"/> (Settings.Cs2Path) if it is still there, else the one of the running process, else
+    /// searched in the Steam libraries. Only reads: the window saves a new place (MainWindow.RememberCs2), the Core never writes the settings.
+    /// </summary>
+    public static string FindCs2(string saved)
     {
-        if (s.Cs2Path != null && File.Exists(s.Cs2Path)) return s.Cs2Path;
+        if (saved != null && File.Exists(saved)) return saved;
         string found = null;
         try
         {
@@ -260,7 +263,6 @@ public static partial class Steam
             found = libs.Select(l => Path.Combine(l, "steamapps", "common", "Counter-Strike Global Offensive", "game", "bin", "win64", "cs2.exe"))
                 .FirstOrDefault(File.Exists);
         }
-        if (found != null && found != s.Cs2Path) { s.Cs2Path = found; Log.Info("CS2 found at " + found); }
         return found;
     }
 
@@ -288,8 +290,10 @@ public static partial class Steam
     /// Closes Steam the clean way: "-shutdown", then up to 20 s for steam.exe and steamwebhelper.exe to exit by themselves. A Steam
     /// that was killed writes its own account back into loginusers.vdf when it starts again (seen with today's client), so the kill is
     /// only for one that hangs. steamservice.exe is a Windows service and is left alone. Then a second for the files to settle.
+    /// <paramref name="whileClosed"/> runs once Steam is closed and before it opens again: files Steam rewrites when it exits (CS2's
+    /// launch options) can only be changed then. The caller passes it; null = nothing.
     /// </summary>
-    static async Task CloseSteam()
+    static async Task CloseSteam(Action whileClosed)
     {
         if (SteamClosedNow()) return;
         // "-shutdown" only signals the running Steam, but it is still steam.exe started by this process: through Explorer, like the rest.
@@ -305,26 +309,23 @@ public static partial class Steam
         }
         await Task.Delay(1000);
         // Files Steam rewrites when it exits (CS2's launch options) can only be changed now, before it starts again.
-        if (SteamClosedNow() && WhileClosed != null)
-            try { await Task.Run(WhileClosed); } catch (Exception ex) { Log.Warn("While Steam was closed: " + ex.Message); }
+        if (SteamClosedNow() && whileClosed != null)
+            try { await Task.Run(whileClosed); } catch (Exception ex) { Log.Warn("While Steam was closed: " + ex.Message); }
     }
-
-    /// <summary>Runs each time the app has closed Steam and before it opens it again (the CS2 launch options).</summary>
-    public static Action WhileClosed { get; set; }
 
     /// <summary>Steam and its web helper are both closed.</summary>
     public static bool Closed => SteamClosedNow();
 
     /// <summary>Closes Steam the clean way (see <see cref="CloseSteam"/>); true when it is closed.</summary>
-    public static async Task<bool> Close() { await CloseSteam(); return SteamClosedNow(); }
+    public static async Task<bool> Close(Action whileClosed = null) { await CloseSteam(whileClosed); return SteamClosedNow(); }
 
     const string Linked = "the Steam folder goes through a link or junction; the app only writes to a real folder";
 
     /// <summary>
     /// Switches account: AutoLoginUser in the registry and AutoLogin + timestamp in loginusers.vdf (see <see cref="MarkForLogin"/>), then
-    /// restarts Steam. Returns the timestamp written, for <see cref="WaitForLogin"/>.
+    /// restarts Steam. Returns the timestamp written, for <see cref="WaitForLogin"/>. <paramref name="whileClosed"/>: see <see cref="CloseSteam"/>.
     /// </summary>
-    public static async Task<long> SwitchTo(string accountName, string steamId, bool offline, string extraArgs)
+    public static async Task<long> SwitchTo(string accountName, string steamId, bool offline, string extraArgs, Action whileClosed = null)
     {
         if (Exe == null || !File.Exists(Exe)) throw new InvalidOperationException("Could not find Steam installed on this PC.");
         // The file is rewritten by this parser: only when it reads back exactly, so nothing Steam keeps there gets lost.
@@ -335,7 +336,7 @@ public static partial class Steam
         // A link is refused before Steam is closed, so Steam isn't left closed for nothing
         if (edit && Redirected(path)) throw new IOException(Linked);
         if (edit && !VdfNode.RoundTrips(File.ReadAllText(path))) throw new InvalidOperationException(NotUnderstood);
-        await CloseSteam();
+        await CloseSteam(whileClosed);
         // A Steam still running would get "-login" while on the old account and write that account back over the switch
         if (!SteamClosedNow()) throw new InvalidOperationException("Steam didn't close, so the account wasn't changed. Close Steam (or wait a moment) and try again.");
 
@@ -545,10 +546,10 @@ public static partial class Steam
     }
 
     /// <summary>Closes and reopens Steam on the same account (e.g. so it connects through the protected connection).</summary>
-    public static async Task Restart(string args)
+    public static async Task Restart(string args, Action whileClosed = null)
     {
         if (Exe == null || !File.Exists(Exe)) throw new InvalidOperationException("Could not find Steam installed on this PC.");
-        await CloseSteam();
+        await CloseSteam(whileClosed);
         Launch(args);
     }
 
@@ -565,9 +566,9 @@ public static partial class Steam
     }
 
     /// <summary>Opens Steam on the login screen to add a new account.</summary>
-    public static async Task AddNew()
+    public static async Task AddNew(Action whileClosed = null)
     {
-        await CloseSteam();
+        await CloseSteam(whileClosed);
         using (var k = Registry.CurrentUser.CreateSubKey(@"Software\Valve\Steam")) k.SetValue("AutoLoginUser", "", RegistryValueKind.String);
         Launch("");
     }

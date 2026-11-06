@@ -28,16 +28,12 @@ public partial class MainWindow
                 locals = new();
             }
         }
-        _accMeta = Store.Load(Paths.File("accounts.json"), () => new Dictionary<string, AccountMeta>());
+        // accounts.json is read once: after that the objects in memory are the truth (a Refresh may still be writing to them)
+        _accMeta ??= Store.Load(Paths.File("accounts.json"), () => new Dictionary<string, AccountMeta>());
         _accounts.Clear();
-        var active = Steam.InUseSteamId();
-        _accHidden = 0;   // only hidden accounts Steam still has, not old entries in accounts.json
-        foreach (var l in locals)
-        {
-            if (!_accMeta.TryGetValue(l.SteamId, out var meta)) _accMeta[l.SteamId] = meta = new AccountMeta();
-            if (meta.Hidden) { _accHidden++; continue; }
-            _accounts.Add(new AccountItem(l, meta) { Active = l.SteamId == active, Streamer = HideLogins });
-        }
+        // only hidden accounts Steam still has, not old entries in accounts.json
+        foreach (var item in AccountItems(locals, _accMeta, Steam.InUseSteamId(), HideLogins, out _accHidden)) _accounts.Add(item);
+        _steamIds = locals.Select(l => l.SteamId).ToList();
         AccountsEmptyText.Text = AccEmptyText();
         ApplyAccountFilter();
         if (HideLogins) RemaskLog();
@@ -48,7 +44,44 @@ public partial class MainWindow
         if (PageConfigs.IsVisible) ShowConfigs();
     }
 
-    void SaveAccounts() { if (!_demo) Store.Save(Paths.File("accounts.json"), _accMeta); }
+    /// <summary>Every account Steam has on this PC at the last LoadAccounts (SteamID64s), the hidden ones too.</summary>
+    List<string> _steamIds = new();
+
+    /// <summary>
+    /// The accounts in <paramref name="now"/> that <paramref name="known"/> doesn't have; <paramref name="known"/> then has them too (the
+    /// caller saves it). No list yet (null) is the first run: every account there now is only remembered, none is new. The one rule for
+    /// "a new account": the CS2 config (Configs), the auto template (Profiles) and the "New Steam account" toast (Accounts).
+    /// </summary>
+    public static List<string> NewAccounts(ref List<string> known, IEnumerable<string> now)
+    {
+        var ids = now.Distinct().ToList();
+        if (known == null) { known = ids; return new(); }
+        var have = known.ToHashSet();
+        var fresh = ids.Where(id => !have.Contains(id)).ToList();
+        known.AddRange(fresh);
+        return fresh;
+    }
+
+    /// <summary>
+    /// The list's items from Steam's accounts. Each account keeps the AccountMeta object it already has in <paramref name="meta"/>, so
+    /// a Refresh still running (it writes the profile and the bans into those objects) isn't lost when the list is built again (a kick
+    /// on an account just logged in, a new account); a new account gets a new one. Hidden accounts are counted, not listed.
+    /// </summary>
+    public static List<AccountItem> AccountItems(IEnumerable<LocalAccount> locals, Dictionary<string, AccountMeta> meta, string active, bool streamer, out int hidden)
+    {
+        hidden = 0;
+        var items = new List<AccountItem>();
+        foreach (var l in locals)
+        {
+            if (!meta.TryGetValue(l.SteamId, out var m)) meta[l.SteamId] = m = new AccountMeta();
+            if (m.Hidden) { hidden++; continue; }
+            items.Add(new AccountItem(l, m) { Active = l.SteamId == active, Streamer = streamer });
+        }
+        return items;
+    }
+
+    // Not read before the first LoadAccounts: saving then would write an empty list over the file
+    void SaveAccounts() { if (!_demo && _accMeta != null) Store.Save(Paths.File("accounts.json"), _accMeta); }
 
     DateTime _loginUsersAt, _loginUsersReadAt;
     string _activeSeen;
@@ -78,9 +111,10 @@ public partial class MainWindow
             _loginUsersReadAt = DateTime.Now;
             if (Steam.AccountsDiffer(_accounts.Select(a => a.SteamId), disk, AccHiddenId))
             {
-                var before = _accounts.Select(a => a.SteamId).ToHashSet();
+                var before = _accounts.Select(a => a.SteamId).ToList();
                 LoadAccounts(disk);
-                var added = _accounts.Where(a => !before.Contains(a.SteamId)).ToList();
+                var fresh = NewAccounts(ref before, _accounts.Select(a => a.SteamId));
+                var added = _accounts.Where(a => fresh.Contains(a.SteamId)).ToList();
                 if (added.Count > 0)
                 {
                     // A new account goes where the sort puts it (at the top in Most recent), not at the end of a long list
@@ -336,7 +370,7 @@ public partial class MainWindow
             string other;
             for (var attempt = 1; ; attempt++)
             {
-                var stamp = await Steam.SwitchTo(a.Login, a.SteamId, _s.SteamOffline, _s.SteamSilent ? "-silent" : "");
+                var stamp = await Steam.SwitchTo(a.Login, a.SteamId, _s.SteamOffline, _s.SteamSilent ? "-silent" : "", WhileSteamClosed);
                 Step($"waiting for Steam to log in to {a.Name}…");
                 (state, other) = await Steam.WaitForLogin(a.SteamId, stamp, TimeSpan.FromSeconds(30));
                 Diag.Write("account", new { steamId = a.SteamId, cs2, offline = _s.SteamOffline, login = state.ToString(), other, attempt });
@@ -391,7 +425,7 @@ public partial class MainWindow
     {
         if (_demo) return;
         if (!await Ask("Add account", "Steam will close and open on the login screen. Log in with the new account and check \"Remember me\". Then come back here and it shows up in the list.", "Open login")) return;
-        try { await Steam.AddNew(); WaitForNewAccount(); }
+        try { await Steam.AddNew(WhileSteamClosed); WaitForNewAccount(); }
         catch (Exception ex) { Toast(ex.Message, false); }
     }
 
@@ -544,7 +578,7 @@ public partial class MainWindow
     void UnhideAll_Click(object sender, RoutedEventArgs e)
     {
         if (_demo) { Toast("Demo: all accounts are visible again.", true); return; }   // the demo never reads the real Steam accounts
-        foreach (var m in _accMeta.Values) m.Hidden = false;
+        foreach (var m in _accMeta?.Values ?? Enumerable.Empty<AccountMeta>()) m.Hidden = false;
         SaveAccounts();
         LoadAccounts();
         Toast("All accounts are visible again.", true);

@@ -55,7 +55,7 @@ static class AvisoTests
             File.WriteAllText(b10, "{ \"StatsAccepted\": true, \"StatsNotice\": 3 }");
             var asked = 0;
             check("Aviso: aceite na beta.10 (aviso 3) volta a ver o aviso uma vez", App.StatsNoticeIn(b10) == 3 && !App.StatsAcceptedIn(b10)
-                && App.StatsGate(Array.Empty<string>(), () => { asked++; return true; }, b10) && asked == 1 && App.StatsAskedAgain, "");
+                && App.StatsGate(Array.Empty<string>(), () => { asked++; return true; }, b10) is { Go: true, AskedAgain: true } && asked == 1, "");
             var corpo = App.StatsNoticeBody(false, 3);
             var mudou = Telemetry.NoticeChangedFor(3);
             check("Aviso: com o que mudou (mais curto, quem guarda, quanto tempo, como perguntar)", corpo.StartsWith(Telemetry.NoticeShort) && corpo.Contains(mudou)
@@ -68,12 +68,12 @@ static class AvisoTests
             var atual = Path.Combine(tmp, "s-b11.json");
             File.WriteAllText(atual, $"{{ \"StatsAccepted\": true, \"StatsNotice\": {Telemetry.NoticeVersion} }}");
             check("Aviso: quem aceitou o 4 não volta a ver", App.StatsAcceptedIn(atual) && Telemetry.NoticeChangedFor(4) == ""
-                && App.StatsGate(Array.Empty<string>(), () => { asked++; return false; }, atual) && asked == 1, "");
+                && App.StatsGate(Array.Empty<string>(), () => { asked++; return false; }, atual).Go && asked == 1, "");
         }
         finally { try { Directory.Delete(tmp, true); } catch { } }
 
         // a build de gravação continua sem enviar nada nem perguntar
-        check("Aviso: a build de gravação não pergunta nem envia", app.Contains("if (args.Contains(AppIds.Args.Demo) || Rec.On) return true;")
+        check("Aviso: a build de gravação não pergunta nem envia", app.Contains("if (args.Contains(AppIds.Args.Demo) || Rec.On) return new(true);")
             && Src("Core", "Telemetry.cs").Contains("if (demo || Rec.On) return;"), "");
     }
 }

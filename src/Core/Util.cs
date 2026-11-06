@@ -111,21 +111,43 @@ public static class Store
     // real data with defaults, so they aren't saved until the app restarts.
     static readonly HashSet<string> Unreadable = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>The file's text; a sharing violation is not corruption, so it is tried again for about 2 s before giving up.</summary>
+    static string ReadText(string path, out Exception error)
+    {
+        error = null;
+        for (var i = 0; ; i++)
+        {
+            try { return System.IO.File.ReadAllText(path, Encoding.UTF8); }
+            catch (IOException) when (i < 20) { Thread.Sleep(100); }
+            catch (Exception ex) { error = ex; return null; }
+        }
+    }
+
+    /// <summary>
+    /// Reads <paramref name="path"/> the way <see cref="Load"/> does (tried again while locked, the .prev copy when damaged), but only
+    /// reads: no Log line, no .broken copy, no mark against saving. Default when it is missing, can't be read or has no good copy
+    /// (a file that can't be read isn't damaged: its .prev is not used then, as Load doesn't). For a look before the app opens (App.StatsNoticeIn).
+    /// </summary>
+    public static T Peek<T>(string path)
+    {
+        try
+        {
+            if (!System.IO.File.Exists(path) || ReadText(path, out _) is not string raw) return default;
+            if (TryParse(raw, out T value)) return value;
+            return System.IO.File.Exists(path + ".prev") && TryParse(System.IO.File.ReadAllText(path + ".prev", Encoding.UTF8), out value) ? value : default;
+        }
+        catch { return default; }
+    }
+
     public static T Load<T>(string path, Func<T> fallback)
     {
         if (!System.IO.File.Exists(path)) return fallback();
-        // A sharing violation is not corruption: try again for about 2 s before giving up
-        string raw = null;
-        for (var i = 0; raw == null; i++)
+        var raw = ReadText(path, out var error);
+        if (error != null)
         {
-            try { raw = System.IO.File.ReadAllText(path, Encoding.UTF8); }
-            catch (IOException) when (i < 20) { Thread.Sleep(100); }
-            catch (Exception ex)
-            {
-                lock (Unreadable) Unreadable.Add(path);
-                Log.Warn($"Could not open {Path.GetFileName(path)} ({ex.Message}). Your changes won't be saved over it until the app restarts.");
-                return fallback();
-            }
+            lock (Unreadable) Unreadable.Add(path);
+            Log.Warn($"Could not open {Path.GetFileName(path)} ({error.Message}). Your changes won't be saved over it until the app restarts.");
+            return fallback();
         }
         lock (Unreadable) Unreadable.Remove(path);
         if (TryParse(raw, out T value)) return value;

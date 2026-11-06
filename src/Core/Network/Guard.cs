@@ -65,6 +65,26 @@ public sealed class GuardReport
     public bool AllRoutesOk => RouteOk.Count > 0 && RouteOk.Values.All(v => v);
     /// <summary>There is a home connection (another active adapter with a gateway, not the candidate and not a phone) whose IP can be compared.</summary>
     public bool HasHome { get; init; }
+
+    // What the sync found that belongs in the settings. The Guard only reads them (on its own thread); the window saves these.
+    /// <summary>cs2.exe found somewhere other than Settings.Cs2Path (null = the same, or not looked for).</summary>
+    public string Cs2Found { get; init; }
+    /// <summary>The rules of v6, v7 and v8 were removed in this sync (Settings.LegacyCleaned).</summary>
+    public bool LegacyCleaned { get; init; }
+}
+
+/// <summary>
+/// What a <see cref="Guard.Sync"/> is asked to do. Ips: the servers' IPs. Force: write the rules again even if nothing changed.
+/// Distrust: why the window doesn't trust the phone's connection (the Guard adds Unchecked itself). VerifiedKey: the candidate whose
+/// public IP was measured and isn't the home IP (any other stays blocked). On: protection is turned on.
+/// </summary>
+public sealed record SyncRequest(IReadOnlyCollection<string> Ips)
+{
+    public bool Force { get; init; }
+    public Distrust Distrust { get; init; }
+    public bool Cs2Running { get; init; }
+    public string VerifiedKey { get; init; }
+    public bool On { get; init; } = true;
 }
 
 /// <summary>
@@ -259,13 +279,12 @@ public sealed class Guard
 
     public static string KeyOf(Adapter a) => a == null ? null : $"{a.Index}|{a.LocalIp}";
 
-    /// <param name="distrust">Why the connection can't be trusted right now (None = trusted).</param>
-    /// <param name="verifiedKey">The candidate whose public IP was measured and isn't the home IP. Any other candidate stays blocked.</param>
-    public Task<GuardReport> Sync(Settings s, IReadOnlyCollection<string> ips, bool force = false, Distrust distrust = Distrust.None, bool cs2Running = false, string verifiedKey = null, bool on = true) =>
+    /// <summary>Applies protection for <paramref name="r"/>. <paramref name="s"/> is only read: what belongs in it comes back in the report.</summary>
+    public Task<GuardReport> Sync(Settings s, SyncRequest r) =>
         Task.Run(async () =>
         {
             await _gate.WaitAsync();
-            try { return await SyncCore(s, ips.Distinct().ToList(), force, distrust, cs2Running, verifiedKey, on); }
+            try { return await SyncCore(s, r.Ips.Distinct().ToList(), r.Force, r.Distrust, r.Cs2Running, r.VerifiedKey, r.On); }
             catch (Exception ex)
             {
                 Log.Error("Sync: " + ex.Message);
@@ -363,7 +382,8 @@ public sealed class Guard
         else if (problem != _lastProblem) { if (problem != null) Log.Warn(problem + " Servers blocked."); _lastProblem = problem; }
         var fwProblem = Firewall.CheckEnabled();
         if (mode is "home" or "off") return await HomeMode(s, ips, adapters, candidate, fwProblem, force, mode, distrust);
-        var cs2 = s.LockCs2 && (s.PhoneSeen || egress != null) ? Steam.Cs2Path(s) : null;
+        var cs2 = s.LockCs2 && (s.PhoneSeen || egress != null) ? Steam.FindCs2(s.Cs2Path) : null;
+        var legacyCleaned = false;
 
         // 1) Firewall first: there is never a moment when a server is reachable with the home IP.
         var killOk = false;
@@ -415,7 +435,7 @@ public sealed class Guard
             {
                 var n = Firewall.RemoveLegacy();
                 if (n > 0) Log.Ok($"Removed {n} old rules from v6/v7/v8.");
-                s.LegacyCleaned = true;
+                legacyCleaned = true;
             }
         }
 
@@ -492,6 +512,8 @@ public sealed class Guard
             Steam = steam,
             SteamOnEgress = steamOnEgress,
             HasHome = PhoneLink.HasHome(adapters, candidate),
+            Cs2Found = cs2 != s.Cs2Path ? cs2 : null,
+            LegacyCleaned = legacyCleaned,
         };
     }
 

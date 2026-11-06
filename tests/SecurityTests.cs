@@ -162,24 +162,24 @@ static class SecurityTests
                 var fresh = Path.Combine(tmp, "quit", "SRT_Dados");
                 var asked = 0;
                 var go = App.StatsGate(Array.Empty<string>(), () => { asked++; return false; }, Path.Combine(fresh, "settings.json"));
-                check("Telemetria: Quit fecha sem enviar nem criar nada", !go && asked == 1 && !App.StatsJustAccepted && !Directory.Exists(Path.GetDirectoryName(fresh)!) && !Telemetry.Running);
-                check("Telemetria: o demo não pergunta", App.StatsGate(new[] { "--demo" }, () => { asked++; return false; }, Path.Combine(fresh, "settings.json")) && asked == 1);
+                check("Telemetria: Quit fecha sem enviar nem criar nada", !go.Go && asked == 1 && !go.JustAccepted && !Directory.Exists(Path.GetDirectoryName(fresh)!) && !Telemetry.Running);
+                check("Telemetria: o demo não pergunta", App.StatsGate(new[] { "--demo" }, () => { asked++; return false; }, Path.Combine(fresh, "settings.json")).Go && asked == 1);
                 // Quem vem da beta.7 (sem campo) e da beta.8 de teste (UsageStats sim ou não) vê o aviso; quem aceitou não volta a ver
                 foreach (var (name, json) in new[] { ("b7", "{ \"Mode\": \"servers\" }"), ("b8-sim", "{ \"UsageStats\": true }"), ("b8-nao", "{ \"UsageStats\": false }"), ("estragado", "{ nao é json") })
                     check($"Telemetria: settings {name} vê o aviso", !App.StatsAcceptedIn(WriteJson(tmp, $"s-{name}.json", json)) && !Store.Load(Path.Combine(tmp, $"s-{name}.json"), () => new Settings()).StatsAccepted);
                 var accepted = Path.Combine(tmp, "s-aceite.json");
                 Store.Save(accepted, new Settings { StatsAccepted = true, StatsNotice = Telemetry.NoticeVersion });
                 check("Telemetria: Accept fica guardado e não volta a perguntar", App.StatsAcceptedIn(accepted)
-                    && App.StatsGate(Array.Empty<string>(), () => { asked++; return false; }, accepted) && asked == 1);
+                    && App.StatsGate(Array.Empty<string>(), () => { asked++; return false; }, accepted).Go && asked == 1);
                 // beta.9: quem aceitou o aviso da beta.8 (ID novo todos os dias) vê-o uma vez mais, com o que mudou; não conta como 1.º arranque
                 var b8 = WriteJson(tmp, "s-b8-aceite.json", "{ \"StatsAccepted\": true }");
                 check("Telemetria: aceite na beta.8 volta a ver o aviso uma vez", App.StatsNoticeIn(b8) == 1 && !App.StatsAcceptedIn(b8)
-                    && App.StatsGate(Array.Empty<string>(), () => { asked++; return true; }, b8) && asked == 2 && App.StatsAskedAgain);
+                    && App.StatsGate(Array.Empty<string>(), () => { asked++; return true; }, b8) is { Go: true, AskedAgain: true } && asked == 2);
                 check("Telemetria: o aviso de novo diz que o ID passou a ficar", Telemetry.NoticeChanged.Contains("kept for this install") && Telemetry.NoticeVersion >= 3);
                 // beta.10: quem aceitou o aviso da beta.9 (só ao abrir e fechar) vê-o uma vez mais, com os 30 minutos
                 var b9 = WriteJson(tmp, "s-b9-aceite.json", "{ \"StatsAccepted\": true, \"StatsNotice\": 2 }");
                 check("Telemetria: aceite na beta.9 volta a ver o aviso uma vez, com os 30 minutos", !App.StatsAcceptedIn(b9)
-                    && App.StatsGate(Array.Empty<string>(), () => { asked++; return true; }, b9) && asked == 3 && App.StatsAskedAgain
+                    && App.StatsGate(Array.Empty<string>(), () => { asked++; return true; }, b9) is { Go: true, AskedAgain: true } && asked == 3
                     && Telemetry.NoticeChanged.Contains("every 30 minutes"));
 
                 // O ID (beta.9): aleatório, feito uma vez por instalação e guardado; um de antes da beta.9 (o diário da beta.8, o fixo da beta.7) é trocado

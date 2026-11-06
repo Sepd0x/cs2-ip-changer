@@ -120,7 +120,7 @@ static class Beta11Tests
         check("Change IP no iPhone: um IP novo que chega tarde ainda conta", SRT.MainWindow.IphoneChangeStep(true, true, "1.1.1.1", "2.2.2.2", TimeSpan.FromSeconds(95), lim) == SRT.MainWindow.IphoneChange.BackNew, "");
 
         var steamSrc = Src("Core", "Steam", "SteamAccounts.cs");
-        check("Opções: a app trata delas sempre que ela própria fecha a Steam", steamSrc.Contains("if (SteamClosedNow() && WhileClosed != null)"), "");
+        check("Opções: a app trata delas sempre que ela própria fecha a Steam", steamSrc.Contains("if (SteamClosedNow() && whileClosed != null)"), "");
         check("Opções: ligado por defeito", new SRT.Settings().Cs2LaunchOptions, "");
     }
 }

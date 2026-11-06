@@ -43,7 +43,8 @@ public partial class App : Application
         var updated = args.Contains(AppIds.Args.Updated);
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
         var settingsFile = Paths.File(AppIds.Files.Settings);
-        if (!StatsGate(args, () => StatsNoticeWindow(updated, StatsNoticeIn(settingsFile)).ShowAndWait(), settingsFile))
+        var stats = StatsGate(args, () => StatsNoticeWindow(updated, StatsNoticeIn(settingsFile)).ShowAndWait(), settingsFile);
+        if (!stats.Go)
         {
             if (updated) UndoAfterUpdateQuit();
             Shutdown();
@@ -65,7 +66,7 @@ public partial class App : Application
         Exit += (_, _) => { Crash.Ended(); Adb.KillOwnServer(); };
         TaskScheduler.UnobservedTaskException += (_, a) => { Log.Error("Task: " + a.Exception?.GetBaseException().Message); Crash.Write(a.Exception, "task"); Telemetry.Error(a.Exception); a.SetObserved(); };
         base.OnStartup(e);
-        var w = new MainWindow(args);
+        var w = new MainWindow(args, stats);
         MainWindow = w;
         w.Show();
     }
@@ -180,64 +181,41 @@ public partial class App : Application
         Shutdown();
     }
 
-    /// <summary>Accept at the notice in this start: the main window saves it with the rest of the settings.</summary>
-    public static bool StatsJustAccepted { get; private set; }
-
     /// <summary>
-    /// True when the app can go on: the usage stats notice was accepted before (settings.json, read only) or is now.
-    /// Quit or Escape returns false before anything is made, changed or sent. The demo and the recording build send nothing,
-    /// so they don't ask.
+    /// What the usage stats notice gave at this start, passed to the main window. Go: the app can go on. JustAccepted: Accept in this
+    /// start (the main window saves it with the rest of the settings). AskedAgain: the notice showed again because an older one was
+    /// accepted, so it isn't a first start.
     /// </summary>
-    public static bool StatsGate(string[] args, Func<bool> ask, string settingsFile)
+    public readonly record struct StatsConsent(bool Go, bool JustAccepted = false, bool AskedAgain = false)
     {
-        if (args.Contains(AppIds.Args.Demo) || Rec.On) return true;
-        var had = StatsNoticeIn(settingsFile);
-        if (had >= Telemetry.NoticeVersion) return true;
-        if (!ask()) return false;
-        StatsJustAccepted = true;
-        StatsAskedAgain = had > 0;
-        return true;
+        /// <summary>The first start on this PC (the notice was never accepted before): first_start and the Steam and CS2 check.</summary>
+        public bool FirstStart => JustAccepted && !AskedAgain;
     }
 
-    /// <summary>The notice showed again because an older one was accepted: not a first start.</summary>
-    public static bool StatsAskedAgain { get; private set; }
+    /// <summary>
+    /// Go when the app can go on: the usage stats notice was accepted before (settings.json, read only) or is now.
+    /// Quit or Escape gives no Go before anything is made, changed or sent. The demo and the recording build send nothing,
+    /// so they don't ask.
+    /// </summary>
+    public static StatsConsent StatsGate(string[] args, Func<bool> ask, string settingsFile)
+    {
+        if (args.Contains(AppIds.Args.Demo) || Rec.On) return new(true);
+        var had = StatsNoticeIn(settingsFile);
+        if (had >= Telemetry.NoticeVersion) return new(true);
+        if (!ask()) return new(false);
+        return new(true, JustAccepted: true, AskedAgain: had > 0);
+    }
 
     /// <summary>The current notice was accepted before (<see cref="StatsNoticeIn"/>).</summary>
     public static bool StatsAcceptedIn(string settingsFile) => StatsNoticeIn(settingsFile) >= Telemetry.NoticeVersion;
 
     /// <summary>
     /// Which notice settings.json says was accepted: 0 none, 1 one from before beta.9 ("StatsAccepted": true alone), else "StatsNotice".
-    /// Read the way Store.Load reads it (a file locked for a moment is tried again for about 2 s, a damaged one falls back to .prev)
-    /// but only read: nothing is written, not even the .broken copy. A missing or unreadable file is "not yet".
+    /// Read by Store.Peek, as Store.Load reads it (a file locked for a moment is tried again for about 2 s, a damaged one falls back to
+    /// .prev, names in any case) but only read: nothing is written, not even the .broken copy. A missing or unreadable file is "not yet".
     /// </summary>
-    public static int StatsNoticeIn(string settingsFile)
-    {
-        if (!System.IO.File.Exists(settingsFile)) return 0;
-        string raw = null;
-        for (var i = 0; raw == null; i++)
-        {
-            try { raw = System.IO.File.ReadAllText(settingsFile); }
-            catch (System.IO.IOException) when (i < 20) { Thread.Sleep(100); }
-            catch { return 0; }
-        }
-        if (Accepted(raw) is int n) return n;
-        try { return System.IO.File.Exists(settingsFile + ".prev") ? Accepted(System.IO.File.ReadAllText(settingsFile + ".prev")) ?? 0 : 0; }
-        catch { return 0; }
-
-        // null: not JSON (damaged)
-        static int? Accepted(string json)
-        {
-            try
-            {
-                using var doc = System.Text.Json.JsonDocument.Parse(json.TrimStart('﻿'));
-                var root = doc.RootElement;
-                if (root.ValueKind != System.Text.Json.JsonValueKind.Object
-                    || !root.TryGetProperty(nameof(Settings.StatsAccepted), out var v) || v.ValueKind != System.Text.Json.JsonValueKind.True) return 0;
-                return root.TryGetProperty(nameof(Settings.StatsNotice), out var n) && n.TryGetInt32(out var k) && k > 1 ? k : 1;
-            }
-            catch { return null; }
-        }
-    }
+    public static int StatsNoticeIn(string settingsFile) =>
+        Store.Peek<Settings>(settingsFile) is { StatsAccepted: true } s ? Math.Max(s.StatsNotice, 1) : 0;
 
     /// <summary>The usage stats notice: the short text, the full list under See the full list, Accept and Quit.</summary>
     /// <param name="had">The notice accepted before (<see cref="StatsNoticeIn"/>): above 0, what changed since then is added.</param>

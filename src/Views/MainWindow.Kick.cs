@@ -22,7 +22,7 @@ public partial class MainWindow
         if (!Steam.Cs2Running)
         {
             // Quit straight from a match: CS2 wrote its network summary as it closed, and no line comes after it
-            if (_cs2StartedAt != null && Cs2Launch.ConsoleLog(_s) is string last)
+            if (_cs2StartedAt != null && Cs2ConsoleLog() is string last)
                 foreach (var line in _cs2Console.ReadNew(last))
                     if (_netReport.Feed(line) is NetReport r) LogNetReport(r);
             if (_netReport.Flush() is NetReport pending) LogNetReport(pending);
@@ -35,7 +35,7 @@ public partial class MainWindow
             return;
         }
         _cs2StartedAt ??= Cs2Launch.StartedAt();
-        var path = Cs2Launch.ConsoleLog(_s);
+        var path = Cs2ConsoleLog();
         if (path == null) return;
         CheckCondebug(path);
         // One disconnect writes several lines, and the first one isn't always the clearest ("kicked", then the ban code):

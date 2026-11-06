@@ -26,6 +26,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - On the hotspot, while the app was still checking the phone's IP or with protection off, the Mobile data row of Checks could say the phone's Wi-Fi was on, or ask for the USB cable, although the hotspot was fine. It now says the connection goes through the hotspot, as it does once the phone is protected.
 - When the app closed CS2 to restart Steam through the phone or to add the launch options, the Log said "CS2 closed by the account switch". It now says what closed it.
 - If the app couldn't read Windows Firewall when it started with CS2 open, it took that as "no block left from the last run" and turned protection off, which could move the match to your home IP. Now protection stays on in that case and the Log says the Firewall couldn't be read.
+- Refresh on Accounts could lose the profiles and bans it had already read when the list was built again meanwhile (a kick or ban seen on an account just logged in, a new account added). What it reads now stays.
+- With Close to the notification area on, the X hid the window even when Windows hadn't shown the app's icon, so the app was running with nothing to click. It now only hides when the icon is there, and closes otherwise.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

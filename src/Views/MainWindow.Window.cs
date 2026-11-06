@@ -167,7 +167,8 @@ public partial class MainWindow
         UnregisterHotkeys();
         _tray?.Dispose();
         _tray = null;
-        if (!_demo && _s.DataMonthBytes > 0) { try { SaveSettings(); } catch { } }   // the data counted since the last save
+        // The data counted since the last save. Closing goes on if it can't be written, but the Log says why.
+        if (!_demo && _s.DataMonthBytes > 0) { try { SaveSettings(); } catch (Exception ex) { Log.Warn("Couldn't save the settings while closing: " + ex.Message); } }
         base.OnClosed(e);
     }
 
@@ -197,7 +198,8 @@ public partial class MainWindow
     async void OnClosing(object sender, CancelEventArgs e)
     {
         // Settings > App > Close to the notification area: the X only hides the window; Quit in the icon's menu closes the app.
-        if (GoesToTray(_s?.CloseToTray == true, _tray != null, _quitting, _sessionEnding, _closingDone, _demo))
+        // Only with the icon really there: a tray Windows refused (no notification area) would leave the app hidden with no way back
+        if (GoesToTray(_s?.CloseToTray == true, _tray?.Shown == true, _quitting, _sessionEnding, _closingDone, _demo))
         {
             e.Cancel = true;
             HideToTray();
