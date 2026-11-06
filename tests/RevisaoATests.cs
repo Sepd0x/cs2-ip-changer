@@ -158,6 +158,33 @@ static class RevisaoATests
               prot.Contains("_cEgress.Ok = null;\n            _cEgress.Waiting = false;\n            _cEgress.Detail = OffPhoneRow(")
               && prot.Contains("_cDiff.Ok = _egressPublic == null || _homePublic == null || same ? null : true;"), "");
 
+        // A8 (botão), A9, A18: uma só regra para o telemóvel poder trocar o IP
+        check("Revisão A8: o Change IP fica ativo com um iPhone ligado, também com a proteção desligada", MainWindow.CanChangeIp(noPhone: false, adbReady: false, iphone: true, iphoneUp: true)
+              && !MainWindow.CanChangeIp(false, false, true, iphoneUp: false) && MainWindow.CanChangeIp(false, adbReady: true, false, false) && !MainWindow.CanChangeIp(noPhone: true, true, true, true), "");
+        check("Revisão A8: o botão Change IP usa a regra, não o Egress", phone.Contains("ChangeIpBtn.IsEnabled = !_changingIp && ChangeIpReady;") && !phone.Contains("iphone && _last?.Egress != null"), "");
+        check("Revisão A9: Change IP and rejoin ativo com o iPhone e em Use the app with protection off sem telemóvel",
+              MainWindow.RejoinEnabled(true, false, canChangeIp: true, false) && MainWindow.RejoinEnabled(true, false, false, skipIp: true)
+              && !MainWindow.RejoinEnabled(false, false, true, true) && !MainWindow.RejoinEnabled(true, noPhone: true, true, true) && !MainWindow.RejoinEnabled(true, false, false, false), "");
+        check("Revisão A9: o botão do rejoin usa a regra", Src("Views", "MainWindow.Kick.cs").Contains("RejoinEnabled(_s.LastServer != null, _s.NoPhone, ChangeIpReady, IpStep(_protOn, _s.UseWithProtectionOff) == IpWhenOff.Skip)"), "");
+        check("Revisão A18: o nome do switch só diz New IP quando o clique troca o IP", !MainWindow.SwitchChangesIp(account: true, canChangeIp: true, adbReady: false)
+              && MainWindow.SwitchChangesIp(true, true, adbReady: true) && MainWindow.SwitchChangesIp(account: false, canChangeIp: true, false) && !MainWindow.SwitchChangesIp(false, false, false), "");
+        check("Revisão A18: o nome usa a mesma regra (fora da demo)", Src("Views", "MainWindow.Accounts.cs").Contains("!_demo && !SwitchChangesIp(c.Account, ChangeIpReady, _adb != null && _phone?.Ready == true)"), "");
+
+        // A10: No phone com iPhone
+        check("Revisão A10: No phone com iPhone diz que não está em uso", phone.IndexOf("if (_s.NoPhone) SetPhone(Ui.Faint, \"iPhone not in use\", \"No phone mode is on\");") is var p10 && p10 > 0
+              && p10 < phone.IndexOf("else if (tethered) SetPhone(Ui.Good, \"iPhone connected\""), "");
+
+        // A16: no hotspot o botão Turn off phone Wi-Fi não aparece
+        check("Revisão A16: o Turn off phone Wi-Fi segue a regra do bloqueio (escondido no hotspot)", phone.Contains("WifiOffBtn.Visibility = info?.Ready == true && PhoneWifiOn ?") && !phone.Contains("WifiOffBtn.Visibility = info?.Ready == true && info.WifiOn"), "");
+
+        // A17: o tooltip do tethering diz o tempo que a app espera
+        check("Revisão A17: o tooltip do Turn on USB tethering diz o tempo de espera certo", xaml.Contains($"waits up to {MainWindow.TetherWait.TotalSeconds:0} s for Windows to see it"), "");
+
+        // A26: telemóvel perdido com a proteção ligada, o Phone setup é o botão azul
+        check("Revisão A26: telemóvel perdido, Phone setup é o principal", MainWindow.SetupPrimary(false, phoneLost: true, phoneWifiOn: false) && !MainWindow.SetupPrimary(false, true, phoneWifiOn: true)
+              && MainWindow.SetupPrimary(firstRun: true, false, false) && !MainWindow.SetupPrimary(false, false, false), "");
+        check("Revisão A26: o estilo do Phone setup usa a regra", phone.Contains("PhoneSetupBtn.Style = (Style)FindResource(SetupPrimary(first, lost, PhoneWifiOn) ?"), "");
+
         check("Revisão A8: o IP novo do iPhone só conta verificado (nunca o de casa)", iphoneSrc.Contains("_verifiedKey != null && _verifiedKey == _last?.CandidateKey ? _egressPublic : null"), "");
     }
 }

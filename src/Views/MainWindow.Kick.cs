@@ -393,7 +393,7 @@ public partial class MainWindow
 
     void UpdateRejoinBtn()
     {
-        RejoinBtn.IsEnabled = !_changingIp && !_rejoining && _s.LastServer != null && _phone?.Ready == true && !_s.NoPhone;
+        RejoinBtn.IsEnabled = !_changingIp && !_rejoining && RejoinEnabled(_s.LastServer != null, _s.NoPhone, ChangeIpReady, IpStep(_protOn, _s.UseWithProtectionOff) == IpWhenOff.Skip);
         RejoinBtn.ToolTip = _s.NoPhone ? "Off in the no phone mode: there is no IP to change." : (_s.LastServer == null ? "Join a server from Servers first. " : $"Changes the IP, then joins {_s.LastServer} again (with another account if this one is banned there). ")
             + (_protOn ? "Only joins with protection confirmed." : _s.UseWithProtectionOff ? "Protection is off: it joins on your home connection without changing the IP (after a ban it asks to turn protection on first)." : "Protection is off: it asks to turn it on first.")
             + $" In game: {_s.HotkeyRejoin}.";

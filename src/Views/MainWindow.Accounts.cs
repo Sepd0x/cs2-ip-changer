@@ -279,7 +279,8 @@ public partial class MainWindow
     {
         var c = SwitchChoice;
         // The name says only what a click will do: no IP step in No phone mode, nor with protection off and "Use the app with protection off"
-        if (c.Ip && (_s.NoPhone || IpStep(_protOn, _s.UseWithProtectionOff) == IpWhenOff.Skip)) c = c with { Ip = false };
+        // (or the phone can't change it now: the same rule as the click, SwitchChangesIp)
+        if (c.Ip && (_s.NoPhone || !_demo && !SwitchChangesIp(c.Account, ChangeIpReady, _adb != null && _phone?.Ready == true) || IpStep(_protOn, _s.UseWithProtectionOff) == IpWhenOff.Skip)) c = c with { Ip = false };
         // The same pick as the click: with the rejoin step, an account banned on the last server is skipped there too
         var next = c.Account ? NextQuick(c.Rejoin ? _servers.FirstOrDefault(x => x.Key == _s.LastServer) : null) : null;
         var pool = _accounts.Count(a => a.Usable);

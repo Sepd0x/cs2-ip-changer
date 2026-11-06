@@ -617,7 +617,7 @@
                                                     ToolTip="So USB tethering uses mobile data and not the home network."/>
                                             <Border x:Name="TetherHost">
                                                 <Button x:Name="TetherBtn" Click="Tether_Click" Margin="0,0,6,6" Content="Turn on USB tethering"
-                                                        ToolTip="Asks the phone to turn on USB tethering and waits up to 15 s for Windows to see it. On some models you have to turn it on by hand."/>
+                                                        ToolTip="Asks the phone to turn on USB tethering and waits up to 30 s for Windows to see it. On some models you have to turn it on by hand."/>
                                             </Border>
                                             <Button x:Name="PhoneSetupBtn" Click="PhoneHelp_Click" Margin="0,0,6,6" Content="Phone setup"
                                                     ToolTip="Installs the phone tool if it's missing, then checks the cable, the driver, USB debugging, tethering, the phone's Wi-Fi and where the rest of the PC goes, fixes what it can and tells you the one thing left to do"/>

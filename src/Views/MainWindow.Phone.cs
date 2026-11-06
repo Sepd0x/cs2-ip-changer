@@ -34,7 +34,8 @@ public partial class MainWindow
         if (_phone?.Ready != true && await IphoneState() is (true, var tethered))
         {
             AdbInstallBtn.Visibility = Visibility.Collapsed;
-            if (tethered) SetPhone(Ui.Good, "iPhone connected", "Change IP: the app tells you when to turn Airplane Mode on and off, then shows the new IP.");
+            if (_s.NoPhone) SetPhone(Ui.Faint, "iPhone not in use", "No phone mode is on");
+            else if (tethered) SetPhone(Ui.Good, "iPhone connected", "Change IP: the app tells you when to turn Airplane Mode on and off, then shows the new IP.");
             else SetPhone(Ui.Warn, "iPhone found, no connection yet", PhoneSetup.IphoneHotspot);
             UpdatePhoneCheck();
             return;
@@ -74,7 +75,9 @@ public partial class MainWindow
             SetPhone(Ui.Warn, "Phone found, no connection yet", info.Summary + ". Turn on USB tethering.");
         else SetPhone(Ui.Good, "Ready to change IP", info.Summary);
         PhoneNotInUse();
-        WifiOffBtn.Visibility = info?.Ready == true && info.WifiOn ? Visibility.Visible : Visibility.Collapsed;
+        // The same rule as the block (PhoneWifiOn): on the hotspot the button stays hidden, since on some phones turning Wi-Fi off
+        // also stops the hotspot (Change IP leaves it alone for that reason). The Phone box still warns when Wi-Fi is on.
+        WifiOffBtn.Visibility = info?.Ready == true && PhoneWifiOn ? Visibility.Visible : Visibility.Collapsed;
         UpdatePhoneCheck();
         // Tethering on in the phone but Windows has no phone adapter: happens after the cable flickers.
         // No phone mode has no candidate, so the adapters say whether Windows sees the phone.
@@ -124,9 +127,9 @@ public partial class MainWindow
     void UpdatePhoneCheck()
     {
         PhoneFirstRun();
-        // Change IP only makes sense with the phone ready on ADB (and not in the no phone mode).
+        // Change IP only makes sense with the phone ready on ADB, or an iPhone connected (and not in the no phone mode).
         var iphone = _iphone && _phone?.Ready != true;
-        ChangeIpBtn.IsEnabled = !_changingIp && (_phone?.Ready == true || iphone && _last?.Egress != null) && !_s.NoPhone;
+        ChangeIpBtn.IsEnabled = !_changingIp && ChangeIpReady;
         var drop = IpChangeDrops ? " If you are on a server, you will drop." : "";
         ChangeIpBtn.ToolTip = _s.NoPhone ? "Off in the no phone mode: pick another option under What goes through the phone."
             : iphone ? "Tells you when to turn Airplane Mode on and off on the iPhone, then shows the new IP." + drop
@@ -134,6 +137,27 @@ public partial class MainWindow
         UpdateRejoinBtn();
         UpdateDataCheck();
     }
+
+    /// <summary>
+    /// Change IP can run: the phone ready on ADB, or an iPhone whose connection is up, protected or still being checked (with
+    /// protection off there is never a protected one). Never in No phone mode.
+    /// </summary>
+    public static bool CanChangeIp(bool noPhone, bool adbReady, bool iphone, bool iphoneUp) => !noPhone && (adbReady || iphone && iphoneUp);
+
+    /// <summary>The Change IP button, Change IP and rejoin and the name of New IP + next account all follow this.</summary>
+    bool ChangeIpReady => CanChangeIp(_s.NoPhone, _phone?.Ready == true, _iphone && _phone?.Ready != true, PhoneLink.Exit(_last) != null);
+
+    /// <summary>
+    /// Change IP and rejoin can run: a last server, not No phone, and either the IP can change or it is left out on purpose (Use the
+    /// app with protection off, protection off: it joins on the home connection).
+    /// </summary>
+    public static bool RejoinEnabled(bool lastServer, bool noPhone, bool canChangeIp, bool skipIp) => lastServer && !noPhone && (canChangeIp || skipIp);
+
+    /// <summary>
+    /// The name of New IP + next account keeps "New IP" only when a click changes it. With the account step the switch needs the
+    /// phone on ADB (it doesn't run the iPhone's guided change); without it, Change IP runs as usual (the iPhone too).
+    /// </summary>
+    public static bool SwitchChangesIp(bool account, bool canChangeIp, bool adbReady) => account ? adbReady : canChangeIp;
 
     /// <summary>The Mobile data row of Checks. While an IP change runs it says the data is off (or coming back), never green.</summary>
     void UpdateDataCheck()
@@ -210,6 +234,12 @@ public partial class MainWindow
     /// <summary>Turn on USB tethering only when it can work and isn't on yet.</summary>
     public static bool ShowTetherButton(bool firstRun, bool phoneReady, bool tethered) => !firstRun && phoneReady && !tethered;
 
+    /// <summary>
+    /// Phone setup is the blue button on the first run, and when protection is on and the phone is gone: Status leaves Change IP and
+    /// rejoin grey then (StatusPrimary, fixFirst), so the fix is the one to press. With the phone's Wi-Fi on, Turn off phone Wi-Fi is.
+    /// </summary>
+    public static bool SetupPrimary(bool firstRun, bool phoneLost, bool phoneWifiOn) => firstRun || phoneLost && !phoneWifiOn;
+
     void PhoneFirstRun()
     {
         var first = !PhoneKnown && !_s.NoPhone;
@@ -217,7 +247,9 @@ public partial class MainWindow
         // USB tethering can only be asked of a phone ADB sees: while it isn't found the button would only fail.
         // beta.11 (2nd round, Hugo: "Ready to change IP" next to "Turn on USB tethering"): not while the phone's tethering already carries the connection
         TetherHost.Visibility = ShowTetherButton(first, _phone?.Ready == true, _last?.Egress?.IsPhone == true || _last?.Candidate?.IsPhone == true) ? Visibility.Visible : Visibility.Collapsed;
-        PhoneSetupBtn.Style = (Style)FindResource(first ? "Primary" : typeof(Button));
+        // Protection on and the phone gone (seen before, Wi-Fi off): Phone setup is the fix, so it is the one blue button then too
+        var lost = _protOn && !_s.NoPhone && _last != null && PhoneLink.Exit(_last) == null;
+        PhoneSetupBtn.Style = (Style)FindResource(SetupPrimary(first, lost, PhoneWifiOn) ? "Primary" : typeof(Button));
         WifiOffBtn.Style = (Style)FindResource(first ? typeof(Button) : "Primary");
         var at = PhoneButtons.Children.IndexOf(PhoneSetupBtn);
         var want = first ? 0 : PhoneButtons.Children.Count - 1;
@@ -330,7 +362,7 @@ public partial class MainWindow
     }
 
     /// <summary>Windows can take 20 s or more to add the phone's adapter after the USB mode changes.</summary>
-    static readonly TimeSpan TetherWait = TimeSpan.FromSeconds(30);
+    public static readonly TimeSpan TetherWait = TimeSpan.FromSeconds(30);
     DateTime _tetherAskedAt = DateTime.MinValue;
 
     /// <summary>

@@ -59,6 +59,12 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - On the iPhone, Change IP with protection off (or right after plugging it in) said "Connect the iPhone first" although it was connected. It now works there too, and only a checked IP counts as the new one.
 - No phone mode left protection on out of sight, so leaving it turned protection on by itself, without the CS2 open question, or not, with nothing saying which. No phone now turns protection off, and leaving it asks "Turn on protection now?" (with CS2 open, the same question as Turn on protection). Closing the app in No phone mode with CS2 open no longer asks about sending CS2 home: it is already there.
 - With protection off, the Phone connection row of Checks could be red and the Phone IP is not your home IP row too. With protection off they are grey and say whether the phone is ready for when you turn it on.
+- Change IP and rejoin stayed grey with an iPhone, and with Use the app with protection off and no phone, although its hotkey worked. It is on now whenever it can run.
+- New IP + next account kept "New IP" in its name when the phone wasn't ready, and the click then only switched the account. The name now drops "New IP" when the IP won't change.
+- With an iPhone in No phone mode, the Phone box said "iPhone connected" and offered Change IP. It now says the iPhone isn't in use.
+- On the phone's hotspot, Turn off phone Wi-Fi showed as the main button, and on some phones it also stops the hotspot. It no longer shows there.
+- The tooltip of Turn on USB tethering said the app waits 15 s for Windows; it waits 30 s.
+- With protection on and a phone you used before gone, Status had no blue button. Phone setup is the blue one then.
 
 ## [0.1.0-beta.11] - 2026-11-06
 
