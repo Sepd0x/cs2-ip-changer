@@ -50,7 +50,7 @@
   },
   {
    "file": "docs/screenshots/configs.png",
-   "sha256": "f01ef7f857afc7fbc5808cc6b6a669a8f10f277c273e1b940d4a2bb88dd9951c",
+   "sha256": "cd30585d246e0ad258c36f845f7ef0ad4975157a243609dfac1e15a4e9a07cc1",
    "size": [
     2480,
     1600
@@ -78,7 +78,7 @@
   },
   {
    "file": "docs/assets/shots/configs.png",
-   "sha256": "f2b5166bcd0017a03871dd1176c95f98dfaed58af2449a96838747210781c6b4",
+   "sha256": "d83706f24a9179f0b9373dcfa99992a783c0e3c1ae7cedd34d88dd06e885523b",
    "size": [
     2572,
     1692
@@ -86,7 +86,7 @@
   },
   {
    "file": "docs/assets/shots/configs.webp",
-   "sha256": "7d680a62a746306b9713f137c6d31c46266f7495fbd0684de32a286410d2a343"
+   "sha256": "6ca3030015a4a11a1ab92b691360146b72c220ecc7a27efb958f58072a827a01"
   },
   {
    "file": "docs/assets/shots/connection.png",
@@ -266,7 +266,7 @@
   },
   {
    "file": "worker/stats/dashboard/ui/configs.png",
-   "sha256": "a4363ef70a79d03eb2535fcb28436f111637472998aeed8371644823a5a5f02f",
+   "sha256": "8e9aae772d3e36909a1d24859dd30108dd1f08f08b8525d4a6c8fc52364f2c39",
    "size": [
     1240,
     800
@@ -282,7 +282,7 @@
   },
   {
    "file": "worker/stats/dashboard/ui/log.png",
-   "sha256": "546120b1b070e906fb621f0e06841a8e37b41eb8202d4b002f3075330e3779f0",
+   "sha256": "a390ce4d9408e141f3c79b0d3229e2ca0883f863f6a002411deddfc46fce56b4",
    "size": [
     1240,
     800
@@ -349,5 +349,8 @@
     "sha256": "1b152fe15f8bad7356f9b2c1a3f2981c199cd66335dab188e24182d0a1b9e18c"
    }
   ]
+ },
+ "social": {
+  "from": "f62c89aaabda1b921d9b6c5ea9749aeaf562dc89eefb56bb89597626cb2a1ac4"
  }
 }
