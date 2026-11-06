@@ -50,7 +50,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Turn off protection with CS2 open now says in the same question that the server you are on sees your home IP from then on.
 - With protection off or No phone, Status said "nothing is blocked" while regions you turned off stay blocked. It now says so, and so does the warning of Use the app with protection off.
 - With protection off and the whole PC on the phone (no other connection), Status said every server sees your home IP. It now says they see the phone's IP, and that nothing protects your home IP if the phone drops.
-- With protection off, the Mobile data row of Checks was red with the phone's Wi-Fi on. It is amber now, as with protection on and the block confirmed.
+- With protection off, the Mobile data row of Checks was red with the phone's Wi-Fi on, and counted as a check that needs you. With protection off it is grey now and says it isn't in use.
 - "Off: 3 servers see your home IP" counted IPs, not servers.
 - With Turn on protection when the app starts on, the question on the first close said the app starts with protection off.
 - The VPN app row of Checks said servers and CS2 still go through the phone with protection off. It now says they see the VPN's IP then.
@@ -59,8 +59,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - On the iPhone, Change IP with protection off (or right after plugging it in) said "Connect the iPhone first" although it was connected. It now works there too, and only a checked IP counts as the new one.
 - No phone mode left protection on out of sight, so leaving it turned protection on by itself, without the CS2 open question, or not, with nothing saying which. No phone now turns protection off, and leaving it asks "Turn on protection now?" (with CS2 open, the same question as Turn on protection). Closing the app in No phone mode with CS2 open no longer asks about sending CS2 home: it is already there.
 - With protection off, the Phone connection row of Checks could be red and the Phone IP is not your home IP row too. With protection off they are grey and say whether the phone is ready for when you turn it on.
-- Change IP and rejoin stayed grey with an iPhone, and with Use the app with protection off and no phone, although its hotkey worked. It is on now whenever it can run.
-- New IP + next account kept "New IP" in its name when the phone wasn't ready, and the click then only switched the account. The name now drops "New IP" when the IP won't change.
+- With protection off, Change IP and rejoin stayed grey with an iPhone connected. It follows the same rule as Change IP now.
+- With an iPhone that isn't connected, New IP + next account still said "New IP" and the click stopped at "Connect the iPhone first". It now leaves the IP out, like with an Android phone that isn't ready.
 - With an iPhone in No phone mode, the Phone box said "iPhone connected" and offered Change IP. It now says the iPhone isn't in use.
 - On the phone's hotspot, Turn off phone Wi-Fi showed as the main button, and on some phones it also stops the hotspot. It no longer shows there.
 - The tooltip of Turn on USB tethering said the app waits 15 s for Windows; it waits 30 s.
@@ -108,6 +108,22 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - With cs2.exe not found, or a Firewall write that failed, Regions said "CS2 can play in 3 of 30 regions" and Checks "3 of 30 allowed", as if the block was on. They now say the regions are picked but not blocked yet (or that the Firewall rule didn't change), and a click on a shortcut says why.
 - Refresh on Regions without internet only showed the grey "Offline" line, and the Log didn't say Valve couldn't be reached. Now both say it.
 - Join with CS2 closed waited the full 2 minutes before joining when the app hadn't found cs2.exe yet. It now finds CS2 once it is open and joins when the main menu is ready.
+- In No phone mode, New IP + next account without the account step was named "Rejoin" but only showed "there is no IP to change" and didn't rejoin. It now rejoins.
+- With the phone not ready on ADB, New IP + next account without the account step stopped at the IP and didn't rejoin. It now leaves the IP out, as Settings says, runs the other steps and the Log says why.
+- On an iPhone, New IP + next account with the account step was named "New IP + <account>" but never changed the IP. It is now named for what it does, and says to use Change IP for the IP. Change IP and rejoin is no longer greyed out with an iPhone connected. Its hotkey, and the New IP + next account hotkey when it would change the IP, now say on an iPhone to use Change IP in the app, instead of waiting for Airplane Mode steps you can't see in game.
+- The top bar and the Log called the switch "New IP + next account" whatever it did. They now use the button's name, for example "Log in to atlas + rejoin · done", and the rejoin is just "Rejoin" when protection is off with Use the app with protection off. The notification area's menu uses the button's name too.
+- With protection off and Use the app with protection off, Change IP and rejoin was greyed out without the phone, and its tooltip said both that it changes the IP and that it doesn't. It is now called Rejoin there, works on your home connection and says so.
+- When the last server was no longer in your list, the rejoin hotkey still changed the IP, dropped you from the game and didn't take you back. It now stops before anything changes and says why, and the button is greyed out.
+- Log in with Open CS2 opened CS2 on your home connection with protection off, but only when the CS2 lock option was on. It now doesn't open CS2 with protection off (unless Use the app with protection off is on), and says so once the login is done instead of before.
+- A ban on the account in use was not saved when that account was hidden from the list, so the rejoin came back with the banned account and the Log asked to log in with Remember me. Bans now count on hidden accounts too.
+- The ban message always promised "rejoin with a new IP as <account>". It now says what the key does: the IP stays the same in No phone mode, protection has to be turned on first when it is off, and an account that isn't in Accounts would rejoin as itself.
+- In No phone mode, or with protection off and Use the app with protection off, some messages talked about the phone: after a timeout, a "No Steam logon" kick, a VPN block, a server joined that isn't in your list, and Join on a server where you were banned. They now talk about your home connection. In Settings, Rejoin the last server and Change the IP say when they run.
+- An account switch that Steam can't do (loginusers.vdf behind a link, or with content the app can't write back) closed CS2 first, and in New IP + next account it changed the IP first. It now stops before anything is closed or changed.
+- With the IP and rejoin steps on and the last server gone, New IP + next account said "turn on at least one step". It now says the IP stays the same and the last server isn't in your list.
+- A server joined from CS2's own browser that said it was full started the app's retry every 15 s. Only a Join or Rejoin from the app does now, and the "last" mark on Servers follows the server you joined.
+- New IP + next account could name the account Steam had just logged in to, for a few seconds after a login, and didn't update when a cooldown ended.
+- Alt+F4, Alt+Space, Alt+Tab and Alt+Esc could be picked as a hotkey, which took them from every window (Alt+F4 stopped closing windows). They are refused now.
+- An account name with an emoji around the 9th letter could show a broken character on the New IP + next account button.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

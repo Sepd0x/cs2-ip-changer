@@ -55,6 +55,8 @@ public static class Hotkey
         var fKey = key >= Key.F1 && key <= Key.F24;
         if (mods == ModifierKeys.None) return "A key on its own would fire while you type or play. Add Ctrl, Alt, Shift or Win.";
         if (mods == ModifierKeys.Shift && !fKey) return "Shift with a letter or number types it. Use Shift only with F1 to F24.";
+        // Taken as a hotkey, these would stop working in every window: Alt+F4 would no longer close one
+        if (mods == ModifierKeys.Alt && key is Key.F4 or Key.Space or Key.Tab or Key.Escape) return $"Windows uses {Format(mods, key)} itself. Pick another combination.";
         return null;
     }
 

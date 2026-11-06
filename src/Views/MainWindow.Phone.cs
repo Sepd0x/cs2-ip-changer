@@ -144,20 +144,11 @@ public partial class MainWindow
     /// </summary>
     public static bool CanChangeIp(bool noPhone, bool adbReady, bool iphone, bool iphoneUp) => !noPhone && (adbReady || iphone && iphoneUp);
 
-    /// <summary>The Change IP button, Change IP and rejoin and the name of New IP + next account all follow this.</summary>
-    bool ChangeIpReady => CanChangeIp(_s.NoPhone, _phone?.Ready == true, _iphone && _phone?.Ready != true, PhoneLink.Exit(_last) != null);
-
     /// <summary>
-    /// Change IP and rejoin can run: a last server, not No phone, and either the IP can change or it is left out on purpose (Use the
-    /// app with protection off, protection off: it joins on the home connection).
+    /// The one rule for "the phone can change its IP now": the Change IP button, Change IP and rejoin (RejoinEnabled) and the IP step
+    /// of New IP + next account on an iPhone (QuickChoice) follow it. With the account step the switch also needs ADB (SwitchChangesIp).
     /// </summary>
-    public static bool RejoinEnabled(bool lastServer, bool noPhone, bool canChangeIp, bool skipIp) => lastServer && !noPhone && (canChangeIp || skipIp);
-
-    /// <summary>
-    /// The name of New IP + next account keeps "New IP" only when a click changes it. With the account step the switch needs the
-    /// phone on ADB (it doesn't run the iPhone's guided change); without it, Change IP runs as usual (the iPhone too).
-    /// </summary>
-    public static bool SwitchChangesIp(bool account, bool canChangeIp, bool adbReady) => account ? adbReady : canChangeIp;
+    bool ChangeIpReady => CanChangeIp(_s.NoPhone, _phone?.Ready == true, IphoneByHand, PhoneLink.Exit(_last) != null);
 
     /// <summary>The Mobile data row of Checks. While an IP change runs it says the data is off (or coming back), never green.</summary>
     void UpdateDataCheck()
@@ -192,16 +183,21 @@ public partial class MainWindow
         {
             var wifi = PhoneLink.WifiOn(_phone, egress?.IsWifi);
             (_cPhoneData.Ok, _cPhoneData.Waiting) = DataRow(wifi, _last?.KillSwitchOk == true, _last?.Unprotected == true);
-            _cPhoneData.Detail = wifi ? $"Phone Wi-Fi is on{(_phone.WifiSsid != null ? $" ({_phone.WifiSsid})" : "")}" : $"{_phone.Carrier} · {_phone.NetType}".Trim(' ', '·');
+            var detail = wifi ? $"Phone Wi-Fi is on{(_phone.WifiSsid != null ? $" ({_phone.WifiSsid})" : "")}" : $"{_phone.Carrier} · {_phone.NetType}".Trim(' ', '·');
+            _cPhoneData.Detail = _last?.Unprotected == true ? DataDetailOff(detail) : detail;
         }
     }
 
     /// <summary>
-    /// The Mobile data row with the phone on ADB. Wi-Fi on with the block confirmed: blocked and safe (amber); with protection off
-    /// nothing goes through the phone yet (amber too: to fix before turning it on); with protection on and no block, a real risk (red).
+    /// The Mobile data row with the phone on ADB. Protection off: grey, and it doesn't count as needing you (6 nov.: red and amber only
+    /// while protection is on, like the Phone connection row). Wi-Fi on with the block confirmed: blocked and safe (amber); with
+    /// protection on and no block, a real risk (red).
     /// </summary>
     public static (bool? Ok, bool Waiting) DataRow(bool wifiOn, bool killSwitchOk, bool unprotected) =>
-        wifiOn && (killSwitchOk || unprotected) ? (null, true) : (!wifiOn, false);
+        unprotected ? (null, false) : wifiOn && killSwitchOk ? (null, true) : (!wifiOn, false);
+
+    /// <summary>The Mobile data row with protection off: what the phone says, and that it isn't in use.</summary>
+    public static string DataDetailOff(string detail) => (string.IsNullOrEmpty(detail) ? "" : detail + " · ") + "not in use: protection is off";
 
     async void WifiOff_Click(object sender, RoutedEventArgs e)
     {

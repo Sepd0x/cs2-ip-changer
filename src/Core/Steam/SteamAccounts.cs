@@ -323,17 +323,30 @@ public static partial class Steam
     /// Switches account: AutoLoginUser in the registry and AutoLogin + timestamp in loginusers.vdf (see <see cref="MarkForLogin"/>), then
     /// restarts Steam. Returns the timestamp written, for <see cref="WaitForLogin"/>. <paramref name="whileClosed"/>: see <see cref="CloseSteam"/>.
     /// </summary>
+    // The file is rewritten by this parser: only when it reads back exactly, so nothing Steam keeps there gets lost.
+    const string NotUnderstood = "Steam's loginusers.vdf has content this version doesn't understand, so the account wasn't changed. Log in from Steam itself.";
+    const string NoSteam = "Could not find Steam installed on this PC.";
+
+    /// <summary>
+    /// Why the account can't be switched now (null = it can): no Steam, loginusers.vdf behind a link, or with content the parser can't
+    /// write back. The app asks before it closes CS2 or changes the IP for a switch; <see cref="SwitchTo"/> asks again before closing Steam.
+    /// </summary>
+    public static string SwitchProblem(string steamId)
+    {
+        if (Exe == null || !File.Exists(Exe)) return NoSteam;
+        var path = LoginUsersPath;
+        if (path == null || !File.Exists(path) || steamId == null) return null;
+        if (Redirected(path)) return Linked;
+        return VdfNode.RoundTrips(File.ReadAllText(path)) ? null : NotUnderstood;
+    }
+
     public static async Task<long> SwitchTo(string accountName, string steamId, bool offline, string extraArgs, Action whileClosed = null)
     {
-        if (Exe == null || !File.Exists(Exe)) throw new InvalidOperationException("Could not find Steam installed on this PC.");
-        // The file is rewritten by this parser: only when it reads back exactly, so nothing Steam keeps there gets lost.
         // Checked before closing Steam, and again after (Steam writes the file when it exits).
-        const string NotUnderstood = "Steam's loginusers.vdf has content this version doesn't understand, so the account wasn't changed. Log in from Steam itself.";
+        // A link is refused before Steam is closed, so Steam isn't left closed for nothing
+        if (SwitchProblem(steamId) is string why) throw why == Linked ? new IOException(why) : new InvalidOperationException(why);
         var path = LoginUsersPath;
         var edit = path != null && File.Exists(path) && steamId != null;
-        // A link is refused before Steam is closed, so Steam isn't left closed for nothing
-        if (edit && Redirected(path)) throw new IOException(Linked);
-        if (edit && !VdfNode.RoundTrips(File.ReadAllText(path))) throw new InvalidOperationException(NotUnderstood);
         await CloseSteam(whileClosed);
         // A Steam still running would get "-login" while on the old account and write that account back over the switch
         if (!SteamClosedNow()) throw new InvalidOperationException("Steam didn't close, so the account wasn't changed. Close Steam (or wait a moment) and try again.");

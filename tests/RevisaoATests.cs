@@ -87,8 +87,12 @@ static class RevisaoATests
               && MainWindow.OffSeen(false, 0) == "CS2 and every server see your home IP, and nothing is blocked.", "");
 
         // A20 (parte do Mobile data): com a proteção desligada o Wi-Fi do telemóvel não é vermelho
-        check("Revisão A20: proteção desligada, Mobile data com o Wi-Fi ligado fica âmbar", MainWindow.DataRow(true, false, unprotected: true) == (null, true)
-              && MainWindow.DataRow(true, false, false) == (false, false) && MainWindow.DataRow(true, true, false) == (null, true) && MainWindow.DataRow(false, false, true) == (true, false), "");
+        // (decidido a 6 nov.: com a proteção desligada fica cinzento e não conta como "needs you"; vermelho e âmbar só com ela ligada)
+        check("Revisão A20: proteção desligada, Mobile data cinzento e fora do resumo", MainWindow.DataRow(true, false, unprotected: true) == (null, false)
+              && MainWindow.DataRow(false, false, unprotected: true) == (null, false)
+              && MainWindow.DataRow(true, false, false) == (false, false) && MainWindow.DataRow(true, true, false) == (null, true) && MainWindow.DataRow(false, false, false) == (true, false), "");
+        check("Revisão A20: proteção desligada, Mobile data diz que não está em uso", MainWindow.DataDetailOff("Phone Wi-Fi is on").EndsWith("not in use: protection is off")
+              && Src("Views", "MainWindow.Phone.cs").Contains("_last?.Unprotected == true ? DataDetailOff("), "");
 
         // A21: conta servidores, não IPs
         check("Revisão A21: 'Off: N servers' conta servidores", MainWindow.RoutesOffText(1) == "Off: 1 server sees your home IP" && MainWindow.RoutesOffText(3) == "Off: 3 servers see your home IP"
@@ -164,12 +168,19 @@ static class RevisaoATests
               && !MainWindow.CanChangeIp(false, false, true, iphoneUp: false) && MainWindow.CanChangeIp(false, adbReady: true, false, false) && !MainWindow.CanChangeIp(noPhone: true, true, true, true), "");
         check("Revisão A8: o botão Change IP usa a regra, não o Egress", phone.Contains("ChangeIpBtn.IsEnabled = !_changingIp && ChangeIpReady;") && !phone.Contains("iphone && _last?.Egress != null"), "");
         check("Revisão A9: Change IP and rejoin ativo com o iPhone e em Use the app with protection off sem telemóvel",
-              MainWindow.RejoinEnabled(true, false, canChangeIp: true, false) && MainWindow.RejoinEnabled(true, false, false, skipIp: true)
-              && !MainWindow.RejoinEnabled(false, false, true, true) && !MainWindow.RejoinEnabled(true, noPhone: true, true, true) && !MainWindow.RejoinEnabled(true, false, false, false), "");
-        check("Revisão A9: o botão do rejoin usa a regra", Src("Views", "MainWindow.Kick.cs").Contains("RejoinEnabled(_s.LastServer != null, _s.NoPhone, ChangeIpReady, IpStep(_protOn, _s.UseWithProtectionOff) == IpWhenOff.Skip)"), "");
-        check("Revisão A18: o nome do switch só diz New IP quando o clique troca o IP", !MainWindow.SwitchChangesIp(account: true, canChangeIp: true, adbReady: false)
-              && MainWindow.SwitchChangesIp(true, true, adbReady: true) && MainWindow.SwitchChangesIp(account: false, canChangeIp: true, false) && !MainWindow.SwitchChangesIp(false, false, false), "");
-        check("Revisão A18: o nome usa a mesma regra (fora da demo)", Src("Views", "MainWindow.Accounts.cs").Contains("!_demo && !SwitchChangesIp(c.Account, ChangeIpReady, _adb != null && _phone?.Ready == true)"), "");
+              MainWindow.RejoinEnabled(false, true, false, canChangeIp: true, false) && MainWindow.RejoinEnabled(false, true, false, false, homeNoBan: true)
+              && !MainWindow.RejoinEnabled(false, lastInList: false, false, true, true) && !MainWindow.RejoinEnabled(false, true, noPhone: true, true, true) && !MainWindow.RejoinEnabled(false, true, false, false, false), "");
+        // Junto com a área B: uma só regra para o telemóvel poder trocar o IP (ChangeIpReady), também no RejoinBtn e no IP do switch no iPhone
+        var kick = Src("Views", "MainWindow.Kick.cs");
+        check("Revisão A9: o botão do rejoin usa a regra do Change IP (o iPhone também com a proteção desligada)",
+              kick.Contains("RejoinEnabled(_changingIp || _rejoining, lastInList, _s.NoPhone, ChangeIpReady, OnHome && !BannedOnLast())") && !kick.Contains("IphoneByHand && _last?.Egress != null"), "");
+        check("Revisão A9: ChangeIpReady é a única regra (sem cópias em Phone.cs)", phone.Contains("bool ChangeIpReady => CanChangeIp(_s.NoPhone, _phone?.Ready == true, IphoneByHand, PhoneLink.Exit(_last) != null);")
+              && !phone.Contains("static bool RejoinEnabled") && !phone.Contains("static bool SwitchChangesIp"), "");
+        var sw = new MainWindow.SwitchSteps(true, true, true, false);
+        check("Revisão A18: o nome do switch tira o New IP com o Android fora do ADB", !MainWindow.QuickSteps(sw, false, false, adbReady: false).Ip && MainWindow.QuickSteps(sw, false, false, adbReady: true).Ip, "");
+        check("Revisão A18: um iPhone desligado também não troca o IP no switch (sem o passo da conta)",
+              !MainWindow.QuickSteps(sw with { Account = false }, false, iphoneByHand: false, adbReady: false).Ip && MainWindow.QuickSteps(sw with { Account = false }, false, iphoneByHand: true, adbReady: false).Ip
+              && kick.Contains("QuickSteps(SwitchChoice, _s.NoPhone, IphoneByHand && (_demo || ChangeIpReady), _demo || _adb != null && _phone?.Ready == true)"), "");
 
         // A10: No phone com iPhone
         check("Revisão A10: No phone com iPhone diz que não está em uso", phone.IndexOf("if (_s.NoPhone) SetPhone(Ui.Faint, \"iPhone not in use\", \"No phone mode is on\");") is var p10 && p10 > 0
