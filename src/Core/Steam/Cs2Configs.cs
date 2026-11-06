@@ -117,8 +117,14 @@ public static class Vcfg
 
 public static class Cs2Config
 {
+    /// <summary>Which file each category lives in, in the order shown. Crosshair and game share the user convars and are merged key by key.</summary>
+    static readonly (string Category, CfgPart Part)[] Map =
+    {
+        ("binds", CfgPart.Keys), ("crosshair", CfgPart.Convars), ("game", CfgPart.Convars), ("video", CfgPart.Video), ("hud", CfgPart.Machine),
+    };
+
     /// <summary>What can be copied, in the order shown.</summary>
-    public static readonly string[] Categories = { "binds", "crosshair", "game", "video", "hud" };
+    public static readonly string[] Categories = Map.Select(m => m.Category).ToArray();
 
     public static string CategoryName(string c) => c switch
     {
@@ -151,14 +157,13 @@ public static class Cs2Config
         CfgPart.Keys => "keys.vcfg", CfgPart.Convars => "convars.vcfg", CfgPart.Video => "video.txt", _ => "machine.vcfg",
     };
 
-    public static CfgPart[] PartsOf(string category) => category switch
-    {
-        "binds" => new[] { CfgPart.Keys },
-        "crosshair" or "game" => new[] { CfgPart.Convars },
-        "video" => new[] { CfgPart.Video },
-        "hud" => new[] { CfgPart.Machine },
-        _ => Array.Empty<CfgPart>(),
-    };
+    public static CfgPart[] PartsOf(string category) => Map.Where(m => m.Category == category).Select(m => m.Part).ToArray();
+
+    /// <summary>The category is a whole file of its own (copied as a file); the others share theirs and are merged by key.</summary>
+    public static bool WholeFile(string category) => PartsOf(category) is [var p] && Map.Count(m => m.Part == p) == 1;
+
+    /// <summary>The category of one setting: its file's, or in the shared convars crosshair or game by the key.</summary>
+    public static string CategoryOf(CfgPart part, string key) => part == CfgPart.Convars ? (IsCrosshairKey(key) ? "crosshair" : "game") : Map.First(m => m.Part == part).Category;
 
     public static bool IsCrosshairKey(string k) => k.StartsWith("cl_crosshair", StringComparison.OrdinalIgnoreCase)
         || k.Equals("crosshair", StringComparison.OrdinalIgnoreCase) || k.Equals("cl_fixedcrosshairgap", StringComparison.OrdinalIgnoreCase);
@@ -232,17 +237,30 @@ public static class Cs2Config
     static readonly string[] Volatile = { "cachedvalue_", "ui_news_last_read_link", "cl_redemption_reset_timestamp", "ui_vanitysetting_", "ui_setting_advertiseforhire_auto_last", "panorama_console_position_and_size" };
     public static bool IsVolatile(string k) => Volatile.Any(v => k.StartsWith(v, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>Same settings: same text, or for the machine file the same values once what CS2 rewrites by itself is left out.</summary>
+    /// <summary>
+    /// Same settings, the one rule for a copy (nothing to write) and the Compare page (nothing to show): same text, or the same values
+    /// once read (<see cref="SameValue"/>, key by key).
+    /// </summary>
     public static bool SameSettings(CfgPart p, string a, string b)
     {
         if (SameText(a, b)) return true;
-        if (p != CfgPart.Machine || a == null || b == null) return false;
+        if (a == null || b == null) return false;
         var fa = Flatten(a, p);
         var fb = Flatten(b, p);
         if (fa.Count == 0 || fb.Count == 0) return false;   // can't be read: compared as text only
-        var ka = fa.Where(x => !IsVolatile(x.Key)).ToList();
-        return ka.Count == fb.Count(x => !IsVolatile(x.Key)) && ka.All(x => fb.TryGetValue(x.Key, out var v) && v == x.Value);
+        return fa.Keys.Union(fb.Keys, StringComparer.OrdinalIgnoreCase).All(k => SameValue(p, k, fa.GetValueOrDefault(k), fb.GetValueOrDefault(k), true));
     }
+
+    /// <summary>
+    /// One setting is the same on both sides (null = not in the file). "1.000000" and "1" are the same number (binds are commands, not
+    /// numbers); a missing bind and "&lt;unbound&gt;" are the same when both files are there; what CS2 rewrites by itself in the machine
+    /// file never counts.
+    /// </summary>
+    public static bool SameValue(CfgPart part, string key, string a, string b, bool bothFiles) =>
+        string.Equals(a, b, StringComparison.Ordinal)
+        || (part == CfgPart.Keys && bothFiles && Unbound(a) && Unbound(b))
+        || (part != CfgPart.Keys && SameNumber(a, b))
+        || (part == CfgPart.Machine && IsVolatile(key));
 
     /// <summary>"1.000000" (older CS2 builds) and "1" (newer) are the same value.</summary>
     static bool SameNumber(string a, string b) =>
@@ -329,11 +347,8 @@ public static class Cs2Config
                 string va = null, vb = null;
                 fa?.TryGetValue(k, out va);
                 fb?.TryGetValue(k, out vb);
-                if (string.Equals(va, vb, StringComparison.Ordinal)) continue;
-                if (part == CfgPart.Keys && fa != null && fb != null && Unbound(va) && Unbound(vb)) continue;   // missing on one side, "unbound" on the other
-                if (part != CfgPart.Keys && SameNumber(va, vb)) continue;   // binds are commands, not numbers
-                if (part == CfgPart.Machine && IsVolatile(k)) continue;
-                var cat = part switch { CfgPart.Keys => "binds", CfgPart.Video => "video", CfgPart.Machine => "hud", _ => IsCrosshairKey(k) ? "crosshair" : "game" };
+                if (SameValue(part, k, va, vb, fa != null && fb != null)) continue;
+                var cat = CategoryOf(part, k);
                 var label = part == CfgPart.Keys ? $"Key {k}" : Labels.TryGetValue(BaseKey(k), out var l) ? l : k;
                 list.Add(new CfgDiff(cat, k, label, Show(k, va, part, fa == null), Show(k, vb, part, fb == null)));
             }
@@ -672,7 +687,7 @@ public sealed class Cs2ConfigStore
             if (remote != null && clouded) plan[remote] = Cs2Config.Lf(text);
             return true;
         }
-        foreach (var c in cats.Where(c => c is "binds" or "video" or "hud"))
+        foreach (var c in cats.Where(Cs2Config.WholeFile))
             foreach (var p in Cs2Config.PartsOf(c))
                 if (Put(p, p == CfgPart.Video ? Cs2Config.KeepDisplay(src.Get(p), current.Get(p)) : src.Get(p))) done.Add(c);   // the display stays this PC's
         bool cross = cats.Contains("crosshair"), game = cats.Contains("game");

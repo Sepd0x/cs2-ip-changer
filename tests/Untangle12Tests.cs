@@ -21,6 +21,47 @@ static class Untangle12Tests
         ExplicitState(check);
         KeyValuesSame(check);
         SteamIdsAndLinks(check);
+        OneSameRule(check);
+    }
+
+    // B8: o mapa categoria → ficheiro e a regra de "igual" escritos uma vez (a cópia e o Compare usavam regras diferentes)
+    static void OneSameRule(Action<string, bool, string> check)
+    {
+        check("B8: cada categoria no seu ficheiro, uma vez", Cs2Config.Categories.SequenceEqual(new[] { "binds", "crosshair", "game", "video", "hud" })
+            && Cs2Config.Categories.Where(Cs2Config.WholeFile).SequenceEqual(new[] { "binds", "video", "hud" })
+            && Cs2Config.CategoryOf(CfgPart.Keys, "MOUSE4") == "binds" && Cs2Config.CategoryOf(CfgPart.Convars, "cl_crosshairsize") == "crosshair"
+            && Cs2Config.CategoryOf(CfgPart.Convars, "sensitivity") == "game" && Cs2Config.CategoryOf(CfgPart.Machine, "cl_hud_color") == "hud"
+            && Cs2Config.Categories.All(c => Cs2Config.PartsOf(c).Length == 1 && Cs2Config.CategoryOf(Cs2Config.PartsOf(c)[0], c == "crosshair" ? "cl_crosshairsize" : "x") == c), "");
+
+        const string A = "76561198000000001", B = "76561198000000002";
+        static string Conv(params (string K, string V)[] kv) => Cs2Config.Crlf("\"config\"\n{\n\t\"convars\"\n\t{\n" + string.Concat(kv.Select(x => $"\t\t\"{x.K}\"\t\t\"{x.V}\"\n")) + "\t}\n}\n");
+        var tmp = Path.Combine(Path.GetTempPath(), "srt-b8c-" + Guid.NewGuid().ToString("N")[..8]);
+        var ud = Path.Combine(tmp, "Steam", "userdata");
+        void Put(string id, string text)
+        {
+            var p = Path.Combine(ud, Cs2Config.Id32(id), "730", @"local\cfg\cs2_user_convars_0_slot0.vcfg");
+            Directory.CreateDirectory(Path.GetDirectoryName(p)!);
+            File.WriteAllText(p, text);
+        }
+        string Get(string id) => File.ReadAllText(Path.Combine(ud, Cs2Config.Id32(id), "730", @"local\cfg\cs2_user_convars_0_slot0.vcfg"));
+        try
+        {
+            // Os mesmos valores, escritos de outra maneira (um CS2 mais antigo grava "1.000000") e por outra ordem
+            Put(A, Conv(("cl_crosshairsize", "2.000000"), ("cl_crosshairgap", "-3"), ("sensitivity", "1.250000")));
+            var bText = Conv(("sensitivity", "1.25"), ("cl_crosshairgap", "-3"), ("cl_crosshairsize", "2"));
+            Put(B, bText);
+            var store = new Cs2ConfigStore(ud, Path.Combine(tmp, "configs")) { Cs2Running = () => false };
+            var diff = Cs2Config.Diff(store.Read(A), store.Read(B));
+            var r = store.Push(new CfgJob { SourceId = A, Target = B, Categories = new() { "crosshair" }, Reason = CfgTrigger.Copy }, "s1");
+            var r2 = store.Push(new CfgJob { SourceId = A, Target = B, Categories = new() { "crosshair", "game" }, Reason = CfgTrigger.Copy }, "s2");
+            check("B8: o que o Compare mostra igual a cópia não reescreve (antes copiava e dizia Copied)", diff.Count == 0 && r.Outcome == CfgOutcome.Same && r2.Outcome == CfgOutcome.Same
+                && Get(B) == bText && store.Backups().Count == 0, $"{diff.Count} {r.Outcome} {r2.Outcome}");
+            Put(A, Conv(("cl_crosshairsize", "3"), ("cl_crosshairgap", "-3"), ("sensitivity", "1.250000")));
+            var r3 = store.Push(new CfgJob { SourceId = A, Target = B, Categories = new() { "crosshair" }, Reason = CfgTrigger.Copy }, "s3");
+            check("B8: o que muda continua a copiar-se", r3.Outcome == CfgOutcome.Copied && Cs2Config.Flatten(Get(B), CfgPart.Convars)["cl_crosshairsize"] == "3"
+                && Cs2Config.Diff(store.Read(A), store.Read(B)).Count == 0, r3.Outcome.ToString());
+        }
+        finally { try { Directory.Delete(tmp, true); } catch { } }
     }
 
     // B8: um só SteamIds (o regex e a base escritos uma vez) e uma só verificação de junções no SafeFile
