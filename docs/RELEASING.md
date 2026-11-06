@@ -27,6 +27,16 @@ It asks for a passphrase, saves the private key encrypted in your user folder (`
 
 ## If a release breaks something
 
+First, how bad is it:
+
+| Level | Examples | What to do |
+|---|---|---|
+| **Critical** | the home IP reaches the servers with protection on, the app won't start, the PC loses internet after closing it, Steam files or accounts damaged | at once: steps 1 to 3 below, an issue pinned with what to do, then a fix release |
+| **Serious** | a main command fails for many (Change IP, Join, the account switch), a crash many people hit | a fix release within a day or two; step 1 only if the fix takes longer |
+| **Minor** | a wrong text, a layout problem, a rare case with a way around it | into the next release, with its test |
+
+The Log, the dashboard (crashes, errors by place in the code, where people stop) and the issues say how many it hits.
+
 Installed copies only update to the release GitHub marks as **Latest**, and only when the user says yes. So:
 
 1. On GitHub, edit the broken release and tick **Set as a pre-release** (or untick Latest): the previous release becomes Latest again, new downloads and the update check go back to it. Nothing is deleted.
