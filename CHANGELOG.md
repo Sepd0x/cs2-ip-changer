@@ -4,6 +4,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+## [0.1.0-beta.11] - 2026-11-06
+
 ### Added
 - A new logo: a disc crossed by one jump that lands on a new point, the carrier's IP, in the app's blues with a yellow point. It is the app's icon (taskbar, Alt+Tab, next to the clock), sits in the corner of the window above Connection, and is on the website, in the browser tab, in the README and on the link preview card.
 - The website counts visits and clicks on Download, with no cookies and no ID, only as counts per day. With Do Not Track or Global Privacy Control on, it sends nothing. README > Telemetry says what it sends.
@@ -462,7 +464,8 @@ First public release, as ServerRouteTool.
 - Restore network, to undo every route and rule in one click.
 - Dark interface in Portuguese.
 
-[Unreleased]: ../../compare/v0.1.0-beta.10...HEAD
+[Unreleased]: ../../compare/v0.1.0-beta.11...HEAD
+[0.1.0-beta.11]: ../../releases/tag/v0.1.0-beta.11
 [0.1.0-beta.10]: ../../releases/tag/v0.1.0-beta.10
 [0.1.0-beta.9]: ../../releases/tag/v0.1.0-beta.9
 [0.1.0-beta.8]: ../../releases/tag/v0.1.0-beta.8

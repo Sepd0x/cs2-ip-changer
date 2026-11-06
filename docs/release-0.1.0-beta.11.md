@@ -25,11 +25,17 @@ New IP + next account follows protection: with protection off it no longer chang
 - Closing a question with X or Esc never joins a server.
 - The New IP + next account button and the switch now pick the same account.
 - Join automatically when a followed player moves only offers the join, and only while CS2 is open.
-- The update check works on mobile data again (GitHub limits its API per IP).
+- Change IP on the phone's hotspot never turns on airplane mode, which dropped the hotspot on some phones.
+- A Refresh on Accounts that Steam rate-limits keeps each account's bans instead of clearing them.
+- After "Server is full", the retry stops as soon as you join another server.
+- The update check works on mobile data again (GitHub limits its API per IP), and never offers a release that was taken back.
 - Install no longer copies old programs from SRT_Dados; it offers to recycle the old folder afterwards.
 
 ### A new logo and website
-A new logo in the app, the website and the README. The website tells the route from your PC through the phone to the server as you scroll, with a page for iPhone users: https://sepd0x.github.io/cs2-ip-changer/
+A new logo in the app, the website and the README. The website tells the route from your PC through the phone to the server as you scroll, with a page for iPhone users, and on a phone it has its own layout: the app's pages side by side at a size you can read, and a tap opens any picture with zoom. https://sepd0x.github.io/cs2-ip-changer/
+
+### Usage stats notice
+The notice at the first start is shorter: what is sent and never sent in two lines, who keeps the stats, why and for how long, with the full list one click away. Because its text changed, it shows once more.
 
 ### Usage stats
 Nothing new about you is collected. The stats now count the Phone setup step you were at when you closed it, to see where people get stuck. Rows with an install ID are deleted after 12 months. The full list is in [Telemetry](https://github.com/Sepd0x/cs2-ip-changer#telemetry).
