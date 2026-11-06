@@ -9,6 +9,13 @@
   "preview_urls": false,
   // No request logs: the sender's IP is never written anywhere.
   "observability": { "enabled": false, "logs": { "enabled": false, "invocation_logs": false } },
+  // Nov. 2026 (security audit): requests per sender IP and minute, keyed on a SHA-256 of the IP (src/index.js ipAllowed; the IP is
+  // never written). RL_APP: the app's routes together (an install sends about one every 4 minutes, so this leaves room for many
+  // installs behind one mobile network IP). RL_SITE: the website's visit counter. The namespace_id only has to be unique in the account.
+  "ratelimits": [
+    { "name": "RL_APP", "namespace_id": "1106", "simple": { "limit": 20, "period": 60 } },
+    { "name": "RL_SITE", "namespace_id": "1107", "simple": { "limit": 30, "period": 60 } }
+  ],
   "d1_databases": [
     { "binding": "DB", "database_name": "cs2ipc-stats", "database_id": "4c55f7d0-849d-4e6b-8b46-b8a0b7a9e19f" }
   ]

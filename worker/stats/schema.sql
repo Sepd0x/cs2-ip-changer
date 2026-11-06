@@ -33,6 +33,10 @@ CREATE TABLE IF NOT EXISTS env (day TEXT NOT NULL, k TEXT NOT NULL, v TEXT NOT N
 CREATE TABLE IF NOT EXISTS site (day TEXT NOT NULL, page TEXT NOT NULL, ref TEXT NOT NULL, country TEXT NOT NULL, event TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (day, page, ref, country, event));
 CREATE TRIGGER IF NOT EXISTS budget_site_insert BEFORE INSERT ON budget WHEN NEW.day LIKE '%:site' AND NEW.rows > 3000 BEGIN SELECT RAISE(ABORT, 'over budget'); END;
 CREATE TRIGGER IF NOT EXISTS budget_site_update BEFORE UPDATE ON budget WHEN NEW.day LIKE '%:site' AND NEW.rows > 3000 BEGIN SELECT RAISE(ABORT, 'over budget'); END;
+-- Nov. 2026 (security audit). Reports from installs with nothing before today: at most NEW_ROWS of the day (day:new), so the
+-- installs already here keep the rest even through a flood of made-up reports. Made by the Worker if missing.
+CREATE TRIGGER IF NOT EXISTS budget_new_insert BEFORE INSERT ON budget WHEN NEW.day LIKE '%:new' AND NEW.rows > 30000 BEGIN SELECT RAISE(ABORT, 'over budget'); END;
+CREATE TRIGGER IF NOT EXISTS budget_new_update BEFORE UPDATE ON budget WHEN NEW.day LIKE '%:new' AND NEW.rows > 30000 BEGIN SELECT RAISE(ABORT, 'over budget'); END;
 -- Nov. 2026, written by the dashboard Worker's cron (src/dashboard.js scheduled), no ID in either. gh_daily: once a day a picture of
 -- GitHub's public numbers (kind repo: stars, forks, watchers, issues; kind asset: tag/file and its download count), so downloads
 -- and stars per day are the difference between two days. live_hourly: every 10 minutes the live signal is counted and the

@@ -105,7 +105,7 @@ export const DEFINITIONS = {
   link_none_share_7d: 'Share of install-days in the last 7 days whose best link was none.',
   automated_7d: 'Install-days left out as automated scans in the last 7 days, and how many of them came from a hosting network.',
   exit_share_7d: 'Share of the last 7 days\' reports sent at close, sleep or sign-out (counter rep_exit, stored from the stats Worker deploy of Nov. 2026 on; 0 before).',
-  budget: 'Rows written today against the daily caps (reports 40,000, live 12,000, site 3,000): at the cap the stats Worker answers 429 until the UTC day changes.',
+  budget: 'Rows written today against the daily caps (reports 40,000, live 12,000, site 3,000; installs with nothing before today may use at most 30,000 of the reports\' 40,000): at the cap the stats Worker answers 429 until the UTC day changes. Each sender IP also has a per-minute limit (20 app requests, 30 site hits).',
   cron_live_hourly: 'Minutes since the start of the newest UTC hour with a live sample (the cron runs every 10 minutes and keeps the highest of each hour).',
   github_token: 'Whether the GITHUB_TOKEN secret works: without it the GitHub traffic (views, clones, referrers) is missing, stars and downloads come from the public API.',
   basis: 'Never add numbers with different bases: acquisition counts (no ID, by choice) and activation cohorts (installs) are different units.',

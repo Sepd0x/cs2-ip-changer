@@ -17,6 +17,12 @@ export const DAILY_ROWS = 40000;
 // leave nothing for the reports. Delete my stats has its own small budget outside the day's, so a flood can't stop it.
 export const LIVE_ROWS = 12000;
 export const FORGET_ROWS = 2000;
+// Nov. 2026 (security audit): reports from installs with nothing before today may use at most this much of the day. A flood of
+// made-up reports always comes with fresh IDs, so the installs that were already here keep the rest (10,000 rows) whatever happens.
+export const NEW_ROWS = 30000;
+// Nov. 2026 (security audit): the most one report may add to one counter, button or heat cell. The app adds 1 per event and sends
+// every 30 minutes, so real values are far below; a bigger one is kept at the cap, so one report can't outweigh everyone else's.
+export const MAX_COUNT = 5000, MAX_HEAT = 1000;
 // Nov. 2026: the website's visit counter (POST /v1/site) has its own small budget, outside the day's, so a flood of made-up
 // visits can't take anything from the app's reports
 export const SITE_ROWS = 3000;
@@ -37,7 +43,27 @@ const CAP = `CASE WHEN NEW.day LIKE '%:live' THEN ${LIVE_ROWS} WHEN NEW.day LIKE
 export const BUDGET_TRIGGERS = [...['INSERT', 'UPDATE'].map((op) => `CREATE TRIGGER IF NOT EXISTS budget_cap_${op.toLowerCase()} BEFORE ${op} ON budget `
   + `WHEN NEW.rows > ${CAP} BEGIN SELECT RAISE(ABORT, 'over budget'); END`),
 ...['INSERT', 'UPDATE'].map((op) => `CREATE TRIGGER IF NOT EXISTS budget_site_${op.toLowerCase()} BEFORE ${op} ON budget `
-  + `WHEN NEW.day LIKE '%:site' AND NEW.rows > ${SITE_ROWS} BEGIN SELECT RAISE(ABORT, 'over budget'); END`)];
+  + `WHEN NEW.day LIKE '%:site' AND NEW.rows > ${SITE_ROWS} BEGIN SELECT RAISE(ABORT, 'over budget'); END`),
+...['INSERT', 'UPDATE'].map((op) => `CREATE TRIGGER IF NOT EXISTS budget_new_${op.toLowerCase()} BEFORE ${op} ON budget `
+  + `WHEN NEW.day LIKE '%:new' AND NEW.rows > ${NEW_ROWS} BEGIN SELECT RAISE(ABORT, 'over budget'); END`)];
+
+/**
+ * Nov. 2026 (security audit): requests per sender IP, through Cloudflare's Rate Limiting bindings (RL_APP for the app's routes,
+ * RL_SITE for the website's, both in wrangler.jsonc). The key is a SHA-256 of the IP: the IP itself never leaves this request, is
+ * never written and never logged. Without the binding (tests, an older deploy) or when it fails, the request goes on as before.
+ */
+export async function ipAllowed(request, limiter) {
+  if (!limiter || typeof limiter.limit !== 'function') return true;
+  const ip = request.headers.get('cf-connecting-ip');
+  if (!ip) return true;
+  try {
+    const hash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('cs2ipc-rl|' + ip)));
+    const key = Array.from(hash.slice(0, 16), (x) => x.toString(16).padStart(2, '0')).join('');
+    const { success } = await limiter.limit({ key });
+    return success !== false;
+  } catch { return true; }
+}
+const slowDown = (headers = {}) => new Response('later', { status: 429, headers: { 'retry-after': '60', ...headers } });
 // The database's budget table and triggers made once per database here (a no-op when schema.sql already made them)
 const budgetReady = new WeakSet();
 // One report per install every 10 minutes; one more, marked exit, inside that time for the report at close, sleep or sign-out
@@ -171,6 +197,7 @@ function budgetKeys(day, kind) {
   if (kind === 'forget') return [[`${day}:forget`, FORGET_ROWS]];
   if (kind === 'site') return [[`${day}:site`, SITE_ROWS]];
   if (kind === 'live') return [[day, DAILY_ROWS], [`${day}:live`, LIVE_ROWS]];
+  if (kind === 'new') return [[day, DAILY_ROWS], [`${day}:new`, NEW_ROWS]];
   return [[day, DAILY_ROWS]];
 }
 
@@ -289,6 +316,7 @@ const siteHeaders = (extra = {}) => ({ 'access-control-allow-origin': SITE_ORIGI
 async function siteHit(request, env) {
   if (request.headers.get('origin') !== SITE_ORIGIN) return new Response('origin', { status: 403 });
   const h = siteHeaders();
+  if (!await ipAllowed(request, env.RL_SITE)) return slowDown(h);
   const drop = () => new Response(null, { status: 204, headers: h });
   if (request.headers.get('dnt') === '1' || request.headers.get('sec-gpc') === '1') return drop();
   if (BOT.test(request.headers.get('user-agent') || '') || (request.cf && HOSTING.has(request.cf.asn))) return drop();
@@ -324,6 +352,8 @@ export default {
           : new Response('origin', { status: 403 });
       if (request.method === 'POST') return siteHit(request, env);
     }
+    if (request.method !== 'POST') return new Response('CS2 IP Changer stats. See the README.', { status: 404 });
+    if (['/v1', '/v1/live', '/v1/env', '/v1/forget'].includes(url.pathname) && !await ipAllowed(request, env.RL_APP)) return slowDown();
     if (request.method === 'POST' && url.pathname === '/v1/live') return live(request, env);
     if (request.method === 'POST' && url.pathname === '/v1/env') return envReport(request, env);
     if (request.method === 'POST' && url.pathname === '/v1/forget') return forget(request, env);
@@ -351,12 +381,12 @@ export default {
     for (const [table, obj, max, cap, ok] of [['clicks', b.clicks, 100000, 150, (x) => NAME.test(x)], ['counts', b.counts, 1000000, 100, counterOk]]) {
       if (!plain(obj)) continue;
       for (const [name, n] of Object.entries(obj).filter(([name, n]) => ok(name) && int(n, max) !== null).slice(0, cap))
-        stmts.push(env.DB.prepare(`INSERT INTO ${table} (day, id, name, n, dev) VALUES (?, ?, ?, ?, ?)`).bind(day, b.id, name, n, dev));
+        stmts.push(env.DB.prepare(`INSERT INTO ${table} (day, id, name, n, dev) VALUES (?, ?, ?, ?, ?)`).bind(day, b.id, name, Math.min(n, MAX_COUNT), dev));
     }
     if (Array.isArray(b.errors))
       for (const e of b.errors.slice(0, 30))
         if (e && NAME.test(e.type || '') && LOCATION.test(e.at || '') && int(e.n, 100000) !== null)
-          stmts.push(env.DB.prepare('INSERT INTO errors (day, id, app, type, at, n, dev) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(day, b.id, b.app, e.type, e.at, e.n, dev));
+          stmts.push(env.DB.prepare('INSERT INTO errors (day, id, app, type, at, n, dev) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(day, b.id, b.app, e.type, e.at, Math.min(e.n, MAX_COUNT), dev));
     // beta.9 extras, kept as counters of this install-day: minutes per screen, moves between screens, the install's age band,
     // and whether it came from a hosting network (an online scanner, most likely)
     const extra = [];
@@ -393,9 +423,11 @@ export default {
         const m = typeof cell === 'string' ? CELL.exec(cell) : null;
         if (!SCREEN.test(s || '') || !['c', 'd', 'r'].includes(kind) || !m || +m[1] >= COLS || +m[2] >= ROWS || !int(n, 10000)) continue;
         stmts.push(env.DB.prepare('INSERT INTO heat (day, app, screen, kind, cell, n, dev) VALUES (?, ?, ?, ?, ?, ?, ?) '
-          + 'ON CONFLICT (day, app, screen, kind, cell, dev) DO UPDATE SET n = n + excluded.n').bind(day, b.app, s, kind, cell, n, dev));
+          + 'ON CONFLICT (day, app, screen, kind, cell, dev) DO UPDATE SET n = n + excluded.n').bind(day, b.app, s, kind, cell, Math.min(n, MAX_HEAT), dev));
         cost += 2;
       }
-    return withinBudget(env, day, stmts, cost);
+    // Nov. 2026 (security audit): an install with nothing before today counts against NEW_ROWS too (one read on pings_id_ts)
+    const seen = await env.DB.prepare('SELECT 1 AS y FROM pings WHERE id = ? AND day < ? LIMIT 1').bind(b.id, day).first();
+    return withinBudget(env, day, stmts, cost, seen ? 'report' : 'new');
   },
 };
