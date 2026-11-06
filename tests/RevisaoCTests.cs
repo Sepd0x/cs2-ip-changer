@@ -38,5 +38,18 @@ static class RevisaoCTests
         check("Revisão C2: Refresh e Regions usam o mesmo motivo", servers.Contains("NoLinkWhy(_last)") && regions.Contains("NoLinkWhy(_last)") && !servers.Contains("Phone disconnected: not querying") && !regions.Contains("the phone is disconnected"), "");
         check("Revisão C2: a linha de Regions com o telemóvel por verificar não manda ligá-lo", !MainWindow.NoPingSuffix(unchecked_).Contains("connect the phone") && MainWindow.NoPingSuffix(null).Contains("connect the phone"), "");
 
+        // C9: duplo clique num botão da linha não entra no servidor
+        var dbl = servers.IndexOf("void ServerList_DoubleClick");
+        check("Revisão C9: duplo clique num botão da linha não entra no servidor",
+            dbl > 0 && servers.IndexOf("OnRowControl(e.OriginalSource as DependencyObject, ServerList, out _)", dbl) is var i9 && i9 > 0 && i9 < servers.IndexOf("await Join(s);", dbl), "");
+        check("Revisão C9: o clique simples usa a mesma regra", servers.Contains("if (OnRowControl(e.OriginalSource as DependencyObject, ServerList, out var row)) return;"), "");
+
+        // C10: a vaga não entra sozinha com outro comando ou uma pergunta aberta
+        check("Revisão C10: com outro comando a correr não entra sozinho", !MainWindow.SlotAutoJoins(autoOn: true, busy: true, dialogOpen: false), "");
+        check("Revisão C10: com uma pergunta aberta não entra sozinho", !MainWindow.SlotAutoJoins(true, false, true), "");
+        check("Revisão C10: livre e com a opção, entra", MainWindow.SlotAutoJoins(true, false, false) && !MainWindow.SlotAutoJoins(false, false, false), "");
+        check("Revisão C10: a vaga e o servidor cheio usam a regra", servers.Contains("if (SlotAutoJoins(auto, CommandBusy, Dialog.Visibility == Visibility.Visible))")
+            && Src("Views", "MainWindow.Kick.cs").Contains("SlotAutoJoins(true, CommandBusy, Dialog.Visibility == Visibility.Visible)"), "");
+
     }
 }

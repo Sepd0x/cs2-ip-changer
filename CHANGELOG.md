@@ -42,6 +42,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Opening the app twice in a few minutes wrote "Usage stats: the report wasn't sent (the server answered 429)" in the Log. That answer only means "not yet" and the report goes later, so it no longer shows.
 - Adding servers always said "added and protected", also with protection off or in No phone mode, where they see your home IP. It now says what happens: they go through the phone, they stay blocked until the phone is connected and checked, or they see your home IP. The Add tooltip no longer promises the phone, and in No phone mode the offer to add a server you joined just asks to add it to the list.
 - With the phone plugged in but its IP still being checked (or its Wi-Fi on), Refresh on Servers said "Phone disconnected" and Join said "protection is not confirmed (Blocked)". Servers, Join, Wait for a slot and Regions now give the real reason, for example "The phone connection's public IP hasn't been checked yet." A slot wait with protection turned off says that.
+- A double click on a server's star, its player count or its Join button also joined the server (and with CS2 open, that can take you out of your match). Only a double click on the row itself joins now.
+- With Join automatically on, a free slot that opened while another command was running (Change IP, an account switch) was lost: the join was refused as busy and the wait was gone. With a question open, it closed your question. Now the app keeps the slot, says it is free and shows Join. The retry on a full server waits for the other command too.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

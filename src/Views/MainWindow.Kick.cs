@@ -512,7 +512,9 @@ public partial class MainWindow
     async Task RetryFull(ServerItem s)
     {
         await Task.Delay(15000);
-        if (_fullServer == s.Key && Steam.Cs2Running && _servers.Contains(s)) await Join(s, fromSlotWait: true);
+        // Another command or a question open: wait another round instead of being refused or closing the question (review C10)
+        for (var i = 0; i < FullTries && !SlotAutoJoins(true, CommandBusy, Dialog.Visibility == Visibility.Visible); i++) await Task.Delay(15000);
+        if (_fullServer == s.Key && Steam.Cs2Running && _servers.Contains(s) && SlotAutoJoins(true, CommandBusy, Dialog.Visibility == Visibility.Visible)) await Join(s, fromSlotWait: true);
     }
 
     /// <summary>CS2 connected to a server: the retry on the full one goes on only if it is that same server (or CS2 says no server).</summary>

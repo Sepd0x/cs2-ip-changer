@@ -59,14 +59,24 @@ public partial class MainWindow
     void ServerList_PreviewMouseDown(object sender, MouseButtonEventArgs e)
     {
         if (e.ChangedButton != MouseButton.Left || e.ClickCount != 1 || Keyboard.Modifiers != ModifierKeys.None) return;
-        ListBoxItem row = null;
-        for (var d = e.OriginalSource as DependencyObject; d != null && !ReferenceEquals(d, ServerList); d = d is System.Windows.Media.Visual ? System.Windows.Media.VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d))
-        {
-            if (d is System.Windows.Controls.Primitives.ButtonBase or System.Windows.Controls.Primitives.ScrollBar or TextBox) return;
-            if (d is ListBoxItem li) { row = li; break; }
-        }
+        if (OnRowControl(e.OriginalSource as DependencyObject, ServerList, out var row)) return;
         if (row == null) { ServerList.UnselectAll(); return; }
         if (row.IsSelected && ServerList.SelectedItems.Count == 1 && !InPlayerList(e.OriginalSource as DependencyObject)) { ServerList.UnselectAll(); e.Handled = true; }
+    }
+
+    /// <summary>
+    /// The click landed on a button, scroll bar or text box inside a row (the star, the player count, Join), not on the row itself.
+    /// <paramref name="row"/> is the row it is in (null: the empty part of the list).
+    /// </summary>
+    static bool OnRowControl(DependencyObject d, DependencyObject list, out ListBoxItem row)
+    {
+        row = null;
+        for (; d != null && !ReferenceEquals(d, list); d = d is System.Windows.Media.Visual ? System.Windows.Media.VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d))
+        {
+            if (d is System.Windows.Controls.Primitives.ButtonBase or System.Windows.Controls.Primitives.ScrollBar or TextBox) return true;
+            if (d is ListBoxItem li) { row = li; return false; }
+        }
+        return false;
     }
 
     void ServerList_KeyDown(object sender, KeyEventArgs e)
@@ -320,7 +330,9 @@ public partial class MainWindow
 
     async void ServerList_DoubleClick(object sender, MouseButtonEventArgs e)
     {
-        if (InPlayerList(e.OriginalSource as DependencyObject)) return;
+        // The double click reaches the list even when a button in the row took both clicks (review C9: the star, the player count
+        // or the row's Join also joined the server)
+        if (OnRowControl(e.OriginalSource as DependencyObject, ServerList, out _) || InPlayerList(e.OriginalSource as DependencyObject)) return;
         if ((e.OriginalSource as FrameworkElement)?.DataContext is ServerItem s) await Join(s);
     }
 
@@ -466,6 +478,15 @@ public partial class MainWindow
         + "itself, and if the teams are full you come in as a spectator (pick a team when a slot frees up).\n\n"
         + "Or wait for a slot: the app checks every 5 s and joins (or tells you) when one opens.";
 
+    /// <summary>
+    /// A free slot (or the retry on a full server) only joins by itself when nothing else runs and no question is open (review C10:
+    /// the join was refused as "still busy" and the wait was gone, or it took over a waiting command and closed your question).
+    /// </summary>
+    public static bool SlotAutoJoins(bool autoOn, bool busy, bool dialogOpen) => autoOn && !busy && !dialogOpen;
+
+    /// <summary>A command, an IP change, an account switch or a rejoin is running: a new command would be refused or take over.</summary>
+    bool CommandBusy => _command != null || _changingIp || _switching || _rejoining;
+
     void StopSlotWait()
     {
         _slotTimer.Stop();
@@ -486,7 +507,8 @@ public partial class MainWindow
             if (!await QueryOne(s, eg) || s.MaxPlayers == 0) return;
             if (s.PlayerCount >= s.MaxPlayers) { SlotText.Text = $"Waiting for a slot on {s.Title} ({s.PlayersText})."; return; }
             System.Media.SystemSounds.Asterisk.Play();
-            if (SlotAutoBox.IsChecked == true)
+            var auto = SlotAutoBox.IsChecked == true;
+            if (SlotAutoJoins(auto, CommandBusy, Dialog.Visibility == Visibility.Visible))
             {
                 StopSlotWait();
                 Log.Ok($"A slot opened on {s.Key} ({s.PlayersText}): joining.");
@@ -496,8 +518,8 @@ public partial class MainWindow
             _slotTimer.Stop();
             SlotText.Text = $"A slot is free on {s.Title} ({s.PlayersText}).";
             SlotJoinBtn.Visibility = Visibility.Visible;
-            Log.Ok($"A slot opened on {s.Key} ({s.PlayersText}).");
-            Toast($"A slot is free on {s.Title}. Join from Servers.", Tone.Info);
+            Log.Ok($"A slot opened on {s.Key} ({s.PlayersText})." + (auto ? " Not joined by itself: another command or a question was open." : ""));
+            Toast(auto ? $"A slot is free on {s.Title}. The app was busy, so it didn't join by itself: join from Servers." : $"A slot is free on {s.Title}. Join from Servers.", Tone.Info);
         }
         finally { _slotChecking = false; }
     }
