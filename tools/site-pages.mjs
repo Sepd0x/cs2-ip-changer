@@ -69,6 +69,8 @@ const vtLinks = (s) => s.replace(/https:\/\/www\.virustotal\.com\/gui\/file\/[0-
   if (!/data-peek="\d+\/\d+\|engines/.test(s)) throw new Error('site/index.html: the guides index has no VirusTotal peek');
   s = s.replace(/data-peek="\d+\/\d+\|engines/, `data-peek="${rel.virustotal.flagged}/${rel.virustotal.engines}|engines`);
   s = vtLinks(s)
+    // The link card with the version in its address: Discord, X and others keep a card for days, a new address fetches it again
+    .replaceAll(/img\/social-preview\.png(\?v=[^"]*)?"/g, `img/social-preview.png?v=${rel.version}"`)
     .replaceAll(/https:\/\/github\.com\/Sepd0x\/cs2-ip-changer\/releases\/latest\/download\/[^"<\s]+/g, EXE)
     .replace(/("softwareVersion": )"[^"]*"/, `$1"${rel.version}"`)
     .replace(/("datePublished": )"[^"]*"/, `$1"${rel.firstRelease}"`)
@@ -395,7 +397,7 @@ export const pages = [
     related: ['steam-account-switcher', 'steam-profile-editor', 'cs2-region-picker'],
     sections: [
       ['Where CS2 keeps each account\'s config', `<p>CS2 saves settings per Steam account in <code>Steam\\userdata\\&lt;id&gt;\\730\\local\\cfg</code>:</p><ul><li>binds in <code>cs2_user_keys_0_slot0.vcfg</code></li><li>crosshair and game settings in <code>cs2_user_convars_0_slot0.vcfg</code></li><li>video in <code>cs2_video.txt</code></li><li>HUD, radar and audio in <code>cs2_machine_convars.vcfg</code></li></ul><p>Copying these by hand works, but it's easy to copy the wrong folder, and Steam Cloud can bring the old files back. The app writes the same files CS2 writes when you change a setting, and never the game itself (<a href="../is-it-safe/">what it changes</a>).</p>`],
-      ['What the Configs page does', `<ul><li><b>Pick what to copy:</b> binds, crosshair, the other game settings (sensitivity, viewmodel), video, and HUD, radar and audio, each on its own. You can copy only the crosshair and keep each account's sensitivity.</li><li><b>Sync modes:</b> from a main account, from the account you used before, or latest change wins. It runs when a new account shows up, before the app logs in or opens CS2, or when you click Sync now.</li><li><b>Never with CS2 open.</b> CS2 saves its config when it closes and would undo the copy, so the copy waits until it closes.</li><li><b>Steam Cloud too.</b> The app writes the cloud copy the same way CS2 does, so Steam uploads the new one on the next launch.</li><li><b>Backups (undo).</b> Every change keeps a backup (the 20 newest per account), and Undo last sync puts it all back.</li><li><b>Snapshots and compare.</b> Save a config under a name, export it as a .zip for another PC, and compare two accounts setting by setting with a crosshair preview.</li><li><b>Video stays this PC's.</b> Each account keeps this PC's refresh rate and monitor, so a 144 Hz screen doesn't end up at 60 Hz.</li></ul>`],
+      ['What the Configs page does', `<ul><li><b>Pick what to copy:</b> binds, crosshair, the other game settings (sensitivity, viewmodel), video, and HUD, radar and audio, each on its own. You can copy only the crosshair and keep each account's sensitivity.</li><li><b>Sync modes:</b> from a main account, from the account you used before, or latest change wins. It runs when a new account shows up, before the app logs in or opens CS2, or when you click Sync now.</li><li><b>Never with CS2 open.</b> CS2 saves its config when it closes and would undo the copy, so the copy waits until it closes.</li><li><b>Steam Cloud too.</b> The app writes the cloud copy the same way CS2 does, so Steam uploads the new one on the next launch.</li><li><b>Backups.</b> Every change keeps a backup (the 20 newest per account), and Undo last sync puts it all back.</li><li><b>Snapshots and compare.</b> Save a config under a name, export it as a .zip for another PC, and compare two accounts setting by setting with a crosshair preview.</li><li><b>Video stays this PC's.</b> Each account keeps this PC's refresh rate and monitor, so a 144 Hz screen doesn't end up at 60 Hz.</li></ul>`],
     ],
     faq: [
       ['Can\'t I just use the crosshair share code?', 'The share code only moves the crosshair. Your binds, sensitivity, viewmodel, video, HUD, radar and audio stay behind, and you have to paste it on every account. The Configs page copies all of it, or only the parts you tick, to every account at once.'],
@@ -465,7 +467,7 @@ export const pages = [
     faq: [
       ['Can Windows send only CS2 through my phone\'s hotspot?', 'Not by itself: when you tether a phone, Windows has no setting to pick one app for it. CS2 IP Changer adds the routes for CS2, Steam and your servers, so only they use the phone and the rest of the PC stays on your home internet. You can still send the whole PC through the phone if you want.'],
       ['My carrier uses CGNAT. Is that a problem?', 'No. You share a public IP with other customers and servers see that shared one. Change IP still works, and when the carrier gives you the same IP back, the app keeps trying.'],
-      ['Will my ping be worse?', 'Usually, yes. Mobile data adds latency and jitter, so expect a higher ping than at home. A good 4G or 5G signal helps a lot: put the phone near a window and keep it charging. The ping in Servers is measured through the phone, so you see it before you join, and Connection quality tells you when the connection itself is weak. While it is weak, Whole PC drops to Game only so CS2 doesn\'t share the phone with the rest of the PC; turn off Fall back to Game only on a weak connection in Settings > Protection to stop that.'],
+      ['Will my ping be worse?', 'Usually, yes. Mobile data adds latency and jitter, so expect a higher ping than at home. A good 4G or 5G signal helps a lot: put the phone near a window and keep it charging. The ping in Servers is measured through the phone, so you see it before you join, and Connection quality tells you when the connection itself is weak. While it is weak, Whole PC drops to Game only so CS2 doesn\'t share the phone with the rest of the PC; turn off Fall back to Game only on a weak connection in Settings > Mobile data to stop that.'],
       ['Does it work with a 4G or 5G USB dongle?', 'It works as the connection: if the app doesn\'t pick it on its own, choose it under Connection > How the PC connects to the phone. Change IP needs an Android phone with ADB, though.'],
     ],
   },
@@ -595,7 +597,7 @@ const SIG = {
   'cs2-ip-ban': ['192.0.2.140', 'New IP after a ban', 'Example IP, new range (was 198.51)', 'From the log of Change IP and rejoin. Example IPs only.'],
   'hide-ip-cs2': ['203.0.•••.•••', 'Your home IP, as the app shows it', 'Masked', "Servers see the carrier's IP; your home IP stays masked in the app too."],
   'is-it-safe': [`${rel.virustotal.flagged}/${rel.virustotal.engines}`, 'VirusTotal engines that flag it', rel.tag, 'The latest release, scanned when it comes out.'],
-  'steam-account-switcher': ['8/8', 'Accounts saved on this PC', 'Example', 'From the Accounts page of the app, with example names.'],
+  'steam-account-switcher': ['8/8', 'Accounts', 'Example', 'From the Accounts page of the app, with example names.'],
   'copy-cs2-config': ['7', 'Settings that differ between two accounts', 'Example', 'From Compare on the Configs page of the app.'],
   'cs2-region-picker': ['8/30', 'Regions CS2 can play in', 'Example', 'From the Regions page of the app.'],
   'steam-profile-editor': ['6/8', 'Accounts picked for one template', 'Example', 'From the Profiles page of the app, with example names.'],
@@ -618,7 +620,7 @@ const WORLD = {
 // The caption under the app's own screen in the text: which page of the app it is, and that it is the real one.
 const capOf = (p) => `The ${p.crop[0][0].toUpperCase() + p.crop[0].slice(1)} page of the app, a real screenshot${/accounts|profiles|configs/.test(p.crop[0]) ? ' with example names' : p.crop[0] === 'connection' ? ' with example IPs' : ''}. Select it to see it full size.`;
 
-const CARD = `${BASE}img/social-preview.png`, CARD_ALT = "CS2 IP Changer: IP banned on a CS2 server? New IP in one click, with the app's Connection screen";
+const CARD = `${BASE}img/social-preview.png?v=${rel.version}`, CARD_ALT = "CS2 IP Changer: IP banned on a CS2 server? New IP in one click, with the app's Connection screen";
 function render(p, modified) {
   const url = `${BASE}${p.slug}/`;
   const image = `${BASE}img/${p.crop[0]}.png`;
