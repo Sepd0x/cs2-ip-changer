@@ -175,7 +175,7 @@ public partial class MainWindow
             {
                 _s.DataWarnedMonth = _s.DataMonth;
                 SaveSettings();
-                Toast($"{DataMeter.Text(_s.DataMonthBytes)} of mobile data used through the phone this month: your warning is at {_s.DataWarnGb:0.#} GB (Settings > Background and data).", Tone.Warn);
+                Toast($"{DataMeter.Text(_s.DataMonthBytes)} of mobile data used through the phone this month: your warning is at {_s.DataWarnGb:0.#} GB (Settings > Mobile data).", Tone.Warn);
             }
             if ((now - _dataSaved).TotalMinutes >= 2) { _dataSaved = now; SaveSettings(); }
         }

@@ -497,7 +497,7 @@
                     </Grid>
 
                     <!-- ======================================== Page: Connection -->
-                    <ScrollViewer x:Name="PageNet" Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="16,0,16,0">
+                    <ScrollViewer x:Name="PageNet" Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="16,0,16,6">
                         <Grid MinHeight="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -572,9 +572,9 @@
                                                     ToolTip="Turns the phone's mobile data off and on until the carrier gives a new IP. Needs the phone set up over ADB. If you are on a server, you will drop."/>
                                             <StackPanel Margin="0,0,6,6" VerticalAlignment="Top">
                                                 <Button x:Name="RejoinBtn" Click="Rejoin_Click" Margin="0" Content="Change IP and rejoin"
-                                                        ToolTip="Changes the IP, then joins the last server again. Only joins with protection confirmed. In game: the rejoin hotkey (Settings > New IP + next account)."/>
+                                                        ToolTip="Changes the IP, then joins the last server again. Only joins with protection confirmed. In game: the rejoin hotkey (Settings > Hotkeys and sounds)."/>
                                                 <TextBlock x:Name="RejoinHotkeyHint" FontSize="11" Foreground="{StaticResource Faint}" HorizontalAlignment="Center" Margin="0,4,0,0"
-                                                           ToolTip="Works while CS2 is in front. Change it in Settings > New IP + next account.">
+                                                           ToolTip="Works while CS2 is in front. Change it in Settings > Hotkeys and sounds.">
                                                     <Run x:Name="RejoinHotkeyKeys" Text="Ctrl+Shift+F10" FontFamily="{StaticResource Mono}"/><Run Text=" in game"/>
                                                 </TextBlock>
                                             </StackPanel>
@@ -626,7 +626,7 @@
                                                   ToolTip="USB cable (recommended) or the phone's Wi-Fi hotspot. A USB 4G/5G dongle or router also works."/>
                                         <TextBlock x:Name="EgressDetail" Text="" Visibility="Collapsed" Foreground="{StaticResource Faint}" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,0"/>
                                         <TextBlock x:Name="DataUsage" Text="" Visibility="Collapsed" Foreground="{StaticResource Faint}" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0" Background="Transparent"
-                                                   ToolTip="Everything that went through the phone's adapter (CS2, Steam and, in Whole PC, the rest of the PC), counted by Windows. Your carrier's count can differ a little. Warning: Settings > Background and data."/>
+                                                   ToolTip="Everything that went through the phone's adapter (CS2, Steam and, in Whole PC, the rest of the PC), counted by Windows. Your carrier's count can differ a little. Warning: Settings > Mobile data."/>
                                     </StackPanel>
                                 </HeaderedContentControl>
 
@@ -656,6 +656,7 @@
                                                 <TextBlock Text="Not protected: servers see your home IP and there is no Change IP. Accounts, Configs, Profiles and Regions still work." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </RadioButton>
+                                        <TextBlock Text="Save mobile data and Fall back to Game only: Settings > Mobile data." Style="{StaticResource OptSub}" Margin="0,10,0,0"/>
                                         <TextBlock x:Name="PcRouteText" Visibility="Collapsed"/>
                                     </StackPanel>
                                 </HeaderedContentControl>
@@ -696,6 +697,15 @@
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
                                     </StackPanel>
+                                </HeaderedContentControl>
+
+                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="How it works">
+                                    <TextBlock Style="{StaticResource Sub}" LineHeight="19" MaxWidth="640" HorizontalAlignment="Left">
+                                        The phone shares its mobile data with the PC, over a USB cable or the Wi-Fi hotspot. The app sends the game through it: servers see the carrier IP, not your home IP.<LineBreak/><LineBreak/>
+                                        If the connection drops, the block stops those servers instead of letting your IP through.<LineBreak/><LineBreak/>
+                                        Change IP turns data off and on until a new IP comes. A USB 4G/5G dongle or router also works.<LineBreak/><LineBreak/>
+                                        <Run Foreground="{StaticResource Faint}">Other people on the same carrier can use the same IP at the same time.</Run>
+                                    </TextBlock>
                                 </HeaderedContentControl>
 
                                 <HeaderedContentControl x:Name="HistoryGroup" Grid.Row="2" Style="{StaticResource Group}" Header="Previous IPs">
@@ -1048,49 +1058,13 @@
                     </Grid>
 
                     <!-- ======================================== Page: Accounts -->
-                    <HeaderedContentControl x:Name="PageAccounts" Grid.Row="1" Margin="16,0,16,18" Style="{StaticResource Group}" Header="Accounts saved on this PC" Visibility="Collapsed">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <Grid Margin="0,0,0,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="180"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBox x:Name="AccSearch" Tag="Search accounts" TextChanged="AccFilter_Changed" VerticalAlignment="Center"
-                                         ToolTip="Name, username, SteamID, notes and tags"/>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
-                                    <RadioButton x:Name="FAll" Style="{StaticResource Seg}" GroupName="accf" Content="All" IsChecked="True" Checked="AccFilter_Changed"/>
-                                    <RadioButton x:Name="FReady" Style="{StaticResource Seg}" GroupName="accf" Content="Ready" Checked="AccFilter_Changed"
-                                                 ToolTip="Accounts New IP + next account can use now: in rotation, no cooldown, no VAC or game ban"/>
-                                    <RadioButton x:Name="FFav" Style="{StaticResource Seg}" GroupName="accf" Content="Favorites" Checked="AccFilter_Changed"/>
-                                    <RadioButton x:Name="FClean" Style="{StaticResource Seg}" GroupName="accf" Content="No bans" Checked="AccFilter_Changed"
-                                                 ToolTip="No Steam bans. Server bans are separate."/>
-                                    <RadioButton x:Name="FBan" Style="{StaticResource Seg}" GroupName="accf" Content="Banned" Checked="AccFilter_Changed"/>
-                                    <RadioButton x:Name="FCool" Style="{StaticResource Seg}" GroupName="accf" Content="Cooldown" Checked="AccFilter_Changed"/>
-                                    <RadioButton x:Name="FOut" Style="{StaticResource Seg}" GroupName="accf" Content="Not in rotation" Checked="AccFilter_Changed"
-                                                 ToolTip="Accounts New IP + next account never picks"/>
-                                </StackPanel>
-                                <TextBlock x:Name="AccCount" Grid.Column="2" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" Foreground="{StaticResource Faint}" VerticalAlignment="Center" HorizontalAlignment="Right"
-                                           TextTrimming="CharacterEllipsis" Margin="12,0,12,0"/>
-                                <StackPanel Grid.Column="3" Orientation="Horizontal">
-                                <Button x:Name="AccViewBtn" Style="{StaticResource IconBtn}" Click="AccView_Click" Content="&#xE8FD;" Margin="0,0,6,0" ToolTip="Show as rows: more accounts at once"/>
-                                <ComboBox x:Name="AccSort" Width="150" SelectionChanged="AccFilter_Changed" ToolTip="Order (favorites always come first)">
-                                    <ComboBoxItem Content="Most recent" Tag="recent"/>
-                                    <ComboBoxItem Content="Ready first" Tag="ready" ToolTip="Ready to use, then the cooldown that ends first, banned last"/>
-                                    <ComboBoxItem Content="Name" Tag="name"/>
-                                    <ComboBoxItem Content="No Steam bans first" Tag="clean"/>
-                                    <ComboBoxItem Content="Most CS2 hours" Tag="hours"/>
-                                </ComboBox>
-                                </StackPanel>
-                            </Grid>
-
-                            <Grid Grid.Row="1" Margin="0,0,0,12">
+                    <Grid x:Name="PageAccounts" Grid.Row="1" Margin="16,0,16,6" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <HeaderedContentControl Style="{StaticResource Group}" Header="Add and log in">
+                            <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
@@ -1107,47 +1081,88 @@
                                     </WrapPanel>
                                 </DockPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <CheckBox x:Name="OptStreamer" Style="{StaticResource Switch}" Content="Hide usernames" Margin="0,0,16,0" VerticalAlignment="Center" Click="AccOpt_Click"
-                                              ToolTip="For streams: hides usernames, your home IP in the Log page and the Steam API key"/>
                                     <Button Click="AccAdd_Click" Content="Add"
                                             ToolTip="Opens the Steam login. Log in with the new account and tick 'Remember me'."/>
-                                    <Button x:Name="AccRefreshBtn" Click="AccRefresh_Click"
-                                            ToolTip="Visits each account's public profile to fetch avatar, name, bans, level and hours. One per second so Steam does not block you.">
-                                        <TextBlock x:Name="AccRefreshText" Text="Refresh"/>
-                                    </Button>
                                     <Button Style="{StaticResource IconBtn}" Content="&#xE713;" Click="SwitchSteps_Click" Margin="0,0,6,0" ToolTip="Choose what New IP + next account does"/>
                                     <Button x:Name="QuickBtn" Margin="0" Click="Quick_Click" Content="New IP + next account"
                                             ToolTip="New IP + next account (its hotkey works in game too): new IP, next account, back to the last server."/>
                                 </StackPanel>
                             </Grid>
+                        </HeaderedContentControl>
 
-                            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
-                                <StackPanel>
-                                    <!-- From 12 accounts, while no view was picked: rows show more at once (4 nov.) -->
-                                    <Border x:Name="AccRowsHint" Style="{StaticResource Card}" Padding="12,8" Margin="0,0,10,10" Visibility="Collapsed">
-                                        <DockPanel>
-                                            <Button DockPanel.Dock="Right" Click="AccView_Click" Tag="cards" Content="Keep cards" Margin="8,0,0,0"/>
-                                            <Button DockPanel.Dock="Right" Style="{StaticResource Primary}" Click="AccView_Click" Tag="rows" Content="Show as rows" Margin="0"/>
-                                            <TextBlock Text="Many accounts? Rows put each account on one line, so bans, cooldowns and who is in rotation line up. The button next to the order switches back any time."
-                                                       Foreground="{StaticResource Muted}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                                        </DockPanel>
-                                    </Border>
-                                    <ItemsControl x:Name="AccountsPanel" ItemTemplate="{StaticResource AccountCard}" ItemsPanel="{StaticResource AccCardsPanel}"
-                                                  SizeChanged="AccountsPanel_SizeChanged" Margin="0,0,-2,0"/>
+                        <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Accounts">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="180"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="AccSearch" Tag="Search accounts" TextChanged="AccFilter_Changed" VerticalAlignment="Center"
+                                             ToolTip="Name, username, SteamID, notes and tags"/>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
+                                        <RadioButton x:Name="FAll" Style="{StaticResource Seg}" GroupName="accf" Content="All" IsChecked="True" Checked="AccFilter_Changed"/>
+                                        <RadioButton x:Name="FReady" Style="{StaticResource Seg}" GroupName="accf" Content="Ready" Checked="AccFilter_Changed"
+                                                     ToolTip="Accounts New IP + next account can use now: in rotation, no cooldown, no VAC or game ban"/>
+                                        <RadioButton x:Name="FFav" Style="{StaticResource Seg}" GroupName="accf" Content="Favorites" Checked="AccFilter_Changed"/>
+                                        <RadioButton x:Name="FClean" Style="{StaticResource Seg}" GroupName="accf" Content="No bans" Checked="AccFilter_Changed"
+                                                     ToolTip="No Steam bans. Server bans are separate."/>
+                                        <RadioButton x:Name="FBan" Style="{StaticResource Seg}" GroupName="accf" Content="Banned" Checked="AccFilter_Changed"/>
+                                        <RadioButton x:Name="FCool" Style="{StaticResource Seg}" GroupName="accf" Content="Cooldown" Checked="AccFilter_Changed"/>
+                                        <RadioButton x:Name="FOut" Style="{StaticResource Seg}" GroupName="accf" Content="Not in rotation" Checked="AccFilter_Changed"
+                                                     ToolTip="Accounts New IP + next account never picks"/>
+                                    </StackPanel>
+                                    <TextBlock x:Name="AccCount" Grid.Column="2" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" Foreground="{StaticResource Faint}" VerticalAlignment="Center" HorizontalAlignment="Right"
+                                               TextTrimming="CharacterEllipsis" Margin="12,0,12,0"/>
+                                    <StackPanel Grid.Column="3" Orientation="Horizontal">
+                                    <Button x:Name="AccViewBtn" Style="{StaticResource IconBtn}" Click="AccView_Click" Content="&#xE8FD;" Margin="0,0,6,0" ToolTip="Show as rows: more accounts at once"/>
+                                    <ComboBox x:Name="AccSort" Width="150" SelectionChanged="AccFilter_Changed" ToolTip="Order (favorites always come first)">
+                                        <ComboBoxItem Content="Most recent" Tag="recent"/>
+                                        <ComboBoxItem Content="Ready first" Tag="ready" ToolTip="Ready to use, then the cooldown that ends first, banned last"/>
+                                        <ComboBoxItem Content="Name" Tag="name"/>
+                                        <ComboBoxItem Content="No Steam bans first" Tag="clean"/>
+                                        <ComboBoxItem Content="Most CS2 hours" Tag="hours"/>
+                                    </ComboBox>
+                                            <Button x:Name="AccRefreshBtn" Margin="6,0,0,0" Click="AccRefresh_Click"
+                                                    ToolTip="Visits each account's public profile to fetch avatar, name, bans, level and hours. One per second so Steam does not block you.">
+                                                <TextBlock x:Name="AccRefreshText" Text="Refresh"/>
+                                            </Button>
+                                            <Button x:Name="AccUnhideBtn" Click="UnhideAll_Click" Margin="6,0,0,0" Visibility="Collapsed" Content="Show hidden" ToolTip="Only while some accounts are hidden: brings them all back"/>
+                                    </StackPanel>
+                                </Grid>
+                                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                    <StackPanel>
+                                        <!-- From 12 accounts, while no view was picked: rows show more at once (4 nov.) -->
+                                        <Border x:Name="AccRowsHint" Style="{StaticResource Card}" Padding="12,8" Margin="0,0,10,10" Visibility="Collapsed">
+                                            <DockPanel>
+                                                <Button DockPanel.Dock="Right" Click="AccView_Click" Tag="cards" Content="Keep cards" Margin="8,0,0,0"/>
+                                                <Button DockPanel.Dock="Right" Style="{StaticResource Primary}" Click="AccView_Click" Tag="rows" Content="Show as rows" Margin="0"/>
+                                                <TextBlock Text="Many accounts? Rows put each account on one line, so bans, cooldowns and who is in rotation line up. The button next to the order switches back any time."
+                                                           Foreground="{StaticResource Muted}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                            </DockPanel>
+                                        </Border>
+                                        <ItemsControl x:Name="AccountsPanel" ItemTemplate="{StaticResource AccountCard}" ItemsPanel="{StaticResource AccCardsPanel}"
+                                                      SizeChanged="AccountsPanel_SizeChanged" Margin="0,0,-2,0"/>
+                                    </StackPanel>
+                                </ScrollViewer>
+                                <StackPanel x:Name="AccountsEmpty" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed">
+                                    <TextBlock Text="No accounts yet" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="AccountsEmptyText" Text="No saved accounts found in Steam on this PC." Foreground="{StaticResource Muted}" TextAlignment="Center" Margin="0,4,0,12"/>
+                                    <Button Style="{StaticResource Primary}" Click="AccAdd_Click" Content="Add account" HorizontalAlignment="Center" Margin="0"/>
                                 </StackPanel>
-                            </ScrollViewer>
-                            <StackPanel x:Name="AccountsEmpty" Grid.Row="2" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed">
-                                <TextBlock Text="No accounts yet" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center"/>
-                                <TextBlock x:Name="AccountsEmptyText" Text="No saved accounts found in Steam on this PC." Foreground="{StaticResource Muted}" TextAlignment="Center" Margin="0,4,0,12"/>
-                                <Button Style="{StaticResource Primary}" Click="AccAdd_Click" Content="Add account" HorizontalAlignment="Center" Margin="0"/>
-                            </StackPanel>
-                        </Grid>
-                    </HeaderedContentControl>
+                            </Grid>
+                        </HeaderedContentControl>
+                    </Grid>
 
                     <!-- ======================================== Page: Configs (MainWindow.Configs.cs) -->
                     <Grid x:Name="PageConfigs" Grid.Row="1" Visibility="Collapsed">
                         <ScrollViewer x:Name="CfgScroll" Padding="16,0,16,6" VerticalScrollBarVisibility="Auto">
-                            <Grid>
+                            <Grid MinHeight="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="12"/>
@@ -1176,7 +1191,13 @@
                                     </DataTemplate>
                                 </Grid.Resources>
 
-                                <StackPanel>
+                                <!-- Left: what you do (Copy, Sync, Snapshots). Right: what you look at and undo; Backups last, like Previous IPs (docs/DESIGN.md > App layout) -->
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
                                     <HeaderedContentControl x:Name="CfgCopyGroup" Style="{StaticResource Group}" Header="Copy">
                                         <StackPanel>
                                             <Grid>
@@ -1246,7 +1267,7 @@
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock x:Name="CfgCopyHint" Style="{StaticResource OptSub}" VerticalAlignment="Center" Margin="0,0,10,0"
-                                                           Text="Each account gets a backup first (Backups, on the right)."/>
+                                                           Text="Each account gets a backup first (see Backups)."/>
                                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                                                     <Button x:Name="CfgToAllBtn" Content="All" Click="CfgToAll_Click" ToolTip="Tick every other account"/>
                                                     <Button x:Name="CfgToNoneBtn" Content="None" Click="CfgToNone_Click"/>
@@ -1256,7 +1277,7 @@
                                         </StackPanel>
                                     </HeaderedContentControl>
 
-                                    <HeaderedContentControl Style="{StaticResource Group}" Header="Sync">
+                                    <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Sync">
                                         <StackPanel>
                                             <TextBlock Style="{StaticResource OptSub}" Margin="0,0,0,12"
                                                        Text="Each account has its own CS2 settings (binds, crosshair, sensitivity, video). The app copies them between your accounts. It never copies while CS2 is open, and it saves a backup first."/>
@@ -1302,7 +1323,59 @@
                                         </StackPanel>
                                     </HeaderedContentControl>
 
-                                    <HeaderedContentControl Style="{StaticResource Group}" Header="Accounts">
+                                    <HeaderedContentControl Grid.Row="2" Style="{StaticResource Group}" Header="Snapshots">
+                                        <StackPanel>
+                                            <Grid Margin="0,0,0,8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="40"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="From" Style="{StaticResource Key}" VerticalAlignment="Center" Margin="0"/>
+                                                <ComboBox x:Name="CfgSnapFrom" Grid.Column="1" ItemTemplate="{StaticResource CfgSourceTemplate}" ToolTip="The account to save" Margin="0,0,8,0"/>
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                                    <Button x:Name="CfgSnapSaveBtn" Content="Save snapshot" Click="CfgSnapSave_Click" ToolTip="Saves this account's config under a name (Main, Practice…)"/>
+                                                    <Button Content="Import" Click="CfgSnapImport_Click" Margin="0" ToolTip="A snapshot .zip exported on this or another PC"/>
+                                                </StackPanel>
+                                            </Grid>
+                                            <TextBlock x:Name="CfgSnapEmpty" Text="No snapshots yet. Save one to keep a config, or to take it to another PC." Style="{StaticResource Sub}"/>
+                                            <ItemsControl x:Name="CfgSnapList">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,5">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <StackPanel VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                                    <DockPanel Margin="0,1,0,0">
+                                                                        <TextBlock DockPanel.Dock="Left" Text="{Binding When}" Foreground="{StaticResource Faint}" FontFamily="{StaticResource Mono}" FontSize="11"/>
+                                                                        <TextBlock Text="{Binding What}" Foreground="{StaticResource Faint}" FontSize="11" TextTrimming="CharacterEllipsis" Margin="8,0,0,0"/>
+                                                                    </DockPanel>
+                                                                </StackPanel>
+                                                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                                    <Button Style="{StaticResource IconBtn}" Content="&#xE8C8;" Click="CfgSnapUse_Click" ToolTip="Copy it to accounts (picks it in Copy)"/>
+                                                                    <Button Style="{StaticResource IconBtn}" Content="&#xE72D;" Click="CfgSnapExport_Click" ToolTip="Export as .zip"/>
+                                                                    <Button Style="{StaticResource IconBtn}" Content="&#xE74D;" Click="CfgSnapDelete_Click" ToolTip="Delete snapshot"/>
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </HeaderedContentControl>
+                                </Grid>
+
+                                <Grid Grid.Column="2">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <HeaderedContentControl Style="{StaticResource Group}" Header="Account configs">
                                         <StackPanel>
                                             <TextBlock x:Name="CfgAccountsEmpty" Text="No Steam accounts on this PC yet." Style="{StaticResource Sub}" Visibility="Collapsed"/>
                                             <!-- beta.10: from 8 accounts, a search; accounts with the same crosshair fold into one line (CfgDisplay) -->
@@ -1393,83 +1466,8 @@
                                             </ItemsControl>
                                         </StackPanel>
                                     </HeaderedContentControl>
-                                </StackPanel>
 
-                                <StackPanel Grid.Column="2">
-                                    <HeaderedContentControl Style="{StaticResource Group}" Header="Backups (undo)">
-                                        <StackPanel>
-                                            <TextBlock Style="{StaticResource OptSub}" Margin="0,0,0,8"
-                                                       Text="Saved before the app changes an account's files. The 20 newest per account are kept."/>
-                                            <TextBlock x:Name="CfgBackupEmpty" Text="No backups yet." Style="{StaticResource Sub}"/>
-                                            <ScrollViewer MaxHeight="230" VerticalScrollBarVisibility="Auto">
-                                                <ItemsControl x:Name="CfgBackupList">
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <Grid Margin="0,0,0,2">
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="90"/>
-                                                                    <ColumnDefinition Width="*"/>
-                                                                    <ColumnDefinition Width="Auto"/>
-                                                                </Grid.ColumnDefinitions>
-                                                                <TextBlock Text="{Binding When}" Foreground="{StaticResource Faint}" FontFamily="{StaticResource Mono}" FontSize="11" VerticalAlignment="Center"/>
-                                                                <DockPanel Grid.Column="1" VerticalAlignment="Center">
-                                                                    <TextBlock DockPanel.Dock="Left" Text="{Binding Account}" TextTrimming="CharacterEllipsis" MaxWidth="150"/>
-                                                                    <TextBlock Text="{Binding Detail}" Foreground="{StaticResource Faint}" TextTrimming="CharacterEllipsis" Margin="8,0,0,0"/>
-                                                                </DockPanel>
-                                                                <Button Grid.Column="2" Style="{StaticResource RowBtn}" Content="Restore" Click="CfgRestore_Click" Margin="0" VerticalAlignment="Center" ToolTip="Restore these files"/>
-                                                            </Grid>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </ScrollViewer>
-                                        </StackPanel>
-                                    </HeaderedContentControl>
-                                    <HeaderedContentControl Style="{StaticResource Group}" Header="Snapshots">
-                                        <StackPanel>
-                                            <Grid Margin="0,0,0,8">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="40"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBlock Text="From" Style="{StaticResource Key}" VerticalAlignment="Center" Margin="0"/>
-                                                <ComboBox x:Name="CfgSnapFrom" Grid.Column="1" ItemTemplate="{StaticResource CfgSourceTemplate}" ToolTip="The account to save" Margin="0,0,8,0"/>
-                                                <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                                    <Button x:Name="CfgSnapSaveBtn" Content="Save snapshot" Click="CfgSnapSave_Click" ToolTip="Saves this account's config under a name (Main, Practice…)"/>
-                                                    <Button Content="Import" Click="CfgSnapImport_Click" Margin="0" ToolTip="A snapshot .zip exported on this or another PC"/>
-                                                </StackPanel>
-                                            </Grid>
-                                            <TextBlock x:Name="CfgSnapEmpty" Text="No snapshots yet. Save one to keep a config, or to take it to another PC." Style="{StaticResource Sub}"/>
-                                            <ItemsControl x:Name="CfgSnapList">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Border BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" Padding="0,5">
-                                                            <Grid>
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="*"/>
-                                                                    <ColumnDefinition Width="Auto"/>
-                                                                </Grid.ColumnDefinitions>
-                                                                <StackPanel VerticalAlignment="Center">
-                                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                                                                    <DockPanel Margin="0,1,0,0">
-                                                                        <TextBlock DockPanel.Dock="Left" Text="{Binding When}" Foreground="{StaticResource Faint}" FontFamily="{StaticResource Mono}" FontSize="11"/>
-                                                                        <TextBlock Text="{Binding What}" Foreground="{StaticResource Faint}" FontSize="11" TextTrimming="CharacterEllipsis" Margin="8,0,0,0"/>
-                                                                    </DockPanel>
-                                                                </StackPanel>
-                                                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                                                    <Button Style="{StaticResource IconBtn}" Content="&#xE8C8;" Click="CfgSnapUse_Click" ToolTip="Copy it to accounts (picks it in Copy)"/>
-                                                                    <Button Style="{StaticResource IconBtn}" Content="&#xE72D;" Click="CfgSnapExport_Click" ToolTip="Export as .zip"/>
-                                                                    <Button Style="{StaticResource IconBtn}" Content="&#xE74D;" Click="CfgSnapDelete_Click" ToolTip="Delete snapshot"/>
-                                                                </StackPanel>
-                                                            </Grid>
-                                                        </Border>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </StackPanel>
-                                    </HeaderedContentControl>
-
-                                    <HeaderedContentControl Style="{StaticResource Group}" Header="Compare">
+                                    <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Compare">
                                         <StackPanel>
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
@@ -1528,7 +1526,35 @@
                                         </StackPanel>
                                     </HeaderedContentControl>
 
-                                </StackPanel>
+                                    <HeaderedContentControl Grid.Row="2" Style="{StaticResource Group}" Header="Backups">
+                                        <StackPanel>
+                                            <TextBlock Style="{StaticResource OptSub}" Margin="0,0,0,8"
+                                                       Text="Saved before the app changes an account's files. The 20 newest per account are kept."/>
+                                            <TextBlock x:Name="CfgBackupEmpty" Text="No backups yet." Style="{StaticResource Sub}"/>
+                                            <ScrollViewer MaxHeight="230" VerticalScrollBarVisibility="Auto">
+                                                <ItemsControl x:Name="CfgBackupList">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid Margin="0,0,0,2">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="90"/>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Text="{Binding When}" Foreground="{StaticResource Faint}" FontFamily="{StaticResource Mono}" FontSize="11" VerticalAlignment="Center"/>
+                                                                <DockPanel Grid.Column="1" VerticalAlignment="Center">
+                                                                    <TextBlock DockPanel.Dock="Left" Text="{Binding Account}" TextTrimming="CharacterEllipsis" MaxWidth="150"/>
+                                                                    <TextBlock Text="{Binding Detail}" Foreground="{StaticResource Faint}" TextTrimming="CharacterEllipsis" Margin="8,0,0,0"/>
+                                                                </DockPanel>
+                                                                <Button Grid.Column="2" Style="{StaticResource RowBtn}" Content="Restore" Click="CfgRestore_Click" Margin="0" VerticalAlignment="Center" ToolTip="Restore these files"/>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </ScrollViewer>
+                                        </StackPanel>
+                                    </HeaderedContentControl>
+                                </Grid>
                             </Grid>
                         </ScrollViewer>
                     </Grid>
@@ -1943,9 +1969,10 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Left: what you change most (protection, Change IP, the New IP + next account command) -->
+                            <!-- Settings (docs/DESIGN.md > App layout). Left: how you play (protection, mobile data, the IP, the commands and their keys). Right: what is around the game (programs, flags, Steam), then the app; Remove last -->
                             <Grid>
                                 <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
@@ -1964,19 +1991,6 @@
                                             <StackPanel>
                                                 <TextBlock Text="Steam through the phone"/>
                                                 <TextBlock Text="Avoids the 'No Steam logon' kick. Steam downloads also use mobile data." Style="{StaticResource OptSub}"/>
-                                            </StackPanel>
-                                        </CheckBox>
-                                        <CheckBox x:Name="KeepOffBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
-                                            <StackPanel>
-                                                <TextBlock Text="Save mobile data"/>
-                                                <TextBlock Text="In 'Game only' and 'No phone', stops Windows from moving the whole PC onto the phone." Style="{StaticResource OptSub}"/>
-                                            </StackPanel>
-                                        </CheckBox>
-                                        <CheckBox x:Name="AutoModeBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12"
-                                                  ToolTip="When the mobile connection is weak, the app changes Whole PC to Game only, so the rest of your PC stops sharing the phone with CS2. It changes back when the connection is good and CS2 is closed. You always get a message.">
-                                            <StackPanel>
-                                                <TextBlock Text="Fall back to Game only on a weak connection"/>
-                                                <TextBlock Text="So the rest of the PC stops sharing a weak phone connection with CS2." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
                                         <!-- beta.11: features without protection, only when you choose it (a warning when you turn it on) -->
@@ -2006,7 +2020,28 @@
                                     </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Change IP">
+                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Mobile data">
+                                    <StackPanel>
+                                        <CheckBox x:Name="KeepOffBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
+                                            <StackPanel>
+                                                <TextBlock Text="Save mobile data"/>
+                                                <TextBlock Text="In 'Game only' and 'No phone', stops Windows from moving the whole PC onto the phone." Style="{StaticResource OptSub}"/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                        <CheckBox x:Name="AutoModeBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12"
+                                                  ToolTip="When the mobile connection is weak, the app changes Whole PC to Game only, so the rest of your PC stops sharing the phone with CS2. It changes back when the connection is good and CS2 is closed. You always get a message.">
+                                            <StackPanel>
+                                                <TextBlock Text="Fall back to Game only on a weak connection"/>
+                                                <TextBlock Text="So the rest of the PC stops sharing a weak phone connection with CS2." Style="{StaticResource OptSub}"/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                        <TextBlock Text="Warn me after (GB a month, 0 = off)" Style="{StaticResource Key}" Margin="0,0,0,5"/>
+                                        <TextBox x:Name="DataWarnBox" Width="90" HorizontalAlignment="Left" Height="28" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" LostFocus="DataWarn_Changed"
+                                                 ToolTip="The app counts what goes through the phone's adapter (shown under Phone on the Connection page) and warns once a month when it passes this."/>
+                                    </StackPanel>
+                                </HeaderedContentControl>
+
+                                <HeaderedContentControl Grid.Row="2" Style="{StaticResource Group}" Header="Change IP">
                                     <StackPanel>
                                     <Grid MaxWidth="560" HorizontalAlignment="Left">
                                         <Grid.ColumnDefinitions>
@@ -2050,40 +2085,11 @@
                                     </CheckBox>
                                     </StackPanel>
                                 </HeaderedContentControl>
-
-                                <HeaderedContentControl Grid.Row="2" x:Name="SwitchGroup" Style="{StaticResource Group}" Header="New IP + next account">
+                                <HeaderedContentControl x:Name="SwitchGroup" Grid.Row="3" Style="{StaticResource Group}" Header="New IP + next account">
                                     <StackPanel>
-                                        <TextBlock Style="{StaticResource OptSub}" Margin="0,0,0,10" Background="Transparent"
+                                        <TextBlock Style="{StaticResource OptSub}" Margin="0,0,0,12" Background="Transparent"
                                                    ToolTip="The steps ticked under Steps, in order. Both hotkeys work in game. The Change IP and rejoin hotkey is separate: it changes the IP and rejoins with the same account, or with the next one if that account is banned on the last server."
                                                    Text="What the New IP + next account button and hotkey do, in order."/>
-                                        <Grid MaxWidth="560" HorizontalAlignment="Left" Margin="0,0,0,4">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" MinWidth="150"/>
-                                                <ColumnDefinition Width="12"/>
-                                                <ColumnDefinition Width="*" MinWidth="150"/>
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel>
-                                                <TextBlock Text="New IP + next account hotkey" Style="{StaticResource Key}" Margin="0,0,0,5"/>
-                                                <TextBox x:Name="HotkeySwitchBox" Height="28" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" IsReadOnly="True" IsReadOnlyCaretVisible="False"
-                                                         PreviewKeyDown="HotkeyBox_PreviewKeyDown" GotKeyboardFocus="HotkeyBox_GotFocus" LostKeyboardFocus="HotkeyBox_LostFocus"
-                                                         ToolTip="Click here and press the keys. Escape puts back Ctrl+Shift+F9."/>
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="2">
-                                                <TextBlock Text="Change IP and rejoin hotkey" Style="{StaticResource Key}" Margin="0,0,0,5"/>
-                                                <TextBox x:Name="HotkeyRejoinBox" Height="28" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" IsReadOnly="True" IsReadOnlyCaretVisible="False"
-                                                         PreviewKeyDown="HotkeyBox_PreviewKeyDown" GotKeyboardFocus="HotkeyBox_GotFocus" LostKeyboardFocus="HotkeyBox_LostFocus"
-                                                         ToolTip="Click here and press the keys. Escape puts back Ctrl+Shift+F10."/>
-                                            </StackPanel>
-                                        </Grid>
-                                        <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,0,0,12"
-                                                   Text="Press the keys you want. Avoid Ctrl+Alt: on many keyboards it is AltGr, which types @ and €."/>
-                                        <CheckBox x:Name="SoundsBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
-                                            <StackPanel>
-                                                <TextBlock Text="Sounds for commands"/>
-                                                <TextBlock Text="A short sound when a hotkey or button starts something, and another when it ends or fails. You hear them in game." Style="{StaticResource OptSub}"/>
-                                            </StackPanel>
-                                        </CheckBox>
-                                        <TextBlock Text="Steps, in order" Style="{StaticResource Key}" Margin="0,0,0,8"/>
                                         <CheckBox x:Name="SwIpBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
                                             <StackPanel>
                                                 <TextBlock Text="Change the IP"/>
@@ -2112,17 +2118,40 @@
                                     </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="3" Style="{StaticResource Group}" Header="How it works" VerticalAlignment="Top">
-                                    <TextBlock Style="{StaticResource Sub}" LineHeight="19" MaxWidth="640" HorizontalAlignment="Left">
-                                        The phone shares its mobile data with the PC, over a USB cable or the Wi-Fi hotspot. The app sends the game through it: servers see the carrier IP, not your home IP.<LineBreak/><LineBreak/>
-                                        If the connection drops, the block stops those servers instead of letting your IP through.<LineBreak/><LineBreak/>
-                                        Change IP turns data off and on until a new IP comes. A USB 4G/5G dongle or router also works.<LineBreak/><LineBreak/>
-                                        <Run Foreground="{StaticResource Faint}">Other people on the same carrier can use the same IP at the same time.</Run>
-                                    </TextBlock>
+                                <HeaderedContentControl Grid.Row="4" Style="{StaticResource Group}" Header="Hotkeys and sounds">
+                                    <StackPanel>
+                                        <Grid MaxWidth="560" HorizontalAlignment="Left" Margin="0,0,0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" MinWidth="150"/>
+                                                <ColumnDefinition Width="12"/>
+                                                <ColumnDefinition Width="*" MinWidth="150"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="New IP + next account hotkey" Style="{StaticResource Key}" Margin="0,0,0,5"/>
+                                                <TextBox x:Name="HotkeySwitchBox" Height="28" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" IsReadOnly="True" IsReadOnlyCaretVisible="False"
+                                                         PreviewKeyDown="HotkeyBox_PreviewKeyDown" GotKeyboardFocus="HotkeyBox_GotFocus" LostKeyboardFocus="HotkeyBox_LostFocus"
+                                                         ToolTip="Click here and press the keys. Escape puts back Ctrl+Shift+F9."/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="Change IP and rejoin hotkey" Style="{StaticResource Key}" Margin="0,0,0,5"/>
+                                                <TextBox x:Name="HotkeyRejoinBox" Height="28" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" IsReadOnly="True" IsReadOnlyCaretVisible="False"
+                                                         PreviewKeyDown="HotkeyBox_PreviewKeyDown" GotKeyboardFocus="HotkeyBox_GotFocus" LostKeyboardFocus="HotkeyBox_LostFocus"
+                                                         ToolTip="Click here and press the keys. Escape puts back Ctrl+Shift+F10."/>
+                                            </StackPanel>
+                                        </Grid>
+                                        <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,0,0,12"
+                                                   Text="Press the keys you want. Avoid Ctrl+Alt: on many keyboards it is AltGr, which types @ and €."/>
+                                        <CheckBox x:Name="SoundsBox" Style="{StaticResource Switch}" Click="SettingChanged">
+                                            <StackPanel>
+                                                <TextBlock Text="Sounds for commands"/>
+                                                <TextBlock Text="A short sound when a hotkey or button starts something, and another when it ends or fails. You hear them in game." Style="{StaticResource OptSub}"/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                    </StackPanel>
                                 </HeaderedContentControl>
+
                             </Grid>
 
-                            <!-- Right: the app in the background, flags and programs, Steam, updates; maintenance and Remove last -->
                             <Grid Grid.Column="2">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -2133,30 +2162,38 @@
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <HeaderedContentControl Style="{StaticResource Group}" Header="Background and data">
+                                <HeaderedContentControl Style="{StaticResource Group}" Header="Open with CS2">
                                     <StackPanel>
-                                        <CheckBox x:Name="StartWithWindowsBox" Style="{StaticResource Switch}" Click="StartWithWindows_Click" Margin="0,0,0,12" ToolTipService.ShowOnDisabled="True"
-                                                  ToolTip="A scheduled task named 'CS2 IP Changer' opens the app in the notification area when you sign in, with its admin rights and without the UAC prompt each time. Protection starts off, unless Settings > Protection > Turn on protection when the app starts is on. Only for the copy installed in C:\Program Files\CS2 IP Changer. Turning this off, Remove everything and --restore delete the task.">
-                                            <StackPanel>
-                                                <TextBlock Text="Start with Windows"/>
-                                                <TextBlock Text="Opens in the notification area when you sign in, with protection off (see Protection above)." Style="{StaticResource OptSub}"/>
-                                                <TextBlock x:Name="AutostartHint" Visibility="Collapsed" Style="{StaticResource OptSub}" Foreground="{StaticResource Warn}"
-                                                           Text="Only for the installed copy: start the app from Downloads and click Install."/>
-                                            </StackPanel>
-                                        </CheckBox>
-                                        <CheckBox x:Name="CloseToTrayBox" Style="{StaticResource Switch}" Click="CloseToTray_Click" Margin="0,0,0,12"
-                                                  ToolTip="The X hides the window and the app keeps protecting from the notification area (next to the clock). Click the icon to open it; right-click it for New IP, Change IP, Regions, Turn protection on or off and Quit.">
-                                            <StackPanel>
-                                                <TextBlock Text="Close to the notification area"/>
-                                                <TextBlock Text="The X hides the window. Quit is in the icon's menu." Style="{StaticResource OptSub}"/>
-                                            </StackPanel>
-                                        </CheckBox>
-                                        <TextBlock Text="Mobile data warning (GB a month, 0 = off)" Style="{StaticResource Key}" Margin="0,0,0,5"/>
-                                        <TextBox x:Name="DataWarnBox" Width="90" HorizontalAlignment="Left" Height="28" VerticalContentAlignment="Center" FontFamily="{StaticResource Mono}" LostFocus="DataWarn_Changed"
-                                                 ToolTip="The app counts what goes through the phone's adapter (shown under Phone on the Connection page) and warns once a month when it passes this."/>
+                                        <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,0,0,10" Background="Transparent"
+                                                   ToolTip="Like Discord, Spotify or a stats tracker. They open as you, without the app's admin rights, and only if they aren't running yet."
+                                                   Text="Programs that open when the app opens CS2, if they aren't running yet."/>
+                                        <ItemsControl x:Name="OpenWithList" MaxWidth="620" HorizontalAlignment="Left">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Margin="0,0,0,8">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Enabled}" Click="OpenWithToggle_Click" ToolTip="{Binding Path}">
+                                                            <StackPanel>
+                                                                <TextBlock Text="{Binding Name}"/>
+                                                                <TextBlock Text="{Binding Path}" Style="{StaticResource OptSub}" TextTrimming="CharacterEllipsis"/>
+                                                            </StackPanel>
+                                                        </CheckBox>
+                                                        <CheckBox Grid.Column="1" Style="{StaticResource Switch}" IsChecked="{Binding AsAdmin}" Click="OpenWithToggle_Click" VerticalAlignment="Top" Margin="16,0,8,0"
+                                                                  ToolTip="Opens it with Run as administrator: Windows asks first (UAC). For programs that only work as admin.">
+                                                            <TextBlock Text="As admin"/>
+                                                        </CheckBox>
+                                                        <Button Grid.Column="2" Style="{StaticResource IconBtn}" Content="&#xE74D;" Click="OpenWithRemove_Click" ToolTip="Remove" VerticalAlignment="Top"/>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <Button HorizontalAlignment="Left" Margin="0,2,0,0" Content="Add program" Click="OpenWithAdd_Click" ToolTip="Pick an .exe file"/>
                                     </StackPanel>
                                 </HeaderedContentControl>
-
                                 <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Player flags">
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,0,0,10" Background="Transparent"
@@ -2210,41 +2247,7 @@
                                         </CheckBox>
                                     </StackPanel>
                                 </HeaderedContentControl>
-
-                                <HeaderedContentControl Grid.Row="2" Style="{StaticResource Group}" Header="Open with CS2">
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,0,0,10" Background="Transparent"
-                                                   ToolTip="Like Discord, Spotify or a stats tracker. They open as you, without the app's admin rights, and only if they aren't running yet."
-                                                   Text="Programs that open when the app opens CS2, if they aren't running yet."/>
-                                        <ItemsControl x:Name="OpenWithList" MaxWidth="620" HorizontalAlignment="Left">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Grid Margin="0,0,0,8">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding Enabled}" Click="OpenWithToggle_Click" ToolTip="{Binding Path}">
-                                                            <StackPanel>
-                                                                <TextBlock Text="{Binding Name}"/>
-                                                                <TextBlock Text="{Binding Path}" Style="{StaticResource OptSub}" TextTrimming="CharacterEllipsis"/>
-                                                            </StackPanel>
-                                                        </CheckBox>
-                                                        <CheckBox Grid.Column="1" Style="{StaticResource Switch}" IsChecked="{Binding AsAdmin}" Click="OpenWithToggle_Click" VerticalAlignment="Top" Margin="16,0,8,0"
-                                                                  ToolTip="Opens it with Run as administrator: Windows asks first (UAC). For programs that only work as admin.">
-                                                            <TextBlock Text="As admin"/>
-                                                        </CheckBox>
-                                                        <Button Grid.Column="2" Style="{StaticResource IconBtn}" Content="&#xE74D;" Click="OpenWithRemove_Click" ToolTip="Remove" VerticalAlignment="Top"/>
-                                                    </Grid>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                        <Button HorizontalAlignment="Left" Margin="0,2,0,0" Content="Add program" Click="OpenWithAdd_Click" ToolTip="Pick an .exe file"/>
-                                    </StackPanel>
-                                </HeaderedContentControl>
-
-                                <HeaderedContentControl Grid.Row="3" Style="{StaticResource Group}" Header="Steam">
+                                <HeaderedContentControl Grid.Row="2" Style="{StaticResource Group}" Header="Steam">
                                     <StackPanel>
                                         <TextBlock Text="Steam Web API key (optional)"/>
                                         <TextBlock Text="With it, bans come from the official API. It stays on this PC, encrypted for your Windows user." Style="{StaticResource OptSub}" Margin="0,1,0,8"/>
@@ -2262,13 +2265,6 @@
                                             <Button x:Name="ApiKeyShowBtn" Grid.Column="1" Margin="6,0,0,0" Click="ApiKeyShow_Click" Content="Show" ToolTipService.ShowOnDisabled="True" ToolTip="Shows the key"/>
                                             <Button Grid.Column="2" Margin="6,0,0,0" Click="ApiKeyLink_Click" Content="Get key" ToolTip="Opens steamcommunity.com/dev/apikey"/>
                                         </Grid>
-                                        <CheckBox x:Name="AutoStreamerBox" Style="{StaticResource Switch}" Click="AutoStreamer_Click" Margin="0,12,0,0"
-                                                  ToolTip="While OBS Studio or Streamlabs is running, the app hides usernames, your home IP in the Log page and the API key, as Hide usernames on the Accounts page does. They show again when it closes.">
-                                            <StackPanel>
-                                                <TextBlock Text="Hide usernames while OBS or Streamlabs is open"/>
-                                                <TextBlock Text="So a login or your home IP never ends up on a stream." Style="{StaticResource OptSub}"/>
-                                            </StackPanel>
-                                        </CheckBox>
                                         <CheckBox x:Name="LaunchOptsBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,12,0,0"
                                                   ToolTip="Adds -condebug -conclearlog to CS2's launch options (Steam > CS2 > Properties) of every account on this PC. What you already have there stays. Only while Steam is closed: Steam would overwrite it otherwise. A backup of each file goes to SRT_Dados\launch-options.">
                                             <StackPanel>
@@ -2284,33 +2280,69 @@
                                     </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="4" Style="{StaticResource Group}" Header="Updates">
+                                <HeaderedContentControl Grid.Row="3" Style="{StaticResource Group}" Header="Privacy">
                                     <StackPanel>
+                                        <CheckBox x:Name="OptStreamer" Style="{StaticResource Switch}" Click="AccOpt_Click" Margin="0,0,0,12"
+                                                  ToolTip="For streams: hides usernames, your home IP in the Log page and the Steam API key">
+                                            <StackPanel>
+                                                <TextBlock Text="Hide usernames"/>
+                                                <TextBlock Text="Also your home IP on the Log page and the Steam API key. For streams." Style="{StaticResource OptSub}"/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                        <CheckBox x:Name="AutoStreamerBox" Style="{StaticResource Switch}" Click="AutoStreamer_Click" Margin="0,0,0,12"
+                                                  ToolTip="While OBS Studio or Streamlabs is running, the app hides usernames, your home IP in the Log page and the API key, as Hide usernames does. They show again when it closes.">
+                                            <StackPanel>
+                                                <TextBlock Text="Hide usernames while OBS or Streamlabs is open"/>
+                                                <TextBlock Text="So a login or your home IP never ends up on a stream." Style="{StaticResource OptSub}"/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                        <!-- Telemetry (beta): required, accepted once before the app opens (App.StatsGate), README > Telemetry -->
+                                        <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0" Background="Transparent"
+                                                   Text="Usage stats, required while the app is in beta, with a random ID made for this install, with no name (never from your PC or you). Never IPs, servers, accounts or names."
+                                                   ToolTip="Sent: the app and Windows versions, your country as two letters, the mode, how the phone is connected, minutes open, how often each button and hotkey is used, a few counters, how long your lists are, and errors as their type and place in the code. Details in the README, under Telemetry."/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                            <Button Click="DeleteStats_Click" Margin="0,0,6,0" HorizontalAlignment="Left" Content="Delete my stats"
+                                                    ToolTip="Deletes everything the stats server keeps under this install's ID, then the app starts over with a new ID."/>
+                                            <Button Click="DeleteLogs_Click" Content="Delete log files" ToolTip="Deletes the log files in SRT_Dados (they hold your home IP, Steam names and servers). The log keeps about 14 days on its own."/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </HeaderedContentControl>
+
+                                <HeaderedContentControl Grid.Row="4" Style="{StaticResource Group}" Header="App">
+                                    <StackPanel>
+                                        <CheckBox x:Name="StartWithWindowsBox" Style="{StaticResource Switch}" Click="StartWithWindows_Click" Margin="0,0,0,12" ToolTipService.ShowOnDisabled="True"
+                                                  ToolTip="A scheduled task named 'CS2 IP Changer' opens the app in the notification area when you sign in, with its admin rights and without the UAC prompt each time. Protection starts off, unless Settings > Protection > Turn on protection when the app starts is on. Only for the copy installed in C:\Program Files\CS2 IP Changer. Turning this off, Remove everything and --restore delete the task.">
+                                            <StackPanel>
+                                                <TextBlock Text="Start with Windows"/>
+                                                <TextBlock Text="Opens in the notification area when you sign in, with protection off (see Protection)." Style="{StaticResource OptSub}"/>
+                                                <TextBlock x:Name="AutostartHint" Visibility="Collapsed" Style="{StaticResource OptSub}" Foreground="{StaticResource Warn}"
+                                                           Text="Only for the installed copy: start the app from Downloads and click Install."/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                        <CheckBox x:Name="CloseToTrayBox" Style="{StaticResource Switch}" Click="CloseToTray_Click" Margin="0,0,0,12"
+                                                  ToolTip="The X hides the window and the app keeps protecting from the notification area (next to the clock). Click the icon to open it; right-click it for New IP, Change IP, Regions, Turn protection on or off and Quit.">
+                                            <StackPanel>
+                                                <TextBlock Text="Close to the notification area"/>
+                                                <TextBlock Text="The X hides the window. Quit is in the icon's menu." Style="{StaticResource OptSub}"/>
+                                            </StackPanel>
+                                        </CheckBox>
                                         <CheckBox x:Name="CheckUpdatesBox" Style="{StaticResource Switch}" Click="CheckUpdates_Click">
                                             <StackPanel>
                                                 <TextBlock Text="Check for updates"/>
                                                 <TextBlock Text="Once a day, on GitHub. Nothing installs without your OK and a matching SHA-256." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
-                                        <!-- Telemetry (beta): required, accepted once before the app opens (App.StatsGate), README > Telemetry -->
-                                        <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,12,0,0" Background="Transparent"
-                                                   Text="Usage stats, required while the app is in beta, with a random ID made for this install, with no name (never from your PC or you). Never IPs, servers, accounts or names."
-                                                   ToolTip="Sent: the app and Windows versions, your country as two letters, the mode, how the phone is connected, minutes open, how often each button and hotkey is used, a few counters, how long your lists are, and errors as their type and place in the code. Details in the README, under Telemetry."/>
-                                        <Button Click="DeleteStats_Click" Margin="0,8,0,0" HorizontalAlignment="Left" Content="Delete my stats"
-                                                ToolTip="Deletes everything the stats server keeps under this install's ID, then the app starts over with a new ID."/>
                                     </StackPanel>
                                 </HeaderedContentControl>
 
                                 <HeaderedContentControl Grid.Row="5" Style="{StaticResource Group}" Header="Maintenance">
-                                    <UniformGrid Columns="2" MaxWidth="420" HorizontalAlignment="Left">
-                                        <Button Click="OpenData_Click" Margin="0,0,6,6" Content="Open data folder" ToolTip="Opens the SRT_Dados folder, next to the .exe"/>
-                                        <Button Click="OpenFirewall_Click" Margin="0,0,0,6" Content="Open Windows Firewall" ToolTip="The app's rules are under Outbound Rules, named 'ServerRouteTool'."/>
-                                        <Button Click="UnhideAll_Click" Margin="0,0,6,0" Content="Show hidden accounts" ToolTip="Brings back the accounts you hid from the Accounts list"/>
-                                        <Button Click="DeleteLogs_Click" Margin="0" Content="Delete log files" ToolTip="Deletes the log files in SRT_Dados (they hold your home IP, Steam names and servers). The log keeps about 14 days on its own."/>
-                                    </UniformGrid>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Click="OpenData_Click" Margin="0,0,6,0" Content="Open data folder" ToolTip="Opens the SRT_Dados folder, next to the .exe"/>
+                                        <Button Click="OpenFirewall_Click" Margin="0" Content="Open Windows Firewall" ToolTip="The app's rules are under Outbound Rules, named 'ServerRouteTool'."/>
+                                    </StackPanel>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="6" Style="{StaticResource Group}" Header="Remove the app" VerticalAlignment="Top">
+                                <HeaderedContentControl Grid.Row="6" Style="{StaticResource Group}" Header="Remove the app">
                                     <StackPanel>
                                         <TextBlock Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,0,0,10"
                                                    Text="Removes the rules, routes and task the app made, then the app itself. You choose whether your settings and accounts stay."/>

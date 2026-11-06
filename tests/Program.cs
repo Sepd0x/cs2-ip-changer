@@ -627,6 +627,8 @@ VersaoTests.Run(Check);
 AvisoTests.Run(Check);
 // sistema de design (5 nov.): as cores da app no site, na dashboard e no README, e as capturas da versão de agora (DesignSyncTests.cs)
 DesignSyncTests.Run(Check);
+// beta.12 (6 nov.): a organização da app segue docs/DESIGN.md > App layout (OrganizacaoTests.cs)
+OrganizacaoTests.Run(Check);
 // 6 nov.: o logo é o mesmo no ícone da app, no favicon, no README, no site, no canto da janela e no cartão (LogoTests.cs)
 LogoTests.Run(Check);
 

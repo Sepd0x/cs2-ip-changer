@@ -227,7 +227,7 @@ public static class PhoneSetup
         PhoneStep.Offline => "The phone is offline in ADB. Unplug the cable and plug it back in.",
         PhoneStep.TetherOff => "Turn on USB tethering by hand: Settings > Network & internet > Hotspot & tethering (Samsung: Settings > Connections > Mobile Hotspot and Tethering), then USB tethering.",
         PhoneStep.WifiOn => "Turn off the phone's Wi-Fi: with it on, the PC may get your home network instead of mobile data.",
-        PhoneStep.PcOnPhone => "The rest of the PC is going through the phone. Turn on Settings > Protection > Save mobile data, or plug the PC into your home network.",
+        PhoneStep.PcOnPhone => "The rest of the PC is going through the phone. Turn on Settings > Mobile data > Save mobile data, or plug the PC into your home network.",
         _ => "The phone is ready.",
     };
 

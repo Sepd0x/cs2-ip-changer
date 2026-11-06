@@ -127,9 +127,9 @@ public partial class MainWindow
     {
         if (_hwnd == IntPtr.Zero) return;
         if (!Hotkey.TryParse(text, out var mods, out var vk))
-            Log.Warn($"The hotkey \"{text}\" can't be used (pick another one in Settings > New IP + next account); use {instead}.");
+            Log.Warn($"The hotkey \"{text}\" can't be used (pick another one in Settings > Hotkeys and sounds); use {instead}.");
         else if (!RegisterHotKey(_hwnd, id, mods | MOD_NOREPEAT, vk))
-            Log.Warn($"The {text} hotkey is already in use by another program; pick another one in Settings > New IP + next account, or use {instead}.");
+            Log.Warn($"The {text} hotkey is already in use by another program; pick another one in Settings > Hotkeys and sounds, or use {instead}.");
     }
 
     void UnregisterHotkeys()
@@ -196,7 +196,7 @@ public partial class MainWindow
 
     async void OnClosing(object sender, CancelEventArgs e)
     {
-        // Settings > Background and data: the X only hides the window; Quit in the icon's menu closes the app.
+        // Settings > App > Close to the notification area: the X only hides the window; Quit in the icon's menu closes the app.
         if (GoesToTray(_s?.CloseToTray == true, _tray != null, _quitting, _sessionEnding, _closingDone, _demo))
         {
             e.Cancel = true;

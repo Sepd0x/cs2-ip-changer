@@ -37,10 +37,10 @@ Yes, the protection does: an iPhone's USB tethering (Personal Hotspot) shows up 
 It runs as admin, changes network settings and isn't code-signed, which is what some heuristics look for. Every release is built by GitHub Actions from this source and attested, and [Privacy and security](PRIVACY-AND-SECURITY.md) lists every Windows function it uses with admin rights and why. [Check your download](../README.md#check-your-download) before you run it.
 
 **Can it run in the background or start with Windows?**<br>
-Yes. Settings > Background and data: the X can hide the window next to the clock, and the copy installed in `C:\Program Files\CS2 IP Changer` can start with Windows, in the notification area, without a UAC prompt each time. Both are off until you turn them on.
+Yes. Settings > App: the X can hide the window next to the clock, and the copy installed in `C:\Program Files\CS2 IP Changer` can start with Windows, in the notification area, without a UAC prompt each time. Both are off until you turn them on.
 
 **How much mobile data does it use?**<br>
-CS2 itself uses little next to a download, but Steam's downloads also go through the phone while it's connected. The Phone box on the Connection page counts what went through the phone this session and this month, and Settings > Background and data warns you at a limit you pick.
+CS2 itself uses little next to a download, but Steam's downloads also go through the phone while it's connected. The Phone box on the Connection page counts what went through the phone this session and this month, and Settings > Mobile data warns you at a limit you pick.
 
 ## Bans
 

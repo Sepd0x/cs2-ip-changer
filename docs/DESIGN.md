@@ -135,6 +135,93 @@ README badges: one row under the title, at most 6, all from shields.io in the fl
 GitHub live; the VirusTotal badge sits in a `<!--rel:vtbadge-->` mark that `node tools/site-pages.mjs` fills from
 `site/release.json`. `tests/DesignSyncTests.cs` checks all of this.
 
+## App layout
+
+Where each thing goes in the app, so every page reads the same way. `tests/OrganizacaoTests.cs` reads the two tables
+below and fails when `src/MainWindow.xaml` leaves them: a group out of order or in the wrong column, a Settings option in
+another group, a name used twice, a column that ends short, a red button that is not last, or a text that points to a
+place that is not there.
+
+### Four page shapes
+
+1. **List** (Servers, Regions, Accounts, Log): a group on top for what you do before the list (add, choose, the options
+   that only change this page), then the list group, named after the page, down to the bottom. The list's bar: search
+   first, then filters, the count, view and order, then the actions on the whole list. Log has nothing to add, so it is
+   the list alone.
+2. **Two columns** (Connection, Configs): left is what you do, right is what you look at and undo, with the history
+   (Previous IPs, Backups) last.
+3. **Options** (Settings): left is how you play (protection, mobile data, the IP, the commands and their keys); right is
+   what is around the game (programs, flags, Steam), then the app; Remove the app last. A new group goes next to the
+   group it changes.
+4. **Editor** (Profiles): a narrow column for the template (260 to 320 px), a wide one for what it changes, Apply at
+   the bottom right.
+
+In two columns and options the columns are equal, 12 px apart, and end on one line: the last group of each column takes
+the rest of the height (since beta.9), so a list or a short group goes last, not a long text.
+
+### Settings, or the page?
+
+- An option that only changes one page lives on that page, in its top group (On login on Accounts, Refresh every 30 s on
+  Servers, Sync on Configs).
+- An option that changes the app, or more than one page, lives in Settings. When it fits two groups, it goes in the
+  group of the thing it changes.
+- One option, one place. A command can show in more than one place (New IP + next account in the top bar and on
+  Accounts); an option can't. Another page can point to it (the gear on Accounts opens Settings > New IP + next account,
+  the grey line under the mode on Connection names Settings > Mobile data).
+- A button that only makes sense sometimes shows only then (Show hidden, while some accounts are hidden).
+- A group has something to do in it. Text that only explains goes under the option it explains (the grey line) or in its
+  tooltip. The one exception is How it works, on Connection.
+
+### Inside a group
+
+- Most used first; a red (`Danger`) button last.
+- In Settings, at most 7 things to click or fill in a group; with more, split it.
+- A group name is 1 to 5 words, no brackets, used once in the whole app. A group takes a page's name only when it is
+  that page's list.
+- Point with names, not places: `Page > Group`, `Page > Group > Option` or `Page > Option`, as they are on screen. Never
+  "above", "below" or "on the right" for another group (the columns move with the window). Outside the app (the phone,
+  Steam, CS2, Windows, GitHub) the texts only name these: `About phone`, `Developer options`, `System`,
+  `Network & internet`, `Additional settings`, `Connection & sharing`, `Connections`, `Personal Hotspot`, `Security`,
+  `Game`, `Apps`, `Installed apps`, `General`. A new one goes here first.
+- The page frame: 16 px at the sides and 18 px under the last group (`16,0,16,6` plus the group's 12; `16,0,16,18` when
+  the page is one group or its groups have no margin).
+
+### Pages
+
+| Page | Element | Shape | Left (or only) column | Right column |
+|---|---|---|---|---|
+| Connection | `PageNet` | two columns | Status, Phone, What goes through the phone | Checks, How it works, Previous IPs |
+| Servers | `PageServers` | list | Add servers, Servers | |
+| Regions | `PageRegions` | list | Matchmaking regions, Regions | |
+| Accounts | `PageAccounts` | list | Add and log in, Accounts | |
+| Configs | `PageConfigs` | two columns | Copy, Sync, Snapshots | Account configs, Compare, Backups |
+| Profiles | `PageProfiles` | editor | Template | Apply to accounts |
+| Log | `PageLog` | list | Log | |
+| Settings | `PageSettings` | options | Protection, Mobile data, Change IP, New IP + next account, Hotkeys and sounds | Open with CS2, Player flags, Steam, Privacy, App, Maintenance, Remove the app |
+
+### Settings, option by option
+
+Every named option in Settings (a switch, a box, a list to pick from) is in this table, in its group. The lists (flags,
+programs) and the buttons are not named here.
+
+| Group | Options |
+|---|---|
+| Protection | `LockCs2Box`, `SteamEgressBox`, `UseOffBox`, `ProtectOnStartBox`, `CleanupBox` |
+| Mobile data | `KeepOffBox`, `AutoModeBox`, `DataWarnBox` |
+| Change IP | `MethodCombo`, `OffSecondsBox`, `AttemptsBox`, `New16Box`, `GoodLinkBox` |
+| New IP + next account | `SwIpBox`, `SwAccountBox`, `SwRejoinBox`, `SwOpenWithBox` |
+| Hotkeys and sounds | `HotkeySwitchBox`, `HotkeyRejoinBox`, `SoundsBox` |
+| Open with CS2 | |
+| Player flags | `AutoJoinBox` |
+| Steam | `ApiKeyPwd`, `ApiKeyBox`, `LaunchOptsBox` |
+| Privacy | `OptStreamer`, `AutoStreamerBox` |
+| App | `StartWithWindowsBox`, `CloseToTrayBox`, `CheckUpdatesBox` |
+| Maintenance | |
+| Remove the app | |
+
+To move or add an option: change it here and in `MainWindow.xaml` in the same step, and the texts that point to it
+(the test lists them).
+
 ## Captures
 
 `node tools/shots.mjs` takes every capture of the app in one run, from the demo of the dev build (needs `src/Privado`;
@@ -174,12 +261,14 @@ serves the site and the lab to look at.
   show an older Connection.
 - `node --test worker/stats/test/worker.test.mjs`: the same color checks for the site and the `/data` dashboard.
 - `node tools/design-tokens.mjs --check` only checks the colors.
+- `tests/OrganizacaoTests.cs`: fails when the app leaves [App layout](#app-layout) (a group's place, a Settings option's
+  group, a name, a column, a red button, a text that points to a place that is not there).
 
 ## When
 
 Any visual change to the app (a color, a text, a layout, anything in a `.xaml`) goes out in the same step as:
 
-1. this file, if a token, a font, a size or a rule changed;
+1. this file, if a token, a font, a size or a rule changed, and the App layout tables if a group or a Settings option moved;
 2. `node tools/design-tokens.mjs` (if `Theme.xaml` changed);
 3. `node tools/shots.mjs`, a look at the new captures, `ui-map.js` if it lists moved buttons, and `node tools/site-renders.mjs` (the 3D renders) if
    Connection changed;

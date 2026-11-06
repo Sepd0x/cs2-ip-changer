@@ -11,7 +11,7 @@ public partial class MainWindow
 
     bool _streamAppOpen;
 
-    /// <summary>Every tick: OBS or Streamlabs opened or closed changes Hide usernames (Settings > Steam).</summary>
+    /// <summary>Every tick: OBS or Streamlabs opened or closed changes Hide usernames (Settings > Privacy).</summary>
     void WatchStreaming()
     {
         var open = _s.AutoStreamer && Streaming.AppOpenNow();

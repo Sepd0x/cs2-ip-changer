@@ -5,6 +5,15 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 ## [Unreleased]
 
 ### Changed
+- The app is organized the same way on every page, so things are where you expect them. Nothing was removed and every option keeps its value; some moved:
+  - Settings now reads like the sidebar: on the left Protection, Mobile data, Change IP, New IP + next account and Hotkeys and sounds; on the right Open with CS2, Player flags, Steam, Privacy, App, Maintenance and, last, Remove the app.
+  - Mobile data (new) has Save mobile data, Fall back to Game only on a weak connection (both were in Protection) and the monthly warning (was in Background and data). A grey line under What goes through the phone on Connection points to it.
+  - Hotkeys and sounds (new) has both hotkeys and Sounds for commands, which were inside New IP + next account. That group now only has its steps.
+  - Privacy (new) has Hide usernames (moved from the Accounts page), Hide usernames while OBS or Streamlabs is open (was in Steam), the usage stats with Delete my stats, and Delete log files.
+  - App (new) has Start with Windows, Close to the notification area and Check for updates. Background and data and Updates are gone.
+  - How it works moved from Settings to the Connection page, between Checks and Previous IPs.
+  - Accounts has two boxes like Servers: Add and log in on top (On login, Add, New IP + next account), the list below with Refresh. Show hidden (was Settings > Maintenance > Show hidden accounts) is next to Refresh and only shows while some accounts are hidden.
+  - Configs: Copy, Sync and Snapshots on the left; Account configs, Compare and Backups on the right. Both columns end on one line.
 - README: a row of badges under the title (latest release, downloads, Windows 10 and 11, the VirusTotal result, build status, license), the "not for VAC or game bans" note as a highlighted box, and a Support section with where to report a bug, an idea or a security problem. The animated demo and the banner show the new logo.
 
 ## [0.1.0-beta.11] - 2026-11-06

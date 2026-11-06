@@ -12,6 +12,8 @@ About 20 minutes. Write the result in the release's session note; anything that 
 3. Change IP: a new IP shows in "IP servers see"; the Log says how long it took.
 4. Servers: Refresh shows players and ping. Join a server: CS2 opens and joins through the phone.
 5. Accounts: Log in to a second account (one Steam already remembers): Steam restarts on it **without asking for the password**, CS2 opens if asked.
+   Then Settings > Privacy > Hide usernames: the usernames on Accounts and the home IP on Log hide. Hide an account
+   (right-click > Hide from list): Show hidden appears next to Refresh and brings it back, then goes away.
 6. New IP + next account (the hotkey) while CS2 is open: new IP, next account, rejoin.
 7. A kick or ban from a server shows up in the app (or trust the last real one in the Log).
 8. Turn off protection: Status says servers see your home IP. With Settings > Use the app with protection off on, Servers and Join work on the home connection; with it off, Join asks to turn protection on.

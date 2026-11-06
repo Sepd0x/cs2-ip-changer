@@ -88,7 +88,7 @@ public partial class MainWindow
         _s.GameMode = false;
         SaveSettings();
         ApplySettingsToUi();
-        Log.Warn("Weak connection: switched to Game only, so CS2 doesn't share the phone with the rest of the PC. The app goes back to Whole PC when it's fine again (with CS2 closed). Turn this off in Settings > Protection.");
+        Log.Warn("Weak connection: switched to Game only, so CS2 doesn't share the phone with the rest of the PC. The app goes back to Whole PC when it's fine again (with CS2 closed). Turn this off in Settings > Mobile data.");
         Toast($"Weak mobile connection ({q.Text}): switched to Game only for now. The rest of the PC is back on your home network.", false);
         _ = SyncNow(force: true);
         return true;

@@ -30,16 +30,16 @@ SIZE = (1240, 800)
 # The README shows Protection | Change IP and Regions | Configs side by side (the two of a pair keep the same shape,
 # bar included, so they are as tall at the same width) and Servers and Accounts as wide strips.
 CROPS = {
-    "protection": ("connection", (94, 500, 659, 746)),  # What goes through the phone (since beta.11 Checks fold to one line when all is good)
-    "change-ip": ("connection", (94, 44, 659, 290)),  # Status: IP servers see, home IP, Change IP and rejoin    565x246, as protection
+    "protection": ("connection", (94, 500, 659, 736)),  # What goes through the phone, the four modes (beta.12: stops above the grey line to Settings > Mobile data)
+    "change-ip": ("connection", (94, 44, 659, 280)),  # Status: IP servers see, home IP, Change IP and rejoin    565x236, as protection
     "servers": ("servers", (108, 186, 1210, 392)),  # an open server: all its players, Staff and Friend flags, the hint under them
-    "accounts": ("accounts", (112, 146, 1202, 340)),  # the first row of cards: in use, a server ban, VAC
+    "accounts": ("accounts", (112, 187, 1202, 381)),  # the first row of cards: in use, a server ban, VAC (beta.12: under Add and log in)
     "regions": ("regions", (98, 254, 806, 614)),  # Europe with the ping of each region
     "configs": ("configs", (660, 374, 1227, 657)),  # Compare: both crosshairs and the settings that differ   567x283 + bar, as regions
     # phone widths (the README swaps them in below 600 px): the wide strips shrink to a third on a 390 px screen, so these
     # keep about as much as the pairs show, at about the same size
     "servers-mobile": ("servers", (108, 186, 668, 370)),  # the open server, its first two columns of players and the flags
-    "accounts-mobile": ("accounts", (660, 146, 1202, 340)),  # two cards: a ban on one server and a cooldown, VAC
+    "accounts-mobile": ("accounts", (660, 187, 1202, 381)),  # two cards: a ban on one server and a cooldown, VAC
 }
 NAMES = {"protection": "Protection", "change-ip": "Change IP", "servers": "Servers", "accounts": "Accounts",
          "regions": "Regions", "configs": "Configs", "servers-mobile": "Servers", "accounts-mobile": "Accounts"}

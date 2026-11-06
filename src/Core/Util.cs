@@ -408,7 +408,7 @@ public static class Proc
     }
 }
 
-/// <summary>A streaming program is open: Hide usernames turns on by itself (Settings > Steam), so a login never reaches a stream.</summary>
+/// <summary>A streaming program is open: Hide usernames turns on by itself (Settings > Privacy), so a login never reaches a stream.</summary>
 public static class Streaming
 {
     // OBS Studio (64 and 32 bit) and Streamlabs Desktop. XSplit's process names aren't confirmed yet, so it isn't listed.

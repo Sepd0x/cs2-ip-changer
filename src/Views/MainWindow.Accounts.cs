@@ -105,7 +105,7 @@ public partial class MainWindow
     int _accHidden;
 
     string AccEmptyText() => Steam.InstallDir() == null ? "Steam is not installed on this PC."
-        : _accounts.Count == 0 && _accHidden > 0 ? "All your accounts are hidden.\nBring them back in Settings > Maintenance > Show hidden accounts."
+        : _accounts.Count == 0 && _accHidden > 0 ? "All your accounts are hidden.\nShow hidden, next to Refresh, brings them back."
         : "No saved accounts found.\nLog in to Steam with \"Remember me\" checked, or use Add account.";
 
     void AccFilter_Changed(object sender, RoutedEventArgs e)
@@ -210,8 +210,9 @@ public partial class MainWindow
         var core = _accounts.Count == 0 ? "" : $"{_accShown.Count} of {_accounts.Count}" + (bans > 0 ? $" · {bans} banned" : "");
         AccCount.Text = string.Join(" · ", new[] { core, hid }.Where(s => !string.IsNullOrEmpty(s)));
         AccCount.ToolTip = _accHidden > 0
-            ? (core.Length > 0 ? core + "\n" : "") + $"{_accHidden} hidden. Bring {(_accHidden == 1 ? "it" : "them")} back in Settings > Maintenance > Show hidden accounts."
+            ? (core.Length > 0 ? core + "\n" : "") + $"{_accHidden} hidden. Show hidden brings {(_accHidden == 1 ? "it" : "them")} back."
             : (core.Length > 0 ? core : null);
+        AccUnhideBtn.Visibility = ShowUnhide(_accHidden) ? Visibility.Visible : Visibility.Collapsed;
         AccountsEmpty.Visibility = _accounts.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         AccRowsHint.Visibility = SuggestRows(_accounts.Count, _s.AccountsView) ? Visibility.Visible : Visibility.Collapsed;
         UpdateQuickInfo();
@@ -537,8 +538,11 @@ public partial class MainWindow
         SaveAccounts();
         if (_accounts.Count == 0) AccountsEmptyText.Text = AccEmptyText();
         ApplyAccountFilter();
-        Toast($"{a.Name} hidden. Bring it back in Settings > Maintenance > Show hidden accounts.", true);
+        Toast($"{a.Name} hidden. Show hidden, next to Refresh, brings it back.", true);
     }
+
+    /// <summary>beta.12 (App layout): Show hidden sits in the Accounts list bar and only shows while some accounts are hidden.</summary>
+    public static bool ShowUnhide(int hidden) => hidden > 0;
 
     void UnhideAll_Click(object sender, RoutedEventArgs e)
     {
