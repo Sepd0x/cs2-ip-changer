@@ -56,7 +56,9 @@ public partial class MainWindow : Window
     CheckItem _cFirewall, _cKill, _cEgress, _cRoutes, _cDiff, _cPhoneData, _cQuality, _cCs2, _cSteam, _cPc, _cRegions;
     string _steamPath;
 
-    static readonly Regex ServerRegex = new(@"(?<![\d.])(\d{1,3}(?:\.\d{1,3}){3})(?!\d|\.\d)(?:[ \t]*[:,; \t][ \t]*(\d+)(?!\d|\.\d))?", RegexOptions.Compiled);
+    // After ":" any number is the port; after a space, comma or ";" only a 4 or 5 digit one that ends the word (review C5:
+    // "1.2.3.4 35ms" from a server browser became port 35)
+    static readonly Regex ServerRegex = new(@"(?<![\d.])(\d{1,3}(?:\.\d{1,3}){3})(?!\d|\.\d)(?:[ \t]*:[ \t]*(?<port>\d+)(?!\d|\.\d)|[ \t]*[,; \t][ \t]*(?<port>\d{4,5})(?![\w.]))?", RegexOptions.Compiled);
 
     /// <param name="stats">What the usage stats notice gave before the window (App.StatsGate).</param>
     public MainWindow(string[] args, App.StatsConsent stats)

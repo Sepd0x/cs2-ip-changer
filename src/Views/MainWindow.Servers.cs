@@ -32,8 +32,17 @@ public partial class MainWindow
             list = defaults.Select(d => new ServerItem { Ip = d.Ip, Port = d.Port }).ToList();
         }
         // Lists from before beta.6 could hold local addresses; they go, and the Log says so
-        var local = list.Count(s => s.Ip != null && !ValidIp(s.Ip));
+        // Review C21: only private, carrier NAT and link-local are "local"; the rest that isn't a public IPv4, the ports out of range
+        // and the repeats get their own line
+        var bad = list.Where(s => !ValidIp(s.Ip)).ToList();
+        var local = bad.Count(s => IsLocalNet(s.Ip));
         if (local > 0) Log.Warn($"Removed {Fmt.Count(local, "address", "addresses")} from the server list: local network addresses can't be game servers.");
+        if (bad.Count > local) Log.Warn($"Removed {Fmt.Count(bad.Count - local, "address", "addresses")} from the server list: not a valid public IPv4 ("
+            + string.Join(", ", bad.Where(s => !IsLocalNet(s.Ip)).Take(5).Select(s => s.Ip ?? "empty")) + (bad.Count - local > 5 ? "…" : "") + ").");
+        var badPort = list.Count(s => ValidIp(s.Ip) && s.Port is < 1 or > 65535);
+        var twice = list.Where(s => ValidIp(s.Ip) && s.Port is >= 1 and <= 65535).GroupBy(s => s.Key).Sum(g => g.Count() - 1);
+        if (badPort > 0) Log.Warn($"Removed {Fmt.Count(badPort, "server")} from the server list: the port isn't between 1 and 65535.");
+        if (twice > 0) Log.Info($"Removed {Fmt.Count(twice, "server")} from the server list that {(twice == 1 ? "was" : "were")} in it twice.");
         foreach (var s in list.Where(s => ValidIp(s.Ip) && s.Port is >= 1 and <= 65535).GroupBy(s => s.Key).Select(g => g.First()))
         {
             s.PlayersText = "—"; s.PingText = "—"; s.Map = "—";
@@ -47,10 +56,14 @@ public partial class MainWindow
         var n = ServerList.SelectedItems.Count;
         RemoveBtn.IsEnabled = n > 0;
         // The button says what it asks (3 nov.: with one server marked, Refresh only ever asked that one)
-        QueryBtn.Content = RefreshLabel(n);
+        QueryBtn.Content = RefreshLabel(n, !string.IsNullOrEmpty(ServerSearch.Text.Trim()));
     }
 
-    public static string RefreshLabel(int selected) => selected <= 0 ? "Refresh all" : selected == 1 ? "Refresh 1" : $"Refresh {selected}";
+    public static string RefreshLabel(int selected) => RefreshLabel(selected, false);
+
+    /// <summary>With a search, none marked asks only the servers shown (review C19: it said "Refresh all").</summary>
+    public static string RefreshLabel(int selected, bool filtered) =>
+        selected <= 0 ? (filtered ? "Refresh shown" : "Refresh all") : selected == 1 ? "Refresh 1" : $"Refresh {selected}";
 
     /// <summary>
     /// Unmarking a server (3 nov.: there was no way back to none marked): a click on the only marked row, a click on the empty
@@ -59,14 +72,24 @@ public partial class MainWindow
     void ServerList_PreviewMouseDown(object sender, MouseButtonEventArgs e)
     {
         if (e.ChangedButton != MouseButton.Left || e.ClickCount != 1 || Keyboard.Modifiers != ModifierKeys.None) return;
-        ListBoxItem row = null;
-        for (var d = e.OriginalSource as DependencyObject; d != null && !ReferenceEquals(d, ServerList); d = d is System.Windows.Media.Visual ? System.Windows.Media.VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d))
-        {
-            if (d is System.Windows.Controls.Primitives.ButtonBase or System.Windows.Controls.Primitives.ScrollBar or TextBox) return;
-            if (d is ListBoxItem li) { row = li; break; }
-        }
+        if (OnRowControl(e.OriginalSource as DependencyObject, ServerList, out var row)) return;
         if (row == null) { ServerList.UnselectAll(); return; }
         if (row.IsSelected && ServerList.SelectedItems.Count == 1 && !InPlayerList(e.OriginalSource as DependencyObject)) { ServerList.UnselectAll(); e.Handled = true; }
+    }
+
+    /// <summary>
+    /// The click landed on a button, scroll bar or text box inside a row (the star, the player count, Join), not on the row itself.
+    /// <paramref name="row"/> is the row it is in (null: the empty part of the list).
+    /// </summary>
+    static bool OnRowControl(DependencyObject d, DependencyObject list, out ListBoxItem row)
+    {
+        row = null;
+        for (; d != null && !ReferenceEquals(d, list); d = d is System.Windows.Media.Visual ? System.Windows.Media.VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d))
+        {
+            if (d is System.Windows.Controls.Primitives.ButtonBase or System.Windows.Controls.Primitives.ScrollBar or TextBox) return true;
+            if (d is ListBoxItem li) { row = li; return false; }
+        }
+        return false;
     }
 
     void ServerList_KeyDown(object sender, KeyEventArgs e)
@@ -87,43 +110,94 @@ public partial class MainWindow
         if (p.Length != 4 || !p.All(x => x.Length is >= 1 and <= 3 && x.All(char.IsAsciiDigit) && (x.Length == 1 || x[0] != '0') && int.Parse(x) <= 255)) return false;
         int a = int.Parse(p[0]), b = int.Parse(p[1]);
         if (a == 0 || a == 127 || a >= 224) return false;
-        if (a == 10 || (a == 172 && b is >= 16 and <= 31) || (a == 192 && b == 168)) return false;   // private networks
-        if ((a == 100 && b is >= 64 and <= 127) || (a == 169 && b == 254)) return false;              // carrier NAT, link-local
+        if (IsLocalNet(ip)) return false;
         if (a == 198 && b is 18 or 19) return false;                                                   // benchmarking
         return ip != Net.EchoIp;                                                                       // the app's own IP test
     }
 
-    int ParseInto(string text, out List<string> ignored)
+    /// <summary>A local network address: private networks, carrier NAT and link-local (what the Log calls "local network").</summary>
+    public static bool IsLocalNet(string ip)
+    {
+        var p = ip?.Split('.');
+        if (p is not { Length: 4 } || !int.TryParse(p[0], out var a) || !int.TryParse(p[1], out var b)) return false;
+        return a == 10 || (a == 172 && b is >= 16 and <= 31) || (a == 192 && b == 168)   // private networks
+            || (a == 100 && b is >= 64 and <= 127) || (a == 169 && b == 254);            // carrier NAT, link-local
+    }
+
+    int ParseInto(string text, out List<string> ignored, out int dupes)
     {
         ignored = new();
         var port = int.TryParse(DefaultPortBox.Text.Trim(), out var dp) && dp is >= 1 and <= 65535 ? dp : 27015;
-        var added = 0;
+        var keys = ParseServers(text, port, _servers.Select(s => s.Key).ToHashSet(), ignored, out dupes);
+        foreach (var k in keys)
+        {
+            var at = k.LastIndexOf(':');
+            _servers.Add(new ServerItem { Ip = k[..at], Port = int.Parse(k[(at + 1)..]), PlayersText = "—", PingText = "—", Map = "—" });
+        }
+        return keys.Count;
+    }
+
+    public static List<string> ParseServers(string text, int defaultPort) => ParseServers(text, defaultPort, new HashSet<string>(), new List<string>(), out _);
+
+    /// <summary>
+    /// The new "IP:port" in a pasted text, in order. <paramref name="known"/> are the ones in the list (it grows with each new one, so
+    /// a repeat in the same text counts once); <paramref name="dupes"/> counts the ones already there (review C4: a text with no IPv4
+    /// said "already in the list"); what isn't a public IP:port goes to <paramref name="ignored"/>.
+    /// </summary>
+    public static List<string> ParseServers(string text, int defaultPort, ISet<string> known, List<string> ignored, out int dupes)
+    {
+        var added = new List<string>();
+        dupes = 0;
         foreach (Match m in ServerRegex.Matches(text ?? ""))
         {
             var ip = string.Join(".", m.Groups[1].Value.Split('.').Select(o => int.TryParse(o, out var n) ? n.ToString() : o));
             if (!ValidIp(ip)) { ignored.Add(m.Value.Trim()); continue; }
-            var p = port;
-            if (m.Groups[2].Success && (!int.TryParse(m.Groups[2].Value, out p) || p < 1 || p > 65535)) { ignored.Add(m.Value.Trim()); continue; }
-            if (_servers.Any(s => s.Ip == ip && s.Port == p)) continue;
-            _servers.Add(new ServerItem { Ip = ip, Port = p, PlayersText = "—", PingText = "—", Map = "—" });
-            added++;
+            var p = defaultPort;
+            if (m.Groups["port"].Success && (!int.TryParse(m.Groups["port"].Value, out p) || p < 1 || p > 65535)) { ignored.Add(m.Value.Trim()); continue; }
+            if (!known.Add($"{ip}:{p}")) { dupes++; continue; }
+            added.Add($"{ip}:{p}");
         }
         return added;
     }
 
+    /// <summary>Nothing new in the text: already in the list, not a public IP:port, or no IPv4 at all (a name or an IPv6).</summary>
+    public static string NothingAdded(int dupes, int ignored) =>
+        ignored > 0 ? "No valid IP:port." + (dupes > 0 ? $" {dupes} already in the list." : "")
+        : dupes > 0 ? "Those servers are already in the list."
+        : "No IPv4 address found. The app needs the server's IP:port, e.g. 1.2.3.4:27015 (names and IPv6 aren't supported).";
+
     async Task AddFromText(string text)
     {
         if (string.IsNullOrWhiteSpace(text)) { Toast("Nothing to add.", false); return; }
-        var n = ParseInto(text, out var ignored);
+        var n = ParseInto(text, out var ignored, out var dupes);
         SaveServers();
         ShowLastServer();
-        if (n == 0 && ignored.Count == 0) { Toast("Those servers are already in the list.", false); return; }
+        if (n == 0 && ignored.Count == 0)
+        {
+            if (dupes == 0) Log.Info("Add servers: no IPv4 address in the text (names and IPv6 aren't supported).");
+            Toast(NothingAdded(dupes, 0), false);
+            return;
+        }
         Log.Info($"Added {Fmt.Count(n, "server")}." + (ignored.Count > 0 ? " Ignored (not a public IP:port): " + string.Join(", ", ignored.Take(20)) + (ignored.Count > 20 ? $" and {ignored.Count - 20} more" : "") : ""));
-        Toast(n > 0 ? $"{Fmt.Count(n, "server")} added and protected." + (ignored.Count > 0 ? $" {ignored.Count} ignored." : "") : "No valid IP:port.", n > 0);
+        Toast(n > 0 ? AddedText(n, ignored.Count, _protOn, _s.NoPhone, _last?.Egress != null) : NothingAdded(dupes, ignored.Count), n > 0);
         _s.DefaultPort = int.TryParse(DefaultPortBox.Text, out var dp) ? dp : 27015;
         SaveSettings();
         await SyncNow(force: true);
-        await QueryServers(true);
+        await QueryServers(true, queue: true);   // the new ones get asked even while the 30 s refresh runs
+    }
+
+    /// <summary>
+    /// What adding means now (review C1: "added and protected" also showed with protection off and in No phone, where nothing is
+    /// blocked or routed): through the phone, blocked until the phone is ready, or on the home IP.
+    /// </summary>
+    public static string AddedText(int added, int ignored, bool protOn, bool noPhone, bool egress)
+    {
+        var one = added == 1;
+        var now = noPhone ? (one ? "No phone mode: it sees your home IP." : "No phone mode: they see your home IP.")
+            : !protOn ? (one ? "Protection is off: it sees your home IP until you turn it on." : "Protection is off: they see your home IP until you turn it on.")
+            : egress ? (one ? "It goes through the phone." : "They go through the phone.")
+            : one ? "It stays blocked until the phone is connected and checked." : "They stay blocked until the phone is connected and checked.";
+        return $"{Fmt.Count(added, "server")} added. {now}" + (ignored > 0 ? $" {ignored} ignored." : "");
     }
 
     async void AddServers_Click(object sender, RoutedEventArgs e) { var t = BulkInput.Text; BulkInput.Clear(); await AddFromText(t); }
@@ -168,6 +242,7 @@ public partial class MainWindow
             return s.Key.Contains(q, StringComparison.OrdinalIgnoreCase) || (s.ServerName ?? "").Contains(q, StringComparison.OrdinalIgnoreCase)
                 || (s.Map ?? "").Contains(q, StringComparison.OrdinalIgnoreCase) || (s.Label ?? "").Contains(q, StringComparison.OrdinalIgnoreCase);
         };
+        QueryBtn.Content = RefreshLabel(ServerList.SelectedItems.Count, !string.IsNullOrEmpty(q));
     }
 
     List<ServerItem> SelectedOrAll()
@@ -176,11 +251,37 @@ public partial class MainWindow
         return sel.Count > 0 ? sel : _serverView.Cast<ServerItem>().ToList();
     }
 
+    /// <summary>
+    /// Why there is no protected connection, in the Guard's words (review C2: with the phone plugged in but its IP still being
+    /// checked, or its Wi-Fi on, the app said "Phone disconnected"). The Guard only leaves it empty when there is no phone at all.
+    /// </summary>
+    public static string NoLinkWhy(GuardReport rep) => rep?.EgressProblem ?? "The phone isn't connected.";
+
+    /// <summary>Join stopped with protection on: the connection's reason, or this server's route when the connection is there.</summary>
+    public static string JoinBlockedText(string title, GuardReport rep, string routeText) => rep?.Egress == null
+        ? $"Not joining {title}. {NoLinkWhy(rep)}"
+        : $"Not joining {title}: its route through the phone isn't confirmed ({routeText}).";
+
+    /// <summary>The slot wait can't ask the server now: no connection, protection turned off since, or the phone's reason.</summary>
+    public static string SlotNoLinkText(string title, bool onHome, bool protOn, GuardReport rep) =>
+        onHome ? $"Waiting for a slot on {title}: no connection."
+        : !protOn ? $"Waiting for a slot on {title}: protection is off."
+        : $"Waiting for a slot on {title}. {NoLinkWhy(rep)}";
+
     async void QueryServers_Click(object sender, RoutedEventArgs e) => await QueryServers(false);
 
-    async Task QueryServers(bool quiet)
+    /// <summary>A Refresh or new servers came in while the servers were being asked: one more round right after (review C20).</summary>
+    bool _queryAgain;
+
+    async Task QueryServers(bool quiet, bool queue = false)
     {
-        if (_demo || _querying) return;
+        if (_demo) return;
+        if (_querying)
+        {
+            if (!quiet || queue) _queryAgain = true;
+            if (!quiet) Toast("Already asking the servers: one moment.", Tone.Info);
+            return;
+        }
         // No phone mode: the game uses the home connection, so the servers are asked from there too.
         // Protection off with "Use the app with protection off": the same, on purpose.
         var egress = OnHome && _last?.Unprotected == true ? HomeAdapter : _last?.Egress;
@@ -188,7 +289,9 @@ public partial class MainWindow
         {
             if (!quiet) Toast(OnHome ? "No connection to ask the servers through."
                 : !_protOn ? "Protection is off: the servers aren't asked over your home network. Turn it on to see players and ping (or Settings > Use the app with protection off)."
-                : "Phone disconnected: not querying servers over your home network.", false);
+                : NoLinkWhy(_last) + " Servers aren't asked over your home network.", false);
+            // Nothing is asked now: the last answers would read as live (review C6)
+            foreach (var srv in _servers) ClearLive(srv);
             return;
         }
         _querying = true;
@@ -197,23 +300,25 @@ public partial class MainWindow
             var targets = quiet ? _servers.ToList() : SelectedOrAll();
             var gate = new SemaphoreSlim(8);
             var ok = 0;
+            var notAsked = OnHome ? 0 : targets.Count(srv => !Routed(srv));
             await Task.WhenAll(targets.Select(async srv =>
             {
                 await gate.WaitAsync();
                 try { if (await QueryOne(srv, egress)) Interlocked.Increment(ref ok); }
                 finally { gate.Release(); }
             }));
-            if (!quiet) Toast($"{ok} of {Fmt.Count(targets.Count, "server")} responded.", ok > 0);
+            if (!quiet) Toast(RespondedText(ok, targets.Count, notAsked), ok > 0);
         }
         finally { _querying = false; }
         ApplyServerBans();   // the network of a ban is known by name only after the server answers
         await CheckFollowed();
+        if (_queryAgain) { _queryAgain = false; await QueryServers(true); }
     }
 
     /// <summary>Name, map, players and ping of one server, only through the phone. False if it didn't answer (or isn't routed).</summary>
     async Task<bool> QueryOne(ServerItem srv, Adapter egress)
     {
-        if (!OnHome && (_last?.RouteOk.TryGetValue(srv.Ip, out var routed) != true || !routed)) { srv.PingText = "—"; srv.Players = null; return false; }
+        if (!OnHome && !Routed(srv)) { ClearLive(srv); return false; }
         try
         {
             var info = await A2S.Query(srv.Ip, srv.Port, egress.LocalIp);
@@ -228,19 +333,42 @@ public partial class MainWindow
             if (info.PlayerList != null) { srv.Players = ToRows(srv, info.PlayerList); srv.PlayersAt = DateTime.Now; }
             else if (info.Players == 0 || DateTime.Now - srv.PlayersAt > TimeSpan.FromMinutes(2)) srv.Players = null;
             srv.PlayersHidden = info.Players > 0 && srv.Players == null;
+            srv.Answered = true;
             Log.Again("servers-query|");
             return true;
         }
         catch (Exception ex)
         {
             if (!A2S.NoAnswer(ex)) Log.WarnOnce("servers-query|" + ex.GetType().Name, $"Servers: asking a server failed ({ex.GetType().Name}: {ex.Message}), so it shows no ping or players.");
-            srv.PingMs = -1;
-            srv.PingText = "—";
-            srv.PlayersText = "—";
-            srv.Players = null;
+            ClearLive(srv);
+            srv.Answered = false;
             return false;
         }
     }
+
+    /// <summary>With protection on, a server is only asked once Windows sends it through the phone.</summary>
+    bool Routed(ServerItem srv) => _last?.RouteOk.TryGetValue(srv.Ip, out var routed) == true && routed;
+
+    /// <summary>
+    /// A row without an answer now (not asked, or no answer): no map, players, bar or ping from an older answer. The name stays,
+    /// it is still that server (review C6: "12/20" and "35 ms" stayed for good after protection was turned off).
+    /// </summary>
+    public static void ClearLive(ServerItem srv)
+    {
+        srv.PingMs = -1;
+        srv.PingText = "—";
+        srv.PlayersText = "—";
+        srv.Map = "—";
+        srv.Players = null;
+        srv.PlayersHidden = false;
+        srv.PlayerCount = 0;
+        srv.MaxPlayers = 0;
+        srv.Answered = null;
+    }
+
+    /// <summary>The Refresh toast: servers not asked (no route through the phone yet) aren't counted as not answering.</summary>
+    public static string RespondedText(int ok, int total, int notAsked) =>
+        $"{ok} of {Fmt.Count(total, "server")} responded" + (notAsked > 0 ? $" ({notAsked} not asked: not routed through the phone yet)." : ".");
 
     void AutoQuery_Click(object sender, RoutedEventArgs e) { _s.AutoQuery = AutoQueryBox.IsChecked == true; SaveSettings(); }
 
@@ -289,7 +417,9 @@ public partial class MainWindow
 
     async void ServerList_DoubleClick(object sender, MouseButtonEventArgs e)
     {
-        if (InPlayerList(e.OriginalSource as DependencyObject)) return;
+        // The double click reaches the list even when a button in the row took both clicks (review C9: the star, the player count
+        // or the row's Join also joined the server)
+        if (OnRowControl(e.OriginalSource as DependencyObject, ServerList, out _) || InPlayerList(e.OriginalSource as DependencyObject)) return;
         if ((e.OriginalSource as FrameworkElement)?.DataContext is ServerItem s) await Join(s);
     }
 
@@ -315,7 +445,7 @@ public partial class MainWindow
             var fullOk = _last?.Egress != null && _last.EffectiveMode == "all" && _last.FullModeOk;
             if (!OnHome && s.Protected != true && !fullOk)
             {
-                Toast($"Not joining {s.Key}: protection is not confirmed ({s.RouteText}).", false);
+                Toast(JoinBlockedText(s.Title, _last, s.RouteText), false);
                 return false;
             }
             // The two known causes of the "No Steam logon" kick: Steam in offline mode, or Steam on a different network than CS2.
@@ -375,10 +505,23 @@ public partial class MainWindow
     void JoinStarted(ServerItem s)
     {
         Diag.Write("join", new { server = s.Key, name = s.Title, isProtected = s.Protected, mode = _last?.EffectiveMode, steamOnEgress = _last?.SteamOnEgress, steamIps = _last?.Steam.LocalIps });
-        Log.Ok(_s.NoPhone ? $"Joining {s.Key} on your home connection (no phone mode)." : OnHome ? $"Joining {s.Key} on your home connection (protection is off)." : $"Joining {s.Key} through the phone.");
+        Log.Ok(JoinLogText(s.Key, _s.NoPhone, OnHome, _last != null && HomeIsPhone(_last)));
         Toast($"Opening {s.Title} in Steam…", true);
         MarkLast(s);
     }
+
+    /// <summary>The Log line of a join: which connection it went on (review C23: with no other network the "home" one is the phone).</summary>
+    public static string JoinLogText(string key, bool noPhone, bool onHome, bool homeIsPhone)
+    {
+        if (!noPhone && !onHome) return $"Joining {key} through the phone.";
+        var why = noPhone ? "no phone mode" : "protection is off";
+        return homeIsPhone ? $"Joining {key} on the phone's connection ({why}, and the PC has no other network)." : $"Joining {key} on your home connection ({why}).";
+    }
+
+    /// <summary>The adapter Windows uses for the rest of the PC is the phone's (the PC has no other network). Also read by RestOfPc.</summary>
+    public static bool HomeIsPhone(GuardReport rep) =>
+        rep.PcDefaultIsEgress || rep.Adapters.FirstOrDefault(a => a.Index == rep.PcDefaultIndex)?.IsPhone == true
+        || (rep.PhoneIndex >= 0 && rep.PcDefaultIndex == rep.PhoneIndex);
 
     /// <summary>After opening CS2: waits for its main menu (the console shows the menu's "loopback" map), then joins. Up to 2 min.</summary>
     async Task<bool> ConnectWhenMenuReady(ServerItem s, string log, ConsoleTail menu)
@@ -392,7 +535,10 @@ public partial class MainWindow
             {
                 await Task.Delay(1000);
                 if (CommandCancelled) return false;
-                if (!Steam.Cs2Running || log == null) continue;
+                if (!Steam.Cs2Running) continue;
+                // cs2.exe wasn't found before it opened (review C18: the join then waited the whole 2 min): the running CS2 says where it is
+                if (log == null && (log = Cs2ConsoleLog()) != null) menu.StartAt(log);
+                if (log == null) continue;
                 ready = menu.ReadNew(log).Any(Cs2Console.IsMenu);   // a new console.log (-conclearlog) is read from its start
             }
             if (!Steam.Cs2Running) { Log.Warn($"CS2 didn't open, so {s.Key} wasn't joined."); Toast($"CS2 didn't open, so {s.Title} wasn't joined.", false); return false; }
@@ -435,6 +581,15 @@ public partial class MainWindow
         + "itself, and if the teams are full you come in as a spectator (pick a team when a slot frees up).\n\n"
         + "Or wait for a slot: the app checks every 5 s and joins (or tells you) when one opens.";
 
+    /// <summary>
+    /// A free slot (or the retry on a full server) only joins by itself when nothing else runs and no question is open (review C10:
+    /// the join was refused as "still busy" and the wait was gone, or it took over a waiting command and closed your question).
+    /// </summary>
+    public static bool SlotAutoJoins(bool autoOn, bool busy, bool dialogOpen) => autoOn && !busy && !dialogOpen;
+
+    /// <summary>A command, an IP change, an account switch or a rejoin is running: a new command would be refused or take over.</summary>
+    bool CommandBusy => _command != null || _changingIp || _switching || _rejoining;
+
     void StopSlotWait()
     {
         _slotTimer.Stop();
@@ -448,14 +603,15 @@ public partial class MainWindow
         if (s == null || _slotChecking) return;
         if (!_servers.Contains(s)) { StopSlotWait(); return; }
         // On the home connection on purpose (No phone, or protection off with the option) the slot is checked from there, as Connect does
-        if ((OnHome ? HomeAdapter : _last?.Egress) is not Adapter eg) { SlotText.Text = $"Waiting for a slot on {s.Title}: " + (OnHome ? "no connection." : "the phone is not connected."); return; }
+        if ((OnHome ? HomeAdapter : _last?.Egress) is not Adapter eg) { SlotText.Text = SlotNoLinkText(s.Title, OnHome, _protOn, _last); return; }
         _slotChecking = true;
         try
         {
             if (!await QueryOne(s, eg) || s.MaxPlayers == 0) return;
             if (s.PlayerCount >= s.MaxPlayers) { SlotText.Text = $"Waiting for a slot on {s.Title} ({s.PlayersText})."; return; }
             System.Media.SystemSounds.Asterisk.Play();
-            if (SlotAutoBox.IsChecked == true)
+            var auto = SlotAutoBox.IsChecked == true;
+            if (SlotAutoJoins(auto, CommandBusy, Dialog.Visibility == Visibility.Visible))
             {
                 StopSlotWait();
                 Log.Ok($"A slot opened on {s.Key} ({s.PlayersText}): joining.");
@@ -465,8 +621,8 @@ public partial class MainWindow
             _slotTimer.Stop();
             SlotText.Text = $"A slot is free on {s.Title} ({s.PlayersText}).";
             SlotJoinBtn.Visibility = Visibility.Visible;
-            Log.Ok($"A slot opened on {s.Key} ({s.PlayersText}).");
-            Toast($"A slot is free on {s.Title}. Join from Servers.", Tone.Info);
+            Log.Ok($"A slot opened on {s.Key} ({s.PlayersText})." + (auto ? " Not joined by itself: another command or a question was open." : ""));
+            Toast(auto ? $"A slot is free on {s.Title}. The app was busy, so it didn't join by itself: join from Servers." : $"A slot is free on {s.Title}. Join from Servers.", Tone.Info);
         }
         finally { _slotChecking = false; }
     }

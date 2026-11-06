@@ -414,7 +414,7 @@ public partial class MainWindow
     {
         var pc = rep.Adapters.FirstOrDefault(a => a.Index == rep.PcDefaultIndex);
         if (pc == null && rep.PcDefaultName is null or "—") return (null, "No internet connection right now");
-        var onPhone = rep.PcDefaultIsEgress || pc?.IsPhone == true || (rep.PhoneIndex >= 0 && rep.PcDefaultIndex == rep.PhoneIndex);
+        var onPhone = HomeIsPhone(rep);
         var name = pc?.Name ?? rep.PcDefaultName;
         if (onPhone) return (rep.Unprotected ? null : false, $"The whole PC is using the phone ({name}): mobile data");
         return (rep.Unprotected || rep.Egress == null ? null : true, $"Home network: {name}");

@@ -60,6 +60,29 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Uninstall from Windows Settings with the app closed: if the removal stopped half-way, the window stayed on "Removing…" and the app closed without a word. It now says what stopped it and to run `--restore`.
 - `--restore`: when only the Start with Windows task couldn't be deleted, the message said to restart the PC to clear routes. It now says the network is restored and how to remove the task.
 - Install: when SRT_Dados couldn't be copied, the message could run two sentences together ("can't be removed Then start").
+- Adding servers always said "added and protected", also with protection off or in No phone mode, where they see your home IP. It now says what happens: they go through the phone, they stay blocked until the phone is connected and checked, or they see your home IP. The Add tooltip no longer promises the phone, and in No phone mode the offer to add a server you joined just asks to add it to the list.
+- With the phone plugged in but its IP still being checked (or its Wi-Fi on), Refresh on Servers said "Phone disconnected" and Join said "protection is not confirmed (Blocked)". Servers, Join, Wait for a slot and Regions now give the real reason, for example "The phone connection's public IP hasn't been checked yet." A slot wait with protection turned off says that.
+- A double click on a server's star, its player count or its Join button also joined the server (and with CS2 open, that can take you out of your match). Only a double click on the row itself joins now.
+- With Join automatically on, a free slot that opened while another command was running (Change IP, an account switch) was lost: the join was refused as busy and the wait was gone. With a question open, it closed your question. Now the app keeps the slot, says it is free and shows Join. The retry on a full server waits for the other command too.
+- After protection was turned off, the phone dropped, or a server had no route yet, Servers kept showing the last map, players and ping as if they were live. A row that isn't asked now shows dashes, and the Refresh count no longer counts servers it didn't ask as not responding ("3 of 5 servers responded (2 not asked: not routed through the phone yet)").
+- A server without a name was called "Server not responding" before it was ever asked, also in Join's messages and questions. The list now says "No name yet" until it is asked and "Not responding" only when it didn't answer; messages use its IP:port.
+- Tooltips on Servers and Regions said the ping, Refresh and Join always went through the phone. They now say what happens with protection on and off.
+- The ping on Servers came out about double on most CS2 servers (the ones that ask for a challenge first), so its color and the order were off too. It now counts one round trip.
+- Pasting a server name or an IPv6 address said "Those servers are already in the list." It now says no IPv4 address was found and that the app needs the IP:port.
+- Text copied from a server browser, like "1.2.3.4 35ms" or "1.2.3.4, 12, de_dust2", added the server with port 35 or 12. A number after a space or a comma only counts as the port when it has 4 or 5 digits; after ":" it works as before.
+- With a search on Servers and nothing marked, the button said Refresh all but only asked the servers shown. It now says Refresh shown, and the Refresh and Copy IPs tooltips say "the ones shown".
+- Servers added while the 30 s refresh was running stayed without name and ping until the next refresh (or for good with it off), and a Refresh click then did nothing. Both now run right after, and the click says the app is already asking.
+- At start, every address removed from an old server list was called a local network address. The Log now tells local addresses, other invalid ones, bad ports and repeats apart.
+- After a match played with protection off, the Log's network summary named the phone's IP and, if it lagged, blamed the phone's connection and gave phone tips. It now says "home connection" whenever protection is off.
+- With protection off, opening CS2 in Whole PC mode said the programs opened with it also go through the phone. That note now only shows with protection on.
+- The bug report's "IP servers see" line showed the phone's IP even with protection off or in No phone mode. It is now called what it is, "Phone public IP".
+- In No phone mode or with protection off on a PC whose only network is the phone, Join's Log line and the Regions ping line said "home connection" and "without the phone". They now say it went on the phone's connection because the PC has no other network.
+- Allow all on Regions with CS2 open said "the block is already on". It now says every region is allowed again and that CS2 only measures the regions when it starts.
+- After turning protection on or off, Regions kept the pings measured on the other path, said "through the phone" in one place and "without the phone" in another, and Closest 3 picked from them. The old pings now go, and with the page open the app measures again on the path the game uses.
+- Closest 3 said "Measure the ping first" when only 1 or 2 regions had answered. It now says how many answered and that there aren't 3 to keep; with none answering, it says so.
+- With cs2.exe not found, or a Firewall write that failed, Regions said "CS2 can play in 3 of 30 regions" and Checks "3 of 30 allowed", as if the block was on. They now say the regions are picked but not blocked yet (or that the Firewall rule didn't change), and a click on a shortcut says why.
+- Refresh on Regions without internet only showed the grey "Offline" line, and the Log didn't say Valve couldn't be reached. Now both say it.
+- Join with CS2 closed waited the full 2 minutes before joining when the app hadn't found cs2.exe yet. It now finds CS2 once it is open and joins when the main menu is ready.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

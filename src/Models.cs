@@ -241,8 +241,16 @@ public sealed class ServerItem : Observable
 
     [JsonIgnore] public string Key => $"{Ip}:{Port}";
     [JsonIgnore] public string StarGlyph => Favorite ? "" : "";
-    [JsonIgnore] public string Title => !string.IsNullOrWhiteSpace(Label) ? Label : !string.IsNullOrWhiteSpace(ServerName) ? ServerName : "Server not responding";
-    [JsonIgnore] public string ServerName { get => _name; set { if (Set(ref _name, value)) Raise(nameof(Title)); } }
+    /// <summary>The server's name for the toasts and questions: your label, its name, else its IP:port (review C7: "Server not
+    /// responding" also went into texts about servers that were never asked).</summary>
+    [JsonIgnore] public string Title => !string.IsNullOrWhiteSpace(Label) ? Label : !string.IsNullOrWhiteSpace(ServerName) ? ServerName : Key;
+    /// <summary>The list's first line (the IP:port is on the second): without a name, whether it was asked and didn't answer.</summary>
+    [JsonIgnore] public string RowTitle => !string.IsNullOrWhiteSpace(Label) ? Label : !string.IsNullOrWhiteSpace(ServerName) ? ServerName
+        : Answered == false ? "Not responding" : "No name yet";
+    bool? _answered;
+    /// <summary>The last time it was asked: true it answered, false it didn't, null not asked (yet, or since the connection changed).</summary>
+    [JsonIgnore] public bool? Answered { get => _answered; set { if (Set(ref _answered, value)) Raise(nameof(RowTitle)); } }
+    [JsonIgnore] public string ServerName { get => _name; set { if (Set(ref _name, value)) { Raise(nameof(Title)); Raise(nameof(RowTitle)); } } }
     [JsonIgnore] public string Map { get => _map; set => Set(ref _map, value); }
     [JsonIgnore] public string PlayersText { get => _players; set => Set(ref _players, value); }
     [JsonIgnore] public int PlayerCount { get => _playerCount; set { if (Set(ref _playerCount, value)) Raise(nameof(Fill)); } }
