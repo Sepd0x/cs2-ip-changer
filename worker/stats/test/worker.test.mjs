@@ -962,6 +962,16 @@ test('medir: a visit from the website is added into the day by page, referrer ho
   assert.ok(budgetOf(DB, `${today0()}:site`) > 0, 'the site has its own budget');
 });
 
+test('medir: a link with ?ref=<name> (TikTok sends no referrer) is counted as ref:<name>, and only short plain names', async () => {
+  const DB = fakeD1();
+  await ingest.fetch(siteReq({ v: 1, p: '/', r: 'ref:tiktok', e: 'view' }), { DB });
+  await ingest.fetch(siteReq({ v: 1, p: '/', r: 'ref:tiktok', e: 'download' }), { DB });
+  await ingest.fetch(siteReq({ v: 1, p: '/', r: 'ref:<script>', e: 'view' }), { DB });
+  await ingest.fetch(siteReq({ v: 1, p: '/', r: 'ref:' + 'a'.repeat(21), e: 'view' }), { DB });
+  const rows = siteRows(DB);
+  assert.deepEqual(rows.map((r) => [r.ref, r.event, r.n]), [['other', 'view', 2], ['ref:tiktok', 'download', 1], ['ref:tiktok', 'view', 1]]);
+});
+
 test('medir: the site counter refuses other origins, odd bodies and JSON, and drops Do Not Track, GPC, bots and hosting networks', async () => {
   const DB = fakeD1();
   const ok = { v: 1, p: '/', r: '', e: 'view' };

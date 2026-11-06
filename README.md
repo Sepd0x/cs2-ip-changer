@@ -259,7 +259,7 @@ The stats are kept by the author of this project (Sepd0x on GitHub), who decides
 <details>
 <summary><b>The website</b></summary>
 
-The website counts visits and clicks on Download, with no cookies and no ID: each page sends which page it is, the name of the site you came from (like `google.com`, never the page) and whether it was a visit or a Download click. The Worker adds the country Cloudflare works out and keeps only counts per day ([`/v1/site`](worker/stats/src/index.js)). Nothing is stored in your browser, and with Do Not Track or Global Privacy Control on, nothing is sent. GitHub Pages, which hosts the site, keeps its own logs under GitHub's privacy statement.
+The website counts visits and clicks on Download, with no cookies and no ID: each page sends which page it is, the name of the site you came from (like `google.com`, never the page; or the short name in the link, like `?ref=tiktok`) and whether it was a visit or a Download click. The Worker adds the country Cloudflare works out and keeps only counts per day ([`/v1/site`](worker/stats/src/index.js)). Nothing is stored in your browser, and with Do Not Track or Global Privacy Control on, nothing is sent. GitHub Pages, which hosts the site, keeps its own logs under GitHub's privacy statement.
 </details>
 
 <details>
@@ -274,7 +274,7 @@ When the app has been open for 20 seconds, every 30 minutes while it stays open 
 - the mode (Game only, Whole PC while CS2 is open, Whole PC always, No phone) and how the phone is connected (USB, hotspot; the best seen since the last report)
 - minutes the app was open
 - how many times each button and hotkey was used, counted by the name of its code (for example `ChangeIp_Click`), never by what's on it
-- a few counters: IP changes that worked, that got the same IP or no network, kicks, bans and VPN blocks the app saw, errors in the Log, where Phone setup stopped (the step's name, like `phone_setup_tetheroff`), and `first_start` on the day you accept this notice (so new users can be counted)
+- a few counters: IP changes that worked, that got the same IP or no network, kicks, bans and VPN blocks the app saw, errors in the Log, where Phone setup stopped when you opened it and when you closed it (the step's name, like `phone_setup_tetheroff` and `phone_left_tetheroff`), and `first_start` on the day you accept this notice (so new users can be counted)
 - how many servers, accounts, flagged players and "Open with CS2" programs are in your lists, and how many regions are turned off, in rough bands (0, 1, 2 to 5, 6 to 20, 21 to 100, more), never the exact number
 - errors as their type and place in the app's code (for example `NullReferenceException` in `MainWindow.QueryServers`), never their message
 - minutes with each screen open (Connection, Servers…) while the window is on screen, and how often people go from one screen to another

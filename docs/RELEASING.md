@@ -25,6 +25,14 @@ It asks for a passphrase, saves the private key encrypted in your user folder (`
    It downloads the exe and the `.sha256`, checks they match and that the exe's attestation comes from this repo's Release workflow, asks for the passphrase, signs, uploads `CS2IPChanger.exe.sha256.sig` and publishes the draft. `--no-publish` leaves it as a draft.
 4. Publishing starts the VirusTotal workflow (needs the `VT_API_KEY` repository secret): it sends the exe and writes "N of M engines flag it" with the link in the run's summary. Put that line in `README.md` (Safety), `site/is-it-safe` (in `tools/site-pages.mjs`) and the release notes. Again by hand: `gh workflow run virustotal.yml -f tag=v<version>`.
 
+## If a release breaks something
+
+Installed copies only update to the release GitHub marks as **Latest**, and only when the user says yes. So:
+
+1. On GitHub, edit the broken release and tick **Set as a pre-release** (or untick Latest): the previous release becomes Latest again, new downloads and the update check go back to it. Nothing is deleted.
+2. Users who already updated: the fix goes out as the next version (`-beta.N+1`). The updater never offers an older version, so a step back is not possible from inside the app; tell them in the release notes and the issue to download the previous exe by hand if they need it now.
+3. The site and the README show `site/release.json`: run `node tools/site-pages.mjs --release v<previous> --vt <its result>` so the download lines match the release that is Latest again.
+
 ## The recording build
 
 `dotnet publish src/ServerRouteTool.csproj -c Release -p:Recording=true -o <folder>` gives `CS2IPChanger-Recording.exe`: personal data never reaches the screen, and it never updates itself. It isn't part of the releases.

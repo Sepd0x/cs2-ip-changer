@@ -32,6 +32,7 @@ export const SITE_PAGES = ['/', '/change-ip-with-phone/', '/copy-cs2-config/', '
   '/steam-account-switcher/', '/steam-profile-editor/'];
 const SITE_TABLE = 'CREATE TABLE IF NOT EXISTS site (day TEXT NOT NULL, page TEXT NOT NULL, ref TEXT NOT NULL, country TEXT NOT NULL, event TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (day, page, ref, country, event))';
 const HOSTNAME = /^(?=.{3,80}$)[a-z0-9-]+(\.[a-z0-9-]+)+$/;
+const REF_TAG = /^ref:[a-z0-9-]{1,20}$/;   // ?ref=<name> on a link to the site (Nov. 2026)
 const BOT = /bot|crawl|spider|slurp|headless|lighthouse|preview/i;
 // Same as schema.sql. wrangler deploy doesn't run the schema, so a database made before the budget existed gets the table here.
 const BUDGET_TABLE = 'CREATE TABLE IF NOT EXISTS budget (day TEXT PRIMARY KEY, rows INTEGER NOT NULL)';
@@ -333,7 +334,8 @@ async function siteHit(request, env) {
   // The referrer's host only, lower case, without www. The site itself is "" (a move between its own pages); anything odd is "other"
   let ref = String(b.r || '').toLowerCase().replace(/^www\./, '');
   if (ref === new URL(SITE_ORIGIN).hostname) ref = '';
-  if (ref && !HOSTNAME.test(ref)) ref = 'other';
+  // A link that names where it was put (?ref=tiktok in a bio: TikTok's own browser sends no referrer) comes as "ref:tiktok"
+  if (ref && !HOSTNAME.test(ref) && !REF_TAG.test(ref)) ref = 'other';
   const cc = request.cf && typeof request.cf.country === 'string' && COUNTRY.test(request.cf.country) ? request.cf.country : '?';
   const day = new Date().toISOString().slice(0, 10);
   const stmt = env.DB.prepare('INSERT INTO site (day, page, ref, country, event, n) VALUES (?, ?, ?, ?, ?, 1) ON CONFLICT (day, page, ref, country, event) DO UPDATE SET n = n + 1')
