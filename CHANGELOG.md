@@ -32,6 +32,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - If an older copy left its protection on (after an update), the Install window now says so: CS2 and your servers stay blocked outside the phone until you install, and it gives the command that turns it off.
 
 ### Changed
+- The usage stats notice is shorter: what is sent and never sent in two lines, who keeps the stats (the author, on Cloudflare), why, for 12 months, how to delete them or ask, and the full list under See the full list. It shows once more because its text changed.
 - The pictures of the app on the website and in the README now show this version, and stay sharp on high-resolution screens (they are twice as detailed).
 - The README reads in the website's order: what it is, how it works, IP banned, the features with a picture of each, Quick start, safety, VPN, FAQ. Each fact is said once, and the long parts (the full Telemetry list, how to check a download) open when you want them.
 - On a phone, the README shows its own animation, tall and narrow, so the words in it can be read. With reduced motion on, a still picture.

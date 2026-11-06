@@ -28,12 +28,15 @@ public partial class NoticeWindow : Window
 
     /// <param name="choices">Options to pick one of, each "title\nwhat it means"; the first is picked at the start (<see cref="Choice"/>).</param>
     /// <param name="danger">The main button in red: it deletes something.</param>
+    /// <param name="more">A longer text under a See the full list button, hidden at the start (the usage stats notice).</param>
     public NoticeWindow(string title, string text, string ok = "OK", string other = null, bool problem = false, Func<NoticeWindow, Task> action = null,
-        string[] choices = null, bool danger = false)
+        string[] choices = null, bool danger = false, string more = null)
     {
         InitializeComponent();
         Title = Heading.Text = title;
         Body.Text = text;
+        MoreText.Text = more ?? "";
+        MoreBtn.Visibility = string.IsNullOrEmpty(more) ? Visibility.Collapsed : Visibility.Visible;
         OkBtn.Content = ok;
         OtherBtn.Content = other ?? "";
         OtherBtn.Visibility = other == null ? Visibility.Collapsed : Visibility.Visible;
@@ -101,6 +104,14 @@ public partial class NoticeWindow : Window
     }
 
     void Other_Click(object sender, RoutedEventArgs e) { Accepted = false; Close(); }
+
+    // See the full list / Hide the full list: only shows or hides the text, Accept and Quit stay as they are
+    void More_Click(object sender, RoutedEventArgs e)
+    {
+        var open = MoreBox.Visibility != Visibility.Visible;
+        MoreBox.Visibility = open ? Visibility.Visible : Visibility.Collapsed;
+        MoreBtn.Content = open ? "Hide the full list" : "See the full list";
+    }
 
     void Drag(object sender, MouseButtonEventArgs e) { if (e.ButtonState == MouseButtonState.Pressed) try { DragMove(); } catch { } }
 }

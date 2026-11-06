@@ -19,13 +19,20 @@
                 </HeaderedContentControl.Header>
                 <StackPanel>
                     <TextBlock x:Name="Body" TextWrapping="Wrap" LineHeight="19"/>
+                    <!-- See the full list: the long version under the short text (the usage stats notice) -->
+                    <ScrollViewer x:Name="MoreBox" MaxHeight="300" Margin="0,12,0,0" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+                        <TextBlock x:Name="MoreText" TextWrapping="Wrap" LineHeight="19" Foreground="{StaticResource Muted}"/>
+                    </ScrollViewer>
                     <StackPanel x:Name="ChoiceList" Margin="0,14,0,0" Visibility="Collapsed"/>
                     <TextBlock x:Name="Status" TextWrapping="Wrap" Margin="0,12,0,0" Visibility="Collapsed" Foreground="{StaticResource Faint}"/>
                     <ProgressBar x:Name="Busy" IsIndeterminate="True" Margin="0,8,0,0" Visibility="Collapsed"/>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-                        <Button x:Name="OtherBtn" Content="Close" Click="Other_Click" IsCancel="True" Visibility="Collapsed"/>
-                        <Button x:Name="OkBtn" Style="{StaticResource Primary}" Content="OK" Margin="0" Click="Ok_Click" IsDefault="True"/>
-                    </StackPanel>
+                    <DockPanel Margin="0,16,0,0" LastChildFill="False">
+                        <Button x:Name="MoreBtn" DockPanel.Dock="Left" Style="{StaticResource Ghost}" Padding="0,6" Content="See the full list" Click="More_Click" Visibility="Collapsed"/>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button x:Name="OtherBtn" Content="Close" Click="Other_Click" IsCancel="True" Visibility="Collapsed"/>
+                            <Button x:Name="OkBtn" Style="{StaticResource Primary}" Content="OK" Margin="0" Click="Ok_Click" IsDefault="True"/>
+                        </StackPanel>
+                    </DockPanel>
                 </StackPanel>
             </HeaderedContentControl>
         </Grid>

@@ -619,6 +619,8 @@ SemProtecaoTests.Run(Check);
 Seguranca1106Tests.Run(Check);
 // 6 nov.: numeração das versões (csproj, CHANGELOG, notas da release) (VersaoTests.cs)
 VersaoTests.Run(Check);
+// beta.11 (6 nov.): o aviso das estatísticas curto, com quem guarda e por quanto tempo, e a lista inteira em See the full list (AvisoTests.cs)
+AvisoTests.Run(Check);
 // sistema de design (5 nov.): as cores da app no site, na dashboard e no README, e as capturas da versão de agora (DesignSyncTests.cs)
 DesignSyncTests.Run(Check);
 // 6 nov.: o logo é o mesmo no ícone da app, no favicon, no README, no site, no canto da janela e no cartão (LogoTests.cs)

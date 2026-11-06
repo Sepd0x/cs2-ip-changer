@@ -43,7 +43,7 @@ public partial class App : Application
         var updated = args.Contains("--updated");
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
         var settingsFile = Paths.File("settings.json");
-        if (!StatsGate(args, () => StatsNoticeWindow(updated, StatsNoticeIn(settingsFile) > 0).ShowAndWait(), settingsFile))
+        if (!StatsGate(args, () => StatsNoticeWindow(updated, StatsNoticeIn(settingsFile)).ShowAndWait(), settingsFile))
         {
             if (updated) UndoAfterUpdateQuit();
             Shutdown();
@@ -239,8 +239,17 @@ public partial class App : Application
         }
     }
 
-    internal static NoticeWindow StatsNoticeWindow(bool updated = false, bool changed = false) =>
-        new(Telemetry.NoticeTitle, Telemetry.NoticeText + (changed ? "\n\n" + Telemetry.NoticeChanged : "") + (updated ? "\n\n" + Telemetry.NoticeAfterUpdate : ""), "Accept", "Quit");
+    /// <summary>The usage stats notice: the short text, the full list under See the full list, Accept and Quit.</summary>
+    /// <param name="had">The notice accepted before (<see cref="StatsNoticeIn"/>): above 0, what changed since then is added.</param>
+    internal static NoticeWindow StatsNoticeWindow(bool updated = false, int had = 0) =>
+        new(Telemetry.NoticeTitle, StatsNoticeBody(updated, had), "Accept", "Quit", more: Telemetry.NoticeList);
+
+    /// <summary>The notice's visible text (<see cref="StatsNoticeWindow"/>), without the full list.</summary>
+    public static string StatsNoticeBody(bool updated, int had)
+    {
+        var changed = Telemetry.NoticeChangedFor(had);
+        return Telemetry.NoticeShort + (changed != "" ? "\n\n" + changed : "") + (updated ? "\n\n" + Telemetry.NoticeAfterUpdate : "");
+    }
 
     /// <summary>
     /// Quit at the notice right after an update: the version before left its protection on for this copy to take over. With no

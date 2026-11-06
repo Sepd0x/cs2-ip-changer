@@ -91,30 +91,60 @@ public static class Telemetry
     // environment report (no ID) are anonymous.
     public const string NoticeTitle = "Usage stats";
 
-    /// <summary>The notice at the first start (Accept or Quit). README > Telemetry has the same list.</summary>
+    /// <summary>
+    /// The notice at the first start (Accept or Quit), since beta.11 (NoticeVersion 4): short, with every kind of stat named, and the
+    /// full list (<see cref="NoticeList"/>) under See the full list. The "Kept by" line says who, why, the legal basis, where, how long
+    /// and how to ask or complain (GDPR art. 13), like README > Telemetry and docs/PRIVACY-AND-SECURITY.md.
+    /// </summary>
+    public const string NoticeShort =
+        "This beta sends usage stats when it opens and closes and every 30 minutes while it's open, so bugs get found and fixed. They are required while it is in beta.\n\n"
+        + "Sent: a random ID made for this install, app and Windows versions, country, which screens, buttons and settings you use, ping and lag in rough bands, errors, and your phone's brand and Android version.\n"
+        + "Never sent: IPs, servers, accounts, Steam names or IDs, your carrier, anything you type.\n"
+        + "Kept by the author (Sepd0x on GitHub) on Cloudflare, only to fix bugs and improve the app, because you accept this notice, for 12 months. "
+        + "Delete them any time: Settings > Delete my stats. Questions: GitHub issues. You can also complain to your data protection authority.\n\n"
+        + "Quit closes the app. Nothing on your PC changes.";
+
+    /// <summary>The full list (the notice until beta.10), shown under See the full list. README > Telemetry has the same list.</summary>
     public const string NoticeText =
         "While CS2 IP Changer is in beta, using it means it sends usage stats when it opens and closes (and every 30 minutes while it's open), so bugs get found and fixed:\n\n"
-        + "•  a random ID made for this install, with no name, never from your PC or from you (Settings > Delete my stats deletes everything kept under it), and how long ago the app was set up, only in rough bands (this week, 2 to 4 weeks…)\n"
+        + NoticeList + "\n\n"
+        + "Never IPs, servers, accounts, Steam names or IDs, your carrier or anything you type.\n\n"
+        + "Quit closes the app without changing anything on your PC.";
+
+    /// <summary>The 7 items of the full list, unchanged since beta.10.</summary>
+    public const string NoticeList =
+        "•  a random ID made for this install, with no name, never from your PC or from you (Settings > Delete my stats deletes everything kept under it), and how long ago the app was set up, only in rough bands (this week, 2 to 4 weeks…)\n"
         + "•  the app and Windows versions, and your country as two letters\n"
         + "•  the mode, how the phone is connected, minutes the app was open and on each screen, and every few minutes while it's open what is on (screen, CS2 open, protection on)\n"
         + "•  how often each button and hotkey is used, where on each screen you click (a coarse grid, added up with everyone's, anonymous), a few counters (IP changes, kicks seen, leak tests passed or failed, which Checks rows are red) and how long your lists are, in rough bands\n"
         + "•  in rough bands: each CS2 match's ping, jitter and lag (Valve or community, never the server), how long sessions last and the start takes, how far you scroll, and which on/off settings you changed\n"
         + "•  errors and crashes, as their type and place in the app's code\n"
-        + "•  in a separate anonymous daily report with no ID or country: Windows language and build, window size and scale, the phone's brand (never the model), Android version and 4G or 5G\n\n"
-        + "Never IPs, servers, accounts, Steam names or IDs, your carrier or anything you type.\n\n"
-        + "Quit closes the app without changing anything on your PC.";
+        + "•  in a separate anonymous daily report with no ID or country: Windows language and build, window size and scale, the phone's brand (never the model), Android version and 4G or 5G";
 
     /// <summary>
     /// The notice's version (Settings.StatsNotice). 2 since beta.9: the ID is kept for the install. 3 since beta.10: the stats also go
-    /// out every 30 minutes while the app is open. An older accept is asked again once.
+    /// out every 30 minutes while the app is open. 4 since beta.11: the short notice, which says who keeps the stats, for how long and
+    /// how to ask. An older accept is asked again once.
     /// </summary>
-    public const int NoticeVersion = 3;
+    public const int NoticeVersion = 4;
 
-    /// <summary>Added to the notice for someone who accepted an older one (beta.8 said the ID was new every day, beta.9 said open and close only).</summary>
-    public const string NoticeChanged =
-        "Changed since you last accepted: the stats now also go out every 30 minutes while the app is open (and before the PC sleeps), "
-        + "not only when it opens and closes. If you accepted before beta.9: the ID is now kept for this install instead of new every day, "
-        + "so the stats can tell people who come back from new installs. It is still random and has no name.";
+    /// <summary>Added to the notice for someone who accepted an older one, from any version before (<see cref="NoticeChangedFor"/>).</summary>
+    public static string NoticeChanged => NoticeChangedFor(1);
+
+    /// <summary>
+    /// What changed since the notice <paramref name="had"/> accepted (Settings.StatsNotice, 1 = before beta.9), only what is new to
+    /// them: beta.8 said the ID was new every day, beta.9 said open and close only, beta.10 had the long notice. Empty for 0 (never accepted).
+    /// </summary>
+    public static string NoticeChangedFor(int had)
+    {
+        if (had <= 0 || had >= NoticeVersion) return "";
+        var s = "Changed since you last accepted: this notice is shorter, with every item still under See the full list, and it now says "
+            + "who keeps the stats, for how long and how to ask about them or complain.";
+        if (had < 3) s += " The stats now also go out every 30 minutes while the app is open (and before the PC sleeps), not only when it opens and closes.";
+        if (had < 2) s += " The ID is now kept for this install instead of new every day, so the stats can tell people who come back from new installs. "
+            + "It is still random and has no name.";
+        return s;
+    }
 
     /// <summary>Added to the notice when it shows right after an update (--updated): Quit undoes what the version before left on.</summary>
     public const string NoticeAfterUpdate =

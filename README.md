@@ -245,7 +245,7 @@ While CS2 IP Changer is in beta, it sends usage stats so bugs can be found and t
 <details>
 <summary><b>The notice, the ID and the bands</b></summary>
 
-Right after an update from inside the app, Quit also turns off the protection the version before left on, so your servers aren't left blocked without the app (not while CS2 is open). Accept is saved and the notice doesn't show again, except once after beta.9 for anyone who accepted it before, because the ID changed (below).
+Right after an update from inside the app, Quit also turns off the protection the version before left on, so your servers aren't left blocked without the app (not while CS2 is open). Accept is saved and the notice doesn't show again, except once when its text changes: after beta.9, because the ID changed (below), and after beta.11, because the notice got shorter and now says who keeps the stats and for how long.
 
 The ID says nothing about who you are. Because it is kept, the usage report is pseudonymous rather than anonymous (that is the word the GDPR uses): one install's reports link up, but never to a person. Only the click map and the separate setup report below, which carry no ID, are anonymous. Since beta.9 it is kept (before, it was new every day), so the stats can tell a returning install from a new one and count how many use the app. The first report of each day also says how long ago the app was set up, only in rough bands (the same day, 1 day, 2 to 3, 4 to 6, 7 to 13, 14 to 29, 30 or more), never the date. List sizes go in rough bands, not exact numbers, for the same reason.
 </details>
