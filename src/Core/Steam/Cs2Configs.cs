@@ -117,8 +117,6 @@ public static class Vcfg
 
 public static class Cs2Config
 {
-    const long SteamId64Base = 76561197960265728;
-
     /// <summary>What can be copied, in the order shown.</summary>
     public static readonly string[] Categories = { "binds", "crosshair", "game", "video", "hud" };
 
@@ -136,8 +134,7 @@ public static class Cs2Config
     }
 
     /// <summary>Steam's userdata folder id (SteamID64 minus the base), or null.</summary>
-    public static string Id32(string steamId64) =>
-        long.TryParse(steamId64, out var id) && id > SteamId64Base && id - SteamId64Base <= uint.MaxValue ? (id - SteamId64Base).ToString(CultureInfo.InvariantCulture) : null;
+    public static string Id32(string steamId64) => SteamIds.Id32(steamId64);
 
     /// <summary>Under 730: the file CS2 reads, its "last sent to the cloud" twin and the Steam Cloud copy (null when not clouded).</summary>
     public static (string Local, string LastClouded, string Remote) PathsOf(CfgPart p) => p switch
@@ -553,16 +550,8 @@ public sealed class Cs2ConfigStore
         ids.Select(i => (Id: i, At: Changed(i))).Where(x => x.At != null).OrderByDescending(x => x.At).Select(x => x.Id).FirstOrDefault();
 
     /// <summary>The account folder (or a folder on the way) is a link or junction: the app runs as admin and only writes to real folders.</summary>
-    static bool Redirected(string dir730)
-    {
-        try
-        {
-            foreach (var p in new[] { Path.GetDirectoryName(dir730), dir730, Path.Combine(dir730, "local"), Path.Combine(dir730, "local", "cfg"), Path.Combine(dir730, "remote") })
-                if (Directory.Exists(p) && File.GetAttributes(p).HasFlag(FileAttributes.ReparsePoint)) return true;
-            return false;
-        }
-        catch { return true; }
-    }
+    static bool Redirected(string dir730) =>
+        SafeFile.Linked(Path.GetDirectoryName(dir730), dir730, Path.Combine(dir730, "local"), Path.Combine(dir730, "local", "cfg"), Path.Combine(dir730, "remote"));
 
     // ------------------------------------------------------------ Links held off
     // Every user can write in Steam's userdata, and a folder there swapped for a junction between a check and the write would send
@@ -582,34 +571,9 @@ public sealed class Cs2ConfigStore
         _ => ex.GetType().Name,
     };
 
-    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    static extern SafeFileHandle CreateFileW(string name, uint access, FileShare share, IntPtr security, FileMode mode, uint flags, IntPtr template);
-
-    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    static extern uint GetFinalPathNameByHandleW(SafeFileHandle handle, StringBuilder path, uint size, uint flags);
-
-    /// <summary>Where an open file or folder really is, every link on the way resolved, or null.</summary>
-    static string FinalPath(SafeFileHandle h)
-    {
-        var sb = new StringBuilder(1024);
-        var n = GetFinalPathNameByHandleW(h, sb, (uint)sb.Capacity, 0);
-        if (n == 0 || n >= sb.Capacity) return null;
-        var p = sb.ToString();
-        return p.StartsWith(@"\\?\UNC\") ? @"\\" + p[8..] : p.StartsWith(@"\\?\") ? p[4..] : p;
-    }
-
-    static bool SamePath(string a, string b) => a != null && b != null &&
-        string.Equals(Path.TrimEndingDirectorySeparator(a), Path.TrimEndingDirectorySeparator(b), StringComparison.OrdinalIgnoreCase);
-
-    /// <summary>A folder held open without delete sharing: while the handle lives, nobody can rename it or put a link in its place.</summary>
-    static SafeFileHandle OpenDir(string path)
-    {
-        const uint ListDirectory = 0x1, BackupSemantics = 0x02000000;
-        var h = CreateFileW(path, ListDirectory, FileShare.ReadWrite, IntPtr.Zero, FileMode.Open, BackupSemantics, IntPtr.Zero);
-        if (!h.IsInvalid) return h;
-        h.Dispose();
-        throw new IOException("can't open the Steam folder");
-    }
+    static string FinalPath(SafeFileHandle h) => SafeFile.FinalPath(h);
+    static bool SamePath(string a, string b) => SafeFile.Same(a, b);
+    static SafeFileHandle OpenDir(string path) => SafeFile.OpenDir(path, "can't open the Steam folder");
 
     /// <summary>Userdata's real path, with it and the Steam folder held. The Steam folder may be a link (moved to another drive); userdata may not.</summary>
     string HoldUserData(List<SafeFileHandle> held)

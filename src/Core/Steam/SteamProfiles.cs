@@ -13,12 +13,17 @@ public static partial class Steam
 {
     // ------------------------------------------------------------ Public account status
 
+    // Not the SteamWeb client: these public reads (profile XML and page, the Web API, avatars from Steam's CDN) follow redirects and
+    // give up after 12 s; SteamWeb's signed-in calls never follow a redirect, keep no cookies and wait 25 s.
     static readonly HttpClient Http = CreateHttp();
+
+    /// <summary>The public profile reads' User-Agent: a desktop browser's start, then the app's own.</summary>
+    public const string ProfileUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " + AppIds.UserAgent;
 
     static HttpClient CreateHttp()
     {
         var h = new HttpClient { Timeout = TimeSpan.FromSeconds(12) };
-        h.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) CS2IPChanger/0.1");
+        h.DefaultRequestHeaders.UserAgent.ParseAdd(ProfileUserAgent);
         h.DefaultRequestHeaders.AcceptLanguage.ParseAdd("en-US,en;q=0.8");
         return h;
     }
@@ -38,7 +43,7 @@ public static partial class Steam
     public static string WebText(string s) => s == null ? null : System.Net.WebUtility.HtmlDecode(s).Trim();
 
     /// <summary>A name worth showing: not empty, and not a bare SteamID64 (what a profile that was never set up can show instead of a name).</summary>
-    public static string ShownName(string s) => string.IsNullOrWhiteSpace(s) || Regex.IsMatch(s.Trim(), @"^7656119\d{10}\z") ? null : s;
+    public static string ShownName(string s) => string.IsNullOrWhiteSpace(s) || SteamIds.IsId64(s.Trim()) ? null : s;
 
     public const string BansUnknown = "Steam didn't answer with the bans (try again in a minute); the account keeps what it had.";
 
@@ -168,7 +173,7 @@ public static partial class Steam
 
     public static async Task<string> DownloadAvatar(string steamId, string url)
     {
-        if (string.IsNullOrEmpty(url) || !Regex.IsMatch(steamId ?? "", @"^7656119\d{10}\z") || !AvatarUrl(url)) return null;
+        if (string.IsNullOrEmpty(url) || !SteamIds.IsId64(steamId) || !AvatarUrl(url)) return null;
         var path = Path.Combine(Paths.Avatars, steamId + ".jpg");
         using var r = await Http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
         r.EnsureSuccessStatusCode();

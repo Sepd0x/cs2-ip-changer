@@ -115,6 +115,12 @@ public static class SafeFile
 
     const string Moved = "the folder was changed into a link while the app was writing; nothing was written there";
 
+    /// <summary>
+    /// One of <paramref name="paths"/> (files or folders) is a link or junction, or can't be checked. The quick check before the app,
+    /// as admin, writes in a folder others can change (Steam's userdata, its config folder); the writes still go by handle.
+    /// </summary>
+    public static bool Linked(params string[] paths) => paths.Any(Paths.IsLink);
+
     /// <summary>Where an open file or folder really is, every link on the way resolved, or null.</summary>
     public static string FinalPath(SafeFileHandle h)
     {
@@ -125,16 +131,20 @@ public static class SafeFile
         return p.StartsWith(@"\\?\UNC\") ? @"\\" + p[8..] : p.StartsWith(@"\\?\") ? p[4..] : p;
     }
 
-    static bool Same(string a, string b) => a != null && b != null &&
+    /// <summary>The same place (a real path from <see cref="FinalPath"/> against the expected one), case and a last \ aside.</summary>
+    public static bool Same(string a, string b) => a != null && b != null &&
         string.Equals(Path.TrimEndingDirectorySeparator(a), Path.TrimEndingDirectorySeparator(Path.GetFullPath(b)), StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>A folder held open without delete sharing: while the handle lives, nobody can rename or delete it.</summary>
-    static SafeFileHandle OpenDir(string path)
+    /// <summary>
+    /// A folder held open without delete sharing: while the handle lives, nobody can rename or delete it. A link on the way is followed
+    /// (the caller checks the real path). <paramref name="error"/>: the message when it can't be opened.
+    /// </summary>
+    public static SafeFileHandle OpenDir(string path, string error = null)
     {
         var h = CreateFileW(path, ListDirectory, 3, IntPtr.Zero, OpenExisting, BackupSemantics, IntPtr.Zero);
         if (!h.IsInvalid) return h;
         h.Dispose();
-        throw new IOException("can't open the folder " + Path.GetFileName(path));
+        throw new IOException(error ?? "can't open the folder " + Path.GetFileName(path));
     }
 
     /// <summary>
@@ -178,12 +188,19 @@ public static class SafeFile
     const uint BackupSemantics = 0x02000000, OpenReparsePoint = 0x00200000;
     const int FileRenameInfo = 3, FileDispositionInfo = 4;
 
+    // The file calls of Windows, here once (Steam.PinnedFolder uses them too).
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    static extern SafeFileHandle CreateFileW(string name, uint access, uint share, IntPtr security, uint disposition, uint flags, IntPtr template);
+    internal static extern SafeFileHandle CreateFileW(string name, uint access, uint share, IntPtr security, uint disposition, uint flags, IntPtr template);
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    static extern uint GetFinalPathNameByHandleW(SafeFileHandle h, StringBuilder path, uint size, uint flags);
+    internal static extern uint GetFinalPathNameByHandleW(SafeFileHandle h, StringBuilder path, uint size, uint flags);
     [DllImport("kernel32.dll", SetLastError = true)]
     static extern bool GetFileInformationByHandle(SafeFileHandle h, out FileInfo info);
     [DllImport("kernel32.dll", SetLastError = true)]
-    static extern bool SetFileInformationByHandle(SafeFileHandle h, int infoClass, byte[] info, uint size);
+    internal static extern bool GetFileInformationByHandleEx(SafeFileHandle h, int infoClass, out AttributeTag info, uint size);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    internal static extern bool SetFileInformationByHandle(SafeFileHandle h, int infoClass, byte[] info, uint size);
+
+    /// <summary>FILE_ATTRIBUTE_TAG_INFO, for GetFileInformationByHandleEx(FileAttributeTagInfo).</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct AttributeTag { public uint Attributes; public uint ReparseTag; }
 }

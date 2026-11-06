@@ -14,8 +14,6 @@ namespace SRT.Core;
 /// <summary>Accounts saved in this PC's Steam, and account switching.</summary>
 public static partial class Steam
 {
-    const long SteamId64Base = 76561197960265728;
-
     public static string InstallDir()
     {
         try
@@ -53,7 +51,7 @@ public static partial class Steam
         {
             // Only real SteamID64s: the ID becomes a file name (avatars) and part of URLs, and loginusers.vdf is in a folder any program
             // of yours can change.
-            if (v is not VdfNode n || !Regex.IsMatch(id, @"^7656119\d{10}\z")) continue;
+            if (v is not VdfNode n || !SteamIds.IsId64(id)) continue;
             long.TryParse(n.Get("timestamp"), out var ts);
             list.Add(new LocalAccount(id, n.Get("AccountName"), n.Get("PersonaName"), n.Get("MostRecent") == "1" || n.Get("AutoLogin") == "1", ts));
         }
@@ -163,7 +161,7 @@ public static partial class Steam
         try
         {
             using var k = Registry.CurrentUser.OpenSubKey(@"Software\Valve\Steam\ActiveProcess");
-            if (k?.GetValue("ActiveUser") is int id && id != 0) return (SteamId64Base + (uint)id).ToString();
+            if (k?.GetValue("ActiveUser") is int id && id != 0) return SteamIds.FromId32((uint)id);
         }
         catch { }
         return null;
@@ -184,7 +182,7 @@ public static partial class Steam
     /// </summary>
     public static string Cs2FriendCode(string steamId64)
     {
-        if (!Regex.IsMatch(steamId64 ?? "", @"^7656119\d{10}\z") || !ulong.TryParse(steamId64, out var id)) return null;
+        if (!SteamIds.IsId64(steamId64) || !ulong.TryParse(steamId64, out var id)) return null;
         // Hash: MD5 of the 64-bit number "CSGO" << 32 | account ID (little-endian), first 4 bytes.
         var h = BitConverter.ToUInt32(System.Security.Cryptography.MD5.HashData(BitConverter.GetBytes((id & 0xFFFFFFFF) | 0x4353474F00000000UL)), 0);
         ulong r = 0;
@@ -433,17 +431,7 @@ public static partial class Steam
     /// can change; the app writes and deletes there as admin, so a link would point those writes somewhere else.
     /// Only these two: a whole Steam folder moved to another drive with a junction is common and stays allowed.
     /// </summary>
-    static bool Redirected(string path)
-    {
-        try
-        {
-            var full = Path.GetFullPath(path);
-            foreach (var p in new[] { full, Path.GetDirectoryName(full) })
-                if ((File.Exists(p) || Directory.Exists(p)) && File.GetAttributes(p).HasFlag(FileAttributes.ReparsePoint)) return true;
-            return false;
-        }
-        catch { return true; }
-    }
+    static bool Redirected(string path) => SafeFile.Linked(path, Path.GetDirectoryName(Path.GetFullPath(path)));
 
     /// <summary>A dated copy before each write (loginusers.vdf.srt-backup-yyyyMMdd-HHmmss), in the same pinned folder.</summary>
     static void BackupLoginUsers(PinnedFolder folder, string name, byte[] bytes)
@@ -477,7 +465,7 @@ public static partial class Steam
         public PinnedFolder(string dir)
         {
             // List rights too: a handle with only attribute rights takes no part in the sharing check and wouldn't hold the folder
-            _dir = CreateFileW(dir, ListDirectory | FileReadAttributes, ShareRead | ShareWrite, IntPtr.Zero, OpenExisting, BackupSemantics | OpenReparsePoint, IntPtr.Zero);
+            _dir = SafeFile.CreateFileW(dir, ListDirectory | FileReadAttributes, ShareRead | ShareWrite, IntPtr.Zero, OpenExisting, BackupSemantics | OpenReparsePoint, IntPtr.Zero);
             if (_dir.IsInvalid) throw new IOException($"could not open the folder {Path.GetFileName(dir)} ({LastError()})");
             if (IsLink(_dir)) { _dir.Dispose(); throw new IOException(Linked); }
             Real = FinalPath(_dir);
@@ -493,15 +481,14 @@ public static partial class Steam
         public void Delete(string name)
         {
             using var h = Checked(name, DeleteRight, ShareRead | ShareWrite | ShareDelete, OpenExisting);
-            byte yes = 1;
-            if (!SetFileInformationByHandle(h, FileDispositionInfo, ref yes, 1)) throw new IOException($"could not delete {name} ({LastError()})");
+            if (!SafeFile.SetFileInformationByHandle(h, FileDispositionInfo, new byte[] { 1 }, 1)) throw new IOException($"could not delete {name} ({LastError()})");
         }
 
         SafeFileHandle Checked(string name, uint rights, uint share, uint disposition)
         {
             if (name.IndexOfAny(new[] { '\\', '/', ':' }) >= 0) throw new ArgumentException(name);
             // Read attributes too: the link check below needs them
-            var h = CreateFileW(Path.Combine(Real, name), rights | FileReadAttributes, share, IntPtr.Zero, disposition, OpenReparsePoint, IntPtr.Zero);
+            var h = SafeFile.CreateFileW(Path.Combine(Real, name), rights | FileReadAttributes, share, IntPtr.Zero, disposition, OpenReparsePoint, IntPtr.Zero);
             if (h.IsInvalid) throw new IOException($"could not open {name} ({LastError()})");
             bool ok;
             try { ok = !IsLink(h) && string.Equals(Path.GetDirectoryName(FinalPath(h)), Real, StringComparison.OrdinalIgnoreCase); }
@@ -515,13 +502,14 @@ public static partial class Steam
         static string LastError() => new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error()).Message;
 
         static bool IsLink(SafeFileHandle h) =>
-            !GetFileInformationByHandleEx(h, FileAttributeTagInfo, out var info, (uint)Marshal.SizeOf<AttributeTag>())
+            !SafeFile.GetFileInformationByHandleEx(h, FileAttributeTagInfo, out var info, (uint)Marshal.SizeOf<SafeFile.AttributeTag>())
             || ((FileAttributes)info.Attributes).HasFlag(FileAttributes.ReparsePoint);
 
+        /// <summary>The real path as Windows gives it (\\?\...), kept that way: <see cref="Real"/> and each file's folder compare like for like.</summary>
         static string FinalPath(SafeFileHandle h)
         {
             var sb = new StringBuilder(1024);
-            var n = GetFinalPathNameByHandleW(h, sb, (uint)sb.Capacity, 0);
+            var n = SafeFile.GetFinalPathNameByHandleW(h, sb, (uint)sb.Capacity, 0);
             if (n == 0 || n >= sb.Capacity) throw new IOException("could not read the folder's real path");
             return sb.ToString();
         }
@@ -531,18 +519,6 @@ public static partial class Steam
         const uint CreateNew = 1, CreateAlways = 2, OpenExisting = 3;
         const uint BackupSemantics = 0x02000000, OpenReparsePoint = 0x00200000;
         const int FileAttributeTagInfo = 9, FileDispositionInfo = 4;
-
-        [StructLayout(LayoutKind.Sequential)]
-        struct AttributeTag { public uint Attributes; public uint ReparseTag; }
-
-        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        static extern SafeFileHandle CreateFileW(string name, uint access, uint share, IntPtr security, uint disposition, uint flags, IntPtr template);
-        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        static extern uint GetFinalPathNameByHandleW(SafeFileHandle h, StringBuilder path, uint size, uint flags);
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool GetFileInformationByHandleEx(SafeFileHandle h, int infoClass, out AttributeTag info, uint size);
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool SetFileInformationByHandle(SafeFileHandle h, int infoClass, ref byte info, uint size);
     }
 
     /// <summary>Closes and reopens Steam on the same account (e.g. so it connects through the protected connection).</summary>

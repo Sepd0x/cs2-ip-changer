@@ -43,7 +43,8 @@ public sealed class SteamWeb : IDisposable
     public static bool Allowed(Uri u) => u is { IsAbsoluteUri: true } && u.Scheme == Uri.UriSchemeHttps && u.IsDefaultPort
         && string.IsNullOrEmpty(u.UserInfo) && Hosts.Contains(u.IdnHost, StringComparer.OrdinalIgnoreCase);
 
-    public const string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 CS2IPChanger/0.1";
+    /// <summary>A whole browser's, then the app's own: the sign-in and edit calls are the ones Steam's own pages make.</summary>
+    public const string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 " + AppIds.UserAgent;
     readonly HttpClient _http;
 
     /// <summary>Tests pass a fake handler; the app uses the default one (certificate checks on, no cookies, no redirects).</summary>
@@ -363,7 +364,6 @@ public sealed class PublicLook
 /// </summary>
 public static class ProfileLink
 {
-    static readonly Regex Id64 = new(@"^7656119\d{10}\z", RegexOptions.Compiled);
     static readonly Regex PathRx = new(@"^/(id|profiles)/([^/]+)/?$", RegexOptions.Compiled);
     static readonly Regex Vanity = new(@"^[A-Za-z0-9_-]{2,32}$", RegexOptions.Compiled);
 
@@ -372,7 +372,7 @@ public static class ProfileLink
     {
         var t = (input ?? "").Trim();
         if (t.Length == 0 || t.Length > 300 || t.Contains("..")) return null;
-        if (Id64.IsMatch(t)) return "/profiles/" + t;
+        if (SteamIds.IsId64(t)) return "/profiles/" + t;
         if (t.StartsWith("steamcommunity.com/", StringComparison.OrdinalIgnoreCase) || t.StartsWith("www.steamcommunity.com/", StringComparison.OrdinalIgnoreCase)) t = "https://" + t;
         if (!Uri.TryCreate(t, UriKind.Absolute, out var u) || (u.Scheme != Uri.UriSchemeHttps && u.Scheme != Uri.UriSchemeHttp)) return null;
         if (!string.IsNullOrEmpty(u.UserInfo) || !u.IsDefaultPort) return null;
@@ -381,7 +381,7 @@ public static class ProfileLink
         if (!m.Success) return null;
         var kind = m.Groups[1].Value;
         var who = Uri.UnescapeDataString(m.Groups[2].Value);
-        if (kind == "profiles") return Id64.IsMatch(who) ? "/profiles/" + who : null;
+        if (kind == "profiles") return SteamIds.IsId64(who) ? "/profiles/" + who : null;
         return Vanity.IsMatch(who) ? "/id/" + who : null;
     }
 }

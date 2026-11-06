@@ -6,7 +6,6 @@ namespace SRT.Core;
 public static class PlayerMatch
 {
     static readonly Regex Spaces = new(@"\s+", RegexOptions.Compiled);
-    static readonly Regex Id64 = new(@"^7656119\d{10}\z", RegexOptions.Compiled);
     static readonly Regex ProfileUrl = new(@"steamcommunity\.com/profiles/(7656119\d{10})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     static readonly Regex VanityUrl = new(@"steamcommunity\.com/id/([A-Za-z0-9_-]{2,32})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     static readonly Regex VanityName = new(@"^[A-Za-z0-9_-]{2,32}$", RegexOptions.Compiled);
@@ -25,7 +24,7 @@ public static class PlayerMatch
     {
         var t = (input ?? "").Trim();
         if (t.Length == 0) return (null, null);
-        if (Id64.IsMatch(t)) return (t, null);
+        if (SteamIds.IsId64(t)) return (t, null);
         if (ProfileUrl.Match(t) is { Success: true } p) return (p.Groups[1].Value, null);
         if (VanityUrl.Match(t) is { Success: true } v) return (null, v.Groups[1].Value);
         if (!t.Contains('/') && !t.Contains('.') && VanityName.IsMatch(t) && t.Any(char.IsLetter)) return (null, t);

@@ -20,6 +20,40 @@ static class Untangle12Tests
         TypedValues(check);
         ExplicitState(check);
         KeyValuesSame(check);
+        SteamIdsAndLinks(check);
+    }
+
+    // B8: um só SteamIds (o regex e a base escritos uma vez) e uma só verificação de junções no SafeFile
+    static void SteamIdsAndLinks(Action<string, bool, string> check)
+    {
+        check("B8: SteamIds aceita só SteamID64 reais", SteamIds.IsId64("76561198000000001") && !SteamIds.IsId64(null) && !SteamIds.IsId64("")
+            && !SteamIds.IsId64("7656119800000000") && !SteamIds.IsId64("76561198000000001\n") && !SteamIds.IsId64(" 76561198000000001") && !SteamIds.IsId64("86561198000000001"), "");
+        check("B8: id32 e SteamID64 vão e voltam", SteamIds.Id32("76561198000000001") == "39734273" && SteamIds.FromId32(39734273) == "76561198000000001"
+            && Cs2Config.Id32("76561198000000001") == "39734273" && SteamIds.Id32("76561197960265728") == null && SteamIds.Id32("x") == null, SteamIds.Id32("76561198000000001"));
+        check("B8: as mesmas regras nos sítios que leem ids", PlayerMatch.ParseProfile("76561198000000001").SteamId == "76561198000000001"
+            && ProfileLink.Path("76561198000000001") == "/profiles/76561198000000001" && Steam.ShownName("76561198000000001") == null && Steam.ShownName("Ana") == "Ana"
+            && Steam.Cs2FriendCode("1234") == null && Steam.Cs2FriendCode("76561198000000001") != null, "");
+        check("B8: o User-Agent da app vai no fim dos dois do Steam", SteamWeb.UserAgent.EndsWith(" CS2IPChanger/0.1") && Steam.ProfileUserAgent == "Mozilla/5.0 (Windows NT 10.0; Win64; x64) CS2IPChanger/0.1", "");
+
+        var tmp = Path.Combine(Path.GetTempPath(), "srt-b8-" + Guid.NewGuid().ToString("N")[..8]);
+        var real = Path.Combine(tmp, "real");
+        var link = Path.Combine(tmp, "link");
+        Directory.CreateDirectory(real);
+        File.WriteAllText(Path.Combine(real, "f.txt"), "x");
+        try
+        {
+            using (var p = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd", $"/c mklink /J \"{link}\" \"{real}\"")
+                { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true }))
+                p!.WaitForExit(10000);
+            var made = Directory.Exists(link);
+            check("B8: SafeFile.Linked vê a junção e deixa passar pastas, ficheiros e caminhos que não existem",
+                !made || (SafeFile.Linked(real, Path.Combine(real, "f.txt"), Path.Combine(tmp, "nada")) == false && SafeFile.Linked(real, link) && SafeFile.Linked(Path.Combine(link, "f.txt"), link)),
+                made ? "" : "sem junção");
+        }
+        finally
+        {
+            try { if (Directory.Exists(link)) Directory.Delete(link); Directory.Delete(tmp, true); } catch { }
+        }
     }
 
     // B8: um só leitor de KeyValues (Steam com escapes, CS2 sem). As impressões digitais são da saída de antes da junção (HEAD 12a3a2b),

@@ -458,7 +458,7 @@ public sealed class SessionStore
 
     static byte[] Entropy(string steamId) => SHA256.HashData(Encoding.UTF8.GetBytes("CS2IPChanger/ProfileSession/v1/" + steamId));
     string FileOf(string steamId) => Path.Combine(_dir, Valid(steamId) + ".bin");
-    static string Valid(string steamId) => Regex.IsMatch(steamId ?? "", @"^7656119\d{10}\z") ? steamId : throw new ArgumentException("not a SteamID64");
+    static string Valid(string steamId) => SteamIds.IsId64(steamId) ? steamId : throw new ArgumentException("not a SteamID64");
 
     static SecurityIdentifier Me => WindowsIdentity.GetCurrent().User;
     static readonly SecurityIdentifier Admins = new(WellKnownSidType.BuiltinAdministratorsSid, null), SystemSid = new(WellKnownSidType.LocalSystemSid, null);
@@ -526,7 +526,7 @@ public sealed class SessionStore
         foreach (var f in Directory.GetFiles(old, "*.bin"))
         {
             var id = Path.GetFileNameWithoutExtension(f);
-            if (!Regex.IsMatch(id, @"^7656119\d{10}\z") || new FileInfo(f).Attributes.HasFlag(FileAttributes.ReparsePoint)) continue;
+            if (!SteamIds.IsId64(id) || new FileInfo(f).Attributes.HasFlag(FileAttributes.ReparsePoint)) continue;
             try
             {
                 var blob = File.ReadAllBytes(f);
@@ -631,7 +631,7 @@ public sealed class SessionStore
     {
         try { Secure(); } catch (Exception ex) { Log.Warn("Saved Steam sign-ins: couldn't lock the folder for admins only: " + ex.Message); }
         return Directory.Exists(_dir) && !ProfilePaths.Redirected(_dir)
-            ? Directory.GetFiles(_dir, "*.bin").Select(Path.GetFileNameWithoutExtension).Where(x => Regex.IsMatch(x, @"^7656119\d{10}\z"))
+            ? Directory.GetFiles(_dir, "*.bin").Select(Path.GetFileNameWithoutExtension).Where(SteamIds.IsId64)
             : Enumerable.Empty<string>();
     }
 }
