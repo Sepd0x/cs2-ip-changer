@@ -132,7 +132,7 @@ var best = Net.BestInterface("1.1.1.1");
 Env("Rota escolhida pelo Windows", best > 0, $"IF {best}");
 Console.WriteLine("     Firewall: " + (Firewall.CheckEnabled() ?? "ligado"));
 var routes = await Net.ListRoutes();
-Env("Tabela de rotas lida (netsh)", routes.Count > 0, $"{routes.Count} rotas");
+Env("Tabela de rotas lida (netsh)", routes?.Count > 0, $"{routes?.Count ?? 0} rotas");
 var ip = await Net.AnyPublicIp();
 Env("IP público", ip != null, ip == null ? "" : Fmt.MaskIp(ip));
 var home = await Net.HomePublicIp(best);

@@ -234,19 +234,27 @@ public static partial class Steam
     static extern bool CloseHandle(IntPtr h);
 
     /// <summary>
-    /// Path to cs2.exe: <paramref name="saved"/> (Settings.Cs2Path) if it is still there, else the one of the running process, else
-    /// searched in the Steam libraries. Only reads: the window saves a new place (MainWindow.RememberCs2), the Core never writes the settings.
+    /// The cs2.exe that runs wins over the saved one: with two copies on the disk (an old library left behind) the CS2 lock must be on
+    /// the one Steam started, or CS2 goes out from home. With CS2 closed the saved one, while it is still there. Null = search.
+    /// </summary>
+    public static string PickCs2(string saved, bool savedExists, IEnumerable<string> running) =>
+        running.FirstOrDefault(p => p != null) ?? (savedExists ? saved : null);
+
+    /// <summary>
+    /// Path to cs2.exe: the one of the running process, else <paramref name="saved"/> (Settings.Cs2Path) if it is still there, else
+    /// searched in the Steam libraries (<see cref="PickCs2"/>). Only reads: the window saves a new place (MainWindow.RememberCs2), the
+    /// Core never writes the settings.
     /// </summary>
     public static string FindCs2(string saved)
     {
-        if (saved != null && File.Exists(saved)) return saved;
-        string found = null;
+        var running = new List<string>();
         try
         {
             foreach (var p in Cs2Launch.Processes())
-                using (p) found ??= ImagePath(p.Id);
+                using (p) running.Add(ImagePath(p.Id));
         }
         catch { }
+        var found = PickCs2(saved, saved != null && File.Exists(saved), running);
         if (found == null && InstallDir() is string dir)
         {
             var libs = new List<string> { dir };

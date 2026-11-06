@@ -137,6 +137,14 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Start with Windows stayed ticked after another Windows user of the same PC turned it on for themselves (the task is one per PC). It now shows off for you.
 - Started with Windows while the notification area wasn't ready, the app could hide its window with no icon to bring it back. The window now stays open then.
 - With the app open in another Windows user's session, starting it said to look in the taskbar. It now says the copy is open in another user's session.
+- With Save mobile data on, unplugging the phone made the app run PowerShell every few seconds and write that the PC may have no internet through the phone. The app now knows the setting left with the phone's adapter.
+- With two copies of CS2 on the disk (an old Steam library left behind), the CS2 lock could go on the copy that wasn't running, so CS2 went out from home with protection on. It now goes on the CS2 that runs.
+- With a VPN app on, the app measured the VPN's IP as your home IP, so a phone sharing your home Wi-Fi could pass the check. The home IP is no longer measured through a VPN, and Status says to turn the VPN off for a moment when the home IP isn't known yet.
+- If Windows was slow to list its routes, the app could forget its own routes and say the network was restored. It now keeps them and says the route table couldn't be read.
+- With protection off or in No phone mode, the app tried to delete Windows' own routes on the phone's adapter at each start and wrote a "Couldn't delete the route" line for each. It leaves them alone now, and its own routes on an adapter with no gateway are removed again.
+- With protection off, a protection rule Windows didn't remove at that moment stayed until something else changed. The app now tries again every minute and says so in the Log.
+- After the PC woke from sleep, the phone stayed trusted from before, even if it had joined your home Wi-Fi in the night. Its IP is now checked again right after waking.
+- On Windows 11 with Location turned off, a hotspot always showed as "not connected" because Windows hides the Wi-Fi name. Status and picking the hotspot now say to turn on Location.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

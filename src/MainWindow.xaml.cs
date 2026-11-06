@@ -207,6 +207,7 @@ public partial class MainWindow : Window
                 await SyncNow();
                 _ = RefreshPublicIps();
             });
+            Microsoft.Win32.SystemEvents.PowerModeChanged += OnPowerModeChanged;
             _queryTimer.Start();
             if (_servers.Count > 0) _ = QueryServers(true);
             AfterUpdateStart();
@@ -216,6 +217,22 @@ public partial class MainWindow : Window
         }
         _secondTimer.Start();
         AfterStartupDev();
+    }
+
+    /// <summary>
+    /// Back from sleep: the phone may have joined the home Wi-Fi in the night and kept the same adapter and local IP, so its IP is
+    /// measured again before anything goes through it (blocked for those few seconds, without a drop toast or sound).
+    /// </summary>
+    void OnPowerModeChanged(object sender, Microsoft.Win32.PowerModeChangedEventArgs e)
+    {
+        if (e.Mode != Microsoft.Win32.PowerModes.Resume) return;
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (_restored || _sessionEnding) return;
+            _verifiedKey = null;
+            _ = SyncNow(force: true);
+            _ = RefreshPublicIps();
+        });
     }
 
     async Task OnTick()

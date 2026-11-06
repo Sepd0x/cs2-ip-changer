@@ -171,6 +171,7 @@ public partial class MainWindow
     protected override void OnClosed(EventArgs e)
     {
         UnregisterHotkeys();
+        Microsoft.Win32.SystemEvents.PowerModeChanged -= OnPowerModeChanged;   // a static event: it would hold the window
         _tray?.Dispose();
         _tray = null;
         // The data counted since the last save. Closing goes on if it can't be written, but the Log says why.
