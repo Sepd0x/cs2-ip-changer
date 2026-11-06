@@ -83,8 +83,9 @@ static class Beta9Tests
             @"_checks\.Add\(\w+ = new CheckItem \{ Title = ""([^""]+)""").Select(m => m.Groups[1].Value).ToList();
         check("Checks: cada linha do painel tem nome curto para o relatório", titles.Count >= 11 && titles.All(Telemetry.CheckKeys.ContainsKey),
             string.Join(", ", titles.Where(x => !Telemetry.CheckKeys.ContainsKey(x))));
-        var workerChk = System.Text.RegularExpressions.Regex.Match(File.ReadAllText(Path.Combine(SecurityTests.Repo(), "worker", "stats", "src", "index.js")), @"chk: \[([^\]]+)\]").Groups[1].Value;
-        check("Checks: os nomes curtos são os mesmos no Worker (família chk fechada)", Telemetry.CheckKeys.Values.All(k => workerChk.Contains($"'{k}'")), workerChk);
+        // Beta.12: o contrato (worker/stats/contract.json) é a lista que o Worker lê
+        var workerChk = TelemetryTests.Contract().GetProperty("bands").GetProperty("chk").EnumerateArray().Select(x => x.GetString()).ToList();
+        check("Checks: os nomes curtos são os mesmos no Worker (família chk fechada)", Telemetry.CheckKeys.Values.OrderBy(k => k).SequenceEqual(workerChk.OrderBy(k => k)), string.Join(",", workerChk));
         var red = Telemetry.RedChecks(new[] { "Windows Firewall", "Mobile data", "Windows Firewall", "texto inventado", null });
         check("Checks: só os nomes conhecidos, uma vez cada, nunca o texto", red.SequenceEqual(new[] { "chk_firewall", "chk_data" }), string.Join(",", red));
         check("Checks: sem linhas a vermelho não manda nada", Telemetry.RedChecks(null).Count == 0 && Telemetry.RedChecks(Array.Empty<string>()).Count == 0, "");

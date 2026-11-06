@@ -47,3 +47,10 @@ jobs:
 
       - name: Run the tests
         run: dotnet run --project tests/Tests.csproj -c Debug
+
+      # The stats Worker and the design tokens, with the Node that comes on the runner (no packages to install)
+      - name: Run the Worker tests
+        run: node --test (Get-ChildItem worker/stats/test/*.test.mjs).FullName
+
+      - name: Check the design tokens
+        run: node tools/design-tokens.mjs --check

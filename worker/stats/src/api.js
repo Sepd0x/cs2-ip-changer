@@ -6,7 +6,7 @@
 // installs up to 2 nov. 2026 were these: no Steam account, no click, 0 minutes). An install-day counts as real when it has a Steam
 // account, a click or a minute; the rest is shown apart as "automated".
 
-import { DAILY_ROWS, LIVE_ROWS, SITE_ROWS, FORGET_ROWS } from './index.js';
+import { DAILY_ROWS, LIVE_ROWS, SITE_ROWS, FORGET_ROWS, contract } from './index.js';
 
 const PERIODS = [1, 7, 30, 90];
 // v4 (Nov. 2026, performance review 4.7): the days of each install are read for this long, and its first day apart with one row
@@ -80,7 +80,7 @@ export function lisbonHour(ts) {
   HOURS.set(h, out);
   return { ...out };
 }
-const SCREENS = ['connection', 'servers', 'regions', 'accounts', 'configs', 'profiles', 'log', 'settings'];
+const SCREENS = contract.screens;
 const AGE = { age_0: '0', age_1: '1', age_2_3: '2-3', age_4_6: '4-6', age_7_13: '7-13', age_14_29: '14-29', age_30p: '30+' };
 // Counted by the app, not real counters for the charts (list sizes in bands, the beta.9 extras)
 const NOT_COUNTERS = /^(servers|accounts|flags|open_with|open_with_admin|regions_blocked|scr_.*|path_.*|age_.*|act_.*|set_.*|reg_.*|data_.*|chk_.*|id_install|net_dc)$/;
@@ -103,13 +103,15 @@ const BANDS = {
 const INSTALL_NAMES = ['first_start', 'accounts', 'net_dc', 'app_start', 'crash', 'ip_changed', 'ip_same', 'ip_no_network', 'ip_home_back', 'min_prot', 'm_valve', 'm_comm',
   'm_valve_lag', 'm_comm_lag', 'unclean_exit', 'leak_ok', 'leak_bad', 'log_error', 'upd_failed', 'rep_exit', 'cable_hint', 'cs2_start', ...SIZES];
 const INSTALL_GLOBS = ['tp_*', 'phone_*', 'chk_*', 'data_*', 'age_*'];
-// Phone setup steps (PhoneSetup.Key of PhoneStep), in the app's order
-const SETUP = [['noadbtool', 'Sem ADB'], ['adbfailed', 'ADB falhou'], ['nousb', 'Sem cabo USB'], ['usbdrivererror', 'Driver USB'], ['nousbdebugging', 'Depuração USB desligada'],
-  ['unauthorized', 'Depuração por autorizar'], ['offline', 'Telemóvel offline'], ['tetheroff', 'Tethering desligado'], ['wifion', 'Wi-Fi do telemóvel ligado'], ['pconphone', 'PC no telemóvel'], ['done', 'Pronto']];
-// The Checks panel's rows (chk_ + Telemetry.CheckKeys), by the title the app shows
-const CHECKS = [['egress', 'Phone connection'], ['routes', 'Servers through the phone'], ['cs2', 'CS2 only through the phone'], ['kill', 'Block if the phone drops'],
-  ['firewall', 'Windows Firewall'], ['diff', 'Phone IP is not your home IP'], ['data', 'Mobile data'], ['quality', 'Connection quality'],
-  ['steam', 'Steam through the phone'], ['pc', 'Other apps'], ['regions', 'Matchmaking regions']];
+// Phone setup steps (PhoneSetup.Key of PhoneStep, contract.setup), in the app's order, with the dashboard's label
+const SETUP_LABEL = { noadbtool: 'Sem ADB', adbfailed: 'ADB falhou', nousb: 'Sem cabo USB', usbdrivererror: 'Driver USB', nousbdebugging: 'Depuração USB desligada',
+  unauthorized: 'Depuração por autorizar', offline: 'Telemóvel offline', tetheroff: 'Tethering desligado', wifion: 'Wi-Fi do telemóvel ligado', pconphone: 'PC no telemóvel', done: 'Pronto' };
+const SETUP = contract.setup.map((k) => [k, SETUP_LABEL[k] ?? k]);
+// The Checks panel's rows (chk_ + Telemetry.CheckKeys, contract.checks), by the title the app shows
+const CHECK_TITLE = { egress: 'Phone connection', routes: 'Servers through the phone', cs2: 'CS2 only through the phone', kill: 'Block if the phone drops',
+  firewall: 'Windows Firewall', diff: 'Phone IP is not your home IP', data: 'Mobile data', quality: 'Connection quality',
+  steam: 'Steam through the phone', pc: 'Other apps', regions: 'Matchmaking regions' };
+const CHECKS = contract.checks.map((k) => [k, CHECK_TITLE[k] ?? k]);
 // Install age bands to the cohort table's columns (days after the install: 0, 1, 3, 7, 14, 30) and the band's first day
 const COHORT = { age_0: [0, 0], age_1: [1, 1], age_2_3: [2, 2], age_7_13: [3, 7], age_14_29: [4, 14], age_30p: [5, 30] };
 // Valve's public datacenter codes (Regions page) to the city, for the dashboard; any other shows as its code
@@ -120,6 +122,8 @@ const WINDOWS = { 19045: 'Windows 10 22H2', 22621: 'Windows 11 22H2', 22631: 'Wi
 const ENV_LABEL = { win: { s: 'Pequena', m: 'Média', l: 'Grande' }, scale: { '100': '100%', '125': '125%', '150': '150%', '175p': '175%+' }, net: { '5g': '5G', '4g': '4G', '3g': '3G', '2g': '2G' },
   brand: { samsung: 'Samsung', google: 'Google', xiaomi: 'Xiaomi', oneplus: 'OnePlus', motorola: 'Motorola', oppo: 'OPPO', realme: 'realme', vivo: 'vivo', huawei: 'Huawei',
     honor: 'Honor', nothing: 'Nothing', sony: 'Sony', asus: 'ASUS', nokia: 'Nokia', zte: 'ZTE', tcl: 'TCL', other: 'Outra' } };
+/** The dashboard's labels for the contract's names, so test/contract.test.mjs can check none is missing. */
+export const LABELS = { bands: BANDS, brand: ENV_LABEL.brand, setup: SETUP_LABEL, checks: CHECK_TITLE };
 
 /** One row per band, in order: { band, n } or, with byLink, { band, usb, hotspot }. */
 function bandRows(fam, get) { return BANDS[fam].map(([b, label]) => ({ band: label, ...get(b) })); }

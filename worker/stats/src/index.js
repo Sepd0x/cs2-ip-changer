@@ -9,7 +9,11 @@
 // list sizes: servers, accounts, flagged players, "Open with CS2" programs and turned-off regions) and errors as type + code location. Never kept: the sender's IP (Cloudflare needs it to deliver the
 // request and works out the country from it; this code only gets the country, never the IP), and nothing the app doesn't send (no IPs, servers, accounts, names). Logs are off (wrangler.jsonc).
 
-const MAX_BODY = 16 * 1024;
+// The names, bands and limits the app sends with: one file shared with the app's tests and the dashboard (contract.json)
+import contract from '../contract.json' with { type: 'json' };
+export { contract };
+
+const MAX_BODY = contract.limits.bodyBytes;
 // Rows written a day, index updates included (D1 counts them). Well under D1's free 100,000: the per-install limit below is keyed
 // on an id the sender picks, so a flood with fresh ids stops here instead of using up the day's writes (or costing money).
 export const DAILY_ROWS = 40000;
@@ -68,7 +72,7 @@ const slowDown = (headers = {}) => new Response('later', { status: 429, headers:
 // The database's budget table and triggers made once per database here (a no-op when schema.sql already made them)
 const budgetReady = new WeakSet();
 // One report per install every 10 minutes; one more, marked exit, inside that time for the report at close, sleep or sign-out
-const GAP = 10 * 60 * 1000;
+const GAP = contract.limits.reportGapMinutes * 60 * 1000;
 const ID = /^[0-9a-f]{32}$/;
 const VERSION = /^\d+\.\d+\.\d+(-[0-9A-Za-z.-]{1,30})?$/;
 const NAME = /^[A-Za-z0-9_]{1,48}$/;
@@ -77,56 +81,30 @@ const LOCATION = /^[A-Za-z0-9_.<>`|+-]{1,120}$/;
 const COUNTRY = /^[A-Z][A-Z0-9]$/;   // ISO 3166 (PT, BR, US…), or Cloudflare's XX (unknown) and T1 (Tor)
 // Minutes in one report: what one day can hold. The app sends the minutes since its last report, and since it also reports at close
 // that is under a day; more is someone inflating the numbers.
-const MAX_MINUTES = 24 * 60;
+const MAX_MINUTES = contract.limits.maxMinutes;
 // beta.9: the app's screens (Nav_Checked), the heat map grid (same as the dashboard's ui-map.js) and install age bands
 const SCREEN = /^[a-z]{1,12}$/;
 const CELL = /^(\d{1,2}),(\d{1,2})$/;
-const COLS = 24, ROWS = 16;
+const { cols: COLS, rows: ROWS } = contract.grid;
 const AGES = { '0': '0', '1': '1', '2-3': '2_3', '4-6': '4_6', '7-13': '7_13', '14-29': '14_29', '30+': '30p' };
 // Hosting and cloud networks (Google, Amazon, Microsoft, OVH, Hetzner, DigitalOcean, Linode, Vultr, Alibaba, Tencent, Oracle, M247,
 // Datacamp, Contabo, Scaleway, netcup). Online virus scanners run the exe there. Only a yes/no is kept (count net_dc), never the network.
 const HOSTING = new Set([15169, 396982, 16509, 14618, 8075, 8068, 16276, 24940, 14061, 63949, 20473, 45102, 132203, 31898, 9009, 212238, 60068, 51167, 12876, 197540]);
 const HEAT_TABLE = 'CREATE TABLE IF NOT EXISTS heat (day TEXT NOT NULL, app TEXT NOT NULL, screen TEXT NOT NULL, kind TEXT NOT NULL, cell TEXT NOT NULL, n INTEGER NOT NULL, dev INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, app, screen, kind, cell, dev))';
 const LIVE_TABLE = 'CREATE TABLE IF NOT EXISTS live (id TEXT PRIMARY KEY, ts INTEGER NOT NULL, app TEXT NOT NULL, mode TEXT, link TEXT, screen TEXT, cs2 INTEGER, prot INTEGER, tray INTEGER, dev INTEGER NOT NULL DEFAULT 0)';
-const LIVE_GAP = 4 * 60 * 1000;   // the app sends every 5 minutes
+// The app sends every liveEveryMinutes; a little less here so a late tick isn't refused
+const LIVE_GAP = contract.limits.liveGapMinutes * 60 * 1000;
 // beta.9 part 2: counters the app sends in bands (src/Core/Telemetry.cs). A name in one of these families must be one of its bands,
 // so nothing else (an exact number, a made-up name) comes in through them. Names the Worker makes itself can't be sent as counters.
-const BANDS = {
-  m: ['valve', 'valve_lag', 'comm', 'comm_lag'],
-  ping: ['lt30', '30_50', '50_80', '80_120', 'gt120'],
-  jit: ['lt5', '5_10', '10_20', '20_40', 'gt40'],
-  jitd: ['lt5', '5_10', '10_20', '20_40', 'gt40'],
-  late: ['0', 'lt1', '1_3', '3_10', 'gt10'],
-  loss: ['0', '1_10', '11_100', 'gt100'],
-  sess: ['lt5', '5_15', '15_30', '30_60', '1_2h', 'gt2h'],
-  st: ['lt1', '1_2', '2_4', '4_8', 'gt8'],
-  tp: ['lt10', '10_30', '30_60', '1_3m', 'gt3m'],
-  start: ['auto', 'hand'],
-  upd: ['seen', 'accepted', 'declined', 'failed', 'done'],
-  // Change IP (method, time, attempts, quality measured after it, retried for jitter), phone drops per session, Rejoin, the
-  // first screen picked after the start, the cable hint
-  chg: ['air', 'data', 'retry'],
-  chgt: ['lt5', '5_10', '10_20', '20_40', 'gt40'],
-  chga: ['1', '2', '3', '4p'],
-  chgq: ['good', 'fair', 'bad'],
-  drop: ['0', '1', '2', '3p'],
-  rej: ['try', 'back', 'wait'],
-  fs: ['connection', 'servers', 'regions', 'accounts', 'configs', 'profiles', 'log', 'settings'],
-  cable: ['hint'],
-  // The Checks panel's red rows when the report is built (Telemetry.CheckKeys) and Run leak test, passed or failed
-  chk: ['egress', 'routes', 'cs2', 'kill', 'firewall', 'diff', 'data', 'quality', 'steam', 'pc', 'regions'],
-  leak: ['ok', 'bad'],
-};
+const BANDS = contract.bands;
 const UPD_FROM = /^updfrom_\d+_\d+_\d+(_[0-9A-Za-z_]{1,20})?$/;
-const DATA = ['lt250m', '250_500m', '500m_1g', '1_2g', 'gt2g'];
+const DATA = contract.data;
 const REGION = /^[a-z]{3,4}[0-9]?$/;
 const SCROLL = /^scl_[a-z]{1,12}_(0|25|50|75|100)$/;
 // v4: rep_exit is the Worker's own (a report marked exit), never the app's
 const RESERVED = /^(scr|path|age|act|set|reg|data)_|^(net_dc|id_install|rep_exit)$/;
-// Same list as Telemetry.SettingNames: on/off settings and the mode, by name only
-const SETTINGS = new Set(['GameMode', 'SteamOnEgress', 'KeepPcOffPhone', 'RequireGoodLink', 'CheckUpdates', 'SteamSilent', 'SteamOffline', 'StreamerMode',
-  'AutoStreamer', 'AutoQuery', 'CleanupOnExit', 'CloseToTray', 'AutoJoinFollowed', 'SwitchIp', 'SwitchAccount', 'SwitchRejoin',
-  'SwitchOpenWith', 'CommandSounds', 'AutoModeByQuality', 'NoPhone', 'Mode']);
+// On/off settings and the mode, by name only (the app's Telemetry.SettingNames is checked against the same list)
+const SETTINGS = new Set(contract.settings);
 
 /** A counter name the app may send: not one the Worker makes, and inside its family's bands when it has one. */
 export function counterOk(name) {
@@ -144,7 +122,7 @@ const ENV = {
   win: (x) => ['s', 'm', 'l'].includes(x),
   scale: (x) => ['100', '125', '150', '175p'].includes(x),
   build: (x) => Number.isInteger(x) && x >= 10000 && x <= 99999,
-  brand: (x) => ['samsung', 'google', 'xiaomi', 'oneplus', 'motorola', 'oppo', 'realme', 'vivo', 'huawei', 'honor', 'nothing', 'sony', 'asus', 'nokia', 'zte', 'tcl', 'other'].includes(x),
+  brand: (x) => contract.brands.includes(x),
   android: (x) => typeof x === 'string' && /^\d{1,2}$/.test(x) && +x >= 4 && +x <= 40,
   net: (x) => ['5g', '4g', '3g', '2g'].includes(x),
 };
@@ -380,13 +358,13 @@ export default {
     ];
     // Caps a little above what the app sends (it stops at 140 buttons and 90 counters with their bands, 30 errors). The good
     // names are picked before the cap, so junk first in the body can't push real counters out.
-    for (const [table, obj, max, cap, ok] of [['clicks', b.clicks, 100000, 150, (x) => NAME.test(x)], ['counts', b.counts, 1000000, 100, counterOk]]) {
+    for (const [table, obj, max, cap, ok] of [['clicks', b.clicks, 100000, contract.limits.clicks, (x) => NAME.test(x)], ['counts', b.counts, 1000000, contract.limits.counts, counterOk]]) {
       if (!plain(obj)) continue;
       for (const [name, n] of Object.entries(obj).filter(([name, n]) => ok(name) && int(n, max) !== null).slice(0, cap))
         stmts.push(env.DB.prepare(`INSERT INTO ${table} (day, id, name, n, dev) VALUES (?, ?, ?, ?, ?)`).bind(day, b.id, name, Math.min(n, MAX_COUNT), dev));
     }
     if (Array.isArray(b.errors))
-      for (const e of b.errors.slice(0, 30))
+      for (const e of b.errors.slice(0, contract.limits.errors))
         if (e && NAME.test(e.type || '') && LOCATION.test(e.at || '') && int(e.n, 100000) !== null)
           stmts.push(env.DB.prepare('INSERT INTO errors (day, id, app, type, at, n, dev) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(day, b.id, b.app, e.type, e.at, Math.min(e.n, MAX_COUNT), dev));
     // beta.9 extras, kept as counters of this install-day: minutes per screen, moves between screens, the install's age band,
@@ -419,7 +397,7 @@ export default {
     let cost = 3 + 2 * (stmts.length - 1);
     // The heat map, added into the day's totals without the ID. Not from hosting networks: a scanner clicking around isn't a person.
     if (Array.isArray(b.heat) && !hosting)
-      for (const h of b.heat.slice(0, 300)) {
+      for (const h of b.heat.slice(0, contract.limits.heat)) {
         if (!Array.isArray(h) || h.length !== 4) continue;
         const [s, kind, cell, n] = h;
         const m = typeof cell === 'string' ? CELL.exec(cell) : null;

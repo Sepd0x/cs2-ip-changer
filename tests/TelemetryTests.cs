@@ -6,8 +6,45 @@ using SRT.Core;
 // os limites abaixo dos do servidor e o corpo que o teste ponta a ponta do Worker usa (worker/stats/test/app-report.json).
 static class TelemetryTests
 {
+    /// <summary>Beta.12: o contrato da telemetria (worker/stats/contract.json), o mesmo ficheiro que o Worker lê.</summary>
+    public static System.Text.Json.JsonElement Contract() =>
+        System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(SecurityTests.Repo(), "worker", "stats", "contract.json"))).RootElement;
+
+    static List<string> Names(System.Text.Json.JsonElement e) => e.EnumerateArray().Select(x => x.GetString()).ToList();
+
+    /// <summary>Beta.12 (untangle B4): o que a app manda cabe no contrato, sem cópias à mão do lado da app.</summary>
+    static void ContractChecks(Action<string, bool, string> check)
+    {
+        var c = Contract();
+        var bands = c.GetProperty("bands");
+        List<string> Band(string fam) => Names(bands.GetProperty(fam));
+        bool All<T>(string fam, IEnumerable<T> inputs, Func<T, string> f) => inputs.Select(f).All(Band(fam).Contains);
+        var ints = Enumerable.Range(-5, 400).ToList();
+        var secs = Enumerable.Range(0, 400).Select(s => TimeSpan.FromSeconds(s * 30)).ToList();
+        check("Contrato: as bandas de ping, jitter, perda e atraso estão no contrato",
+            All("ping", ints, Telemetry.PingBand) && All("jit", ints, Telemetry.JitterBand) && All("loss", ints, Telemetry.LossBand)
+            && All("late", ints.Select(i => i / 10.0), Telemetry.LateBand), "");
+        check("Contrato: as bandas de tempo estão no contrato",
+            All("sess", secs, Telemetry.SessionBand) && All("st", secs.Select(s => s / 60), Telemetry.StartupBand) && All("tp", secs, Telemetry.ProtectedBand)
+            && All("chgt", secs.Select(s => s / 30), Telemetry.ChangeBand), "");
+        check("Contrato: tentativas, quedas e dados móveis estão no contrato",
+            All("chga", ints, Telemetry.AttemptsBand) && All("drop", ints, Telemetry.DropsBand)
+            && ints.Select(i => Telemetry.DataBand(i * 10_000_000L)).All(Names(c.GetProperty("data")).Contains), "");
+        check("Contrato: as verificações (chk_) são as do contrato", Telemetry.CheckKeys.Values.OrderBy(k => k).SequenceEqual(Names(c.GetProperty("checks")).OrderBy(k => k)), "");
+        check("Contrato: as marcas do telemóvel estão no contrato",
+            new[] { "Samsung", "redmi", "HMD", "Fairphone", "google" }.Select(Telemetry.BrandOf).All(Names(c.GetProperty("brands")).Contains), "");
+        var lim = c.GetProperty("limits");
+        check("Contrato: os minutos e o intervalo dos relatórios são os do contrato",
+            Telemetry.MaxMinutes == lim.GetProperty("maxMinutes").GetInt32() && Telemetry.Gap == TimeSpan.FromMinutes(lim.GetProperty("reportGapMinutes").GetInt32()), "");
+        check("Contrato: a app manda abaixo dos limites do servidor",
+            Telemetry.MaxClicks <= lim.GetProperty("clicks").GetInt32() && Telemetry.MaxCounts <= lim.GetProperty("counts").GetInt32()
+            && Telemetry.MaxErrors <= lim.GetProperty("errors").GetInt32() && Telemetry.MaxHeat <= lim.GetProperty("heat").GetInt32()
+            && Telemetry.MaxBody <= lim.GetProperty("bodyBytes").GetInt32(), "");
+    }
+
     public static void Run(Action<string, bool, string> check)
     {
+        ContractChecks(check);
         var t = new DateTime(2026, 11, 4, 15, 0, 0, DateTimeKind.Utc);
 
         // D1: o relatório periódico (de 30 em 30 min com algo novo), nunca dentro dos 10 min do servidor

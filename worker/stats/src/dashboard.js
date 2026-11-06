@@ -41,7 +41,7 @@ export function readable(name) {
 
 const MODES = { game: 'Game only', cs2open: 'Whole PC while CS2 is open', always: 'Whole PC, always', nophone: 'No phone' };
 const LINKS = { usb: 'USB cable', hotspot: 'Wi-Fi hotspot', other: 'Other adapter', none: 'Phone not connected' };
-const LISTS = { servers: 'Servers', accounts: 'Accounts', flags: 'Flagged players', open_with: 'Open with CS2', regions_blocked: 'Regions off' };
+const LISTS = { servers: 'Servers', accounts: 'Accounts', flags: 'Flagged players', open_with: 'Open with CS2', open_with_admin: 'Open with CS2 (as admin)', regions_blocked: 'Regions off' };
 
 export default {
   /** The cron: the live signal every 10 minutes, GitHub's public numbers and the 12-month cleanup once a day. */
