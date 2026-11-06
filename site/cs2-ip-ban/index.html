@@ -800,13 +800,13 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
      no ID, nothing kept in your browser. Off with Do Not Track or Global Privacy Control. Code: worker/stats/src/index.js */
   var nv=navigator;
   /* a link with ?ref=<name> (a TikTok bio, say: links from apps come with no referrer) counts as from that name: letters,
-     digits and dashes only, 20 at most; the parameter leaves the address bar at once, so a shared link doesn't carry it */
+     digits and dashes only, 20 at most, sent as ref:<name> so it never reads as a site; the parameter leaves the address bar at once, so a shared link doesn't carry it */
   var rq='';try{var sp=new URLSearchParams(location.search);if(sp.has('ref')){rq=(sp.get('ref')||'').toLowerCase();if(!/^[a-z0-9-]{1,20}$/.test(rq))rq='';sp.delete('ref');var qs=sp.toString();history.replaceState(history.state,'',location.pathname+(qs?'?'+qs:'')+location.hash)}}catch(x){}
   if(nv.sendBeacon&&location.hostname==='sepd0x.github.io'&&nv.doNotTrack!=='1'&&window.doNotTrack!=='1'&&nv.globalPrivacyControl!==true){
     var pg=location.pathname.replace(/^\/cs2-ip-changer/,'').replace(/index\.html$/,'')||'/';
     if(pg.slice(-1)!=='/')pg+='/';
     var rf='';try{if(d.referrer){var u=new URL(d.referrer);if(u.hostname!==location.hostname)rf=u.hostname}}catch(x){}
-    if(!rf&&rq)rf=rq;
+    if(!rf&&rq)rf='ref:'+rq;
     var hit=function(ev){try{nv.sendBeacon('https://stats.cs2ipchanger.workers.dev/v1/site',JSON.stringify({v:1,p:pg,r:rf,e:ev}))}catch(x){}};
     hit('view');
     d.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&/\/releases\/(latest\/)?download\//.test(a.href))hit('download')});

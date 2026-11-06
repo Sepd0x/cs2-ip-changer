@@ -194,8 +194,12 @@ static class DesignSyncTests
         check("SEO: nenhuma guia repete o h1 da home", homeH1.Length > 0 && sameH1.Count == 0, string.Join(", ", sameH1));
         var noSs = pagesHtml.Where(kv => Regex.Matches(kv.Value, @"Download for Windows\s*</a>").Count > Regex.Matches(kv.Value, "class=\"rel-ss[^\"]*\">Windows may say \"Windows protected your PC\": click More info, then Run anyway. <a href=\"(\\.\\./)?is-it-safe/\">").Count).Select(kv => kv.Key).ToList();
         check("SEO: debaixo de cada Download, o que fazer no aviso do SmartScreen", noSs.Count == 0, string.Join(", ", noSs));
-        var noRef = pagesHtml.Where(kv => !kv.Value.Contains("if(!/^[a-z0-9-]{1,20}$/.test(rq))rq=''") || !kv.Value.Contains("sp.delete('ref')") || !kv.Value.Contains("if(!rf&&rq)rf=rq")).Select(kv => kv.Key).ToList();
+        var noRef = pagesHtml.Where(kv => !kv.Value.Contains("if(!/^[a-z0-9-]{1,20}$/.test(rq))rq=''") || !kv.Value.Contains("sp.delete('ref')") || !kv.Value.Contains("if(!rf&&rq)rf='ref:'+rq")).Select(kv => kv.Key).ToList();
         check("SEO: o contador usa o ?ref= (só [a-z0-9-], até 20) e tira-o da barra", noRef.Count == 0, string.Join(", ", noRef));
+        // o site manda "ref:<nome>" e o Worker só guarda esse formato (antes mandava "tiktok" e o Worker contava-o como "other")
+        var workerSrc = Txt("worker/stats/src/index.js");
+        check("SEO: o ?ref= chega ao Worker no formato que ele guarda (ref:<nome>)",
+            workerSrc.Contains("const REF_TAG = /^ref:[a-z0-9-]{1,20}$/;") && workerSrc.Contains("!REF_TAG.test(ref)"), "");
         var slowLd = new[] { "site/index.html", "site/404.html" }.Concat(guides).Where(f => !Txt(f).Contains("setTimeout(end,matchMedia('(pointer:coarse)').matches?1100:6000)")).ToList();
         check("Site: no telemóvel o ecrã de carregamento sai em ~1,5 s e não espera pelo 3D", slowLd.Count == 0 && homeHtml.Contains("@media (pointer:fine),(pointer:none){html.ld .b-cover .copy>*{animation-play-state:paused}}"), string.Join(", ", slowLd));
 
