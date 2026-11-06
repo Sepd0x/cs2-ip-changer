@@ -92,8 +92,12 @@ public partial class MainWindow
             {
                 Force = force, Distrust = DistrustNow(_distrust, PhoneWifiOn, _noHome), Cs2Running = cs2Running, VerifiedKey = _verifiedKey, On = _protOn,
             });
-            if (FromSync(_s, rep)) SaveSettings();
-            ApplyReport(rep);
+            // Closing or Windows signing out: the Guard no longer writes, and its answer isn't shown
+            if (!_restored && !_sessionEnding)
+            {
+                if (FromSync(_s, rep)) SaveSettings();
+                ApplyReport(rep);
+            }
         }
         finally { _syncing = false; }
         if (_syncAgain)
@@ -364,8 +368,7 @@ public partial class MainWindow
         else if (rep.Distrust == Distrust.Unchecked)
             SetHero(held, "Checking the phone's IP…", $"{Blocked(rep)} stay blocked until the app confirms the phone's public IP is not your home IP.");
         else if (rep.Distrust == Distrust.NoHome)
-            SetHero(held, "Home IP not known yet",
-                $"{Blocked(rep)} stay blocked. Close CS2 (or pick Game only) for a moment so the app can read your home IP and compare it with the phone's.");
+            SetHero(held, "Home IP not known yet", NoHomeSub(Blocked(rep), VpnIsDefault(rep)));
         else if (rep.Distrust == Distrust.PhoneWifi && !same)
             SetHero(held, "Phone Wi-Fi is on",
                 $"{Blocked(rep)} are blocked. With Wi-Fi on, the phone may share your home network instead of mobile data: turn it off under Phone.");
@@ -679,7 +682,7 @@ public partial class MainWindow
         {
             if (a.Ssid == null)
             {
-                Toast("First connect the PC's Wi-Fi to the phone's hotspot, then pick it again.", false);
+                Toast(a.SsidUnknown ? Net.SsidLocationText : "First connect the PC's Wi-Fi to the phone's hotspot, then pick it again.", false);
                 FillEgressCombo(_last.Adapters);
                 return;
             }
@@ -783,6 +786,21 @@ public partial class MainWindow
         : key == null || shown == null || shownKey != key ? (null, false)
         : (shown, true);
 
+    /// <summary>
+    /// The adapter the home IP is measured through: the one Windows uses for the rest of the PC, unless that is the phone's, or a VPN
+    /// (its IP isn't your home IP, so a phone sharing your home Wi-Fi would pass the check). -1 = not measured now: the last home IP counts.
+    /// </summary>
+    public static int HomeIf(GuardReport rep, Adapter candidate) =>
+        rep == null || rep.PcDefaultIsEgress || candidate?.Index == rep.PcDefaultIndex || VpnIsDefault(rep) ? -1 : rep.PcDefaultIndex;
+
+    /// <summary>The rest of the PC goes out through a VPN app's adapter.</summary>
+    public static bool VpnIsDefault(GuardReport rep) => rep?.Adapters.Any(a => a.Index == rep.PcDefaultIndex && a.IsVpn) == true;
+
+    /// <summary>Status while the home IP isn't known. Through a VPN it can't be read until the VPN is off for a moment.</summary>
+    public static string NoHomeSub(string blocked, bool vpnDefault) => vpnDefault
+        ? $"{blocked} stay blocked. Your PC goes out through a VPN app, so the app can't read your home IP: turn the VPN off for a moment so it can compare it with the phone's."
+        : $"{blocked} stay blocked. Close CS2 (or pick Game only) for a moment so the app can read your home IP and compare it with the phone's.";
+
     async Task RefreshPublicIpsCore()
     {
         if (_demo) return;
@@ -793,7 +811,7 @@ public partial class MainWindow
         var candidate = rep?.Candidate;
         // Home = the adapter Windows uses for the rest of the PC. If that adapter is the phone's (whole PC,
         // game mode, or only the hotspot exists), it can't be measured: the last confirmed home IP is shown.
-        var homeIf = rep == null || rep.PcDefaultIsEgress || candidate?.Index == rep.PcDefaultIndex ? -1 : rep.PcDefaultIndex;
+        var homeIf = HomeIf(rep, candidate);
 
         var key = Guard.KeyOf(candidate);
         _measuredKey = key;

@@ -26,6 +26,8 @@ public sealed class Adapter
     public bool IsWifi { get; init; }
     /// <summary>Name of the Wi-Fi network the adapter is connected to (Wi-Fi adapters only).</summary>
     public string Ssid { get; set; }
+    /// <summary>Windows didn't let the app read the Wi-Fi name (Windows 11 24H2 asks for Location): null Ssid means "not known", not "not connected".</summary>
+    public bool SsidUnknown { get; set; }
     public string Kind => IsPhone ? "Phone (USB)" : IsUsbNet ? "USB network" : IsWifi ? "Wi-Fi" : IsVpn ? "VPN" : "Network";
     public string Display => $"{Name}  ·  {Description}";
     public override string ToString() => Display;
@@ -128,19 +130,37 @@ public static partial class Net
         try
         {
             var r = Proc.Run("netsh", "wlan show interfaces", 6000).GetAwaiter().GetResult();
-            // One block per adapter; the block's GUID links it to the right adapter.
-            var blocks = Regex.Split(r.Output, @"\r?\n\s*\r?\n");
-            foreach (var b in blocks)
+            var (byGuid, unreadable) = SsidsFrom(r.Output);
+            foreach (var (guid, ssid) in byGuid)
             {
-                var g = GuidLine.Match(b);
-                var ssid = SsidLine.Match(b);
-                if (!g.Success) continue;
-                var a = list.FirstOrDefault(x => x.Id.Trim('{', '}').Equals(g.Groups[1].Value, StringComparison.OrdinalIgnoreCase));
-                if (a != null) a.Ssid = ssid.Success ? ssid.Groups[1].Value : null;
+                var a = list.FirstOrDefault(x => x.Id.Trim('{', '}').Equals(guid, StringComparison.OrdinalIgnoreCase));
+                if (a != null) a.Ssid = ssid;
             }
+            // Wi-Fi is up but netsh gave no adapter at all: it refused (no Location permission), the name isn't known
+            if (unreadable) foreach (var a in list.Where(x => x.IsWifi && x.Up)) a.SsidUnknown = true;
         }
         catch { }
     }
+
+    /// <summary>
+    /// "netsh wlan show interfaces": one block per adapter, linked by its GUID, with its SSID (null = not connected). Unreadable: no
+    /// block with a GUID at all, as when Windows asks for the Location permission first; then no name is known.
+    /// </summary>
+    public static (Dictionary<string, string> ByGuid, bool Unreadable) SsidsFrom(string output)
+    {
+        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var b in Regex.Split(output ?? "", @"\r?\n\s*\r?\n"))
+        {
+            var g = GuidLine.Match(b);
+            if (!g.Success) continue;
+            var ssid = SsidLine.Match(b);
+            map[g.Groups[1].Value] = ssid.Success ? ssid.Groups[1].Value : null;
+        }
+        return (map, map.Count == 0);
+    }
+
+    /// <summary>What to do when Windows doesn't let the app read the Wi-Fi name.</summary>
+    public const string SsidLocationText = "Windows doesn't let the app read the Wi-Fi name: turn on Location in Windows Settings > Privacy & security > Location.";
 
     /// <summary>
     /// Picks the protected connection: the adapter pinned in Settings, or the first active USB phone.
@@ -155,7 +175,8 @@ public static partial class Net
             var a = all.FirstOrDefault(x => x.Id == fixedId && x.Up && x.LocalIp != null);
             if (a != null && a.IsWifi && !string.IsNullOrEmpty(fixedSsid) && a.Ssid != fixedSsid)
             {
-                problem = a.Ssid == null
+                problem = a.Ssid == null && a.SsidUnknown ? SsidLocationText
+                    : a.Ssid == null
                     ? $"The PC's Wi-Fi is not connected to the hotspot \"{fixedSsid}\"."
                     : $"The PC's Wi-Fi is connected to \"{a.Ssid}\", not to the hotspot \"{fixedSsid}\".";
                 return null;

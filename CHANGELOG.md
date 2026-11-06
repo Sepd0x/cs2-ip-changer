@@ -143,6 +143,28 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - A server filled with bots showed as full, so Wait for a slot never joined. Bots no longer count, since the server drops one to let you in.
 - If saving the account switch failed half way (a full disk), Steam's list of saved accounts could be left empty. It is now put back as it was.
 - With Steam closed by you, Log in from the app didn't add the console log option to CS2's launch options, so kicks weren't seen when Steam opened CS2 later.
+- Whole PC: closing the app and keeping protection left the DNS rule behind, so once the phone was gone (or after a restart) the PC couldn't open any website until the app was opened again. Closing with Keep now takes off the Whole PC rules and gives the phone its default route back; only the block on your servers and CS2 stays.
+- "Keep protection and close" with CS2 open, and Quit at the usage stats notice right after an update with CS2 open, left the phone's adapter without its default route, so the PC could have no internet through the phone later. They now give it back, as closing with Keep does.
+- A second X, Alt+F4 or Quit while the app was undoing the routes and the kill switch (or removing itself) closed it at once and left the block behind. It now waits for that to finish.
+- Turn off protection when closing: if something couldn't be removed, the app closed as if all was clean. It now says what stayed and where to remove it.
+- Signing out of Windows or shutting down with Turn off protection when closing could leave the Firewall rules on (WPF closes the app without waiting). The rules now go first, right when Windows asks, and the "CS2 is still open" question no longer shows up then.
+- Closing the app during Change IP, while the phone's mobile data (or airplane mode) was being switched, could leave the phone with no mobile data or in airplane mode. The app now turns it back on before it exits.
+- With an Android phone used, the app stayed running about 4 seconds after its window closed.
+- Remove everything (or Uninstall in Windows Settings) deleted the app even when it couldn't remove all of its rules, so `--restore` and a second try were gone too. When the network isn't fully restored, the app and its files now stay, and the result says how to try again.
+- After a power loss in the middle of saving, the app could start with all its settings, servers and account notes back to the defaults, and lose them for good two saves later. It now loads the copy that was left and says so in the Log.
+- Right after an update, starting the app again (or Uninstall in Windows Settings) could say it was already running instead of bringing the window back, until the next start.
+- Start with Windows stayed ticked after another Windows user of the same PC turned it on for themselves (the task is one per PC). It now shows off for you.
+- Started with Windows while the notification area wasn't ready, the app could hide its window with no icon to bring it back. The window now stays open then.
+- With the app open in another Windows user's session, starting it said to look in the taskbar. It now says the copy is open in another user's session.
+- With Save mobile data on, unplugging the phone made the app run PowerShell every few seconds and write that the PC may have no internet through the phone. The app now knows the setting left with the phone's adapter.
+- With two copies of CS2 on the disk (an old Steam library left behind), the CS2 lock could go on the copy that wasn't running, so CS2 went out from home with protection on. It now goes on the CS2 that runs.
+- With a VPN app on, the app measured the VPN's IP as your home IP, so a phone sharing your home Wi-Fi could pass the check. The home IP is no longer measured through a VPN, and Status says to turn the VPN off for a moment when the home IP isn't known yet.
+- If Windows was slow to list its routes, the app could forget its own routes and say the network was restored. It now keeps them and says the route table couldn't be read.
+- With protection off or in No phone mode, the app tried to delete Windows' own routes on the phone's adapter at each start and wrote a "Couldn't delete the route" line for each. It leaves them alone now, and its own routes on an adapter with no gateway are removed again.
+- With protection off, a protection rule Windows didn't remove at that moment stayed until something else changed. The app now tries again every minute and says so in the Log.
+- After the PC woke from sleep, the phone stayed trusted from before, even if it had joined your home Wi-Fi in the night. Its IP is now checked again right after waking.
+- On Windows 11 with Location turned off, a hotspot always showed as "not connected" because Windows hides the Wi-Fi name. Status and picking the hotspot now say to turn on Location.
+- Settings > Steam through the phone didn't say that, in Game only with CS2 only through the phone on, CS2's matchmaking can't connect without it. It says so now, and the guide says a community server that isn't on your list may not connect until you add it.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

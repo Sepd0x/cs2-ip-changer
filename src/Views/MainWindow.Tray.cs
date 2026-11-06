@@ -108,7 +108,7 @@ public partial class MainWindow
         WindowState = WindowState.Minimized;
         Loaded += async (_, _) =>
         {
-            if (_tray != null) Hide();
+            if (_tray?.Shown == true) Hide();   // only with the icon really there (Explorer busy at sign-in can refuse it)
             WindowState = WindowState.Normal;
             ShowInTaskbar = true;
             await Startup();
@@ -116,21 +116,38 @@ public partial class MainWindow
     }
 
     /// <summary>A second start of the app (double click while it runs) brings this window back instead of "already running".</summary>
-    void ListenForShow()
+    async void ListenForShow()
     {
         try
         {
-            var ev = new EventWaitHandle(false, EventResetMode.AutoReset, App.ShowEventName, out var created);
-            if (!created)
-            {
-                // Made by someone else before the app: whoever made it could pop the window up mid-game. Not used.
-                ev.Dispose();
+            // Made by someone else before the app: whoever made it could pop the window up mid-game. Not used.
+            if (!await ListenFor(App.ShowEventName, () => Dispatcher.BeginInvoke(ShowFromTray)))
                 Log.Warn($"Another program already made {App.ShowEventName}: a second start of the app won't bring this window back.");
-                return;
-            }
-            ThreadPool.RegisterWaitForSingleObject(ev, (_, _) => Dispatcher.BeginInvoke(ShowFromTray), null, -1, false);
         }
         catch (Exception ex) { Log.Warn("A second start won't bring this window back: " + ex.Message); }
+    }
+
+    /// <summary>
+    /// After an update the copy before still holds the app's events for a few seconds while it closes (its stats, the phone tool),
+    /// so the new copy tries again once a second, up to 15 s, before it gives up on them. Without an update, once.
+    /// </summary>
+    public static bool EventRetry(bool justUpdated, int tries) => justUpdated && tries < 15;
+
+    /// <summary>Makes the event <paramref name="name"/> and runs <paramref name="onSet"/> each time it is set. False when another process holds it.</summary>
+    async Task<bool> ListenFor(string name, Action onSet)
+    {
+        for (var tries = 0; ; tries++)
+        {
+            var ev = new EventWaitHandle(false, EventResetMode.AutoReset, name, out var created);
+            if (created)
+            {
+                ThreadPool.RegisterWaitForSingleObject(ev, (_, _) => onSet(), null, -1, false);
+                return true;
+            }
+            ev.Dispose();
+            if (!EventRetry(_justUpdated, tries)) return false;
+            await Task.Delay(1000);
+        }
     }
 
     // ------------------------------------------------------------ Start with Windows (scheduled task, only for the installed copy)
@@ -228,7 +245,7 @@ public partial class MainWindow
         if (Steam.Cs2Running) { Toast("Close CS2 first: removing the block now would send CS2's traffic through your home connection.", Tone.Warn); return; }
         if (!await Ask(Uninstall.Title, Uninstall.Text(), "Remove", danger: true, choices: Uninstall.Choices(Paths.Data, Autostart.Allowed(Environment.ProcessPath)))) return;
         var everything = _dialogChoice == 1;
-        _removing = _closingDone = _restored = true;
+        _removing = _closingDone = _restored = _closeBusy = true;   // a second X waits for the removal (CloseWaits)
         _tick.Stop();
         ShowProgress("Removing the rules, routes, task and the app's files…");
         var got = await _regionGate.WaitAsync(TimeSpan.FromSeconds(10));
@@ -240,6 +257,7 @@ public partial class MainWindow
             Log.Error("Remove stopped: " + ex.Message);
             HideProgress();
             new NoticeWindow("Not everything was removed", "Remove stopped: " + ex.Message + $"\n\nOpen the app and try again, or run {AppIds.ExeName} {AppIds.Args.Restore}.", "Close", problem: true) { Owner = this }.ShowAndWait();
+            _closeBusy = false;
             Close();
             return;
         }
@@ -248,18 +266,15 @@ public partial class MainWindow
         HideProgress();
         var (title, text, problem) = Uninstall.Result(o, Paths.Data);
         new NoticeWindow(title, text, "Close", problem: problem) { Owner = this }.ShowAndWait();
+        _closeBusy = false;
         Close();
     }
 
     /// <summary>Uninstall in Windows Settings while the app runs: the copy started by Windows asks this one to open the same question.</summary>
-    void ListenForUninstall()
+    async void ListenForUninstall()
     {
-        try
-        {
-            var ev = new EventWaitHandle(false, EventResetMode.AutoReset, App.UninstallEventName, out var created);
-            if (!created) { ev.Dispose(); return; }   // made by someone else first: not used (it could open the question at any moment)
-            ThreadPool.RegisterWaitForSingleObject(ev, (_, _) => Dispatcher.BeginInvoke(() => RemoveAll_Click(this, new RoutedEventArgs())), null, -1, false);
-        }
+        // Made by someone else first: not used (it could open the question at any moment)
+        try { await ListenFor(App.UninstallEventName, () => Dispatcher.BeginInvoke(() => RemoveAll_Click(this, new RoutedEventArgs()))); }
         catch { }
     }
 }

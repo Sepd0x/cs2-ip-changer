@@ -339,6 +339,12 @@ public static class Firewall
     static readonly string[] ProtectionRules = { RuleName, EchoRuleName, Cs2RuleName, DnsUdpRuleName, DnsTcpRuleName, Ipv6RuleName };
 
     /// <summary>
+    /// The Whole PC rules: DNS only from the phone's local IP, and IPv6 blocked. They survive a restart and, with the phone gone,
+    /// leave the PC without names, so closing with Keep takes them off (Guard.KeepOnClose): only the kill switch and the CS2 lock stay.
+    /// </summary>
+    public static readonly string[] WholePcRules = { DnsUdpRuleName, DnsTcpRuleName, Ipv6RuleName };
+
+    /// <summary>
     /// A block of protection is still in the Firewall (from a run closed with Keep, or one that crashed): the kill switch, the CS2 lock
     /// or the Whole PC rules. Not the app's own IP test rule, which blocks nothing else. With no servers listed only the CS2 lock and
     /// the Whole PC rules are there, so the kill switch alone isn't enough (Guard.OnAtStart).

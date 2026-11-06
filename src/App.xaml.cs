@@ -32,7 +32,7 @@ public partial class App : Application
             // Uninstall in Windows Settings while the app runs: the running copy opens the Remove question
             if (uninstall && Signal(UninstallEventName)) { Shutdown(); return; }
             if (!args.Contains(AppIds.Args.Updated) && ShowRunning()) { Shutdown(); return; }
-            AlreadyRunningWindow().ShowAndWait();
+            AlreadyRunningWindow(OpenInOtherSession()).ShowAndWait();
             Shutdown();
             return;
         }
@@ -63,7 +63,7 @@ public partial class App : Application
         DispatcherUnhandledException += OnUiError;
         AppDomain.CurrentDomain.UnhandledException += (_, a) => { Crash.Write(a.ExceptionObject as Exception, "fatal"); Telemetry.Fatal(a.ExceptionObject as Exception); };
         if (!args.Contains(AppIds.Args.Demo)) Crash.Started();
-        Exit += (_, _) => { Crash.Ended(); Adb.KillOwnServer(); };
+        Exit += (_, _) => { Crash.Ended(); Adb.SendPendingOn(); Adb.KillOwnServer(); };
         TaskScheduler.UnobservedTaskException += (_, a) => { Log.Error("Task: " + a.Exception?.GetBaseException().Message); Crash.Write(a.Exception, "task"); Telemetry.Error(a.Exception); a.SetObserved(); };
         base.OnStartup(e);
         var w = new MainWindow(args, stats);
@@ -254,14 +254,20 @@ public partial class App : Application
     /// <summary>
     /// Quit at the notice right after an update: the version before left its protection on for this copy to take over. With no
     /// app left to turn it off, it's undone like Turn off protection (the Regions rule stays, as it does there).
-    /// Not while CS2 runs: it would carry on with your home IP.
+    /// Not while CS2 runs: it would carry on with your home IP. Then it goes as closing with Keep (Guard.KeepOnClose): the phone gets
+    /// its default route back and the Whole PC rules go, so the PC isn't left without internet once the phone is gone.
     /// </summary>
     static void UndoAfterUpdateQuit()
     {
-        if (Steam.Cs2Running) return;
         try
         {
             Paths.Ensure();
+            if (Steam.Cs2Running)
+            {
+                new Guard().KeepOnClose(cs2Running: true).GetAwaiter().GetResult();
+                Log.Info("Usage stats notice: Quit after an update with CS2 open. The block stays, the phone got its default route back.");
+                return;
+            }
             var servers = Store.Load<List<ServerItem>>(Paths.File(AppIds.Files.Servers), () => new());
             var left = new Guard().RestoreAll(servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: true).GetAwaiter().GetResult();
             Log.Info("Usage stats notice: Quit after an update. " + (left == null ? "The protection the version before left on was turned off." : "Couldn't remove: " + left));
@@ -270,8 +276,29 @@ public partial class App : Application
     }
 
     // The app's own windows for these two messages (NoticeWindow), not Windows' message box. The demo screenshots use them too.
-    internal static NoticeWindow AlreadyRunningWindow() =>
-        new("CS2 IP Changer is already running", "Close the copy that is open first (look in the taskbar), then start the app again.", "Close");
+    internal static NoticeWindow AlreadyRunningWindow(bool otherSession = false) =>
+        new("CS2 IP Changer is already running", RunningText(otherSession), "Close");
+
+    /// <summary>
+    /// Why this start stops. The lock is for the whole PC (the rules are), but the window can only be brought back in this Windows
+    /// session: a copy open in another user's session has nothing in this taskbar.
+    /// </summary>
+    public static string RunningText(bool otherSession) => otherSession
+        ? "CS2 IP Changer is open in another Windows user's session. It changes the Firewall for the whole PC, so only one copy can run: close it in that session first."
+        : "Close the copy that is open first (look in the taskbar), then start the app again.";
+
+    /// <summary>Another copy of the app runs in another Windows session (fast user switching). Read as admin; false when it can't be told.</summary>
+    static bool OpenInOtherSession()
+    {
+        try
+        {
+            using var me = System.Diagnostics.Process.GetCurrentProcess();
+            var others = System.Diagnostics.Process.GetProcessesByName(me.ProcessName);
+            try { return others.Any(p => p.Id != me.Id && p.SessionId != me.SessionId); }
+            finally { foreach (var p in others) p.Dispose(); }
+        }
+        catch { return false; }
+    }
 
     internal static NoticeWindow RestoredWindow(string left, bool running, string task = null)
     {

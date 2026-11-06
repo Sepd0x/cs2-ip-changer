@@ -89,7 +89,7 @@ public partial class MainWindow
         sb.AppendLine();
         sb.AppendLine("== The app's routes");
         var ips = _servers.Select(s => s.Ip).Append(Net.EchoIp).ToHashSet();
-        foreach (var r in await Net.ListRoutes())
+        foreach (var r in await Net.ListRoutes() ?? new())
             if ((r.Prefix.EndsWith("/32") && ips.Contains(r.Prefix[..^3])) || Guard.SplitPrefixes.Contains(r.Prefix) || Net.ValvePrefixes.Contains(r.Prefix))
                 sb.AppendLine($"{r.Prefix} if {r.Index} via {r.NextHop}");
         sb.AppendLine();

@@ -132,16 +132,50 @@ public static class Store
     {
         try
         {
-            if (!System.IO.File.Exists(path) || ReadText(path, out _) is not string raw) return default;
+            if (!System.IO.File.Exists(path)) return Spare<T>(path, out var spare, out _) ? spare : default;
+            if (ReadText(path, out _) is not string raw) return default;
             if (TryParse(raw, out T value)) return value;
             return System.IO.File.Exists(path + ".prev") && TryParse(System.IO.File.ReadAllText(path + ".prev", Encoding.UTF8), out value) ? value : default;
         }
         catch { return default; }
     }
 
+    /// <summary>
+    /// Which copy to read when the file itself is missing: a power loss or a crash in the middle of <see cref="Save"/> can leave only
+    /// the .tmp (the newest: written and flushed before the swap, and a cut one never parses) and the .prev. "main" when the file is there.
+    /// </summary>
+    public static string LoadFrom(bool main, bool tmpGood, bool prevGood) => main ? "main" : tmpGood ? "tmp" : prevGood ? "prev" : "default";
+
+    /// <summary>The file is missing: its .tmp, else its .prev, when one of them reads (<see cref="LoadFrom"/>). Which one in <paramref name="from"/>.</summary>
+    static bool Spare<T>(string path, out T value, out string from)
+    {
+        value = default;
+        T tmpValue = default, prevValue = default;
+        bool Good(string file, out T v)
+        {
+            v = default;
+            try { return System.IO.File.Exists(file) && TryParse(System.IO.File.ReadAllText(file, Encoding.UTF8), out v); } catch { return false; }
+        }
+        var tmpGood = Good(path + AppIds.Files.TmpSuffix, out tmpValue);
+        var prevGood = !tmpGood && Good(path + ".prev", out prevValue);
+        from = LoadFrom(false, tmpGood, prevGood);
+        if (from == "default") return false;
+        value = from == "tmp" ? tmpValue : prevValue;
+        return true;
+    }
+
     public static T Load<T>(string path, Func<T> fallback)
     {
-        if (!System.IO.File.Exists(path)) return fallback();
+        if (!System.IO.File.Exists(path))
+        {
+            // Cut off in the middle of a save: the copy that is left, said in the Log, rather than everything from the defaults
+            if (Spare<T>(path, out var spare, out var from))
+            {
+                Log.Warn($"{Path.GetFileName(path)} was missing; the {(from == "tmp" ? "copy being saved" : "previous copy")} was loaded.");
+                return spare;
+            }
+            return fallback();
+        }
         var raw = ReadText(path, out var error);
         if (error != null)
         {

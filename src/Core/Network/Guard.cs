@@ -130,6 +130,8 @@ public sealed class Guard
     string _lastProblem;
     /// <summary>The Firewall errors of the last rewrite, so the same failure on every sync is logged once.</summary>
     string _fwErrors;
+    /// <summary>The app is closing with the block kept, or Windows is signing out: from then on no sync writes anything.</summary>
+    volatile bool _released;
 
     public static readonly string[] SplitPrefixes = { "0.0.0.0/1", "128.0.0.0/1" };
 
@@ -239,8 +241,16 @@ public sealed class Guard
         var onPhone = adapters.Any(a => a.Index == rt.Index && a.IsPhone);
         if (!onPhone && (exitIndex <= 0 || rt.Index != exitIndex)) return false;
         if (SplitPrefixes.Contains(rt.Prefix) || Net.ValvePrefixes.Contains(rt.Prefix)) return true;
-        return rt.Prefix.EndsWith("/32") && (onPhone && anyHostOnPhone || serverIps.Contains(rt.Prefix[..^3]));
+        return rt.Prefix.EndsWith("/32") && (onPhone && anyHostOnPhone && ViaGateway(rt) || serverIps.Contains(rt.Prefix[..^3]));
     }
+
+    /// <summary>
+    /// The route goes through a gateway (an IPv4 next hop that isn't 0.0.0.0). Windows' own /32 routes on the phone's adapter (its
+    /// local IP, the broadcast, 255.255.255.255) are on-link, and the app's routes on a phone always have the gateway (PickEgress
+    /// wants one), so "any /32 on the phone" never takes Windows' own.
+    /// </summary>
+    static bool ViaGateway(Net.Route rt) =>
+        System.Net.IPAddress.TryParse(rt.NextHop, out var hop) && hop.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && !hop.Equals(System.Net.IPAddress.Any);
 
     /// <summary>
     /// The index of the phone's connection for <see cref="IsOurs"/>: the last sync's, only while the same adapter still has the
@@ -256,6 +266,7 @@ public sealed class Guard
     /// </summary>
     async Task<int> DeleteOurs(List<Net.Route> routes, List<Adapter> adapters, Func<Net.Route, bool> pick, IReadOnlySet<string> serverIps, bool anyHostOnPhone = false)
     {
+        if (routes == null) return 0;   // the table couldn't be read: nothing is deleted or forgotten
         var exit = ExitIndex(_exit, adapters);
         var deleted = 0;
         foreach (var rt in routes)
@@ -284,6 +295,8 @@ public sealed class Guard
         Task.Run(async () =>
         {
             await _gate.WaitAsync();
+            // Closing (Keep) or Windows signing out: a sync that was already on its way doesn't put back what the close took off
+            if (_released) { _gate.Release(); return new GuardReport { Error = "The app is closing." }; }
             try { return await SyncCore(s, r.Ips.Distinct().ToList(), r.Force, r.Distrust, r.Cs2Running, r.VerifiedKey, r.On); }
             catch (Exception ex)
             {
@@ -528,6 +541,15 @@ public sealed class Guard
         var other = phone != null && PhoneLink.HasHome(adapters, phone);
         var onPhone = phone != null && Net.BestInterface(Net.PcProbeIp) == phone.Index;
         var step = PcOffPhoneNext(s.KeepPcOffPhone, userMode ?? s.Mode, mode, phone, other, _metricAppliedTo, onPhone, (DateTime.Now - _metricTriedAt).TotalSeconds);
+        if (step == PcOffPhoneStep.Undo && MetricGone(_metricAppliedTo, adapters))
+        {
+            // The cable came out (or tethering went off): Windows removed the adapter and its setting with it, so there is nothing
+            // to give back, and PowerShell on an index that is gone would fail on every sync
+            Log.Info($"The phone's adapter {_metricAppliedTo} is gone, and its Save mobile data setting with it.");
+            _metricAppliedTo = -1;
+            SaveOwned();
+            return;
+        }
         if (step == PcOffPhoneStep.Undo)
         {
             await RestoreMetric();
@@ -535,7 +557,11 @@ public sealed class Guard
             return;
         }
         if (step != PcOffPhoneStep.Apply) return;
-        if (_metricAppliedTo >= 0 && _metricAppliedTo != phone.Index) await RestoreMetric();
+        if (_metricAppliedTo >= 0 && _metricAppliedTo != phone.Index)
+        {
+            if (MetricGone(_metricAppliedTo, adapters)) { _metricAppliedTo = -1; SaveOwned(); }
+            else await RestoreMetric();
+        }
         _metricTriedAt = DateTime.Now;
         var r = await _powershell(PcOffPhoneArgs(phone.Index, true), 20000);
         if (!r.Ok) { if (_warned.Add("metric")) Log.Warn("Couldn't keep the rest of the PC off the phone: " + PsError(r.Output)); return; }
@@ -576,6 +602,44 @@ public sealed class Guard
     });
 
     /// <summary>
+    /// Closing with Keep (also "Keep protection and close" with CS2 open, and Quit after an update with CS2 open): the kill switch and
+    /// the CS2 lock stay, as the question says. What would leave the PC without internet once the phone is gone goes: the Whole PC
+    /// rules (DNS only from the phone's local IP and IPv6 blocked, which survive a restart), the phone's default route (Save mobile
+    /// data) and, with CS2 closed, the 0/1 and 128/1 routes (a match still open needs them; they go with the phone's adapter or a
+    /// restart). No sync writes anything after this one.
+    /// </summary>
+    public Task KeepOnClose(bool cs2Running) => Task.Run(async () =>
+    {
+        _released = true;
+        await _gate.WaitAsync();
+        try
+        {
+            var rules = Firewall.Remaining();
+            foreach (var n in Firewall.WholePcRules) if (rules.Error != null || rules.Contains(n)) Firewall.Remove(n);
+            if (!cs2Running) await RemoveSplitRoutes(Net.Scan());
+            await RestoreMetric();
+        }
+        finally { _gate.Release(); }
+    });
+
+    /// <summary>
+    /// Windows is signing out or shutting down and closes the app without waiting: only the Firewall rules <paramref name="names"/>
+    /// (COM in the app, fast, and they are what survives a restart), within <paramref name="limit"/>. Routes and the metric go with
+    /// a restart. No sync writes anything after this. True when it finished in time.
+    /// </summary>
+    public bool RemoveRulesNow(IReadOnlyCollection<string> names, TimeSpan limit)
+    {
+        _released = true;
+        var work = Task.Run(async () =>
+        {
+            var got = await _gate.WaitAsync(limit / 2);
+            try { foreach (var n in names) Firewall.Remove(n); }
+            finally { if (got) _gate.Release(); }
+        });
+        try { return work.Wait(limit); } catch { return false; }
+    }
+
+    /// <summary>
     /// Gives the phone's adapter its default route and automatic metric back. When PowerShell fails the adapter stays marked as
     /// changed (in owned.json too), so the next start or --restore still gives it back, and the Log says so.
     /// </summary>
@@ -585,12 +649,18 @@ public sealed class Guard
         var r = await _powershell(PcOffPhoneArgs(_metricAppliedTo, false), 20000);
         if (!r.Ok)
         {
-            Log.Warn($"Couldn't give the phone's adapter its default route back: {PsError(r.Output)} Without the home network the PC may have no internet through the phone until --restore or a restart.");
+            // Once per adapter: the next start, Turn off and --restore still try, but the Log doesn't say it again each time
+            if (_warned.Add("metric-back " + _metricAppliedTo))
+                Log.Warn($"Couldn't give the phone's adapter its default route back: {PsError(r.Output)} Without the home network the PC may have no internet through the phone until --restore or a restart.");
             return;
         }
+        _warned.Remove("metric-back " + _metricAppliedTo);
         _metricAppliedTo = -1;
         SaveOwned();
     }
+
+    /// <summary>Save mobile data is marked on an adapter Windows no longer lists (the phone was unplugged): nothing is left to give back.</summary>
+    public static bool MetricGone(int appliedTo, IEnumerable<Adapter> adapters) => appliedTo >= 0 && !adapters.Any(a => a.Index == appliedTo);
 
     /// <summary>
     /// No phone mode: the kill switch, the IP test rule, the CS2 lock, whole PC and every route of the app are taken off, so CS2 and
@@ -607,12 +677,20 @@ public sealed class Guard
         var off = mode == "off";
         // With Windows Firewall off the old rules can't be removed: the signature changes when it is back on, and they go then
         var sig = (off ? "off|" + phone?.LocalIp : "home") + (fwProblem != null ? "|fw-off" : "");
-        if (force || _fwSignature != sig)
+        if (HomeRewriteDue(force, _fwSignature != sig, DateTime.Now, _homeRetryAt))
         {
             var was = _fwSignature;
             if (fwProblem == null) Firewall.RemoveProtection();
             await DeleteOurs(await _routes.List(), adapters, _ => true, ips.Append(Net.EchoIp).ToHashSet(), anyHostOnPhone: true);
             var errors = new List<string>();
+            // A rule Windows didn't remove (the Firewall busy for a moment) is tried again, once a minute, and said once
+            if (fwProblem == null && Firewall.BlockLeft(Firewall.Remaining(), unreadableCounts: false))
+            {
+                errors.Add("a protection rule is still there");
+                _homeRetryAt = DateTime.Now.AddSeconds(60);
+                if (_warned.Add("home-left")) Log.Warn("A rule of the app's protection couldn't be removed, so servers or CS2 may still be blocked at home. The app tries again every minute; Log > What the app changed shows it.");
+            }
+            else { _homeRetryAt = default; _warned.Remove("home-left"); }
             if (off && phone != null && fwProblem == null)
             {
                 TryRule(errors, () => Firewall.Apply(EchoRule(phone.LocalIp)));
@@ -645,7 +723,16 @@ public sealed class Guard
         };
     }
 
-    static readonly string[] FullModeRuleNames = { Firewall.DnsUdpRuleName, Firewall.DnsTcpRuleName, Firewall.Ipv6RuleName };
+    static readonly string[] FullModeRuleNames = Firewall.WholePcRules;
+
+    /// <summary>When protection off (or No phone) may rewrite after a rule was left behind (default: no wait).</summary>
+    DateTime _homeRetryAt;
+
+    /// <summary>
+    /// Protection off and No phone write again when asked (<paramref name="force"/>) or when the state changed; after a protection
+    /// rule was left behind, not before <paramref name="retryAt"/> (once a minute, not every 5 s with 6 Firewall calls each).
+    /// </summary>
+    public static bool HomeRewriteDue(bool force, bool changed, DateTime now, DateTime retryAt) => force || changed && now >= retryAt;
 
     /// <summary>DNS (UDP and TCP 53) only from the protected connection's local IP; all outbound IPv6 blocked.</summary>
     static Firewall.FwRule[] FullModeRules(string allowLocalIp) => new[]
@@ -717,8 +804,18 @@ public sealed class Guard
 
     void DisownGone(string[] prefixes, List<Net.Route> routes)
     {
+        foreach (var key in GoneFrom(OwnedKeys().Where(k => prefixes.Contains(k.Prefix)), routes)) Disown(key);
+    }
+
+    /// <summary>
+    /// The app's routes Windows already dropped (not in <paramref name="routes"/>), which are no longer the app's. With a table that
+    /// couldn't be read (null) none: a netsh that timed out is not "no routes".
+    /// </summary>
+    public static List<RouteKey> GoneFrom(IEnumerable<RouteKey> owned, List<Net.Route> routes)
+    {
+        if (routes == null) return new();
         var present = routes.Select(RouteKey.Of).ToHashSet();
-        foreach (var key in OwnedKeys().Where(k => prefixes.Contains(k.Prefix) && !present.Contains(k)).ToList()) Disown(key);
+        return owned.Where(k => !present.Contains(k)).ToList();
     }
 
     async Task RemoveSplitRoutes(List<Adapter> adapters)
@@ -781,8 +878,7 @@ public sealed class Guard
             var routes = await _routes.List();
             await DeleteOurs(routes, adapters, _ => true, set);
             // What Windows already dropped is no longer the app's; a route it refused to delete stays (the check below says so)
-            var present = routes.Select(RouteKey.Of).ToHashSet();
-            foreach (var key in OwnedKeys().Where(k => !present.Contains(k)).ToList()) _ownedRoutes.Remove(key.ToString());
+            foreach (var key in GoneFrom(OwnedKeys(), routes)) _ownedRoutes.Remove(key.ToString());
             SaveOwned();
             Firewall.RemoveAll(keepRegions);
             await RestoreMetric();
@@ -795,7 +891,9 @@ public sealed class Guard
             var left = new List<string>();
             adapters = Net.Scan();
             var exit = ExitIndex(_exit, adapters);
-            foreach (var rt in await _routes.List())
+            // A table that couldn't be read isn't "no routes left" either
+            if (await _routes.List() is not { } after) left.Add("routes (could not read the route table)");
+            else foreach (var rt in after)
                 if (IsOurs(rt, _ownedRoutes, adapters, exit, set)) left.Add("route " + rt.Prefix);
             var rules = Firewall.Remaining();
             // A Firewall that couldn't be read isn't "nothing left": the restore isn't confirmed

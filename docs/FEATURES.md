@@ -18,7 +18,7 @@ The short version is in the [README](../README.md#features). This page has the d
   <img src="assets/shots/connection.png" alt="The Connection page: protection status, the IP servers see next to your home IP, phone status and live checks" width="100%">
 </picture>
 
-**Game-only routing.** CS2, Steam and the servers on your list go through the phone. Your browser, Discord and downloads stay on your home connection and don't eat your mobile data. You can send the whole PC through the phone instead: IPv4 and DNS go through the phone, and IPv6 is blocked while it's on, so nothing leaves from home.
+**Game-only routing.** CS2, Steam and the servers on your list go through the phone. CS2's game traffic can only leave through the phone, so a community server that isn't on your list may not connect until you add it, and CS2's matchmaking needs Steam through the phone (on by default). Your browser, Discord and downloads stay on your home connection and don't eat your mobile data. You can send the whole PC through the phone instead: IPv4 and DNS go through the phone, and IPv6 is blocked while it's on, so nothing leaves from home.
 
 **No phone mode.** No phone with you? Pick "No phone: play on your home connection" under What goes through the phone. Nothing is blocked and servers see your home IP, and the app says so in plain words. Change IP is off. Accounts, Configs, Profiles and Regions keep working. Until a phone has been connected once on your PC, CS2 isn't locked, so trying the app without a phone never leaves CS2 unable to connect at home.
 
