@@ -49,18 +49,25 @@ public static class Cs2LaunchOptions
         VdfNode root;
         try { root = VdfNode.Parse(vdf); }
         catch { return new(null, null, null, false, "the file couldn't be read"); }
-        var steam = root.Child("UserLocalConfigStore")?.Child("Software")?.Child("Valve")?.Child("Steam");
+        var steam = root.At(SteamSection);
         if (steam == null) return new(null, null, null, false, "it isn't a Steam localconfig.vdf");
-        var apps = steam.Child("apps");
-        if (apps == null) { apps = new VdfNode(); steam.Items.Add(new("apps", apps)); }
-        var cs2 = apps.Child("730");
-        if (cs2 == null) { cs2 = new VdfNode(); apps.Items.Add(new("730", cs2)); }
-        var before = cs2.Get("LaunchOptions");
+        var apps = steam.Child(Apps);
+        if (apps == null) { apps = new VdfNode(); steam.Items.Add(new(Apps, apps)); }
+        var cs2 = apps.Child(AppId);
+        if (cs2 == null) { cs2 = new VdfNode(); apps.Items.Add(new(AppId, cs2)); }
+        var before = cs2.Get(Key);
         var after = Add(before);
         if (before != null && after == before) return new(null, before, before, false, "already there", Already: true);
-        cs2.Set("LaunchOptions", after);
+        cs2.Set(Key, after);
         return new(root.Write(), before, after, true, null);
     }
+
+    // Where the launch options are in localconfig.vdf: UserLocalConfigStore > Software > Valve > Steam > apps > 730 > LaunchOptions.
+    static readonly string[] SteamSection = { "UserLocalConfigStore", "Software", "Valve", "Steam" };
+    const string Apps = "apps", AppId = "730", Key = "LaunchOptions";
+
+    /// <summary>CS2's launch options in a parsed localconfig.vdf, or null when the file has none.</summary>
+    public static string Of(VdfNode root) => root.At(SteamSection.Append(Apps).Append(AppId))?.Get(Key);
 
     public sealed record AccountResult(string Id32, bool Changed, string Before, string After, string Why, bool Already = false)
     {
@@ -122,9 +129,7 @@ public static class Cs2LaunchOptions
                 {
                     using var f = SafeFile.OpenRead(file);
                     using var r = new StreamReader(f, new UTF8Encoding(false));
-                    var root = VdfNode.Parse(r.ReadToEnd());
-                    var lo = root.Child("UserLocalConfigStore")?.Child("Software")?.Child("Valve")?.Child("Steam")?.Child("apps")?.Child("730")?.Get("LaunchOptions");
-                    if (Has(lo)) with++;
+                    if (Has(Of(VdfNode.Parse(r.ReadToEnd())))) with++;
                 }
                 catch { }
             }

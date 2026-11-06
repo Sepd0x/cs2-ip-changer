@@ -15,6 +15,14 @@ public sealed class VdfNode
 
     public VdfNode Child(string key) => Items.FirstOrDefault(i => i.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Value as VdfNode;
 
+    /// <summary>The node down a path of keys (each found in any case), or null when one is missing.</summary>
+    public VdfNode At(IEnumerable<string> keys)
+    {
+        var n = this;
+        foreach (var k in keys) if ((n = n?.Child(k)) == null) return null;
+        return n;
+    }
+
     public string Get(string key) => Items.FirstOrDefault(i => i.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Value as string;
 
     public bool Has(string key) => Items.Any(i => i.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
@@ -25,106 +33,126 @@ public sealed class VdfNode
         if (i >= 0) Items[i] = new(Items[i].Key, value); else Items.Add(new(key, value));
     }
 
-    public static VdfNode Parse(string text)
-    {
-        var pos = 0;
-        return ParseBody(text, ref pos);
-    }
-
-    static VdfNode ParseBody(string t, ref int p, int depth = 0)
-    {
-        // A crafted file with thousands of "{" would overflow the stack, and that can't be caught: it would close the app as admin.
-        if (depth > 32) throw new InvalidDataException("VDF nested too deep");
-        var node = new VdfNode();
-        while (true)
-        {
-            var key = Token(t, ref p);
-            if (key == null || key == "}") return node;
-            var val = Token(t, ref p);
-            if (val == "{") node.Items.Add(new(key, ParseBody(t, ref p, depth + 1)));
-            else if (val != null) node.Items.Add(new(key, val));
-            else return node;
-        }
-    }
-
-    static string Token(string t, ref int p) => Token(t, ref p, out _, out _);
+    /// <summary>Steam's files (loginusers.vdf, localconfig.vdf, libraryfolders.vdf): see <see cref="KeyValues.Steam"/>.</summary>
+    public static VdfNode Parse(string text) => KeyValues.Steam.Parse(text);
 
     /// <summary>
     /// True if writing the parsed file gives back the same tokens, quoted text as it was (escapes included).
     /// False on anything this parser doesn't keep: unquoted words (#include, [$WIN32] conditions), stray braces, escapes it would drop.
     /// </summary>
-    public static bool RoundTrips(string text)
+    public static bool RoundTrips(string text) => KeyValues.Steam.RoundTrips(text);
+
+    public string Write() => KeyValues.Steam.Write(this);
+}
+
+/// <summary>
+/// Valve's KeyValues text, the one reader and writer for Steam's .vdf files and CS2's config files. Written as Steam and CS2 write
+/// it: "key"\t\t"value" and "key" then { } on their own lines, tabs, LF (the caller picks the line endings). // comments are skipped.
+/// The two dialects differ in the quotes:
+/// <list type="bullet">
+/// <item><see cref="Steam"/>: a backslash escapes the next character (\" and \\ inside a name), and the writer escapes them back.
+/// As the app always read it, a quoted "{" or "}" still opens or closes a section, and a bare word runs up to a space or a brace.
+/// A file where either matters never round-trips, so it is never written.</item>
+/// <item><see cref="Cs2"/>: no escapes. CS2 saves a bind on the \ key as "\" (seen on a real keys file), so a quote always ends the
+/// text, a value can't hold a quote (the writer throws), and only bare braces count.</item>
+/// </list>
+/// </summary>
+public sealed class KeyValues
+{
+    public static readonly KeyValues Steam = new(true, "VDF"), Cs2 = new(false, "config");
+
+    readonly bool _escapes;
+    readonly string _name;
+
+    KeyValues(bool escapes, string name) { _escapes = escapes; _name = name; }
+
+    /// <summary>One token. <paramref name="Raw"/>: a quoted text as it is in the file (escapes included).</summary>
+    readonly record struct Token(string Text, bool Quoted, string Raw)
     {
-        try
-        {
-            var before = Tokens(text);
-            if (before == null) return false;
-            var after = Tokens(Parse(text).Write());
-            return after != null && before.SequenceEqual(after);
-        }
-        catch { return false; }
+        public bool Is(string brace, bool quotedCounts) => Text == brace && (!Quoted || quotedCounts);
     }
 
-    /// <summary>Raw tokens; null if one is a bare word (Steam quotes every key and value).</summary>
-    static List<string> Tokens(string t)
+    List<Token> Tokens(string t)
     {
-        var list = new List<string>();
+        var list = new List<Token>();
         var p = 0;
-        while (Token(t, ref p, out var quoted, out var raw) is string tok)
+        while (p < t.Length)
         {
-            if (!quoted && tok != "{" && tok != "}") return null;
-            list.Add(quoted ? "\"" + raw + "\"" : tok);
+            var ch = t[p];
+            if (char.IsWhiteSpace(ch)) { p++; continue; }
+            if (ch == '/' && p + 1 < t.Length && t[p + 1] == '/') { while (p < t.Length && t[p] != '\n') p++; continue; }
+            if (ch is '{' or '}') { list.Add(new(ch.ToString(), false, null)); p++; continue; }
+            if (ch == '"')
+            {
+                var start = ++p;
+                var sb = new StringBuilder();
+                while (p < t.Length && t[p] != '"')
+                {
+                    if (_escapes && t[p] == '\\' && p + 1 < t.Length) { sb.Append(t[p + 1]); p += 2; continue; }
+                    sb.Append(t[p++]);
+                }
+                list.Add(new(sb.ToString(), true, t[start..Math.Min(p, t.Length)]));
+                p++;
+                continue;
+            }
+            var s = p;
+            while (p < t.Length && !char.IsWhiteSpace(t[p]) && t[p] is not ('{' or '}') && (_escapes || t[p] != '"')) p++;
+            list.Add(new(t[s..p], false, null));
         }
         return list;
     }
 
-    static string Token(string t, ref int p, out bool quoted, out string raw)
+    public VdfNode Parse(string text)
     {
-        quoted = false;
-        raw = null;
-        while (p < t.Length)
-        {
-            if (char.IsWhiteSpace(t[p])) { p++; continue; }
-            if (t[p] == '/' && p + 1 < t.Length && t[p + 1] == '/') { while (p < t.Length && t[p] != '\n') p++; continue; }
-            break;
-        }
-        if (p >= t.Length) return null;
-        if (t[p] == '{' || t[p] == '}') return t[p++].ToString();
-        if (t[p] == '"')
-        {
-            p++;
-            var start = p;
-            var sb = new StringBuilder();
-            while (p < t.Length && t[p] != '"')
-            {
-                if (t[p] == '\\' && p + 1 < t.Length) { sb.Append(t[p + 1]); p += 2; continue; }
-                sb.Append(t[p++]);
-            }
-            quoted = true;
-            raw = t[start..Math.Min(p, t.Length)];
-            p++;
-            return sb.ToString();
-        }
-        var s = p;
-        while (p < t.Length && !char.IsWhiteSpace(t[p]) && t[p] != '{' && t[p] != '}') p++;
-        return t[s..p];
+        var tokens = Tokens(text);
+        var i = 0;
+        return Body(tokens, ref i, 0);
     }
 
-    public string Write(int depth = 0)
+    VdfNode Body(List<Token> k, ref int i, int depth)
+    {
+        // A crafted file with thousands of "{" would overflow the stack, and that can't be caught: it would close the app as admin
+        // (an imported snapshot can come from anyone).
+        if (depth > 32) throw new InvalidDataException(_name + " nested too deep");
+        var node = new VdfNode();
+        while (i < k.Count)
+        {
+            var key = k[i++];
+            if (key.Is("}", _escapes)) return node;
+            if (i >= k.Count) return node;
+            var v = k[i++];
+            if (v.Is("{", _escapes)) node.Items.Add(new(key.Text, Body(k, ref i, depth + 1)));
+            else node.Items.Add(new(key.Text, v.Text));
+        }
+        return node;
+    }
+
+    public string Write(VdfNode n, int depth = 0)
     {
         var sb = new StringBuilder();
         var tab = new string('\t', depth);
-        foreach (var (k, v) in Items)
+        foreach (var (k, v) in n.Items)
         {
-            if (v is VdfNode n)
-            {
-                sb.Append(tab).Append('"').Append(Esc(k)).Append("\"\n");
-                sb.Append(tab).Append("{\n").Append(n.Write(depth + 1)).Append(tab).Append("}\n");
-            }
-            else sb.Append(tab).Append('"').Append(Esc(k)).Append("\"\t\t\"").Append(Esc((string)v)).Append("\"\n");
+            if (v is VdfNode c) sb.Append(tab).Append('"').Append(Text(k)).Append("\"\n").Append(tab).Append("{\n").Append(Write(c, depth + 1)).Append(tab).Append("}\n");
+            else sb.Append(tab).Append('"').Append(Text(k)).Append("\"\t\t\"").Append(Text((string)v)).Append("\"\n");
         }
         return sb.ToString();
     }
 
-    static string Esc(string s) => s.Replace("\\", "\\\\").Replace("\"", "\\\"");
+    string Text(string s) => _escapes ? s.Replace("\\", "\\\\").Replace("\"", "\\\"")
+        : s.Contains('"') ? throw new InvalidDataException("a quote inside a config value") : s;
+
+    /// <summary>True if writing the parsed file gives back the same tokens, quoted text as it was (nothing bare, nothing lost).</summary>
+    public bool RoundTrips(string text)
+    {
+        try
+        {
+            var before = Tokens(text);
+            if (before.Any(t => !t.Quoted && t.Text is not ("{" or "}"))) return false;
+            return before.Select(Key).SequenceEqual(Tokens(Write(Parse(text))).Select(Key));
+        }
+        catch { return false; }
+    }
+
+    static (string, bool) Key(Token t) => (t.Quoted ? t.Raw : t.Text, t.Quoted);
 }

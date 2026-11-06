@@ -101,85 +101,18 @@ public sealed record Crosshair(double? Style, double? Size, double? Gap, double?
     bool Pixels = false, double? ScreenHeight = null);
 
 /// <summary>
-/// CS2 writes its config files without escapes: a bind on the \ key is saved as "\" (seen on a real keys file). The Steam VDF
-/// parser would read that as an escaped quote, so these files are read and written token by token, exactly as CS2 does.
+/// CS2 writes its config files without escapes: a bind on the \ key is saved as "\" (seen on a real keys file). The Steam dialect
+/// would read that as an escaped quote, so these files use <see cref="KeyValues.Cs2"/>, exactly as CS2 writes them.
 /// </summary>
 public static class Vcfg
 {
-    static List<(string Text, bool Quoted)> Tokens(string t)
-    {
-        var list = new List<(string, bool)>();
-        var p = 0;
-        while (p < t.Length)
-        {
-            var ch = t[p];
-            if (char.IsWhiteSpace(ch)) { p++; continue; }
-            if (ch == '/' && p + 1 < t.Length && t[p + 1] == '/') { while (p < t.Length && t[p] != '\n') p++; continue; }
-            if (ch is '{' or '}') { list.Add((ch.ToString(), false)); p++; continue; }
-            if (ch == '"')
-            {
-                var end = t.IndexOf('"', p + 1);
-                if (end < 0) end = t.Length;
-                list.Add((t[(p + 1)..end], true));
-                p = end + 1;
-                continue;
-            }
-            var s = p;
-            while (p < t.Length && !char.IsWhiteSpace(t[p]) && t[p] is not ('{' or '}' or '"')) p++;
-            list.Add((t[s..p], false));
-        }
-        return list;
-    }
-
-    public static VdfNode Parse(string text)
-    {
-        var tokens = Tokens(text);
-        var i = 0;
-        return Body(tokens, ref i, 0);
-    }
-
-    static VdfNode Body(List<(string Text, bool Quoted)> k, ref int i, int depth)
-    {
-        // A crafted file with thousands of "{" would overflow the stack (an imported snapshot can come from anyone).
-        if (depth > 32) throw new InvalidDataException("config nested too deep");
-        var node = new VdfNode();
-        while (i < k.Count)
-        {
-            var key = k[i++];
-            if (!key.Quoted && key.Text == "}") return node;
-            if (i >= k.Count) return node;
-            var v = k[i++];
-            if (!v.Quoted && v.Text == "{") node.Items.Add(new(key.Text, Body(k, ref i, depth + 1)));
-            else node.Items.Add(new(key.Text, v.Text));
-        }
-        return node;
-    }
+    public static VdfNode Parse(string text) => KeyValues.Cs2.Parse(text);
 
     /// <summary>The same layout CS2 writes (tabs, LF; the caller picks the line endings). Throws on a quote, which this format can't hold.</summary>
-    public static string Write(VdfNode n, int depth = 0)
-    {
-        var sb = new StringBuilder();
-        var tab = new string('\t', depth);
-        foreach (var (k, v) in n.Items)
-        {
-            if (k.Contains('"') || (v is string sv && sv.Contains('"'))) throw new InvalidDataException("a quote inside a config value");
-            if (v is VdfNode c) sb.Append(tab).Append('"').Append(k).Append("\"\n").Append(tab).Append("{\n").Append(Write(c, depth + 1)).Append(tab).Append("}\n");
-            else sb.Append(tab).Append('"').Append(k).Append("\"\t\t\"").Append((string)v).Append("\"\n");
-        }
-        return sb.ToString();
-    }
+    public static string Write(VdfNode n) => KeyValues.Cs2.Write(n);
 
     /// <summary>True if writing the parsed file gives back the same tokens (nothing bare, nothing lost).</summary>
-    public static bool RoundTrips(string text)
-    {
-        try
-        {
-            var before = Tokens(text);
-            if (before.Any(t => !t.Quoted && t.Text is not ("{" or "}"))) return false;
-            return before.SequenceEqual(Tokens(Write(Parse(text))));
-        }
-        catch { return false; }
-    }
+    public static bool RoundTrips(string text) => KeyValues.Cs2.RoundTrips(text);
 }
 
 public static class Cs2Config

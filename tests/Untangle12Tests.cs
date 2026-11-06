@@ -19,6 +19,99 @@ static class Untangle12Tests
         await Cs2OpenAndClose(check);
         TypedValues(check);
         ExplicitState(check);
+        KeyValuesSame(check);
+    }
+
+    // B8: um só leitor de KeyValues (Steam com escapes, CS2 sem). As impressões digitais são da saída de antes da junção (HEAD 12a3a2b),
+    // tiradas com este mesmo código: o que o Steam e o CS2 leem e o que a app escreve (Write, RoundTrips, launch options,
+    // loginusers com MarkForLogin, Flatten, MergeConvars, KeepDisplay) fica igual ao byte.
+    static readonly string[] KvSamples =
+    {
+        "\"users\"\n{\n\t\"76561198000000001\"\n\t{\n\t\t\"AccountName\"\t\t\"ana\"\n\t\t\"PersonaName\"\t\t\"a\\\"b\\\\c\"\n\t\t\"MostRecent\"\t\t\"1\"\n\t\t\"timestamp\"\t\t\"1793308000\"\n\t}\n\t\"76561198000000002\"\n\t{\n\t\t\"AccountName\"\t\t\"bia\"\n\t\t\"AutoLogin\"\t\t\"1\"\n\t}\n}\n",
+        "\"users\"\r\n{\r\n\t\"76561198000000001\"\r\n\t{\r\n\t\t\"AccountName\"\t\t\"ana\"\r\n\t\t\"Timestamp\"\t\t\"1\"\r\n\t}\r\n}\r\n",
+        "// comment\n\"users\" // trailing\n{\n\t\"a\" \"1\" // c\n\t// \"b\" \"2\"\n}\n",
+        "\"users\"\n{\n\t\"a\"\n}\n",
+        "\"a\"",
+        "  \"b\"   \"2\"\n\"a\"\t\"1\"\n\"c\" { \"x\" \"y\" }",
+        "#include \"outro.vdf\"\n\"users\"\n{\n}\n",
+        "\"users\"\n{\n\t\"a\"\t\"1\" [$WIN32]\n}\n",
+        "\"users\"\n{\n\t\"PersonaName\"\t\"a\\nb\"\n}\n",
+        "\"users\"\n{\n}\n}\n\"outro\"\t\"1\"\n",
+        "\"config\"\n{\n\t\"bindings\"\n\t{\n\t\t\"\\\"\t\t\"say hi\"\n\t\t\"a\"\t\t\"+left\"\n\t}\n}\n",
+        "\"config\"\r\n{\r\n\t\"bindings\"\r\n\t{\r\n\t\t\"\\\"\t\t\"\\\"\r\n\t}\r\n}\r\n",
+        "\"a\" { \"}\" \"x\" }",
+        "\"a\" \"{\" \"b\" \"c\" }",
+        "\"a\" \"b",
+        "\"a\" \"b\\",
+        "",
+        "   \n\t ",
+        "abc\"def\" \"x\" \"y\"",
+        "\"nome\"\t\"Ána ç ✓\"\n",
+        "\"a\"{\"b\"\"c\"}\"d\"\"e\"",
+        "\"k\" \"v\" \"lonely\"",
+        "\"UserLocalConfigStore\"\n{\n\t\"Software\"\n\t{\n\t\t\"Valve\"\n\t\t{\n\t\t\t\"Steam\"\n\t\t\t{\n\t\t\t\t\"apps\"\n\t\t\t\t{\n\t\t\t\t\t\"730\"\n\t\t\t\t\t{\n\t\t\t\t\t\t\"LaunchOptions\"\t\t\"-novid  +fps_max 0 \"\n\t\t\t\t\t\t\"cloud\"\t\t\"x\"\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}\n",
+        "\"UserLocalConfigStore\"\n{\n\t\"Software\"\n\t{\n\t\t\"Valve\"\n\t\t{\n\t\t\t\"Steam\"\n\t\t\t{\n\t\t\t\t\"other\"\t\t\"1\"\n\t\t\t}\n\t\t}\n\t}\n}\n",
+        "\"UserLocalConfigStore\"\n{\n\t\"Software\"\n\t{\n\t\t\"Valve\"\n\t\t{\n\t\t\t\"Steam\"\n\t\t\t{\n\t\t\t\t\"apps\"\n\t\t\t\t{\n\t\t\t\t\t\"730\"\n\t\t\t\t\t{\n\t\t\t\t\t\t\"LaunchOptions\"\t\t\"-condebug -CONCLEARLOG\"\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}\n",
+        "\"config\"\r\n{\r\n\t\"convars\"\r\n\t{\r\n\t\t\"cl_crosshairsize\"\t\t\"2\"\r\n\t\t\"sensitivity\"\t\t\"1.250000\"\r\n\t\t\"cl_crosshaircolor\"\t\t\"4\"\r\n\t\t\"fps_max_ui$2\"\t\t\"200\"\r\n\t}\r\n}\r\n",
+        "\"config\"\n{\n\t\"convars\"\n\t{\n\t\t\"sensitivity\"\t\t\"2\"\n\t\t\"cl_crosshairgap\"\t\t\"-3\"\n\t\t\"volume\"\t\t\"0.5\"\n\t}\n}\n",
+        "\"video.cfg\"\n{\n\t\"setting.defaultres\"\t\t\"1280\"\n\t\"setting.defaultresheight\"\t\t\"960\"\n\t\"setting.refreshrate_numerator\"\t\t\"144\"\n\t\"setting.monitor_index\"\t\t\"1\"\n\t\"VendorID\"\t\t\"4318\"\n}\n",
+        "\"video.cfg\"\n{\n\t\"setting.defaultres\"\t\t\"1920\"\n\t\"setting.refreshrate_numerator\"\t\t\"60\"\n}\n",
+        string.Concat(Enumerable.Repeat("\"a\" {", 40)),
+    };
+
+    static readonly string[] KvBefore =
+    {
+        "BE88300335721EE6", "37AD33A47FA6FE09", "990FC7B1DAF7B785", "69A796092F15817C", "FC65196CE766F32C", "DC97B8AEBFA26D7E",
+        "AEFD98D26BF92F0C", "DEB47A8E35CE97FC", "B962AFD0F4B1DC31", "69AE862E3E7853D1", "8524258EBF2ED92D", "BAA173F1013B303D",
+        "12ACD40A3810F0D6", "96935D2E307CB4E6", "B2C10905F8EAB941", "2EEBDF2EEC133B0A", "B86CB6E36849B4A1", "B86CB6E36849B4A1",
+        "0ED7445AF46AA4F5", "39386D3A48AC26DA", "77484F3091861C61", "399CD08E600DC446", "BBA1A62EBD83C4A6", "9A186A0491041611",
+        "E9F2963F7E62EBF1", "A61776DA8CF96D8F", "599896E73643A44C", "C315A85FFD414CED", "D23DAA6A578701D4", "E530316C47DC6E22",
+    };
+    const string KvPairsBefore = "8CB061A91E611364";
+
+    static string KvTry(Func<string> f)
+    {
+        try { return f(); }
+        catch (Exception ex) { return "ERR:" + ex.GetType().Name + ":" + ex.Message; }
+    }
+
+    static string KvFlat(Dictionary<string, string> m) => m == null ? "null" : string.Join(";", m.OrderBy(x => x.Key, StringComparer.Ordinal).Select(x => x.Key + "=" + x.Value));
+
+    /// <summary>Tudo o que a app lê ou escreve a partir de um texto, nos dois dialetos.</summary>
+    static string KvOf(string t) => string.Join("\u0001", new[]
+    {
+        KvTry(() => VdfNode.Parse(t).Write()),
+        VdfNode.RoundTrips(t).ToString(),
+        KvTry(() => Vcfg.Write(Vcfg.Parse(t))),
+        Vcfg.RoundTrips(t).ToString(),
+        KvTry(() => { var p = Cs2LaunchOptions.Patch(t); return $"{p.Text}|{p.Before}|{p.After}|{p.Changed}|{p.Why}|{p.Already}"; }),
+        KvTry(() => string.Join(";", Steam.ParseAccounts(t).Select(a => $"{a.SteamId},{a.AccountName},{a.PersonaName},{a.MostRecent},{a.Timestamp}"))),
+        KvTry(() => { var d = VdfNode.Parse(t); if (d.Child("users") is VdfNode u) Steam.MarkForLogin(u, "76561198000000001", true, 1793308000); return d.Write(); }),
+        KvTry(() => KvFlat(Cs2Config.Flatten(t, CfgPart.Convars))),
+        KvTry(() => KvFlat(Cs2Config.Flatten(t, CfgPart.Video))),
+    });
+
+    static string KvSha(string s) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(s)))[..16];
+
+    static void KeyValuesSame(Action<string, bool, string> check)
+    {
+        var diff = Enumerable.Range(0, KvSamples.Length).Where(i => KvSha(KvOf(KvSamples[i])) != KvBefore[i]).ToList();
+        check("B8: um só leitor de KeyValues lê e escreve igual ao byte a antes (aspas, escapes, comentários, chaves sem valor, ordem, espaços, CRLF)",
+            diff.Count == 0, string.Join(",", diff));
+        var pairs = new System.Text.StringBuilder();
+        foreach (var a in KvSamples)
+            foreach (var b in KvSamples.Append(null))
+            {
+                pairs.Append(KvTry(() => Cs2Config.MergeConvars(a, b, true, false))).Append('\u0002');
+                pairs.Append(KvTry(() => Cs2Config.MergeConvars(a, b, false, true))).Append('\u0002');
+                pairs.Append(KvTry(() => Cs2Config.KeepDisplay(a, b))).Append('\u0003');
+            }
+        check("B8: as fusões das configs do CS2 (mira, jogo, ecrã) ficam iguais ao byte", KvSha(pairs.ToString()) == KvPairsBefore, KvSha(pairs.ToString()));
+        check("B8: a mesma tecla \\ do CS2 e o mesmo \\\" do Steam",
+            Vcfg.Parse(KvSamples[10]).At(new[] { "config", "bindings" })?.Get("\\") == "say hi" && VdfNode.Parse(KvSamples[0]).At(new[] { "users", "76561198000000001" })?.Get("PersonaName") == "a\"b\\c", "");
+        var p = Cs2LaunchOptions.Patch(KvSamples[23]);
+        check("B8: as launch options leem-se do mesmo caminho em que são escritas", p.Changed && Cs2LaunchOptions.Of(VdfNode.Parse(p.Text)) == "-condebug -conclearlog"
+            && Cs2LaunchOptions.Of(VdfNode.Parse(KvSamples[22])) == "-novid  +fps_max 0 ", p.Why);
     }
 
     // B7: o Core não escreve nas Settings, as contas novas têm uma regra, a lista de contas não perde um Refresh a meio
