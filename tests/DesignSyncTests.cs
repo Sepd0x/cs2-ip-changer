@@ -216,6 +216,12 @@ static class DesignSyncTests
         check("Site: no telemóvel a janela inteira e os números 01 a 06 ficam presos por cima das páginas",
             homeJs.Contains("fig.appendChild(nav);") && homeHtml.Contains(".js .pages{scroll-snap-align:start;scroll-margin-top:var(--pg-top,0px);") && homeJs.Contains("storyEnd = Math.floor("), "");
         // por toque a captura abre à largura do ecrã e faz zoom com dois dedos ou toque duplo (antes abria a 1240 px, um terço à vista)
+        // os limites da sessão principal (6 nov.): a parte presa fica perto de 35% do ecrã (35,2% a 390x844, 35,4% a 375x667),
+        // e o visor fecha com Voltar e a deslizar para baixo, prende o foco, devolve-o e não deixa a página por trás mexer
+        check("Site: no telemóvel a janela presa e os números ocupam ~35% do ecrã (a janela encolhe num ecrã baixo)",
+            homeHtml.Contains(".js .app-body .win{width:min(100%,calc((35svh - 72px) * 1.55));") && homeHtml.Contains(".js .app-body .win-fig figcaption{display:none}") && homeJs.Contains("pc.className = 'pg-cap'"), "");
+        check("Site: o visor fecha com Voltar (pushState) e a deslizar para baixo, prende o foco e devolve-o, e a página por trás fica parada",
+            homeHtml.Contains("history.pushState({lb:1},'')") && homeHtml.Contains("if(e.clientY-p0.m.y>90){bx.close();return}") && homeHtml.Contains("if(e.key==='Tab'){e.preventDefault();") && homeHtml.Contains("html.lb-open{overflow:hidden}") && homeHtml.Contains("__lenis.stop()") && homeHtml.Contains("lbFrom=d.activeElement"), "");
         check("Site: por toque a captura abre inteira e faz zoom com dois dedos e toque duplo, e o Close fica por cima",
             homeHtml.Contains("Pinch or double-tap to zoom") && homeHtml.Contains("var zoomer=function(bx){") && homeHtml.Contains(".lb-x{position:fixed;z-index:2;") && homeHtml.Contains(".lightbox img{width:100vw;max-width:100vw!important;"), "");
         check("Site: um botão por página (44 px) e o endereço segue a página deslizada",

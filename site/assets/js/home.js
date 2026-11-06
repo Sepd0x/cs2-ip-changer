@@ -338,7 +338,9 @@
           inn.appendChild(ring); cut.appendChild(inn); keys[k].insertBefore(cut, keys[k].firstChild);
         });
       });
-      fig.appendChild(nav); tabs[0].setAttribute('aria-current', 'true');
+      fig.appendChild(nav);
+      // the caption goes under the pages while they sit side by side (the window above is kept small, CSS)
+      var cap = $('figcaption', fig); if (cap) { var pc = d.createElement('p'); pc.className = 'pg-cap'; pc.innerHTML = cap.innerHTML; pagesBox.parentNode.insertBefore(pc, pagesBox.nextSibling); } tabs[0].setAttribute('aria-current', 'true');
       // the page whose card is most in view is the one shown; the address and the chip follow once the swipe rests
       var step = function () { return pages.length > 1 ? pages[1].offsetLeft - pages[0].offsetLeft : 1; };
       var slide = function (i, smooth) { pagesBox.scrollTo({ left: i * step(), behavior: smooth && FX ? 'smooth' : 'auto' }); show(pages[i].getAttribute('data-pg')); holdPg = performance.now() + (smooth ? 500 : 0); };

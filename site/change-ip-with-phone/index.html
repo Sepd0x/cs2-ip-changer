@@ -154,6 +154,7 @@ addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.docume
   --mono:"Fragment Mono","Cascadia Mono",Consolas,ui-monospace,"SFMono-Regular",Menlo,monospace;
   --h2:clamp(2.2rem,1rem + 3.6vw,4.8rem)}
 *{box-sizing:border-box}
+html.lb-open{overflow:hidden}
 html{color-scheme:dark;font-size:100%;-webkit-text-size-adjust:100%;scrollbar-color:var(--line2) var(--bg);scroll-padding-top:calc(var(--top-h) + 1rem)}
 @media (min-width:1600px){html{font-size:clamp(1rem,1vw,1.125rem)}}
 @media (min-width:1915px){html{font-size:clamp(1.125rem,.94vw,1.5rem)}}
@@ -798,7 +799,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
     });
   });
   /* a screenshot opens at full size over the page; a click or Escape closes it (without JS the link opens the picture) */
-  var box,coarse=matchMedia('(pointer:coarse)').matches,zreset=function(){};
+  var box,lbY=null,lbFrom=null,lbBack=null,coarse=matchMedia('(pointer:coarse)').matches,zreset=function(){};
   /* by touch: two fingers zoom around where they are, one finger moves a zoomed picture, a double tap zooms in or back out */
   var zoomer=function(bx){
     var im=bx.querySelector('img'),s=1,x=0,y=0,as=1,ax=0,ay=0,P={},p0=null,tap=0,moved=0;
@@ -810,9 +811,11 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
     var mid=function(a){return{x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2,d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)}};
     bx.addEventListener('pointerdown',function(e){if(!coarse||e.target.tagName==='BUTTON')return;P[e.pointerId]={x:e.clientX,y:e.clientY};var a=pts();moved=0;p0=a.length===2?{m:mid(a),s:s,x:x,y:y}:{m:{x:e.clientX,y:e.clientY},s:s,x:x,y:y}});
     bx.addEventListener('pointermove',function(e){if(!P[e.pointerId])return;P[e.pointerId]={x:e.clientX,y:e.clientY};var a=pts();
-      if(a.length===2){var m=mid(a);s=p0.s;x=p0.x;y=p0.y;at(p0.m.x,p0.m.y,p0.s*m.d/p0.m.d);x+=m.x-p0.m.x;y+=m.y-p0.m.y;moved=1;put()}
+      if(a.length===2){var m=mid(a);im.style.opacity='';s=p0.s;x=p0.x;y=p0.y;at(p0.m.x,p0.m.y,p0.s*m.d/p0.m.d);x+=m.x-p0.m.x;y+=m.y-p0.m.y;moved=1;put()}
+      else if(a.length===1&&s===1&&coarse){var dy=Math.max(0,e.clientY-p0.m.y);if(dy>6)moved=1;im.style.transform=dy?'translateY('+dy+'px)':'';im.style.opacity=dy?String(Math.max(.4,1-dy/400)):''}
       else if(a.length===1&&s>1){var dx=e.clientX-p0.m.x,dy=e.clientY-p0.m.y;if(Math.abs(dx)+Math.abs(dy)>6)moved=1;x=p0.x+dx;y=p0.y+dy;fit();put()}});
     var up=function(e){if(!P[e.pointerId])return;delete P[e.pointerId];var a=pts();if(a.length===1){p0={m:a[0],s:s,x:x,y:y};return}
+      if(!a.length&&s===1&&moved){if(e.clientY-p0.m.y>90){bx.close();return}im.style.transform='';im.style.opacity=''}
       if(!a.length&&s>1){fit();put()}
       if(!moved&&e.target.tagName==='IMG'){var now=Date.now();if(now-tap<320){at(e.clientX,e.clientY,s>1?1:2.6);if(s>1)fit();put();tap=0}else tap=now}};
     bx.addEventListener('pointerup',up);bx.addEventListener('pointercancel',up);
@@ -821,8 +824,8 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
     var a=e.target.closest&&e.target.closest('a.zoom');
     if(!a||e.button||e.ctrlKey||e.metaKey||e.shiftKey||!window.HTMLDialogElement)return;
     e.preventDefault();
-    if(!box){box=d.createElement('dialog');box.className='lightbox';box.setAttribute('aria-label','Screenshot');box.innerHTML='<button type="button" class="lb-x">Close</button><img alt="Screenshot of CS2 IP Changer"><span class="lb-hint" aria-hidden="true">Pinch or double-tap to zoom</span>';box.addEventListener('click',function(e){if(!(coarse&&e.target.tagName==='IMG'))box.close()});box.addEventListener('close',function(){zreset()});d.body.appendChild(box);zoomer(box)}
-    var img=box.querySelector('img'),src=a.querySelector('picture.on img')||a.querySelector('img');img.src=src?src.currentSrc||src.src:a.getAttribute('href');img.alt=src?src.alt:'';box.showModal();
+    if(!box){box=d.createElement('dialog');box.className='lightbox';box.setAttribute('aria-label','Screenshot');box.innerHTML='<button type="button" class="lb-x">Close</button><img alt="Screenshot of CS2 IP Changer"><span class="lb-hint" aria-hidden="true">Pinch or double-tap to zoom</span>';box.addEventListener('click',function(e){if(!(coarse&&e.target.tagName==='IMG'))box.close()});box.addEventListener('close',function(){zreset();box.querySelector('img').style.opacity='';d.documentElement.classList.remove('lb-open');if(window.__lenis)__lenis.start();var f0=lbFrom;lbFrom=null;if(f0&&f0.focus)f0.focus({preventScroll:true});if(history.state&&history.state.lb){lbBack=f0;history.back()}});box.addEventListener('keydown',function(e){if(e.key==='Tab'){e.preventDefault();box.querySelector('.lb-x').focus()}});addEventListener('popstate',function(){if(box.open)box.close();if(lbY!==null){var yy=lbY;lbY=null;scrollTo(0,yy);requestAnimationFrame(function(){scrollTo(0,yy)})}if(lbBack){var fb=lbBack;lbBack=null;fb.focus({preventScroll:true});requestAnimationFrame(function(){if(d.activeElement!==fb)fb.focus({preventScroll:true})})}});d.body.appendChild(box);zoomer(box)}
+    var img=box.querySelector('img'),src=a.querySelector('picture.on img')||a.querySelector('img');img.src=src?src.currentSrc||src.src:a.getAttribute('href');img.alt=src?src.alt:'';lbFrom=d.activeElement;lbY=scrollY;if(window.__lenis)__lenis.stop();box.showModal();d.documentElement.classList.add('lb-open');try{history.pushState({lb:1},'')}catch(x){}
   });
   /* visit counter: which page, the site you came from (its name only) and clicks on Download, added up per day. No cookies,
      no ID, nothing kept in your browser. Off with Do Not Track or Global Privacy Control. Code: worker/stats/src/index.js */
