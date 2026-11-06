@@ -13,6 +13,46 @@ static class RevisaoDTests
         check("Revisão D: as fontes leem-se", Src("MainWindow.xaml").Length > 0, "");
         Configs(check, Src);
         SettingsAndTray(check, Src);
+        StartUpdateAndRemove(check, Src);
+    }
+
+    static void StartUpdateAndRemove(Action<string, bool, string> check, Func<string[], string> src)
+    {
+        string Src(params string[] p) => src(p);
+        var app = Src("App.xaml.cs");
+
+        // D14. O aviso das estatísticas depois de um update só fala da proteção quando ela ficou ligada
+        check("Revisão D14: um update com a proteção desligada não a deixou ligada", !App.ProtectionLeftOn(new[] { AppIds.Args.Updated, AppIds.Args.Off }) && !App.ProtectionLeftOn(new[] { AppIds.Args.Updated, AppIds.Args.Standby }), "");
+        check("Revisão D14: com --on, ou só --updated (beta.9), ficou ligada", App.ProtectionLeftOn(new[] { AppIds.Args.Updated, AppIds.Args.On }) && App.ProtectionLeftOn(new[] { AppIds.Args.Updated }), "");
+        check("Revisão D14: sem update, nada ficou ligado", !App.ProtectionLeftOn(new[] { AppIds.Args.On }) && !App.ProtectionLeftOn(Array.Empty<string>()), "");
+        check("Revisão D14: o aviso recebe essa regra (o Quit continua a desfazer como antes)",
+            app.Contains("StatsNoticeWindow(ProtectionLeftOn(args), StatsNoticeIn(settingsFile))") && app.Contains("if (updated) UndoAfterUpdateQuit();"), "");
+
+        // D15. Update que não instala diz porquê
+        var full = new Updater.Release("1.0.0", "v1.0.0", "https://x/r", "https://x/e", "https://x/s", 1, "https://x/sig");
+        check("Revisão D15: sem assinatura diz que não está assinada", MainWindow.NoInstallReason(full with { SigUrl = null }, true) is string s1 && s1.Contains("isn't signed"), MainWindow.NoInstallReason(full with { SigUrl = null }, true) ?? "null");
+        check("Revisão D15: sem exe, sem .sha256 e no build que não se substitui, cada um a sua razão",
+            MainWindow.NoInstallReason(full with { ExeUrl = null }, true) is string e1 && e1.Contains(AppIds.ExeName)
+            && MainWindow.NoInstallReason(full with { ShaUrl = null }, true) is string e2 && e2.Contains(".sha256")
+            && MainWindow.NoInstallReason(full, false) is string e3 && e3.Contains("can't replace itself"), "");
+        check("Revisão D15: uma release completa instala", MainWindow.NoInstallReason(full, true) == null, "");
+        var upd = Src("Views", "MainWindow.Update.cs");
+        check("Revisão D15: o Update diz a razão no toast e no Log", upd.Contains("if (NoInstallReason(r, Updater.CanSelfUpdate) is string why)") && upd.Contains("Log.Warn($\"Update {r.Version}: {why}\");") && !upd.Contains("\"Opened the release page on GitHub.\""), "");
+
+        // D17. Uninstall pelo Windows: uma exceção a meio diz o que fazer em vez de fechar calada
+        var un = app[app.IndexOf("void UninstallAndExit()")..];
+        un = un[..un.IndexOf("\n    }")];
+        check("Revisão D17: o Remove do Windows apanha a exceção e manda correr --restore", un.Contains("catch (Exception ex)") && un.Contains("{AppIds.Args.Restore}") && un.Contains("w.Finish();"), "");
+
+        // D20. Frases que não batiam
+        check("Revisão D20: a razão do SRT_Dados acaba em ponto antes de \"Then start\"",
+            SRT.Program.DataNotCopiedText("x can't be removed", "C:\\a.exe") == $"{AppIds.ExeName} is installed, but SRT_Dados wasn't copied: x can't be removed. Then start C:\\a.exe."
+            && SRT.Program.DataNotCopiedText("Copy it back.", "e").Contains("Copy it back. Then start e."), SRT.Program.DataNotCopiedText("x can't be removed", "C:\\a.exe"));
+        var onlyTask = App.RestoredText(null, false, "Windows didn't delete the task");
+        check("Revisão D20: --restore com só a tarefa por apagar não manda reiniciar o PC por causa das rotas",
+            !onlyTask.Text.Contains("Restart the PC") && onlyTask.Text.Contains("Start with Windows") && onlyTask.Text.Contains("Windows didn't delete the task"), onlyTask.Text);
+        check("Revisão D20: a rede por limpar continua a dizer o mesmo", App.RestoredText("route 203.0.113.37/32", false).Text.Contains("Restart the PC to clear routes"), "");
+        check("Revisão D20: o --restore passa a tarefa à parte", app.Contains("RestoredWindow(left, running, task).ShowAndWait();"), "");
     }
 
     static void SettingsAndTray(Action<string, bool, string> check, Func<string[], string> src)

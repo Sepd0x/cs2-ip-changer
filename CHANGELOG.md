@@ -55,6 +55,11 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Turning off Hide usernames while OBS or Streamlabs is open wrote "The streaming program closed" in the Log while it was still open. It now says the option was turned off.
 - The mobile data warning never came when you set the limit below what you had already used this month. It now comes on the next data the app counts, once a month as before.
 - Profiles > Make the others look like: the Preview tooltip now says it also copies the privacy settings when you are signed in to that account.
+- After an update made with protection off, the usage stats notice (when it shows again) said the version before had left protection on. It now only says so when it did.
+- Update on a release the app won't install only said "Opened the release page on GitHub.", in green. It now says why (no exe, no .sha256, not signed, or a copy that can't replace itself), and the Log says it too.
+- Uninstall from Windows Settings with the app closed: if the removal stopped half-way, the window stayed on "Removing…" and the app closed without a word. It now says what stopped it and to run `--restore`.
+- `--restore`: when only the Start with Windows task couldn't be deleted, the message said to restart the PC to clear routes. It now says the network is restored and how to remove the task.
+- Install: when SRT_Dados couldn't be copied, the message could run two sentences together ("can't be removed Then start").
 
 ## [0.1.0-beta.11] - 2026-11-06
 

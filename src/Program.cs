@@ -162,6 +162,10 @@ public static class Program
         return InstallWindow(from, Installer.Target).ShowAndWait() ? 0 : 1;
     }
 
+    /// <summary>Install: the exe is in place but SRT_Dados isn't. The reason is an exception's message, with or without its full stop.</summary>
+    public static string DataNotCopiedText(string dataError, string exe) =>
+        $"{AppIds.ExeName} is installed, but SRT_Dados wasn't copied: {(dataError ?? "").TrimEnd().TrimEnd('.')}. Then start {exe}.";
+
     internal static NoticeWindow InstallWindow(string from, string target)
     {
         var keep = Directory.Exists(Path.Combine(target, AppIds.DataFolder)) && Directory.Exists(Path.Combine(from, AppIds.DataFolder));
@@ -186,7 +190,7 @@ public static class Program
                 // The exe is in place, but the app would start without your settings: it isn't started, the message says what to do
                 w.Working = false;
                 w.Finish();
-                w.Say($"{AppIds.ExeName} is installed, but SRT_Dados wasn't copied: {r.DataError} Then start {r.Exe}.", bad: true);
+                w.Say(DataNotCopiedText(r.DataError, r.Exe), bad: true);
                 return;
             }
             var note = (r.ExeKept != null ? $"Version {r.ExeKept} was already there and stays. " : "")

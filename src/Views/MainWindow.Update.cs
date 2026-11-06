@@ -78,11 +78,11 @@ public partial class MainWindow
                 return;
             }
             // Never installs without the release's own hash; the dev build (DLLs next to the exe) can't replace itself either.
-            if (r.ExeUrl == null || r.ShaUrl == null || r.SigUrl == null || !Updater.CanSelfUpdate)
+            if (NoInstallReason(r, Updater.CanSelfUpdate) is string why)
             {
                 OpenUrl(r.PageUrl);
-                Toast(r.ExeUrl != null && r.ShaUrl == null ? "This release has no .sha256 file, so the app won't install it. Opened the release page."
-                    : "Opened the release page on GitHub.", r.ShaUrl != null);
+                Log.Warn($"Update {r.Version}: {why}");
+                Toast(why, false);
                 return;
             }
             HideProgress();
@@ -105,6 +105,14 @@ public partial class MainWindow
         }
         finally { HideProgress(); _updating = false; UpdateBtn.IsEnabled = true; }
     }
+
+    /// <summary>Why Update opens the release page instead of installing (null: it installs). Each case its own reason.</summary>
+    public static string NoInstallReason(Updater.Release r, bool canSelfUpdate) =>
+        r.ExeUrl == null ? $"This release has no {AppIds.ExeName}. Opened the release page."
+        : r.ShaUrl == null ? "This release has no .sha256 file, so the app won't install it. Opened the release page."
+        : r.SigUrl == null ? "This release isn't signed with the project's key, so the app won't install it. Opened the release page."
+        : !canSelfUpdate ? "This copy of the app can't replace itself (a development or recording build). Opened the release page."
+        : null;
 
     /// <summary>For a download question: a warning when the rest of the PC goes out through the phone right now.</summary>
     string MobileDataNote() => _last?.PcDefaultIsEgress == true ? "\n\nThis download goes through the phone's mobile data." : "";
