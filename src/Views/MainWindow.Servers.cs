@@ -535,7 +535,10 @@ public partial class MainWindow
             {
                 await Task.Delay(1000);
                 if (CommandCancelled) return false;
-                if (!Steam.Cs2Running || log == null) continue;
+                if (!Steam.Cs2Running) continue;
+                // cs2.exe wasn't found before it opened (review C18: the join then waited the whole 2 min): the running CS2 says where it is
+                if (log == null && (log = Cs2ConsoleLog()) != null) menu.StartAt(log);
+                if (log == null) continue;
                 ready = menu.ReadNew(log).Any(Cs2Console.IsMenu);   // a new console.log (-conclearlog) is read from its start
             }
             if (!Steam.Cs2Running) { Log.Warn($"CS2 didn't open, so {s.Key} wasn't joined."); Toast($"CS2 didn't open, so {s.Title} wasn't joined.", false); return false; }

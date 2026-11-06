@@ -124,6 +124,52 @@ static class RevisaoCTests
         // C12
         check("Revisão C12: o aviso de Whole PC só com a proteção ligada", Src("Views", "MainWindow.OpenWith.cs").Contains("if (_s.WholePc && _protOn)"), "");
 
+        // C13
+        check("Revisão C13: Allow all com o CS2 aberto não diz que o bloqueio está ligado", !MainWindow.Cs2OpenRegionsText(blockedCount: 0).Contains("block is already on") && MainWindow.Cs2OpenRegionsText(3).Contains("block is already on"), "");
+
+        // C14: pings de outro caminho
+        check("Revisão C14: pings de outro caminho não contam", MainWindow.PingsStale(anyPing: true, pingedHome: false, nowHome: true) && !MainWindow.PingsStale(true, true, true) && !MainWindow.PingsStale(false, false, true), "");
+        check("Revisão C14: o tooltip usa o mesmo caminho que a linha", !regions.Contains("(PingedOnHome ? \"without the phone (protection off or No phone)\"") && regions.Contains("RemeasureIfPathChanged();"), "");
+
+        // C15
+        check("Revisão C15: Closest 3 com 2 respostas não pede para medir primeiro", !MainWindow.ClosestText(measured: 30, answered: 2, "Measure the ping first: press Refresh.").StartsWith("Measure the ping first"), MainWindow.ClosestText(30, 2, "M"));
+        check("Revisão C15: sem nenhuma resposta diz isso", MainWindow.ClosestText(30, 0, "M").StartsWith("No region answered"), "");
+        check("Revisão C15: sem medir pede para medir", MainWindow.ClosestText(0, 0, "M") == "M", "");
+
+        // C16: sem regra, nada diz allowed como se bloqueasse
+        check("Revisão C16: sem cs2.exe, o Checks não diz allowed como se bloqueasse", !MainWindow.RegionsCheckText(30, 27, failed: true, noCs2: true).Contains("of 30 allowed") && MainWindow.RegionsCheckText(30, 27, true, true) == "Not blocked yet: see Regions", "");
+        check("Revisão C16: com a escrita falhada diz que a regra não mudou", MainWindow.RegionsCheckText(30, 27, failed: true, noCs2: false) == "Firewall rule didn't change: see Regions", "");
+        check("Revisão C16: o título diz que ainda não bloqueia", MainWindow.RegionsTitle(3, 30, failed: true, noCs2: true) == "3 of 30 regions picked, not blocked yet"
+            && MainWindow.RegionsTitle(3, 30, true, false) == "3 of 30 regions picked: the Firewall rule didn't change" && MainWindow.RegionsTitle(3, 30, false, false) == "CS2 can play in 3 of 30 regions"
+            && MainWindow.RegionsTitle(30, 30, true, true) == "All 30 regions allowed: CS2 picks as usual", "");
+        check("Revisão C16: sem cs2.exe um clique diz porquê", regions.Contains("if (!quiet) Toast(_regionError, false);"), "");
+
+        // C17: sem a Valve, a cópia vem marcada e o Log diz porquê
+        {
+            var fixture = Path.Combine(repo, "tests", "fixtures", "sdrconfig.json");
+            var dir = Path.Combine(Path.GetTempPath(), "cs2ipchanger-revc-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(dir);
+            var seen = new List<string>();
+            void On(LogEntry e) { lock (seen) seen.Add(e.Text); }
+            try
+            {
+                var cache = Path.Combine(dir, "sdrconfig.json");
+                File.Copy(fixture, cache);
+                var tag = Guid.NewGuid().ToString("N")[..8];
+                Log.Again("regions-valve|");
+                Log.Added += On;
+                var cfg = Regions.Load(cache, () => throw new HttpRequestException("offline " + tag)).GetAwaiter().GetResult();
+                Log.Added -= On;
+                bool logged; lock (seen) logged = seen.Any(l => l.Contains("Couldn't get Valve's relay list") && l.Contains(tag));
+                check("Revisão C17: sem a Valve, a cópia vem marcada e o Log diz porquê", cfg is { FromCache: true } && logged, string.Join(" | ", seen));
+            }
+            finally { Log.Added -= On; try { Directory.Delete(dir, true); } catch { } }
+            check("Revisão C17: um Refresh com a cópia diz que não chegou à Valve", regions.Contains("if (cfg.FromCache && asked) Toast(") && regions.Contains("await LoadRegions(atStart: false, asked: true);"), "");
+        }
+
+        // C18
+        check("Revisão C18: sem console.log procura outra vez depois de o CS2 abrir", servers.Contains("if (log == null && (log = Cs2ConsoleLog()) != null) menu.StartAt(log);"), "");
+
         // C19
         check("Revisão C19: com pesquisa o botão não diz all", MainWindow.RefreshLabel(0, filtered: true) == "Refresh shown" && MainWindow.RefreshLabel(0, false) == "Refresh all" && MainWindow.RefreshLabel(2, true) == "Refresh 2", "");
         check("Revisão C19: a pesquisa atualiza o nome do botão", servers.Contains("QueryBtn.Content = RefreshLabel(ServerList.SelectedItems.Count, !string.IsNullOrEmpty(q));"), "");

@@ -57,6 +57,12 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - With protection off, opening CS2 in Whole PC mode said the programs opened with it also go through the phone. That note now only shows with protection on.
 - The bug report's "IP servers see" line showed the phone's IP even with protection off or in No phone mode. It is now called what it is, "Phone public IP".
 - In No phone mode or with protection off on a PC whose only network is the phone, Join's Log line and the Regions ping line said "home connection" and "without the phone". They now say it went on the phone's connection because the PC has no other network.
+- Allow all on Regions with CS2 open said "the block is already on". It now says every region is allowed again and that CS2 only measures the regions when it starts.
+- After turning protection on or off, Regions kept the pings measured on the other path, said "through the phone" in one place and "without the phone" in another, and Closest 3 picked from them. The old pings now go, and with the page open the app measures again on the path the game uses.
+- Closest 3 said "Measure the ping first" when only 1 or 2 regions had answered. It now says how many answered and that there aren't 3 to keep; with none answering, it says so.
+- With cs2.exe not found, or a Firewall write that failed, Regions said "CS2 can play in 3 of 30 regions" and Checks "3 of 30 allowed", as if the block was on. They now say the regions are picked but not blocked yet (or that the Firewall rule didn't change), and a click on a shortcut says why.
+- Refresh on Regions without internet only showed the grey "Offline" line, and the Log didn't say Valve couldn't be reached. Now both say it.
+- Join with CS2 closed waited the full 2 minutes before joining when the app hadn't found cs2.exe yet. It now finds CS2 once it is open and joins when the main menu is ready.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

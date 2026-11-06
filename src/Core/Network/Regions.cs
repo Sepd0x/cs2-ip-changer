@@ -83,16 +83,18 @@ public static class Regions
             var json = await (fetch ?? Download)();
             var cfg = Parse(json, DateTime.Now);
             try { File.WriteAllText(cachePath + ".tmp", json); File.Move(cachePath + ".tmp", cachePath, true); } catch { }
+            Log.Again("regions-valve|");
             return cfg;
         }
         catch (Exception ex)
         {
+            // Said before the saved copy is used (review C17: with a copy the failure never reached the Log), once until Valve answers again
+            Log.WarnOnce("regions-valve|", "Couldn't get Valve's relay list: " + (ex.InnerException ?? ex).Message);
             try
             {
                 if (File.Exists(cachePath)) return Parse(File.ReadAllText(cachePath), File.GetLastWriteTime(cachePath), fromCache: true);
             }
             catch (Exception cex) { Log.Warn("The saved relay list can't be read: " + cex.Message); }
-            Log.Warn("Couldn't get Valve's relay list: " + (ex.InnerException ?? ex).Message);
             return null;
         }
     }
