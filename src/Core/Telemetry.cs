@@ -589,6 +589,7 @@ public static class Telemetry
         "GameMode", "SteamOnEgress", "KeepPcOffPhone", "RequireGoodLink", "CheckUpdates", "SteamSilent", "SteamOffline", "StreamerMode",
         "AutoStreamer", "AutoQuery", "CleanupOnExit", "CloseToTray", "AutoJoinFollowed", "SwitchIp", "SwitchAccount", "SwitchRejoin",
         "SwitchOpenWith", "CommandSounds", "AutoModeByQuality", "NoPhone", "Mode", "ProtectOnStart", "UseWithProtectionOff",
+        "TestVersions",
     };
 
     /// <summary>The names in SettingNames whose value in <paramref name="now"/> differs from <paramref name="factory"/> (a new Settings).</summary>

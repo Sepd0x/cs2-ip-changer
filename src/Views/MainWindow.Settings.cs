@@ -41,6 +41,7 @@ public partial class MainWindow
             HotkeySwitchBox.Text = _s.HotkeySwitch;
             HotkeyRejoinBox.Text = _s.HotkeyRejoin;
             CheckUpdatesBox.IsChecked = _s.CheckUpdates;
+            TestVersionsBox.IsChecked = _s.TestVersions;
             KeepOffBox.IsChecked = _s.KeepPcOffPhone;
             LockCs2Box.IsChecked = _s.LockCs2;
             SteamEgressBox.IsChecked = _s.SteamOnEgress;

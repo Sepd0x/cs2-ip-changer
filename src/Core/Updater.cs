@@ -19,8 +19,9 @@ public static partial class Updater
     public const string ReleasesPage = "https://github.com/" + Repo + "/releases";
     const string ExeName = AppIds.ExeName;
 
-    /// <summary>A release on GitHub. <see cref="Size"/> is the exe's size in bytes (0 = not known).</summary>
-    public sealed record Release(string Version, string Tag, string PageUrl, string ExeUrl, string ShaUrl, long Size = 0, string SigUrl = null);
+    /// <summary>A release on GitHub. <see cref="Size"/> is the exe's size in bytes (0 = not known). <see cref="Test"/>: marked
+    /// pre-release, a test version (Settings > App > Get test versions).</summary>
+    public sealed record Release(string Version, string Tag, string PageUrl, string ExeUrl, string ShaUrl, long Size = 0, string SigUrl = null, bool Test = false);
 
     // ------------------------------------------------------------ Versions (SemVer 2.0)
 
@@ -74,8 +75,11 @@ public static partial class Updater
 
     // ------------------------------------------------------------ The release list
 
-    /// <summary>The highest version in the /releases answer (drafts and pre-releases left out). Links outside this repo are dropped.</summary>
-    public static Release PickLatest(string json)
+    /// <summary>
+    /// The highest version in the /releases answer. Drafts never (a release taken back is a draft, docs/RELEASING.md). Pre-releases
+    /// are the test channel: left out unless <paramref name="test"/> (Settings > App > Get test versions). Links outside this repo are dropped.
+    /// </summary>
+    public static Release PickLatest(string json, bool test = false)
     {
         Release best = null;
         using var doc = JsonDocument.Parse(json);
@@ -83,9 +87,9 @@ public static partial class Updater
         foreach (var r in doc.RootElement.EnumerateArray())
         {
             if (r.TryGetProperty("draft", out var d) && d.ValueKind == JsonValueKind.True) continue;
-            // A release marked pre-release is one taken back (docs/RELEASING.md, "If a release breaks something"): never offered.
-            // Betas go out as normal releases, so this only skips the ones pulled on purpose.
-            if (r.TryGetProperty("prerelease", out var pre) && pre.ValueKind == JsonValueKind.True) continue;
+            // Each new version goes out first as a pre-release, the test channel; it becomes stable (Latest) after the test rounds.
+            var isTest = r.TryGetProperty("prerelease", out var pre) && pre.ValueKind == JsonValueKind.True;
+            if (isTest && !test) continue;
             var tag = Str(r, "tag_name");
             if (!IsValid(tag)) continue;
             string exe = null, sha = null, sig = null;
@@ -105,7 +109,7 @@ public static partial class Updater
                     else if (name == ExeName + ".sha256.sig") sig = url;
                 }
             var page = Str(r, "html_url");
-            var rel = new Release(Clean(tag), tag, IsRepoUrl(page, "/releases/") ? page : ReleasesPage, exe, sha, size, sig);
+            var rel = new Release(Clean(tag), tag, IsRepoUrl(page, "/releases/") ? page : ReleasesPage, exe, sha, size, sig, isTest);
             if (best == null || Compare(rel.Version, best.Version) > 0) best = rel;
         }
         return best;
@@ -146,15 +150,16 @@ public static partial class Updater
     /// <summary>
     /// The newest release. The API first; when it refuses (60 requests an hour per IP without a token, and mobile data shares one IP
     /// between many people, audit C6) or fails, the redirect of github.com/.../releases/latest, which has no such limit. The
-    /// download is the same either way: only an exe with the project's signature is installed.
+    /// download is the same either way: only an exe with the project's signature is installed. <paramref name="test"/>: the test
+    /// channel too (pre-releases). The redirect only knows the stable one, so without the API a test version waits for the next check.
     /// </summary>
-    public static async Task<Release> Latest(CancellationToken ct = default)
+    public static async Task<Release> Latest(bool test, CancellationToken ct = default)
     {
         if (Rec.On) return null;   // the recording build never replaces itself with the normal one
         try
         {
             using var http = Http(15);
-            return PickLatest(await http.GetStringAsync(ApiUrl + "?per_page=50", ct));
+            return PickLatest(await http.GetStringAsync(ApiUrl + "?per_page=50", ct), test);
         }
         catch (Exception api) when (!ct.IsCancellationRequested)
         {
