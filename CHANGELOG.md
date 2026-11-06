@@ -145,6 +145,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - With protection off, a protection rule Windows didn't remove at that moment stayed until something else changed. The app now tries again every minute and says so in the Log.
 - After the PC woke from sleep, the phone stayed trusted from before, even if it had joined your home Wi-Fi in the night. Its IP is now checked again right after waking.
 - On Windows 11 with Location turned off, a hotspot always showed as "not connected" because Windows hides the Wi-Fi name. Status and picking the hotspot now say to turn on Location.
+- Settings > Steam through the phone didn't say that, in Game only with CS2 only through the phone on, CS2's matchmaking can't connect without it. It says so now, and the guide says a community server that isn't on your list may not connect until you add it.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

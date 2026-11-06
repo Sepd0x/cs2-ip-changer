@@ -1991,7 +1991,7 @@
                                         <CheckBox x:Name="SteamEgressBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
                                             <StackPanel>
                                                 <TextBlock Text="Steam through the phone"/>
-                                                <TextBlock Text="Avoids the 'No Steam logon' kick. Steam downloads also use mobile data." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="Avoids the 'No Steam logon' kick. In Game only with CS2 only through the phone on, matchmaking needs it. Steam downloads also use mobile data." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
                                         <!-- beta.11: features without protection, only when you choose it (a warning when you turn it on) -->

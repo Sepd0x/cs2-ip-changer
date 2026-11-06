@@ -49,6 +49,15 @@ static class RevisaoETests
         check("Revisão E3: o mesmo erro de devolver a métrica vai ao Log uma vez", warned == 1, $"{warned} linhas");
         check("Revisão E3: e a métrica continua marcada para o próximo arranque ou o --restore", failing.PcOffPhoneApplied && failing.Owned().MetricIf == 7, "");
 
+        // E5. Game only: o comportamento fica (o lado seguro), o texto deixa de prometer o CS2 inteiro pelo telemóvel
+        check("Revisão E5: a opção Steam through the phone diz que o matchmaking precisa dela em Game only com o CS2 trancado",
+            Src("MainWindow.xaml").Contains("Text=\"Avoids the 'No Steam logon' kick. In Game only with CS2 only through the phone on, matchmaking needs it. Steam downloads also use mobile data.\""), "");
+        var docs = File.ReadAllText(Path.Combine(SecurityTests.Repo(), "docs", "FEATURES.md"));
+        var pages = File.ReadAllText(Path.Combine(SecurityTests.Repo(), "tools", "site-pages.mjs"));
+        check("Revisão E5: o FEATURES e o guia do site dizem que um servidor fora da lista pode não ligar",
+            docs.Contains("a community server that isn't on your list may not connect until you add it") && pages.Contains("a community server that isn't on your list may not connect until you add it"), "");
+        check("Revisão E5: o comportamento não mudou (os blocos da Valve só com Steam through the phone)", guard.Contains("if (s.SteamOnEgress && egress != null)"), "");
+
         // E6. A regra do CS2 vai para o cs2.exe que corre, não para uma cópia antiga guardada
         check("Revisão E6: com o CS2 a correr, a regra vai para o cs2.exe que corre", Steam.PickCs2(@"C:\old\cs2.exe", true, new[] { @"D:\SteamLibrary\cs2.exe" }) == @"D:\SteamLibrary\cs2.exe", "");
         check("Revisão E6: com o CS2 fechado, o guardado vale enquanto existe", Steam.PickCs2(@"C:\old\cs2.exe", true, Array.Empty<string>()) == @"C:\old\cs2.exe"
