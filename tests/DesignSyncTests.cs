@@ -178,6 +178,26 @@ static class DesignSyncTests
         check("Site: o endereço usa os passos do rail", railSteps.Count == 6 && jsSteps.SequenceEqual(railSteps.Skip(1).Select(s => s.Split('=')[0])), string.Join(" ", jsSteps));
         var updateBody = Regex.Match(homeJs, @"function update\(\) \{[\s\S]*?\n  \}\n").Value;
         check("Site: aria-current e o rail só quando o passo assenta", updateBody.Length > 0 && !updateBody.Contains("aria-current") && homeJs.Contains("'scrollend'") && homeJs.Contains("history.replaceState"), "");
+
+        // ---------------- 4. auditoria de SEO (6 nov.): títulos e descrições nos limites, o cartão social completo em cada guia,
+        // a linha do SmartScreen debaixo de cada Download, o ?ref= no contador, e no telemóvel o ecrã de carregamento não espera pelo 3D
+        string Un(string x) => System.Net.WebUtility.HtmlDecode(x);
+        var pagesHtml = new[] { "site/index.html" }.Concat(guides).ToDictionary(f => f, Txt);
+        var longT = pagesHtml.Where(kv => Un(Regex.Match(kv.Value, "<title>([^<]*)</title>").Groups[1].Value).Length > 60).Select(kv => kv.Key).ToList();
+        check("SEO: cada título tem 60 caracteres ou menos", longT.Count == 0, string.Join(", ", longT));
+        var longD = pagesHtml.Where(kv => Un(Regex.Match(kv.Value, "<meta name=\"description\" content=\"([^\"]*)\"").Groups[1].Value) is var d && (d.Length == 0 || d.Length > 155)).Select(kv => kv.Key).ToList();
+        check("SEO: cada descrição tem 155 caracteres ou menos", longD.Count == 0, string.Join(", ", longD));
+        var noCard = pagesHtml.Where(kv => !new[] { "twitter:image\"", "og:image:alt", "og:image:width", "og:image:height" }.All(kv.Value.Contains)).Select(kv => kv.Key).ToList();
+        check("SEO: cada página tem twitter:image e og:image com alt, largura e altura", noCard.Count == 0, string.Join(", ", noCard));
+        var homeH1 = Un(Regex.Match(homeHtml, "<h1[^>]*>([^<]*)</h1>").Groups[1].Value);
+        var sameH1 = guides.Where(f => Un(Regex.Match(pagesHtml[f], "<h1[^>]*>([^<]*)</h1>").Groups[1].Value) == homeH1).ToList();
+        check("SEO: nenhuma guia repete o h1 da home", homeH1.Length > 0 && sameH1.Count == 0, string.Join(", ", sameH1));
+        var noSs = pagesHtml.Where(kv => Regex.Matches(kv.Value, @"Download for Windows\s*</a>").Count > Regex.Matches(kv.Value, "class=\"rel-ss[^\"]*\">Windows may say \"Windows protected your PC\": click More info, then Run anyway. <a href=\"(\\.\\./)?is-it-safe/\">").Count).Select(kv => kv.Key).ToList();
+        check("SEO: debaixo de cada Download, o que fazer no aviso do SmartScreen", noSs.Count == 0, string.Join(", ", noSs));
+        var noRef = pagesHtml.Where(kv => !kv.Value.Contains("if(!/^[a-z0-9-]{1,20}$/.test(rq))rq=''") || !kv.Value.Contains("sp.delete('ref')") || !kv.Value.Contains("if(!rf&&rq)rf=rq")).Select(kv => kv.Key).ToList();
+        check("SEO: o contador usa o ?ref= (só [a-z0-9-], até 20) e tira-o da barra", noRef.Count == 0, string.Join(", ", noRef));
+        var slowLd = new[] { "site/index.html", "site/404.html" }.Concat(guides).Where(f => !Txt(f).Contains("setTimeout(end,matchMedia('(pointer:coarse)').matches?1100:6000)")).ToList();
+        check("Site: no telemóvel o ecrã de carregamento sai em ~1,5 s e não espera pelo 3D", slowLd.Count == 0 && homeHtml.Contains("@media (pointer:fine),(pointer:none){html.ld .b-cover .copy>*{animation-play-state:paused}}"), string.Join(", ", slowLd));
     }
 
     /// <summary>Theme.xaml: as cores de 6 dígitos (Color e SolidColorBrush), em minúsculas, como o design-tokens.mjs.</summary>

@@ -139,6 +139,8 @@
     var y = scrollY, w = where(y), p = w.p, sub = w.sub;
     seen = { inStory: y < storyEnd, p: w.p, sub: w.sub, pg: pageNow(y) };
     dwell(y);
+    // past the story (the close, the footer) the chip has no step to show, so it goes (it said "6/6 The app" at the FAQ's end)
+    if (whereEl) { var away = !stepAt(y); if (whereEl.classList.contains('away') !== away) { whereEl.classList.toggle('away', away); if (away) whereShut(); } }
     if (!FX || held) { p = Math.round(p); if (p === 4) sub = snap(sub); else if (p > 4) sub = 1; }
     if (p < 4) sub = 0;
     // the stage is seen while the story is on screen and again at the close; under the plain sections it rests

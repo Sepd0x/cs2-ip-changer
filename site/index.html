@@ -34,7 +34,7 @@
 <script>(function(h){h.classList.add('js');if(!matchMedia('(prefers-reduced-motion: reduce)').matches)h.classList.add('fx')})(document.documentElement)</script>
 <script>
 /* the loading screen: only with JS and WebGL. The line fills (its own transform: a custom property on <html> made every step restyle the whole page) as the page gets ready (HTML, fonts, the 3D script) and the page
-   comes in on the world's first frame, or after 6 s, or at once without WebGL. While it shows, the wheel, touch and the
+   comes in on the world's first frame, or after 6 s (on a phone or tablet it is gone by about 1.5 s, 6 Nov.: the first words wait no longer), or at once without WebGL. While it shows, the wheel, touch and the
    scroll keys wait, so nothing moves under it. Reduced motion: the line steps and the screen goes at once */
 (function(h){try{var c=document.createElement('canvas');if(!(c.getContext('webgl2')||c.getContext('webgl')))return}catch(x){return}
 h.classList.add('ld','ldu');var t0=performance.now(),p=0,done=false,K={32:1,33:1,34:1,35:1,36:1,37:1,38:1,39:1,40:1},O={capture:true,passive:false},
@@ -44,7 +44,7 @@ end=function(e){if(done)return;done=true;if(e&&e.type==='worldready')h.classList
 setTimeout(function(){h.classList.add('ld-out');setTimeout(function(){h.classList.remove('ld','ld-out')},400)},Math.max(90,300-(performance.now()-t0)))};
 ['wheel','touchmove','keydown'].forEach(function(t){addEventListener(t,hold,O)});
 window.__ldStep=set;window.__ldEnd=end;set(.12);
-document.addEventListener('worldready',end,true);setTimeout(end,6000);
+document.addEventListener('worldready',end,true);setTimeout(end,matchMedia('(pointer:coarse)').matches?1100:6000);
 document.addEventListener('DOMContentLoaded',function(){set(.25)});
 document.addEventListener('worldprogress',function(e){set(.45+.52*(+e.detail||0))},true);
 if(document.fonts)document.fonts.ready.then(function(){set(.35)});
@@ -181,7 +181,7 @@ html.ld-out .ld-scr{opacity:0;visibility:hidden}
 @media (prefers-reduced-motion:no-preference){.ld-bar i{display:block;position:absolute;top:-2px;bottom:-2px;left:0;width:3rem;background:linear-gradient(90deg,transparent,rgba(255,255,255,.8),transparent);animation:ld-glint 1.25s cubic-bezier(.45,0,.25,1) infinite}}
 @keyframes ld-glint{from{transform:translateX(-3rem)}to{transform:translateX(min(14rem,62vw))}}
 /* what comes in after it: the cover's lines and the first reveals wait for it; when the world was drawn under it (ldw), no fade from the poster */
-html.ld .b-cover .copy>*{animation-play-state:paused}
+@media (pointer:fine),(pointer:none){html.ld .b-cover .copy>*{animation-play-state:paused}}
 html.fx.ld .rv.in{opacity:0;transform:translateY(24px)}
 html.ldw .stage.ready canvas,html.ldw .gw.ready canvas{transition:none}
 html.ldw .stage.ready .stage-still{opacity:0;transition:none}
@@ -223,6 +223,9 @@ main>*,footer{position:relative;z-index:1}
 .rel{color:var(--ink2);font-size:.86rem;line-height:1.5;margin:.75rem 0 0}
 .rel a{color:var(--ink2);display:inline-block;padding-block:.25rem}
 .rel a:hover{color:var(--ink)}
+/* 6 Nov.: under Download, what to do at the SmartScreen warning (the .exe is not code-signed yet) */
+.rel-ss,.beat p.rel-ss{color:var(--ink3);font-size:.78rem;line-height:1.45;margin:.3rem 0 0;max-width:34rem}
+.rel-ss a{color:var(--ink2)}.rel-ss a:hover{color:var(--ink)}
 .nowrap-bits a{white-space:nowrap}
 .req,.safe{color:var(--ink3);font-size:.88rem;line-height:1.5;margin:.8rem 0 0}
 .req{margin-top:.45rem}
@@ -707,7 +710,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
 .pause::before{content:"";flex:none;width:8px;height:10px;border-inline:2.5px solid currentColor}
 .pause[aria-pressed=true]{opacity:1;color:var(--ink);background:color-mix(in srgb,var(--t-accent) 16%,var(--t-surface));box-shadow:inset 0 0 0 1px var(--t-accent)}
 .pause[aria-pressed=true]::before{border:0;border-left:9px solid currentColor;border-block:5px solid transparent;width:0;height:0}
-.story-off .rail,.story-off .pause,.story-off .where{opacity:0;visibility:hidden}
+.story-off .rail,.story-off .pause,.story-off .where,.where.away{opacity:0;visibility:hidden}
 /* 6 Nov.: under 1000 px the rail and the header's links are hidden, so a chip says where the story is ("2/6 Phone") and
    opens the steps, Setup and Guides. Where the rail is on a PC; top left held upright, beside Pause motion on its side. */
 .where{display:none;position:fixed;right:max(var(--gutter),(100% - var(--max))/2);bottom:1.1rem;z-index:5;transition:opacity .4s,visibility .4s;font:400 .8rem/1 var(--mono)}
@@ -945,6 +948,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
           <a class="link" href="is-it-safe/">Is it safe?</a>
         </div>
         <p class="rel nowrap-bits"><!--rel:line-->v0.1.0-beta.10 · 63.4 MB · 4 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Release notes and checksums</a><!--/rel--></p>
+        <p class="rel-ss">Windows may say "Windows protected your PC": click More info, then Run anyway. <a href="is-it-safe/">Why it's safe</a></p>
       </div>
       <div class="get-phone">
         <button class="btn" type="button" id="send-link" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/">Send the link to my PC</button>
@@ -1243,6 +1247,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
           <a class="btn btn-ghost" href="https://github.com/Sepd0x/cs2-ip-changer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>Star on GitHub</a>
         </div>
         <p class="rel get-desk"><!--rel:line-->v0.1.0-beta.10 · 63.4 MB · 4 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Release notes and checksums</a><!--/rel--></p>
+        <p class="rel-ss get-desk">Windows may say "Windows protected your PC": click More info, then Run anyway. <a href="is-it-safe/">Why it's safe</a></p>
       </div>
     </div>
   </section>
@@ -1316,10 +1321,14 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
   /* visit counter: which page, the site you came from (its name only) and clicks on Download, added up per day. No cookies,
      no ID, nothing kept in your browser. Off with Do Not Track or Global Privacy Control. Code: worker/stats/src/index.js */
   var nv=navigator;
+  /* a link with ?ref=<name> (a TikTok bio, say: links from apps come with no referrer) counts as from that name: letters,
+     digits and dashes only, 20 at most; the parameter leaves the address bar at once, so a shared link doesn't carry it */
+  var rq='';try{var sp=new URLSearchParams(location.search);if(sp.has('ref')){rq=(sp.get('ref')||'').toLowerCase();if(!/^[a-z0-9-]{1,20}$/.test(rq))rq='';sp.delete('ref');var qs=sp.toString();history.replaceState(history.state,'',location.pathname+(qs?'?'+qs:'')+location.hash)}}catch(x){}
   if(nv.sendBeacon&&location.hostname==='sepd0x.github.io'&&nv.doNotTrack!=='1'&&window.doNotTrack!=='1'&&nv.globalPrivacyControl!==true){
     var pg=location.pathname.replace(/^\/cs2-ip-changer/,'').replace(/index\.html$/,'')||'/';
     if(pg.slice(-1)!=='/')pg+='/';
     var rf='';try{if(d.referrer){var u=new URL(d.referrer);if(u.hostname!==location.hostname)rf=u.hostname}}catch(x){}
+    if(!rf&&rq)rf=rq;
     var hit=function(ev){try{nv.sendBeacon('https://stats.cs2ipchanger.workers.dev/v1/site',JSON.stringify({v:1,p:pg,r:rf,e:ev}))}catch(x){}};
     hit('view');
     d.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&/\/releases\/(latest\/)?download\//.test(a.href))hit('download')});

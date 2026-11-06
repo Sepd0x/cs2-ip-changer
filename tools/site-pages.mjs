@@ -303,7 +303,7 @@ const slug = (s) => s.toLowerCase().replace(/'/g, '').replace(/[^a-z0-9]+/g, '-'
 const icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>';
 const star = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>';
 // On a PC: the exe itself, with what you get under it. On a phone (a Windows app is no use there): copy this page's link for the PC.
-const download = (url) => `<div class="get-desk"><a class="btn" href="${EXE}">${icon}Download for Windows</a><p class="rel">${relLine}</p></div>
+const download = (url) => `<div class="get-desk"><a class="btn" href="${EXE}">${icon}Download for Windows</a><p class="rel">${relLine}</p><p class="rel-ss">Windows may say "Windows protected your PC": click More info, then Run anyway. <a href="../is-it-safe/">Why it's safe</a></p></div>
           <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">${url.replace(/^https:\/\//, '').replace(/\/$/, '').replace(/\//g, '/<wbr>')}</code><button class="btn" type="button" data-share data-copy="${url}">Send to my PC</button></div><a class="link" href="${EXE}">Download the .exe anyway</a></div>`;
 const req = 'Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin';
 // The copy button and the screenshot viewer: the same code as the home page (between its /* shared */ marks).
@@ -338,7 +338,7 @@ const crop = ([name, x, y, w, h, alt]) => `<a class="crop zoom" href="../img/${n
 export const pages = [
   {
     slug: 'cs2-region-picker',
-    title: 'CS2 server picker and region picker: change your region in CS2',
+    title: 'CS2 region picker: change your matchmaking region',
     desc: 'Pick your CS2 matchmaking region: block the ones you don\'t want and see the ping of each. Free Windows app, one firewall rule for cs2.exe on Valve relays.',
     nav: 'CS2 region picker',
     blurb: 'How to change your region in CS2.',
@@ -443,12 +443,12 @@ export const pages = [
   },
   {
     slug: 'change-ip-with-phone',
-    title: "Use your phone's mobile data for CS2 only, not the whole PC",
+    title: 'Change your CS2 IP with an Android phone (USB tethering)',
     desc: "Set up your Android phone's mobile data for CS2 only: USB tethering, game-only routing, a kill switch and a new IP in one click over ADB. Free for Windows.",
     nav: 'Change IP with your phone',
     blurb: 'Setup, game-only routing and a new IP in one click.',
     eyebrow: 'Setup guide',
-    h1: "Use your phone's mobile data for CS2 only, and change IP in one click",
+    h1: 'Set up an Android phone for CS2: USB tethering, and a new IP in one click',
     lead: 'The whole setup, start to finish: the phone shares its mobile data over USB, only CS2, Steam and your servers use it, and Change IP gets a new carrier IP from the PC.',
     crop: ['connection', 91, 44, 569, 452,'The Connection page: protection status, the IP servers see next to your home IP, and the phone ready to change IP'],
     related: ['cs2-iphone-hotspot', 'cs2-ip-ban', 'is-it-safe'],
@@ -469,7 +469,7 @@ export const pages = [
     // Facts only from README.md (Quick start, the FAQ "Does it work with an iPhone?" and the VPN table). The iPhone steps of
     // Phone setup come with beta.11, so this page doesn't mention them until that release is out.
     slug: 'cs2-iphone-hotspot',
-    title: "Play CS2 on your iPhone's mobile data, not your home IP",
+    title: "Play CS2 on your iPhone's Personal Hotspot, not your home IP",
     desc: "CS2 IP Changer works with an iPhone: Personal Hotspot by USB or Wi-Fi, only CS2 and Steam on it, a kill switch, and a new IP with Airplane Mode.",
     nav: 'CS2 with an iPhone',
     blurb: 'Personal Hotspot, and a new IP by Airplane Mode.',
@@ -497,7 +497,7 @@ export const pages = [
   {
     slug: 'cs2-ip-ban',
     title: 'Does CS2 IP ban? Community server bans and getting back in',
-    desc: 'Does CS2 IP ban? Valve doesn\'t, community servers can. Tell an IP ban from a SteamID or range ban, see what a new IP fixes, and get back in with your phone\'s mobile data.',
+    desc: 'Does CS2 IP ban? Valve doesn\'t, community servers can. Tell an IP ban from a SteamID or range ban, and get back in with your phone\'s mobile data.',
     nav: 'CS2 IP ban',
     blurb: 'Which ban you have and how to get back in.',
     eyebrow: 'CS2 IP ban bypass',
@@ -614,6 +614,7 @@ const WORLD = {
 // The caption under the app's own screen in the text: which page of the app it is, and that it is the real one.
 const capOf = (p) => `The ${p.crop[0][0].toUpperCase() + p.crop[0].slice(1)} page of the app, a real screenshot${/accounts|profiles|configs/.test(p.crop[0]) ? ' with example names' : p.crop[0] === 'connection' ? ' with example IPs' : ''}. Select it to see it full size.`;
 
+const CARD = `${BASE}img/social-preview.png`, CARD_ALT = "CS2 IP Changer: IP banned on a CS2 server? New IP in one click, with the app's Connection screen";
 function render(p, modified) {
   const url = `${BASE}${p.slug}/`;
   const image = `${BASE}img/${p.crop[0]}.png`;
@@ -674,15 +675,20 @@ function render(p, modified) {
 <meta property="og:title" content="${esc(p.title)}">
 <meta property="og:description" content="${esc(p.desc)}">
 <meta property="og:url" content="${url}">
-<meta property="og:image" content="${image}">
+<meta property="og:image" content="${CARD}">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="${esc(CARD_ALT)}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="${CARD}">
+<meta name="twitter:image:alt" content="${esc(CARD_ALT)}">
 <link rel="preload" href="../fonts/funnel-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../fonts/fragment-mono.woff2" as="font" type="font/woff2" crossorigin>
 <script>document.documentElement.classList.add('js');if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('fx')</script>
 <script>
 /* the loading screen: only with JS and WebGL. The line fills (its own transform: a custom property on <html> made every step restyle the whole page) as the page gets ready (HTML, fonts, the 3D script) and the page
-   comes in on the world's first frame, or after 6 s, or at once without WebGL. While it shows, the wheel, touch and the
+   comes in on the world's first frame, or after 6 s (on a phone or tablet it is gone by about 1.5 s, 6 Nov.: the first words wait no longer), or at once without WebGL. While it shows, the wheel, touch and the
    scroll keys wait, so nothing moves under it. Reduced motion: the line steps and the screen goes at once */
 (function(h){try{var c=document.createElement('canvas');if(!(c.getContext('webgl2')||c.getContext('webgl')))return}catch(x){return}
 h.classList.add('ld','ldu');var t0=performance.now(),p=0,done=false,K={32:1,33:1,34:1,35:1,36:1,37:1,38:1,39:1,40:1},O={capture:true,passive:false},
@@ -692,7 +698,7 @@ end=function(e){if(done)return;done=true;if(e&&e.type==='worldready')h.classList
 setTimeout(function(){h.classList.add('ld-out');setTimeout(function(){h.classList.remove('ld','ld-out')},400)},Math.max(90,300-(performance.now()-t0)))};
 ['wheel','touchmove','keydown'].forEach(function(t){addEventListener(t,hold,O)});
 window.__ldStep=set;window.__ldEnd=end;set(.12);
-document.addEventListener('worldready',end,true);setTimeout(end,6000);
+document.addEventListener('worldready',end,true);setTimeout(end,matchMedia('(pointer:coarse)').matches?1100:6000);
 document.addEventListener('DOMContentLoaded',function(){set(.25)});
 document.addEventListener('worldprogress',function(e){set(.45+.52*(+e.detail||0))},true);
 if(document.fonts)document.fonts.ready.then(function(){set(.35)});

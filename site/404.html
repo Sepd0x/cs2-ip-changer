@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <script>
 /* the loading screen: only with JS and WebGL. The line fills (its own transform: a custom property on <html> made every step restyle the whole page) as the page gets ready (HTML, fonts, the 3D script) and the page
-   comes in on the world's first frame, or after 6 s, or at once without WebGL. While it shows, the wheel, touch and the
+   comes in on the world's first frame, or after 6 s (on a phone or tablet it is gone by about 1.5 s, 6 Nov.: the first words wait no longer), or at once without WebGL. While it shows, the wheel, touch and the
    scroll keys wait, so nothing moves under it. Reduced motion: the line steps and the screen goes at once */
 (function(h){try{var c=document.createElement('canvas');if(!(c.getContext('webgl2')||c.getContext('webgl')))return}catch(x){return}
 h.classList.add('ld','ldu');var t0=performance.now(),p=0,done=false,K={32:1,33:1,34:1,35:1,36:1,37:1,38:1,39:1,40:1},O={capture:true,passive:false},
@@ -14,7 +14,7 @@ end=function(e){if(done)return;done=true;if(e&&e.type==='worldready')h.classList
 setTimeout(function(){h.classList.add('ld-out');setTimeout(function(){h.classList.remove('ld','ld-out')},400)},Math.max(90,300-(performance.now()-t0)))};
 ['wheel','touchmove','keydown'].forEach(function(t){addEventListener(t,hold,O)});
 window.__ldStep=set;window.__ldEnd=end;set(.12);
-document.addEventListener('worldready',end,true);setTimeout(end,6000);
+document.addEventListener('worldready',end,true);setTimeout(end,matchMedia('(pointer:coarse)').matches?1100:6000);
 document.addEventListener('DOMContentLoaded',function(){set(.25)});
 document.addEventListener('worldprogress',function(e){set(.45+.52*(+e.detail||0))},true);
 if(document.fonts)document.fonts.ready.then(function(){set(.35)});
@@ -131,7 +131,7 @@ html.ld-out .ld-scr{opacity:0;visibility:hidden}
 @media (prefers-reduced-motion:no-preference){.ld-bar i{display:block;position:absolute;top:-2px;bottom:-2px;left:0;width:3rem;background:linear-gradient(90deg,transparent,rgba(255,255,255,.8),transparent);animation:ld-glint 1.25s cubic-bezier(.45,0,.25,1) infinite}}
 @keyframes ld-glint{from{transform:translateX(-3rem)}to{transform:translateX(min(14rem,62vw))}}
 /* what comes in after it: the cover's lines and the first reveals wait for it; when the world was drawn under it (ldw), no fade from the poster */
-html.ld .b-cover .copy>*{animation-play-state:paused}
+@media (pointer:fine),(pointer:none){html.ld .b-cover .copy>*{animation-play-state:paused}}
 html.fx.ld .rv.in{opacity:0;transform:translateY(24px)}
 html.ldw .stage.ready canvas,html.ldw .gw.ready canvas{transition:none}
 html.ldw .stage.ready .stage-still{opacity:0;transition:none}
