@@ -431,3 +431,40 @@
   var later = function () { setTimeout(function () { idle(start, { timeout: 1200 }); }, FX ? 900 : 0); };
   if (W.WorldScene) later(); else W.__worldReady = later;
 })();
+/* Android or iPhone, on a phone: a switch of two tabs over the two cards (6 Nov., the owner asked for it). It opens on the
+   iPhone for a visitor on iOS, on Android for everyone else. Arrows, Home and End move between the tabs. On a PC, or
+   without JS, both cards show side by side as before (index.html, .ph-tabs and .duo.tabbed) */
+(function () {
+  'use strict';
+  var d = document, duo = d.querySelector('.duo'); if (!duo || !window.matchMedia) return;
+  var cards = [].slice.call(duo.children); if (cards.length !== 2) return;
+  var Q = matchMedia('(max-width:759px),(max-height:540px) and (orientation:landscape)');
+  var ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var names = ['Android', 'iPhone'], on = ios ? 1 : 0, tabs = [];
+  var list = d.createElement('div'); list.className = 'ph-tabs'; list.setAttribute('role', 'tablist'); list.setAttribute('aria-label', 'Your phone');
+  names.forEach(function (n, i) {
+    var b = d.createElement('button'); b.type = 'button'; b.textContent = n; b.id = 'ph-tab-' + i; b.setAttribute('role', 'tab'); b.setAttribute('aria-controls', 'ph-card-' + i);
+    b.addEventListener('click', function () { pick(i); });
+    list.appendChild(b); tabs.push(b); cards[i].id = 'ph-card-' + i;
+  });
+  list.addEventListener('keydown', function (e) {
+    var k = e.key, i = k === 'ArrowRight' || k === 'ArrowDown' ? (on + 1) % 2 : k === 'ArrowLeft' || k === 'ArrowUp' ? (on + 1) % 2 : k === 'Home' ? 0 : k === 'End' ? 1 : -1;
+    if (i < 0) return; e.preventDefault(); pick(i); tabs[i].focus();
+  });
+  duo.parentNode.insertBefore(list, duo);
+  function pick(i) {
+    on = i;
+    tabs.forEach(function (b, k) { b.setAttribute('aria-selected', k === i); b.tabIndex = k === i ? 0 : -1; });
+    if (duo.classList.contains('tabbed')) cards.forEach(function (c, k) { c.setAttribute('aria-hidden', k !== i); });
+  }
+  function set() {
+    var t = Q.matches; duo.classList.toggle('tabbed', t);
+    cards.forEach(function (c, k) {
+      if (t) { c.setAttribute('role', 'tabpanel'); c.setAttribute('aria-labelledby', 'ph-tab-' + k); c.tabIndex = 0; }
+      else { c.removeAttribute('role'); c.removeAttribute('aria-labelledby'); c.removeAttribute('aria-hidden'); c.removeAttribute('tabindex'); }
+    });
+    if (t) duo.removeAttribute('role'); else duo.setAttribute('role', 'group');
+    pick(on);
+  }
+  set(); if (Q.addEventListener) Q.addEventListener('change', set); else if (Q.addListener) Q.addListener(set);
+})();

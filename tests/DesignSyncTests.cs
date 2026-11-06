@@ -218,6 +218,14 @@ static class DesignSyncTests
         var footer2 = guides.Where(f => !Txt(f).Contains(".fgrid nav[aria-labelledby=f2] ul{grid-template-columns:repeat(2,minmax(0,1fr));")).ToList();
         check("Site: o rodapé em duas colunas no telemóvel, na home e em cada guia, com 44 px por link",
             homeHtml.Contains("footer nav li a{display:flex;align-items:center;min-height:44px;") && footer2.Count == 0, string.Join(", ", footer2));
+        // Android ou iPhone no telemóvel (pedido do dono, 6 nov.): separadores com teclado, iPhone primeiro para quem
+        // vem de iOS, os dois cartões na mesma célula (sem salto ao trocar), e sem JS ou no PC os dois à vista
+        check("Site: Android | iPhone no telemóvel é um tablist com setas, Home e End, e abre no iPhone para quem vem de iOS",
+            homeJs.Contains("list.setAttribute('role', 'tablist')") && homeJs.Contains("b.setAttribute('role', 'tab')") && homeJs.Contains("'ArrowLeft'") && homeJs.Contains("'Home'") && homeJs.Contains("'End'")
+            && homeJs.Contains("/iPhone|iPad|iPod/.test(navigator.userAgent)") && homeJs.Contains("on = ios ? 1 : 0"), "");
+        check("Site: Android | iPhone só no telemóvel, com alvos de 44 px e sem salto ao trocar (os dois cartões na mesma célula)",
+            homeHtml.Contains(".ph-tabs{display:none}") && homeHtml.Contains(".ph-tabs button{min-width:6.5rem;min-height:44px;") && homeHtml.Contains(".duo.tabbed>div{grid-area:1/1;")
+            && homeJs.Contains("matchMedia('(max-width:759px),(max-height:540px) and (orientation:landscape)')") && homeHtml.Contains("@media (max-width:759px),(max-height:540px) and (orientation:landscape){\n  .ph-tabs{display:flex;".Replace("\n", homeHtml.Contains("\r\n") ? "\r\n" : "\n")), "");
         check("Site: a is-it-safe diz que o contador conta o ?ref= de um link",
             Txt("site/is-it-safe/index.html").Contains("or the short name in the link when there is none (like <code>?ref=tiktok</code>)"), "");
     }

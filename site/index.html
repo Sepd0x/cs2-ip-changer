@@ -887,6 +887,20 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
   .js .pages .mk-key li::before{grid-row:2}
   .js .pages .mk-key li>span{grid-row:2}
 }
+/* Android or iPhone on a phone (6 Nov., the owner: a button, phone components): Android | iPhone switches the one card
+   shown, iPhone first for a visitor on iOS (home.js). Both cards share one cell, so the box is the taller card's height
+   and a switch fades without moving anything below. Without JS, or on a PC, both cards show as before */
+.ph-tabs{display:none}
+@media (max-width:759px),(max-height:540px) and (orientation:landscape){
+  .ph-tabs{display:flex;width:max-content;max-width:100%;gap:.25rem;padding:.25rem;margin:0 0 1.4rem;border-radius:999px;background:var(--t-surface);box-shadow:inset 0 0 0 1px var(--line)}
+  .ph-tabs button{min-width:6.5rem;min-height:44px;padding:0 1.2rem;border:0;border-radius:999px;background:none;color:var(--ink2);font:500 1rem/1 var(--sans);cursor:pointer;transition:background-color .25s,color .25s}
+  .ph-tabs button[aria-selected=true]{background:var(--t-accent);color:var(--t-bg)}
+  .ph-tabs button:focus-visible{outline:2px solid var(--t-accent-light);outline-offset:2px}
+  .duo.tabbed{grid-template-columns:minmax(0,1fr)}
+  .duo.tabbed>div{grid-area:1/1;padding:1.6rem 0;border:0!important;transition:opacity .3s var(--ease-out),visibility .3s}
+  .duo.tabbed>div[aria-hidden=true]{opacity:0;visibility:hidden}
+}
+@media (prefers-reduced-motion:reduce){.duo.tabbed>div{transition:none}}
 .cut{display:none}
 @media (max-width:759px) and (orientation:portrait){
   .cut-in .patch{visibility:visible}
