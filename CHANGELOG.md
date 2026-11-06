@@ -17,6 +17,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
   - How it works moved from Settings to the Connection page, between Checks and Previous IPs.
   - Accounts has two boxes like Servers: Add and log in on top (On login, Add, New IP + next account), the list below with Refresh. Show hidden (was Settings > Maintenance > Show hidden accounts) is next to Refresh and only shows while some accounts are hidden.
   - Configs: Copy, Sync and Snapshots on the left; Account configs, Compare and Backups on the right. Both columns end on one line.
+- Website: when Windows is set to show fewer animations, the site still starts still, but now shows a Play motion button where Pause motion is. It turns the motion on and remembers it in that browser; Pause motion takes you back.
 - The usage stats also count whether Turn on protection when the app starts and Use the app with protection off are changed from their default.
 - When a Steam folder is a link or junction, Configs now says the same as the account switch, with the reason: "a Steam or CS2 config folder goes through a link or junction; the app only writes to a real folder".
 
