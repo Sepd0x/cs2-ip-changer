@@ -338,7 +338,7 @@
           inn.appendChild(ring); cut.appendChild(inn); keys[k].insertBefore(cut, keys[k].firstChild);
         });
       });
-      pagesBox.parentNode.insertBefore(nav, pagesBox); tabs[0].setAttribute('aria-current', 'true');
+      fig.appendChild(nav); tabs[0].setAttribute('aria-current', 'true');
       // the page whose card is most in view is the one shown; the address and the chip follow once the swipe rests
       var step = function () { return pages.length > 1 ? pages[1].offsetLeft - pages[0].offsetLeft : 1; };
       var slide = function (i, smooth) { pagesBox.scrollTo({ left: i * step(), behavior: smooth && FX ? 'smooth' : 'auto' }); show(pages[i].getAttribute('data-pg')); holdPg = performance.now() + (smooth ? 500 : 0); };
@@ -361,7 +361,7 @@
     var holdPg = 0;
     pageGo = function (pg) {
       var i = pages.map(function (l) { return l.getAttribute('data-pg'); }).indexOf(pg); if (i < 0) return;
-      if (car) { scrollTo(0, Math.round(docTop(nav) - topH() - 8)); slide(i, false); }
+      if (car) { scrollTo(0, Math.round(docTop(pagesBox) - topH() - fig.offsetHeight - 8)); slide(i, false); }
       else if (side) scrollTo(0, rests[i]); else ($('h3', pages[i]) || pages[i]).scrollIntoView({ block: 'start', behavior: 'instant' });
       show(pg); holdPg = performance.now() + 600;
     };

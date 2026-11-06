@@ -391,8 +391,10 @@ footer a:hover{color:var(--ink)}
 a.zoom{display:block;cursor:zoom-in}
 .lightbox{padding:0;border:0;background:transparent;max-width:96vw;max-height:94vh;overflow:visible}
 .lightbox::backdrop{background:rgba(0,0,0,.88)}
-.lb-x{position:fixed;right:1rem;top:1rem;min-height:44px;padding:.5rem 1rem;border:0;border-radius:999px;background:var(--t-surface2);color:var(--ink);font:500 .95rem var(--sans);box-shadow:inset 0 0 0 1px var(--line2);cursor:pointer}
-@media (pointer:coarse){.lightbox{overflow:auto;max-width:100vw}.lightbox img{max-width:none!important;width:1240px}}
+.lb-x{position:fixed;z-index:2;right:max(1rem,env(safe-area-inset-right));top:max(1rem,env(safe-area-inset-top));min-height:44px;padding:.5rem 1rem;border:0;border-radius:999px;background:var(--t-surface2);color:var(--ink);font:500 .95rem var(--sans);box-shadow:inset 0 0 0 1px var(--line2);cursor:pointer}
+/* by touch the picture opens the width of the screen, whole, and zooms with two fingers or a double tap (6 Nov.: it opened at full size with a third of it on screen and nothing said it scrolled) */
+@media (pointer:coarse){.lightbox[open]{display:grid;place-items:center;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;overflow:hidden;touch-action:none}.lightbox img{width:100vw;max-width:100vw!important;max-height:100dvh;object-fit:contain;border-radius:0;transform-origin:0 0;cursor:auto}.lb-hint{position:fixed;left:50%;bottom:max(1rem,env(safe-area-inset-bottom));transform:translateX(-50%);padding:.5rem .9rem;border-radius:999px;background:var(--t-surface2);color:var(--ink2);font:400 .85rem/1.2 var(--sans);white-space:nowrap;pointer-events:none;transition:opacity .4s}.lightbox.zoomed .lb-hint{opacity:0}}
+.lb-hint{display:none}@media (pointer:coarse){.lb-hint{display:block}}
 .lightbox img{display:block;width:auto;height:auto;max-width:96vw;max-height:94vh;border-radius:8px;box-shadow:0 0 0 1px var(--line2),0 30px 80px -20px #000;cursor:zoom-out}
 @media (max-width:900px){.top nav .hide-s{display:none}}
 @media (max-width:1000px){
@@ -787,12 +789,30 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
     });
   });
   /* a screenshot opens at full size over the page; a click or Escape closes it (without JS the link opens the picture) */
-  var box;
+  var box,coarse=matchMedia('(pointer:coarse)').matches,zreset=function(){};
+  /* by touch: two fingers zoom around where they are, one finger moves a zoomed picture, a double tap zooms in or back out */
+  var zoomer=function(bx){
+    var im=bx.querySelector('img'),s=1,x=0,y=0,as=1,ax=0,ay=0,P={},p0=null,tap=0,moved=0;
+    var put=function(){as=s;ax=x;ay=y;im.style.transform=s>1?'translate('+x+'px,'+y+'px) scale('+s+')':'';bx.classList.toggle('zoomed',s>1)};
+    var fit=function(){var r=im.getBoundingClientRect(),w=r.width/as,h=r.height/as,l=r.left-ax,t=r.top-ay;x=w*s<=innerWidth?(innerWidth-w*s)/2-l:Math.min(-l,Math.max(innerWidth-l-w*s,x));y=h*s<=innerHeight?(innerHeight-h*s)/2-t:Math.min(-t,Math.max(innerHeight-t-h*s,y))};
+    var at=function(cx,cy,ns){var r=im.getBoundingClientRect(),l=r.left-ax,t=r.top-ay;ns=Math.max(1,Math.min(5,ns));x=cx-l-(cx-l-x)*ns/s;y=cy-t-(cy-t-y)*ns/s;s=ns;if(s===1){x=y=0}};
+    zreset=function(){s=1;x=y=0;P={};put()};
+    var pts=function(){return Object.keys(P).map(function(k){return P[k]})};
+    var mid=function(a){return{x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2,d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)}};
+    bx.addEventListener('pointerdown',function(e){if(!coarse||e.target.tagName==='BUTTON')return;P[e.pointerId]={x:e.clientX,y:e.clientY};var a=pts();moved=0;p0=a.length===2?{m:mid(a),s:s,x:x,y:y}:{m:{x:e.clientX,y:e.clientY},s:s,x:x,y:y}});
+    bx.addEventListener('pointermove',function(e){if(!P[e.pointerId])return;P[e.pointerId]={x:e.clientX,y:e.clientY};var a=pts();
+      if(a.length===2){var m=mid(a);s=p0.s;x=p0.x;y=p0.y;at(p0.m.x,p0.m.y,p0.s*m.d/p0.m.d);x+=m.x-p0.m.x;y+=m.y-p0.m.y;moved=1;put()}
+      else if(a.length===1&&s>1){var dx=e.clientX-p0.m.x,dy=e.clientY-p0.m.y;if(Math.abs(dx)+Math.abs(dy)>6)moved=1;x=p0.x+dx;y=p0.y+dy;fit();put()}});
+    var up=function(e){if(!P[e.pointerId])return;delete P[e.pointerId];var a=pts();if(a.length===1){p0={m:a[0],s:s,x:x,y:y};return}
+      if(!a.length&&s>1){fit();put()}
+      if(!moved&&e.target.tagName==='IMG'){var now=Date.now();if(now-tap<320){at(e.clientX,e.clientY,s>1?1:2.6);if(s>1)fit();put();tap=0}else tap=now}};
+    bx.addEventListener('pointerup',up);bx.addEventListener('pointercancel',up);
+  };
   d.addEventListener('click',function(e){
     var a=e.target.closest&&e.target.closest('a.zoom');
     if(!a||e.button||e.ctrlKey||e.metaKey||e.shiftKey||!window.HTMLDialogElement)return;
     e.preventDefault();
-    if(!box){box=d.createElement('dialog');box.className='lightbox';box.setAttribute('aria-label','Screenshot');box.innerHTML='<button type="button" class="lb-x">Close</button><img alt="Screenshot of CS2 IP Changer">';box.addEventListener('click',function(){box.close()});d.body.appendChild(box)}
+    if(!box){box=d.createElement('dialog');box.className='lightbox';box.setAttribute('aria-label','Screenshot');box.innerHTML='<button type="button" class="lb-x">Close</button><img alt="Screenshot of CS2 IP Changer"><span class="lb-hint" aria-hidden="true">Pinch or double-tap to zoom</span>';box.addEventListener('click',function(e){if(!(coarse&&e.target.tagName==='IMG'))box.close()});box.addEventListener('close',function(){zreset()});d.body.appendChild(box);zoomer(box)}
     var img=box.querySelector('img'),src=a.querySelector('picture.on img')||a.querySelector('img');img.src=src?src.currentSrc||src.src:a.getAttribute('href');img.alt=src?src.alt:'';box.showModal();
   });
   /* visit counter: which page, the site you came from (its name only) and clicks on Download, added up per day. No cookies,

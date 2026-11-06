@@ -211,9 +211,13 @@ static class DesignSyncTests
         // cada recorte é a captura a 1240x800 (o tamanho da janela da app), com o anel no sítio das marcas do PC
         check("Site: os recortes das páginas são a captura a tamanho real, centrados nas marcas da janela",
             homeHtml.Contains(".cut-in{position:absolute;width:1240px;height:800px;") && homeJs.Contains("'.marks .mk[data-pg=\"' + pg + '\"]'") && homeJs.Contains("* 12.4).toFixed(1) + 'px'") && homeJs.Contains("* 8).toFixed(1) + 'px'"), "");
-        // o encaixe parava a janela 72 px abaixo do cabeçalho (o scroll-padding da página somava-se), com o 3D ainda por cima dela
-        check("Site: no telemóvel o encaixe pára a janela inteira logo por baixo do cabeçalho e a história acaba aí",
-            homeHtml.Contains("scroll-snap-align:start;scroll-margin-top:-1rem}") && homeHtml.Contains("scroll-padding-top:calc(var(--top-h) + 1rem)") && homeJs.Contains("storyEnd = Math.floor("), "");
+        // a janela inteira fica presa por cima das páginas (o dono preferia ver a app toda), com os números 01 a 06 dentro dela,
+        // e o encaixe pousa as páginas logo por baixo, no ponto onde a história acaba (antes ficavam 8 px antes, com o 3D por cima)
+        check("Site: no telemóvel a janela inteira e os números 01 a 06 ficam presos por cima das páginas",
+            homeJs.Contains("fig.appendChild(nav);") && homeHtml.Contains(".js .pages{scroll-snap-align:start;scroll-margin-top:var(--pg-top,0px);") && homeJs.Contains("storyEnd = Math.floor("), "");
+        // por toque a captura abre à largura do ecrã e faz zoom com dois dedos ou toque duplo (antes abria a 1240 px, um terço à vista)
+        check("Site: por toque a captura abre inteira e faz zoom com dois dedos e toque duplo, e o Close fica por cima",
+            homeHtml.Contains("Pinch or double-tap to zoom") && homeHtml.Contains("var zoomer=function(bx){") && homeHtml.Contains(".lb-x{position:fixed;z-index:2;") && homeHtml.Contains(".lightbox img{width:100vw;max-width:100vw!important;"), "");
         check("Site: um botão por página (44 px) e o endereço segue a página deslizada",
             homeJs.Contains("nav.className = 'pg-nav'") && homeHtml.Contains(".pg-nav button{flex:1;min-width:44px;min-height:44px;") && homeJs.Contains("take(stepAt(scrollY)); }, 160);"), "");
         check("Site: no telemóvel ao alto os passos da história mais juntos (o ban de 334 para 226 svh)",
