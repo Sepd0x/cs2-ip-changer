@@ -167,6 +167,17 @@ static class DesignSyncTests
         var rBad = renders.GetProperty("files").EnumerateArray().Where(e => !File.Exists(Path_(e.GetProperty("file").GetString())) || Sha(File.ReadAllBytes(Path_(e.GetProperty("file").GetString()))) != e.GetProperty("sha256").GetString())
             .Select(e => e.GetProperty("file").GetString()).ToList();
         check("Capturas: cada poster 3D é o que foi registado", rList.Count >= 6 && rList.SequenceEqual(renders.GetProperty("files").EnumerateArray().Select(e => e.GetProperty("file").GetString())) && rBad.Count == 0, string.Join(", ", rBad));
+
+        // ---------------- 3. os passos da história (6 nov.): o chip do telemóvel e o endereço seguem o rail; o passo marca-se
+        // quando o scroll assenta, não em cada frame (antes eram ~200 escritas de aria-current numa passagem pela história)
+        var homeHtml = Txt("site/index.html"); var homeJs = Txt("site/assets/js/home.js");
+        List<string> Steps(string id) => Regex.Matches(Regex.Match(homeHtml, $"id=\"{id}\"[\\s\\S]*?</ol>").Value, "<a href=\"(#[a-z-]+)\">([^<]+)</a>").Select(m => m.Groups[1].Value + "=" + m.Groups[2].Value).ToList();
+        var railSteps = Steps("rail"); var whereSteps = Steps("where");
+        check("Site: o chip do telemóvel tem os seis passos do rail", railSteps.Count == 6 && railSteps.SequenceEqual(whereSteps), string.Join(" ", whereSteps));
+        var jsSteps = Regex.Matches(Regex.Match(homeJs, @"var STEPS = \[([^\]]*)\]").Groups[1].Value, "'(#[a-z-]+)'").Select(m => m.Groups[1].Value).ToList();
+        check("Site: o endereço usa os passos do rail", railSteps.Count == 6 && jsSteps.SequenceEqual(railSteps.Skip(1).Select(s => s.Split('=')[0])), string.Join(" ", jsSteps));
+        var updateBody = Regex.Match(homeJs, @"function update\(\) \{[\s\S]*?\n  \}\n").Value;
+        check("Site: aria-current e o rail só quando o passo assenta", updateBody.Length > 0 && !updateBody.Contains("aria-current") && homeJs.Contains("'scrollend'") && homeJs.Contains("history.replaceState"), "");
     }
 
     /// <summary>Theme.xaml: as cores de 6 dígitos (Color e SolidColorBrush), em minúsculas, como o design-tokens.mjs.</summary>

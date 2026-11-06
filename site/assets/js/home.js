@@ -19,6 +19,7 @@
   var NB = 6; // beats 0..5 are the story; 6 is the close
   var copies = beats.map(function (b) { return $('.copy', b); });
   var appBody = $('.app-body'), cta = $('.cta'), railItems = rail ? $$('li', rail) : [], railOl = rail ? $('ol', rail) : null;
+  var whereEl = $('#where'), whereBtn = whereEl ? $('button', whereEl) : null, whereList = whereEl ? $('.where-list', whereEl) : null, whereLinks = whereEl ? $$('ol a', whereEl) : [];
   var logLis = $$('#ban-log li'), banIP = $('#ban-ip'), banNote = $('#ban-ip-note'), banSaid = banIP ? banIP.parentNode : null;
   // where each log line starts, as a share of the ban beat; the scene uses the same marks
   var LINES = [0, .12, .26, .4, .62, .74, .86];
@@ -101,11 +102,12 @@
     return { box: [right + Math.max(24, Wd * .025), th + (land ? 8 : 18), Wd - Math.max(16, Wd * .02), Hh - (land ? 12 : 70)], bias: [.5, .5] };
   }
   // what the scene's labels must not sit under: the beat cards on screen and the pause button (css px of the canvas)
-  var pauseRect = null; addEventListener('resize', function () { pauseRect = null; });
+  var pauseRect = null, whereRect = null; addEventListener('resize', function () { pauseRect = whereRect = null; });
   function avoid() {
     var out = [], y = scrollY;
     if (tall()) for (var i = 0; i < copies.length; i++) { var c = copies[i]; if (!c) continue; var r = c.getBoundingClientRect(); if (r.bottom > 0 && r.top < H) out.push([r.left, r.top, r.right, r.bottom]); }
     if (pauseBtn && !pauseBtn.hidden && !pauseBtn.classList.contains('under')) { if (!pauseRect) { var q = pauseBtn.getBoundingClientRect(); pauseRect = [q.left - 6, q.top - 6, q.right + 6, q.bottom + 6]; } out.push(pauseRect); }
+    if (whereBtn && !whereEl.classList.contains('under')) { if (!whereRect) { var q2 = whereBtn.getBoundingClientRect(); whereRect = q2.width ? [q2.left - 8, q2.top - 8, q2.right + 8, q2.bottom + 14] : []; } if (whereRect.length) out.push(whereRect); }
     return out;
   }
   function veil() {
@@ -127,7 +129,7 @@
   }
 
   var railGo = null;
-  if (rail) rail.addEventListener('click', function (e) { var a = e.target.closest && e.target.closest('a'); if (!a) return; var i = railItems.indexOf(a.parentNode); if (i >= 0) { railGo = { p: i, until: performance.now() + 1300, first: true }; requestAnimationFrame(update); } });
+  if (rail) rail.addEventListener('click', function (e) { var a = e.target.closest && e.target.closest('a'); if (!a) return; var i = railItems.indexOf(a.parentNode); if (i >= 0) { railGo = { p: i, until: performance.now() + 1300, first: true }; mark(i); requestAnimationFrame(update); } });
 
   /* ------------------------------------------------------------ every scroll: the scene, the rail, the log */
   var lastLine = -2, uq = 0, onStage = true;
@@ -136,6 +138,7 @@
     uq = 0;
     var y = scrollY, w = where(y), p = w.p, sub = w.sub;
     seen = { inStory: y < storyEnd, p: w.p, sub: w.sub, pg: pageNow(y) };
+    dwell(y);
     if (!FX || held) { p = Math.round(p); if (p === 4) sub = snap(sub); else if (p > 4) sub = 1; }
     if (p < 4) sub = 0;
     // the stage is seen while the story is on screen and again at the close; under the plain sections it rests
@@ -156,12 +159,11 @@
     var T = tall(), th = topH(), av = H - th;
     for (var k = 1; k < NB; k++) { var cc = copies[k]; if (!cc) continue; var o = T ? clamp((cc.getBoundingClientRect().bottom - th - av * .3) / (av * .32)) : 1; if (cc.__o !== o) { cc.__o = o; cc.style.opacity = o < 1 ? o.toFixed(3) : ''; } }
     // the pause button sits on the free part of the scene; while a card passes under it, it steps aside
-    if (pauseBtn && T) { var pt = th + 10; pauseBtn.classList.toggle('under', copies.concat([$('.copy', cta)]).some(function (c) { if (!c || c.__o < .2) return false; var r = c.getBoundingClientRect(); return r.top < pt + 44 && r.bottom > pt; })); }
-    // the rail: which beat, and how far along the route
-    if (railOl) {
-      railOl.style.setProperty('--p', clamp(p / (NB - 1)).toFixed(4));
-      railItems.forEach(function (li, i) { var on = Math.abs(Math.min(p, NB - 1) - i) < .5, a = li.firstElementChild; li.classList.toggle('on', on); if (on) a.setAttribute('aria-current', 'step'); else a.removeAttribute('aria-current'); });
-    }
+    // (the "where you are" chip sits at the same height, top left, and steps aside with it)
+    if ((pauseBtn || whereEl) && T) { var pt = th + 10, under = copies.concat([$('.copy', cta)]).some(function (c) { if (!c || c.__o < .2) return false; var r = c.getBoundingClientRect(); return r.top < pt + 44 && r.bottom > pt; }); if (pauseBtn) pauseBtn.classList.toggle('under', under); if (whereEl && whereEl.classList.contains('under') !== under) { whereEl.classList.toggle('under', under); if (under) whereShut(); } }
+    if (whereEl && root.classList.contains('story-off') !== whereOff) { whereOff = !whereOff; if (whereOff) whereShut(); }
+    // the rail: how far along the route (which beat is marked once the scroll rests, settle below)
+    if (railOl) railOl.style.setProperty('--p', clamp(p / (NB - 1)).toFixed(4));
     // the ban: the log line on screen, and the IP the server sees
     var line = -1;
     if (p > 3.5 && p < 4.5) { for (var k = 0; k < LINES.length; k++) if (sub >= LINES[k]) line = k; }
@@ -183,8 +185,75 @@
     }
   }
   W.__story = function () { return { A: A, ctaAt: ctaAt, storyEnd: storyEnd }; };
-  function onScroll() { if (!uq) { uq = 1; requestAnimationFrame(update); } }
+  function onScroll() { if (!uq) { uq = 1; requestAnimationFrame(update); } clearTimeout(settleT); settleT = setTimeout(settle, 160); }
   addEventListener('scroll', onScroll, { passive: true });
+
+  /* ------------------------------------------------------------ once the scroll rests: the step (6 Nov., from the study of
+     the best story sites). The rail, the chip and aria-current mark it then, not on every frame on the way past; and the
+     address takes it (#carrier, #ban, #servers...), so a reload or a shared link opens on that step */
+  var STEPS = ['', '#how', '#carrier', '#kill-switch', '#ban', '#features'], PGS = $$('#pages > li').map(function (li) { return li.getAttribute('data-pg'); });
+  var ours = function (h) { return STEPS.indexOf(h) > 0 || (h.length > 1 && PGS.indexOf(h.slice(1)) > 0); };
+  var settleT = 0, stepOn = -1, whereOff = false;
+  function stepAt(y) {
+    var pg = pageNow(y); if (pg) return { i: NB - 1, h: pg === 'connection' ? '#features' : '#' + pg };
+    if (y < storyEnd) { var i = Math.min(NB - 1, Math.max(0, Math.round(where(y).p))); return { i: i, h: STEPS[i] }; }
+    return null;
+  }
+  function mark(i) {
+    if (i === stepOn) return; stepOn = i;
+    var set = function (a, on) { if (on) a.setAttribute('aria-current', 'step'); else a.removeAttribute('aria-current'); };
+    railItems.forEach(function (li, k) { li.classList.toggle('on', k === i); set(li.firstElementChild, k === i); });
+    whereLinks.forEach(function (a, k) { set(a, k === i); });
+    if (whereBtn && whereLinks[i]) { $('b', whereBtn).textContent = i + 1; $('.where-at', whereBtn).textContent = whereLinks[i].textContent; whereRect = null; }
+  }
+  function settle() {
+    clearTimeout(settleT); settleT = 0;
+    // a step picked on the rail or the chip is marked already; the scroll there is still going
+    if (railGo && performance.now() < railGo.until) { settleT = setTimeout(settle, railGo.until - performance.now() + 30); return; }
+    take(stepAt(scrollY));
+  }
+  function take(s) {
+    if (s) mark(s.i);
+    var h = s ? s.h : '';
+    if ((s || ours(location.hash)) && h !== location.hash) try { history.replaceState(history.state, '', location.pathname + location.search + h); } catch (x) {}
+  }
+  // a slow, steady wheel never rests: a step that stays the same for 400 ms is taken too, so the rail keeps up with a reader
+  // and only a quick pass over a step leaves it out (6 Nov.: at 100 px every 450 ms the rail stayed on PC for a minute)
+  var cand = -2, candT = 0;
+  function dwell(y) {
+    if (railGo) return;
+    var s = stepAt(y), i = s ? s.i : -1, now = performance.now();
+    if (i !== cand) { cand = i; candT = now; } else if (now - candT > 400 && (i !== stepOn || (s ? s.h : '') !== location.hash) && (s || ours(location.hash))) take(s);
+  }
+  // the smooth scroll moves the page a little every frame, and without it each notch of a wheel is a scroll of its own:
+  // each can end in a scrollend, so one counts only when the wheel has stopped too (else the timer above settles)
+  var lastWheel = 0; addEventListener('wheel', function () { lastWheel = performance.now(); }, { passive: true });
+  addEventListener('scrollend', function () { if (!(W.__lenis && W.__lenis.isScrolling) && performance.now() - lastWheel > 150) settle(); });
+  // a link to a step opens on it (a reload keeps its own place)
+  function deep() {
+    var h = location.hash, nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
+    if (!ours(h) || (nav && nav.type !== 'navigate')) return;
+    var i = STEPS.indexOf(h);
+    if (i > 0 && A[i]) scrollTo(0, Math.round(A[i].s)); else if (i < 0) pageGo(h.slice(1));
+    update(); settle();
+  }
+
+  /* ------------------------------------------------------------ the "where you are" chip: under 1000 px, where the rail is hidden */
+  var whereShut = function () {};
+  if (whereEl) {
+    whereEl.hidden = false;
+    var whereOpen = function (o) { whereBtn.setAttribute('aria-expanded', o); whereList.hidden = !o; };
+    whereShut = function () { if (!whereList.hidden) whereOpen(false); };
+    whereBtn.addEventListener('click', function () { whereOpen(whereList.hidden); });
+    whereList.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a'); if (!a) return;
+      var i = whereLinks.indexOf(a);
+      if (i >= 0) { railGo = { p: i, until: performance.now() + 1300, first: true }; mark(i); requestAnimationFrame(update); }
+      whereOpen(false);
+    });
+    d.addEventListener('click', function (e) { if (!whereEl.contains(e.target)) whereShut(); });
+    d.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !whereList.hidden) { whereOpen(false); whereBtn.focus(); } });
+  }
   var rq = 0;
   var lastW = innerWidth;
   var seen = null, pageNow = function () { return null; }, pageGo = function () {};
@@ -196,7 +265,7 @@
   d.addEventListener('visibilitychange', function () { if (api) api.hide(d.hidden || !onStage); });
   measure(); veil(); update();
   if (d.fonts && d.fonts.ready) d.fonts.ready.then(function () { measure(); veil(); if (api) api.resize(); update(); });
-  addEventListener('load', function () { measure(); update(); });
+  addEventListener('load', function () { measure(); update(); deep(); settle(); });
 
   /* ------------------------------------------------------------ keyboard in the story: one beat per PageDown or Space, one log
      line in the ban (6 Nov.: like a finger on a phone, a key never lands between two beats with the camera half way) */
@@ -235,13 +304,12 @@
   if (fig) {
     var pics = $$('.views picture', fig), zl = $('.views', fig), pages = $$('#pages > li'), cur = 'connection';
     // the page being read while the window is docked, and the way back to it (its title where the snap rests it)
-    pageNow = function (y) { return centres.length && y >= storyEnd - 1 && y <= centres[centres.length - 1] - line0 + innerHeight * .6 ? cur : null; };
-    // the page's title goes where the snap rests it, and the window keeps that page while the page settles (on its side the
-    // page under the middle of the screen can be the one before)
+    pageNow = function (y) { return rests.length && y >= storyEnd - 1 && y <= rests[rests.length - 1] + innerHeight * .6 ? cur : null; };
+    // the page's title goes where the snap rests it, and the window keeps that page while the page settles
     var holdPg = 0;
     pageGo = function (pg) {
       var i = pages.map(function (l) { return l.getAttribute('data-pg'); }).indexOf(pg); if (i < 0) return;
-      ($('h3', pages[i]) || pages[i]).scrollIntoView({ block: 'start', behavior: 'instant' });
+      if (side) scrollTo(0, rests[i]); else ($('h3', pages[i]) || pages[i]).scrollIntoView({ block: 'start', behavior: 'instant' });
       show(pg); holdPg = performance.now() + 600;
     };
     var show = function (pg) {
@@ -255,12 +323,24 @@
       pages.forEach(function (li) { li.classList.toggle('on', li.getAttribute('data-pg') === pg); });
       if (win) win.setAttribute('data-pg', pg);
     };
-    var centres = [], line0 = 0;
-    var mPages = function () { centres = pages.map(function (li) { return docTop(li) + li.offsetHeight / 2; }); line0 = tall() ? Math.min(innerHeight * .78, topH() + fig.offsetHeight + innerHeight * .25) : innerHeight * .5; };
+    // rests: the scroll where each page is read (the keyboard and a turn of the phone go there). A phone on its side has
+    // the window beside a short column: each page rests with its title level with the window's top, and the window shows
+    // the page that fills most of the column, its title above the column's middle (6 Nov.: by the middle of the screen it showed the next page
+    // while the text on the left was still the one before)
+    var centres = [], rests = [], line0 = 0, side = false, figTop = 0;
+    var mPages = function () {
+      var pr = $('#pages').getBoundingClientRect(), fr = fig.getBoundingClientRect();
+      side = innerWidth < 1000 && fr.left >= pr.right - 4;
+      figTop = parseFloat(getComputedStyle(fig).top) || topH();
+      centres = pages.map(function (li) { return docTop(li) + li.offsetHeight / 2; });
+      line0 = tall() ? Math.min(innerHeight * .78, topH() + fig.offsetHeight + innerHeight * .25) : innerHeight * .5;
+      rests = side ? pages.map(function (li) { return Math.round(docTop($('h3', li) || li) - figTop); }) : centres.map(function (c) { return Math.round(c - line0); });
+    };
     var pick = function () {
       if (performance.now() < holdPg) return;
-      var line = scrollY + line0, best = -1, bd = 1e9;
-      centres.forEach(function (c, i) { var dd = Math.abs(c - line); if (dd < bd) { bd = dd; best = i; } });
+      var best = -1, bd = 1e9;
+      if (side) { var lim = scrollY + (innerHeight - figTop) * .5; rests.forEach(function (r, i) { if (r <= lim) best = i; }); best = Math.max(best, 0); }
+      else { var line = scrollY + line0; centres.forEach(function (c, i) { var dd = Math.abs(c - line); if (dd < bd) { bd = dd; best = i; } }); }
       if (best >= 0) show(pages[best].getAttribute('data-pg'));
     };
     var pq = 0, onPg = function () { if (!pq) { pq = 1; requestAnimationFrame(function () { pq = 0; pick(); }); } };
@@ -270,8 +350,8 @@
     pages.forEach(function (li) { li.addEventListener('focusin', function () { show(li.getAttribute('data-pg')); }); });
     // the keyboard: one page of the window per PageDown or Space, from the first page to the last
     d.addEventListener('keydown', function (e) {
-      var dir = keyDir(e); if (!dir || !centres.length) return;
-      var y = scrollY, at = centres.map(function (c) { return Math.round(c - line0); }), to = null, i;
+      var dir = keyDir(e); if (!dir || !rests.length) return;
+      var y = scrollY, at = rests, to = null, i;
       if (y < at[0] - innerHeight * .6 || y > at[at.length - 1] + 2) return;
       if (dir > 0) { for (i = 0; i < at.length; i++) if (at[i] > y + 4) { to = at[i]; break; } }
       else { for (i = at.length - 1; i >= 0; i--) if (at[i] < y - 4) { to = at[i]; break; } }
@@ -281,7 +361,12 @@
     fig.addEventListener('focusin', function () { if (scrollY < storyEnd) scrollTo(0, Math.ceil(storyEnd)); });
     // by touch on a phone each page rests with its text right under the sticky window (the snap in the CSS; the
     // margin leaves out the page's scroll-padding, which the snap adds on its own)
-    var pagesEl = $('#pages'), setWin = function () { fig.style.setProperty('--win-h', fig.offsetHeight + 'px'); if (pagesEl) pagesEl.style.setProperty('--pg-top', ((parseFloat(getComputedStyle(fig).top) || topH()) + fig.offsetHeight - (parseFloat(getComputedStyle(root).scrollPaddingTop) || 0)) + 'px'); };
+    // On its side the window is beside the text, so a page's title rests level with the window's top instead
+    var pagesEl = $('#pages'), setWin = function () {
+      mPages(); fig.style.setProperty('--win-h', fig.offsetHeight + 'px');
+      var sp = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0, rem = parseFloat(getComputedStyle(root).fontSize) || 16;
+      if (pagesEl) pagesEl.style.setProperty('--pg-top', (side ? figTop - sp - 2.2 * rem : figTop + fig.offsetHeight - sp) + 'px');
+    };
     setWin(); addEventListener('resize', setWin); addEventListener('load', setWin);
   }
 

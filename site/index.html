@@ -707,7 +707,25 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
 .pause::before{content:"";flex:none;width:8px;height:10px;border-inline:2.5px solid currentColor}
 .pause[aria-pressed=true]{opacity:1;color:var(--ink);background:color-mix(in srgb,var(--t-accent) 16%,var(--t-surface));box-shadow:inset 0 0 0 1px var(--t-accent)}
 .pause[aria-pressed=true]::before{border:0;border-left:9px solid currentColor;border-block:5px solid transparent;width:0;height:0}
-.story-off .rail,.story-off .pause{opacity:0;visibility:hidden}
+.story-off .rail,.story-off .pause,.story-off .where{opacity:0;visibility:hidden}
+/* 6 Nov.: under 1000 px the rail and the header's links are hidden, so a chip says where the story is ("2/6 Phone") and
+   opens the steps, Setup and Guides. Where the rail is on a PC; top left held upright, beside Pause motion on its side. */
+.where{display:none;position:fixed;right:max(var(--gutter),(100% - var(--max))/2);bottom:1.1rem;z-index:5;transition:opacity .4s,visibility .4s;font:400 .8rem/1 var(--mono)}
+@media (max-width:999px){.where:not([hidden]){display:block}}
+.where>button{display:inline-flex;align-items:center;gap:.5rem;min-height:44px;padding:0 .9rem;border:0;border-radius:22px;background:var(--t-surface);color:var(--ink);font:inherit;box-shadow:inset 0 0 0 1px var(--line);cursor:pointer}
+.where>button b{font-weight:400;color:var(--t-accent-light)}
+.where>button::after{content:"";width:6px;height:6px;margin-left:.1rem;border:solid var(--ink3);border-width:0 1.5px 1.5px 0;transform:translateY(-2px) rotate(45deg);transition:transform .2s}
+.where>button[aria-expanded=true]::after{transform:translateY(1px) rotate(-135deg)}
+.where>button:focus-visible{outline:2px solid var(--t-accent);outline-offset:2px}
+.where-list{position:absolute;right:0;bottom:calc(100% + 8px);min-width:12rem;padding:.4rem;border-radius:12px;background:var(--t-surface);box-shadow:inset 0 0 0 1px var(--line),0 12px 32px rgb(0 0 0/.35)}
+.where-list ol{list-style:none;margin:0;padding:0;counter-reset:st}
+.where-list li{counter-increment:st}
+.where-list a{display:flex;align-items:center;gap:.7rem;min-height:44px;padding:0 .7rem;border-radius:8px;color:var(--ink2);text-decoration:none}
+.where-list ol a::before{content:counter(st);min-width:1ch;color:var(--ink3)}
+.where-list a:hover,.where-list a:focus-visible{background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--ink)}
+.where-list a[aria-current]{color:var(--ink)}.where-list a[aria-current]::before{color:var(--t-accent-light)}
+.where-list p{display:flex;gap:.2rem;margin:.3rem 0 0;padding-top:.3rem;border-top:1px solid var(--line)}
+.where-list p a{flex:1;justify-content:center}
 @media (max-width:1199px){
   .instr{grid-template-columns:repeat(2,minmax(0,1fr))}
   .instr>li:nth-child(3){border-left:0;padding-left:0;border-top:1px solid var(--line)}
@@ -782,6 +800,8 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
   .cta{align-items:flex-end;padding-block:4rem 2rem}
   .cta .copy{padding:1.2rem;border-radius:16px;background:color-mix(in srgb,var(--bg) 95%,transparent);box-shadow:0 0 0 1px var(--line)}
   .pause{right:10px;bottom:auto;top:calc(var(--top-h) + 10px);width:44px;height:44px;padding:0;justify-content:center;font-size:0;gap:0;background:var(--t-surface)}
+  .where{right:auto;left:10px;bottom:auto;top:calc(var(--top-h) + 10px)}.where-list{right:auto;left:0;bottom:auto;top:calc(100% + 8px)}
+  .where.under{opacity:0;visibility:hidden}
 }
 /* a small phone held upright: the cards get tighter so the world still shows above them */
 @media (max-width:999px) and (orientation:portrait) and (max-height:700px){
@@ -845,6 +865,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
   .log{font-size:.78rem}.log li{padding-block:.08rem}
   .cue{display:none}
   .pause{right:10px;bottom:10px;width:44px;height:44px;padding:0;justify-content:center;font-size:0;gap:0}
+  .where{right:62px;bottom:10px}.where-list ol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:.2rem}.where-list{min-width:20rem}
 }
 /* very small and on its side (a phone at 400 % zoom): one card across, the world above it */
 @media (max-width:639px) and (orientation:landscape){
@@ -943,6 +964,20 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
       <li><a href="#ban">New IP</a></li>
       <li><a href="#features">The app</a></li>
     </ol>
+  </nav>
+  <nav class="where" id="where" aria-label="Where you are in the story" hidden>
+    <button type="button" aria-expanded="false" aria-controls="where-list"><span><b>1</b>/6</span> <span class="where-at">PC</span></button>
+    <div class="where-list" id="where-list" hidden>
+      <ol>
+        <li><a href="#top">PC</a></li>
+        <li><a href="#how">Phone</a></li>
+        <li><a href="#carrier">Carrier</a></li>
+        <li><a href="#kill-switch">Kill switch</a></li>
+        <li><a href="#ban">New IP</a></li>
+        <li><a href="#features">The app</a></li>
+      </ol>
+      <p><a href="#setup">Setup</a><a href="#guides">Guides</a></p>
+    </div>
   </nav>
   <button class="pause" type="button" id="pause" hidden aria-pressed="false" title="Pause motion">Pause motion</button>
 
