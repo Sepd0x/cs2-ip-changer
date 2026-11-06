@@ -135,6 +135,6 @@ static class Beta9Tests
         check("Dashboard: cada botão do ui-map é um handler de Click que a app conta", ids.Count > 60 && missing.Count == 0, string.Join(", ", missing));
         var leakSrc = File.ReadAllText(Path.Combine(SecurityTests.Repo(), "src", "Views", "MainWindow.Protection.cs"));
         check("Teste de fugas: conta passou ou falhou depois do No phone mode (que não tem o que testar)",
-            leakSrc.Contains("Telemetry.LeakTest(bad.Count == 0)") && leakSrc.IndexOf("Telemetry.LeakTest(") > leakSrc.IndexOf("if (_s.NoPhone)", leakSrc.IndexOf("async Task<bool> LeakTest()")), "");
+            leakSrc.Contains("Telemetry.LeakTest(ok)") && leakSrc.IndexOf("Telemetry.LeakTest(") > leakSrc.IndexOf("if (_s.NoPhone)", leakSrc.IndexOf("async Task<bool> LeakTest()")), "");
     }
 }

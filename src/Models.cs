@@ -198,6 +198,8 @@ public static class ChecksView
         : ok == total ? $"All {total} checks OK." : "All good: nothing needs you.";
 
     public static string Toggle(bool showAll) => showAll ? "Show less" : "Show all";
+    /// <summary>The toggle's tooltip, which changes with its name.</summary>
+    public static string ToggleTip(bool showAll) => showAll ? "Only the checks that need you" : "Every check, also the ones that are fine";
 
     /// <summary>
     /// The VPN that carries the PC's traffic now (the adapter Windows picks for the internet, <paramref name="pcDefaultIndex"/>), or
@@ -506,7 +508,7 @@ public sealed class AccountItem : Observable
     public string LastServerText => Meta.LastServer == null ? null
         : $"Last: {(string.IsNullOrWhiteSpace(Meta.LastServerName) ? Meta.LastServer : Meta.LastServerName)} · {Fmt.Ago(Meta.LastServerAt)}";
     /// <summary>Eligible for Switch: not skipped, no cooldown, no VAC/game ban.</summary>
-    public bool Usable => !Excluded && !InCooldown && !HasVac && !HasGameBan;
+    public bool Usable => InRotation && !InCooldown && !HasVac && !HasGameBan;
     public string CooldownText => InCooldown ? "Cooldown " + Fmt.Left(Meta.CooldownUntil.Value - AppClock.Now) : null;
     public bool HasServerBans => Meta.ServerBans is { Count: > 0 };
     public string ServerBansText => !HasServerBans ? null : Meta.ServerBans.Count == 1 ? "banned on 1 server" : $"banned on {Meta.ServerBans.Count} servers";

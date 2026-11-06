@@ -37,6 +37,7 @@ public partial class MainWindow
             foreach (var c in _checks) c.Shown = ChecksView.Shows(c.Attention, all);
             ChecksSummary.Text = ChecksView.Summary(_checks.Count, _checks.Count(c => c.Ok == true && !c.Waiting), _checks.Count(c => c.Attention), _protOn || _s?.NoPhone == true);
             ChecksToggle.Content = ChecksView.Toggle(all);
+            ChecksToggle.ToolTip = ChecksView.ToggleTip(all);
         }
         finally { _checksRefreshing = false; }
     }

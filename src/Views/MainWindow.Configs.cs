@@ -734,6 +734,7 @@ public sealed class CfgGroupRow
     public bool IsCrosshairGroup => !IsEmptyGroup;
     public bool Open { get; init; }
     public string ToggleText => Open ? "Hide" : "Show";
+    public string ToggleTip => Open ? "Back to one line for this group" : "Show each account of this group (Sync on or off one by one)";
     public Action Toggle { get; set; }
 }
 

@@ -454,8 +454,8 @@ public partial class MainWindow
                     "Turn off \"Offline mode\" in Accounts and log in to the account again.", "Join anyway"))
                 return false;
             if (ActiveAccount() is AccountItem acc && acc.BanFor(s.Key, s.ServerName, s.Network) is { } ban && !await Ask($"{acc.Name} was banned here",
-                    (ban.Key == s.Key ? $"{s.Title} banned {acc.Name}" : $"{ban.Value?.Name ?? ban.Key}, on the same network as {s.Title}, banned {acc.Name}")
-                    + $" on {Fmt.When(ban.Value?.At)}. Networks usually share their ban list, and if the ban is on the account, a new IP won't help.\n\n" + BanJoinTip(_s.HotkeySwitch, OnHome),
+                    (ban.Key == s.Key ? $"{s.Title} banned {acc.Name}" : $"{ban.Value?.Name ?? ban.Key}, in the same community as {s.Title}, banned {acc.Name}")
+                    + $" on {Fmt.When(ban.Value?.At)}. Communities usually share their ban list, and if the ban is on the account, a new IP won't help.\n\n" + BanJoinTip(_s.HotkeySwitch, OnHome),
                     "Join anyway"))
                 return false;
             if (!await WaitAfterCrash(s)) return false;

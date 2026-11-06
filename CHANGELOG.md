@@ -124,6 +124,15 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - New IP + next account could name the account Steam had just logged in to, for a few seconds after a login, and didn't update when a cooldown ended.
 - Alt+F4, Alt+Space, Alt+Tab and Alt+Esc could be picked as a hotkey, which took them from every window (Alt+F4 stopped closing windows). They are refused now.
 - An account name with an emoji around the 9th letter could show a broken character on the New IP + next account button.
+- Game only said "You can only join those", but with Settings > Protection > CS2 only through the phone off, CS2 can join other servers with your home IP. Game only and the option now say so, and Run leak test warns about it instead of saying "No leaks".
+- Run leak test failed on a weak connection or on regions you turned off, which aren't leaks. It now passes and says the connection is weak apart. In Whole PC, Other apps still counts.
+- With Show hidden, hidden accounts showed under Ready and on top in Ready first, though New IP + next account never picks them. They now show under Not in rotation.
+- The usage stats line in Settings > Privacy listed less than the notice you accepted. Its tooltip is now the notice's own "Sent:" line.
+- "Join automatically when a followed player moves" always asked first. It's now called Ask to join when a followed player moves.
+- The rejoin hotkey's tooltip said it only works with CS2 in front. It works anywhere.
+- When the carrier kept the same IP, the app suggested airplane mode even when it was already the method or on the hotspot, where it isn't used. It now suggests it only when it can help, and says where to set it.
+- Tooltips that didn't change with their button: Checks > Show all and Show less, Show and Hide of a group in Configs, and Cancel in the top bar while the app waits.
+- Some texts named things that aren't on screen or said less than the app does: "Steps" in New IP + next account, "Remove everything" in Start with Windows, "(Accounts)" on the Show button of the Steam key, "Wait for a slot on the Servers page" when a server stays full, "Allow all on Regions", "network" for a server community, which files Import reads, what Backups keeps, the profile picture size, what All and None tick in Copy, and when New IP + next account opens CS2.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

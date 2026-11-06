@@ -98,11 +98,15 @@ public static class Telemetry
     /// </summary>
     public const string NoticeShort =
         "This beta sends usage stats when it opens and closes and every 30 minutes while it's open, so bugs get found and fixed. They are required while it is in beta.\n\n"
-        + "Sent: a random ID made for this install, app and Windows versions, country, which screens, buttons and settings you use, ping and lag in rough bands, errors, and your phone's brand and Android version.\n"
+        + NoticeSent + "\n"
         + "Never sent: IPs, servers, accounts, Steam names or IDs, your carrier, anything you type.\n"
         + "Kept by the author (Sepd0x on GitHub) on Cloudflare, only to fix bugs and improve the app, because you accept this notice, for 12 months. "
         + "Delete them any time: Settings > Delete my stats. Questions: GitHub issues. You can also complain to your data protection authority.\n\n"
         + "Quit closes the app. Nothing on your PC changes.";
+
+    /// <summary>The "Sent:" line of the notice, also the tooltip of the stats line in Settings > Privacy (one text, never a shorter copy).</summary>
+    public const string NoticeSent =
+        "Sent: a random ID made for this install, app and Windows versions, country, which screens, buttons and settings you use, ping and lag in rough bands, errors, and your phone's brand and Android version.";
 
     /// <summary>The full list (the notice until beta.10), shown under See the full list. README > Telemetry has the same list.</summary>
     public const string NoticeText =

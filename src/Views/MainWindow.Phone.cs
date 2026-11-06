@@ -549,6 +549,10 @@ public partial class MainWindow
 
     async void ChangeIp_Click(object sender, RoutedEventArgs e) => await RunCommand("Change IP", "starting…", () => ChangeIp(confirm: true));
 
+    /// <summary>The carrier kept the same IP. Airplane mode is suggested only where it would be new: not already the method, never on the hotspot.</summary>
+    public static string SameIpToast(bool airplane, bool hotspot) =>
+        "The carrier kept giving the same IP. " + (airplane || hotspot ? "Wait a few minutes and try again." : "Try Airplane mode in Settings > Change IP > Method, or wait a few minutes.");
+
     /// <summary>Cycles the phone's data until the carrier gives a new IP. True if the IP really changed (and isn't the home IP).</summary>
     async Task<bool> ChangeIp(bool confirm)
     {
@@ -694,7 +698,7 @@ public partial class MainWindow
             else if (got != null && got == first)
             {
                 Telemetry.Count("ip_same");
-                Toast("The carrier kept giving the same IP. Try airplane mode in Settings or wait a few minutes.", false);
+                Toast(SameIpToast(method == Adb.Method.Airplane, hotspot), false);
             }
             else
             {

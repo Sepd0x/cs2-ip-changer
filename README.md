@@ -101,7 +101,7 @@ Click a picture for the details of that page.
   <a href="docs/FEATURES.md#accounts"><picture><source media="(max-width: 600px)" srcset="docs/assets/shots/crop-accounts-mobile.webp" type="image/webp"><source srcset="docs/assets/shots/crop-accounts.webp" type="image/webp"><img src="docs/assets/shots/crop-accounts.png" alt="Accounts: Steam accounts with the one in use, a ban on one server, a cooldown and a VAC ban" width="838"></picture></a>
 </p>
 
-**Accounts.** Switch saved Steam accounts without passwords, with VAC, game and trade bans, cooldowns and ban marks per server. **New IP + next account** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F9</kbd>) always moves on to the next account, banned or not.
+**Accounts.** Switch saved Steam accounts without passwords, with VAC, game and trade bans, cooldowns and ban marks per server. **New IP + next account** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F9</kbd>) moves on to the next account that isn't banned or on cooldown, whether or not you were banned.
 
 **Profiles.** Change the name, picture and privacy of many Steam accounts at once from templates, with a preview and Restore original ([Profiles](docs/FEATURES.md#profiles)).
 
