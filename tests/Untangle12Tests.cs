@@ -11,6 +11,90 @@ static class Untangle12Tests
         await MetricBack(check);
         IphoneOnWifi(check);
         StoppedClock(check);
+        RouteKeys(check);
+        OursOnTheExit(check);
+        await RouteNotDeleted(check);
+    }
+
+    // B1: a chave das rotas da app num só tipo, no formato que o owned.json sempre teve
+    static void RouteKeys(Action<string, bool, string> check)
+    {
+        var key = RouteKey.Of(new Net.Route("203.0.113.9/32", 17, "192.0.2.1"));
+        check("B1: a chave de uma rota escreve-se como no owned.json", key.ToString() == "203.0.113.9/32|17|192.0.2.1", key.ToString());
+        check("B1: uma linha de um owned.json antigo volta à mesma chave", RouteKey.TryParse("203.0.113.9/32|17|192.0.2.1", out var back) && back == key, back.ToString());
+        check("B1: sem três partes ou com um índice que não é número, não é chave",
+            !RouteKey.TryParse("203.0.113.9/32|17", out _) && !RouteKey.TryParse("203.0.113.9/32|-3|192.0.2.1", out _) && !RouteKey.TryParse(null, out _), "");
+        var usb = new Adapter { Index = 17, IsPhone = true, Up = true, LocalIp = "192.168.42.10", Gateway = "192.168.42.129" };
+        var onLink = new Adapter { Index = 21, Up = true, LocalIp = "10.0.0.2" };
+        check("B1: a rota que a app junta tem o gateway do adaptador, ou 0.0.0.0 sem gateway",
+            RouteKey.Of("1.0.0.1/32", usb).ToString() == "1.0.0.1/32|17|192.168.42.129" && RouteKey.Of("1.0.0.1/32", onLink).Hop == "0.0.0.0", "");
+        check("B1: o owned.json continua a aceitar as mesmas linhas",
+            Guard.Trusted(new Guard.OwnedState { Routes = new() { key.ToString(), "0.0.0.0/1|17|192.0.2.1", "10.0.0.0/8|17|192.0.2.1" } }, out var dropped).Routes.Count == 2 && dropped == 1, "");
+    }
+
+    // B1: "esta rota é da app" também no hotspot ou numa rede USB (a ligação do telemóvel), mas nunca uma rota de outro programa
+    static void OursOnTheExit(Action<string, bool, string> check)
+    {
+        var none = new HashSet<string>();
+        var servers = new HashSet<string> { "203.0.113.9" };
+        var wifi = new Adapter { Index = 12, IsWifi = true, Up = true, LocalIp = "172.20.10.2", Gateway = "172.20.10.1", Ssid = "Ana" };
+        var usbPhone = new Adapter { Index = 17, IsPhone = true, Up = true, LocalIp = "192.168.42.10", Gateway = "192.168.42.129" };
+        var adapters = new List<Adapter> { wifi, usbPhone };
+        Net.Route On(string prefix, int index) => new(prefix, index, "172.20.10.1");
+
+        check("B1: um servidor da lista no hotspot é da app quando o hotspot é a ligação do telemóvel",
+            Guard.IsOurs(On("203.0.113.9/32", 12), none, adapters, 12, servers), "");
+        check("B1: sem ligação conhecida (--restore), o hotspot fica como hoje", !Guard.IsOurs(On("203.0.113.9/32", 12), none, adapters, -1, servers), "");
+        check("B1: as metades do PC e os blocos da Valve no hotspot também",
+            Guard.IsOurs(On("0.0.0.0/1", 12), none, adapters, 12, none) && Guard.IsOurs(On(Net.ValvePrefixes[0], 12), none, adapters, 12, none), "");
+        check("B1: um /32 que não é da lista no hotspot nunca é da app (o servidor de uma VPN)",
+            !Guard.IsOurs(On("198.51.100.7/32", 12), none, adapters, 12, servers, anyHostOnPhone: true), "");
+        check("B1: num adaptador de telemóvel, qualquer /32 conta quando a lista pode ter mudado",
+            Guard.IsOurs(On("198.51.100.7/32", 17), none, adapters, 12, servers, anyHostOnPhone: true), "");
+        check("B1: outras rotas (a rota por defeito, uma rede) nunca são da app",
+            !Guard.IsOurs(On("0.0.0.0/0", 12), none, adapters, 12, servers) && !Guard.IsOurs(On("10.0.0.0/8", 17), none, adapters, 12, servers), "");
+        check("B1: o que está no owned.json é da app em qualquer adaptador",
+            Guard.IsOurs(On("203.0.113.9/32", 5), new HashSet<string> { "203.0.113.9/32|5|172.20.10.1" }, adapters, -1, none), "");
+
+        check("B1: a ligação do telemóvel conta enquanto tem o mesmo IP local", Guard.ExitIndex(wifi, adapters) == 12, "");
+        var moved = new Adapter { Index = 12, IsWifi = true, Up = true, LocalIp = "192.168.1.40", Gateway = "192.168.1.1" };
+        check("B1: o Wi-Fi que saltou para o router de casa já não conta", Guard.ExitIndex(wifi, new List<Adapter> { moved }) == -1, "");
+        var vpn = new Adapter { Index = 30, IsVpn = true, Up = true, LocalIp = "10.8.0.2" };
+        check("B1: o adaptador de uma VPN escolhido à mão nunca conta", Guard.ExitIndex(vpn, new List<Adapter> { vpn }) == -1, "");
+    }
+
+    // B1: uma rota que o Windows não apaga continua a ser da app (no owned.json também) e vai ao Log uma vez, não a cada sync
+    static async Task RouteNotDeleted(Action<string, bool, string> check)
+    {
+        const string key = "203.0.113.9/32|9999|192.0.2.1";
+        var dir = Path.Combine(Path.GetTempPath(), "srt-untangle12-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        var file = Path.Combine(dir, "owned.json");
+        Store.Save(file, new Guard.OwnedState { Routes = new() { key }, Boot = DateTime.UtcNow.AddMilliseconds(-Environment.TickCount64) });
+        var table = new List<Net.Route> { new("203.0.113.9/32", 9999, "192.0.2.1") };
+        var deletes = 0;
+        var refuse = true;
+        var guard = new Guard(file, (a, ms) => Task.FromResult(new ProcResult(0, "")), new Guard.RouteTable(
+            () => Task.FromResult(table.ToList()),
+            rt => { deletes++; if (refuse) return Task.FromResult(new ProcResult(1, "Element not found.")); table.Remove(rt); return Task.FromResult(new ProcResult(0, "Ok.")); }));
+        check("B1: o Guard lê a rota do owned.json", guard.Owned().Routes.Contains(key), "");
+
+        var warned = 0;
+        void Seen(LogEntry e) { if (e.Text.StartsWith("Couldn't delete the route 203.0.113.9/32")) warned++; }
+        Log.Added += Seen;
+        try
+        {
+            await guard.RemoveIps(new[] { "203.0.113.9" }, new Settings());
+            await guard.RemoveIps(new[] { "203.0.113.9" }, new Settings());
+            check("B1: a rota que o Windows recusa apagar continua da app", deletes == 2 && guard.Owned().Routes.Contains(key)
+                && Store.Load(file, () => new Guard.OwnedState()).Routes.Contains(key), $"{deletes} tentativas");
+            check("B1: e a falha vai ao Log uma vez, não a cada tentativa", warned == 1, $"{warned} linhas");
+            refuse = false;
+            await guard.RemoveIps(new[] { "203.0.113.9" }, new Settings());
+            check("B1: apagada, deixa de ser da app", table.Count == 0 && !guard.Owned().Routes.Contains(key)
+                && !Store.Load(file, () => new Guard.OwnedState()).Routes.Contains(key), "");
+        }
+        finally { Log.Added -= Seen; }
     }
 
     // O relógio do demo parado: o que a app mostra e carimba lê o AppClock, por isso as capturas saem iguais em cada corrida

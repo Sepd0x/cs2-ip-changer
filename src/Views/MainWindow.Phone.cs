@@ -491,7 +491,7 @@ public partial class MainWindow
             Hotspot = hotspot,
             Tethered = phone != null && !hotspot,
             WifiOn = info?.Ready == true && info.WifiOn && info.WifiConnected != false,
-            PcOnPhone = Guard.NeedsPcOffPhone(mode, true, Net.BestInterface("1.1.1.1"), phone?.Index ?? -1, other),
+            PcOnPhone = Guard.NeedsPcOffPhone(mode, true, Net.BestInterface(Net.PcProbeIp), phone?.Index ?? -1, other),
             Iphone = NotePhoneKind(PhoneUsb.IphoneSeen(info?.Ready == true, usb, phone, _s.EgressSsid)),
         };
     }

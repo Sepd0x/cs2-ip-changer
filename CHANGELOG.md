@@ -21,6 +21,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 ### Fixed
 - An iPhone used only through its hotspot over Wi-Fi, with no cable, got the Android steps (install the phone tool, USB debugging) and Change IP stayed off. The app now remembers the phone is an iPhone (seen on the cable once, or from a hotspot named like an iPhone's) and shows the iPhone's steps and its guided Change IP.
 - If Windows refused to give the phone's adapter its default route back when the app closed, nothing said so and the next start forgot about it, so without the home network the PC had no internet through the phone until a restart. Now the Log says so, and the next start or `--restore` gives it back.
+- On a hotspot or a USB network, a route of the app could stay behind after Turn off protection or No phone when the app had lost its list of routes, so servers kept going through the phone. Those routes are now found on the phone's connection too (only the app's own kind: your servers, Whole PC and Valve's blocks, never another program's).
+- A route Windows refused to delete was forgotten, so the app never tried it again, and on a hotspot Turn off protection still said the network was restored. Now the Log says which route was left (once, not every few seconds), the app tries it again, and Turn off protection lists it.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

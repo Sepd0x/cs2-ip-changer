@@ -46,6 +46,30 @@ public sealed class GuardReport
 }
 
 /// <summary>
+/// A route the app adds, as owned.json keeps it: "prefix|interface index|next hop" (the format files from older versions use too).
+/// Built only by <see cref="Of(Net.Route)"/> (a route in the table) and <see cref="Of(string, Adapter)"/> (a route the app adds).
+/// </summary>
+public readonly record struct RouteKey(string Prefix, int Index, string Hop)
+{
+    public override string ToString() => $"{Prefix}|{Index}|{Hop}";
+
+    public static RouteKey Of(Net.Route r) => new(r.Prefix, r.Index, r.NextHop);
+
+    /// <summary>The route the app adds for <paramref name="prefix"/> through <paramref name="via"/> (no gateway: on-link, 0.0.0.0).</summary>
+    public static RouteKey Of(string prefix, Adapter via) => new(prefix, via.Index, via.Gateway ?? "0.0.0.0");
+
+    /// <summary>Three parts with a whole number (digits only) as the index. What the parts hold is checked by the caller.</summary>
+    public static bool TryParse(string s, out RouteKey key)
+    {
+        key = default;
+        var p = s?.Split('|');
+        if (p == null || p.Length != 3 || !int.TryParse(p[1], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var idx)) return false;
+        key = new RouteKey(p[0], idx, p[2]);
+        return true;
+    }
+}
+
+/// <summary>
 /// Keeps protection up, in three layers:
 ///  1. Firewall: the servers (and cs2.exe itself) can only go out with the local IP of the protected connection.
 ///  2. The connection only counts if it is the right network (on Wi-Fi, the saved hotspot).
@@ -84,10 +108,24 @@ public sealed class Guard
     /// <summary>Runs PowerShell for the metric (Save mobile data). The tests pass one that fails, to see what the Guard does then.</summary>
     readonly Func<string, int, Task<ProcResult>> _powershell;
 
+    /// <summary>Reads and deletes routes: netsh in the app. The tests pass a table in memory, to see what the Guard deletes and keeps.</summary>
+    public sealed record RouteTable(Func<Task<List<Net.Route>>> List, Func<Net.Route, Task<ProcResult>> Delete)
+    {
+        public static readonly RouteTable Windows = new(Net.ListRoutes, Net.DeleteRoute);
+    }
+    readonly RouteTable _routes;
+
+    /// <summary>
+    /// The phone's connection of the last sync (the candidate: protected or still being checked), so the app's routes on a hotspot
+    /// or a USB network are found too, not only those on a phone adapter. Null = none, or not synced yet (--restore).
+    /// </summary>
+    Adapter _exit;
+
     /// <summary>With owned.json somewhere else (the admin tests use an admin-only folder).</summary>
-    public Guard(string ownedFile, Func<string, int, Task<ProcResult>> powershell = null)
+    public Guard(string ownedFile, Func<string, int, Task<ProcResult>> powershell = null, RouteTable routes = null)
     {
         _powershell = powershell ?? ((args, ms) => Proc.Run("powershell", args, ms));
+        _routes = routes ?? RouteTable.Windows;
         _ownedFile = ownedFile;
         var st = LoadOwned(ownedFile);
         // From before a restart: Windows already dropped those routes, and the interface index may now be another adapter.
@@ -129,11 +167,10 @@ public sealed class Guard
 
     static bool OwnedRouteShape(string key)
     {
-        var p = key.Split('|');
-        if (p.Length != 3 || !int.TryParse(p[1], System.Globalization.NumberStyles.None, null, out var idx) || idx <= 0) return false;
-        if (!System.Net.IPAddress.TryParse(p[2], out var gw) || gw.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork || p[2] != gw.ToString()) return false;
-        if (SplitPrefixes.Contains(p[0]) || Net.ValvePrefixes.Contains(p[0])) return true;
-        var host = p[0].EndsWith("/32") ? p[0][..^3] : null;
+        if (!RouteKey.TryParse(key, out var k) || k.Index <= 0) return false;
+        if (!System.Net.IPAddress.TryParse(k.Hop, out var gw) || gw.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork || k.Hop != gw.ToString()) return false;
+        if (SplitPrefixes.Contains(k.Prefix) || Net.ValvePrefixes.Contains(k.Prefix)) return true;
+        var host = k.Prefix.EndsWith("/32") ? k.Prefix[..^3] : null;
         return host != null && System.Net.IPAddress.TryParse(host, out var a) && a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && host == a.ToString()
             && !System.Net.IPAddress.Any.Equals(a);
     }
@@ -143,8 +180,60 @@ public sealed class Guard
         try { Store.Save(_ownedFile, new OwnedState { Routes = _ownedRoutes.ToList(), MetricIf = _metricAppliedTo, Boot = BootTime }); }
         catch (Exception ex) { Log.Warn("Could not save owned.json: " + ex.Message); }
     }
-    void Own(string key) { if (_ownedRoutes.Add(key)) SaveOwned(); }
-    bool Disown(string key) { if (!_ownedRoutes.Remove(key)) return false; SaveOwned(); return true; }
+    void Own(RouteKey key) { if (_ownedRoutes.Add(key.ToString())) SaveOwned(); }
+    bool Disown(RouteKey key) { if (!_ownedRoutes.Remove(key.ToString())) return false; SaveOwned(); return true; }
+    IEnumerable<RouteKey> OwnedKeys() => _ownedRoutes.Select(r => RouteKey.TryParse(r, out var k) ? k : (RouteKey?)null).OfType<RouteKey>();
+
+    /// <summary>
+    /// The one rule for "this route is the app's": it is in owned.json, or it sits on the phone's side and has the shape of the
+    /// app's routes (a server /32 of <paramref name="serverIps"/>, a whole-PC half or one of Valve's blocks). The phone's side is
+    /// a phone adapter, or the phone's connection the Guard knows (<paramref name="exitIndex"/>: a hotspot or a USB network).
+    /// <paramref name="anyHostOnPhone"/>: every /32 on a phone adapter counts (the list may have changed); never on the
+    /// connection, which can also carry other programs' routes (a VPN's server).
+    /// </summary>
+    public static bool IsOurs(Net.Route rt, IReadOnlySet<string> owned, IEnumerable<Adapter> adapters, int exitIndex, IReadOnlySet<string> serverIps, bool anyHostOnPhone = false)
+    {
+        if (owned.Contains(RouteKey.Of(rt).ToString())) return true;
+        var onPhone = adapters.Any(a => a.Index == rt.Index && a.IsPhone);
+        if (!onPhone && (exitIndex <= 0 || rt.Index != exitIndex)) return false;
+        if (SplitPrefixes.Contains(rt.Prefix) || Net.ValvePrefixes.Contains(rt.Prefix)) return true;
+        return rt.Prefix.EndsWith("/32") && (onPhone && anyHostOnPhone || serverIps.Contains(rt.Prefix[..^3]));
+    }
+
+    /// <summary>
+    /// The index of the phone's connection for <see cref="IsOurs"/>: the last sync's, only while the same adapter still has the
+    /// same local IP (a Wi-Fi that moved to the home router is not it any more), and never a VPN's adapter. -1 = none.
+    /// </summary>
+    public static int ExitIndex(Adapter exit, IEnumerable<Adapter> adapters) =>
+        exit != null && !exit.IsVpn && adapters.Any(a => a.Index == exit.Index && a.LocalIp == exit.LocalIp && !a.IsVpn) ? exit.Index : -1;
+
+    /// <summary>
+    /// The one way the app deletes routes: each one <paramref name="pick"/> keeps that is the app's (<see cref="IsOurs"/>). A route
+    /// Windows doesn't delete stays the app's (owned.json too), so the next try, the check after a restore and --restore still see
+    /// it; the failure goes to the Log once per route, not on every sync. Returns how many were deleted.
+    /// </summary>
+    async Task<int> DeleteOurs(List<Net.Route> routes, List<Adapter> adapters, Func<Net.Route, bool> pick, IReadOnlySet<string> serverIps, bool anyHostOnPhone = false)
+    {
+        var exit = ExitIndex(_exit, adapters);
+        var deleted = 0;
+        foreach (var rt in routes)
+        {
+            if (!pick(rt) || !IsOurs(rt, _ownedRoutes, adapters, exit, serverIps, anyHostOnPhone)) continue;
+            var key = RouteKey.Of(rt);
+            var r = await _routes.Delete(rt);
+            if (!r.Ok)
+            {
+                if (_warned.Add("route " + key)) Log.Warn($"Couldn't delete the route {rt.Prefix} on adapter {rt.Index}: {(r.Output ?? "").Trim()}");
+                continue;
+            }
+            _warned.Remove("route " + key);
+            Disown(key);
+            deleted++;
+        }
+        return deleted;
+    }
+
+    static readonly IReadOnlySet<string> NoServers = new HashSet<string>();
 
     public const string WhyUnchecked = "The phone connection's public IP hasn't been checked yet.";
 
@@ -230,10 +319,25 @@ public sealed class Guard
         "Managed by CS2 IP Changer. CS2's game traffic (UDP) can only go out through the protected connection: servers not in the list never see your home IP.",
         Firewall.NET_FW_IP_PROTOCOL_UDP);
 
+    /// <summary>
+    /// The app's own IP test (<see cref="Net.EchoIp"/>, the app's exe only) can only leave through <paramref name="allow"/>: the
+    /// candidate, so the IP measured is the phone's. Other programs (1.0.0.1 is also a public DNS server) are left alone.
+    /// </summary>
+    static Firewall.FwRule EchoRule(string allow) => new(Firewall.EchoRuleName, new[] { Net.EchoIp }, Environment.ProcessPath, allow,
+        "Managed by CS2 IP Changer. Makes sure the app's IP test measures the protected connection.");
+
+    /// <summary>Writes one Firewall rule; a failure is kept for the Log line instead of stopping the other rules.</summary>
+    static void TryRule(List<string> errors, Action write)
+    {
+        try { write(); }
+        catch (Exception ex) { errors.Add((ex.InnerException ?? ex).Message); }
+    }
+
     async Task<GuardReport> SyncCore(Settings s, List<string> ips, bool force, string distrust, bool cs2Running, string verifiedKey, bool on)
     {
         var adapters = Net.Scan();
         var candidate = Net.PickEgress(adapters, s.EgressAdapterId, s.EgressSsid, out var problem);
+        _exit = candidate;
         // A new connection (another adapter or local IP) is only trusted after its public IP is measured.
         if (distrust == null && candidate != null && KeyOf(candidate) != verifiedKey) distrust = WhyUnchecked;
         var egress = distrust != null ? null : candidate;
@@ -243,7 +347,7 @@ public sealed class Guard
         if (mode is "home" or "off") _lastProblem = null;
         else if (problem != _lastProblem) { if (problem != null) Log.Warn(problem + " Servers blocked."); _lastProblem = problem; }
         var fwProblem = Firewall.CheckEnabled();
-        if (mode is "home" or "off") return await HomeMode(s, adapters, candidate, fwProblem, force, mode, distrust);
+        if (mode is "home" or "off") return await HomeMode(s, ips, adapters, candidate, fwProblem, force, mode, distrust);
         var cs2 = s.LockCs2 && (s.PhoneSeen || egress != null) ? Steam.Cs2Path(s) : null;
 
         // 1) Firewall first: there is never a moment when a server is reachable with the home IP.
@@ -261,7 +365,7 @@ public sealed class Guard
             void ReadBack()
             {
                 killOk = Firewall.Verify(Firewall.RuleName, ips, allow);
-                echoOk = Firewall.Verify(Firewall.EchoRuleName, new[] { Net.EchoIp }, candidate?.LocalIp, Environment.ProcessPath);
+                echoOk = Firewall.Verify(EchoRule(candidate?.LocalIp));
                 cs2Ok = cs2 != null ? Firewall.Verify(Cs2Rule(cs2, allow)) : null;
                 dnsOk = full != null ? Firewall.Verify(full[0]) && Firewall.Verify(full[1]) : null;
                 ipv6Ok = full != null ? Firewall.Verify(full[2]) : null;
@@ -271,14 +375,9 @@ public sealed class Guard
             {
                 // Each rule on its own: one failing must not leave the others on an old allowed IP.
                 var errors = new List<string>();
-                void Try(Action a)
-                {
-                    try { a(); }
-                    catch (Exception ex) { errors.Add((ex.InnerException ?? ex).Message); }
-                }
+                void Try(Action a) => TryRule(errors, a);
                 Try(() => Firewall.Apply(Firewall.RuleName, ips, null, allow, "Managed by CS2 IP Changer. Servers in the list can only be reached from the local IP of the protected connection."));
-                // Only the app's own IP test: other programs (1.0.0.1 is also a public DNS server) are left alone.
-                Try(() => Firewall.Apply(Firewall.EchoRuleName, new[] { Net.EchoIp }, Environment.ProcessPath, candidate?.LocalIp, "Managed by CS2 IP Changer. Makes sure the app's IP test measures the protected connection."));
+                Try(() => Firewall.Apply(EchoRule(candidate?.LocalIp)));
                 if (cs2 != null) Try(() => Firewall.Apply(Cs2Rule(cs2, allow)));
                 else Firewall.Remove(Firewall.Cs2RuleName);
                 if (full != null) foreach (var r in full) Try(() => Firewall.Apply(r));
@@ -336,20 +435,20 @@ public sealed class Guard
         var fullOk = false;
         if (mode == "all" && egress?.Gateway != null)
         {
-            if (Net.BestInterface("1.1.1.1") != egress.Index || Net.BestInterface("200.1.1.1") != egress.Index)
+            if (Net.BestInterface(Net.PcProbeIp) != egress.Index || Net.BestInterface(Net.PcProbeIpHigh) != egress.Index)
             {
                 foreach (var pfx in SplitPrefixes)
                 {
                     var r = await Net.AddRoute(pfx, egress, 5);
-                    if (r.Ok) Own($"{pfx}|{egress.Index}|{egress.Gateway}");
+                    if (r.Ok) Own(RouteKey.Of(pfx, egress));
                 }
                 Log.Info(s.Mode == "all" ? "The whole PC goes through the phone." : "CS2 is open: the whole PC goes through the phone.");
             }
-            fullOk = Net.BestInterface("1.1.1.1") == egress.Index;
+            fullOk = Net.BestInterface(Net.PcProbeIp) == egress.Index;
         }
         else await RemoveSplitRoutes(adapters);
 
-        var pcIdx = Net.BestInterface("1.1.1.1");
+        var pcIdx = Net.BestInterface(Net.PcProbeIp);
         var pc = adapters.FirstOrDefault(a => a.Index == pcIdx);
         var steam = Net.ReadSteamLink();
         bool? steamOnEgress = !steam.Connected || egress == null ? null : steam.LocalIps.All(ip => ip == egress.LocalIp);
@@ -391,7 +490,7 @@ public sealed class Guard
     async Task KeepPcOffPhone(Settings s, string mode, Adapter phone, List<Adapter> adapters, string userMode = null)
     {
         var other = phone != null && HasOtherInternet(adapters, phone);
-        var onPhone = phone != null && Net.BestInterface("1.1.1.1") == phone.Index;
+        var onPhone = phone != null && Net.BestInterface(Net.PcProbeIp) == phone.Index;
         var step = PcOffPhoneNext(s.KeepPcOffPhone, userMode ?? s.Mode, mode, phone, other, _metricAppliedTo, onPhone, (DateTime.Now - _metricTriedAt).TotalSeconds);
         if (step == PcOffPhoneStep.Undo)
         {
@@ -467,7 +566,7 @@ public sealed class Guard
     /// phone is already checked when you turn protection on. Save mobile data keeps the rest of the PC on the home network in both,
     /// whatever mode is picked: so the home IP gets measured on a first start in Whole PC always too (review finding 7).
     /// </summary>
-    async Task<GuardReport> HomeMode(Settings s, List<Adapter> adapters, Adapter phone, string fwProblem, bool force, string mode, string distrust)
+    async Task<GuardReport> HomeMode(Settings s, List<string> ips, List<Adapter> adapters, Adapter phone, string fwProblem, bool force, string mode, string distrust)
     {
         var off = mode == "off";
         // With Windows Firewall off the old rules can't be removed: the signature changes when it is back on, and they go then
@@ -476,16 +575,24 @@ public sealed class Guard
         {
             var was = _fwSignature;
             if (fwProblem == null) Firewall.RemoveProtection();
-            await RemoveOurRoutes(new HashSet<string> { Net.EchoIp }, adapters, all: true);
+            await DeleteOurs(await _routes.List(), adapters, _ => true, ips.Append(Net.EchoIp).ToHashSet(), anyHostOnPhone: true);
+            var errors = new List<string>();
             if (off && phone != null && fwProblem == null)
-                Firewall.Apply(Firewall.EchoRuleName, new[] { Net.EchoIp }, Environment.ProcessPath, phone.LocalIp, "Managed by CS2 IP Changer. Makes sure the app's IP test measures the protected connection.");
-            if (off && was?.StartsWith("off|") != true) Log.Info("Protection is off: no kill switch, no CS2 lock and no routes. CS2 and servers see your home IP.");
-            if (!off && was?.StartsWith("home") != true) Log.Info("No phone mode: the kill switch and the routes are off. CS2 and servers see your home IP.");
-            _fwSignature = sig;
+            {
+                TryRule(errors, () => Firewall.Apply(EchoRule(phone.LocalIp)));
+                if (FirewallErrorLine(errors, ref _fwErrors) is string line) { if (errors.Count > 0) Log.Error(line); else Log.Ok(line); }
+            }
+            // A rule that wasn't written is tried again on the next sync (the Log line above is only said once)
+            if (errors.Count == 0)
+            {
+                if (off && was?.StartsWith("off|") != true) Log.Info("Protection is off: no kill switch, no CS2 lock and no routes. CS2 and servers see your home IP.");
+                if (!off && was?.StartsWith("home") != true) Log.Info("No phone mode: the kill switch and the routes are off. CS2 and servers see your home IP.");
+                _fwSignature = sig;
+            }
         }
         if (off && phone != null) await EnsureRoutes(new List<string> { Net.EchoIp }, phone, adapters);
         await KeepPcOffPhone(s, mode, phone, adapters, userMode: "servers");
-        var pcIdx = Net.BestInterface("1.1.1.1");
+        var pcIdx = Net.BestInterface(Net.PcProbeIp);
         return new GuardReport
         {
             Adapters = adapters,
@@ -501,25 +608,6 @@ public sealed class Guard
             Steam = Net.ReadSteamLink(),
             HasHome = adapters.Any(a => a.Up && a.Gateway != null && a.Index != phone?.Index && !a.IsPhone),
         };
-    }
-
-    /// <summary>
-    /// Deletes the app's routes: its own (owned.json) and, on a phone adapter, server /32s, whole PC and Valve's blocks.
-    /// <paramref name="all"/>: every /32 on a phone adapter counts as a server route (the list may have changed).
-    /// </summary>
-    async Task RemoveOurRoutes(HashSet<string> serverIps, List<Adapter> adapters, bool all = false)
-    {
-        foreach (var rt in await Net.ListRoutes())
-        {
-            var ours = _ownedRoutes.Contains($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
-            var onPhone = adapters.Any(a => a.Index == rt.Index && a.IsPhone);
-            var serverRoute = rt.Prefix.EndsWith("/32") && (all || serverIps.Contains(rt.Prefix[..^3]));
-            if (ours || (onPhone && (serverRoute || SplitPrefixes.Contains(rt.Prefix) || Net.ValvePrefixes.Contains(rt.Prefix))))
-            {
-                await Net.DeleteRoute(rt);
-                Disown($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
-            }
-        }
     }
 
     static readonly string[] FullModeRuleNames = { Firewall.DnsUdpRuleName, Firewall.DnsTcpRuleName, Firewall.Ipv6RuleName };
@@ -553,71 +641,43 @@ public sealed class Guard
         adapters.Any(a => a.Up && a.Gateway != null && a.Index != egress.Index && !a.IsPhone);
 
     /// <summary>Fast path: the Windows API says whether each IP already leaves through the adapter. Routes are only touched if one is missing.</summary>
-    async Task EnsureRoutes(List<string> ips, Adapter via, List<Adapter> adapters)
-    {
-        var missing = ips.Where(ip => Net.BestInterface(ip) != via.Index).ToList();
-        if (missing.Count == 0) return;
-        // Clears our routes left on another adapter (e.g. the cable came back with another index, or the Wi-Fi network changed).
-        foreach (var rt in await Net.ListRoutes())
-        {
-            var ip = rt.Prefix.EndsWith("/32") ? rt.Prefix[..^3] : null;
-            if (ip == null || !missing.Contains(ip)) continue;
-            var ours = _ownedRoutes.Contains($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
-            if ((ours || adapters.Any(a => a.Index == rt.Index && a.IsPhone)) && (rt.Index != via.Index || rt.NextHop != (via.Gateway ?? "0.0.0.0")))
-            {
-                await Net.DeleteRoute(rt);
-                Disown($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
-            }
-        }
-        foreach (var ip in missing)
-        {
-            var r = await Net.AddRoute(ip + "/32", via);
-            if (r.Ok) Own($"{ip}/32|{via.Index}|{via.Gateway ?? "0.0.0.0"}");
-            else Log.Warn($"Route {ip}: {r.Output}");
-        }
-    }
+    Task EnsureRoutes(List<string> ips, Adapter via, List<Adapter> adapters) =>
+        EnsureVia(ips.Select(ip => ip + "/32").ToList(), p => p[..^3], via, adapters);
 
     /// <summary>Like EnsureRoutes, but for whole blocks (e.g. Valve's).</summary>
     async Task EnsurePrefixRoutes(string[] prefixes, Adapter via, List<Adapter> adapters)
     {
-        var missing = prefixes.Where(p => Net.BestInterface(Net.ProbeIp(p)) != via.Index).ToList();
-        if (missing.Count == 0) return;
-        var hop = via.Gateway ?? "0.0.0.0";
-        foreach (var rt in await Net.ListRoutes())
-        {
-            if (!missing.Contains(rt.Prefix)) continue;
-            var ours = _ownedRoutes.Contains($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
-            if ((ours || adapters.Any(a => a.Index == rt.Index && a.IsPhone)) && (rt.Index != via.Index || rt.NextHop != hop))
-            {
-                await Net.DeleteRoute(rt);
-                Disown($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
-            }
-        }
-        var added = 0;
-        foreach (var pfx in missing)
-        {
-            var r = await Net.AddRoute(pfx, via);
-            if (r.Ok) { Own($"{pfx}|{via.Index}|{hop}"); added++; }
-            else Log.Warn($"Route {pfx}: {r.Output}");
-        }
+        var added = await EnsureVia(prefixes, Net.ProbeIp, via, adapters);
         if (added > 0) Log.Info($"Steam through the phone: {Fmt.Count(added, "Valve block")} {(added == 1 ? "goes" : "go")} through \"{via.Name}\".");
+    }
+
+    /// <summary>
+    /// EnsureRoutes and EnsurePrefixRoutes: the prefixes Windows doesn't send through <paramref name="via"/> yet (asked for the IP
+    /// <paramref name="probe"/> gives) get the app's routes for them on another adapter deleted (the cable came back with another
+    /// index, the Wi-Fi network changed) and a route through <paramref name="via"/>. Returns how many were added.
+    /// </summary>
+    async Task<int> EnsureVia(IReadOnlyList<string> prefixes, Func<string, string> probe, Adapter via, List<Adapter> adapters)
+    {
+        var missing = prefixes.Where(p => Net.BestInterface(probe(p)) != via.Index).ToList();
+        if (missing.Count == 0) return 0;
+        var want = missing.ToHashSet();
+        var hosts = missing.Where(p => p.EndsWith("/32")).Select(p => p[..^3]).ToHashSet();
+        await DeleteOurs(await _routes.List(), adapters, rt => want.Contains(rt.Prefix) && RouteKey.Of(rt) != RouteKey.Of(rt.Prefix, via), hosts);
+        var added = 0;
+        foreach (var p in missing)
+        {
+            var r = await Net.AddRoute(p, via);
+            if (r.Ok) { Own(RouteKey.Of(p, via)); added++; }
+            else Log.Warn($"Route {(p.EndsWith("/32") ? p[..^3] : p)}: {r.Output}");
+        }
+        return added;
     }
 
     async Task RemovePrefixRoutes(string[] prefixes, List<Adapter> adapters)
     {
-        if (!_ownedRoutes.Any(r => prefixes.Any(p => r.StartsWith(p + "|")))) return;
-        var routes = await Net.ListRoutes();
-        var removed = false;
-        foreach (var rt in routes)
-        {
-            if (!prefixes.Contains(rt.Prefix)) continue;
-            if (_ownedRoutes.Contains($"{rt.Prefix}|{rt.Index}|{rt.NextHop}") || adapters.Any(a => a.Index == rt.Index && a.IsPhone))
-            {
-                await Net.DeleteRoute(rt);
-                Disown($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
-                removed = true;
-            }
-        }
+        if (!OwnedKeys().Any(k => prefixes.Contains(k.Prefix))) return;
+        var routes = await _routes.List();
+        var removed = await DeleteOurs(routes, adapters, rt => prefixes.Contains(rt.Prefix), NoServers) > 0;
         // Routes Windows already dropped with their adapter (tethering turned off) are no longer ours, or this ran (and logged) every sync.
         DisownGone(prefixes, routes);
         if (removed) Log.Info("Steam through the phone turned off: Steam goes back to the home network.");
@@ -625,41 +685,27 @@ public sealed class Guard
 
     void DisownGone(string[] prefixes, List<Net.Route> routes)
     {
-        var present = routes.Select(rt => $"{rt.Prefix}|{rt.Index}|{rt.NextHop}").ToHashSet();
-        foreach (var key in _ownedRoutes.Where(r => prefixes.Any(p => r.StartsWith(p + "|")) && !present.Contains(r)).ToList()) Disown(key);
+        var present = routes.Select(RouteKey.Of).ToHashSet();
+        foreach (var key in OwnedKeys().Where(k => prefixes.Contains(k.Prefix) && !present.Contains(k)).ToList()) Disown(key);
     }
 
     async Task RemoveSplitRoutes(List<Adapter> adapters)
     {
-        if (_ownedRoutes.Count == 0 || !_ownedRoutes.Any(r => r.StartsWith("0.0.0.0/1") || r.StartsWith("128.0.0.0/1"))) return;
-        var routes = await Net.ListRoutes();
+        if (!OwnedKeys().Any(k => SplitPrefixes.Contains(k.Prefix))) return;
+        var routes = await _routes.List();
         DisownGone(SplitPrefixes, routes);
-        foreach (var rt in routes)
-        {
-            if (!SplitPrefixes.Contains(rt.Prefix)) continue;
-            if (_ownedRoutes.Contains($"{rt.Prefix}|{rt.Index}|{rt.NextHop}") || adapters.Any(a => a.Index == rt.Index && a.IsPhone))
-            {
-                await Net.DeleteRoute(rt);
-                Disown($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
-            }
-        }
+        await DeleteOurs(routes, adapters, rt => SplitPrefixes.Contains(rt.Prefix), NoServers);
         Log.Info("The rest of the PC goes back to the home network.");
     }
 
-    /// <summary>Removes routes for servers that left the list (only the app's own or those on phone adapters).</summary>
+    /// <summary>Removes routes for servers that left the list (only the app's own or those on the phone's side).</summary>
     public Task RemoveIps(IEnumerable<string> ips, Settings s) => Task.Run(async () =>
     {
         await _gate.WaitAsync();
         try
         {
             var set = ips.ToHashSet();
-            var adapters = Net.Scan();
-            foreach (var rt in await Net.ListRoutes())
-            {
-                if (!rt.Prefix.EndsWith("/32") || !set.Contains(rt.Prefix[..^3])) continue;
-                if (Disown($"{rt.Prefix}|{rt.Index}|{rt.NextHop}") || adapters.Any(a => a.Index == rt.Index && a.IsPhone))
-                    await Net.DeleteRoute(rt);
-            }
+            await DeleteOurs(await _routes.List(), Net.Scan(), rt => rt.Prefix.EndsWith("/32") && set.Contains(rt.Prefix[..^3]), set);
             _fwSignature = null;
         }
         finally { _gate.Release(); }
@@ -700,14 +746,11 @@ public sealed class Guard
         {
             var adapters = Net.Scan();
             var set = ips.Append(Net.EchoIp).ToHashSet();
-            foreach (var rt in await Net.ListRoutes())
-            {
-                var ours = _ownedRoutes.Contains($"{rt.Prefix}|{rt.Index}|{rt.NextHop}");
-                var onPhone = adapters.Any(a => a.Index == rt.Index && a.IsPhone);
-                var serverRoute = rt.Prefix.EndsWith("/32") && set.Contains(rt.Prefix[..^3]);
-                if (ours || (onPhone && (serverRoute || SplitPrefixes.Contains(rt.Prefix) || Net.ValvePrefixes.Contains(rt.Prefix)))) await Net.DeleteRoute(rt);
-            }
-            _ownedRoutes.Clear();
+            var routes = await _routes.List();
+            await DeleteOurs(routes, adapters, _ => true, set);
+            // What Windows already dropped is no longer the app's; a route it refused to delete stays (the check below says so)
+            var present = routes.Select(RouteKey.Of).ToHashSet();
+            foreach (var key in OwnedKeys().Where(k => !present.Contains(k)).ToList()) _ownedRoutes.Remove(key.ToString());
             SaveOwned();
             Firewall.RemoveAll(keepRegions);
             await RestoreMetric();
@@ -719,12 +762,9 @@ public sealed class Guard
             // Reads everything back: the restore only counts if nothing of ours is left.
             var left = new List<string>();
             adapters = Net.Scan();
-            foreach (var rt in await Net.ListRoutes())
-            {
-                var onPhone = adapters.Any(a => a.Index == rt.Index && a.IsPhone);
-                var serverRoute = rt.Prefix.EndsWith("/32") && set.Contains(rt.Prefix[..^3]);
-                if (onPhone && (serverRoute || SplitPrefixes.Contains(rt.Prefix) || Net.ValvePrefixes.Contains(rt.Prefix))) left.Add("route " + rt.Prefix);
-            }
+            var exit = ExitIndex(_exit, adapters);
+            foreach (var rt in await _routes.List())
+                if (IsOurs(rt, _ownedRoutes, adapters, exit, set)) left.Add("route " + rt.Prefix);
             left.AddRange(Firewall.Remaining().Where(n => !keepRegions || !n.StartsWith(Firewall.RegionsRuleName)).Select(n => "rule \"" + n + "\""));
             if (_metricAppliedTo >= 0) left.Add($"the metric of adapter {_metricAppliedTo}");
             if (left.Count == 0) { Log.Ok("Network restored: app rules and routes removed, checked."); return null; }

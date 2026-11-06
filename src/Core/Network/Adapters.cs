@@ -169,6 +169,12 @@ public static partial class Net
 
     // ------------------------------------------------------------ Route picked by Windows
 
+    /// <summary>
+    /// An address on the internet the app never routes by itself: the adapter Windows picks for it is the one the rest of the PC
+    /// uses. <see cref="PcProbeIpHigh"/> is one in the other half (128.0.0.0/1), so Whole PC checks both halves.
+    /// </summary>
+    public const string PcProbeIp = "1.1.1.1", PcProbeIpHigh = "200.1.1.1";
+
     [DllImport("iphlpapi.dll")]
     static extern int GetBestInterface(uint destAddr, out uint bestIfIndex);
 
