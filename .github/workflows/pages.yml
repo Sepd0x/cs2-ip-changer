@@ -29,9 +29,10 @@ jobs:
           cp -r site/. _site/
           cp docs/screenshots/*.png _site/img/
           cp docs/assets/icon.png docs/assets/social-preview.png docs/assets/how-it-works-dark.svg _site/img/
+          cp docs/assets/favicon.svg docs/assets/favicon.ico docs/assets/apple-touch-icon.png _site/img/
           # Lossless WebP of each screenshot: same pixels, about a quarter of the size. The PNGs stay as the fallback.
           for f in _site/img/*.png; do
-            case "$f" in */icon.png|*/social-preview.png) continue ;; esac
+            case "$f" in */icon.png|*/social-preview.png|*/apple-touch-icon.png) continue ;; esac
             cwebp -quiet -lossless -z 9 "$f" -o "${f%.png}.webp"
           done
           test -f _site/img/connection.webp

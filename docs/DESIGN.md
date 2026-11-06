@@ -92,6 +92,41 @@ changed). The dashboard's click map (`ui-map.js`) had five buttons in the beta.1
 Different on purpose (bigger than a token, a design call): the site's fonts (Funnel) and its round buttons (pills, filled
 accent) against the app's Segoe and square buttons; the web's brighter text white. Change these only with the owner.
 
+## Logo
+
+A disc crossed by one jump: the connection leaves the ground (light blue), crosses the sky (deep blue) and lands on a new
+point, the carrier's IP (a yellow core in a deep blue ring). Chosen by the owner on 6 Nov 2026 after three rounds and three
+independent critics (the study, the sketches and the scores are in `publish/logo-2026-11-06/`, outside git).
+
+| Part | Colour | Theme.xaml key |
+|---|---|---|
+| the ground (lower piece) | `#5ba8f0` | `AccentColor` |
+| the sky (upper crescent) and the ring round the point | `#2b74c2` | `AccentDeepColor` |
+| the point's core | `#d8e03a` | `Top3` |
+
+Rules: a free shape on a transparent background (no tile, no square behind it), no glow, no shadow, no gradient, no mask;
+flat colours only from the table; it must read in one colour (the point becomes a hole). The yellow never touches the
+background (it sits in its ring), so the same `.ico` works on light and dark taskbars. Drawn on a 32 grid: the disc's top on
+y 2, the cut 4 wide (2 px at 16), a clear gap of 2 round the point, no tip thinner than 2.2. 16 and 24 px have their own
+drawings, fitted to whole pixels (`logo-16.svg`, `logo-24.svg`); the other sizes are the master.
+
+`node tools/logo.mjs` makes every file from `tools/logo-shape.mjs` (the numbers) and the three keys above (Playwright and
+paper.js 0.12.18, see the top of the script; `--out <folder>` is a trial):
+
+| File | Where it is used |
+|---|---|
+| `docs/assets/logo.svg` (master), `logo-black.svg`, `logo-white.svg` | the README card's signature; one-colour uses |
+| `docs/assets/logo-16.svg`, `logo-24.svg` | the small sizes; `logo-24.svg` is also drawn by the window (below) |
+| `docs/assets/app.ico` = `src/app.ico` | the exe, the taskbar, Alt+Tab and the tray: 16, 20, 24, 32, 40, 48, 64, 256 |
+| `docs/assets/icon.png` (256) | the README header; the site's `img/icon.png` (header, loading screen, guide window bars) |
+| `docs/assets/favicon.svg`, `favicon.ico`, `apple-touch-icon.png` | the site's `<head>` (the Pages workflow copies them to `img/`) |
+
+The window draws the logo in the empty corner above Connection (`SideLogo` in `src/MainWindow.xaml`, 24 px, the paths of
+`logo-24.svg` with the theme's brushes): change both together. The README card (`docs/assets/src/social-preview.html`)
+signs with `logo.svg` in its lower left corner. The GitHub avatar (`publish/logo-2026-11-06/avatar-460.png`) is uploaded by
+hand. `tests/LogoTests.cs` fails if any of these stop being the same logo, or if the logo gains a background, glow, mask or a
+colour outside the table.
+
 ## Captures
 
 `node tools/shots.mjs` takes every capture of the app in one run, from the demo of the dev build (needs `src/Privado`;

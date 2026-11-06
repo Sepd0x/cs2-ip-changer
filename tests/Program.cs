@@ -621,6 +621,8 @@ Seguranca1106Tests.Run(Check);
 VersaoTests.Run(Check);
 // sistema de design (5 nov.): as cores da app no site, na dashboard e no README, e as capturas da versão de agora (DesignSyncTests.cs)
 DesignSyncTests.Run(Check);
+// 6 nov.: o logo é o mesmo no ícone da app, no favicon, no README, no site, no canto da janela e no cartão (LogoTests.cs)
+LogoTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

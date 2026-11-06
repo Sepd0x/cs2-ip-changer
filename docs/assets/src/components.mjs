@@ -27,17 +27,7 @@ const themes = {
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const write = (name, svg) => fs.writeFileSync(new URL(name, out), svg.replace(/\n\s*/g, '\n'));
 
-// ------------------------------------------------------------------ logo (graphite tile, blue shield with a phone cut out of it)
-const SHIELD = 'M60 74 L128 50 L196 74 L196 150 L128 214 L60 150 Z';
-const logo = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
-<defs>
-<linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2A2A"/><stop offset="1" stop-color="#141414"/></linearGradient>
-<mask id="shield"><path d="${SHIELD}" fill="#fff"/><rect x="104" y="84" width="48" height="84" rx="9" fill="#000"/><rect x="118" y="92" width="20" height="5" rx="2.5" fill="#fff"/></mask>
-</defs>
-<rect x="8" y="8" width="240" height="240" rx="56" fill="url(#tile)" stroke="#3A3A3A" stroke-width="2"/>
-<rect width="256" height="256" fill="${T.AccentColor}" mask="url(#shield)"/>
-</svg>`;
-write('logo.svg', logo);
+// The logo (logo.svg and the rest) is no longer drawn here: node tools/logo.mjs makes it (docs/DESIGN.md, Logo).
 
 // ------------------------------------------------------------------ download button (works on both themes)
 write('download.svg', `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 264 46" width="264" height="46" role="img" aria-label="Download for Windows">

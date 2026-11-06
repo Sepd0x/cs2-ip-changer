@@ -67,7 +67,8 @@ document.getElementById('c').addEventListener('worldready',function(){window.__r
 
 const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.mjs': 'text/javascript', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.avif': 'image/avif', '.jpg': 'image/jpeg', '.woff2': 'font/woff2', '.json': 'application/json', '.txt': 'text/plain', '.xml': 'application/xml', '.mp4': 'video/mp4', '.webm': 'video/webm' };
 // What the Pages workflow adds to img/: every docs/screenshots/*.png (with a lossless WebP of each) and three of docs/assets
-const PAGES_IMG = ['docs/screenshots/', 'docs/assets/icon.png', 'docs/assets/social-preview.png', 'docs/assets/how-it-works-dark.svg'];
+const PAGES_IMG = ['docs/screenshots/', 'docs/assets/icon.png', 'docs/assets/social-preview.png', 'docs/assets/how-it-works-dark.svg',
+  'docs/assets/favicon.svg', 'docs/assets/favicon.ico', 'docs/assets/apple-touch-icon.png'];
 
 function pagesImg(name) {
   for (const p of PAGES_IMG) {

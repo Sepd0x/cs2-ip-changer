@@ -667,7 +667,7 @@ function render(p, modified) {
 <meta name="description" content="${esc(p.desc)}">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="${url}">
-<link rel="icon" href="../img/icon.png">
+<link rel="icon" href="../img/favicon.ico" sizes="32x32"><link rel="icon" href="../img/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="../img/apple-touch-icon.png">
 <meta name="theme-color" content="${themeColor}">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="CS2 IP Changer">

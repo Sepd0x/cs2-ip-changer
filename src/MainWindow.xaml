@@ -387,6 +387,31 @@
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
+                        <!-- the logo (publish/logo-2026-11-06, its 24 px drawing on a 32 grid), in the corner above Connection -->
+                        <Image x:Name="SideLogo" Width="24" Height="24" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,12,0,0"
+                               IsHitTestVisible="False" Focusable="False" AutomationProperties.Name="CS2 IP Changer">
+                            <Image.Source>
+                                <DrawingImage>
+                                    <DrawingImage.Drawing>
+                                        <DrawingGroup>
+                                            <GeometryDrawing Brush="Transparent" Geometry="M0,0 H32 V32 H0 Z"/>
+                                            <GeometryDrawing Geometry="M1.5,15.5c0,-7.456 6.044,-13.5 13.5,-13.5c7.456,0 13.5,6.044 13.5,13.5c0,0.927 -0.093,1.831 -0.271,2.705c-0.239,-0.064 -0.485,-0.114 -0.735,-0.149c-1.333,-5.412 -5.177,-10.056 -10.494,-10.056c-4.488,0 -9.183,5.237 -12.646,12.165l-2.026,0c-0.535,-1.454 -0.828,-3.026 -0.828,-4.665z">
+                                                <GeometryDrawing.Brush><SolidColorBrush Color="{StaticResource AccentDeepColor}"/></GeometryDrawing.Brush>
+                                            </GeometryDrawing>
+                                            <GeometryDrawing Brush="{StaticResource Accent}" Geometry="M15,29c-3.435,0 -6.57,-1.283 -8.953,-3.395c2.576,-8.171 5.601,-13.605 10.953,-13.605c5.389,0 6.517,2.103 6.859,6.696c-1.899,1.007 -3.192,3.005 -3.192,5.304c0,1.203 0.354,2.323 0.964,3.262c-1.958,1.106 -4.221,1.738 -6.631,1.738z"/>
+                                            <GeometryDrawing>
+                                                <GeometryDrawing.Brush><SolidColorBrush Color="{StaticResource AccentDeepColor}"/></GeometryDrawing.Brush>
+                                                <GeometryDrawing.Geometry><EllipseGeometry Center="26.667,24" RadiusX="4" RadiusY="4"/></GeometryDrawing.Geometry>
+                                            </GeometryDrawing>
+                                            <GeometryDrawing>
+                                                <GeometryDrawing.Brush><SolidColorBrush Color="{StaticResource Top3}"/></GeometryDrawing.Brush>
+                                                <GeometryDrawing.Geometry><EllipseGeometry Center="26.667,24" RadiusX="2.667" RadiusY="2.667"/></GeometryDrawing.Geometry>
+                                            </GeometryDrawing>
+                                        </DrawingGroup>
+                                    </DrawingImage.Drawing>
+                                </DrawingImage>
+                            </Image.Source>
+                        </Image>
                         <StackPanel Margin="0,48,-1,0">
                             <RadioButton x:Name="NavNet" Style="{StaticResource Nav}" Tag="&#xEA18;" Content="Connection" IsChecked="True" Checked="Nav_Checked"
                                          ToolTip="The IP servers see, Change IP and the phone"/>
