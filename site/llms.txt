@@ -4,8 +4,8 @@
 
 Website: https://sepd0x.github.io/cs2-ip-changer/
 Source and downloads: https://github.com/Sepd0x/cs2-ip-changer (latest release: https://github.com/Sepd0x/cs2-ip-changer/releases/latest)
-Download: https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe (CS2IPChanger.exe, 63.4 MB, SHA-256 fae35fdfe338757fbed1813feb0d90be9552f5e3f09c7e1a6fe5b1f32bf3407b, VirusTotal: 0 of 68 engines flag it, https://www.virustotal.com/gui/file/fae35fdfe338757fbed1813feb0d90be9552f5e3f09c7e1a6fe5b1f32bf3407b/detection)
-Status: beta. Latest release 0.1.0-beta.10 (2026-11-04). Free, no account. Not affiliated with Valve.
+Download: https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe (CS2IPChanger.exe, 63.5 MB, SHA-256 3159098476f179175d31c320c2b581ab45af1d9e0fb04a13760824394d321c22, VirusTotal: 0 of 69 engines flag it, https://www.virustotal.com/gui/file/3159098476f179175d31c320c2b581ab45af1d9e0fb04a13760824394d321c22/detection)
+Status: beta. Latest release 0.1.0-beta.11 (2026-11-06). Free, no account. Not affiliated with Valve.
 
 ## How it works
 

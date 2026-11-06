@@ -7,7 +7,7 @@
   <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest"><img src="https://img.shields.io/github/v/release/Sepd0x/cs2-ip-changer?include_prereleases&sort=semver&label=release&color=2b74c2" alt="Latest release"></a>
   <a href="https://github.com/Sepd0x/cs2-ip-changer/releases"><img src="https://img.shields.io/github/downloads/Sepd0x/cs2-ip-changer/total?label=downloads&color=2b74c2" alt="Total downloads"></a>
   <a href="#quick-start"><img src="https://img.shields.io/badge/Windows-10%20%7C%2011-2b74c2" alt="Windows 10 and 11"></a>
-  <!--rel:vtbadge--><a href="https://www.virustotal.com/gui/file/fae35fdfe338757fbed1813feb0d90be9552f5e3f09c7e1a6fe5b1f32bf3407b/detection"><img src="https://img.shields.io/badge/VirusTotal-0%2F68-2b74c2" alt="VirusTotal: 0 of 68 engines flag it"></a><!--/rel-->
+  <!--rel:vtbadge--><a href="https://www.virustotal.com/gui/file/3159098476f179175d31c320c2b581ab45af1d9e0fb04a13760824394d321c22/detection"><img src="https://img.shields.io/badge/VirusTotal-0%2F69-2b74c2" alt="VirusTotal: 0 of 69 engines flag it"></a><!--/rel-->
   <a href="https://github.com/Sepd0x/cs2-ip-changer/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Sepd0x/cs2-ip-changer/ci.yml?branch=main&label=build" alt="Build and tests"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-personal%20use-2b74c2" alt="License: free for personal use, all rights reserved"></a>
 </p>
@@ -25,7 +25,7 @@
     </picture>
   </a>
   <br>
-  <sub><!--rel:line--><a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">CS2IPChanger.exe</a> · v0.1.0-beta.10 · 63.4 MB · 4 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">release notes and checksums</a><!--/rel--></sub>
+  <sub><!--rel:line--><a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">CS2IPChanger.exe</a> · v0.1.0-beta.11 · 63.5 MB · 6 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">release notes and checksums</a><!--/rel--></sub>
   <br>
   <sub>Official downloads only here and on the website. <a href="#check-your-download">Check your download</a>.</sub>
 </p>
@@ -118,7 +118,7 @@ Click a picture for the details of that page.
 
 **Steps**
 
-1. **Download** [`CS2IPChanger.exe`](https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe) (<!--rel:size-->63.4 MB<!--/rel-->, from the [latest release](https://github.com/Sepd0x/cs2-ip-changer/releases/latest)). Put it in a folder only admins can change, like `C:\Program Files\CS2 IP Changer`. Started from Downloads or the Desktop, it offers to install itself there in one click.
+1. **Download** [`CS2IPChanger.exe`](https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe) (<!--rel:size-->63.5 MB<!--/rel-->, from the [latest release](https://github.com/Sepd0x/cs2-ip-changer/releases/latest)). Put it in a folder only admins can change, like `C:\Program Files\CS2 IP Changer`. Started from Downloads or the Desktop, it offers to install itself there in one click.
 2. **Connect the phone.** Plug it in by USB, turn on USB tethering (Personal Hotspot on an iPhone) and turn off the phone's Wi-Fi.
 3. **Open the app.** It asks for admin. Open **Phone setup** (under Phone): each step checks itself and turns green, and where the app can do a step it has a button. Paste the servers you play on into **Servers**. Then press **Turn on protection** (Status, on the Connection page). Protection starts off each time the app opens; Settings > Protection can turn it on by itself.
 4. **Check.** Open **Connection** with CS2 and Steam running. Every check should be green, and the IP servers see must not be your home IP.
@@ -165,7 +165,7 @@ To check only the hash, put the `.sha256` file next to the exe and run this in P
 ```
 </details>
 
-Each release is also scanned on VirusTotal. <!--rel:vt-->beta.10: [0 of 68 engines](https://www.virustotal.com/gui/file/fae35fdfe338757fbed1813feb0d90be9552f5e3f09c7e1a6fe5b1f32bf3407b/detection) flag it<!--/rel-->.
+Each release is also scanned on VirusTotal. <!--rel:vt-->beta.11: [0 of 69 engines](https://www.virustotal.com/gui/file/3159098476f179175d31c320c2b581ab45af1d9e0fb04a13760824394d321c22/detection) flag it<!--/rel-->.
 
 <details>
 <summary><b>Why some engines flag it</b></summary>
