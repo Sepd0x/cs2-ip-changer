@@ -124,6 +124,16 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - New IP + next account could name the account Steam had just logged in to, for a few seconds after a login, and didn't update when a cooldown ended.
 - Alt+F4, Alt+Space, Alt+Tab and Alt+Esc could be picked as a hotkey, which took them from every window (Alt+F4 stopped closing windows). They are refused now.
 - An account name with an emoji around the 9th letter could show a broken character on the New IP + next account button.
+- Someone writing "you got banned" or "no steam logon" in the chat could make the app say you were banned, mark the account as banned on that server and its network, and offer to switch, while you were still playing. Only a real disconnect counts now.
+- A server notice like "VPN/Proxy not allowed on this server" turned a kick by a vote, an AFK kick or a full server in the next half minute into a "VPN block" and offered a new IP and account. Those keep their real reason now.
+- When Steam dropped its connection to Valve or its check timed out, the app said "Steam or VAC refused the connection... check the account". It now says Steam lost its session and to join again once Steam reconnects. An account logged in on another PC says so.
+- A server that turns you away while you join without giving a reason (a whitelist, Prime only, a minimum Steam level) no longer marks the account as banned there and on its whole network. The app says the server refused the join without saying why.
+- With the PC's clock ahead when you last used an account, switching to any other account could end in "Steam logged in to X instead of Y" although Steam logged in to the right one.
+- Restart Steam through the phone and Add account went on when Steam didn't close. They now stop and say to close Steam yourself.
+- The wait on a full server ("tries again every 15 s for 2 minutes") could stop after one try.
+- A server filled with bots showed as full, so Wait for a slot never joined. Bots no longer count, since the server drops one to let you in.
+- If saving the account switch failed half way (a full disk), Steam's list of saved accounts could be left empty. It is now put back as it was.
+- With Steam closed by you, Log in from the app didn't add the console log option to CS2's launch options, so kicks weren't seen when Steam opened CS2 later.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

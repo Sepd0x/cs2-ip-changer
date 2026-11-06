@@ -144,7 +144,7 @@ static class RevisaoBTests
         check("Revisão B9: servidor novo em casa não promete o telemóvel", !MainWindow.AddJoinedText("1.2.3.4:27015", home: true).Contains("phone")
             && MainWindow.AddJoinedText("1.2.3.4:27015").Contains("through the phone"), "");
         check("Revisão B9: o Join banido em casa não diz que muda o IP", !MainWindow.BanJoinTip("F9", true).Contains("changes the IP") && MainWindow.BanJoinTip("F9", false).Contains("changes the IP"), "");
-        check("Revisão B9: os textos usam OnHome", kick.Contains("Toast(NoSteamLogonToast(OnHome)") && kick.Contains("Toast(TimeoutToast(never, OnHome)") && kick.Contains("VpnToast(OnHome, _s.NoPhone)")
+        check("Revisão B9: os textos usam OnHome", kick.Contains("Toast(NoSteamLogonToast(OnHome") && kick.Contains("Toast(TimeoutToast(never, OnHome)") && kick.Contains("VpnToast(OnHome, _s.NoPhone)")
             && Src("Views", "MainWindow.Servers.cs").Contains("BanJoinTip(_s.HotkeySwitch, OnHome)"), "");
         check("Revisão B9: Settings já não diz que o rejoin só entra com a proteção confirmada", !xaml.Contains("Text=\"Only joins when protection is confirmed.")
             && xaml.Contains("on your home connection in No phone or with Use the app with protection off"), "");

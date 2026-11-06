@@ -118,13 +118,33 @@ public partial class MainWindow
         if ((DateTime.Now - _noSteamLogonAt).TotalSeconds < 20) return;
         _noSteamLogonAt = DateTime.Now;
         System.Media.SystemSounds.Hand.Play();
-        Log.Warn("Kicked with \"No Steam logon\": Steam lost its session with Valve (it reconnected on another network, or after a crash). A new IP won't help. Console: " + Cut(line));
+        // Only the code that is "No Steam logon" is called that; Steam dropping or a VAC check that timed out is the same family (review F3)
+        var said = Cs2Console.SaysNoSteamLogon(line);
+        Log.Warn((said ? "Kicked with \"No Steam logon\": Steam" : "The server dropped you because Steam")
+            + " lost its session with Valve (it reconnected on another network, or after a crash). A new IP won't help. Console: " + Cut(line));
         Diag.Write("kick", new { kind = "no-steam-logon", line, server = _consoleServer });
-        Toast(NoSteamLogonToast(OnHome), Tone.Error);
+        Toast(NoSteamLogonToast(OnHome, said), Tone.Error);
     }
 
-    public static string NoSteamLogonToast(bool home) =>
-        $"Kicked with \"No Steam logon\": Steam lost its session. Wait for Steam to reconnect{(home ? "" : " through the phone")} (Checks), then join again.";
+    /// <summary><paramref name="said"/> false: another code of the family (Steam dropped, the VAC check timed out), not "No Steam logon" itself.</summary>
+    public static string NoSteamLogonToast(bool home, bool said = true) =>
+        (said ? "Kicked with \"No Steam logon\": Steam lost its session." : "Steam lost its session, so the server dropped you.")
+        + $" Wait for Steam to reconnect{(home ? "" : " through the phone")} (Checks), then join again.";
+
+    /// <summary>Steam or VAC said no to the account; another PC logging in to it has its own words (review F3).</summary>
+    public static string SteamRefusedToast(bool elsewhere) => elsewhere
+        ? "This account was logged in somewhere else, so Steam ended its session here. Log out there, then join again."
+        : "Steam or VAC refused the connection. A new IP won't help: check the account.";
+
+    /// <summary>A join refused before getting in, with no reason: not marked as a ban (a whitelist or Prime only server does it too).</summary>
+    public const string RefusedJoinToast = "The server refused the join without saying why. Not marked as a ban: it may let in only some players, or this account may be banned there.";
+
+    /// <summary>
+    /// One disconnect can come over two reads: within 20 s only something stronger still counts (a ban after a kick or a timeout).
+    /// A full server after a new Join (<paramref name="joinedAt"/>) is a new refusal, so the wait for a slot goes on (review F6).
+    /// </summary>
+    public static bool SameDisconnect(KickKind lastKind, DateTime lastAt, KickKind kind, DateTime now, DateTime? joinedAt) =>
+        (now - lastAt).TotalSeconds < 20 && Cs2Console.Stronger(lastKind, kind) == lastKind && !(kind == KickKind.Full && joinedAt > lastAt);
 
     /// <summary>A timeout: the connection, not the admin. On the home connection there is no phone to check.</summary>
     public static string TimeoutToast(bool never, bool home) => never ? "The server never answered. If other servers work, it may be offline or blocking this IP."
@@ -186,8 +206,7 @@ public partial class MainWindow
             ShowLastServer();   // the "last" mark on Servers and the names that use the last server
         }
         // One disconnect can come over two reads: within 20 s only something stronger still counts (a ban after a kick or a timeout).
-        var recent = (DateTime.Now - _lastKickAt).TotalSeconds < 20;
-        if (recent && Cs2Console.Stronger(_lastKickKind, kind) == _lastKickKind) { Log.Info($"CS2 console ({what}): " + Cut(line)); return; }
+        if (SameDisconnect(_lastKickKind, _lastKickAt, kind, DateTime.Now, _s.LastServerAt)) { Log.Info($"CS2 console ({what}): " + Cut(line)); return; }
         // The app's own IP change or the phone dropping also time the game out: that's not the server, and it doesn't count.
         if (kind == KickKind.NoAnswer && (_changingIp || _rejoining || (_last?.Egress == null && _last?.Unprotected != true))) { Log.Info("CS2 lost the server while the connection was changing. Console: " + Cut(line)); return; }
         _lastKickAt = DateTime.Now;
@@ -209,9 +228,22 @@ public partial class MainWindow
         if (kind == KickKind.Steam)
         {
             // VAC or Steam refused the account: no rejoin offer and no server ban mark, a new IP changes nothing.
-            Log.Warn($"Steam or VAC refused the connection to {server ?? "the server"}{on}. A new IP won't help. Console: " + Cut(line));
+            var elsewhere = Cs2Console.LoggedInElsewhere(line);
+            Log.Warn((elsewhere ? $"The account{on} was logged in somewhere else, so Steam ended its session on {server ?? "the server"}."
+                : $"Steam or VAC refused the connection to {server ?? "the server"}{on}.") + " A new IP won't help. Console: " + Cut(line));
             Diag.Write("kick", new { kind = "steam", line, server });
-            Toast("Steam or VAC refused the connection. A new IP won't help: check the account.", Tone.Error);
+            Toast(SteamRefusedToast(elsewhere), Tone.Error);
+            return;
+        }
+        if (kind == KickKind.Kick && d.Why == KickReason.RefusedJoin)
+        {
+            // Refused before getting in, with no reason: no ban mark and no rejoin question (the same join would be refused again)
+            Telemetry.Count("kick_seen");
+            Log.Warn($"{server ?? "The server"} refused the join{on} without saying why (sign-on state {d.SignOn}). Not marked as a ban: it may let in only some players"
+                + " (a whitelist, Prime only, a Steam level), or this account may be banned there. Console: " + Cut(line));
+            Diag.Write("kick", new { kind = "refused", line, server });
+            Toast(RefusedJoinToast, Tone.Warn);
+            UpdateRejoinBtn();
             return;
         }
         if (kind == KickKind.Full)

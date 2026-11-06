@@ -261,6 +261,8 @@ public sealed class ServerItem : Observable
     [JsonIgnore] public string PlayersText { get => _players; set => Set(ref _players, value); }
     [JsonIgnore] public int PlayerCount { get => _playerCount; set { if (Set(ref _playerCount, value)) Raise(nameof(Fill)); } }
     [JsonIgnore] public int MaxPlayers { get => _max; set { if (Set(ref _max, value)) { Raise(nameof(Fill)); Raise(nameof(HasPlayers)); } } }
+    /// <summary>Bots among <see cref="PlayerCount"/>: the server drops one to make room for a player, so they don't make it full.</summary>
+    [JsonIgnore] public int Bots { get; set; }
     [JsonIgnore] public bool HasPlayers => MaxPlayers > 0;
     [JsonIgnore] public double Fill => MaxPlayers > 0 ? Math.Min(1, (double)PlayerCount / MaxPlayers) * 60 : 0;
     [JsonIgnore] public string PingText { get => _ping; set => Set(ref _ping, value); }
