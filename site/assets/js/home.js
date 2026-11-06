@@ -294,14 +294,25 @@
     e.preventDefault(); keyGo(to);
   });
 
-  /* ------------------------------------------------------------ Pause motion: remembered, and it stops the scene's own loops */
+  /* ------------------------------------------------------------ Pause motion: remembered, and it stops the scene's own loops.
+     When the system asks for less motion the page starts still and the same button is Play motion: it turns motion on in
+     this browser (cs2-fx, read by the <head> script, which loads the motion libraries) and reloads. With motion on by that
+     choice, Pausing also sends the next visits back to the still page. */
+  var OPT = root.classList.contains('fx-opt');
   if (pauseBtn && FX) {
     pauseBtn.hidden = false; pauseBtn.setAttribute('aria-pressed', held);
     pauseBtn.addEventListener('click', function () {
       held = !held; pauseBtn.setAttribute('aria-pressed', held);
-      try { localStorage.setItem('cs2-motion', held ? 'paused' : ''); } catch (x) {}
+      try { localStorage.setItem('cs2-motion', held ? 'paused' : ''); if (OPT) localStorage.setItem('cs2-fx', held ? '' : 'on'); } catch (x) {}
       if (api) { if (held) api.pause(); else api.resume(); }
       update();
+    });
+  } else if (pauseBtn && W.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches && (function () { try { localStorage.getItem('cs2-fx'); return true; } catch (x) { return false; } })()) {
+    pauseBtn.hidden = false; pauseBtn.removeAttribute('aria-pressed'); pauseBtn.classList.add('play');
+    pauseBtn.textContent = pauseBtn.title = 'Play motion';
+    pauseBtn.addEventListener('click', function () {
+      try { localStorage.setItem('cs2-fx', 'on'); localStorage.setItem('cs2-motion', ''); } catch (x) { return; }
+      location.reload();
     });
   }
 

@@ -1,5 +1,5 @@
 /* CS2 IP Changer site: the readout (the IP as a number on a ruler) and the motion of every page.
-   The calm page is the HTML itself. html.fx (set in <head> when the visitor allows motion) turns the motion on, and only
+   The calm page is the HTML itself. html.fx (set in <head> when the system allows motion, or the visitor pressed Play motion) turns the motion on, and only
    then are GSAP, ScrollTrigger and Lenis loaded. scenes.min.js (the two 3D scenes, three.js) loads either way: with
    reduced motion they cut between states and draw only when something changes. Everything is served from this site. */
 (function () {
@@ -31,7 +31,7 @@
       new ResizeObserver(function () { var h = d.documentElement.scrollHeight; if (Math.abs(h - rhH) < 2) return; rhH = h; clearTimeout(rhT); rhT = setTimeout(function () { ST.refresh(); }, 200); }).observe(d.body);
     }
     if (W.Lenis) {
-      lenis = new W.Lenis({ lerp: .14, wheelMultiplier: 1 }); W.__lenis = lenis;
+      lenis = new W.Lenis({ lerp: .14, wheelMultiplier: 1, respectReducedMotion: false }); W.__lenis = lenis;
       lenis.on('scroll', ST.update);
       G.ticker.add(function (t) { lenis.raf(t * 1000); });
       G.ticker.lagSmoothing(500, 33);

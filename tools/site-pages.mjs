@@ -143,8 +143,8 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 .gw-ctl .demo{background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .gw-pause{width:44px;padding:0;gap:0;justify-content:center;font-size:0;color:var(--ink3)}.gw-pause:hover,.gw-pause:focus-visible{color:var(--ink)}
 .gw-pause::before{content:"";flex:none;width:8px;height:10px;border-inline:2.5px solid currentColor}
-.gw-pause[aria-pressed=true]::before{border:0;border-left:9px solid currentColor;border-block:5px solid transparent;width:0;height:0}
-.gw-pause[aria-pressed=true]{background:color-mix(in srgb,var(--t-accent) 16%,transparent);box-shadow:inset 0 0 0 1px var(--t-accent)}
+.gw-pause[aria-pressed=true]::before,.gw-pause.play::before{border:0;border-left:9px solid currentColor;border-block:5px solid transparent;width:0;height:0}
+.gw-pause[aria-pressed=true],.gw-pause.play{background:color-mix(in srgb,var(--t-accent) 16%,transparent);box-shadow:inset 0 0 0 1px var(--t-accent)}
 .no-gl .gw,.no-gl .groom,.no-gl .gw-ctl{display:none}
 @media (max-width:760px){.gw .wd-lab>div{padding:.4rem .55rem;width:max-content;max-width:min(11.5rem,46vw);white-space:normal}.gw .wd-lab b{font-size:.82rem}.gw .wd-lab span,.gw .wd-lab small{font-size:.8125rem}}
 /* the app's own screen, at the top of the text: the real screenshot, the crop this page is about */
@@ -219,6 +219,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 .gtext ol.tl>li:last-child::after{display:none}
 .gtext ol.tl>li.in::before{color:var(--accent)}
 @media (prefers-reduced-motion:no-preference){.js .gtext ol.tl>li.rv:not(.in)::after{transform:scaleY(0)}}
+.fx-opt .gtext ol.tl>li.rv:not(.in)::after{transform:scaleY(0)}
 .gtext ol.howto>li>b:first-child{display:block;font:500 1.08rem/1.35 var(--disp);letter-spacing:-.01em;margin-bottom:.3rem}
 /* tables in a frame on a PC */
 .gtext .tbl{margin:1.5rem 0 1.25rem}
@@ -691,7 +692,7 @@ function render(p, modified) {
 <link rel="preload" href="../fonts/funnel-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../fonts/fragment-mono.woff2" as="font" type="font/woff2" crossorigin>
-<script>document.documentElement.classList.add('js');if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('fx')</script>
+<script>(function(h){h.classList.add('js');var o=0;try{o=localStorage.getItem('cs2-fx')==='on'}catch(x){}if(!matchMedia('(prefers-reduced-motion: reduce)').matches)h.classList.add('fx');else if(o)h.classList.add('fx','fx-opt')})(document.documentElement)</script>
 <script>
 /* the loading screen: only with JS and WebGL. The line fills (its own transform: a custom property on <html> made every step restyle the whole page) as the page gets ready (HTML, fonts, the 3D script) and the page
    comes in on the world's first frame, or after 6 s (on a phone or tablet it is gone by about 1.5 s, 6 Nov.: the first words wait no longer), or at once without WebGL. While it shows, the wheel, touch and the
@@ -833,7 +834,7 @@ ${footer}
         return{box:[cr.right-sr.left+24,th+18,W-Math.max(20,(W-cr.right+sr.left)*.04),fr.top-sr.top-14]};
       };
     place();addEventListener('resize',place);
-    var fx=d.documentElement.classList.contains('fx'),api=null,live=stg.querySelector('[role=status]'),pz=stg.querySelector('.gw-pause'),pl=stg.querySelector('.gw-play'),held=false;
+    var fx=d.documentElement.classList.contains('fx'),opt=d.documentElement.classList.contains('fx-opt'),api=null,live=stg.querySelector('[role=status]'),pz=stg.querySelector('.gw-pause'),pl=stg.querySelector('.gw-play'),held=false;
     try{held=localStorage.getItem('cs2-motion')==='paused'}catch(x){}
     var vt=${JSON.stringify(rel.virustotal)};
     try{api=window.GuideWorld.mount(cv,{scene:stg.getAttribute('data-world'),still:!fx,img:'../img/',vt:vt,frame:frame})}catch(x){api=null}
@@ -842,7 +843,9 @@ ${footer}
     if(held)api.pause();
     if(!api.still)pl.hidden=false;
     pl.addEventListener('click',function(){api.play();if(held){held=false;api.resume();if(pz){pz.setAttribute('aria-pressed','false')}try{localStorage.setItem('cs2-motion','')}catch(x){}}live.textContent='';setTimeout(function(){live.textContent='Playing it again.'},60)});
-    if(fx&&pz){pz.hidden=false;pz.setAttribute('aria-pressed',held);pz.addEventListener('click',function(){held=!held;pz.setAttribute('aria-pressed',held);try{localStorage.setItem('cs2-motion',held?'paused':'')}catch(x){}if(held)api.pause();else api.resume()})}
+    if(fx&&pz){pz.hidden=false;pz.setAttribute('aria-pressed',held);pz.addEventListener('click',function(){held=!held;pz.setAttribute('aria-pressed',held);try{localStorage.setItem('cs2-motion',held?'paused':'');if(opt)localStorage.setItem('cs2-fx',held?'':'on')}catch(x){}if(held)api.pause();else api.resume()})}
+    // the system asks for less motion: the page starts still and the same button is Play motion (remembered in this browser, then a reload loads the motion)
+    else if(pz&&matchMedia('(prefers-reduced-motion: reduce)').matches&&(function(){try{localStorage.getItem('cs2-fx');return true}catch(x){return false}})()){pz.hidden=false;pz.removeAttribute('aria-pressed');pz.classList.add('play');pz.textContent=pz.title='Play motion';pz.addEventListener('click',function(){try{localStorage.setItem('cs2-fx','on');localStorage.setItem('cs2-motion','')}catch(x){return}location.reload()})}
   };
   if(window.GuideWorld)window.__gw();
 })();
