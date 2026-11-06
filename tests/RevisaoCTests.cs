@@ -117,6 +117,13 @@ static class RevisaoCTests
         check("Revisão C10: a vaga e o servidor cheio usam a regra", servers.Contains("if (SlotAutoJoins(auto, CommandBusy, Dialog.Visibility == Visibility.Visible))")
             && Src("Views", "MainWindow.Kick.cs").Contains("SlotAutoJoins(true, CommandBusy, Dialog.Visibility == Visibility.Visible)"), "");
 
+        // C11: o relatório de rede segue o caminho real do jogo
+        var kick = Src("Views", "MainWindow.Kick.cs");
+        check("Revisão C11: com a proteção desligada (sem a opção) o relatório não fala do telemóvel", kick.Contains("var home = PingOnHome(_s.NoPhone, _protOn);") && MainWindow.PingOnHome(false, false) && !MainWindow.PingOnHome(false, true), "");
+
+        // C12
+        check("Revisão C12: o aviso de Whole PC só com a proteção ligada", Src("Views", "MainWindow.OpenWith.cs").Contains("if (_s.WholePc && _protOn)"), "");
+
         // C19
         check("Revisão C19: com pesquisa o botão não diz all", MainWindow.RefreshLabel(0, filtered: true) == "Refresh shown" && MainWindow.RefreshLabel(0, false) == "Refresh all" && MainWindow.RefreshLabel(2, true) == "Refresh 2", "");
         check("Revisão C19: a pesquisa atualiza o nome do botão", servers.Contains("QueryBtn.Content = RefreshLabel(ServerList.SelectedItems.Count, !string.IsNullOrEmpty(q));"), "");
@@ -128,5 +135,13 @@ static class RevisaoCTests
         check("Revisão C21: 224.0.0.1 não é contado como rede local", !MainWindow.IsLocalNet("224.0.0.1") && MainWindow.IsLocalNet("192.168.1.10") && MainWindow.IsLocalNet("100.64.0.1") && !MainWindow.IsLocalNet("8.8.8.8"), "");
         check("Revisão C21: as regras do IP continuam iguais", !MainWindow.ValidIp("10.0.0.1") && !MainWindow.ValidIp("169.254.1.1") && MainWindow.ValidIp("100.128.0.1"), "");
 
+        // C22
+        check("Revisão C22: o relatório chama ao IP do telemóvel pelo que é", !Src("Views", "MainWindow.Report.cs").Contains("IP servers see: {_egressPublic") && Src("Views", "MainWindow.Report.cs").Contains("Phone public IP: {_egressPublic"), "");
+
+        // C23
+        check("Revisão C23: sem outra rede o caminho de casa é o telemóvel", MainWindow.HomeIsPhone(new GuardReport { PcDefaultIndex = 7, PhoneIndex = 7 }) && !MainWindow.HomeIsPhone(new GuardReport { PcDefaultIndex = 3, PhoneIndex = 7 }), "");
+        check("Revisão C23: o Join diz que vai pelo telemóvel quando o PC não tem outra rede", MainWindow.JoinLogText("1.2.3.4:27015", noPhone: true, onHome: true, homeIsPhone: true).Contains("the phone's connection")
+            && MainWindow.JoinLogText("1.2.3.4:27015", true, true, false) == "Joining 1.2.3.4:27015 on your home connection (no phone mode)."
+            && MainWindow.JoinLogText("1.2.3.4:27015", false, false, false) == "Joining 1.2.3.4:27015 through the phone.", "");
     }
 }

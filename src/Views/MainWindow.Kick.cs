@@ -93,8 +93,8 @@ public partial class MainWindow
     /// </summary>
     void LogNetReport(NetReport r)
     {
-        // The home connection on purpose (No phone, or protection off with the option): no phone IP and no phone tips
-        var home = OnHome;
+        // The home connection (No phone, or protection off, with or without the option): no phone IP and no phone tips (review C11)
+        var home = PingOnHome(_s.NoPhone, _protOn);
         var via = home ? "home connection" : "phone IP " + (_egressPublic ?? "not measured");
         var line = r.Line(via, _consoleServer);
         if (r.Laggy && !home) Log.Warn(line + " To lag less: " + NetReport.Tips(_last?.Egress?.IsWifi == true));

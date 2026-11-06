@@ -53,6 +53,10 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - With a search on Servers and nothing marked, the button said Refresh all but only asked the servers shown. It now says Refresh shown, and the Refresh and Copy IPs tooltips say "the ones shown".
 - Servers added while the 30 s refresh was running stayed without name and ping until the next refresh (or for good with it off), and a Refresh click then did nothing. Both now run right after, and the click says the app is already asking.
 - At start, every address removed from an old server list was called a local network address. The Log now tells local addresses, other invalid ones, bad ports and repeats apart.
+- After a match played with protection off, the Log's network summary named the phone's IP and, if it lagged, blamed the phone's connection and gave phone tips. It now says "home connection" whenever protection is off.
+- With protection off, opening CS2 in Whole PC mode said the programs opened with it also go through the phone. That note now only shows with protection on.
+- The bug report's "IP servers see" line showed the phone's IP even with protection off or in No phone mode. It is now called what it is, "Phone public IP".
+- In No phone mode or with protection off on a PC whose only network is the phone, Join's Log line and the Regions ping line said "home connection" and "without the phone". They now say it went on the phone's connection because the PC has no other network.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

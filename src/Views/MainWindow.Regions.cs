@@ -151,6 +151,7 @@ public partial class MainWindow
             foreach (var r in _regions) r.PingMs = pings.GetValueOrDefault(r.Id, -1);
             _regionsPingedAt = DateTime.Now;
             _regionsPingedHome = PingedOnHome;
+            _regionsHomeIsPhone = _regionsPingedHome && _last != null && HomeIsPhone(_last);
             _regionView?.Refresh();
             if (!quiet) Toast($"{pings.Count(p => p.Value >= 0)} of {pings.Count} regions answered.", pings.Any(p => p.Value >= 0));
         }
@@ -182,6 +183,8 @@ public partial class MainWindow
 
     bool PingedOnHome => PingOnHome(_s.NoPhone, _protOn);
     bool _regionsPingedHome;
+    /// <summary>Measured "without the phone", but the PC had no other network, so it went on the phone's connection (review C23).</summary>
+    bool _regionsHomeIsPhone;
 
     string MeasureFirst => PingVia == null && !PingedOnHome ? "Measure the ping first. " + NoLinkWhy(_last) + " With protection on, the ping is only measured through the phone." : "Measure the ping first: press Refresh.";
 
@@ -429,7 +432,7 @@ public partial class MainWindow
         if (_sdr.FromCache) src = $"Offline: using the list saved on {Fmt.When(_sdr.FetchedAt)}";
         var pinged = _regions.Any(r => r.PingMs >= 0);
         src += _pingingRegions ? " · measuring ping…"
-            : pinged ? $" · ping measured {Fmt.Ago(_regionsPingedAt)}" + (_regionsPingedHome ? " without the phone" : " through the phone")
+            : pinged ? $" · ping measured {Fmt.Ago(_regionsPingedAt)}" + (_regionsHomeIsPhone ? " on the phone's connection (the PC has no other network)" : _regionsPingedHome ? " without the phone" : " through the phone")
             : PingVia == null && !PingedOnHome ? NoPingSuffix(_last)
             : "";
         RegionsSource.Text = src;

@@ -505,10 +505,23 @@ public partial class MainWindow
     void JoinStarted(ServerItem s)
     {
         Diag.Write("join", new { server = s.Key, name = s.Title, isProtected = s.Protected, mode = _last?.EffectiveMode, steamOnEgress = _last?.SteamOnEgress, steamIps = _last?.Steam.LocalIps });
-        Log.Ok(_s.NoPhone ? $"Joining {s.Key} on your home connection (no phone mode)." : OnHome ? $"Joining {s.Key} on your home connection (protection is off)." : $"Joining {s.Key} through the phone.");
+        Log.Ok(JoinLogText(s.Key, _s.NoPhone, OnHome, _last != null && HomeIsPhone(_last)));
         Toast($"Opening {s.Title} in Steam…", true);
         MarkLast(s);
     }
+
+    /// <summary>The Log line of a join: which connection it went on (review C23: with no other network the "home" one is the phone).</summary>
+    public static string JoinLogText(string key, bool noPhone, bool onHome, bool homeIsPhone)
+    {
+        if (!noPhone && !onHome) return $"Joining {key} through the phone.";
+        var why = noPhone ? "no phone mode" : "protection is off";
+        return homeIsPhone ? $"Joining {key} on the phone's connection ({why}, and the PC has no other network)." : $"Joining {key} on your home connection ({why}).";
+    }
+
+    /// <summary>The adapter Windows uses for the rest of the PC is the phone's (the PC has no other network). Also read by RestOfPc.</summary>
+    public static bool HomeIsPhone(GuardReport rep) =>
+        rep.PcDefaultIsEgress || rep.Adapters.FirstOrDefault(a => a.Index == rep.PcDefaultIndex)?.IsPhone == true
+        || (rep.PhoneIndex >= 0 && rep.PcDefaultIndex == rep.PhoneIndex);
 
     /// <summary>After opening CS2: waits for its main menu (the console shows the menu's "loopback" map), then joins. Up to 2 min.</summary>
     async Task<bool> ConnectWhenMenuReady(ServerItem s, string log, ConsoleTail menu)
