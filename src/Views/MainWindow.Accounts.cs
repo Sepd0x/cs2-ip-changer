@@ -268,7 +268,8 @@ public partial class MainWindow
     /// <summary>The next account in the rotation: not skipped, no cooldown or ban (nor banned by that server), least recently used.</summary>
     AccountItem NextQuick(ServerItem server = null)
     {
-        var active = _accounts.FirstOrDefault(a => a.Active)?.SteamId;
+        // The account Steam is on now, as the ban marks see it: the Active flag can be a few seconds behind a login
+        var active = ActiveAccount()?.SteamId ?? _accounts.FirstOrDefault(a => a.Active)?.SteamId;
         return _accounts.Where(a => a.Usable && a.SteamId != active && a.BanFor(server?.Key, server?.ServerName, server?.Network) == null)
             .OrderBy(a => a.Meta.LastUsed ?? DateTime.MinValue)
             .ThenBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase)
@@ -277,8 +278,9 @@ public partial class MainWindow
 
     void UpdateQuickInfo()
     {
-        var c = SwitchChoice;
-        // The name says only what a click will do: no IP step in No phone mode, nor with protection off and "Use the app with protection off"
+        // The name says only what a click will do: the steps the click runs (QuickChoice: no IP step in No phone mode, on an iPhone with
+        // the account step or with the phone not ready on ADB), and none with protection off and "Use the app with protection off"
+        var c = QuickChoice;
         if (c.Ip && (_s.NoPhone || IpStep(_protOn, _s.UseWithProtectionOff) == IpWhenOff.Skip)) c = c with { Ip = false };
         // The same pick as the click: with the rejoin step, an account banned on the last server is skipped there too
         var next = c.Account ? NextQuick(c.Rejoin ? _servers.FirstOrDefault(x => x.Key == _s.LastServer) : null) : null;
@@ -293,7 +295,9 @@ public partial class MainWindow
         SideQuickNext.Margin = new Thickness(who == null ? 0 : 4, 0, 0, 0);
         SideQuickTail.Text = tail;
         // Shorter than the top bar: at the minimum width (1020) a longer name pushes the "On login:" row onto two lines. The tooltip has it whole.
-        QuickBtn.Content = head + (who == null ? "" : who.Length > 10 ? who.Substring(0, 9) + "…" : who) + tail;
+        QuickBtn.Content = head + (who == null ? "" : ShortName(who)) + tail;
+        // The whole name, for the top bar while it runs, the Log and the notification area's menu
+        _quickName = head + (who ?? "") + tail;
         // With fewer than two accounts there is nothing to rotate to: the command isn't offered.
         var offered = !c.Account || _accounts.Count >= 2;
         SideQuick.Visibility = QuickBtn.Visibility = offered ? Visibility.Visible : Visibility.Collapsed;
@@ -301,9 +305,11 @@ public partial class MainWindow
         var steps = new List<string>();
         if (c.Ip) steps.Add("changes the IP");
         if (c.Account) steps.Add(next == null ? "logs in to the next account (none now: all are out of rotation, on cooldown or banned)" : $"logs in to {next.Name}");
-        if (c.Rejoin) steps.Add($"joins {_s.LastServer ?? "the last server"} again");
-        var tip = steps.Count == 0 ? "This button does nothing yet: pick its steps in Settings > New IP + next account."
-            : "In order, it " + (steps.Count == 1 ? steps[0] : string.Join(", ", steps.Take(steps.Count - 1)) + " and " + steps[^1]) + " (with the usual checks)."
+        if (rejoin) steps.Add($"joins {_s.LastServer} again");
+        // The rejoin step on, with no server to go back to: said, instead of a promise to join it
+        var noRejoin = c.Rejoin && !rejoin ? " " + NoRejoinWhy(_s.LastServer) : "";
+        var tip = steps.Count == 0 ? (noRejoin.Length > 0 ? noRejoin.TrimStart() : "This button does nothing yet: pick its steps in Settings > New IP + next account.")
+            : "In order, it " + (steps.Count == 1 ? steps[0] : string.Join(", ", steps.Take(steps.Count - 1)) + " and " + steps[^1]) + " (with the usual checks)." + noRejoin
               + (c.Account ? $"\n{Fmt.Count(pool, "account")} in the rotation (no cooldown or ban)." : "")
               + $"\nPick the steps in Settings > New IP + next account. Shortcut anywhere, even in game: {_s.HotkeySwitch}.";
         QuickBtn.ToolTip = tip;
@@ -322,15 +328,33 @@ public partial class MainWindow
         return (head, rejoin && (ip || who != null) ? " + rejoin" : "");
     }
 
+    /// <summary>The account's name on the button: at most 10 letters, cut by what you see (an emoji is never cut in half).</summary>
+    public static string ShortName(string who)
+    {
+        var s = new System.Globalization.StringInfo(who);
+        return s.LengthInTextElements > 10 ? s.SubstringByTextElements(0, 9) + "…" : who;
+    }
+
+    /// <summary>The button's whole name now ("New IP + atlas + rejoin"), set by <see cref="UpdateQuickInfo"/>.</summary>
+    string _quickName = "New IP + next account";
+
     async void Quick_Click(object sender, RoutedEventArgs e) => await QuickSwitch("New IP + next account");
 
-    /// <summary>The one switch, with the steps picked in Settings (by default: new IP, next account, back to the last server).</summary>
-    Task QuickSwitch(string from) => RunCommand("New IP + next account", "starting…", () => RunSwitch(SwitchChoice, from));
+    /// <summary>
+    /// The one switch, with the steps picked in Settings (by default: new IP, next account, back to the last server). It runs under the
+    /// button's name, so the top bar and the Log say what it does ("Log in to atlas + rejoin · done").
+    /// </summary>
+    Task QuickSwitch(string from)
+    {
+        UpdateQuickInfo();
+        var steps = QuickChoice;
+        return RunCommand(_quickName, "starting…", () => RunSwitch(steps, from, ipLeftOut: SwitchChoice.Ip && !steps.Ip ? IpLeftOutWhy : null));
+    }
 
     /// <summary>The account quick switch would use now (also for Switch), or null with the reason shown.</summary>
     AccountItem PickQuick(ServerItem server = null)
     {
-        if (_accounts.Count < 2) { Toast("New IP + next account needs at least 2 saved accounts. Add one on Accounts.", false); return null; }
+        if (_accounts.Count < 2) { Toast("Switching account needs at least 2 saved accounts. Add one on Accounts.", false); return null; }
         var next = NextQuick(server);
         var skipped = _accounts.Where(a => !a.Usable).Select(a =>
             $"{a.Name} ({(a.Excluded ? "not in rotation" : a.InCooldown ? "cooldown" : "ban")})").ToList();
@@ -367,6 +391,8 @@ public partial class MainWindow
             Toast($"Demo: logging in to {a.Name}.", true);
             return true;
         }
+        // Before CS2 is closed for it: a switch Steam won't let happen closes nothing
+        if (SwitchProblem(a) is string cant) { Log.Warn("Account switch: " + cant); Toast(cant, Tone.Error); return false; }
         if (Steam.Cs2Running)
         {
             if (ask && !await Ask("CS2 is open", $"CS2 and Steam have to close to log in to {a.Name}. Continue?", "Close and log in")) return false;
@@ -382,12 +408,13 @@ public partial class MainWindow
         Toast($"Logging in to {a.Name}…", true);
         try
         {
-            // Without CS2 locked to the phone connection, the game only opens with confirmed protection.
-            if (cs2 && !_s.LockCs2 && !OnHome && (_last?.Egress == null || _distrust))
+            // Without CS2 locked to the phone connection, the game only opens with confirmed protection. With protection off there is no
+            // lock at all (the CS2 lock option does nothing then), so it opens only on the home connection on purpose. Said once logged in.
+            string noCs2 = null;
+            if (cs2 && !OpensCs2OnLogin(_protOn, _s.LockCs2, OnHome, _last?.Egress != null, _distrust))
             {
                 cs2 = false;
-                Toast(_protOn ? "Switched account but did not open CS2: the phone isn't connected (or not trusted yet) and CS2 is not locked to it."
-                              : "Switched account but did not open CS2: protection is off and CS2 is not locked.", false);
+                noCs2 = _protOn ? "the phone isn't connected (or not trusted yet) and CS2 is not locked to it" : "protection is off";
             }
             ConfigsBeforeLogin(a);   // CS2 config copied in, while CS2 is closed (Configs page)
             // Steam first, CS2 only once Steam is really on this account: today's client can come up on another one.
@@ -414,6 +441,7 @@ public partial class MainWindow
                 if (got != null) { foreach (var x in _accounts) x.Active = x == got; UpdateQuickInfo(); }
                 return false;
             }
+            if (noCs2 != null) Toast($"Logged in to {a.Name}. CS2 wasn't opened: {noCs2}.", false);
             if (cs2) Steam.Launch(Cs2Launch.SteamArgs);
             if (cs2 && openWith) OpenWithCs2();
             // A switch you started here, with no CS2 to open: Steam's window came up in front, the app goes back on top.
@@ -433,6 +461,20 @@ public partial class MainWindow
         }
         catch (Exception ex) { Log.Error("Account switch: " + ex.Message); Toast(ex.Message, Tone.Error); return false; }
         finally { a.Busy = false; _switching = false; UpdateQuickInfo(); }
+    }
+
+    /// <summary>
+    /// Log in opens CS2: on the home connection on purpose (No phone, or protection off with the option), or with protection on and CS2
+    /// locked to the phone or the phone connected and trusted. Protection off without the option: no, the CS2 lock isn't running then.
+    /// </summary>
+    public static bool OpensCs2OnLogin(bool protOn, bool lockCs2, bool onHome, bool egress, bool distrust) =>
+        onHome || protOn && (lockCs2 || egress && !distrust);
+
+    /// <summary>Why Steam can't switch to <paramref name="a"/> now (null = it can), asked before anything is closed or changed for it.</summary>
+    static string SwitchProblem(AccountItem a)
+    {
+        try { return Steam.SwitchProblem(a.SteamId); }
+        catch (Exception ex) { return "The account wasn't changed: " + ex.Message; }
     }
 
     /// <summary>Steam opens its window a moment after it logs in: the app waits for that, then comes back in front (not when minimized).</summary>

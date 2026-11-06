@@ -2094,7 +2094,7 @@
                                         <CheckBox x:Name="SwIpBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
                                             <StackPanel>
                                                 <TextBlock Text="Change the IP"/>
-                                                <TextBlock Text="Like the Change IP button. If the phone isn't ready, only the account changes." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="Like the Change IP button. If the IP can't change, the other steps still run." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
                                         <CheckBox x:Name="SwAccountBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12"
@@ -2107,7 +2107,7 @@
                                         <CheckBox x:Name="SwRejoinBox" Style="{StaticResource Switch}" Click="SettingChanged" Margin="0,0,0,12">
                                             <StackPanel>
                                                 <TextBlock Text="Rejoin the last server"/>
-                                                <TextBlock Text="Only joins when protection is confirmed. If off, CS2 opens in the main menu." Style="{StaticResource OptSub}"/>
+                                                <TextBlock Text="Joins through the phone with protection confirmed, or on your home connection in No phone or with Use the app with protection off. If off, CS2 opens in the main menu." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
                                         <CheckBox x:Name="SwOpenWithBox" Style="{StaticResource Switch}" Click="SettingChanged">

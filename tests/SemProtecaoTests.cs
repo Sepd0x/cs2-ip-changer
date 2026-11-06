@@ -26,7 +26,7 @@ static class SemProtecaoTests
         check("Sem proteção: o Join só pergunta para ligar a proteção quando a opção está desligada", servers.Contains("if (!_protOn && !OnHome)"), "");
         check("Sem proteção: o Join não exige o servidor protegido quando a opção está ligada", servers.Contains("if (!OnHome && s.Protected != true && !fullOk)"), "");
         check("Sem proteção: os servidores são perguntados por casa", servers.Contains("OnHome && _last?.Unprotected == true ? HomeAdapter"), "");
-        check("Sem proteção: o Log in abre o CS2", Src("Views", "MainWindow.Accounts.cs").Contains("if (cs2 && !_s.LockCs2 && !OnHome &&"), "");
+        check("Sem proteção: o Log in abre o CS2", Src("Views", "MainWindow.Accounts.cs").Contains("if (cs2 && !OpensCs2OnLogin(_protOn, _s.LockCs2, OnHome,") && MainWindow.OpensCs2OnLogin(false, true, true, false, false), "");
 
         var settings = Src("Views", "MainWindow.Settings.cs");
         check("Sem proteção: ligar a opção pergunta primeiro, com o aviso", settings.Contains("!await Ask(\"Use the app with protection off?\", UseOffWarning"), "");

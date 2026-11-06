@@ -455,7 +455,7 @@ public partial class MainWindow
                 return false;
             if (ActiveAccount() is AccountItem acc && acc.BanFor(s.Key, s.ServerName, s.Network) is { } ban && !await Ask($"{acc.Name} was banned here",
                     (ban.Key == s.Key ? $"{s.Title} banned {acc.Name}" : $"{ban.Value?.Name ?? ban.Key}, on the same network as {s.Title}, banned {acc.Name}")
-                    + $" on {Fmt.When(ban.Value?.At)}. Networks usually share their ban list, and if the ban is on the account, a new IP won't help.\n\nNew IP + next account ({_s.HotkeySwitch}) changes the IP and the account together.",
+                    + $" on {Fmt.When(ban.Value?.At)}. Networks usually share their ban list, and if the ban is on the account, a new IP won't help.\n\n" + BanJoinTip(_s.HotkeySwitch, OnHome),
                     "Join anyway"))
                 return false;
             if (!await WaitAfterCrash(s)) return false;

@@ -22,8 +22,8 @@ static class RevisaoCTests
         check("Revisão C1: com o telemóvel ligado vão pelo telemóvel", MainWindow.AddedText(2, 1, true, false, true) == "2 servers added. They go through the phone. 1 ignored.", MainWindow.AddedText(2, 1, true, false, true));
         check("Revisão C1: proteção ligada sem telemóvel ficam bloqueados", MainWindow.AddedText(2, 0, true, false, false).Contains("blocked until the phone"), MainWindow.AddedText(2, 0, true, false, false));
         check("Revisão C1: o Add não promete o telemóvel", !xaml.Contains("routes them through the phone right away"), "");
-        check("Revisão C1: No phone não oferece jogar pelo telemóvel", !MainWindow.AddJoinedText("1.2.3.4:27015", noPhone: true).Contains("through the phone"), "");
-        check("Revisão C1: o toast de servidor novo sabe se é No phone", Src("Views", "MainWindow.Kick.cs").Contains("AddJoinedText(server, _s.NoPhone)"), "");
+        check("Revisão C1: No phone não oferece jogar pelo telemóvel", !MainWindow.AddJoinedText("1.2.3.4:27015", home: true).Contains("through the phone"), "");
+        check("Revisão C1: o toast de servidor novo sabe se se joga em casa (No phone ou a opção, área B)", Src("Views", "MainWindow.Kick.cs").Contains("AddJoinedText(server, OnHome)"), "");
 
         // C2: telemóvel ligado e por verificar não é "desligado"
         var unchecked_ = new GuardReport { Candidate = new Adapter { Index = 5, LocalIp = "192.168.42.10" }, Distrust = Distrust.Unchecked, EgressProblem = DistrustText.Of(Distrust.Unchecked) };
