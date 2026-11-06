@@ -228,7 +228,7 @@ public partial class MainWindow
         if (Steam.Cs2Running) { Toast("Close CS2 first: removing the block now would send CS2's traffic through your home connection.", Tone.Warn); return; }
         if (!await Ask(Uninstall.Title, Uninstall.Text(), "Remove", danger: true, choices: Uninstall.Choices(Paths.Data, Autostart.Allowed(Environment.ProcessPath)))) return;
         var everything = _dialogChoice == 1;
-        _removing = _closingDone = _restored = true;
+        _removing = _closingDone = _restored = _closeBusy = true;   // a second X waits for the removal (CloseWaits)
         _tick.Stop();
         ShowProgress("Removing the rules, routes, task and the app's files…");
         var got = await _regionGate.WaitAsync(TimeSpan.FromSeconds(10));
@@ -240,6 +240,7 @@ public partial class MainWindow
             Log.Error("Remove stopped: " + ex.Message);
             HideProgress();
             new NoticeWindow("Not everything was removed", "Remove stopped: " + ex.Message + $"\n\nOpen the app and try again, or run {AppIds.ExeName} {AppIds.Args.Restore}.", "Close", problem: true) { Owner = this }.ShowAndWait();
+            _closeBusy = false;
             Close();
             return;
         }
@@ -248,6 +249,7 @@ public partial class MainWindow
         HideProgress();
         var (title, text, problem) = Uninstall.Result(o, Paths.Data);
         new NoticeWindow(title, text, "Close", problem: problem) { Owner = this }.ShowAndWait();
+        _closeBusy = false;
         Close();
     }
 

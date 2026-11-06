@@ -124,6 +124,13 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - New IP + next account could name the account Steam had just logged in to, for a few seconds after a login, and didn't update when a cooldown ended.
 - Alt+F4, Alt+Space, Alt+Tab and Alt+Esc could be picked as a hotkey, which took them from every window (Alt+F4 stopped closing windows). They are refused now.
 - An account name with an emoji around the 9th letter could show a broken character on the New IP + next account button.
+- Whole PC: closing the app and keeping protection left the DNS rule behind, so once the phone was gone (or after a restart) the PC couldn't open any website until the app was opened again. Closing with Keep now takes off the Whole PC rules and gives the phone its default route back; only the block on your servers and CS2 stays.
+- "Keep protection and close" with CS2 open, and Quit at the usage stats notice right after an update with CS2 open, left the phone's adapter without its default route, so the PC could have no internet through the phone later. They now give it back, as closing with Keep does.
+- A second X, Alt+F4 or Quit while the app was undoing the routes and the kill switch (or removing itself) closed it at once and left the block behind. It now waits for that to finish.
+- Turn off protection when closing: if something couldn't be removed, the app closed as if all was clean. It now says what stayed and where to remove it.
+- Signing out of Windows or shutting down with Turn off protection when closing could leave the Firewall rules on (WPF closes the app without waiting). The rules now go first, right when Windows asks, and the "CS2 is still open" question no longer shows up then.
+- Closing the app during Change IP, while the phone's mobile data (or airplane mode) was being switched, could leave the phone with no mobile data or in airplane mode. The app now turns it back on before it exits.
+- With an Android phone used, the app stayed running about 4 seconds after its window closed.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

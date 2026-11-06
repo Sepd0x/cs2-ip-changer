@@ -349,7 +349,24 @@ public static class Adb
     public static void KillOwnServer()
     {
         if (_used == null) return;
-        try { Run(_used, "kill-server", 3000).Wait(4000); } catch { }
+        // Off the window thread: Proc.Run's awaits would come back to it, blocked here, and the wait would always run its 4 s
+        try { Task.Run(() => Run(_used, "kill-server", 3000)).Wait(4000); } catch { }
+    }
+
+    /// <summary>The phone's data (or airplane mode) turned off by Change IP and not on again yet: what turns it back on. Null otherwise.</summary>
+    public sealed record PendingCommand(string Adb, string Serial, string On);
+
+    static volatile PendingCommand _pendingOn;
+    public static PendingCommand PendingOn => _pendingOn;
+
+    /// <summary>
+    /// On exit: an app closed in the seconds Change IP has the phone's data (or airplane mode) off sends the command that turns it
+    /// back on, so the phone isn't left without mobile data or calls. 6 s at most.
+    /// </summary>
+    public static void SendPendingOn()
+    {
+        if (_pendingOn is not { } p) return;
+        try { Task.Run(() => Run(p.Adb, $"-s {p.Serial} shell {p.On}", 5000)).Wait(6000); } catch { }
     }
 
     /// <summary>Remove everything: the adb server of the app's own copy stops, also one left from an earlier start (it holds that folder).</summary>
@@ -357,7 +374,7 @@ public static class Adb
     {
         KillOwnServer();
         var copy = Path.Combine(AppIds.ProgramDataDir, "adb", "adb.exe");
-        if (File.Exists(copy)) { try { Run(copy, "kill-server", 3000).Wait(4000); } catch { } }
+        if (File.Exists(copy)) { try { Task.Run(() => Run(copy, "kill-server", 3000)).Wait(4000); } catch { } }
     }
 
     /// <summary>The phone says USB tethering (rndis) is on.</summary>
@@ -456,8 +473,10 @@ public static class Adb
     /// method really used: where "svc data" is missing it falls back to airplane mode, unless <paramref name="allowAirplane"/> is
     /// false (the phone's hotspot: airplane mode would drop it, and the PC with it).
     /// </summary>
-    public static async Task<(string Error, Method Used)> Cycle(string adb, string serial, Method method, int offSeconds, bool allowAirplane = true)
+    /// <param name="shell">Runs one "adb shell" command on the phone (the tests pass their own).</param>
+    public static async Task<(string Error, Method Used)> Cycle(string adb, string serial, Method method, int offSeconds, bool allowAirplane = true, Func<string, Task<ProcResult>> shell = null)
     {
+        shell ??= cmd => Run(adb, $"-s {serial} shell {cmd}");
         string off, on;
         if (method == Method.Airplane)
         {
@@ -469,23 +488,29 @@ public static class Adb
             off = "svc data disable";
             on = "svc data enable";
         }
-        var r1 = await Run(adb, $"-s {serial} shell {off}");
+        var r1 = await shell(off);
         if (!r1.Ok || r1.Output.Contains("Exception") || r1.Output.Contains("not found"))
         {
             // On some Android versions "svc data" is not available: try airplane mode.
-            if (method == Method.MobileData && allowAirplane) return await Cycle(adb, serial, Method.Airplane, offSeconds);
+            if (method == Method.MobileData && allowAirplane) return await Cycle(adb, serial, Method.Airplane, offSeconds, shell: shell);
             return (Refused + r1.Output, method);
         }
-        await Task.Delay(TimeSpan.FromSeconds(offSeconds));
-        // Turning data or airplane mode off can drop USB tethering, and ADB with it, for a few seconds: keep trying for about 20 s.
-        var r2 = await Run(adb, $"-s {serial} shell {on}");
-        for (var i = 0; i < 4 && !r2.Ok; i++)
+        // Until "on" goes through, closing the app sends it on the way out (SendPendingOn)
+        _pendingOn = new PendingCommand(adb, serial, on);
+        try
         {
-            await Task.Delay(5000);
-            r2 = await Run(adb, $"-s {serial} shell {on}");
+            await Task.Delay(TimeSpan.FromSeconds(offSeconds));
+            // Turning data or airplane mode off can drop USB tethering, and ADB with it, for a few seconds: keep trying for about 20 s.
+            var r2 = await shell(on);
+            for (var i = 0; i < 4 && !r2.Ok; i++)
+            {
+                await Task.Delay(5000);
+                r2 = await shell(on);
+            }
+            if (!r2.Ok) return ("Turned data off but could not turn it back on: " + r2.Output + " (turn it on manually on the phone)", method);
+            return (null, method);
         }
-        if (!r2.Ok) return ("Turned data off but could not turn it back on: " + r2.Output + " (turn it on manually on the phone)", method);
-        return (null, method);
+        finally { _pendingOn = null; }
     }
 
     /// <summary>Turns off the phone's Wi-Fi so tethering uses mobile data.</summary>

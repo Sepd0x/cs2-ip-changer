@@ -107,7 +107,7 @@ public partial class MainWindow
     {
         base.OnSourceInitialized(e);
         if (_demo) return;
-        if (Application.Current != null) Application.Current.SessionEnding += (_, _) => _sessionEnding = true;
+        if (Application.Current != null) Application.Current.SessionEnding += (_, _) => OnSessionEnding();
         _hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
         System.Windows.Interop.HwndSource.FromHwnd(_hwnd)?.AddHook(WndProc);
         RegisterHotkeys();
@@ -201,8 +201,39 @@ public partial class MainWindow
         if (!IsVisible) await System.Windows.Threading.Dispatcher.Yield();
     }
 
+    /// <summary>
+    /// The close is under way (undoing the routes and the kill switch, Keep giving the phone its route back, Remove): a second X,
+    /// Alt+F4 or Quit waits for it instead of ending the app halfway. Not when Windows signs out (WPF closes the window anyway).
+    /// </summary>
+    public static bool CloseWaits(bool closeBusy, bool sessionEnding) => closeBusy && !sessionEnding;
+
+    /// <summary>What Turn off and close couldn't remove, said before the app goes (null: nothing to say). Never while Windows is shutting down.</summary>
+    public static string CloseLeftText(string left, bool sessionEnding) => sessionEnding ? null : left;
+
+    /// <summary>Windows signing out or shutting down: with Turn off protection when closing, and CS2 closed, every protection rule goes.</summary>
+    public static bool CleanAtSessionEnd(bool cleanupOnExit, bool protOn, bool cs2Running) => cleanupOnExit && protOn && !cs2Running;
+
+    bool _closeBusy;
+
+    /// <summary>
+    /// Windows is signing out or shutting down: WPF closes the window without waiting for anything after the first await, so the
+    /// Firewall rules (they survive a restart) go here, first and with a short limit. Turn off protection when closing: all of them
+    /// (the Regions rule stays); Keep, or CS2 still open: the Whole PC rules, as closing with Keep does. Routes and the phone's
+    /// metric go with a restart. Not for an update (the new copy keeps the rules) or a close already under way.
+    /// </summary>
+    void OnSessionEnding()
+    {
+        _sessionEnding = true;
+        if (_demo || !_protOn || _restored || _closingDone) return;
+        _tick.Stop();
+        var all = CleanAtSessionEnd(_s.CleanupOnExit, _protOn, Steam.Cs2Running);
+        var done = _guard.RemoveRulesNow(all ? Firewall.RulesToRemove(keepRegions: true) : Firewall.WholePcRules, TimeSpan.FromSeconds(2));
+        Log.Info("Windows is signing out: " + (all ? "protection turned off" : "the Whole PC rules removed, the block stays") + (done ? "." : " (not confirmed in time)."));
+    }
+
     async void OnClosing(object sender, CancelEventArgs e)
     {
+        if (CloseWaits(_closeBusy, _sessionEnding)) { e.Cancel = true; return; }
         // Settings > App > Close to the notification area: the X only hides the window; Quit in the icon's menu closes the app.
         // Only with the icon really there: a tray Windows refused (no notification area) would leave the app hidden with no way back
         if (GoesToTray(_s?.CloseToTray == true, _tray?.Shown == true, _quitting, _sessionEnding, _closingDone, _demo))
@@ -251,13 +282,8 @@ public partial class MainWindow
         // Save mobile data go like with Turn off and close
         if (!_s.CleanupOnExit && _protOn)
         {
-            if (!_guard.PcOffPhoneApplied) return;
             e.Cancel = true;
-            _closingDone = true;
-            _tick.Stop();
-            try { await _guard.ReleasePcOffPhone(); }
-            catch (Exception ex) { Log.Error("Closing: the phone's adapter didn't get its default route back: " + ex.Message); }
-            Close();
+            await KeepAndClose();
             return;
         }
         e.Cancel = true;
@@ -265,13 +291,17 @@ public partial class MainWindow
         // goes through home, so there is nothing to ask (not ProtectionArmed: Whole PC with no servers and no CS2 lock still moves CS2).
         if (Steam.Cs2Running && !_restored && _protOn && _last?.Unprotected != true)
         {
-            await AfterCancelledClose();
-            if (!await Ask("CS2 is still open", "Turning protection off now would send CS2's traffic through your home connection. Close CS2 first, or close the app and keep protection on this time.", "Keep protection and close")) { _quitting = false; return; }
-            _closingDone = true;
-            Close();
+            // Windows signing out or shutting down: no question may hold that up, so the block stays as with Keep
+            if (!_sessionEnding)
+            {
+                await AfterCancelledClose();
+                if (!await Ask("CS2 is still open", "Turning protection off now would send CS2's traffic through your home connection. Close CS2 first, or close the app and keep protection on this time.", "Keep protection and close")) { _quitting = false; return; }
+            }
+            await KeepAndClose();
             return;
         }
         _closingDone = true;
+        _closeBusy = true;
         // Same as Restore network: no tick may put the rules back while RestoreAll runs or while the process exits.
         _restored = true;
         _tick.Stop();
@@ -280,8 +310,33 @@ public partial class MainWindow
         // A Regions write still running finishes first (10 s at most), so the app doesn't close halfway through it. The Regions rule
         // itself stays: regions don't depend on protection.
         var got = await _regionGate.WaitAsync(TimeSpan.FromSeconds(10));
-        try { await _guard.RestoreAll(_servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: true); } catch { }
+        string left = null;
+        try { left = await _guard.RestoreAll(_servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: true); }
+        catch (Exception ex) { left = ex.Message; Log.Error("Closing: turning off protection stopped: " + ex.Message); }
         finally { if (got) _regionGate.Release(); }
+        // What stayed is said before the app goes, with where to remove it (the same window as --restore)
+        if (CloseLeftText(left, _sessionEnding) is string what)
+        {
+            HideProgress();
+            App.RestoredWindow(what, false).ShowAndWait();
+        }
+        _closeBusy = false;
+        Close();
+    }
+
+    /// <summary>
+    /// Keep: the kill switch and the CS2 lock stay, the Whole PC rules, the phone's default route and (CS2 closed) the Whole PC routes
+    /// go (Guard.KeepOnClose), so the PC isn't left without internet once the phone is gone. No sync puts anything back meanwhile.
+    /// </summary>
+    async Task KeepAndClose()
+    {
+        _closingDone = true;
+        _closeBusy = true;
+        _restored = true;
+        _tick.Stop();
+        try { await _guard.KeepOnClose(Steam.Cs2Running); }
+        catch (Exception ex) { Log.Error("Closing: the Whole PC rules or the phone's default route weren't given back: " + ex.Message); }
+        _closeBusy = false;
         Close();
     }
 }

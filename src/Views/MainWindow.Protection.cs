@@ -92,8 +92,12 @@ public partial class MainWindow
             {
                 Force = force, Distrust = DistrustNow(_distrust, PhoneWifiOn, _noHome), Cs2Running = cs2Running, VerifiedKey = _verifiedKey, On = _protOn,
             });
-            if (FromSync(_s, rep)) SaveSettings();
-            ApplyReport(rep);
+            // Closing or Windows signing out: the Guard no longer writes, and its answer isn't shown
+            if (!_restored && !_sessionEnding)
+            {
+                if (FromSync(_s, rep)) SaveSettings();
+                ApplyReport(rep);
+            }
         }
         finally { _syncing = false; }
         if (_syncAgain)

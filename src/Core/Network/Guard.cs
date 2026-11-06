@@ -130,6 +130,8 @@ public sealed class Guard
     string _lastProblem;
     /// <summary>The Firewall errors of the last rewrite, so the same failure on every sync is logged once.</summary>
     string _fwErrors;
+    /// <summary>The app is closing with the block kept, or Windows is signing out: from then on no sync writes anything.</summary>
+    volatile bool _released;
 
     public static readonly string[] SplitPrefixes = { "0.0.0.0/1", "128.0.0.0/1" };
 
@@ -284,6 +286,8 @@ public sealed class Guard
         Task.Run(async () =>
         {
             await _gate.WaitAsync();
+            // Closing (Keep) or Windows signing out: a sync that was already on its way doesn't put back what the close took off
+            if (_released) { _gate.Release(); return new GuardReport { Error = "The app is closing." }; }
             try { return await SyncCore(s, r.Ips.Distinct().ToList(), r.Force, r.Distrust, r.Cs2Running, r.VerifiedKey, r.On); }
             catch (Exception ex)
             {
@@ -576,6 +580,44 @@ public sealed class Guard
     });
 
     /// <summary>
+    /// Closing with Keep (also "Keep protection and close" with CS2 open, and Quit after an update with CS2 open): the kill switch and
+    /// the CS2 lock stay, as the question says. What would leave the PC without internet once the phone is gone goes: the Whole PC
+    /// rules (DNS only from the phone's local IP and IPv6 blocked, which survive a restart), the phone's default route (Save mobile
+    /// data) and, with CS2 closed, the 0/1 and 128/1 routes (a match still open needs them; they go with the phone's adapter or a
+    /// restart). No sync writes anything after this one.
+    /// </summary>
+    public Task KeepOnClose(bool cs2Running) => Task.Run(async () =>
+    {
+        _released = true;
+        await _gate.WaitAsync();
+        try
+        {
+            var rules = Firewall.Remaining();
+            foreach (var n in Firewall.WholePcRules) if (rules.Error != null || rules.Contains(n)) Firewall.Remove(n);
+            if (!cs2Running) await RemoveSplitRoutes(Net.Scan());
+            await RestoreMetric();
+        }
+        finally { _gate.Release(); }
+    });
+
+    /// <summary>
+    /// Windows is signing out or shutting down and closes the app without waiting: only the Firewall rules <paramref name="names"/>
+    /// (COM in the app, fast, and they are what survives a restart), within <paramref name="limit"/>. Routes and the metric go with
+    /// a restart. No sync writes anything after this. True when it finished in time.
+    /// </summary>
+    public bool RemoveRulesNow(IReadOnlyCollection<string> names, TimeSpan limit)
+    {
+        _released = true;
+        var work = Task.Run(async () =>
+        {
+            var got = await _gate.WaitAsync(limit / 2);
+            try { foreach (var n in names) Firewall.Remove(n); }
+            finally { if (got) _gate.Release(); }
+        });
+        try { return work.Wait(limit); } catch { return false; }
+    }
+
+    /// <summary>
     /// Gives the phone's adapter its default route and automatic metric back. When PowerShell fails the adapter stays marked as
     /// changed (in owned.json too), so the next start or --restore still gives it back, and the Log says so.
     /// </summary>
@@ -645,7 +687,7 @@ public sealed class Guard
         };
     }
 
-    static readonly string[] FullModeRuleNames = { Firewall.DnsUdpRuleName, Firewall.DnsTcpRuleName, Firewall.Ipv6RuleName };
+    static readonly string[] FullModeRuleNames = Firewall.WholePcRules;
 
     /// <summary>DNS (UDP and TCP 53) only from the protected connection's local IP; all outbound IPv6 blocked.</summary>
     static Firewall.FwRule[] FullModeRules(string allowLocalIp) => new[]
