@@ -4,7 +4,7 @@
 </h1>
 
 <p align="center">
-  <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest"><img src="https://img.shields.io/github/v/release/Sepd0x/cs2-ip-changer?include_prereleases&sort=semver&label=release&color=2b74c2" alt="Latest release"></a>
+  <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest"><img src="https://img.shields.io/github/v/release/Sepd0x/cs2-ip-changer?label=stable&color=2b74c2" alt="Latest release"></a>
   <a href="https://github.com/Sepd0x/cs2-ip-changer/releases"><img src="https://img.shields.io/github/downloads/Sepd0x/cs2-ip-changer/total?label=downloads&color=2b74c2" alt="Total downloads"></a>
   <a href="#quick-start"><img src="https://img.shields.io/badge/Windows-10%20%7C%2011-2b74c2" alt="Windows 10 and 11"></a>
   <!--rel:vtbadge--><a href="https://www.virustotal.com/gui/file/3159098476f179175d31c320c2b581ab45af1d9e0fb04a13760824394d321c22/detection"><img src="https://img.shields.io/badge/VirusTotal-0%2F69-2b74c2" alt="VirusTotal: 0 of 69 engines flag it"></a><!--/rel-->
