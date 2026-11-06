@@ -7,6 +7,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { readTheme } from './design-tokens.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const site = join(root, 'site');
@@ -83,6 +84,9 @@ const vtLinks = (s) => s.replace(/https:\/\/www\.virustotal\.com\/gui\/file\/[0-
   s = fill(s, 'line', `<a href="${EXE}">${rel.asset}</a> · v${rel.version} · ${size} · ${day(rel.published)} · <a href="${LATEST}">release notes and checksums</a>`, 'README.md');
   s = fill(s, 'size', size, 'README.md');
   s = fill(s, 'vt', `${short}: [${vtText}](${VT}) flag it`, 'README.md');
+  // the VirusTotal badge in the row under the title (the other badges read GitHub live, through shields.io)
+  const deep = readTheme().AccentDeepColor.slice(1);
+  s = fill(s, 'vtbadge', `<a href="${VT}"><img src="https://img.shields.io/badge/VirusTotal-${rel.virustotal.flagged}%2F${rel.virustotal.engines}-${deep}" alt="VirusTotal: ${vtText} flag it"></a>`, 'README.md');
   writeFileSync(file, vtLinks(s));
 }
 // site/llms.txt: the status line and the direct download.

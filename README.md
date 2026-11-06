@@ -4,6 +4,15 @@
 </h1>
 
 <p align="center">
+  <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest"><img src="https://img.shields.io/github/v/release/Sepd0x/cs2-ip-changer?include_prereleases&sort=semver&label=release&color=2b74c2" alt="Latest release"></a>
+  <a href="https://github.com/Sepd0x/cs2-ip-changer/releases"><img src="https://img.shields.io/github/downloads/Sepd0x/cs2-ip-changer/total?label=downloads&color=2b74c2" alt="Total downloads"></a>
+  <a href="#quick-start"><img src="https://img.shields.io/badge/Windows-10%20%7C%2011-2b74c2" alt="Windows 10 and 11"></a>
+  <!--rel:vtbadge--><a href="https://www.virustotal.com/gui/file/fae35fdfe338757fbed1813feb0d90be9552f5e3f09c7e1a6fe5b1f32bf3407b/detection"><img src="https://img.shields.io/badge/VirusTotal-0%2F68-2b74c2" alt="VirusTotal: 0 of 68 engines flag it"></a><!--/rel-->
+  <a href="https://github.com/Sepd0x/cs2-ip-changer/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Sepd0x/cs2-ip-changer/ci.yml?branch=main&label=build" alt="Build and tests"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-personal%20use-2b74c2" alt="License: free for personal use, all rights reserved"></a>
+</p>
+
+<p align="center">
   <b>CS2 IP ban bypass and home IP protection for community servers. Free, for Windows.</b><br>
   CS2 plays through your phone's mobile data, so servers see your carrier's IP.
 </p>
@@ -54,7 +63,10 @@ So those servers only see the carrier's IP. Your home IP stays out of their logs
 2. **Change IP and rejoin.** Click it, or press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> in game. The phone's mobile data goes off and on until the carrier hands you a new IP.
 3. **Back in.** After a ban, the app logs into the next account that server hasn't banned and joins the server again. After a kick, it rejoins with the same account.
 
-On an iPhone you get the new IP yourself, with Airplane Mode: only Android lets a PC do it. This is for a server's own ban. A new IP doesn't change a VAC or game ban ([does CS2 IP ban?](https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/)).
+On an iPhone you get the new IP yourself, with Airplane Mode: only Android lets a PC do it.
+
+> [!IMPORTANT]
+> This is for a community server's own ban. A new IP doesn't change a VAC or game ban ([does CS2 IP ban?](https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/)).
 
 <a id="what-it-does"></a>
 ## Features
@@ -237,7 +249,7 @@ The app measures the phone's IP by asking 1.0.0.1 (Cloudflare's `/cdn-cgi/trace`
 
 While CS2 IP Changer is in beta, it sends usage stats so bugs can be found and the parts people use get better. They are required to use the app.
 
-- **You decide first.** At the first start, before the app opens, a notice lists what is sent, with Accept and Quit. Until you accept, nothing is sent and no ID is made. Quit (or Escape) closes the app without changing anything on your PC.
+- **You decide first.** At the first start, before the app opens, a notice lists what is sent, with Accept and Quit. Until you accept, nothing is sent and no ID is made. Quit (or <kbd>Esc</kbd>) closes the app without changing anything on your PC.
 - **Never sent:** IPs (yours, the phone's or servers'), server names or addresses, Steam accounts, logins, names or IDs, your carrier, city or region, players' names, file paths or anything you typed.
 - **A random ID**, made once for this install, never from your PC, Windows, Steam or you. It isn't tied to your name, PC, Steam or anything else.
 - **Delete it any time.** Settings > Delete my stats deletes everything the server keeps under your ID and gives the app a new one.
@@ -296,6 +308,15 @@ While the app is open, every 5 minutes it also sends a short signal: this instal
 
 The server is a Cloudflare Worker whose code is in this repo ([`worker/stats`](worker/stats)). Cloudflare has to see your IP to deliver the request, like with any website, and gives the Worker only the country; the Worker never reads the IP or stores it, and its request logs are off. The stats are stored per day in a database with no IP column ([`schema.sql`](worker/stats/schema.sql)). The recording build sends nothing.
 </details>
+
+## Support
+
+- **A bug:** [open a bug report](https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose) with the version and Log > Save bug report. Look through the .zip before you post it.
+- **An idea:** [suggest a feature](https://github.com/Sepd0x/cs2-ip-changer/issues/new?template=feature_request.yml), and say what you want to do in the game.
+- **A way your home IP could leak:** [report it privately](https://github.com/Sepd0x/cs2-ip-changer/security/advisories/new), not in a public issue ([SECURITY.md](.github/SECURITY.md)).
+- **A question:** most answers are in the [FAQ](docs/FAQ.md) and the [guides on the website](https://sepd0x.github.io/cs2-ip-changer/#guides).
+
+Pull requests aren't accepted for now. If you found a fix, describe it in an issue ([CONTRIBUTING.md](CONTRIBUTING.md)).
 
 ## License
 

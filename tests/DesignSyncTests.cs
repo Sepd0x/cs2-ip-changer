@@ -245,6 +245,25 @@ static class DesignSyncTests
             && homeJs.Contains("matchMedia('(max-width:759px),(max-height:540px) and (orientation:landscape)')") && homeHtml.Contains("@media (max-width:759px),(max-height:540px) and (orientation:landscape){\n  .ph-tabs{display:flex;".Replace("\n", homeHtml.Contains("\r\n") ? "\r\n" : "\n")), "");
         check("Site: a is-it-safe diz que o contador conta o ?ref= de um link",
             Txt("site/is-it-safe/index.html").Contains("or the short name in the link when there is none (like <code>?ref=tiktok</code>)"), "");
+
+        // ---------------- 4. os emblemas do README (6 nov.): uma linha só, no máximo 6, todos do shields.io no azul fundo da app;
+        // a versão e os downloads lidos do GitHub ao vivo, o do VirusTotal preenchido pelo site-pages.mjs como as outras marcas rel:
+        var readme = Txt("README.md");
+        var badgeRow = Regex.Match(readme, @"</h1>\s*<p align=""center"">([\s\S]*?)</p>").Groups[1].Value;
+        var badges = Regex.Matches(badgeRow, @"<img src=""(https://img\.shields\.io/[^""]+)""").Select(m => m.Groups[1].Value).ToList();
+        var deepHex = theme.GetValueOrDefault("AccentDeepColor", "#").TrimStart('#');
+        check("README: uma linha de 4 a 6 emblemas do shields.io logo a seguir ao título", badges.Count is >= 4 and <= 6, badges.Count.ToString());
+        var offColor = badges.Where(b => !b.Contains("/actions/workflow/status/") && !b.EndsWith("-" + deepHex) && !b.Contains("color=" + deepHex)).ToList();
+        check("README: os emblemas usam o AccentDeepColor do Theme.xaml (o do build fica com a cor do estado)", deepHex.Length == 6 && offColor.Count == 0, string.Join(", ", offColor));
+        check("README: a versão e os downloads vêm do GitHub ao vivo, e o build é o ci.yml",
+            badges.Any(b => b.StartsWith("https://img.shields.io/github/v/release/Sepd0x/cs2-ip-changer")) && badges.Any(b => b.StartsWith("https://img.shields.io/github/downloads/Sepd0x/cs2-ip-changer/total"))
+            && badges.Any(b => b.StartsWith("https://img.shields.io/github/actions/workflow/status/Sepd0x/cs2-ip-changer/ci.yml")), "");
+        var relJson = JsonDocument.Parse(Txt("site/release.json")).RootElement;
+        var vt = relJson.GetProperty("virustotal");
+        var vtWant = $"VirusTotal-{vt.GetProperty("flagged").GetInt32()}%2F{vt.GetProperty("engines").GetInt32()}-{deepHex}";
+        check("README: o emblema do VirusTotal é o da release.json, numa marca rel: que o site-pages.mjs preenche",
+            Regex.IsMatch(badgeRow, @"<!--rel:vtbadge--><a href=""https://www\.virustotal\.com/gui/file/" + relJson.GetProperty("sha256").GetString() + @"/detection""><img src=""https://img\.shields\.io/badge/" + Regex.Escape(vtWant) + @"""")
+            && Txt("tools/site-pages.mjs").Contains("fill(s, 'vtbadge',"), vtWant);
     }
 
     /// <summary>Theme.xaml: as cores de 6 dígitos (Color e SolidColorBrush), em minúsculas, como o design-tokens.mjs.</summary>

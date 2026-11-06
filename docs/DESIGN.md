@@ -123,9 +123,17 @@ paper.js 0.12.18, see the top of the script; `--out <folder>` is a trial):
 
 The window draws the logo in the empty corner above Connection (`SideLogo` in `src/MainWindow.xaml`, 24 px, the paths of
 `logo-24.svg` with the theme's brushes): change both together. The README card (`docs/assets/src/social-preview.html`)
-signs with `logo.svg` in its lower left corner. The GitHub avatar (`publish/logo-2026-11-06/avatar-460.png`) is uploaded by
+signs with `logo.svg` in its lower left corner, and so does `banner.png` (`docs/assets/src/banner.html`, `render.cmd`). The
+README's animated demo (`demo.gif`, `demo-mobile.gif` and their `.png` stills) draws `logo-24.svg` (desktop) and `logo.svg`
+(phone) in its header; it is made outside git (`publish/readme-gif-2026-11-05/LEIA-ME.md`), so record it again when the logo
+changes. The GitHub avatar (`publish/logo-2026-11-06/avatar-460.png`) is uploaded by
 hand. `tests/LogoTests.cs` fails if any of these stop being the same logo, or if the logo gains a background, glow, mask or a
 colour outside the table.
+
+README badges: one row under the title, at most 6, all from shields.io in the flat style with the grey label and
+`AccentDeepColor` (`2b74c2`) as the value colour; the build badge keeps its pass or fail colour. Release and downloads read
+GitHub live; the VirusTotal badge sits in a `<!--rel:vtbadge-->` mark that `node tools/site-pages.mjs` fills from
+`site/release.json`. `tests/DesignSyncTests.cs` checks all of this.
 
 ## Captures
 

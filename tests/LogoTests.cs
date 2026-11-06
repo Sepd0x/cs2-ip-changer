@@ -74,6 +74,7 @@ static class LogoTests
         var pagesYml = Txt(".github/workflows/pages.yml");
         check("Logo: o Pages copia o icon.png e os favicons para img/", new[] { "docs/assets/icon.png", "docs/assets/favicon.svg", "docs/assets/favicon.ico", "docs/assets/apple-touch-icon.png" }.All(pagesYml.Contains), "");
         check("Logo: o cartão social assina com o logo.svg", Txt("docs/assets/src/social-preview.html").Contains("src=\"../logo.svg\""), "");
+        check("Logo: o banner.png sai do banner.html com o logo.svg", Txt("docs/assets/src/banner.html").Contains("src=\"../logo.svg\""), "");
         check("Logo: o components.mjs já não escreve um logo.svg antigo", !Txt("docs/assets/src/components.mjs").Contains("write('logo.svg'"), "");
     }
 }

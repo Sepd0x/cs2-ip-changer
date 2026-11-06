@@ -4,6 +4,9 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Changed
+- README: a row of badges under the title (latest release, downloads, Windows 10 and 11, the VirusTotal result, build status, license), the "not for VAC or game bans" note as a highlighted box, and a Support section with where to report a bug, an idea or a security problem. The animated demo and the banner show the new logo.
+
 ## [0.1.0-beta.11] - 2026-11-06
 
 ### Added
