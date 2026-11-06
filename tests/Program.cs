@@ -617,6 +617,8 @@ TelemetryTests.Run(Check);
 SemProtecaoTests.Run(Check);
 // auditoria de segurança de 6 nov.: nada do dono nos ficheiros do git, a tarefa de Start with Windows (Seguranca1106Tests.cs)
 Seguranca1106Tests.Run(Check);
+// 6 nov.: numeração das versões (csproj, CHANGELOG, notas da release) (VersaoTests.cs)
+VersaoTests.Run(Check);
 // sistema de design (5 nov.): as cores da app no site, na dashboard e no README, e as capturas da versão de agora (DesignSyncTests.cs)
 DesignSyncTests.Run(Check);
 
