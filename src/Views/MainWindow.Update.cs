@@ -22,7 +22,7 @@ public partial class MainWindow
             try
             {
                 using var cts = new CancellationTokenSource(20000);
-                r = await Updater.Latest(cts.Token);
+                r = await Updater.Latest(_s.TestVersions, cts.Token);
             }
             catch (Exception ex)
             {
@@ -33,6 +33,7 @@ public partial class MainWindow
             _s.LastUpdateCheck = DateTime.Now;
             var wasKnown = _s.UpdateLatest;
             _s.UpdateLatest = r?.Version;
+            _s.UpdateLatestTest = r?.Test == true;
             // The check itself worked: a settings file that can't be written is its own Log line, and the new version is still said
             try { SaveSettings(); }
             catch (Exception ex) { Log.Warn("Couldn't save the settings after the update check: " + ex.Message); }
@@ -41,21 +42,33 @@ public partial class MainWindow
                 _update = r;
                 if (wasKnown != r.Version)
                 {
-                    Log.Info($"Version {r.Version} is available on GitHub.");
+                    Log.Info($"{(r.Test ? "Test version" : "Version")} {r.Version} is available on GitHub.");
                     Telemetry.Count("upd_seen");
-                    Toast($"CS2 IP Changer {r.Version} is available. Click Update under the version number.", Tone.Info);
+                    Toast(UpdateToast(r.Version, r.Test), Tone.Info);
                 }
             }
         }
         finally { _checkingUpdate = false; ShowUpdateNotice(); }
     }
 
+    /// <summary>The toast when the check finds a newer version; a test version (pre-release) says so.</summary>
+    public static string UpdateToast(string v, bool test) => test
+        ? $"Test version {v} is out. Click Update under the version number."
+        : $"CS2 IP Changer {v} is available. Click Update under the version number.";
+
+    /// <summary>The Update button's tooltip.</summary>
+    public static string UpdateTip(string v, bool test) =>
+        $"{(test ? "Test version" : "Version")} {v} is available. Downloads it from GitHub, checks its SHA-256 and restarts the app.";
+
+    /// <summary>The version in the Update question: "test version 0.1.0-beta.12" or "version 0.1.0-beta.12".</summary>
+    public static string UpdateWhat(string v, bool test) => (test ? "test version " : "version ") + v;
+
     void ShowUpdateNotice()
     {
         var v = _s.UpdateLatest;
         var show = _s.CheckUpdates && Updater.IsNewer(v, AppInfo.Version);
         UpdateBtn.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-        if (show) UpdateBtn.ToolTip = $"Version {v} is available. Downloads it from GitHub, checks its SHA-256 and restarts the app.";
+        if (show) UpdateBtn.ToolTip = UpdateTip(v, _s.UpdateLatestTest);
     }
 
     async void Update_Click(object sender, RoutedEventArgs e)
@@ -67,11 +80,12 @@ public partial class MainWindow
         try
         {
             ShowProgress("Checking GitHub for the latest version…");
-            using (var cts = new CancellationTokenSource(20000)) _update = await Updater.Latest(cts.Token) ?? _update;
+            using (var cts = new CancellationTokenSource(20000)) _update = await Updater.Latest(_s.TestVersions, cts.Token) ?? _update;
             var r = _update;
             if (r == null || !Updater.IsNewer(r.Version, AppInfo.Version))
             {
                 _s.UpdateLatest = r?.Version;
+                _s.UpdateLatestTest = r?.Test == true;
                 SaveSettings();
                 ShowUpdateNotice();
                 Toast("You already have the latest version.", true);
@@ -87,7 +101,7 @@ public partial class MainWindow
             }
             HideProgress();
             var size = r.Size > 0 ? $" (about {Math.Max(1, (r.Size + 500_000) / 1_000_000)} MB)" : "";
-            if (!await Ask("Update CS2 IP Changer", $"Download version {r.Version}{size} from GitHub, check its SHA-256 and restart the app?{MobileDataNote()}\n\n" + (!_protOn ? "Protection stays off, as now." : "Protection stays on while it restarts. If you are on a server, you will be disconnected for a few seconds while the new version checks the phone's IP."), "Update")) { Telemetry.Count("upd_declined"); return; }
+            if (!await Ask("Update CS2 IP Changer", $"Download {UpdateWhat(r.Version, r.Test)}{size} from GitHub, check its SHA-256 and restart the app?{MobileDataNote()}\n\n" + (!_protOn ? "Protection stays off, as now." : "Protection stays on while it restarts. If you are on a server, you will be disconnected for a few seconds while the new version checks the phone's IP."), "Update")) { Telemetry.Count("upd_declined"); return; }
             Telemetry.Count("upd_accepted");
             ShowProgress("Downloading the update…");
             var sha = await Updater.Download(r, new Progress<string>(t => ProgressText.Text = t));
@@ -145,6 +159,16 @@ public partial class MainWindow
     void CheckUpdates_Click(object sender, RoutedEventArgs e)
     {
         _s.CheckUpdates = CheckUpdatesBox.IsChecked == true;
+        SaveSettings();
+        if (_s.CheckUpdates) _ = CheckForUpdates(force: true);
+        else ShowUpdateNotice();
+    }
+
+    /// <summary>Settings > App > Get test versions. Turned off, a test version already seen is no longer offered.</summary>
+    void TestVersions_Click(object sender, RoutedEventArgs e)
+    {
+        _s.TestVersions = TestVersionsBox.IsChecked == true;
+        if (!_s.TestVersions && _s.UpdateLatestTest) { _s.UpdateLatest = null; _s.UpdateLatestTest = false; _update = null; }
         SaveSettings();
         if (_s.CheckUpdates) _ = CheckForUpdates(force: true);
         else ShowUpdateNotice();

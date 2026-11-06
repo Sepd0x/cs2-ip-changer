@@ -38,9 +38,10 @@ static class Untangle1106Tests
         check("Servidor cheio: sem tentativa ou sem servidor, nada muda", !MainWindow.FullRetryStops(null, "5.6.7.8:27015") && !MainWindow.FullRetryStops("1.2.3.4:27015", null), "");
         check("Servidor cheio: ligado onde o CS2 diz que entrou", Src("Views", "MainWindow.Kick.cs").Contains("if (FullRetryStops(_fullServer, _consoleServer)) _fullServer = null;"), "");
 
-        // A1: uma release retirada (pre-release) nunca é oferecida
+        // A1: uma release retirada nunca é oferecida. Desde os canais (6 nov., tests/CanaisTests.cs) a retirada é um draft e a
+        // pre-release é o canal de teste: fica de fora só sem Get test versions.
         var upd = Src("Core", "Updater.cs");
-        check("Update: pre-releases ficam de fora", upd.Contains("if (r.TryGetProperty(\"prerelease\", out var pre) && pre.ValueKind == JsonValueKind.True) continue;"), "");
+        check("Update: pre-releases ficam de fora no canal estável", upd.Contains("if (isTest && !test) continue;"), "");
         check("Update: o RELEASING diz para pôr a release em rascunho enquanto houver cópias antigas",
             File.ReadAllText(Path.Combine(repo, "docs", "RELEASING.md")).Contains("gh release edit v<version> --draft=true"), "");
 

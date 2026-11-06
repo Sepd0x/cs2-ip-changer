@@ -46,6 +46,11 @@ public sealed partial class Settings
     public int StatsNotice { get; set; }
     public DateTime? LastUpdateCheck { get; set; }
     public string UpdateLatest { get; set; }              // highest version seen on GitHub at the last check
+    /// <summary>That version is a test version (a pre-release on GitHub).</summary>
+    public bool UpdateLatestTest { get; set; }
+    /// <summary>Settings > App > Get test versions: the update also offers the pre-releases, the test channel. Off (also in an older
+    /// settings file): only the stable versions, the one GitHub marks Latest.</summary>
+    public bool TestVersions { get; set; }
     /// <summary>The Steam Web API key, in memory only. settings.json keeps it encrypted for this Windows user (SteamApiKeySealed).</summary>
     [JsonIgnore]
     public string SteamApiKey

@@ -646,6 +646,7 @@ await RevisaoETests.Run(Check);
 RevisaoFTests.Run(Check);
 await RevisaoGTests.Run(Check);
 RevisaoHTests.Run(Check);
+CanaisTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

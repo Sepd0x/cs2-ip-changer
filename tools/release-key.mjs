@@ -5,6 +5,7 @@
 //   node tools/release-key.mjs sign <tag> [--key <file>] [--no-publish]
 //                                                      per release, after the workflow made the draft: checks the exe against its .sha256
 //                                                      and its build attestation, signs, uploads CS2IPChanger.exe.sha256.sig, publishes
+//                                                      it as a pre-release (the test channel)
 //
 // The private key never goes in the repo or on GitHub (the tool refuses a path inside the repo, and *.pem is in .gitignore).
 // Keep a copy somewhere offline: losing it means the installed apps can't update by themselves any more.
@@ -117,8 +118,10 @@ async function sign() {
   if (gh(['release', 'upload', tag, sigPath, '--clobber']).status !== 0) fail('upload failed');
   console.log(`Signed: ${EXE}.sha256.sig uploaded to ${tag} (SHA-256 ${actual}).`);
   if (isDraft && !flag('--no-publish')) {
-    if (gh(['release', 'edit', tag, '--draft=false']).status !== 0) fail('the release is signed but still a draft; publish it on GitHub');
-    console.log('Published.');
+    // Published as a pre-release, the test channel (docs/RELEASING.md): only copies with Get test versions on see it. It becomes
+    // stable (Latest) after the test rounds, with gh release edit <tag> --prerelease=false --latest.
+    if (gh(['release', 'edit', tag, '--draft=false', '--prerelease']).status !== 0) fail('the release is signed but still a draft; publish it on GitHub as a pre-release');
+    console.log('Published as a pre-release (test version). After the test rounds: gh release edit ' + tag + ' --prerelease=false --latest');
   } else if (isDraft) console.log('Left as a draft (--no-publish).');
 }
 

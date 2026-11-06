@@ -5,8 +5,8 @@
 #
 # The tag has to match <Version> in src/ServerRouteTool.csproj (tag v0.1.0-alpha.3 for 0.1.0-alpha.3).
 # If the release already exists (drafted by hand with notes), the files are added to it. If not, it is
-# created with docs/release-<version>.md as notes when that file exists. Betas are not marked as
-# prereleases: published, the newest one is Latest, so releases/latest (the Download links) points to it.
+# created with docs/release-<version>.md as notes when that file exists. release-key.mjs publishes it as a
+# pre-release (the test channel); after the test rounds it becomes Latest, so releases/latest (the Download links) points to it.
 #
 # Third-party actions are pinned to a commit. The comment next to each one says which tag it is.
 

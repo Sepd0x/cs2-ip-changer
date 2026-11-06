@@ -220,7 +220,7 @@ programs) and the buttons are not named here.
 | Player flags | `AutoJoinBox` |
 | Steam | `ApiKeyPwd`, `ApiKeyBox`, `LaunchOptsBox` |
 | Privacy | `OptStreamer`, `AutoStreamerBox` |
-| App | `StartWithWindowsBox`, `CloseToTrayBox`, `CheckUpdatesBox` |
+| App | `StartWithWindowsBox`, `CloseToTrayBox`, `CheckUpdatesBox`, `TestVersionsBox` |
 | Maintenance | |
 | Remove the app | |
 

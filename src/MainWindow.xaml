@@ -2326,10 +2326,17 @@
                                                 <TextBlock Text="The X hides the window. Quit is in the icon's menu." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
-                                        <CheckBox x:Name="CheckUpdatesBox" Style="{StaticResource Switch}" Click="CheckUpdates_Click">
+                                        <CheckBox x:Name="CheckUpdatesBox" Style="{StaticResource Switch}" Click="CheckUpdates_Click" Margin="0,0,0,12">
                                             <StackPanel>
                                                 <TextBlock Text="Check for updates"/>
                                                 <TextBlock Text="Once a day, on GitHub. Nothing installs without your OK and a matching SHA-256." Style="{StaticResource OptSub}"/>
+                                            </StackPanel>
+                                        </CheckBox>
+                                        <CheckBox x:Name="TestVersionsBox" Style="{StaticResource Switch}" Click="TestVersions_Click"
+                                                  ToolTip="Each new version comes out first as a test version (a pre-release on GitHub), signed and checked like the stable ones. It becomes stable after it is tested. Turned off, the app offers the next stable version that is newer than yours.">
+                                            <StackPanel>
+                                                <TextBlock Text="Get test versions"/>
+                                                <TextBlock Text="New versions before they are fully tested. Off: only stable versions." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
                                     </StackPanel>
