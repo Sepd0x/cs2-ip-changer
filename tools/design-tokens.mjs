@@ -92,9 +92,9 @@ export function apply(text, style, theme = readTheme()) {
   return out;
 }
 
-/** The files that are behind Theme.xaml. */
+/** The files that are behind Theme.xaml. Line ends don't count: a Windows checkout (Git's autocrlf, the CI runner) has CRLF. */
 export function behind(theme = readTheme()) {
-  return FILES.filter((f) => { const s = readFileSync(ROOT + f.path, 'utf8'); return apply(s, f.style, theme) !== s; }).map((f) => f.path);
+  return FILES.filter((f) => { const s = readFileSync(ROOT + f.path, 'utf8').replace(/\r\n/g, '\n'); return apply(s, f.style, theme) !== s; }).map((f) => f.path);
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

@@ -4,6 +4,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+## [0.1.0-beta.12] - 2026-11-06
+
 ### Added
 - Two kinds of versions: stable and test. Every new version comes out first as a test version (a pre-release on GitHub) and becomes stable once it has been tested. Settings > App > Get test versions (off as it comes) makes the update offer the test versions too. Off, you only get stable versions, as before, and the Download links always give the stable one. The usage stats count whether it is turned on.
 
@@ -630,7 +632,8 @@ First public release, as ServerRouteTool.
 - Restore network, to undo every route and rule in one click.
 - Dark interface in Portuguese.
 
-[Unreleased]: ../../compare/v0.1.0-beta.11...HEAD
+[Unreleased]: ../../compare/v0.1.0-beta.12...HEAD
+[0.1.0-beta.12]: ../../releases/tag/v0.1.0-beta.12
 [0.1.0-beta.11]: ../../releases/tag/v0.1.0-beta.11
 [0.1.0-beta.10]: ../../releases/tag/v0.1.0-beta.10
 [0.1.0-beta.9]: ../../releases/tag/v0.1.0-beta.9

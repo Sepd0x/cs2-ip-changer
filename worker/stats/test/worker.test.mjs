@@ -548,7 +548,8 @@ test('beta.9 part 4: red Checks and the leak test only inside their families; pe
 
 // ------------------------------------------------------------------ one set of colors: src/Theme.xaml -> site and dashboard (tools/design-tokens.mjs)
 
-const readRoot = (p) => readFileSync(ROOT + p, 'utf8');
+// line ends don't count: a Windows checkout (Git's autocrlf, the CI runner) has CRLF
+const readRoot = (p) => readFileSync(ROOT + p, 'utf8').replace(/\r\n/g, '\n');
 const styleOf = (p) => [...readRoot(p).matchAll(/<style>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join('\n');
 const guides = readdirSync(ROOT + 'site').filter((d) => existsSync(ROOT + `site/${d}/index.html`)).map((d) => `site/${d}/index.html`);
 const DASH_CSS = 'worker/stats/dashboard/style.css';

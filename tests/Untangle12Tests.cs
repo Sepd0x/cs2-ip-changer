@@ -663,7 +663,7 @@ static class Untangle12Tests
     {
         const string key = "203.0.113.9/32|9999|192.0.2.1";
         var dir = Path.Combine(Path.GetTempPath(), "srt-untangle12-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(dir);
+        OwnedDir(dir);
         var file = Path.Combine(dir, "owned.json");
         Store.Save(file, new Guard.OwnedState { Routes = new() { key }, Boot = DateTime.UtcNow.AddMilliseconds(-Environment.TickCount64) });
         var table = new List<Net.Route> { new("203.0.113.9/32", 9999, "192.0.2.1") };
@@ -713,11 +713,22 @@ static class Untangle12Tests
         check("Relógio: volta a andar com o Windows", Math.Abs((AppClock.Now - DateTime.Now).TotalSeconds) < 5, "");
     }
 
+    /// <summary>
+    /// A pasta do owned.json. Como administrador (o runner do GitHub corre assim) o Guard só lê um owned.json numa pasta que só
+    /// os admins mudam, por isso aí a pasta nasce só de admins; sem admin, uma pasta normal (o Guard não exige nada).
+    /// </summary>
+    internal static void OwnedDir(string dir)
+    {
+        using var me = System.Security.Principal.WindowsIdentity.GetCurrent();
+        if (new System.Security.Principal.WindowsPrincipal(me).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator)) Adb.CreateAdminOnly(dir);
+        else Directory.CreateDirectory(dir);
+    }
+
     /// <summary>Um owned.json desta sessão do Windows (a métrica só vive até reiniciar).</summary>
     static string OwnedWithMetric(int ifIndex)
     {
         var dir = Path.Combine(Path.GetTempPath(), "srt-untangle12-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(dir);
+        OwnedDir(dir);
         var file = Path.Combine(dir, "owned.json");
         Store.Save(file, new Guard.OwnedState { MetricIf = ifIndex, Boot = DateTime.UtcNow.AddMilliseconds(-Environment.TickCount64) });
         return file;

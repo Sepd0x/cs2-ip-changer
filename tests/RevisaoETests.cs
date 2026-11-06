@@ -18,7 +18,7 @@ static class RevisaoETests
     static string OwnedFile(int metricIf, params string[] routes)
     {
         var dir = Path.Combine(Path.GetTempPath(), "srt-revisaoe-" + Guid.NewGuid().ToString("N")[..8]);
-        Directory.CreateDirectory(dir);
+        Untangle12Tests.OwnedDir(dir);   // as admin (the GitHub runner) the Guard only reads an owned.json from an admin-only folder
         var file = Path.Combine(dir, "owned.json");
         Store.Save(file, new Guard.OwnedState { Routes = routes.ToList(), MetricIf = metricIf, Boot = DateTime.UtcNow.AddMilliseconds(-Environment.TickCount64) });
         return file;
