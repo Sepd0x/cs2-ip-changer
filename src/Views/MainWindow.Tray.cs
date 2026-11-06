@@ -76,8 +76,12 @@ public partial class MainWindow
         if (_s.TrayHinted) return;
         _s.TrayHinted = true;
         SaveSettings();
-        _tray?.Balloon("CS2 IP Changer is still running", "Protection carries on. Click the icon to open the app; right-click it for New IP, Regions or Quit.");
+        _tray?.Balloon("CS2 IP Changer is still running", TrayHintText(_protOn && !_s.NoPhone));
     }
+
+    /// <summary>The balloon of the first trip to the tray: "Protection carries on" only when it is on.</summary>
+    public static string TrayHintText(bool protOn) =>
+        (protOn ? "Protection carries on. " : "") + "Click the icon to open the app; right-click it for New IP, Regions or Quit.";
 
     /// <summary>The X goes to the notification area: only with the option on and the icon there, never to quit, for an update or a Windows sign-out.</summary>
     public static bool GoesToTray(bool closeToTray, bool hasIcon, bool quitting, bool sessionEnding, bool closingDone, bool demo) =>

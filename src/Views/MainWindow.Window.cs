@@ -159,6 +159,12 @@ public partial class MainWindow
         return IntPtr.Zero;
     }
 
+    /// <summary>The first close with protection on. How the next start goes follows Turn on protection when the app starts (Guard.OnAtStart).</summary>
+    public static string CloseKeepText(string blocked, bool protectOnStart) =>
+        $"{blocked} stay blocked outside the phone after you close the app. Without the phone they can't connect until you open the app again "
+        + (protectOnStart ? "(it starts with protection on: Settings > Protection)." : "(it starts with protection off, unless CS2 is still open).")
+        + "\n\nThe app remembers your answer. To change it: Settings > Protection > Turn off protection when closing the app.";
+
     /// <summary>Windows is shutting down or signing out: closing goes through without questions.</summary>
     bool _sessionEnding, _closeAsking;
 
@@ -228,10 +234,7 @@ public partial class MainWindow
             try
             {
                 await AfterCancelledClose();
-                keep = await Ask("Close the app",
-                    $"{Blocked(_last)} stay blocked outside the phone after you close the app. Without the phone they can't connect until you open the app again (it starts with protection off, unless CS2 is still open).\n\n" +
-                    "The app remembers your answer. To change it: Settings > Protection > Turn off protection when closing the app.",
-                    "Keep and close", "Turn off and close");
+                keep = await Ask("Close the app", CloseKeepText(Blocked(_last), _s.ProtectOnStart), "Keep and close", "Turn off and close");
             }
             finally { _closeAsking = false; }
             if (!keep && !_dialogCancelClicked) { _quitting = false; return; }   // Escape, or another question came up: the app stays open

@@ -43,6 +43,17 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Before a phone was ever checked on the PC, Status, the Turn on protection message, the leak test and the tooltip of Turn on protection when the app starts said CS2 was blocked too. CS2 is only locked once the app has checked a phone, so they now say only your servers wait, and that CS2 isn't locked yet.
 - When the phone dropped, the message said "your IP can't leak" and Status said "You're safe" even with the CS2 lock off, and the Log always said servers and CS2 were blocked. They now name only what is blocked.
 - The hotspot tooltip said "everything is blocked" when the PC leaves the phone's network; it is your servers and CS2, while protection is on.
+- With protection off, a phone sharing your home Wi-Fi gave an error in the Log, the Windows error sound and the message "Servers and CS2 are now blocked", although nothing is blocked then. The Log now says to turn off the phone's Wi-Fi before you turn on protection, without the sound.
+- With protection off, the box under the IP servers see could show your home IP in full, next to "phone ready", while the phone wasn't ready. It now shows the phone's IP only once it is checked.
+- With protection off, Change IP, Phone setup and the tray balloon said servers were blocked, that servers see the phone's IP, or that protection carries on. They now say what happens with protection off.
+- With protection off and CS2 on your home connection, Change IP asked "you will be disconnected" and said "If you are on a server, you will drop". It only asks that when CS2 really goes through the phone.
+- Turn off protection with CS2 open now says in the same question that the server you are on sees your home IP from then on.
+- With protection off or No phone, Status said "nothing is blocked" while regions you turned off stay blocked. It now says so, and so does the warning of Use the app with protection off.
+- With protection off and the whole PC on the phone (no other connection), Status said every server sees your home IP. It now says they see the phone's IP, and that nothing protects your home IP if the phone drops.
+- With protection off, the Mobile data row of Checks was red with the phone's Wi-Fi on. It is amber now, as with protection on and the block confirmed.
+- "Off: 3 servers see your home IP" counted IPs, not servers.
+- With Turn on protection when the app starts on, the question on the first close said the app starts with protection off.
+- The VPN app row of Checks said servers and CS2 still go through the phone with protection off. It now says they see the VPN's IP then.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

@@ -164,9 +164,10 @@ public sealed class IpHistoryEntry
 
 public sealed class CheckItem : Observable
 {
-    bool? _ok; bool _waiting; string _detail;
+    bool? _ok; bool _waiting; string _detail, _help;
     public string Title { get; init; }
-    public string Help { get; init; }
+    /// <summary>Settable: a row whose explanation depends on the protection state (VPN app) changes it with the state.</summary>
+    public string Help { get => _help; set => Set(ref _help, value); }
     public bool? Ok { get => _ok; set { if (Set(ref _ok, value)) { Raise(nameof(Glyph)); Raise(nameof(Brush)); Raise(nameof(DetailBrush)); } } }
     public string Detail { get => _detail; set => Set(ref _detail, value); }
     /// <summary>Not OK yet, but safe: blocked while waiting for the phone (amber, not red).</summary>
@@ -212,6 +213,11 @@ public static class ChecksView
     public static string VpnDetail(string name) => $"On ({name}). Not tested with the app yet: if CS2 or your servers don't connect, turn it off while you play.";
 
     public const string VpnHelp = "A VPN carries your PC's traffic. Your servers and CS2 still go through the phone (its IP is what they see), but the app wasn't tested with every VPN app and its kill switch.";
+
+    /// <summary>Protection off or No phone: nothing goes through the phone, so servers and CS2 see the VPN's IP.</summary>
+    public const string VpnHelpOff = "A VPN carries your PC's traffic. Protection isn't on, so servers and CS2 see the VPN's IP, not the phone's. The app wasn't tested with every VPN app and its kill switch.";
+
+    public static string VpnHelpFor(bool unprotected) => unprotected ? VpnHelpOff : VpnHelp;
 }
 
 // ------------------------------------------------------------ Servers

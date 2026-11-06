@@ -54,7 +54,7 @@ public partial class MainWindow
         if (!await Ask("Change IP on the iPhone",
                 "1. On the iPhone, turn Airplane Mode on.\n2. Wait 3 seconds.\n3. Turn Airplane Mode off.\n\n"
                 + (_last.Egress.IsWifi ? "Keep Personal Hotspot on. " : "Keep the cable plugged in. ") + "The app waits for the iPhone to come back (up to 90 s) and shows the new IP. "
-                + "If you are on a server, you will drop.", "I'm doing it", "Cancel"))
+                + (IpChangeDrops ? "If you are on a server, you will drop." : "Servers see the new IP once protection is on."), "I'm doing it", "Cancel"))
             return false;
         using var wait = CommandWait();
         var sw = Stopwatch.StartNew();

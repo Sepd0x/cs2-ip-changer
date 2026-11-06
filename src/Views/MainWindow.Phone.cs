@@ -127,9 +127,10 @@ public partial class MainWindow
         // Change IP only makes sense with the phone ready on ADB (and not in the no phone mode).
         var iphone = _iphone && _phone?.Ready != true;
         ChangeIpBtn.IsEnabled = !_changingIp && (_phone?.Ready == true || iphone && _last?.Egress != null) && !_s.NoPhone;
+        var drop = IpChangeDrops ? " If you are on a server, you will drop." : "";
         ChangeIpBtn.ToolTip = _s.NoPhone ? "Off in the no phone mode: pick another option under What goes through the phone."
-            : iphone ? "Tells you when to turn Airplane Mode on and off on the iPhone, then shows the new IP. If you are on a server, you will drop."
-            : "Turns the phone's mobile data off and on until the carrier gives a new IP. Needs the phone set up over ADB. If you are on a server, you will drop.";
+            : iphone ? "Tells you when to turn Airplane Mode on and off on the iPhone, then shows the new IP." + drop
+            : "Turns the phone's mobile data off and on until the carrier gives a new IP. Needs the phone set up over ADB." + drop;
         UpdateRejoinBtn();
         UpdateDataCheck();
     }
@@ -165,13 +166,18 @@ public partial class MainWindow
         }
         else
         {
-            // Wi-Fi on with the block confirmed: blocked and safe (amber); without the block it's a real risk (red).
             var wifi = PhoneLink.WifiOn(_phone, egress?.IsWifi);
-            _cPhoneData.Waiting = wifi && _last?.KillSwitchOk == true;
-            _cPhoneData.Ok = _cPhoneData.Waiting ? null : !wifi;
+            (_cPhoneData.Ok, _cPhoneData.Waiting) = DataRow(wifi, _last?.KillSwitchOk == true, _last?.Unprotected == true);
             _cPhoneData.Detail = wifi ? $"Phone Wi-Fi is on{(_phone.WifiSsid != null ? $" ({_phone.WifiSsid})" : "")}" : $"{_phone.Carrier} · {_phone.NetType}".Trim(' ', '·');
         }
     }
+
+    /// <summary>
+    /// The Mobile data row with the phone on ADB. Wi-Fi on with the block confirmed: blocked and safe (amber); with protection off
+    /// nothing goes through the phone yet (amber too: to fix before turning it on); with protection on and no block, a real risk (red).
+    /// </summary>
+    public static (bool? Ok, bool Waiting) DataRow(bool wifiOn, bool killSwitchOk, bool unprotected) =>
+        wifiOn && (killSwitchOk || unprotected) ? (null, true) : (!wifiOn, false);
 
     async void WifiOff_Click(object sender, RoutedEventArgs e)
     {
@@ -395,7 +401,7 @@ public partial class MainWindow
             _setupRows.Add(new SetupStepRow(i, now, _setupBusy == i.Step ? _setupBusyText : null, _setupBusy == null));
         var ok = steps.Count(i => i.State == PhoneSetup.StepState.Ok);
         SetupSummary.Text = now == null && steps.All(i => i.State == PhoneSetup.StepState.Ok)
-            ? "The phone is ready. The app checks its IP, then servers see it instead of your home IP."
+            ? SetupReadyText(_protOn)
             : now == null ? $"{ok} of {steps.Count} done." : $"{ok} of {steps.Count} done. Next: {now.Title}.";
         SetupFoot.Text = _s.NoPhone ? "You picked No phone under What goes through the phone, so the app isn't using the phone right now."
             : now == null ? "For less lag in game: " + NetReport.Tips(_last?.Egress?.IsWifi == true)
@@ -403,6 +409,11 @@ public partial class MainWindow
         SetupCloseBtn.Content = now == null ? "Done" : "Close";
         SetupCloseBtn.Style = (Style)FindResource(now == null ? "Primary" : "Btn");
     }
+
+    /// <summary>Phone setup with every step done. With protection off servers still see the home IP, so it says what is left.</summary>
+    public static string SetupReadyText(bool protOn) => protOn
+        ? "The phone is ready. The app checks its IP, then servers see it instead of your home IP."
+        : "The phone is ready. Turn on protection so servers see its IP instead of your home IP.";
 
     void SetupClose_Click(object sender, RoutedEventArgs e)
     {
@@ -531,7 +542,8 @@ public partial class MainWindow
             Toast(_adb == null ? "Install the phone tool first (button under Phone)." : "The phone is not ready on ADB. See \"Phone setup\".", false);
             return false;
         }
-        if (confirm && Steam.Cs2Running && !await Ask("CS2 is open", "If you are on a server, you will be disconnected when the IP changes. Continue?", "Change IP")) return false;
+        // With protection off CS2 is on the home connection and doesn't drop, unless the whole PC is on the phone
+        if (confirm && Steam.Cs2Running && IpChangeDrops && !await Ask("CS2 is open", "If you are on a server, you will be disconnected when the IP changes. Continue?", "Change IP")) return false;
 
         _changingIp = true;
         // Protection off: the phone's IP changes all the same (servers see it once protection is on). The new IP isn't known yet: untrusted (servers and CS2 blocked) until it is measured again.
@@ -625,7 +637,7 @@ public partial class MainWindow
             {
                 _distrust = true;
                 Telemetry.Count("ip_home_back");
-                Toast("The phone came back with your home IP. Your servers stay blocked: turn off the phone's Wi-Fi.", Tone.Error);
+                Toast(HomeBackText(_protOn), Tone.Error);
             }
             else if (got != null && first == null)
             {
@@ -674,6 +686,11 @@ public partial class MainWindow
             await RefreshPublicIps();
         }
     }
+
+    /// <summary>Change IP came back with the home IP: the phone shares the home Wi-Fi. Only protection on blocks your servers then.</summary>
+    public static string HomeBackText(bool protOn) => protOn
+        ? "The phone came back with your home IP. Your servers stay blocked: turn off the phone's Wi-Fi."
+        : "The phone came back with your home IP: it is sharing your Wi-Fi. Turn off the phone's Wi-Fi.";
 
     /// <summary>
     /// "Keep changing until the connection is good": 10 pings to the IP test address, only through the phone. Null when the test

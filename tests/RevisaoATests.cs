@@ -44,5 +44,67 @@ static class RevisaoATests
         check("Revisão A24: o tooltip do hotspot diz o que fica bloqueado", !prot.Contains("everything is blocked.") && prot.Contains("your servers and CS2 are blocked while protection is on"), "");
         check("Revisão A24: o Log do kill switch distingue sem ligação de ligação por confirmar", guard.Contains("(candidate != null ? \" blocked (the phone isn't trusted yet).\" : \" blocked (no connection).\")"), "");
         check("Revisão A6: a pergunta do hotspot diz que só bloqueia com a proteção ligada", prot.Contains("servers and CS2 get blocked while protection is on."), "");
+
+        var phone = Src("Views", "MainWindow.Phone.cs");
+        var iphoneSrc = Src("Views", "MainWindow.Iphone.cs");
+        var settings = Src("Views", "MainWindow.Settings.cs");
+
+        // A2: com a proteção desligada, o IP igual ao de casa não diz "blocked" nem toca o alarme
+        check("Revisão A2: proteção desligada, IP igual ao de casa sem 'blocked'", !MainWindow.SameIpText("1.2.3.4", unprotected: true).Contains("blocked")
+              && MainWindow.SameIpText("1.2.3.4", unprotected: false).Contains("blocked"), "");
+        check("Revisão A2: proteção desligada, o som e o toast de bloqueio não saem",
+              prot.Contains("if (same && unprotected) Log.Warn(SameIpText(e, unprotected: true));\n                else if (same)\n                {\n                    Log.Error(SameIpText(e, unprotected: false));\n                    if (Steam.Cs2Running) System.Media.SystemSounds.Hand.Play();"), "");
+        check("Revisão A2: proteção desligada, sem IP de casa não diz 'blocked'", !MainWindow.NoHomeText(true).Contains("blocked") && MainWindow.NoHomeText(false).Contains("blocked"), "");
+        check("Revisão A2: proteção desligada, o IP verificado não diz que os servidores já o veem",
+              MainWindow.CheckedText("1.2.3.4", true).Contains("once protection is on") && MainWindow.CheckedText("1.2.3.4", false) == "Phone connection checked: servers see 1.2.3.4.", "");
+
+        // A3: Turn off com o CS2 aberto diz que o servidor onde se está vê o IP de casa
+        check("Revisão A3: Turn off com o CS2 aberto avisa do servidor onde se está", MainWindow.TurnOffAsk(true).Contains("if you are on a server, it sees your home IP from now on")
+              && !MainWindow.TurnOffAsk(false).Contains("CS2 is open") && settings.Contains("TurnOffAsk(!_demo && Steam.Cs2Running)"), "");
+
+        // A4: proteção desligada, a caixa do IP não escreve o IP de casa nem "phone ready" sem confiança
+        check("Revisão A4: proteção desligada, IP sem confiança não aparece nem diz 'ready'", !MainWindow.OffEgressLine("85.1.1.1", ready: false).Contains("85.1.1.1")
+              && !MainWindow.OffEgressLine("85.1.1.1", ready: false).Contains("ready") && MainWindow.OffEgressLine("85.1.1.1", ready: true).Contains("phone ready: 85.1.1.1"), "");
+        check("Revisão A4: a caixa usa a mesma confiança que o Status", prot.Contains("OffEgressLine(_egressPublic, PhoneReadyOff(_last))") && prot.Contains("var phoneReady = PhoneReadyOff(rep);"), "");
+
+        // A6: frases que diziam "blocked" ou "servers see it" com a proteção desligada
+        check("Revisão A6: Change IP de volta com o IP de casa, sem proteção, não diz 'blocked'", !MainWindow.HomeBackText(false).Contains("blocked") && MainWindow.HomeBackText(true).Contains("blocked"), "");
+        check("Revisão A6: Phone setup pronto, sem proteção, diz para a ligar", MainWindow.SetupReadyText(false).Contains("Turn on protection") && !MainWindow.SetupReadyText(false).Contains("then servers see it"), "");
+        check("Revisão A6: o balão do ícone só diz 'Protection carries on' com a proteção ligada", !MainWindow.TrayHintText(false).Contains("Protection") && MainWindow.TrayHintText(true).StartsWith("Protection carries on."), "");
+
+        // A14: as regiões continuam bloqueadas com a proteção desligada e em No phone
+        check("Revisão A14: 'nothing is blocked' só sem regiões bloqueadas", MainWindow.NothingBlocked(0) == "nothing is blocked" && MainWindow.NothingBlocked(2).Contains("regions")
+              && !prot.Contains("and nothing is blocked. Accounts"), "");
+        check("Revisão A14: o aviso de Use the app with protection off fala das regiões", MainWindow.UseOffWarning.Contains("regions") && MainWindow.UseOffWarning.Contains("sees your home IP"), "");
+
+        // A15: com o PC todo pelo telemóvel e a proteção desligada, os servidores veem o IP do telemóvel
+        var phoneAdapter = new Adapter { Index = 7, Name = "Ethernet 2", IsPhone = true, Up = true };
+        var onPhoneRep = new GuardReport { EffectiveMode = "off", Adapters = new() { phoneAdapter }, PcDefaultIndex = 7, PcDefaultName = "Ethernet 2", PhoneIndex = 7 };
+        var homeRep = new GuardReport { EffectiveMode = "off", Adapters = new() { new Adapter { Index = 3, Name = "Wi-Fi", Up = true }, phoneAdapter }, PcDefaultIndex = 3, PcDefaultName = "Wi-Fi", PhoneIndex = 7 };
+        check("Revisão A15: o PC pelo telemóvel reconhece-se", MainWindow.PcOnPhone(onPhoneRep) && !MainWindow.PcOnPhone(homeRep), "");
+        check("Revisão A15: com o PC pelo telemóvel o Status não diz que veem o IP de casa", !MainWindow.OffSeen(true, 0).Contains("every server see your home IP") && MainWindow.OffSeen(true, 0).Contains("see its IP")
+              && MainWindow.OffSeen(false, 0) == "CS2 and every server see your home IP, and nothing is blocked.", "");
+
+        // A20 (parte do Mobile data): com a proteção desligada o Wi-Fi do telemóvel não é vermelho
+        check("Revisão A20: proteção desligada, Mobile data com o Wi-Fi ligado fica âmbar", MainWindow.DataRow(true, false, unprotected: true) == (null, true)
+              && MainWindow.DataRow(true, false, false) == (false, false) && MainWindow.DataRow(true, true, false) == (null, true) && MainWindow.DataRow(false, false, true) == (true, false), "");
+
+        // A21: conta servidores, não IPs
+        check("Revisão A21: 'Off: N servers' conta servidores", MainWindow.RoutesOffText(1) == "Off: 1 server sees your home IP" && MainWindow.RoutesOffText(3) == "Off: 3 servers see your home IP"
+              && prot.Contains("RoutesOffText(_servers.Count)"), "");
+
+        // A22: a pergunta do fecho segue Turn on protection when the app starts
+        check("Revisão A22: com Turn on at start a pergunta do fecho diz que começa ligada", !MainWindow.CloseKeepText("Your servers", true).Contains("starts with protection off")
+              && MainWindow.CloseKeepText("Your servers", true).Contains("starts with protection on") && MainWindow.CloseKeepText("Your servers", false).Contains("starts with protection off"), "");
+
+        // A23: a linha VPN app sem proteção não diz que vai pelo telemóvel, e muda com o estado
+        check("Revisão A23: VPN app sem proteção não diz 'through the phone'", !ChecksView.VpnHelpFor(true).Contains("through the phone") && ChecksView.VpnHelpFor(false) == ChecksView.VpnHelp, "");
+        check("Revisão A23: a ajuda da linha VPN atualiza-se em cada relatório", Src("Views", "MainWindow.Checks.cs").Contains("_cVpn.Help = ChecksView.VpnHelpFor(rep.Unprotected);"), "");
+
+        // A25: com a proteção desligada (e o CS2 por casa) trocar o IP não deita ninguém abaixo
+        check("Revisão A25: trocar o IP só derruba com a proteção ligada ou o PC pelo telemóvel", MainWindow.ChangeDrops(true, false) && MainWindow.ChangeDrops(false, true) && !MainWindow.ChangeDrops(false, false), "");
+        check("Revisão A25: sem derrubar, o Status da troca não diz 'you will drop'", !MainWindow.ChangingSub(false).Contains("drop") && MainWindow.ChangingSub(true).Contains("you will drop"), "");
+        check("Revisão A25: a pergunta 'CS2 is open' do Change IP só quando derruba", phone.Contains("if (confirm && Steam.Cs2Running && IpChangeDrops && !await Ask(\"CS2 is open\",")
+              && phone.Contains("var drop = IpChangeDrops ?") && iphoneSrc.Contains("(IpChangeDrops ? \"If you are on a server, you will drop.\""), "");
     }
 }

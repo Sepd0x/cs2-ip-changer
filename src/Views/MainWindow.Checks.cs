@@ -91,10 +91,11 @@ public partial class MainWindow
         }
         if (_cVpn == null)
         {
-            _cVpn = new CheckItem { Title = "VPN app", Help = ChecksView.VpnHelp, Waiting = true };
+            _cVpn = new CheckItem { Title = "VPN app", Waiting = true };
             _checks.Add(_cVpn);
             Log.Warn($"A VPN app is on ({name}). Turn it off while you play: the app wasn't tested with it.");
         }
         _cVpn.Detail = ChecksView.VpnDetail(name);
+        _cVpn.Help = ChecksView.VpnHelpFor(rep.Unprotected);   // each report: protection can be turned on or off while the VPN stays
     }
 }
