@@ -111,8 +111,9 @@ const style = home.match(/<style>[\s\S]*?<\/style>/)[0].replace(/\/\* home: [\s\
 .gw{position:absolute;inset:0;z-index:0;pointer-events:none}
 .gw canvas{display:block;width:100%;height:100%;opacity:0;transition:opacity 1.4s var(--ease-out)}
 .gw.ready canvas{opacity:1}
-/* the veil: text never sits on the picture without the page's own ground behind it */
-.gw::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 0,color-mix(in srgb,var(--bg) 86%,transparent) calc(var(--gw-l,44%) - 8%),transparent calc(var(--gw-l,44%) + 5%)),linear-gradient(transparent 84%,var(--bg))}
+/* the veil: text never sits on the picture without the page's own ground behind it; under the copy it is the ground itself
+   (6 Nov.: parts of the world outside the shot, a monitor or a leg of the route, showed through behind the headline) */
+.gw::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 0,var(--bg) calc(var(--gw-l,44%) - 12%),color-mix(in srgb,var(--bg) 90%,transparent) calc(var(--gw-l,44%) - 3%),transparent calc(var(--gw-l,44%) + 6%)),linear-gradient(transparent 84%,var(--bg))}
 .ghero{position:relative;z-index:1;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));align-items:center;min-height:min(calc(100svh - var(--top-h)),64rem);padding-block:clamp(2.25rem,1rem + 3.2vw,4.5rem) clamp(5.5rem,4rem + 3vw,7.5rem)}
 .ghero-copy{grid-column:1/7;min-width:0;padding-right:clamp(0rem,2vw,2.5rem)}
 .ghero-copy>*{position:relative;z-index:2}
@@ -187,6 +188,10 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 .toc a.on::before{transform:none}
 /* the text: a 68ch column, numbered sections */
 .gtext{color:var(--ink2);max-width:42rem;counter-reset:sec}
+/* below the first screen the browser lays these out only when they come near (6 Nov.: the first layout of the whole guide was
+   one 600 ms task on a slow phone); the sizes are guesses until each part has been on screen once, then remembered */
+.gtext{content-visibility:auto;contain-intrinsic-size:auto 3400px}.gfaq{content-visibility:auto;contain-intrinsic-size:auto 420px}.gmore{content-visibility:auto;contain-intrinsic-size:auto 800px}footer .fgrid{content-visibility:auto;contain-intrinsic-size:auto 1250px}
+@media (min-width:1000px){.gtext{contain-intrinsic-size:auto 2100px}.gmore{contain-intrinsic-size:auto 380px}footer .fgrid{contain-intrinsic-size:auto 480px}}.gshot{content-visibility:auto;contain-intrinsic-size:auto 400px}.gtoc-m{content-visibility:auto;contain-intrinsic-size:auto 260px}footer .legal{content-visibility:auto;contain-intrinsic-size:auto 120px}
 .gtext h2::before{content:counter(sec,decimal-leading-zero);content:counter(sec,decimal-leading-zero) / "";display:inline-block;width:3.2rem;font:400 .8rem/1 var(--mono);letter-spacing:0;color:var(--ink3);vertical-align:.55em}
 .gtext h2{background:var(--t-top) 0 0/3rem 2px no-repeat;counter-increment:sec;color:var(--ink);font:500 clamp(1.7rem,1.1rem + 1.7vw,2.8rem)/1.06 var(--disp);letter-spacing:-.035em;margin:clamp(3.25rem,2.4rem + 2.6vw,5rem) 0 1.2rem;padding-top:clamp(1rem,.8rem + .6vw,1.4rem);border-top:0}
 .gtext h2:first-child{margin-top:0;padding-top:clamp(1rem,.8rem + .6vw,1.4rem)}
@@ -217,7 +222,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
   .gtext td.us{padding-left:0;background:none;font-weight:500}
 }
 /* FAQ and related guides */
-.gl .gfaq{max-width:44rem;margin-top:clamp(3.25rem,2.4rem + 2.6vw,5rem);padding:clamp(2rem,1.6rem + 1.4vw,3rem) 0 0;border-top:1px solid var(--line)}
+.gl .gfaq{max-width:42rem;margin-top:clamp(3.25rem,2.4rem + 2.6vw,5rem);padding:clamp(2rem,1.6rem + 1.4vw,3rem) 0 0;border-top:1px solid var(--line)}
 .gfaq h2,.gmore h2{font:500 clamp(1.6rem,1.15rem + 1.4vw,2.4rem)/1.08 var(--disp);letter-spacing:-.03em;margin:0 0 1.4rem}
 .gfaq details[open] summary{color:var(--ink)}
 .gmore{grid-column:1/-1;margin-top:clamp(4rem,2.6rem + 4vw,7rem);padding-top:clamp(2rem,1.6rem + 1.4vw,3rem);border-top:1px solid var(--line)}
@@ -233,6 +238,8 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
   .gmore ul a:hover svg{transform:translateX(6px);color:var(--accent)}
 }
 .gmore ul a:focus-visible::before{transform:scaleX(1)}
+/* a phone: the guide's name over its line, the arrow on the name's row (three columns left the line four lines tall) */
+@media (max-width:520px){.gmore ul a{grid-template-columns:minmax(0,1fr) 1.25rem;gap:.35rem 1rem}.gmore ul a span{grid-column:1;grid-row:2}.gmore ul a svg{grid-column:2;grid-row:1}}
 .gmore .end{display:none}
 .gmore .end .btn{width:100%}
 .gmore .end .link,.gstar a{font:inherit;text-decoration:underline;text-decoration-color:var(--line2);text-decoration-thickness:1px;text-underline-offset:.22em}
@@ -443,7 +450,7 @@ export const pages = [
     eyebrow: 'Setup guide',
     h1: "Use your phone's mobile data for CS2 only, and change IP in one click",
     lead: 'The whole setup, start to finish: the phone shares its mobile data over USB, only CS2, Steam and your servers use it, and Change IP gets a new carrier IP from the PC.',
-    crop: ['connection', 91, 44, 569, 428,'The Connection page: protection status, the IP servers see next to your home IP, and the phone ready to change IP'],
+    crop: ['connection', 91, 44, 569, 452,'The Connection page: protection status, the IP servers see next to your home IP, and the phone ready to change IP'],
     related: ['cs2-iphone-hotspot', 'cs2-ip-ban', 'is-it-safe'],
     sections: [
       ['What you need', `<ul><li>Windows 10 or 11 (64-bit) and admin rights: routes and firewall rules are system settings.</li><li>Windows Firewall turned on. Third-party firewalls that turn it off (some antivirus suites) leave the app without a kill switch, and it says so.</li><li>An Android phone or iPhone with mobile data, and a USB cable or the phone's Wi-Fi hotspot.</li><li>USB debugging on the phone, only if you want to change IP from the PC.</li></ul>`],
@@ -673,6 +680,25 @@ function render(p, modified) {
 <link rel="preload" href="../fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../fonts/fragment-mono.woff2" as="font" type="font/woff2" crossorigin>
 <script>document.documentElement.classList.add('js');if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('fx')</script>
+<script>
+/* the loading screen: only with JS and WebGL. The line fills (its own transform: a custom property on <html> made every step restyle the whole page) as the page gets ready (HTML, fonts, the 3D script) and the page
+   comes in on the world's first frame, or after 6 s, or at once without WebGL. While it shows, the wheel, touch and the
+   scroll keys wait, so nothing moves under it. Reduced motion: the line steps and the screen goes at once */
+(function(h){try{var c=document.createElement('canvas');if(!(c.getContext('webgl2')||c.getContext('webgl')))return}catch(x){return}
+h.classList.add('ld','ldu');var t0=performance.now(),p=0,done=false,K={32:1,33:1,34:1,35:1,36:1,37:1,38:1,39:1,40:1},O={capture:true,passive:false},
+hold=function(e){if(e.type!=='keydown'||K[e.keyCode]){e.preventDefault();e.stopImmediatePropagation()}},
+set=function(v){if(v>p){p=v;var e=document.querySelector('.ld-bar b');if(e)e.style.transform='scaleX('+v+')'}},
+end=function(e){if(done)return;done=true;if(e&&e.type==='worldready')h.classList.add('ldw');set(1);['wheel','touchmove','keydown'].forEach(function(t){removeEventListener(t,hold,O)});
+setTimeout(function(){h.classList.add('ld-out');setTimeout(function(){h.classList.remove('ld','ld-out')},400)},Math.max(90,300-(performance.now()-t0)))};
+['wheel','touchmove','keydown'].forEach(function(t){addEventListener(t,hold,O)});
+window.__ldStep=set;window.__ldEnd=end;set(.12);
+document.addEventListener('worldready',end,true);setTimeout(end,6000);
+document.addEventListener('DOMContentLoaded',function(){set(.25)});
+document.addEventListener('worldprogress',function(e){set(.45+.52*(+e.detail||0))},true);
+if(document.fonts)document.fonts.ready.then(function(){set(.35)});
+new MutationObserver(function(){if(h.classList.contains('no-gl'))end()}).observe(h,{attributes:true,attributeFilter:['class']});
+addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.documentElement)
+</script>
 <script type="application/ld+json">
 ${JSON.stringify(ld, null, 1)}
 </script>
@@ -680,6 +706,7 @@ ${style}
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
+<div class="ld-scr" aria-hidden="true"><div class="ld-in"><span class="ld-name"><img src="../img/icon.png" alt="" width="28" height="28">CS2 IP Changer</span><span class="ld-bar"><b></b><i></i></span></div></div>
 <header class="top">
   <div class="wrap">
     <a class="brand" href="../"><img src="../img/icon.png" alt="" width="28" height="28">CS2 IP Changer</a>
@@ -761,7 +788,7 @@ ${p.faq?.length ? `    <section class="gfaq" aria-labelledby="faq">
 </main>
 ${footer}
 <script>
-(function(){var b='../assets/js/',l=(document.documentElement.classList.contains('fx')?(matchMedia('(pointer: fine)').matches?['gsap.min.js','ScrollTrigger.min.js','lenis.min.js']:[]):[]).concat(['readout.js','../guides/world.min.js']);l.forEach(function(f){var s=document.createElement('script');s.src=b+f;s.async=false;if(/world/.test(f)){s.onload=function(){window.__gw&&window.__gw()};s.onerror=function(){document.documentElement.classList.add('no-gl')}}document.body.appendChild(s)})})();
+(function(){var b='../assets/js/',l=(document.documentElement.classList.contains('fx')?(matchMedia('(pointer: fine)').matches?['gsap.min.js','ScrollTrigger.min.js','lenis.min.js']:[]):[]).concat(['readout.js','../guides/world.min.js']);l.forEach(function(f){var s=document.createElement('script');s.src=b+f;s.async=false;if(/world/.test(f)){s.onload=function(){window.__ldStep&&__ldStep(.45);window.__gw&&window.__gw()};s.onerror=function(){document.documentElement.classList.add('no-gl')}}document.body.appendChild(s)})})();
 </script>
 <script>
 (function(){

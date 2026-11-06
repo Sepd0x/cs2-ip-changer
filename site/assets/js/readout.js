@@ -24,6 +24,12 @@
   var lenis = null;
   if (HAS) {
     G.registerPlugin(ST);
+    // the guides lay out their text, questions and footer only when they come near (content-visibility); each time one is
+    // laid out for the first time the page's height changes, so the scroll-linked parts measure again (6 Nov.)
+    if (d.querySelector('.gtext') && 'ResizeObserver' in W) {
+      var rhH = 0, rhT = 0;
+      new ResizeObserver(function () { var h = d.documentElement.scrollHeight; if (Math.abs(h - rhH) < 2) return; rhH = h; clearTimeout(rhT); rhT = setTimeout(function () { ST.refresh(); }, 200); }).observe(d.body);
+    }
     if (W.Lenis) {
       lenis = new W.Lenis({ lerp: .14, wheelMultiplier: 1 }); W.__lenis = lenis;
       lenis.on('scroll', ST.update);
@@ -327,7 +333,7 @@
       // the kit shows the last change: the IP before and the new one, always in another /16
       var ka = $('.k-ip .a'), kb = $('.k-ip .b'); if (ka && kb && kb.textContent !== ip) { ka.textContent = kb.textContent; kb.textContent = ip; }
     });
-    var pics = $$('.views picture', win), zl = $('.views', win), pages = $$('#pages li');
+    var pics = $$('.views picture', win), zl = $('.views', win), pages = $$('#pages > li');
     var bigs = {};
     pages.forEach(function (li) { var bn = $('.bn', li); if (bn) bigs[li.getAttribute('data-pg')] = bn; });
     var cur = 'connection';
@@ -631,10 +637,35 @@
     });
   }
 
-  /* ------------------------------------------------------------ footer: the top line cuts through the name as it comes up */
+  /* ------------------------------------------------------------ footer: the name lights up as the page reaches it */
+  // the three colors draw through its outline with the scroll; then a packet of light runs through the letters and packets
+  // run along the horizon, only while it is on screen; Pause motion holds them; the light follows a mouse near it
   var wm = $('.wordmark');
   if (wm && HAS) ST.create({ trigger: wm, start: 'top bottom', end: 'max', scrub: .6, onUpdate: function (s) { wm.style.setProperty('--wm', (s.progress * 100).toFixed(1) + '%'); } });
   else if (wm) wm.style.setProperty('--wm', '100%');
+  if (wm && FX) {
+    var wmHeld = function () { var h = false; try { h = localStorage.getItem('cs2-motion') === 'paused'; } catch (x) {} wm.classList.toggle('wm-hold', h); return h; };
+    wm.classList.add('wm-run'); wmHeld();
+    addEventListener('cs2motion', function () { wmHeld(); });
+    d.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('#pause')) setTimeout(wmHeld, 0); });
+    if ('IntersectionObserver' in W) new IntersectionObserver(function (es) { wm.classList.toggle('wm-vis', es[es.length - 1].isIntersecting); }).observe(wm);
+    else wm.classList.add('wm-vis');
+    var svg = $('svg', wm), spot = $('.wm-spot', wm);
+    if (fine && svg && spot && svg.createSVGPoint) {
+      var pt = svg.createSVGPoint(), sx = -400, sy = 100, tx2 = -400, ty2 = 100, spr = 0;
+      var spMove = function () { sx += (tx2 - sx) * .16; sy += (ty2 - sy) * .16; spot.setAttribute('cx', sx.toFixed(1)); spot.setAttribute('cy', sy.toFixed(1)); spr = Math.abs(tx2 - sx) + Math.abs(ty2 - sy) > .5 ? requestAnimationFrame(spMove) : 0; };
+      addEventListener('pointermove', function (e) {
+        var r = svg.getBoundingClientRect();
+        var near = e.clientY > r.top - 120 && e.clientY < r.bottom + 60 && !wm.classList.contains('wm-hold');
+        wm.classList.toggle('wm-near', near);
+        if (!near) return;
+        var m = svg.getScreenCTM(); if (!m) return;
+        pt.x = e.clientX; pt.y = e.clientY; var q = pt.matrixTransform(m.inverse());
+        if (sx < -300) { sx = q.x; sy = q.y; }
+        tx2 = q.x; ty2 = q.y; if (!spr) spr = requestAnimationFrame(spMove);
+      }, { passive: true });
+    }
+  }
 
   /* ------------------------------------------------------------ .rv: in when it reaches the screen, once */
   var rvs = $$('.rv, .kit > div, .vs > div');
@@ -642,6 +673,12 @@
     var rio = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); rio.unobserve(e.target); } }); }, { rootMargin: '0px 0px -8% 0px' });
     rvs.forEach(function (el) { rio.observe(el); });
   } else rvs.forEach(function (el) { el.classList.add('in'); });
+  /* the small demos (And the rest, Is it safe?, phone or VPN) play when the cell is well on screen, not as it peeks in */
+  var demoEls = $$('.kit > div, .vs > div, .instr > li');
+  if (FX && 'IntersectionObserver' in W) {
+    var dio = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('go'); dio.unobserve(e.target); } }); }, { rootMargin: '0px 0px -38% 0px' });
+    demoEls.forEach(function (el) { dio.observe(el); });
+  } else demoEls.forEach(function (el) { el.classList.add('go'); });
 
   /* ------------------------------------------------------------ the guides: each page's own number rolls in once */
   $$('.ro-sig').forEach(function (box) {

@@ -35,10 +35,10 @@ const IP_OLD = '198.51.100.23', IP_NEW = '192.0.2.140';
 // labels: proposal A's callouts; prefixed so they never meet the page's own classes
 const CSS = `
 .wd-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;contain:layout paint}
-.wd-lab{position:absolute;left:0;top:0;opacity:var(--o,0);transform:translate3d(var(--x,-999px),var(--y,-999px),0);will-change:transform,opacity}
+.wd-lab{position:absolute;left:0;top:0;opacity:var(--o,0);transition:opacity .25s;transform:translate3d(var(--x,-999px),var(--y,-999px),0);will-change:transform,opacity}
 .wd-lab i{position:absolute;left:-4px;top:-4px;width:8px;height:8px;border-radius:50%;background:var(--t-text);box-shadow:0 0 0 4px color-mix(in srgb,var(--t-text) 14%,transparent)}
 .wd-lab::before{content:"";position:absolute;left:-.5px;bottom:8px;width:1px;height:var(--stem,44px);background:linear-gradient(0deg,color-mix(in srgb,var(--t-text) 55%,transparent),transparent)}
-.wd-lab>div{position:absolute;left:-10px;bottom:calc(var(--stem,44px) + 12px);white-space:nowrap;padding:.5rem .7rem;border-radius:7px;background:color-mix(in srgb,var(--t-bg) 90%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--t-text) 11%,transparent)}
+.wd-lab>div{position:absolute;left:-10px;bottom:calc(var(--stem,44px) + 12px);white-space:nowrap;padding:.5rem .7rem;border-radius:7px;background:var(--t-bg);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--t-text) 13%,transparent),0 10px 28px -12px #000}
 .wd-lab b{display:block;font:600 .9rem/1.2 "Funnel Sans",system-ui,sans-serif;color:var(--t-text)}
 .wd-lab span,.wd-lab small{display:block;font:400 .78rem/1.35 "Fragment Mono",ui-monospace,Consolas,monospace;color:var(--t-muted);margin-top:.15rem}
 .wd-lab small{font-size:.75rem}
@@ -61,7 +61,7 @@ function addCSS() {
   const s = document.createElement('style'); s.dataset.wd = ''; s.textContent = CSS; document.head.appendChild(s);
 }
 
-function mount(canvas, opts = {}) {
+function* build(canvas, opts = {}) {
   const still = !!opts.still;
   const root = document.documentElement;
   const css = getComputedStyle(root);
@@ -80,6 +80,7 @@ function mount(canvas, opts = {}) {
   catch (e) { return null; }
   if (!renderer.capabilities.isWebGL2) { renderer.dispose(); return null; }
   renderer.debug.checkShaderErrors = false;
+  yield;
   const small = () => (canvas.clientWidth || innerWidth) < 761;
   const dpr = () => Math.min(devicePixelRatio, small() ? 2 : 1.75);
   renderer.setPixelRatio(dpr());
@@ -90,6 +91,7 @@ function mount(canvas, opts = {}) {
   scene.fog = new FogExp2(C.bg, 0.02);
   const camera = new PerspectiveCamera(30, 1, 0.1, 320);
 
+  yield;
   // ---------- a studio environment for reflections: dark, two soft boxes and the route's colours low on the horizon ----------
   const envCv = document.createElement('canvas'); envCv.width = 512; envCv.height = 256;
   {
@@ -103,6 +105,7 @@ function mount(canvas, opts = {}) {
   }
   const envTex = new CanvasTexture(envCv); envTex.mapping = EquirectangularReflectionMapping; envTex.colorSpace = SRGBColorSpace;
 
+  yield;
   // ---------- light: a dim world; each part of the route lights what is near it, the screen lights the desk ----------
   const hemi = new HemisphereLight(C.surface3, C.bg, 0.9); scene.add(hemi);
   const key = new DirectionalLight(mul(C.muted, 1), 0.75); key.position.set(-14, 26, 16); key.target.position.set(2, 0, -3);
@@ -126,6 +129,7 @@ function mount(canvas, opts = {}) {
     fragmentShader: `uniform vec3 uBg,uA,uB; varying vec3 vP; void main(){ float h = exp(-abs(vP.y)*14.); float side = smoothstep(-1.,1.,vP.x); vec3 tint = mix(uA,uB,side); gl_FragColor = vec4(uBg + tint*h*.014, 1.); }`,
   })));
 
+  yield;
   // ---------- materials ----------
   const M = {
     metal: new MeshStandardMaterial({ color: C.surface3, emissive: C.surface2, emissiveIntensity: 0.25, metalness: 0.35, roughness: 0.4, envMapIntensity: 0.6 }),
@@ -142,7 +146,10 @@ function mount(canvas, opts = {}) {
     chrome: new MeshStandardMaterial({ color: C.muted, metalness: 0.5, roughness: 0.3, envMapIntensity: 1 }),
   };
   const shadowy = o => { o.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); return o; };
-  const rbox = (w, h, d, r, mat, seg = 3) => new Mesh(new RoundedBoxGeometry(w, h, d, seg, Math.min(r, w / 2, h / 2, d / 2)), mat);
+  // one geometry per size: the racks, the props and the cards repeat the same boxes, and building each again was a third of
+  // the start's longest task on a slow phone (6 Nov.). Nothing changes a box's geometry after it is made
+  const RB = new Map();
+  const rbox = (w, h, d, r, mat, seg = 3) => { const rr = Math.min(r, w / 2, h / 2, d / 2), k = w + ',' + h + ',' + d + ',' + rr + ',' + seg; let g = RB.get(k); if (!g) RB.set(k, g = new RoundedBoxGeometry(w, h, d, seg, rr)); return new Mesh(g, mat); };
 
   // small canvas textures, drawn with the app's tokens
   function cvTex(w, h, draw, srgb = true) {
@@ -150,6 +157,7 @@ function mount(canvas, opts = {}) {
     const t = new CanvasTexture(cv); if (srgb) t.colorSpace = SRGBColorSpace; t.anisotropy = 8; return t;
   }
 
+  yield;
   // ---------- ground: a matte floor with A's quiet dot lattice, lit for real by the route's lights ----------
   const floor = new Mesh(new PlaneGeometry(260, 260), new MeshStandardMaterial({ color: mul(C.bg, 0.6), roughness: 1, metalness: 0 }));
   floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
@@ -174,6 +182,7 @@ function mount(canvas, opts = {}) {
   function blob(x, z, w, d, ry = 0) { const m = new Mesh(new PlaneGeometry(w, d), blobMat); m.rotation.set(-Math.PI / 2, 0, ry); m.position.set(x, 0.006, z); scene.add(m); }
 
   let stitchRef = null;
+  yield;
   // ---------- your desk: a mat that groups PC, screen, keyboard and phone ----------
   {
     const deskMat = rbox(11.6, 0.05, 6.8, 0.025, M.mat); deskMat.position.set(-4.1, 0.025, 1.75); deskMat.receiveShadow = true; scene.add(deskMat);
@@ -181,6 +190,7 @@ function mount(canvas, opts = {}) {
     stitch.rotation.set(-Math.PI / 2, 0, Math.PI / 4); stitch.scale.set(8.05, 4.72, 1); stitch.position.set(-4.1, 0.052, 1.75); scene.add(stitch);
   }
 
+  yield;
   // ---------- the PC tower: brushed side, a glass side panel with the parts inside, a vented front with the app's top line ----------
   const pc = new Group(); scene.add(pc);
   const TW = 1.15, TH = 2.5, TD = 2.5, TX = -7.6, TZ = 0.6;
@@ -225,6 +235,7 @@ function mount(canvas, opts = {}) {
   const USB_PC = V3(TX + TW / 2 + 0.03, 0.42, TZ + 1.08);
   const LAN_PC = V3(TX - 0.15, 0.32, TZ - TD / 2 - 0.02);
 
+  yield;
   // ---------- the monitor: thin panel, real app on screen, its light falls on the desk ----------
   const mon = new Group(); mon.position.set(-4.5, 0.05, 0.1); mon.rotation.y = -0.28; pc.add(mon);
   const SW = 3.42, SH = 2.21, SY = 2.5;
@@ -275,6 +286,7 @@ function mount(canvas, opts = {}) {
     shadowy(kb); blob(-4.25, 1.75, 3.2, 1.3, 0.28);
   }
 
+  yield;
   // ---------- the phone on a stand, its screen shows its real state ----------
   const phone = new Group(); phone.position.set(-0.55, 0.05, 2.85); phone.rotation.y = -0.6; scene.add(phone);
   const PW = 0.9, PH = 1.86, PD = 0.085, TILT = -0.36;
@@ -328,6 +340,7 @@ function mount(canvas, opts = {}) {
   const PHONE_TOP = tw(0, PH + 0.05, 0);   // where the radio link leaves
   const PHONE_FRONT = tw(0, 0, 1).sub(tw(0, 0, 0)).normalize();
 
+  yield;
   // ---------- the carrier's cell site: a monopole with three sector antennas, a dish, a cabinet and a fence ----------
   const mastBase = V3(5.5, 0, -6.5), mastH = 8.2;
   const mastTop = mastBase.clone().add(V3(0, mastH + 0.15, 0));
@@ -375,6 +388,7 @@ function mount(canvas, opts = {}) {
   const beacon = new Mesh(new SphereGeometry(0.07, 12, 12), new MeshBasicMaterial({ color: C.bad }));
   beacon.position.copy(mastBase).add(V3(0, mastH + 0.05, 0)); scene.add(beacon);
 
+  yield;
   // ---------- the CS2 server: three cabinets on a raised floor; the middle one is the server you play on ----------
   const serverTop = V3(SX, 4.62, SZ);
   const RW = 1.75, RH = 4.6, RD = 1.5;
@@ -434,6 +448,7 @@ function mount(canvas, opts = {}) {
     scene.add(new Points(g, m)); return m;
   })();
 
+  yield;
   // ---------- home: the router and the grey home route (browser, Discord, downloads) ----------
   const routerPos = V3(-11, 0, -4.8);
   {
@@ -460,6 +475,7 @@ function mount(canvas, opts = {}) {
   scene.add(new Mesh(new TubeGeometry(homeCable, 80, 0.04, 8), homeMat));
   scene.add(new Mesh(new TubeGeometry(homeOut, 90, 0.035, 6), homeMat));
 
+  yield;
   // ---------- the kill switch: Windows Firewall on the PC. CS2's way home ends at it; the rest of the PC still goes home ----------
   const gatePos = homeCable.getPointAt(0.14).setY(0), gateTan = homeCable.getTangentAt(0.14);
   const gate = new Group(); gate.position.copy(gatePos); gate.rotation.y = Math.atan2(gateTan.x, gateTan.z); scene.add(gate);
@@ -485,6 +501,7 @@ function mount(canvas, opts = {}) {
   });
   scene.add(new Mesh(new TubeGeometry(homeTry, 60, 0.035, 6), tryMat));
 
+  yield;
   // ---------- the route itself: proposal A's line, at full strength ----------
   const toPhone = PORT.clone().add(PHONE_FRONT.clone().multiplyScalar(0.55)).setY(0.08);
   const cable = new CatmullRomCurve3([USB_PC, USB_PC.clone().add(V3(0.35, -0.3, 0.25)), V3(-6.3, 0.07, 2.75), V3(-4.9, 0.07, 3.7), V3(-3.0, 0.07, 4.0), V3(-1.7, 0.07, 3.85), toPhone, PORT.clone().add(PHONE_FRONT.clone().multiplyScalar(0.12)).add(V3(0, -0.06, 0)), PORT], false, 'centripetal');
@@ -494,7 +511,7 @@ function mount(canvas, opts = {}) {
   const routeFS = `uniform vec3 c1,c2,c3,uDead; uniform float uS,uE,uTime,uOn,uDash,uCut,uGain,uDraw,uReveal;
   varying vec2 vUv; varying vec3 vN; varying vec3 vV;
   void main(){
-    float u = mix(uS,uE,vUv.x);
+    float u = clamp(mix(uS,uE,vUv.x),0.,1.);   // a guide may stretch a leg past the ends (6 Nov.): the colours stop there
     vec3 col = u < .5 ? mix(c1,c2,u*2.) : mix(c2,c3,u*2.-1.);
     float core = pow(abs(dot(normalize(vN),normalize(vV))),1.2);
     if(uDash > 0.){ if(fract(vUv.x*uDash - uTime*1.6) > .5) discard; }
@@ -553,6 +570,7 @@ function mount(canvas, opts = {}) {
   });
   const packets = new Points(pGeo, pMat); packets.frustumCulled = false; scene.add(packets);
 
+  yield;
   // ---------- shots: one per beat. Positions are proposal A's where A had them ----------
   scene.updateMatrixWorld(true);
   let apex = arc.getPoint(0); for (let t = 0; t <= 1; t += 0.02) { const p = arc.getPoint(t); if (p.y > apex.y) apex = p; }
@@ -565,11 +583,11 @@ function mount(canvas, opts = {}) {
   const K = (p, t = 0, r = 0, b = 0, l = 0) => ({ p, t, r, b, l });
   const SHOTS = {
     wide: [
-      { pos: V3(-21, 14, 26), tgt: V3(3.5, 3.4, -4), fov: 30, keys: [K(apex, 10), K(mastTop, 96, 60, 0, 10), K(serverTop, 110, 10, 0, 170), ...rackPts.map(p => K(p, 0, 10, 10, 6)), K(PORT, 100, 120, 14), K(cable.getPointAt(0.35), 0, 0, 16, 0)] },
+      { pos: V3(-21, 14, 26), tgt: V3(3.5, 3.4, -4), fov: 30, keys: [K(apex, 10), K(mastTop, 130, 60, 0, 180), K(serverTop, 110, 10, 0, 170), ...rackPts.map(p => K(p, 0, 10, 10, 6)), K(PORT, 100, 120, 14), K(cable.getPointAt(0.35), 0, 0, 16, 0)] },
       { pos: V3(-12, 6.5, 13), tgt: V3(-4.5, 0.8, 0.8), fov: 34, keys: [K(mastTop, 96, 40, 0, 10), K(V3(SX + 2.95, RH + 0.2, SZ - 0.75), 20, 60), K(V3(SX + 2.95, 0, SZ + 0.75), 0, 40, 10), K(V3(SX + 2.95, RH, SZ + 0.75), 0, 40), K(apex, 30), ...towerPts.map(p => K(p, 0, 0, 10, 10)), K(monW(0, SY + 1.15), 100, 0, 0, 0), K(PORT, 100, 140, 14, 0), K(PHONE_TOP, 0, 20), K(routerPos.clone().add(V3(0, 1.4, 0)), 110, 40, 0, 20), K(cable.getPointAt(0.5), 0, 0, 40, 0)] },
-      { pos: V3(-1, 2.4, 11), tgt: V3(10, 6, -8), fov: 36, keys: [K(mastTop, 96, 40, 0, 10), K(mastBase, 0, 0, 10), K(apex, 10), K(serverTop, 110, 10, 0, 170), K(V3(SX + 2.95, 0, SZ + 0.75), 0, 8, 8)] },
+      { pos: V3(-1, 2.4, 11), tgt: V3(10, 6, -8), fov: 36, keys: [K(mastTop, 130, 40, 0, 180), K(mastBase, 0, 0, 10), K(apex, 10), K(serverTop, 110, 10, 0, 170), K(V3(SX + 2.95, 0, SZ + 0.75), 0, 8, 8)] },
       { pos: V3(-12.5, 13, 13), tgt: V3(-6.2, 0.4, -0.6), fov: 34, keys: [...towerPts.map(p => K(p, 0, 0, 10, 10)), K(gatePos.clone().add(V3(0, 1.7, 0)), 110, 60, 0, 30), K(routerPos.clone().add(V3(0, 1.4, 0)), 0, 20, 0, 20), K(PORT, 90, 120, 20), K(monW(1.75, SY + 1.15))] },
-      { pos: V3(-1, 4, 10), tgt: V3(12, 5.5, -8), fov: 38, keys: [K(mastTop, 96, 40, 0, 10), K(mastBase, 0, 0, 10), K(apex, 10), K(serverTop, 120, 20, 0, 190), ...rackPts.map(p => K(p, 0, 10, 10, 6))] },
+      { pos: V3(-1, 4, 10), tgt: V3(12, 5.5, -8), fov: 38, keys: [K(mastTop, 130, 40, 0, 180), K(mastBase, 0, 0, 10), K(apex, 10), K(serverTop, 120, 20, 0, 190), ...rackPts.map(p => K(p, 0, 10, 10, 6))] },
       { pos: scrC.clone().add(scrN.clone().multiplyScalar(9)), tgt: scrC.clone(), fov: 26, keys: [K(monW(-SW / 2, SY - SH / 2)), K(monW(SW / 2, SY + SH / 2)), K(monW(-SW / 2, SY + SH / 2)), K(monW(SW / 2, SY - SH / 2))] },
       { pos: V3(-8, 24, 26), tgt: V3(4, 1, -4), fov: 28, keys: [K(V3(SX + 2.95, RH + 0.2, SZ - 0.75), 20, 60), K(apex, 30), ...towerPts.map(p => K(p)), K(routerPos), ...rackPts.map(p => K(p, 0, 40)), K(V3(SX + 2.95, RH, SZ - 0.75), 0, 40), K(apex, 20), K(mastTop), K(PORT)] },
     ],
@@ -599,7 +617,8 @@ function mount(canvas, opts = {}) {
     const pts = S.keys.map(q => { pv.copy(q.p).project(camera); return { x: pv.x * W / 2, y: -pv.y * H / 2, q }; });
     const [L, T, R, B] = fr.box;
     // the room labels need round their points shrinks when the box is too small for it, so the picture never becomes a dot
-    let pad = 1;
+    // the labels are sized in rem, and the page's rem grows on big screens: their room grows with it
+    let pad = Math.max(1, (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16) / 16);
     const range = z => {
       let xl = -Infinity, xh = Infinity, yl = -Infinity, yh = Infinity;
       for (const { x, y, q } of pts) {
@@ -616,19 +635,21 @@ function mount(canvas, opts = {}) {
     fits[i] = { zoom: lo, dx: lerp(r[0], r[1], bx), dy: lerp(r[2], r[3], by), box: fr.box };
   }
 
+  yield;
   // ---------- labels ----------
   addCSS();
   const wrap = document.createElement('div');
   wrap.className = 'wd-labels'; wrap.setAttribute('aria-hidden', 'true');
   const LAB = {
     pc: { at: V3(TX + 0.2, TH + 0.25, TZ), beats: [0, 1], html: '<b>Your PC</b><span>CS2 and Steam</span>' },
-    phone: { at: PHONE_TOP.clone().add(V3(0, 0.1, 0)), beats: [0, 1, 2, 3], html: '<b>Phone</b><span data-k="ph">mobile data on</span>' },
-    cable: { at: cable.getPointAt(0.62), beats: [1], html: '<b>USB cable</b><span>USB tethering, or the phone\'s hotspot</span>' },
-    router: { at: routerPos.clone().add(V3(0, 1.45, 0)), beats: [1, 3], html: '<b>Home router</b><span>browser, Discord, downloads</span>' },
-    mast: { at: mastTop.clone().add(V3(0, 0.3, 0)), beats: [0, 2, 4], html: '<b>Your carrier</b><span data-k="mast">4G / 5G</span>' },
-    server: { at: serverTop.clone().add(V3(0, 0.45, 0)), beats: [0, 2, 4], r: 1, html: '<b>CS2 server</b><span data-k="srv">sees <em>' + IP_OLD + '</em></span><small data-k="srvn">example IP, your carrier\'s</small>' },
-    gate: { at: gatePos.clone().add(V3(-0.9, 3.0, -0.6)), beats: [3], hot: 1, html: '<b>Windows Firewall on your PC</b><span>CS2 and your servers: blocked</span>' },
-    cut: { at: PORT.clone().add(V3(0, 0.05, 0)), beats: [3], dn: 1, html: '<b>Cable pulled</b><span>CS2 is cut off, not sent home</span>' },
+    phone: { at: PHONE_TOP.clone().add(V3(0, 0.1, 0)), beats: [0, 1, 2, 3], side: { wide: [0, 0], tall: [1, 0] }, html: '<b>Phone</b><span data-k="ph">mobile data on</span>' },
+    cable: { at: cable.getPointAt(0.62), beats: [1], side: { wide: [1, 1], tall: [1, 1] }, html: '<b>USB cable</b><span>USB tethering, or the phone\'s hotspot</span>' },
+    router: { at: routerPos.clone().add(V3(0, 1.45, 0)), beats: [1, 3], side: { wide: [0, 0], tall: [0, 0] }, html: '<b>Home router</b><span>browser, Discord, downloads</span>' },
+    mast: { at: mastTop.clone().add(V3(0, 0.3, 0)), beats: [0, 2, 4], r: 1, one: 1, html: '<b>Your carrier</b><span data-k="mast">4G / 5G</span>' },
+    server: { at: serverTop.clone().add(V3(0, 0.45, 0)), beats: [0, 2, 4], r: 1, side: { wide: [1, 0], tall: [1, 1] }, html: '<b>CS2 server</b><span data-k="srv">sees <em>' + IP_OLD + '</em></span><small data-k="srvn">example IP, your carrier\'s</small>' },
+    // on the red gate itself, where the home cable leaves the PC; the box on the empty floor below it, left of the PC
+    gate: { at: gatePos.clone().add(V3(0, 0.62, 0)), beats: [3], hot: 1, one: 1, side: { wide: [1, 1], tall: [0, 0] }, html: '<b>Windows Firewall on your PC</b><span>CS2 and your servers: blocked</span>' },
+    cut: { at: PORT.clone().add(V3(0, 0.05, 0)), beats: [3], dn: 1, side: { wide: [1, 1], tall: [1, 1] }, html: '<b>Cable pulled</b><span>CS2 is cut off, not sent home</span>' },
   };
   // the guides build on this world: they may add props, labels and shots, and run their own story each frame
   const __gx = (opts.extend && opts.extend({ scene, camera, renderer, C, M, LAB, SHOTS, K, rbox, cable, air, arc, mCable, mAir, mArc, homeMat, hatch, tryMat, gate, gateFrameMat, Lbad, L2, L3, leds, mastTop, mastBase, serverTop, routerPos, gatePos, PORT, PHONE_TOP, SX, SZ, monW, scrC, scrN, mon })) || {};
@@ -653,6 +674,8 @@ function mount(canvas, opts = {}) {
   for (const x of [TX - TW / 2, TX + TW / 2]) for (const y of [0.2, TH / 2, TH]) for (const z of [TZ - TD / 2, TZ, TZ + TD / 2]) LINE_PTS.push(V3(x, y, z));
   for (const dy of [-1.9, -0.95, 0]) for (const [dx, dz] of [[-0.7, 0], [0.7, 0], [0, -0.7], [0, 0.7]]) LINE_PTS.push(mastTop.clone().add(V3(dx, dy, dz)));
   for (const y of [0.1, PH / 2, PH]) for (const x of [-PW / 2, PW / 2]) LINE_PTS.push(tw(x, y, 0));
+  // the monitor's face: a label over the app's screen hides what the beat is about
+  for (const fy of [-0.5, -0.25, 0, 0.25, 0.5]) for (const fx of [-0.5, -0.25, 0, 0.25, 0.5]) LINE_PTS.push(monW(fx * SW, SY + fy * SH));
   let lineScr = [];
   function placeLabels(p, box) {
     placed.length = 0;
@@ -660,9 +683,12 @@ function mount(canvas, opts = {}) {
     const av = opts.avoid ? opts.avoid() : [];
     lineScr = LINE_PTS.map(q => { proj.copy(q).project(camera); return [(proj.x * 0.5 + 0.5) * W, (-proj.y * 0.5 + 0.5) * H]; });
     // nearest shots first, so the beat on screen keeps its labels
-    for (const k in LAB) {
+    // the labels that carry a beat go first (the hot ones, then those of fewer beats), so they get the room
+    const order = Object.keys(LAB).sort((a, b) => (LAB[b].hot ? 1 : 0) - (LAB[a].hot ? 1 : 0) || LAB[a].beats.length - LAB[b].beats.length);
+    for (const k of order) {
       const lb = LAB[k], el = lb.el, s = lb.s;
-      let o = 0; for (const b of lb.beats) o = Math.max(o, 1 - Math.max(Math.abs(p - b), Math.abs(st.p - b)) * 2.4);
+      // full while its beat holds, gone a third of the way to the next: the box is never left half see-through (6 Nov.)
+      let o = 0; for (const b of lb.beats) o = Math.max(o, 1.6 * (1 - Math.max(Math.abs(p - b), Math.abs(st.p - b)) * 3.2));
       if (layout === 'tall' && !lb.tall && (!(k === 'phone' || k === 'server' || k === 'gate' || k === 'mast') || B - T < 180 || p < 0.5)) o = 0;
       o = clamp(o);
       let x = 0, y = 0, r = !!lb.r, dn = !!lb.dn;
@@ -674,12 +700,32 @@ function mount(canvas, opts = {}) {
         const w = s.w, h = s.h, stem = layout === 'tall' ? 30 : 44;
         const rect = (rr, dd) => { const y0 = dd ? y + 32 : y - stem - 12 - h, x0 = rr ? x + 10 - w : x - 10; return [x0, y0, x0 + w, y0 + h]; };
         const ok = q => q[0] >= L - 4 && q[2] <= Math.min(W - 8, R + 8) && q[1] >= T - 4 && q[3] <= B + 6 && !placed.some(o2 => q[0] < o2[2] + 10 && o2[0] < q[2] + 10 && q[1] < o2[3] + 8 && o2[1] < q[3] + 8) && !lineScr.some(([lx, ly]) => lx > q[0] - 4 && lx < q[2] + 4 && ly > q[1] - 4 && ly < q[3] + 4) && !av.some(a => q[0] < a[2] && a[0] < q[2] && q[1] < a[3] && a[1] < q[3]);
-        const tries = [[r, dn], [!r, dn], [r, !dn], [!r, !dn]];
+        // each label has its own place for each layout (side: { wide: [r, dn], tall: [r, dn] }), tried first; another side only
+        // when it comes in, never while it is on screen (6 Nov.: the carrier's and the firewall's jumped). one: that place only
+        const pref = lb.side && lb.side[layout]; if (pref) { r = !!pref[0]; dn = !!pref[1]; }
+        const tries = lb.one ? [[r, dn]] : [[r, dn], [!r, dn], [r, !dn], [!r, !dn]];
         const loose = q => q[0] >= L - 4 && q[2] <= Math.min(W - 8, R + 8) && q[1] >= T - 4 && q[3] <= B + 6 && !placed.some(o2 => q[0] < o2[2] + 10 && o2[0] < q[2] + 10 && q[1] < o2[3] + 8 && o2[1] < q[3] + 8) && !av.some(a => q[0] < a[2] && a[0] < q[2] && q[1] < a[3] && a[1] < q[3]);
         const inBox = proj.z < 1 && x > L - 6 && x < R + 6 && y > T && y < B + 4;
-        const t = inBox ? (tries.find(([a, b]) => ok(rect(a, b))) || tries.find(([a, b]) => loose(rect(a, b)))) : null;
-        if (t) { [r, dn] = t; placed.push(rect(r, dn)); } else o = 0;
-      }
+        // a label keeps the side it came in with for as long as its beat lasts: choosing again each frame made the carrier's
+        // and the firewall's boxes jump from below to above and back (6 Nov.). Its text may grow (the ban changes it): it
+        // stays. If a label that goes first now takes its place, it fades out there and comes back there; it never moves
+        const keep = s.side || null;
+        const hit = q => placed.some(o2 => q[0] < o2[2] + 10 && o2[0] < q[2] + 10 && q[1] < o2[3] + 8 && o2[1] < q[3] + 8);
+        if (!inBox) { o = 0; s.side = null; s.hitT = 0; }
+        else if (keep) {
+          [r, dn] = keep;
+          // taken: it fades out; once it is gone (the fade is .25 s) it may come back somewhere else, never while it shows
+          // the same when its kept place now runs out of the picture's box (6 Nov.: on the guides the phone's was cut by the
+          // edge, and the profiles' template label, placed while the page was still loading, sat on the text column)
+          const q = rect(r, dn);
+          if (hit(q) || q[0] < Math.max(2, L - 12) || q[2] > Math.min(W - 2, R + 16) || q[1] < Math.max(2, T - 12) || q[3] > Math.min(H - 2, B + 14)) { o = 0; if (!s.hitT) s.hitT = time; else if (time - s.hitT > 0.35) { s.side = null; s.hitT = 0; } }
+          else { s.hitT = 0; placed.push(rect(r, dn)); }
+        }
+        else {
+          const t = tries.find(([a, b]) => ok(rect(a, b))) || tries.find(([a, b]) => loose(rect(a, b)));
+          if (t) { [r, dn] = t; placed.push(rect(r, dn)); s.side = t; } else o = 0;
+        }
+      } else s.side = null; // out of its beats: the next time it comes in, it may take another place
       if (s.o !== o) { el.style.setProperty('--o', o.toFixed(3)); s.o = o; }
       if (o > 0) {
         const xs = x.toFixed(1) + 'px', ys = y.toFixed(1) + 'px';
@@ -691,6 +737,7 @@ function mount(canvas, opts = {}) {
     }
   }
 
+  yield;
   // ---------- post: proposal A's bloom, on an MSAA half float buffer ----------
   const rt = new WebGLRenderTarget(4, 4, { type: HalfFloatType, samples: 4 });
   const composer = new EffectComposer(renderer, rt);
@@ -731,6 +778,7 @@ function mount(canvas, opts = {}) {
     dirty = true; request();
   }
 
+  yield;
   // ---------- state ----------
   const st = { p: 0, sub: 0, cta: 0 };
   let pNow = 0, time = 0, reveal = still || opts.lit ? 1 : 0, dirty = true;
@@ -841,6 +889,7 @@ function mount(canvas, opts = {}) {
     return Math.abs(st.p - pNow) > 0.0005 || (!still && reveal < 1);
   }
 
+  yield;
   // ---------- loop ----------
   let raf = 0, last = 0, paused = false, ready = false, first = false, destroyed = false, hidden = false;
   function request() { if (raf || destroyed || !ready || hidden) return; if (paused && !dirty) return; raf = requestAnimationFrame(frame); }
@@ -870,27 +919,50 @@ function mount(canvas, opts = {}) {
 
   // the real Connection page for the monitor, decoded off the main thread
   const scrURL = opts.screen || new URL('img/connection.webp', document.baseURI).href;
-  const img = new Image(); img.decoding = 'async'; img.src = scrURL;
-  const imgReady = (img.decode ? img.decode() : new Promise(r => { img.onload = r; })).then(() => { scrImg = img; }).catch(() => {});
+  // as a bitmap at the screen's size, made from the file: drawn from an <img>, the browser decoded it again on the main thread
+  // when the screen was drawn (~50 ms on a slow phone, 6 Nov.), and a bitmap made from the <img> decodes there too (~90 ms).
+  // From the file's bytes it is decoded and scaled off the main thread, so drawing the screen is a plain copy
+  const viaImg = () => { const img = new Image(); img.decoding = 'async'; img.src = scrURL; return (img.decode ? img.decode() : new Promise(r => { img.onload = r; })).then(() => img); };
+  const imgReady = (window.createImageBitmap && window.fetch
+    ? fetch(scrURL).then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); }).then(b => createImageBitmap(b, { resizeWidth: 1240, resizeHeight: 800, resizeQuality: 'high' })).catch(viaImg)
+    : viaImg()).then(b => { scrImg = b; }).catch(() => {});
 
+  yield;
   // ---------- start: build, environment, compile every program without blocking, then draw ----------
   resize();
   const fontsReady = (document.fonts ? Promise.all(['600 30px "Funnel Sans"', '400 28px "Funnel Sans"', '600 19px "Fragment Mono"'].map(f => document.fonts.load(f))) : Promise.resolve()).catch(() => {});
+  // how far the start has got, 0 to 1, for the page's loading screen (it listens for worldprogress on the document)
+  const tell = f => { try { canvas.dispatchEvent(new CustomEvent('worldprogress', { detail: f })); } catch (e) { /* old browser */ } };
   (async () => {
     await yieldTask(); if (destroyed) return;
     // reflections from a small studio environment; on GPUs where its programs link slowly this is the longest step, so it runs only when asked
     if (opts.env) { const pmrem = new PMREMGenerator(renderer); scene.environment = pmrem.fromEquirectangular(envTex).texture; pmrem.dispose(); }
     envTex.dispose();
     await yieldTask(); if (destroyed) return;
-    update(0);
+    update(0); tell(0.1);
+    // the programs start compiling three objects at a time, the page getting the thread back in between (6 Nov.: all at once
+    // it was one 200 ms task on a slow phone). Objects with a light inside are left to the whole-scene pass below: compiled on
+    // their own they would count their light twice and get a program the real frame never uses. That pass then finds the
+    // rest ready, so it is short; the GPU compiles them all side by side either way
+    {
+      const prs = [], kids0 = scene.children.filter(o => !o.isLight && !o.getObjectByProperty('isLight', true)), prev = renderer.getRenderTarget();
+      for (let i = 0; i < kids0.length; i += 3) {
+        renderer.setRenderTarget(composer.readBuffer);
+        for (const o of kids0.slice(i, i + 3)) { try { prs.push(renderer.compileAsync(o, camera, scene).catch(() => {})); } catch (e) { /* compiles below */ } }
+        renderer.setRenderTarget(prev);
+        await yieldTask(); if (destroyed) return;
+      }
+    }
     await comp(scene, camera, scene, composer.readBuffer);
     if (destroyed) return;
+    tell(0.3);
     {
       const tiny = new WebGLRenderTarget(2, 2, { type: HalfFloatType, samples: 4 });
       const kids = scene.children.filter(o => !o.isLight);
       const vis = kids.map(o => o.visible);
       kids.forEach(o => (o.visible = false));
-      for (const o of kids) { o.visible = true; renderer.setRenderTarget(tiny); try { await renderer.compileAsync(o, camera, scene); } catch (e) { /* drawn below anyway */ } renderer.render(scene, camera); o.visible = false; await yieldTask(); if (destroyed) return; }
+      let done = 0;
+      for (const o of kids) { tell(0.3 + 0.55 * (done++ / kids.length)); o.visible = true; renderer.setRenderTarget(tiny); try { await renderer.compileAsync(o, camera, scene); } catch (e) { /* drawn below anyway */ } renderer.render(scene, camera); o.visible = false; await yieldTask(); if (destroyed) return; }
       kids.forEach((o, i) => (o.visible = vis[i]));
       renderer.setRenderTarget(null); tiny.dispose();
     }
@@ -909,12 +981,21 @@ function mount(canvas, opts = {}) {
     addMat(toScreen, outPass.material);
     await comp(toRT, ortho, toRT, bloom.renderTargetBright);
     await comp(toScreen, ortho, toScreen, null);
-    quad.dispose();
+    quad.dispose(); tell(0.9);
     await Promise.all([fontsReady, imgReady]);
     if (destroyed) return;
-    phState = ''; drawPhone(true, true); drawScreen(ipShown);
-    renderer.initTexture(scrTex); renderer.initTexture(phTex);
-    renderer.shadowMap.needsUpdate = true;
+    // the two screens and the shadow map each on a task of their own: in the first frame together they made it ~105 ms on a
+    // slow phone (6 Nov.). The shadows are drawn from a camera that sees nothing, so only the shadow map costs anything
+    phState = ''; drawPhone(true, true); renderer.initTexture(phTex);
+    await yieldTask(); if (destroyed) return;
+    drawScreen(ipShown); renderer.initTexture(scrTex);
+    await yieldTask(); if (destroyed) return;
+    {
+      const away = new OrthographicCamera(-0.001, 0.001, 0.001, -0.001, 0, 0.001), tiny = new WebGLRenderTarget(2, 2);
+      away.position.set(0, -900, 0); away.lookAt(0, -901, 0); away.updateMatrixWorld();
+      renderer.shadowMap.needsUpdate = true;
+      renderer.setRenderTarget(tiny); renderer.render(scene, away); renderer.setRenderTarget(null); tiny.dispose();
+    }
     await yieldTask(); if (destroyed) return;
     ready = true; dirty = true; request();
   })();
@@ -944,6 +1025,40 @@ function mount(canvas, opts = {}) {
       });
       composer.dispose(); bloom.dispose(); bloomIn.dispose(); renderer.dispose();
     },
+  };
+}
+
+// The world is built a part at a time (each `yield` above), the page getting the thread back in between: built in one go it
+// was one ~220 ms task on a slow phone (6 Nov.). The renderer comes first, so a browser without WebGL still gets null at once.
+// Until the last part is built, the api keeps what it is told (the newest set, pause or hide) and hands it on.
+function mount(canvas, opts = {}) {
+  // for profiling: with window.__wdSteps = [] set before the scene starts, each part's time in ms lands in it
+  const steps = Array.isArray(window.__wdSteps) ? window.__wdSteps : null;
+  const step = () => { const t = performance.now(), v = it.next(); if (steps) steps.push(Math.round(performance.now() - t)); return v; };
+  const it = build(canvas, opts);
+  let r = step();
+  if (r.done) return r.value;
+  let real = null, dead = false, want = null, paused = null, hidden = null;
+  (async () => {
+    while (!r.done) { await yieldTask(); r = step(); }
+    real = r.value;
+    if (!real) return;
+    if (dead) { real.destroy(); return; }
+    if (want) real.set(want);
+    if (paused === true) real.pause();
+    if (hidden !== null) real.hide(hidden);
+  })();
+  return {
+    set(o) {
+      if (real) return real.set(o);
+      want = Object.assign(want || {}, o); if (!o.jump) delete want.jump;
+    },
+    pause() { if (real) real.pause(); else paused = true; },
+    resume() { if (real) real.resume(); else paused = false; },
+    hide(v) { if (real) real.hide(v); else hidden = !!v; },
+    resize() { if (real) real.resize(); },
+    get ready() { return !!real && real.ready; },
+    destroy() { if (real) real.destroy(); else dead = true; },
   };
 }
 

@@ -32,6 +32,25 @@
 <link rel="preload" href="fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/fragment-mono.woff2" as="font" type="font/woff2" crossorigin>
 <script>(function(h){h.classList.add('js');if(!matchMedia('(prefers-reduced-motion: reduce)').matches)h.classList.add('fx')})(document.documentElement)</script>
+<script>
+/* the loading screen: only with JS and WebGL. The line fills (its own transform: a custom property on <html> made every step restyle the whole page) as the page gets ready (HTML, fonts, the 3D script) and the page
+   comes in on the world's first frame, or after 6 s, or at once without WebGL. While it shows, the wheel, touch and the
+   scroll keys wait, so nothing moves under it. Reduced motion: the line steps and the screen goes at once */
+(function(h){try{var c=document.createElement('canvas');if(!(c.getContext('webgl2')||c.getContext('webgl')))return}catch(x){return}
+h.classList.add('ld','ldu');var t0=performance.now(),p=0,done=false,K={32:1,33:1,34:1,35:1,36:1,37:1,38:1,39:1,40:1},O={capture:true,passive:false},
+hold=function(e){if(e.type!=='keydown'||K[e.keyCode]){e.preventDefault();e.stopImmediatePropagation()}},
+set=function(v){if(v>p){p=v;var e=document.querySelector('.ld-bar b');if(e)e.style.transform='scaleX('+v+')'}},
+end=function(e){if(done)return;done=true;if(e&&e.type==='worldready')h.classList.add('ldw');set(1);['wheel','touchmove','keydown'].forEach(function(t){removeEventListener(t,hold,O)});
+setTimeout(function(){h.classList.add('ld-out');setTimeout(function(){h.classList.remove('ld','ld-out')},400)},Math.max(90,300-(performance.now()-t0)))};
+['wheel','touchmove','keydown'].forEach(function(t){addEventListener(t,hold,O)});
+window.__ldStep=set;window.__ldEnd=end;set(.12);
+document.addEventListener('worldready',end,true);setTimeout(end,6000);
+document.addEventListener('DOMContentLoaded',function(){set(.25)});
+document.addEventListener('worldprogress',function(e){set(.45+.52*(+e.detail||0))},true);
+if(document.fonts)document.fonts.ready.then(function(){set(.35)});
+new MutationObserver(function(){if(h.classList.contains('no-gl'))end()}).observe(h,{attributes:true,attributeFilter:['class']});
+addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.documentElement)
+</script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -147,6 +166,25 @@ h1,h2,h3{text-wrap:balance}
 p,li,dd{text-wrap:pretty}
 .skip{position:absolute;left:-999px;top:8px;background:var(--t-accent);color:var(--t-bg);padding:8px 14px;border-radius:5px;z-index:60}
 .skip:focus{left:12px}
+/* the loading screen (6 Nov.): plain ground, the name and the app's top line filling as the page gets ready, then the page
+   comes in with its own entrance. The glint runs on transform only, so it stays smooth while the page is busy */
+.ld-scr{display:none}
+html.ld .ld-scr{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:var(--t-bg);transition:opacity .38s cubic-bezier(.22,1,.36,1),visibility 0s .38s}
+html.ld-out .ld-scr{opacity:0;visibility:hidden}
+.ld-scr::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:var(--t-top)}
+.ld-in{display:grid;justify-items:center;gap:1.15rem}
+.ld-name{display:flex;align-items:center;gap:10px;font:600 1rem/1 "Funnel Display","Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;letter-spacing:-.01em;color:var(--t-text)}
+.ld-name img{width:28px;height:28px;border-radius:6px}
+.ld-bar{position:relative;display:block;width:min(14rem,62vw);height:2px;border-radius:2px;background:var(--t-line);overflow:hidden}
+.ld-bar b{position:absolute;inset:0;background:var(--t-top);transform-origin:0 50%;transform:scaleX(var(--ld,.08));transition:transform .6s cubic-bezier(.22,1,.36,1)}
+.ld-bar i{display:none}
+@media (prefers-reduced-motion:no-preference){.ld-bar i{display:block;position:absolute;top:-2px;bottom:-2px;left:0;width:3rem;background:linear-gradient(90deg,transparent,rgba(255,255,255,.8),transparent);animation:ld-glint 1.25s cubic-bezier(.45,0,.25,1) infinite}}
+@keyframes ld-glint{from{transform:translateX(-3rem)}to{transform:translateX(min(14rem,62vw))}}
+/* what comes in after it: the cover's lines and the first reveals wait for it; when the world was drawn under it (ldw), no fade from the poster */
+html.ld .b-cover .copy>*{animation-play-state:paused}
+html.fx.ld .rv.in{opacity:0;transform:translateY(24px)}
+html.ldw .stage.ready canvas,html.ldw .gw.ready canvas{transition:none}
+html.ldw .stage.ready .stage-still{opacity:0;transition:none}
 [hidden]{display:none!important}
 .intro #h1,.intro .hero-side>*,.intro .hero .ro{visibility:hidden}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
@@ -307,9 +345,27 @@ footer nav h3{font:500 .9rem/1.4 var(--sans);color:var(--ink);margin:0 0 1rem}
 footer nav ul{list-style:none;margin:0;padding:0;display:grid;gap:0}
 footer a{color:var(--ink3);text-decoration:none;transition:color .15s;display:inline-block;padding-block:.55rem}
 footer a:hover{color:var(--ink)}
-.wordmark{position:relative;margin-top:clamp(2.5rem,2rem + 3vw,5rem);height:.7em;font:600 min(12.6vw,16rem)/1 var(--disp);letter-spacing:-.055em;text-align:center;white-space:nowrap;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.12);border-bottom:1px solid var(--line2);user-select:none;overflow:hidden}
-@supports not (-webkit-text-stroke:1px #000){.wordmark{color:rgba(255,255,255,.05)}}
-.wordmark span{display:block;background:linear-gradient(90deg in oklch,var(--t-top1),var(--t-top2) 50%,var(--t-top3));-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:0;color:transparent;clip-path:inset(0 calc(100% - var(--wm,0%)) 86% 0);position:absolute;inset:0}
+/* the name at the very end: its outline lit in the app's three colors, a packet of light that runs through the letters,
+   the horizon as the route with its packets, and the name's reflection on the floor, as in the 3D world (6 Nov.).
+   It draws itself in as the page reaches it; the light follows the pointer. Reduced motion or Pause motion: lit and still */
+.wordmark{position:relative;max-width:calc(var(--max) + 2*var(--gutter));margin:clamp(2.5rem,2rem + 3vw,5rem) auto 0;padding-inline:var(--gutter);user-select:none}
+.wordmark svg{display:block;width:100%;height:auto;overflow:visible;font:600 200px/1 var(--disp);letter-spacing:-4px}
+.wordmark use{fill:none;vector-effect:non-scaling-stroke}
+.wm-base{stroke:rgba(255,255,255,.1);stroke-width:1px}
+.wm-line{stroke:url(#wm-c);stroke-width:1.5px}
+.wm-glow{stroke:url(#wm-c);stroke-width:5px;opacity:.85}
+.wm-drawn{width:calc(var(--wm,100%) * 1.06)}
+.wm-hz{stroke:url(#wm-c);stroke-width:1px;opacity:.55;vector-effect:non-scaling-stroke}
+.wm-hz-glow{stroke:url(#wm-c);stroke-width:6;opacity:.35}
+.wm-pk{stroke:url(#wm-c);stroke-width:2.5;stroke-linecap:round;stroke-dasharray:0 1420;opacity:0}
+.wm-pk-glow{stroke-width:9}
+.fx .wm-run .wm-pass{animation:wm-pass 7s cubic-bezier(.45,0,.25,1) infinite 1.2s}
+.fx .wm-run .wm-pk{opacity:1;stroke-dasharray:3 61 2 127 4 233 2 97 3 181 2 149;animation:wm-pk 6s linear infinite}
+.fx .wm-run .wm-pk-glow{opacity:.9}
+.fx .wm-hold .wm-pass,.fx .wm-hold .wm-pk,.fx .wordmark:not(.wm-vis) .wm-pass,.fx .wordmark:not(.wm-vis) .wm-pk{animation-play-state:paused}
+@keyframes wm-pass{from{transform:translateX(0)}62%,to{transform:translateX(2260px)}}
+@keyframes wm-pk{to{stroke-dashoffset:-864}}
+.wm-spot{transition:opacity .4s;opacity:0}.wm-near .wm-spot{opacity:1}
 .legal{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.6rem 2rem;padding-block:1.6rem 2.2rem;font-size:.84rem}
 @media (max-width:900px){.fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.fbrand{grid-column:1/-1}}
 @media (max-width:420px){.fgrid{grid-template-columns:minmax(0,1fr)}}
@@ -384,7 +440,9 @@ section.solid{border-top:1px solid var(--line)}
 .said .digits .ch{height:1.1em}.said .digits .g{height:1.1em;line-height:1.1em}
 @media (max-height:400px){.log li{padding-block:.05rem}.beat-long .copy{padding-block:.4rem}}
 @media (min-width:1000px) and (max-height:820px){.said.big{margin:.6rem 0 .5rem}.said.big .ip{font-size:2.2rem}.log li{padding-block:.2rem}.beat-long .copy{padding-block:1rem}.beat-long h2{font-size:clamp(2rem,1rem + 2.2vw,3.2rem);margin-bottom:.8rem}.beat-long .sub{font-size:.92rem;margin-bottom:1rem}}
-.said.big.banned .ip{color:var(--ink3);text-decoration:line-through;text-decoration-thickness:1px;text-decoration-color:var(--t-bad)}
+.said.big .ip{position:relative;width:max-content}
+.said.big.banned .ip{color:var(--ink3)}
+.said.big.banned .ip::after{content:"";position:absolute;left:-.04em;right:-.04em;top:52%;height:2px;background:var(--t-bad);pointer-events:none}
 .said.big.wait .ip{color:var(--ink3)}
 /* the ban: the log drives the scene, one line at a time, while the copy holds */
 .beat-long{min-height:260svh;align-items:stretch}
@@ -407,20 +465,23 @@ code{font-size:max(12px,.86em)}
 .log li .g,.js .log li.past .g,.js .log li.now .g{color:var(--t-good)}
 .js .log li:not(.past):not(.now) .w,.js .log li:not(.past):not(.now) .g{color:var(--t-faint)}
 .ban-cap{margin:0;font-size:.86rem;color:var(--ink3);max-width:46ch}
-.ban-after{padding-block:2.5rem 3rem;border-top:1px solid var(--line)}
-.ban-after .wrap{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:.5rem 3rem}
+/* the ban's last words stay in the story (6 Nov.): no band across the world, the copy column over the scene's veil like a beat */
+.solid.ban-after{background:none;border-top:0;padding-block:1rem clamp(4rem,10svh,7rem)}
+.ba-copy{width:min(32rem,36%);display:flex;flex-direction:column;align-items:flex-start;gap:.35rem}
 .ban-after p{margin:0;color:var(--ink2);max-width:72ch}
 /* the app: the screen the camera flew into, as the real window; six pages on the left */
 .app-body{background:none;padding-block:clamp(2rem,1rem + 3vw,4rem) clamp(5rem,3rem + 5vw,9rem)}
 .app-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));align-items:start}
 .pages{grid-column:1/5;grid-row:1;list-style:none;margin:0;padding:0 2rem 0 0}
-.pages li{min-height:44svh;display:flex;flex-direction:column;justify-content:center;padding-block:1.6rem;color:var(--ink3);transition:color .4s}
+.pages li{min-height:82svh;display:flex;flex-direction:column;justify-content:center;padding-block:1.6rem;color:var(--ink3);transition:color .4s}
 .pages li h3{display:flex;align-items:baseline;gap:.9rem;font:500 clamp(1.6rem,1.1rem + 1.2vw,2.4rem)/1.1 var(--disp);letter-spacing:-.03em;color:var(--t-faint);transition:color .4s;margin:0 0 .7rem}
 .pages li h3 span{font:400 .8rem/1 var(--mono);color:var(--ink3);letter-spacing:0}
 .pages li p{margin:0 0 .5rem;max-width:40ch}
 .pages li .big{white-space:nowrap;font:400 clamp(1.8rem,1rem + 1.6vw,2.8rem)/1 var(--mono);letter-spacing:-.05em;color:var(--t-faint);margin:.3rem 0 .3rem;transition:color .4s}
 .pages li .big small{white-space:normal;display:block;font:400 .8rem/1.4 var(--mono);letter-spacing:0;color:var(--ink3);margin-top:.5rem}
 .pages li a{color:var(--ink2);font-size:.95rem;display:inline-flex;align-items:center;min-height:44px}
+/* the first page gets room above it: the window docks while Connection is read, so it stays up as long as the others */
+@media (min-width:1000px){.pages>li:first-child{min-height:108svh;padding-top:calc(1.6rem + 26svh)}}
 .pages li.on{color:var(--ink2)}
 .pages li.on h3{color:var(--ink)}
 .pages li.on .big{color:var(--t-accent-light)}
@@ -441,6 +502,30 @@ code{font-size:max(12px,.86em)}
 .views picture:not(.on){opacity:0}
 .win-fig figcaption{margin-top:1rem;font-size:.86rem;color:var(--ink3);padding-right:var(--gutter)}
 .win-fig .tap{display:none}@media (pointer:coarse){.win-fig .tap{display:inline}}
+/* proposal B's marks on the real window (6 Nov.): each page's three things, numbered on the capture and in its text */
+.marks{position:absolute;inset:0;pointer-events:none}
+.mk{position:absolute;left:var(--x);top:var(--y);width:var(--w);height:var(--h);border-radius:5px;box-shadow:0 0 0 1.5px var(--t-accent),0 0 22px rgba(var(--t-accent-rgb),.3);opacity:0;transform:scale(1.12);transition:opacity .3s var(--ease-out),transform .55s var(--ease-out)}
+.mk b{position:absolute;right:100%;top:50%;width:clamp(.85rem,2.2cqw,1.3rem);height:clamp(.85rem,2.2cqw,1.3rem);margin:0 .3rem 0 0;transform:translateY(-50%);border-radius:50%;display:grid;place-items:center;background:var(--t-accent);color:var(--t-bg);font:600 clamp(.55rem,1.15cqw,.7rem)/1 var(--sans);box-shadow:0 0 0 clamp(2px,.3cqw,3px) var(--t-bg)}
+.win:not([data-pg]) .mk[data-pg=connection],.win[data-pg=connection] .mk[data-pg=connection],.win[data-pg=servers] .mk[data-pg=servers],.win[data-pg=accounts] .mk[data-pg=accounts],.win[data-pg=regions] .mk[data-pg=regions],.win[data-pg=configs] .mk[data-pg=configs],.win[data-pg=profiles] .mk[data-pg=profiles]{opacity:1;transform:none;transition-delay:.12s}
+.mk.t b,.mk.tr b{right:auto;left:0;top:auto;bottom:100%;transform:none;margin:0 0 .25rem -.35rem}
+.mk.tr b{left:auto;right:0;margin:0 -.35rem .25rem 0}
+.mk.r b{right:auto;left:100%;margin:0 0 0 .3rem}
+.mk.tl b{right:auto;left:0;top:0;transform:translate(-58%,-42%);margin:0}
+/* a phone-sized window: the app's text is a few px tall, so each number is smaller and sits where the capture is plain
+   (data-ph, picked from the capture by publish/site-polimento-2026-11-06/tools/phone-pins.py), never on the next control */
+@container (max-width:560px){
+  .mk{border-radius:3px;box-shadow:0 0 0 1px var(--t-accent),0 0 12px rgba(var(--t-accent-rgb),.3)}
+  .mk[data-ph] b{left:auto;right:auto;top:auto;bottom:auto;width:.72rem;height:.72rem;margin:0;transform:none;font-size:.5rem;box-shadow:0 0 0 1.5px var(--t-bg)}
+  .mk[data-ph=r] b{left:calc(100% + 2px);top:50%;transform:translateY(-50%)}.mk[data-ph=l] b{right:calc(100% + 2px);top:50%;transform:translateY(-50%)}
+  .mk[data-ph=tr] b{right:0;bottom:calc(100% + 2px)}.mk[data-ph=tl] b{left:0;bottom:calc(100% + 2px)}.mk[data-ph=br] b{right:0;top:calc(100% + 2px)}.mk[data-ph=bl] b{left:0;top:calc(100% + 2px)}
+  .mk[data-ph=xtr] b{left:100%;bottom:100%}.mk[data-ph=xtl] b{right:100%;bottom:100%}.mk[data-ph=xbr] b{left:100%;top:100%}.mk[data-ph=xbl] b{right:100%;top:100%}
+}
+.mk-key{list-style:none;margin:.3rem 0 .7rem;padding:0;display:grid;gap:.45rem;font-size:.9rem;line-height:1.4;color:var(--ink3);counter-reset:mk}
+.pages .mk-key li{counter-increment:mk;min-height:0;padding:0;display:flex;flex-direction:row;justify-content:flex-start;align-items:baseline;gap:.65rem;color:inherit}
+.mk-key li::before{content:counter(mk);flex:none;width:1.25rem;height:1.25rem;border-radius:50%;display:inline-grid;place-items:center;align-self:flex-start;font:600 .68rem/1 var(--sans);background:var(--t-surface3);color:var(--ink2);transition:background-color .4s,color .4s}
+.mk-key b{font-weight:500;color:inherit}
+.pages li.on .mk-key{color:var(--ink2)}
+.pages li.on .mk-key li::before{background:var(--t-accent);color:var(--t-bg)}
 /* stills of the same world, one per section after the story, under the same light */
 .still{position:relative;margin:0 0 2.6rem;border-radius:14px;overflow:hidden;background:var(--t-edge);box-shadow:0 0 0 1px var(--line)}
 .still::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:var(--t-top);z-index:1}
@@ -455,7 +540,7 @@ code{font-size:max(12px,.86em)}
 .pair .still{margin:0}
 @media (max-width:759px){.trust-head{grid-template-columns:minmax(0,1fr)}.pair{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:759px){.still figcaption{position:static;max-width:none;margin:0;border-radius:0;background:var(--t-bg)}}
-.ph-still{width:100%;aspect-ratio:5/4;object-fit:cover;object-position:50% 42%;border-radius:12px;margin:0 0 1.2rem;box-shadow:0 0 0 1px var(--line)}
+.ph-still{width:100%;aspect-ratio:5/4;object-fit:cover;object-position:50% 22%;border-radius:12px;margin:0 0 1.2rem;box-shadow:0 0 0 1px var(--line)}
 .no-gl .stage-still{object-fit:cover;width:100%;height:100%;top:0;right:0;transform:none;opacity:.85}
 /* trust: four instruments on one line, hairlines between them */
 .trust{padding-block:clamp(5rem,3rem + 5vw,9rem)}
@@ -473,8 +558,8 @@ code{font-size:max(12px,.86em)}
 .vt-grid{display:grid;grid-template-columns:repeat(var(--cols,17),minmax(0,1fr));gap:3px;max-width:15rem}
 .vt-grid i{aspect-ratio:1;border-radius:1.5px;background:color-mix(in srgb,var(--t-good) 75%,transparent)}
 .vt-grid i.bad{background:var(--t-bad)}
-.fx .vt-grid i{background:rgba(255,255,255,.07);transition:background-color .4s;transition-delay:calc(var(--d)*16ms)}
-.fx .in .vt-grid i{background:color-mix(in srgb,var(--t-good) 75%,transparent)}
+.fx .vt-grid i{background:rgba(255,255,255,.07);transition:background-color .5s;transition-delay:calc(.2s + var(--d)*26ms)}
+.fx .go .vt-grid i{background:color-mix(in srgb,var(--t-good) 75%,transparent)}
 .chipl{display:flex;flex-wrap:wrap;gap:.35rem}
 .chip{display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .6rem;border-radius:6px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);color:var(--ink2);font:400 .8rem/1.3 var(--mono);white-space:nowrap}
 .chip.no{color:var(--ink);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--t-good) 50%,transparent);background:color-mix(in srgb,var(--t-good) 9%,transparent)}
@@ -499,13 +584,23 @@ code{font-size:max(12px,.86em)}
 .slot .st{color:var(--t-warn)}.slot .st.go{color:var(--t-good)}
 .slot .two{display:grid}.slot .two>*{grid-area:1/1}
 .slot .now{opacity:0}
-.fx .kit>div:not(.in) .slot .now{opacity:1}.fx .kit>div:not(.in) .slot .later{opacity:0}
-.fx .slot .now,.fx .slot .later{transition:opacity .5s var(--ease-out) 1.1s}
+.fx .kit>div:not(.go) .slot .now{opacity:1}.fx .kit>div:not(.go) .slot .later{opacity:0}
+.fx .slot .now,.fx .slot .later{transition:opacity .6s var(--ease-out) 1.2s}
+/* the demos play when the cell is well on screen (class go, at 62% of the screen's height), slow enough to follow (6 Nov.) */
+.fx .q .bars2 i{transform-origin:50% 100%;transition:transform .6s var(--ease-out),background-color .4s;transition-delay:calc(.2s + var(--d,0)*.35s)}
+.fx .kit>div:not(.go) .q .bars2 i{transform:scaleY(.12)}
+.q .bars2 i:nth-child(2){--d:1}.q .bars2 i:nth-child(3){--d:2}.q .bars2 i:nth-child(4){--d:3}
+.fx .q b,.fx .q span{transition:opacity .5s var(--ease-out) 1.4s}.fx .kit>div:not(.go) .q b,.fx .kit>div:not(.go) .q span{opacity:0}
+.mask .two{display:grid}.mask .two>*{grid-area:1/1}.mask .now{opacity:0}
+.fx .kit>div:not(.go) .mask .now{opacity:1}.fx .kit>div:not(.go) .mask .later{opacity:0}
+.fx .mask .now,.fx .mask .later{transition:opacity .5s var(--ease-out) 1.2s}
+.fx .mask .sw i{transition:background-color .35s .7s}.fx .mask .sw i::after{transition:left .5s var(--ease-spring) .7s}
+.fx .kit>div:not(.go) .mask .sw i{background:var(--line2)}.fx .kit>div:not(.go) .mask .sw i::after{left:.2rem}
 .list{display:grid;gap:.5rem;font:400 .86rem/1 var(--sans);color:var(--ink2)}
 .list span{display:flex;align-items:center;gap:.6rem}
 .list i{width:.62rem;height:.62rem;border-radius:2px;background:var(--t-good)}
-.fx .list i{background:var(--line2);transition:background-color .35s;transition-delay:calc(.3s + var(--d)*.28s)}
-.fx .in .list i{background:var(--t-good)}
+.fx .list i{background:var(--line2);transition:background-color .4s;transition-delay:calc(.4s + var(--d)*.4s)}
+.fx .go .list i{background:var(--t-good)}
 .q{display:grid;gap:.8rem}
 .q .bars2{display:flex;align-items:flex-end;gap:5px;height:2.4rem}
 .q .bars2 i{width:.6rem;border-radius:2px;background:var(--t-good)}
@@ -534,15 +629,15 @@ code{font-size:max(12px,.86em)}
 .dc-row.hit{fill:var(--t-bad)}
 .dc-bar{fill:rgba(255,255,255,.035)}
 .dc-bar.hit{fill:color-mix(in srgb,var(--t-bad) 14%,transparent)}
-.fx .vs .cg-line{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 1.1s var(--ease-out);transition-delay:calc(var(--d)*40ms)}
-.fx .vs .in .cg-line{stroke-dashoffset:0}
+.fx .vs .cg-line{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 1.6s var(--ease-out);transition-delay:calc(.2s + var(--d)*60ms)}
+.fx .vs .go .cg-line{stroke-dashoffset:0}
 #vpn table{border-collapse:separate;border-spacing:0;table-layout:fixed}
 #vpn thead td{width:24%}
 #vpn th,#vpn td{border-bottom:1px solid rgba(255,255,255,.06);padding-block:1.15rem}
 #vpn tbody tr:last-child th,#vpn tbody tr:last-child td{border-bottom:0}
 #vpn .us{background:none;padding-inline:0 1.4rem;color:var(--ink)}
 #vpn td:not(.us){color:var(--ink3)}
-#vpn thead .us{border-top:2px solid transparent;border-image:var(--t-top) 1;color:var(--ink);font:500 .95rem/1.4 var(--disp)}
+#vpn thead .us{box-shadow:none;border-top:2px solid transparent;border-image:var(--t-top) 1;color:var(--ink);font:500 .95rem/1.4 var(--disp)}
 #vpn tbody tr:hover th,#vpn tbody tr:hover td:not(.us){color:var(--ink)}
 /* setup */
 .steps4{list-style:none;margin:0 0 4rem;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line);counter-reset:st}
@@ -554,7 +649,7 @@ code{font-size:max(12px,.86em)}
 .duo-h{font:500 clamp(1.8rem,1rem + 2vw,3rem)/1.05 var(--disp);letter-spacing:-.035em;margin:0 0 .8rem}.duo-h .m{color:var(--ink3)}
 .duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;border-block:1px solid var(--line)}
 .duo>div{padding:2rem 2rem 2rem 0}
-.duo>div+div{border-left:1px solid var(--line);padding-left:2rem}
+.duo>div+div{border-left:1px solid var(--line);padding-inline:2rem 0}
 .duo h4{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;font:500 clamp(1.4rem,1rem + 1vw,2rem)/1.1 var(--disp);letter-spacing:-.03em;margin:0 0 .8rem}
 .duo h4 span{font:400 .8rem/1 var(--mono);color:var(--ink3);letter-spacing:0}
 .duo p{margin:0;color:var(--ink2);max-width:46ch}
@@ -577,10 +672,10 @@ ul.guides li:hover a .t{transform:translateX(.5rem)}
 ul.guides a::after{content:"";position:absolute;inset:0}
 ul.guides a:focus-visible{outline:0}ul.guides a:focus-visible::after{outline:2px solid var(--t-accent-light);outline-offset:2px}
 ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
-.peek{position:fixed;left:0;top:0;z-index:35;width:20rem;padding:1.1rem 1.2rem 1rem;border-radius:12px;background:color-mix(in srgb,var(--t-surface) 94%,transparent);box-shadow:0 0 0 1px var(--line2),0 40px 80px -30px #000;pointer-events:none;opacity:0;visibility:hidden;transform:translate(var(--x,0),var(--y,0)) translate(-50%,-104%) scale(.96);transition:opacity .25s,visibility .25s,transform .4s var(--ease-out)}
+.peek{position:fixed;left:0;top:0;z-index:35;width:max-content;min-width:18rem;max-width:min(26rem,100vw - 2rem);padding:1.1rem 1.2rem 1rem;border-radius:12px;background:var(--t-surface);box-shadow:0 0 0 1px var(--line2),0 40px 80px -30px #000;pointer-events:none;opacity:0;visibility:hidden;transform:translate(var(--x,0),var(--y,0)) translate(-50%,-104%) scale(.96);transition:opacity .25s,visibility .25s,transform .4s var(--ease-out)}
 .peek.on{visibility:visible;opacity:1;transform:translate(var(--x,0),var(--y,0)) translate(-50%,-112%) scale(1)}
 .peek::before{content:"";position:absolute;inset:0 0 auto;height:2px;border-radius:12px 12px 0 0;background:var(--t-top)}
-.peek b{display:block;font:400 2.6rem/1 var(--mono);letter-spacing:-.05em;color:var(--ink);white-space:nowrap}
+.peek b{display:block;font:400 min(2.6rem,10.5vw)/1 var(--mono);letter-spacing:-.05em;color:var(--ink);white-space:nowrap}
 .peek span{display:block;margin-top:.5rem;font:400 .8rem/1.4 var(--mono);color:var(--ink3)}
 .faq{margin-top:clamp(5rem,3rem + 5vw,9rem);display:grid;grid-template-columns:repeat(12,minmax(0,1fr));align-items:start}
 .faq h2{grid-column:1/5;font-size:clamp(2rem,1rem + 2.2vw,3.4rem);padding-right:2rem}
@@ -607,7 +702,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
 .rail a:hover{color:var(--ink)}
 .rail li.on a{color:var(--ink);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.5em;text-decoration-color:currentColor}
 /* 5 Nov.: a quiet round icon, not a labelled pill (the owner found the pill tacky). The text stays as the accessible name. */
-.pause{position:fixed;right:max(var(--gutter),(100% - var(--max))/2);bottom:3.7rem;z-index:5;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;padding:0;gap:0;border:0;border-radius:50%;background:color-mix(in srgb,var(--t-surface) 70%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink3);font-size:0;cursor:pointer;opacity:.7;transition:opacity .4s,visibility .4s,color .2s,background-color .2s,box-shadow .2s}
+.pause{position:fixed;right:max(var(--gutter),(100% - var(--max))/2);bottom:calc(2.3rem + 32px);z-index:5;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;padding:0;gap:0;border:0;border-radius:50%;background:color-mix(in srgb,var(--t-surface) 70%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink3);font-size:0;cursor:pointer;opacity:.7;transition:opacity .4s,visibility .4s,color .2s,background-color .2s,box-shadow .2s}
 .pause:hover,.pause:focus-visible{opacity:1;color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink3)}
 .pause::before{content:"";flex:none;width:8px;height:10px;border-inline:2.5px solid currentColor}
 .pause[aria-pressed=true]{opacity:1;color:var(--ink);background:color-mix(in srgb,var(--t-accent) 16%,var(--t-surface));box-shadow:inset 0 0 0 1px var(--t-accent)}
@@ -624,6 +719,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
   .steps4 li:nth-child(3){border-left:0;padding-left:0}
   .steps4 li:nth-child(n+3){border-top:1px solid var(--line);margin-top:1.6rem}
   .beat .copy{width:min(30rem,40%)}
+  .ba-copy{width:min(30rem,40%)}
   .b-cover .copy{width:min(32rem,44%)}
 }
 @media (max-width:999px){
@@ -632,10 +728,11 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
   .win{border-radius:8px}
   .win-fig figcaption{padding-right:0;margin-top:.5rem;font-size:.8rem}
   .pages{padding:0}
-  .pages li{min-height:auto;justify-content:flex-start;padding-block:2.2rem 3rem}
+  .pages li{min-height:62svh;justify-content:flex-start;padding-block:2.2rem 3rem}
   .vs{grid-template-columns:minmax(0,1fr)}
   .vs>div+div{border-left:0;padding-left:0;border-top:1px solid var(--line)}
   .duo{grid-template-columns:minmax(0,1fr)}
+  .duo>div{padding-right:0}
   .duo>div+div{border-left:0;padding-left:0;border-top:1px solid var(--line)}
   .faq{display:block}
   .faq .more{margin-right:0}
@@ -645,6 +742,17 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
   ul.guides li::after{grid-row:1;grid-column:3}
   .rail{display:none}
 }
+/* by touch (6 Nov.): a fling rests on each of the window's six pages, its text right under the window, and upright on
+   each beat's card, so nothing goes by in a second and a rest never falls between two cards. Proximity only: the
+   plain sections scroll as they always did. With a mouse or trackpad, the smooth scroll does the holding instead. */
+@media (max-width:999px) and (pointer:coarse){
+  html{scroll-snap-type:y proximity}
+  /* on the heading, not the page: a snap area taller than the screen would let it rest anywhere in a 30 px band */
+  .pages>li>h3{scroll-snap-align:start;scroll-snap-stop:always;scroll-margin-top:calc(var(--pg-top,0px) + 2.2rem)}
+}
+@media (max-width:999px) and (orientation:portrait) and (pointer:coarse){
+  .beat:not(.b-cover):not(.beat-long):not([data-beat="5"]) .copy{scroll-snap-align:end;scroll-snap-stop:always;scroll-margin-bottom:12px}
+}
 /* held upright (a phone, a tablet): the route on top, each beat's text on its own plain card at the bottom */
 @media (max-width:999px) and (orientation:portrait){
   .stage::after{background:linear-gradient(transparent calc(var(--vt,62%) - 14%),color-mix(in srgb,var(--bg) 88%,transparent) calc(var(--vt,62%) - 2%),var(--bg) var(--vt,62%),var(--bg) var(--vb,100%),transparent calc(var(--vb,100%) + 6%))}
@@ -652,6 +760,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
   .beat .copy,.b-cover .copy,.cta .copy{width:auto;max-width:36rem}
   .beat:not(.b-cover) .copy{padding:1.15rem 1.15rem 1.2rem;margin-inline:-.4rem;border-radius:16px;background:color-mix(in srgb,var(--bg) 95%,transparent);box-shadow:0 0 0 1px var(--line),0 -20px 50px -10px var(--bg)}
   .beat .copy>:last-child{margin-bottom:0}
+  .ba-copy{width:auto;max-width:36rem;gap:.6rem;padding:1.15rem 1.15rem 1.2rem;margin-inline:-.4rem;border-radius:16px;background:color-mix(in srgb,var(--bg) 95%,transparent);box-shadow:0 0 0 1px var(--line)}
   .b-cover{min-height:calc(100svh - var(--top-h));padding-block:0 3.4rem;align-items:flex-end}
   .b-cover .copy{padding-top:1rem}
   .b-cover h1{font-size:clamp(2.1rem,1rem + 5.4vw,3.4rem);margin-bottom:1rem;max-width:13ch}
@@ -661,8 +770,8 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
   .beat h2{font-size:clamp(1.9rem,1rem + 4vw,2.8rem);margin-bottom:.9rem}
   .beat h3{font-size:clamp(1.8rem,1rem + 3.6vw,2.6rem);margin-bottom:.8rem}
   .beat p{font-size:1rem;margin-bottom:.7rem}
-  .beat-long{min-height:300svh;align-items:stretch}
-  .beat-long>.wrap{justify-content:flex-end}
+  .beat-long{min-height:334svh;align-items:stretch}
+  .beat-long>.wrap{justify-content:flex-end;padding-top:34svh}
   .beat-long .copy{top:auto;bottom:max(12px,env(safe-area-inset-bottom));position:sticky}
   /* the ban card holds the log and the IP; the Valve note and the made-up times note follow right after the beat */
   .beat-long .sub,.beat-long .ban-cap{display:none}.ban-cap-s{display:block;margin-bottom:1rem}
@@ -779,6 +888,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
+<div class="ld-scr" aria-hidden="true"><div class="ld-in"><span class="ld-name"><img src="img/icon.png" alt="" width="28" height="28">CS2 IP Changer</span><span class="ld-bar"><b></b><i></i></span></div></div>
 <div class="cols" aria-hidden="true"><i></i></div>
 <header class="top">
   <div class="wrap">
@@ -885,10 +995,12 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
     </div>
     <div class="solid ban-after">
       <div class="wrap">
-        <p class="ban-cap ban-cap-s ban-sub-s">It's for a server's own IP ban, not for Valve: a new IP doesn't change a VAC or game ban.</p>
-        <p class="ban-cap ban-cap-s">Shown on Android, with made-up times, names and IPs. On an iPhone you get the new IP with Airplane Mode on the phone.</p>
-        <p>The app sees the ban in CS2's console, marks that account as banned on that server and its community, and logs into the next account that server hasn't banned. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> works from inside the game.</p>
-        <a class="link" href="cs2-ip-ban/">Which ban do you have?</a>
+        <div class="ba-copy">
+          <p class="ban-cap ban-cap-s ban-sub-s">It's for a server's own IP ban, not for Valve: a new IP doesn't change a VAC or game ban.</p>
+          <p class="ban-cap ban-cap-s">Shown on Android, with made-up times, names and IPs. On an iPhone you get the new IP with Airplane Mode on the phone.</p>
+          <p>The app sees the ban in CS2's console, marks that account as banned on that server and its community, and logs into the next account that server hasn't banned. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> works from inside the game.</p>
+          <a class="link" href="cs2-ip-ban/">Which ban do you have?</a>
+        </div>
       </div>
     </div>
   </section>
@@ -915,16 +1027,17 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
             </a>
             <div class="patch p-bar" aria-hidden="true"><span>192.0.2.140</span></div>
             <div class="patch p-ip" aria-hidden="true"><span>192.0.2.140</span></div>
+            <div class="marks" aria-hidden="true"><span class="mk" data-pg="connection" data-ph="tr" style="--x:8.589%;--y:20.563%;--w:12.581%;--h:2.625%"><b>1</b></span><span class="mk" data-pg="connection" data-ph="l" style="--x:30.565%;--y:20.563%;--w:12.016%;--h:2.625%"><b>2</b></span><span class="mk tl" data-pg="connection" data-ph="xbr" style="--x:17.5%;--y:27.5%;--w:12.339%;--h:4.5%"><b>3</b></span><span class="mk" data-pg="servers" data-ph="r" style="--x:59.435%;--y:27.875%;--w:5.161%;--h:3.125%"><b>1</b></span><span class="mk" data-pg="servers" data-ph="l" style="--x:92.5%;--y:27%;--w:4.597%;--h:4%"><b>2</b></span><span class="mk t" data-pg="servers" data-ph="br" style="--x:77.742%;--y:8.625%;--w:5.484%;--h:4.5%"><b>3</b></span><span class="mk" data-pg="accounts" data-ph="l" style="--x:8.79%;--y:18.625%;--w:21.935%;--h:23.375%"><b>1</b></span><span class="mk r" data-pg="accounts" data-ph="tr" style="--x:60.685%;--y:27%;--w:8.024%;--h:2%"><b>2</b></span><span class="mk" data-pg="accounts" data-ph="l" style="--x:46.21%;--y:36.375%;--w:5.565%;--h:4%"><b>3</b></span><span class="mk r" data-pg="regions" data-ph="r" style="--x:8.831%;--y:9.125%;--w:15.202%;--h:2.625%"><b>1</b></span><span class="mk t" data-pg="regions" data-ph="r" style="--x:42.742%;--y:16.875%;--w:25.806%;--h:4.5%"><b>2</b></span><span class="mk" data-pg="regions" data-ph="l" style="--x:9.274%;--y:42.125%;--w:1.694%;--h:2.625%"><b>3</b></span><span class="mk" data-pg="configs" data-ph="r" style="--x:8.79%;--y:30.875%;--w:39.516%;--h:2.75%"><b>1</b></span><span class="mk" data-pg="configs" data-ph="l" style="--x:91.048%;--y:11.5%;--w:6.129%;--h:10.5%"><b>2</b></span><span class="mk r" data-pg="configs" data-ph="r" style="--x:54.435%;--y:58.125%;--w:6.895%;--h:4.188%"><b>3</b></span><span class="mk r" data-pg="profiles" data-ph="r" style="--x:40%;--y:8.875%;--w:43.71%;--h:2.75%"><b>1</b></span><span class="mk r" data-pg="profiles" data-ph="r" style="--x:55.887%;--y:19.75%;--w:12.581%;--h:5.5%"><b>2</b></span><span class="mk t" data-pg="profiles" data-ph="br" style="--x:91.129%;--y:11.875%;--w:6.532%;--h:4.5%"><b>3</b></span></div>
           </div>
           <figcaption>The real app, with example IPs and names. <span class="tap">Tap the picture to open it full size.</span></figcaption>
         </figure>
         <ol class="pages" id="pages">
-          <li class="on" data-pg="connection"><h3><span aria-hidden="true">01</span> Connection</h3><p class="big"><span class="bn">192.0.2.140</span><small>IP servers see after Change IP, example</small></p><p>Protection status, the IP servers see next to your home IP, the phone, live checks and a leak test. Change IP lives here.</p><a href="change-ip-with-phone/">Change IP with your phone</a></li>
-          <li data-pg="servers"><h3><span aria-hidden="true">02</span> Servers</h3><p class="big"><span class="bn">14/16</span><small>players on EU Retakes #1, example</small></p><p>Paste <code>IP:port</code> or <code>steam://connect</code> links. Name, map, players and ping through the phone, and it can wait for a slot on a full server.</p><a href="cs2-ip-ban/">Banned on one? CS2 IP ban</a></li>
-          <li data-pg="accounts"><h3><span aria-hidden="true">03</span> Accounts</h3><p class="big"><span class="bn">8/8</span><small>accounts saved on this PC, example</small></p><p>Switch between the Steam accounts saved on your PC without passwords. VAC, game and trade bans, cooldowns and server ban marks.</p><a href="steam-account-switcher/">Steam account switcher</a></li>
-          <li data-pg="regions"><h3><span aria-hidden="true">04</span> Regions</h3><p class="big"><span class="bn">8/30</span><small>regions CS2 can play in, example</small></p><p>Choose where matchmaking puts you, with each region's ping. One firewall rule for <code>cs2.exe</code> blocks the regions you turn off.</p><a href="cs2-region-picker/">CS2 region picker</a></li>
-          <li data-pg="configs"><h3><span aria-hidden="true">05</span> Configs</h3><p class="big"><span class="bn">7</span><small>settings differ between two accounts, example</small></p><p>Copy binds, crosshair, sensitivity and video between accounts. Never while CS2 is open, always with a backup.</p><a href="copy-cs2-config/">Copy CS2 settings</a></li>
-          <li data-pg="profiles"><h3><span aria-hidden="true">06</span> Profiles</h3><p class="big"><span class="bn">6/8</span><small>accounts picked for one template, example</small></p><p>Name, picture, bio and privacy on many Steam accounts from one template. Preview first; Restore original undoes it.</p><a href="steam-profile-editor/">Steam profile editor</a></li>
+          <li class="on" data-pg="connection"><h3><span aria-hidden="true">01</span> Connection</h3><p class="big"><span class="bn">192.0.2.140</span><small>IP servers see after Change IP, example</small></p><p>Protection status, the IP servers see next to your home IP, the phone, live checks and a leak test. Change IP lives here.</p><ol class="mk-key"><li><span>IP servers see, your carrier's</span></li><li><span>Your home IP, masked</span></li><li><span><b>Change IP and rejoin</b>, also <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd> in game</span></li></ol><a href="change-ip-with-phone/">Change IP with your phone</a></li>
+          <li data-pg="servers"><h3><span aria-hidden="true">02</span> Servers</h3><p class="big"><span class="bn">14/16</span><small>players on EU Retakes #1, example</small></p><p>Paste <code>IP:port</code> or <code>steam://connect</code> links. Name, map, players and ping through the phone, and it can wait for a slot on a full server.</p><ol class="mk-key"><li><span>Players, live through the phone</span></li><li><span>Join</span></li><li><span>Paste <code>IP:port</code> or <code>steam://</code> links</span></li></ol><a href="cs2-ip-ban/">Banned on one? CS2 IP ban</a></li>
+          <li data-pg="accounts"><h3><span aria-hidden="true">03</span> Accounts</h3><p class="big"><span class="bn">8/8</span><small>accounts saved on this PC, example</small></p><p>Switch between the Steam accounts saved on your PC without passwords. VAC, game and trade bans, cooldowns and server ban marks.</p><ol class="mk-key"><li><span>The account in use</span></li><li><span>A server's ban mark</span></li><li><span>Log in, no password</span></li></ol><a href="steam-account-switcher/">Steam account switcher</a></li>
+          <li data-pg="regions"><h3><span aria-hidden="true">04</span> Regions</h3><p class="big"><span class="bn">8/30</span><small>regions CS2 can play in, example</small></p><p>Choose where matchmaking puts you, with each region's ping. One firewall rule for <code>cs2.exe</code> blocks the regions you turn off.</p><ol class="mk-key"><li><span>Regions CS2 can play in</span></li><li><span>Block the ones slower than a ping</span></li><li><span>Turn one region off</span></li></ol><a href="cs2-region-picker/">CS2 region picker</a></li>
+          <li data-pg="configs"><h3><span aria-hidden="true">05</span> Configs</h3><p class="big"><span class="bn">7</span><small>settings differ between two accounts, example</small></p><p>Copy binds, crosshair, sensitivity and video between accounts. Never while CS2 is open, always with a backup.</p><ol class="mk-key"><li><span>What to copy</span></li><li><span>Backups, to undo</span></li><li><span>Compare two accounts</span></li></ol><a href="copy-cs2-config/">Copy CS2 settings</a></li>
+          <li data-pg="profiles"><h3><span aria-hidden="true">06</span> Profiles</h3><p class="big"><span class="bn">6/8</span><small>accounts picked for one template, example</small></p><p>Name, picture, bio and privacy on many Steam accounts from one template. Preview first; Restore original undoes it.</p><ol class="mk-key"><li><span>What to change</span></li><li><span>Each account now and after</span></li><li><span>Preview first</span></li></ol><a href="steam-profile-editor/">Steam profile editor</a></li>
         </ol>
       </div>
     </div>
@@ -969,7 +1082,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
         <div class="rv"><div class="art" aria-hidden="true"><div class="slot"><span>EU Retakes #1</span><div class="two"><span class="now"><span class="n">32<i>/32</i></span></span><span class="later"><span class="n">31<i>/32</i></span></span></div><div class="two"><span class="st now">full, waiting for a slot</span><span class="st go later">slot open, joining</span></div></div></div><div class="tp"><h3>Full server? It waits.</h3> Servers can wait for a free slot on a full server and join you as soon as one opens, through the phone.</div></div>
         <div class="rv" style="--i:1"><div class="art" aria-hidden="true"><div class="list"><span><i style="--d:0"></i>USB cable</span><span><i style="--d:1"></i>Driver</span><span><i style="--d:2"></i>USB debugging</span><span><i style="--d:3"></i>Tethering on, phone Wi-Fi off</span></div></div><div class="tp"><h3>Phone setup.</h3> Steps for the cable, driver, USB debugging, tethering and the phone's Wi-Fi that check themselves and turn green, with a button where the app can do it.</div></div>
         <div class="rv" style="--i:2"><div class="art" aria-hidden="true"><div class="q"><span class="bars2"><i></i><i></i><i></i><i></i></span><span><b>Good</b> · 41 ms · jitter 5 ms · 0% loss</span></div></div><div class="tp"><h3>Connection quality.</h3> Ping, jitter and loss through the phone every 30 seconds, with a warning when it's weak.</div></div>
-        <div class="rv" style="--i:3"><div class="art" aria-hidden="true"><div class="mask"><span class="ip">203.0.&#8226;&#8226;&#8226;.&#8226;&#8226;&#8226;</span><span class="sw"><i></i>Hide usernames</span></div></div><div class="tp"><h3>Stream friendly.</h3> Your home IP stays masked in the app, and Hide usernames keeps them off screen, in the Log too.</div></div>
+        <div class="rv" style="--i:3"><div class="art" aria-hidden="true"><div class="mask"><span class="ip two"><span class="now">203.0.113.7</span><span class="later">203.0.&#8226;&#8226;&#8226;.&#8226;&#8226;&#8226;</span></span><span class="sw"><i></i>Hide usernames</span></div></div><div class="tp"><h3>Stream friendly.</h3> Your home IP stays masked in the app, and Hide usernames keeps them off screen, in the Log too.</div></div>
       </div>
     </div>
   </section>
@@ -1112,12 +1225,34 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
     <nav aria-labelledby="f2"><h3 id="f2">Guides</h3><ul><li><a href="change-ip-with-phone/">Change IP with your phone</a></li><li><a href="cs2-iphone-hotspot/">CS2 with an iPhone</a></li><li><a href="cs2-ip-ban/">CS2 IP ban</a></li><li><a href="hide-ip-cs2/">Hide your IP without a VPN</a></li><li><a href="is-it-safe/">Is it safe?</a></li><li><a href="steam-account-switcher/">Steam account switcher</a></li><li><a href="copy-cs2-config/">Copy CS2 settings</a></li><li><a href="cs2-region-picker/">CS2 region picker</a></li><li><a href="steam-profile-editor/">Steam profile editor</a></li></ul></nav>
     <nav aria-labelledby="f3"><h3 id="f3">Project</h3><ul><li><a href="https://github.com/Sepd0x/cs2-ip-changer">Source on GitHub</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/releases">Releases</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/blob/main/CHANGELOG.md">Changelog</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer#privacy">Privacy</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose">Report a bug</a></li></ul></nav>
   </div>
-  <div class="wordmark" aria-hidden="true">CS2 IP Changer<span>CS2 IP Changer</span></div>
+  <div class="wordmark" aria-hidden="true"><svg viewBox="7 0 1433 252" focusable="false">
+    <defs>
+      <linearGradient id="wm-c" gradientUnits="userSpaceOnUse" x1="7" y1="0" x2="1440" y2="0"><stop offset="0" style="stop-color:var(--t-top1)"/><stop offset=".25" style="stop-color:color-mix(in oklch,var(--t-top1),var(--t-top2))"/><stop offset=".5" style="stop-color:var(--t-top2)"/><stop offset=".75" style="stop-color:color-mix(in oklch,var(--t-top2),var(--t-top3))"/><stop offset="1" style="stop-color:var(--t-top3)"/></linearGradient>
+      <linearGradient id="wm-band"><stop offset="0" stop-color="white" stop-opacity="0"/><stop offset=".5" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient>
+      <radialGradient id="wm-spot"><stop offset="0" stop-color="white" stop-opacity=".9"/><stop offset="1" stop-color="white" stop-opacity="0"/></radialGradient>
+      <linearGradient id="wm-fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="white" stop-opacity=".45"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient>
+      <filter id="wm-blur" x="-10%" y="-40%" width="120%" height="180%"><feGaussianBlur stdDeviation="7"/></filter>
+      <filter id="wm-blur2" x="-10%" y="-400%" width="120%" height="900%"><feGaussianBlur stdDeviation="5"/></filter>
+      <clipPath id="wm-down"><rect x="-33" y="196" width="1513" height="56"/></clipPath>
+      <mask id="wm-lit" maskUnits="userSpaceOnUse" x="-33" y="0" width="1513" height="252"><rect class="wm-drawn" x="-33" width="1513" height="252" fill="white" fill-opacity=".6"/><rect class="wm-pass" x="-453" width="420" height="252" fill="url(#wm-band)"/><circle class="wm-spot" cx="-400" cy="100" r="190" fill="url(#wm-spot)"/></mask>
+      <mask id="wm-floor" maskUnits="userSpaceOnUse" x="-33" y="196" width="1513" height="56"><rect x="-33" y="196" width="1513" height="56" fill="url(#wm-fade)"/></mask>
+      <text id="wm-t" x="0" y="150">CS2 IP Changer</text>
+    </defs>
+    <use href="#wm-t" class="wm-base"/>
+    <g mask="url(#wm-lit)">
+      <use href="#wm-t" class="wm-glow" filter="url(#wm-blur)"/><use href="#wm-t" class="wm-line"/>
+      <g mask="url(#wm-floor)" clip-path="url(#wm-down)"><use href="#wm-t" class="wm-line" transform="matrix(1 0 0 -1 0 346)"/></g>
+    </g>
+    <line class="wm-hz-glow" x1="7" y1="196" x2="1440" y2="196" filter="url(#wm-blur2)"/>
+    <line class="wm-hz" x1="7" y1="196" x2="1440" y2="196"/>
+    <line class="wm-pk wm-pk-glow" x1="7" y1="196" x2="1440" y2="196" filter="url(#wm-blur2)"/>
+    <line class="wm-pk" x1="7" y1="196" x2="1440" y2="196"/>
+  </svg></div>
   <div class="wrap legal"><span>CS2 IP Changer by Sepd0x. Not affiliated with Valve. Counter-Strike and Steam are trademarks of Valve Corporation.</span><span>Made for community servers.</span></div>
 </footer>
 <script>
 /* the motion libraries load only when motion is on; the shared script, the story and the world load either way, in this order */
-(function(){var b='assets/js/',l=(document.documentElement.classList.contains('fx')?['gsap.min.js','ScrollTrigger.min.js','lenis.min.js']:[]).concat(['readout.js','home.js','scenes.min.js']);l.forEach(function(f){var s=document.createElement('script');s.src=b+f;s.async=false;if(f==='scenes.min.js')s.onload=function(){if(window.__worldReady)window.__worldReady()};document.body.appendChild(s)})})();
+(function(){var b='assets/js/',l=(document.documentElement.classList.contains('fx')?['gsap.min.js','ScrollTrigger.min.js','lenis.min.js']:[]).concat(['readout.js','home.js','scenes.min.js']);l.forEach(function(f){var s=document.createElement('script');s.src=b+f;s.async=false;if(f==='scenes.min.js')s.onload=function(){window.__ldStep&&__ldStep(.45);if(window.__worldReady)window.__worldReady()};document.body.appendChild(s)})})();
 </script>
 <script>
 (function(){

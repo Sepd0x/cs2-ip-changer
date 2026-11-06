@@ -36,7 +36,8 @@
       if (i === 0) return { s: 0, e: 0 };
       if (b.classList.contains('beat-long')) {
         c.style.setProperty('--ch', ch + 'px');
-        if (T) return { s: Math.max(0, bt + ch + 24 - H, docTop(copies[i - 1]) + copies[i - 1].offsetHeight - topH()), e: bt + bh - H };
+        // upright, the card rises only after the gap above it (the wrap's padding), once the card before has faded
+        if (T) return { s: Math.max(0, bt + (parseFloat(getComputedStyle(c.parentNode).paddingTop) || 0) + ch + 24 - H,docTop(copies[i - 1]) + copies[i - 1].offsetHeight - topH()), e: bt + bh - H };
         var stuck = topH() + Math.max(16, (H - topH() - ch) / 2);
         return { s: bt + 32 - stuck, e: bt + bh - ch - stuck - 32 };
       }
@@ -47,8 +48,13 @@
     // a beat never anchors before the one above it
     for (var i = 1; i < A.length; i++) { A[i].s = Math.max(A[i].s, A[i - 1].e + 1); A[i].e = Math.max(A[i].e, A[i].s); }
     // the story ends when the page's own app window docks where the 3D screen is
-    var wr = winRect();
-    storyEnd = wr ? docTop(fig) - wr.fig : (appBody ? docTop(appBody) : 1e9);
+    // measured where the window sits in the page, not where it is stuck: a reload or a turn of the phone with the window
+    // stuck put the end of the story at the page being read (6 Nov.), and the 3D came back over the window's pages
+    var wr = winRect(), fp = fig ? fig.style.position : '';
+    if (fig) fig.style.position = 'static';
+    var figTop = fig ? docTop(fig) : 0;
+    if (fig) fig.style.position = fp;
+    storyEnd = wr ? figTop - wr.fig : (appBody ? docTop(appBody) : 1e9);
     ctaAt = cta ? docTop(cta) : 1e9; ctaH = cta ? cta.offsetHeight : 0;
   }
   function where(y) {
@@ -129,6 +135,7 @@
   function update() {
     uq = 0;
     var y = scrollY, w = where(y), p = w.p, sub = w.sub;
+    seen = { inStory: y < storyEnd, p: w.p, sub: w.sub, pg: pageNow(y) };
     if (!FX || held) { p = Math.round(p); if (p === 4) sub = snap(sub); else if (p > 4) sub = 1; }
     if (p < 4) sub = 0;
     // the stage is seen while the story is on screen and again at the close; under the plain sections it rests
@@ -144,8 +151,12 @@
     stage.style.setProperty('--veil-x', (p > 4.4 && p < 5 ? 16 * Math.sin((p - 4.4) / .6 * Math.PI) : 0).toFixed(1) + '%');
     // held upright, the ground under the cover's text stays plain; past the cover each beat has its own card
     if (tall()) { var cr = copies[0].getBoundingClientRect(), on0 = cr.bottom > 0; stage.style.setProperty('--vt', (on0 ? Math.max(0, cr.top / innerHeight * 100) : 100).toFixed(1) + '%'); stage.style.setProperty('--vb', (on0 ? Math.max(0, cr.bottom / innerHeight * 100) : 100).toFixed(1) + '%'); }
+    // held upright, a beat's card fades as it rises into the upper part of the screen, so the next card never stacks
+    // under a readable one and the route above is clear (6 Nov., the owner saw cards pile up between beats on a phone)
+    var T = tall(), th = topH(), av = H - th;
+    for (var k = 1; k < NB; k++) { var cc = copies[k]; if (!cc) continue; var o = T ? clamp((cc.getBoundingClientRect().bottom - th - av * .3) / (av * .32)) : 1; if (cc.__o !== o) { cc.__o = o; cc.style.opacity = o < 1 ? o.toFixed(3) : ''; } }
     // the pause button sits on the free part of the scene; while a card passes under it, it steps aside
-    if (pauseBtn && tall()) { var pt = topH() + 10; pauseBtn.classList.toggle('under', copies.concat([$('.copy', cta)]).some(function (c) { if (!c) return false; var r = c.getBoundingClientRect(); return r.top < pt + 44 && r.bottom > pt; })); }
+    if (pauseBtn && T) { var pt = th + 10; pauseBtn.classList.toggle('under', copies.concat([$('.copy', cta)]).some(function (c) { if (!c || c.__o < .2) return false; var r = c.getBoundingClientRect(); return r.top < pt + 44 && r.bottom > pt; })); }
     // the rail: which beat, and how far along the route
     if (railOl) {
       railOl.style.setProperty('--p', clamp(p / (NB - 1)).toFixed(4));
@@ -176,25 +187,37 @@
   addEventListener('scroll', onScroll, { passive: true });
   var rq = 0;
   var lastW = innerWidth;
-  addEventListener('resize', function () { var coarse = matchMedia('(pointer:coarse)').matches; if (coarse && innerWidth === lastW) { measure(); update(); return; } lastW = innerWidth; clearTimeout(rq); rq = setTimeout(function () { var w0 = where(scrollY), inStory = scrollY < storyEnd; measure(); veil(); if (api) api.resize(); if (inStory && A.length) { var i = Math.min(Math.round(w0.p), A.length - 1), a = A[i]; scrollTo(0, Math.round(a.s + (a.e - a.s) * (i === 4 ? w0.sub : 0))); } update(); }, 120); });
+  var seen = null, pageNow = function () { return null; }, pageGo = function () {};
+  // a new width (the phone turned, a window resized): back to the beat, or the window's page, that was on screen. Where that
+  // was is kept from the last scroll, before the browser moved the page for the new layout (6 Nov.: turned on a page of the
+  // window, a phone landed in the ban, and stayed there when turned back)
+  var was = null;
+  addEventListener('resize', function () { var coarse = matchMedia('(pointer:coarse)').matches; if (coarse && innerWidth === lastW) { measure(); update(); return; } lastW = innerWidth; if (!was) was = seen; clearTimeout(rq); rq = setTimeout(function () { var w0 = was || { inStory: scrollY < storyEnd, p: where(scrollY).p, sub: where(scrollY).sub, pg: pageNow(scrollY) }; was = null; measure(); veil(); if (api) api.resize(); if (w0.inStory && A.length) { var i = Math.min(Math.round(w0.p), A.length - 1), a = A[i]; scrollTo(0, Math.round(a.s + (a.e - a.s) * (i === 4 ? w0.sub : 0))); } else if (w0.pg) pageGo(w0.pg); update(); }, 120); });
   d.addEventListener('visibilitychange', function () { if (api) api.hide(d.hidden || !onStage); });
   measure(); veil(); update();
   if (d.fonts && d.fonts.ready) d.fonts.ready.then(function () { measure(); veil(); if (api) api.resize(); update(); });
   addEventListener('load', function () { measure(); update(); });
 
-  /* ------------------------------------------------------------ keyboard in the ban: one log line per PageDown or Space */
+  /* ------------------------------------------------------------ keyboard in the story: one beat per PageDown or Space, one log
+     line in the ban (6 Nov.: like a finger on a phone, a key never lands between two beats with the camera half way) */
+  var keyGo = function (to) { if (W.__lenis) W.__lenis.scrollTo(to, { duration: .7 }); else scrollTo({ top: to, behavior: FX ? 'smooth' : 'auto' }); };
+  var keyDir = function (e) {
+    if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return 0;
+    var t = e.target; if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(t.tagName))) return 0;
+    return e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey) ? 1 : e.key === 'PageUp' || (e.key === ' ' && e.shiftKey) ? -1 : 0;
+  };
   d.addEventListener('keydown', function (e) {
-    if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || !A[4]) return;
-    var t = e.target; if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(t.tagName))) return;
-    var down = e.key === 'PageDown' || (e.key === ' ' && !e.shiftKey), up = e.key === 'PageUp' || (e.key === ' ' && e.shiftKey);
-    if (!down && !up) return;
-    var a = A[4], y = scrollY, span = a.e - a.s; if (y < a.s - 2 || y > a.e + 2 || span <= 0) return;
-    var k = (y - a.s) / span, next = null;
-    if (down) { for (var i = 0; i < LINES.length; i++) if (LINES[i] > k + .01) { next = LINES[i]; break; } if (next === null) return; }
-    else { for (var j = LINES.length - 1; j >= 0; j--) if (LINES[j] < k - .01) { next = LINES[j]; break; } if (next === null) return; }
-    e.preventDefault();
-    var to = Math.round(a.s + span * (next + .02));
-    if (W.__lenis) W.__lenis.scrollTo(to, { duration: .7 }); else scrollTo({ top: to, behavior: FX ? 'smooth' : 'auto' });
+    var dir = keyDir(e); if (!dir || !A[4]) return;
+    // where the story rests: each beat's place, and in the ban each log line; past the last beat the key does what it always does
+    var y = scrollY, a = A[4], span = a.e - a.s, stops = [], i, to = null;
+    for (i = 0; i < NB; i++) if (i !== 4 || span <= 0) stops.push(Math.round(A[i].s));
+    if (span > 0) LINES.forEach(function (l) { stops.push(Math.round(a.s + span * (l + .02))); });
+    stops.sort(function (x, z) { return x - z; });
+    if (y > stops[stops.length - 1] + 2) return;
+    if (dir > 0) { for (i = 0; i < stops.length; i++) if (stops[i] > y + 4) { to = stops[i]; break; } }
+    else { for (i = stops.length - 1; i >= 0; i--) if (stops[i] < y - 4) { to = stops[i]; break; } }
+    if (to === null) return;
+    e.preventDefault(); keyGo(to);
   });
 
   /* ------------------------------------------------------------ Pause motion: remembered, and it stops the scene's own loops */
@@ -210,9 +233,20 @@
 
   /* ------------------------------------------------------------ the app's six pages: the window shows the page being read */
   if (fig) {
-    var pics = $$('.views picture', fig), zl = $('.views', fig), pages = $$('#pages li'), cur = 'connection';
+    var pics = $$('.views picture', fig), zl = $('.views', fig), pages = $$('#pages > li'), cur = 'connection';
+    // the page being read while the window is docked, and the way back to it (its title where the snap rests it)
+    pageNow = function (y) { return centres.length && y >= storyEnd - 1 && y <= centres[centres.length - 1] - line0 + innerHeight * .6 ? cur : null; };
+    // the page's title goes where the snap rests it, and the window keeps that page while the page settles (on its side the
+    // page under the middle of the screen can be the one before)
+    var holdPg = 0;
+    pageGo = function (pg) {
+      var i = pages.map(function (l) { return l.getAttribute('data-pg'); }).indexOf(pg); if (i < 0) return;
+      ($('h3', pages[i]) || pages[i]).scrollIntoView({ block: 'start', behavior: 'instant' });
+      show(pg); holdPg = performance.now() + 600;
+    };
     var show = function (pg) {
       if (pg === cur) return; cur = pg;
+      if (seen) seen.pg = pageNow(scrollY); // the scroll's own update ran before this page was picked
       pics.forEach(function (pc) {
         var on = pc.getAttribute('data-pg') === pg; pc.classList.toggle('on', on);
         if (on) { pc.removeAttribute('aria-hidden'); var im = $('img', pc); if (im.loading === 'lazy') im.loading = 'eager'; zl.href = 'img/' + pg + '.png'; }
@@ -224,18 +258,31 @@
     var centres = [], line0 = 0;
     var mPages = function () { centres = pages.map(function (li) { return docTop(li) + li.offsetHeight / 2; }); line0 = tall() ? Math.min(innerHeight * .78, topH() + fig.offsetHeight + innerHeight * .25) : innerHeight * .5; };
     var pick = function () {
+      if (performance.now() < holdPg) return;
       var line = scrollY + line0, best = -1, bd = 1e9;
       centres.forEach(function (c, i) { var dd = Math.abs(c - line); if (dd < bd) { bd = dd; best = i; } });
       if (best >= 0) show(pages[best].getAttribute('data-pg'));
     };
     var pq = 0, onPg = function () { if (!pq) { pq = 1; requestAnimationFrame(function () { pq = 0; pick(); }); } };
     mPages(); addEventListener('resize', mPages); addEventListener('load', mPages); if (d.fonts && d.fonts.ready) d.fonts.ready.then(mPages);
-    if ('IntersectionObserver' in W) new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { mPages(); addEventListener('scroll', onPg, { passive: true }); } else removeEventListener('scroll', onPg); }); }).observe($('#pages'));
+    if ('IntersectionObserver' in W) new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { mPages(); pick(); addEventListener('scroll', onPg, { passive: true }); } else removeEventListener('scroll', onPg); }); }).observe($('#pages'));
     else addEventListener('scroll', onPg, { passive: true });
     pages.forEach(function (li) { li.addEventListener('focusin', function () { show(li.getAttribute('data-pg')); }); });
+    // the keyboard: one page of the window per PageDown or Space, from the first page to the last
+    d.addEventListener('keydown', function (e) {
+      var dir = keyDir(e); if (!dir || !centres.length) return;
+      var y = scrollY, at = centres.map(function (c) { return Math.round(c - line0); }), to = null, i;
+      if (y < at[0] - innerHeight * .6 || y > at[at.length - 1] + 2) return;
+      if (dir > 0) { for (i = 0; i < at.length; i++) if (at[i] > y + 4) { to = at[i]; break; } }
+      else { for (i = at.length - 1; i >= 0; i--) if (at[i] < y - 4) { to = at[i]; break; } }
+      if (to === null) return;
+      e.preventDefault(); keyGo(to);
+    });
     fig.addEventListener('focusin', function () { if (scrollY < storyEnd) scrollTo(0, Math.ceil(storyEnd)); });
-    var setWin = function () { fig.style.setProperty('--win-h', fig.offsetHeight + 'px'); };
-    setWin(); addEventListener('resize', setWin);
+    // by touch on a phone each page rests with its text right under the sticky window (the snap in the CSS; the
+    // margin leaves out the page's scroll-padding, which the snap adds on its own)
+    var pagesEl = $('#pages'), setWin = function () { fig.style.setProperty('--win-h', fig.offsetHeight + 'px'); if (pagesEl) pagesEl.style.setProperty('--pg-top', ((parseFloat(getComputedStyle(fig).top) || topH()) + fig.offsetHeight - (parseFloat(getComputedStyle(root).scrollPaddingTop) || 0)) + 'px'); };
+    setWin(); addEventListener('resize', setWin); addEventListener('load', setWin);
   }
 
   /* ------------------------------------------------------------ start the scene once its script is in */

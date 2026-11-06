@@ -40,6 +40,9 @@ function routeLike(c, curve, extra) {
   return { m, mesh, curve };
 }
 function only(LAB, keep) { for (const k in LAB) if (!keep.includes(k)) LAB[k].beats = []; }
+// shots near the PC see only the cable's end and the first part of the air leg, which are all one purple on the
+// home's route; there the visible stretch carries the whole line of three colours (6 Nov.: two guides had a purple line)
+function threeColours(c) { c.mCable.uniforms.uS.value = -0.6; c.mCable.uniforms.uE.value = 0.12; c.mAir.uniforms.uS.value = 0.12; c.mAir.uniforms.uE.value = 3.2; }
 
 // ---------------------------------------------------------------- the pages
 const PAGES = {
@@ -68,7 +71,8 @@ const PAGES = {
   // CS2 with an iPhone: Personal Hotspot; Airplane Mode on and off on the iPhone, the server then sees another carrier IP
   iphone: {
     small: ['phone', 'server'],
-    p: 4, end: 5.4, iphone: true,
+    // lit: the route is already drawn when the picture comes in; the story draws it once, after Airplane Mode (it drew twice)
+    p: 4, end: 6.2, iphone: true, lit: true,
     shots: {
       wide: { pos: [-6.5, 4.2, 12.5], tgt: [4.5, 3.6, -3.5], fov: 40 },
       tall: { pos: [-7, 5.5, 22], tgt: [4.5, 4.2, -4], fov: 52 },
@@ -79,7 +83,7 @@ const PAGES = {
       c.LAB.phone.beats = [4]; c.LAB.phone.html = '<b>iPhone</b><span data-k="ph">Personal Hotspot on</span>';
       c.LAB.phone.at = c.PORT.clone().add(V3(0, -0.06, 0.1)); c.LAB.phone.dn = 1; c.LAB.phone.tall = true; // under the iPhone, so its screen (where Airplane Mode is) stays in view
     },
-    sub: t => lerp(0.3, 1, smooth(0.4, 4.4, t)),
+    sub: t => lerp(0.3, 1, smooth(1.2, 5.2, t)),
     tick(c, X, t, s, sub) {
       c.leds.uniforms.uBan.value = 0;
       // on a phone there is no room under the iPhone: its label goes on the empty floor to its right, never over its screen
@@ -96,10 +100,10 @@ const PAGES = {
   // CS2 IP ban: the world's own ban beat, played once: kicked, mobile data off and on, a new IP, back with the next account
   ban: {
     small: ['server'],
-    p: 4, end: 6.2,
+    p: 4, end: 6.8, lit: true,
     shots: {},
     build(c) { only(c.LAB, ['mast', 'server']); c.LAB.mast.tall = c.LAB.server.tall = true; },
-    sub: t => lerp(0, 1, smooth(0.3, 5.6, t)),
+    sub: t => lerp(0, 1, smooth(0.9, 6.2, t)),
     // the world's own ban beat says it all (kicked, data off and on, new IP, back on the server)
   },
   // Hide your IP: the home route carries the browser and stops at Windows Firewall for CS2; the server only sees the carrier
@@ -110,12 +114,14 @@ const PAGES = {
       wide: { pos: [-17, 14.5, 16], tgt: [0.5, 1.2, -4], fov: 34 },
       tall: { pos: [-15, 23, 25], tgt: [0.5, 0.8, -4], fov: 52 },
     },
-    keys: (c, K) => [K(c.routerPos.clone().add(V3(0, 1.4, 0)), 110, 20, 0, 200), K(c.gatePos.clone().add(V3(0, 1.7, 0)), 110, 200, 0, 20), K(c.mastTop, 96, 40, 0, 10), K(c.serverTop, 110, 10, 0, 180), K(V3(c.SX + 2.95, 0, c.SZ + 0.75), 0, 8, 8), K(c.PORT, 0, 0, 10)],
+    keys: (c, K) => [K(c.routerPos.clone().add(V3(0, 1.4, 0)), 110, 20, 0, 200), K(c.gatePos.clone().add(V3(0, 1.7, 0)), 110, 200, 0, 20), K(c.mastTop, 96, 40, 0, 10), K(c.serverTop, 110, 230, 0, 10), K(V3(c.SX + 2.95, 0, c.SZ + 0.75), 0, 8, 8), K(c.PORT, 0, 0, 10)],
     build(c) {
       only(c.LAB, ['router', 'gate', 'mast', 'server']);
       c.LAB.router.html = T('Home IP', '203.0.•••.•••', 'never sent to the server'); c.LAB.router.beats = [1]; c.LAB.router.dn = 1; c.LAB.router.r = 1;
       c.LAB.gate.html = T('Windows Firewall', 'CS2 and your servers', 'blocked at home'); c.LAB.gate.beats = [1];
       for (const k of ['mast', 'server']) c.LAB[k].beats = [1];
+      // the server's label to its right, where the shot keeps room: on its left the dashed leg from the phone goes up (6 Nov.)
+      c.LAB.server.r = 0; c.LAB.server.dn = 0;
       for (const k of ['router', 'gate', 'server']) c.LAB[k].tall = true;
     },
     tick(c, X, t) {
@@ -190,6 +196,7 @@ const PAGES = {
     },
     keys: (c, K) => [K(c.monW(-1.71, 1.39)), K(c.monW(1.71, 3.61), 96, 0, 0, 0), K(V3(-3.3, 1.95, 2.1), 96, 190, 0, 0), K(V3(0.9, 0, 0.4), 0, 8, 8), K(V3(-4.0, 0, 2.4), 0, 0, 10)],
     build(c, X) {
+      threeColours(c);
       only(c.LAB, ['phone']); c.LAB.phone.beats = [1]; // the phone in the corner of the shot, named
       const face = (lit) => new MeshStandardMaterial({ color: c.C.surface3, metalness: 0.2, roughness: 0.6, emissive: lit, emissiveIntensity: 0 });
       X.cards = [];
@@ -259,6 +266,7 @@ const PAGES = {
     },
     keys: (c, K) => [K(c.monW(-1.71, 1.39)), K(c.monW(1.71, 3.61), 96, 0, 0, 0), K(V3(-2.8, 1.5, 2.4), 96, 190, 0, 0), K(V3(-0.68, 0.06, 1.62), 0, 190, 90, 20), K(V3(0.6, 0, 1.0), 0, 8, 8)],
     build(c, X) {
+      threeColours(c);
       only(c.LAB, ['phone']); c.LAB.phone.beats = [1]; // the phone in the corner of the shot, named
       const av = document.createElement('canvas'); av.width = av.height = 128;
       const g = av.getContext('2d'), css = getComputedStyle(document.documentElement), v = n => css.getPropertyValue(n).trim();
@@ -364,10 +372,12 @@ function mount(canvas, opts = {}) {
   let api = null;
   try {
     api = window.WorldScene && window.WorldScene.mount(canvas, {
-      still, ios: !!G.iphone, plainScreen: !!G.screen, screen: IMG + (G.screen || 'connection') + '.webp',
+      still, lit: !!G.lit, ios: !!G.iphone, plainScreen: !!G.screen, screen: IMG + (G.screen || 'connection') + '.webp',
       frame: (W, H) => (opts.frame ? opts.frame(W, H) : { box: [W * 0.04, H * 0.06, W * 0.96, H * 0.94] }),
       extend(ctx) {
         c = ctx;
+        // the home's own places for its labels are for the home's shots; each page places its labels with r and dn
+        for (const k in c.LAB) { delete c.LAB[k].side; delete c.LAB[k].one; }
         G.build && G.build(c, X);
         // the labels that carry the page's point are placed first, so they get the room
         { const all = Object.entries(c.LAB), first = G.small || [];

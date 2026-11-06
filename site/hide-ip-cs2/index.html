@@ -20,6 +20,25 @@
 <link rel="preload" href="../fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../fonts/fragment-mono.woff2" as="font" type="font/woff2" crossorigin>
 <script>document.documentElement.classList.add('js');if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('fx')</script>
+<script>
+/* the loading screen: only with JS and WebGL. The line fills (its own transform: a custom property on <html> made every step restyle the whole page) as the page gets ready (HTML, fonts, the 3D script) and the page
+   comes in on the world's first frame, or after 6 s, or at once without WebGL. While it shows, the wheel, touch and the
+   scroll keys wait, so nothing moves under it. Reduced motion: the line steps and the screen goes at once */
+(function(h){try{var c=document.createElement('canvas');if(!(c.getContext('webgl2')||c.getContext('webgl')))return}catch(x){return}
+h.classList.add('ld','ldu');var t0=performance.now(),p=0,done=false,K={32:1,33:1,34:1,35:1,36:1,37:1,38:1,39:1,40:1},O={capture:true,passive:false},
+hold=function(e){if(e.type!=='keydown'||K[e.keyCode]){e.preventDefault();e.stopImmediatePropagation()}},
+set=function(v){if(v>p){p=v;var e=document.querySelector('.ld-bar b');if(e)e.style.transform='scaleX('+v+')'}},
+end=function(e){if(done)return;done=true;if(e&&e.type==='worldready')h.classList.add('ldw');set(1);['wheel','touchmove','keydown'].forEach(function(t){removeEventListener(t,hold,O)});
+setTimeout(function(){h.classList.add('ld-out');setTimeout(function(){h.classList.remove('ld','ld-out')},400)},Math.max(90,300-(performance.now()-t0)))};
+['wheel','touchmove','keydown'].forEach(function(t){addEventListener(t,hold,O)});
+window.__ldStep=set;window.__ldEnd=end;set(.12);
+document.addEventListener('worldready',end,true);setTimeout(end,6000);
+document.addEventListener('DOMContentLoaded',function(){set(.25)});
+document.addEventListener('worldprogress',function(e){set(.45+.52*(+e.detail||0))},true);
+if(document.fonts)document.fonts.ready.then(function(){set(.35)});
+new MutationObserver(function(){if(h.classList.contains('no-gl'))end()}).observe(h,{attributes:true,attributeFilter:['class']});
+addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.documentElement)
+</script>
 <script type="application/ld+json">
 {
  "@context": "https://schema.org",
@@ -41,7 +60,7 @@
     "@id": "https://sepd0x.github.io/cs2-ip-changer/#author"
    },
    "datePublished": "2026-10-31",
-   "dateModified": "2026-11-05",
+   "dateModified": "2026-11-06",
    "breadcrumb": {
     "@id": "https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/#crumbs"
    },
@@ -146,6 +165,25 @@ h1,h2,h3{text-wrap:balance}
 p,li,dd{text-wrap:pretty}
 .skip{position:absolute;left:-999px;top:8px;background:var(--t-accent);color:var(--t-bg);padding:8px 14px;border-radius:5px;z-index:60}
 .skip:focus{left:12px}
+/* the loading screen (6 Nov.): plain ground, the name and the app's top line filling as the page gets ready, then the page
+   comes in with its own entrance. The glint runs on transform only, so it stays smooth while the page is busy */
+.ld-scr{display:none}
+html.ld .ld-scr{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:var(--t-bg);transition:opacity .38s cubic-bezier(.22,1,.36,1),visibility 0s .38s}
+html.ld-out .ld-scr{opacity:0;visibility:hidden}
+.ld-scr::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:var(--t-top)}
+.ld-in{display:grid;justify-items:center;gap:1.15rem}
+.ld-name{display:flex;align-items:center;gap:10px;font:600 1rem/1 "Funnel Display","Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;letter-spacing:-.01em;color:var(--t-text)}
+.ld-name img{width:28px;height:28px;border-radius:6px}
+.ld-bar{position:relative;display:block;width:min(14rem,62vw);height:2px;border-radius:2px;background:var(--t-line);overflow:hidden}
+.ld-bar b{position:absolute;inset:0;background:var(--t-top);transform-origin:0 50%;transform:scaleX(var(--ld,.08));transition:transform .6s cubic-bezier(.22,1,.36,1)}
+.ld-bar i{display:none}
+@media (prefers-reduced-motion:no-preference){.ld-bar i{display:block;position:absolute;top:-2px;bottom:-2px;left:0;width:3rem;background:linear-gradient(90deg,transparent,rgba(255,255,255,.8),transparent);animation:ld-glint 1.25s cubic-bezier(.45,0,.25,1) infinite}}
+@keyframes ld-glint{from{transform:translateX(-3rem)}to{transform:translateX(min(14rem,62vw))}}
+/* what comes in after it: the cover's lines and the first reveals wait for it; when the world was drawn under it (ldw), no fade from the poster */
+html.ld .b-cover .copy>*{animation-play-state:paused}
+html.fx.ld .rv.in{opacity:0;transform:translateY(24px)}
+html.ldw .stage.ready canvas,html.ldw .gw.ready canvas{transition:none}
+html.ldw .stage.ready .stage-still{opacity:0;transition:none}
 [hidden]{display:none!important}
 .intro #h1,.intro .hero-side>*,.intro .hero .ro{visibility:hidden}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
@@ -306,9 +344,27 @@ footer nav h3{font:500 .9rem/1.4 var(--sans);color:var(--ink);margin:0 0 1rem}
 footer nav ul{list-style:none;margin:0;padding:0;display:grid;gap:0}
 footer a{color:var(--ink3);text-decoration:none;transition:color .15s;display:inline-block;padding-block:.55rem}
 footer a:hover{color:var(--ink)}
-.wordmark{position:relative;margin-top:clamp(2.5rem,2rem + 3vw,5rem);height:.7em;font:600 min(12.6vw,16rem)/1 var(--disp);letter-spacing:-.055em;text-align:center;white-space:nowrap;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.12);border-bottom:1px solid var(--line2);user-select:none;overflow:hidden}
-@supports not (-webkit-text-stroke:1px #000){.wordmark{color:rgba(255,255,255,.05)}}
-.wordmark span{display:block;background:linear-gradient(90deg in oklch,var(--t-top1),var(--t-top2) 50%,var(--t-top3));-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:0;color:transparent;clip-path:inset(0 calc(100% - var(--wm,0%)) 86% 0);position:absolute;inset:0}
+/* the name at the very end: its outline lit in the app's three colors, a packet of light that runs through the letters,
+   the horizon as the route with its packets, and the name's reflection on the floor, as in the 3D world (6 Nov.).
+   It draws itself in as the page reaches it; the light follows the pointer. Reduced motion or Pause motion: lit and still */
+.wordmark{position:relative;max-width:calc(var(--max) + 2*var(--gutter));margin:clamp(2.5rem,2rem + 3vw,5rem) auto 0;padding-inline:var(--gutter);user-select:none}
+.wordmark svg{display:block;width:100%;height:auto;overflow:visible;font:600 200px/1 var(--disp);letter-spacing:-4px}
+.wordmark use{fill:none;vector-effect:non-scaling-stroke}
+.wm-base{stroke:rgba(255,255,255,.1);stroke-width:1px}
+.wm-line{stroke:url(#wm-c);stroke-width:1.5px}
+.wm-glow{stroke:url(#wm-c);stroke-width:5px;opacity:.85}
+.wm-drawn{width:calc(var(--wm,100%) * 1.06)}
+.wm-hz{stroke:url(#wm-c);stroke-width:1px;opacity:.55;vector-effect:non-scaling-stroke}
+.wm-hz-glow{stroke:url(#wm-c);stroke-width:6;opacity:.35}
+.wm-pk{stroke:url(#wm-c);stroke-width:2.5;stroke-linecap:round;stroke-dasharray:0 1420;opacity:0}
+.wm-pk-glow{stroke-width:9}
+.fx .wm-run .wm-pass{animation:wm-pass 7s cubic-bezier(.45,0,.25,1) infinite 1.2s}
+.fx .wm-run .wm-pk{opacity:1;stroke-dasharray:3 61 2 127 4 233 2 97 3 181 2 149;animation:wm-pk 6s linear infinite}
+.fx .wm-run .wm-pk-glow{opacity:.9}
+.fx .wm-hold .wm-pass,.fx .wm-hold .wm-pk,.fx .wordmark:not(.wm-vis) .wm-pass,.fx .wordmark:not(.wm-vis) .wm-pk{animation-play-state:paused}
+@keyframes wm-pass{from{transform:translateX(0)}62%,to{transform:translateX(2260px)}}
+@keyframes wm-pk{to{stroke-dashoffset:-864}}
+.wm-spot{transition:opacity .4s;opacity:0}.wm-near .wm-spot{opacity:1}
 .legal{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.6rem 2rem;padding-block:1.6rem 2.2rem;font-size:.84rem}
 @media (max-width:900px){.fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.fbrand{grid-column:1/-1}}
 @media (max-width:420px){.fgrid{grid-template-columns:minmax(0,1fr)}}
@@ -361,8 +417,9 @@ a.zoom{display:block;cursor:zoom-in}
 .gw{position:absolute;inset:0;z-index:0;pointer-events:none}
 .gw canvas{display:block;width:100%;height:100%;opacity:0;transition:opacity 1.4s var(--ease-out)}
 .gw.ready canvas{opacity:1}
-/* the veil: text never sits on the picture without the page's own ground behind it */
-.gw::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 0,color-mix(in srgb,var(--bg) 86%,transparent) calc(var(--gw-l,44%) - 8%),transparent calc(var(--gw-l,44%) + 5%)),linear-gradient(transparent 84%,var(--bg))}
+/* the veil: text never sits on the picture without the page's own ground behind it; under the copy it is the ground itself
+   (6 Nov.: parts of the world outside the shot, a monitor or a leg of the route, showed through behind the headline) */
+.gw::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--bg) 0,var(--bg) calc(var(--gw-l,44%) - 12%),color-mix(in srgb,var(--bg) 90%,transparent) calc(var(--gw-l,44%) - 3%),transparent calc(var(--gw-l,44%) + 6%)),linear-gradient(transparent 84%,var(--bg))}
 .ghero{position:relative;z-index:1;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));align-items:center;min-height:min(calc(100svh - var(--top-h)),64rem);padding-block:clamp(2.25rem,1rem + 3.2vw,4.5rem) clamp(5.5rem,4rem + 3vw,7.5rem)}
 .ghero-copy{grid-column:1/7;min-width:0;padding-right:clamp(0rem,2vw,2.5rem)}
 .ghero-copy>*{position:relative;z-index:2}
@@ -437,6 +494,10 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 .toc a.on::before{transform:none}
 /* the text: a 68ch column, numbered sections */
 .gtext{color:var(--ink2);max-width:42rem;counter-reset:sec}
+/* below the first screen the browser lays these out only when they come near (6 Nov.: the first layout of the whole guide was
+   one 600 ms task on a slow phone); the sizes are guesses until each part has been on screen once, then remembered */
+.gtext{content-visibility:auto;contain-intrinsic-size:auto 3400px}.gfaq{content-visibility:auto;contain-intrinsic-size:auto 420px}.gmore{content-visibility:auto;contain-intrinsic-size:auto 800px}footer .fgrid{content-visibility:auto;contain-intrinsic-size:auto 1250px}
+@media (min-width:1000px){.gtext{contain-intrinsic-size:auto 2100px}.gmore{contain-intrinsic-size:auto 380px}footer .fgrid{contain-intrinsic-size:auto 480px}}.gshot{content-visibility:auto;contain-intrinsic-size:auto 400px}.gtoc-m{content-visibility:auto;contain-intrinsic-size:auto 260px}footer .legal{content-visibility:auto;contain-intrinsic-size:auto 120px}
 .gtext h2::before{content:counter(sec,decimal-leading-zero);content:counter(sec,decimal-leading-zero) / "";display:inline-block;width:3.2rem;font:400 .8rem/1 var(--mono);letter-spacing:0;color:var(--ink3);vertical-align:.55em}
 .gtext h2{background:var(--t-top) 0 0/3rem 2px no-repeat;counter-increment:sec;color:var(--ink);font:500 clamp(1.7rem,1.1rem + 1.7vw,2.8rem)/1.06 var(--disp);letter-spacing:-.035em;margin:clamp(3.25rem,2.4rem + 2.6vw,5rem) 0 1.2rem;padding-top:clamp(1rem,.8rem + .6vw,1.4rem);border-top:0}
 .gtext h2:first-child{margin-top:0;padding-top:clamp(1rem,.8rem + .6vw,1.4rem)}
@@ -467,7 +528,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
   .gtext td.us{padding-left:0;background:none;font-weight:500}
 }
 /* FAQ and related guides */
-.gl .gfaq{max-width:44rem;margin-top:clamp(3.25rem,2.4rem + 2.6vw,5rem);padding:clamp(2rem,1.6rem + 1.4vw,3rem) 0 0;border-top:1px solid var(--line)}
+.gl .gfaq{max-width:42rem;margin-top:clamp(3.25rem,2.4rem + 2.6vw,5rem);padding:clamp(2rem,1.6rem + 1.4vw,3rem) 0 0;border-top:1px solid var(--line)}
 .gfaq h2,.gmore h2{font:500 clamp(1.6rem,1.15rem + 1.4vw,2.4rem)/1.08 var(--disp);letter-spacing:-.03em;margin:0 0 1.4rem}
 .gfaq details[open] summary{color:var(--ink)}
 .gmore{grid-column:1/-1;margin-top:clamp(4rem,2.6rem + 4vw,7rem);padding-top:clamp(2rem,1.6rem + 1.4vw,3rem);border-top:1px solid var(--line)}
@@ -483,6 +544,8 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
   .gmore ul a:hover svg{transform:translateX(6px);color:var(--accent)}
 }
 .gmore ul a:focus-visible::before{transform:scaleX(1)}
+/* a phone: the guide's name over its line, the arrow on the name's row (three columns left the line four lines tall) */
+@media (max-width:520px){.gmore ul a{grid-template-columns:minmax(0,1fr) 1.25rem;gap:.35rem 1rem}.gmore ul a span{grid-column:1;grid-row:2}.gmore ul a svg{grid-column:2;grid-row:1}}
 .gmore .end{display:none}
 .gmore .end .btn{width:100%}
 .gmore .end .link,.gstar a{font:inherit;text-decoration:underline;text-decoration-color:var(--line2);text-decoration-thickness:1px;text-underline-offset:.22em}
@@ -542,6 +605,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
+<div class="ld-scr" aria-hidden="true"><div class="ld-in"><span class="ld-name"><img src="../img/icon.png" alt="" width="28" height="28">CS2 IP Changer</span><span class="ld-bar"><b></b><i></i></span></div></div>
 <header class="top">
   <div class="wrap">
     <a class="brand" href="../"><img src="../img/icon.png" alt="" width="28" height="28">CS2 IP Changer</a>
@@ -666,11 +730,33 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
     <nav aria-labelledby="f2"><h3 id="f2">Guides</h3><ul><li><a href="../change-ip-with-phone/">Change IP with your phone</a></li><li><a href="../cs2-iphone-hotspot/">CS2 with an iPhone</a></li><li><a href="../cs2-ip-ban/">CS2 IP ban</a></li><li><a href="../hide-ip-cs2/">Hide your IP without a VPN</a></li><li><a href="../is-it-safe/">Is it safe?</a></li><li><a href="../steam-account-switcher/">Steam account switcher</a></li><li><a href="../copy-cs2-config/">Copy CS2 settings</a></li><li><a href="../cs2-region-picker/">CS2 region picker</a></li><li><a href="../steam-profile-editor/">Steam profile editor</a></li></ul></nav>
     <nav aria-labelledby="f3"><h3 id="f3">Project</h3><ul><li><a href="https://github.com/Sepd0x/cs2-ip-changer">Source on GitHub</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/releases">Releases</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/blob/main/CHANGELOG.md">Changelog</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer#privacy">Privacy</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose">Report a bug</a></li></ul></nav>
   </div>
-  <div class="wordmark" aria-hidden="true">CS2 IP Changer<span>CS2 IP Changer</span></div>
+  <div class="wordmark" aria-hidden="true"><svg viewBox="7 0 1433 252" focusable="false">
+    <defs>
+      <linearGradient id="wm-c" gradientUnits="userSpaceOnUse" x1="7" y1="0" x2="1440" y2="0"><stop offset="0" style="stop-color:var(--t-top1)"/><stop offset=".25" style="stop-color:color-mix(in oklch,var(--t-top1),var(--t-top2))"/><stop offset=".5" style="stop-color:var(--t-top2)"/><stop offset=".75" style="stop-color:color-mix(in oklch,var(--t-top2),var(--t-top3))"/><stop offset="1" style="stop-color:var(--t-top3)"/></linearGradient>
+      <linearGradient id="wm-band"><stop offset="0" stop-color="white" stop-opacity="0"/><stop offset=".5" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient>
+      <radialGradient id="wm-spot"><stop offset="0" stop-color="white" stop-opacity=".9"/><stop offset="1" stop-color="white" stop-opacity="0"/></radialGradient>
+      <linearGradient id="wm-fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="white" stop-opacity=".45"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient>
+      <filter id="wm-blur" x="-10%" y="-40%" width="120%" height="180%"><feGaussianBlur stdDeviation="7"/></filter>
+      <filter id="wm-blur2" x="-10%" y="-400%" width="120%" height="900%"><feGaussianBlur stdDeviation="5"/></filter>
+      <clipPath id="wm-down"><rect x="-33" y="196" width="1513" height="56"/></clipPath>
+      <mask id="wm-lit" maskUnits="userSpaceOnUse" x="-33" y="0" width="1513" height="252"><rect class="wm-drawn" x="-33" width="1513" height="252" fill="white" fill-opacity=".6"/><rect class="wm-pass" x="-453" width="420" height="252" fill="url(#wm-band)"/><circle class="wm-spot" cx="-400" cy="100" r="190" fill="url(#wm-spot)"/></mask>
+      <mask id="wm-floor" maskUnits="userSpaceOnUse" x="-33" y="196" width="1513" height="56"><rect x="-33" y="196" width="1513" height="56" fill="url(#wm-fade)"/></mask>
+      <text id="wm-t" x="0" y="150">CS2 IP Changer</text>
+    </defs>
+    <use href="#wm-t" class="wm-base"/>
+    <g mask="url(#wm-lit)">
+      <use href="#wm-t" class="wm-glow" filter="url(#wm-blur)"/><use href="#wm-t" class="wm-line"/>
+      <g mask="url(#wm-floor)" clip-path="url(#wm-down)"><use href="#wm-t" class="wm-line" transform="matrix(1 0 0 -1 0 346)"/></g>
+    </g>
+    <line class="wm-hz-glow" x1="7" y1="196" x2="1440" y2="196" filter="url(#wm-blur2)"/>
+    <line class="wm-hz" x1="7" y1="196" x2="1440" y2="196"/>
+    <line class="wm-pk wm-pk-glow" x1="7" y1="196" x2="1440" y2="196" filter="url(#wm-blur2)"/>
+    <line class="wm-pk" x1="7" y1="196" x2="1440" y2="196"/>
+  </svg></div>
   <div class="wrap legal"><span>CS2 IP Changer by Sepd0x. Not affiliated with Valve. Counter-Strike and Steam are trademarks of Valve Corporation.</span><span>Made for community servers.</span></div>
 </footer>
 <script>
-(function(){var b='../assets/js/',l=(document.documentElement.classList.contains('fx')?(matchMedia('(pointer: fine)').matches?['gsap.min.js','ScrollTrigger.min.js','lenis.min.js']:[]):[]).concat(['readout.js','../guides/world.min.js']);l.forEach(function(f){var s=document.createElement('script');s.src=b+f;s.async=false;if(/world/.test(f)){s.onload=function(){window.__gw&&window.__gw()};s.onerror=function(){document.documentElement.classList.add('no-gl')}}document.body.appendChild(s)})})();
+(function(){var b='../assets/js/',l=(document.documentElement.classList.contains('fx')?(matchMedia('(pointer: fine)').matches?['gsap.min.js','ScrollTrigger.min.js','lenis.min.js']:[]):[]).concat(['readout.js','../guides/world.min.js']);l.forEach(function(f){var s=document.createElement('script');s.src=b+f;s.async=false;if(/world/.test(f)){s.onload=function(){window.__ldStep&&__ldStep(.45);window.__gw&&window.__gw()};s.onerror=function(){document.documentElement.classList.add('no-gl')}}document.body.appendChild(s)})})();
 </script>
 <script>
 (function(){
