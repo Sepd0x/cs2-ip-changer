@@ -16,9 +16,10 @@ namespace SRT;
 // Protection
 public partial class MainWindow
 {
-    const string WhySame = "The public IP of the connection is the same as your home IP.";
-    const string WhyWifi = "The phone's Wi-Fi is on, so it may be sharing your home network instead of mobile data.";
-    const string WhyNoHome = "The home IP hasn't been measured yet.";
+    /// <summary>Why the phone's connection isn't trusted now, from what the window knows (the Guard adds Unchecked itself).</summary>
+    public static Distrust DistrustNow(bool sameAsHome, bool phoneWifiOn, bool noHome) =>
+        sameAsHome ? Distrust.SameIp : phoneWifiOn ? Distrust.PhoneWifi : noHome ? Distrust.NoHome : Distrust.None;
+
     /// <summary>The phone's IP was measured, but there is a home network whose IP was never read: nothing to compare with yet.</summary>
     bool _noHome;
 
@@ -61,8 +62,7 @@ public partial class MainWindow
                 if (!cs2Running) QualityOnCs2Closed();
                 force = true;
             }
-            var reason = _distrust ? WhySame : PhoneWifiOn ? WhyWifi : _noHome ? WhyNoHome : null;
-            var rep = await _guard.Sync(_s, ips, force, reason, cs2Running, _verifiedKey, _protOn);
+            var rep = await _guard.Sync(_s, ips, force, DistrustNow(_distrust, PhoneWifiOn, _noHome), cs2Running, _verifiedKey, _protOn);
             if (legacyBefore != _s.LegacyCleaned || cs2Before != _s.Cs2Path) SaveSettings();
             ApplyReport(rep);
         }
@@ -253,10 +253,10 @@ public partial class MainWindow
         _cEgress.Waiting = waiting;
         _cEgress.Detail = rep.Egress != null
             ? $"{(rep.Egress.IsPhone || rep.Egress.IsUsbNet || rep.Egress.IsWifi ? rep.Egress.Kind : rep.Egress.Name)} · {rep.Egress.LocalIp}" + (rep.Egress.IsWifi && rep.Egress.Ssid != null ? $" · {rep.Egress.Ssid}" : "")
-            : rep.DistrustReason == Guard.WhyUnchecked ? $"{rep.Candidate?.Name ?? "Phone"}: checking its public IP…"
-            : rep.DistrustReason == WhyWifi ? "Blocked while the phone's Wi-Fi is on"
-            : rep.DistrustReason == WhySame ? "Blocked: same IP as your home IP"
-            : rep.DistrustReason == WhyNoHome ? "Blocked: your home IP hasn't been measured yet"
+            : rep.Distrust == Distrust.Unchecked ? $"{rep.Candidate?.Name ?? "Phone"}: checking its public IP…"
+            : rep.Distrust == Distrust.PhoneWifi ? "Blocked while the phone's Wi-Fi is on"
+            : rep.Distrust == Distrust.SameIp ? "Blocked: same IP as your home IP"
+            : rep.Distrust == Distrust.NoHome ? "Blocked: your home IP hasn't been measured yet"
             : rep.EgressProblem ?? "Waiting for the phone";
         // The square comes from the same branch as the text: never green next to "Not locked yet".
         var notLockedYet = _s.LockCs2 && !PhoneKnown && rep.Egress == null;
@@ -313,12 +313,12 @@ public partial class MainWindow
         var cs2Off = _s.LockCs2 && rep.Cs2LockOk == false;
         if (rep.FirewallProblem != null)
             SetHero("bad", "Windows Firewall is off", rep.FirewallProblem + ". " + FirewallHint("there is no kill switch"));
-        else if (rep.DistrustReason == Guard.WhyUnchecked)
+        else if (rep.Distrust == Distrust.Unchecked)
             SetHero(held, "Checking the phone's IP…", $"{Blocked(rep)} stay blocked until the app confirms the phone's public IP is not your home IP.");
-        else if (rep.DistrustReason == WhyNoHome)
+        else if (rep.Distrust == Distrust.NoHome)
             SetHero(held, "Home IP not known yet",
                 $"{Blocked(rep)} stay blocked. Close CS2 (or pick Game only) for a moment so the app can read your home IP and compare it with the phone's.");
-        else if (rep.DistrustReason == WhyWifi && !same)
+        else if (rep.Distrust == Distrust.PhoneWifi && !same)
             SetHero(held, "Phone Wi-Fi is on",
                 $"{Blocked(rep)} are blocked. With Wi-Fi on, the phone may share your home network instead of mobile data: turn it off under Phone.");
         else if (rep.Distrusted || same)
@@ -412,10 +412,10 @@ public partial class MainWindow
         if (off)
         {
             // The phone, as it would be used: checked here so Turn on protection trusts it at once
-            _cEgress.Ok = rep.Candidate == null ? null : phoneReady ? true : rep.DistrustReason is string d && d != Guard.WhyUnchecked ? false : null;
-            _cEgress.Waiting = rep.Candidate != null && !phoneReady && rep.DistrustReason == Guard.WhyUnchecked;
+            _cEgress.Ok = rep.Candidate == null ? null : phoneReady ? true : rep.Distrust is not (Distrust.None or Distrust.Unchecked) ? false : null;
+            _cEgress.Waiting = rep.Candidate != null && !phoneReady && rep.Distrust == Distrust.Unchecked;
             _cEgress.Detail = rep.Candidate == null ? "No phone connected (protection is off)"
-                : $"{rep.Candidate.Kind} · {rep.Candidate.LocalIp}" + (phoneReady ? " · ready" : rep.DistrustReason == Guard.WhyUnchecked ? " · checking its IP…" : rep.DistrustReason != null ? " · " + rep.DistrustReason : "");
+                : $"{rep.Candidate.Kind} · {rep.Candidate.LocalIp}" + (phoneReady ? " · ready" : rep.Distrust == Distrust.Unchecked ? " · checking its IP…" : rep.Distrusted ? " · " + rep.DistrustReason : "");
             var same = _egressPublic != null && _homePublic != null && _egressPublic == _homePublic;
             _cDiff.Ok = _egressPublic == null || _homePublic == null ? null : !same;
             _cDiff.Detail = _egressPublic == null ? "Waiting for the phone's IP" : _homePublic == null ? "No home network to compare" : same ? "Same IP: the phone is sharing your Wi-Fi" : "Yes";

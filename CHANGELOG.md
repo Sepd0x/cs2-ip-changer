@@ -25,6 +25,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - A route Windows refused to delete was forgotten, so the app never tried it again, and on a hotspot Turn off protection still said the network was restored. Now the Log says which route was left (once, not every few seconds), the app tries it again, and Turn off protection lists it.
 - On the hotspot, while the app was still checking the phone's IP or with protection off, the Mobile data row of Checks could say the phone's Wi-Fi was on, or ask for the USB cable, although the hotspot was fine. It now says the connection goes through the hotspot, as it does once the phone is protected.
 - When the app closed CS2 to restart Steam through the phone or to add the launch options, the Log said "CS2 closed by the account switch". It now says what closed it.
+- If the app couldn't read Windows Firewall when it started with CS2 open, it took that as "no block left from the last run" and turned protection off, which could move the match to your home IP. Now protection stays on in that case and the Log says the Firewall couldn't be read.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

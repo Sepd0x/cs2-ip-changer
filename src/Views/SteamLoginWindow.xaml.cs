@@ -210,7 +210,7 @@ public partial class SteamLoginWindow : Window
             StartPolling(ct);
         }
         // 9/27: Steam ended the session, the code can't work any more: back to the password.
-        catch (SteamWebException ex) when (ex.EResult is 9 or 27) { Failed(ex.Message); BackToPassword(); }
+        catch (SteamWebException ex) when (ex.SignInTimedOut) { Failed(ex.Message); BackToPassword(); }
         catch (SteamWebException ex) { Failed(ex.Message); Working(false); Code.SelectAll(); Code.Focus(); }
         catch (OperationCanceledException) { }
         catch (Exception ex) { Unexpected(ex); }
@@ -268,7 +268,7 @@ public partial class SteamLoginWindow : Window
                 if (DateTime.Now > until) { Failed("That took too long. Start again."); BackToPassword(); return; }
             }
         }
-        catch (SteamWebException ex) { Failed(ex.Message); if (ex.EResult is 9 or 27) BackToPassword(); else Working(false); }
+        catch (SteamWebException ex) { Failed(ex.Message); if (ex.SignInTimedOut) BackToPassword(); else Working(false); }
         catch (OperationCanceledException) { }
         catch (Exception ex) { Unexpected(ex); }
         finally { if (_pollingFor == ct) _pollingFor = default; }

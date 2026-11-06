@@ -45,9 +45,9 @@ public partial class MainWindow
             if (fresh.Count == 0) return;
             st.Known.AddRange(fresh.Select(a => a.SteamId));
             Cfg.SaveState();
-            if (!_s.ConfigOnNewAccount || _s.ConfigMode == "off") return;
-            var jobs = fresh.SelectMany(a => CfgPlan("new", a.SteamId, PreviousAccount(a.SteamId))).ToList();
-            RunCfgJobs(jobs, "new", false);
+            if (!_s.ConfigOnNewAccount || _s.ConfigMode == CfgMode.Off) return;
+            var jobs = fresh.SelectMany(a => CfgPlan(CfgTrigger.New, a.SteamId, PreviousAccount(a.SteamId))).ToList();
+            RunCfgJobs(jobs, CfgTrigger.New, false);
         }
         catch (Exception ex) { Log.Warn("Config sync for a new account: " + Cs2ConfigStore.Why(ex)); }
     }
@@ -59,10 +59,10 @@ public partial class MainWindow
         try
         {
             FlushCfgQueue();
-            if (!_s.ConfigOnLogin || _s.ConfigMode == "off") return;
+            if (!_s.ConfigOnLogin || _s.ConfigMode == CfgMode.Off) return;
             // The account in use, else the last one logged in, this one included: logging in to that same account again copies nothing.
             var prev = PreviousAccount(null);
-            RunCfgJobs(CfgPlan("login", a.SteamId, prev), "login", false);
+            RunCfgJobs(CfgPlan(CfgTrigger.Login, a.SteamId, prev), CfgTrigger.Login, false);
         }
         catch (Exception ex) { Log.Warn("Config sync before login: " + Cs2ConfigStore.Why(ex)); }
     }
@@ -74,8 +74,8 @@ public partial class MainWindow
         try
         {
             FlushCfgQueue();
-            if (!_s.ConfigOnLogin || _s.ConfigMode is "off" or "previous" || Steam.InUseSteamId() is not string active) return;
-            RunCfgJobs(CfgPlan("login", active, null), "cs2", false);
+            if (!_s.ConfigOnLogin || _s.ConfigMode is CfgMode.Off or CfgMode.Previous || Steam.InUseSteamId() is not string active) return;
+            RunCfgJobs(CfgPlan(CfgTrigger.Login, active, null), CfgTrigger.Cs2, false);
         }
         catch (Exception ex) { Log.Warn("Config sync before CS2: " + Cs2ConfigStore.Why(ex)); }
     }
@@ -88,8 +88,8 @@ public partial class MainWindow
         {
             FlushCfgQueue();
             // Closed by the app (the account switch already copied): CS2 killed that way saved nothing new.
-            if (_s.ConfigMode != "latest" || _cs2.ClosedByAppRecently) return;
-            RunCfgJobs(CfgPlan("closed", null, null), "closed", false);
+            if (_s.ConfigMode != CfgMode.Latest || _cs2.ClosedByAppRecently) return;
+            RunCfgJobs(CfgPlan(CfgTrigger.Closed, null, null), CfgTrigger.Closed, false);
         }
         catch (Exception ex) { Log.Warn("Config sync after CS2 closed: " + Cs2ConfigStore.Why(ex)); }
     }
@@ -98,7 +98,7 @@ public partial class MainWindow
     {
         if (Cfg.State.Pending.Count == 0) return;
         var results = Cfg.FlushPending(NewSyncId(), j => CfgSourceLabel(j));
-        if (results.Count > 0) ReportCfg(results, "queued", false);
+        if (results.Count > 0) ReportCfg(results, CfgTrigger.Queued, false);
     }
 
     /// <summary>The copies for a trigger, from the settings (Sync on/off per account, mode, categories).</summary>
@@ -107,7 +107,7 @@ public partial class MainWindow
         var ids = _accounts.Select(a => a.SteamId).ToList();
         var opt = _s.ConfigOptOut.ToHashSet();
         // An account with Sync off is never the source: the latest change among the others wins.
-        var latest = _s.ConfigMode == "latest" ? Cfg.PickLatest(ids.Where(i => !opt.Contains(i))) : null;
+        var latest = _s.ConfigMode == CfgMode.Latest ? Cfg.PickLatest(ids.Where(i => !opt.Contains(i))) : null;
         return Cs2Config.Plan(_s.ConfigMode, _s.ConfigMainId, previous, latest, trigger, target, ids, opt, _s.ConfigCategories);
     }
 
@@ -126,8 +126,8 @@ public partial class MainWindow
 
     internal static string CfgReasonText(string r) => r switch
     {
-        "new" => "new account", "login" => "before login", "cs2" => "before CS2 opened", "closed" => "CS2 closed", "manual" => "Sync now",
-        "copy" => "copy", "restore" => "before a restore", "queued" => "after CS2 closed", _ => r,
+        CfgTrigger.New => "new account", CfgTrigger.Login => "before login", CfgTrigger.Cs2 => "before CS2 opened", CfgTrigger.Closed => "CS2 closed",
+        CfgTrigger.Manual => "Sync now", CfgTrigger.Copy => "copy", CfgTrigger.Restore => "before a restore", CfgTrigger.Queued => "after CS2 closed", _ => r,
     };
 
     void RunCfgJobs(List<CfgJob> jobs, string why, bool manual)
@@ -195,13 +195,13 @@ public partial class MainWindow
         try
         {
             foreach (var rb in new[] { CfgModeOff, CfgModeMain, CfgModePrevious, CfgModeLatest }) rb.IsChecked = (string)rb.Tag == _s.ConfigMode;
-            if (!new[] { "off", "main", "previous", "latest" }.Contains(_s.ConfigMode)) CfgModeOff.IsChecked = true;
+            if (!CfgMode.All.Contains(_s.ConfigMode)) CfgModeOff.IsChecked = true;
             foreach (var cb in CfgCats.Children.OfType<CheckBox>()) cb.IsChecked = _s.ConfigCategories.Contains((string)cb.Tag);
             CfgOnNewBox.IsChecked = _s.ConfigOnNewAccount;
             CfgOnLoginBox.IsChecked = _s.ConfigOnLogin;
-            CfgMainBox.IsEnabled = _s.ConfigMode == "main";
+            CfgMainBox.IsEnabled = _s.ConfigMode == CfgMode.Main;
             // Sync Off: the When boxes and Sync now do nothing, so they show as disabled. The ticks stay saved for the next mode.
-            var syncOn = _s.ConfigMode != "off";
+            var syncOn = _s.ConfigMode != CfgMode.Off;
             CfgOnNewBox.IsEnabled = CfgOnLoginBox.IsEnabled = CfgSyncNowBtn.IsEnabled = syncOn;   // one primary on the page: Copy
             CfgWhenLabel.Opacity = syncOn ? 1 : 0.5;
 
@@ -232,7 +232,7 @@ public partial class MainWindow
                     Acc = a,
                     Sync = !_s.ConfigOptOut.Contains(a.SteamId),
                     Selected = selected.Contains(a.SteamId),
-                    IsMain = _s.ConfigMode == "main" && a.SteamId == _s.ConfigMainId,
+                    IsMain = _s.ConfigMode == CfgMode.Main &&a.SteamId == _s.ConfigMainId,
                     Pending = Cfg.State.Pending.Any(j => j.Target == a.SteamId),
                     CrosshairText = set.Empty ? "No CS2 config yet" : Cs2Config.CrosshairSummary(set) ?? "Default crosshair",
                     ChangedText = set.Empty ? "Opens with CS2's defaults (or gets the sync)" : changed != null ? "Changed in game " + Fmt.Ago(changed) : "Not changed in game since the last copy",
@@ -260,7 +260,7 @@ public partial class MainWindow
             CfgBackupList.ItemsSource = backups;
             CfgBackupEmpty.Visibility = backups.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             CfgUndoBtn.IsEnabled = Cfg.CanUndo;   // nothing to put back: greyed out like Sync now
-            ShowCfgResult(Cfg.State.LastResult ?? (_s.ConfigMode == "off" ? "Sync is off. To copy once, use Copy." : "No sync yet."));
+            ShowCfgResult(Cfg.State.LastResult ?? (_s.ConfigMode == CfgMode.Off ? "Sync is off. To copy once, use Copy." : "No sync yet."));
         }
         catch (Exception ex) { Log.Warn("Configs page: " + Cs2ConfigStore.Why(ex)); }
         finally { _cfgLoading = false; }
@@ -278,14 +278,14 @@ public partial class MainWindow
     {
         if (_cfgLoading || sender is not RadioButton rb) return;
         _s.ConfigMode = (string)rb.Tag;
-        if (_s.ConfigMode == "off") Cfg.DropQueued(_ => true);   // Sync off: the copies waiting for CS2 to close go too
-        if (_s.ConfigMode == "main" && _s.ConfigMainId == null) _s.ConfigMainId = (CfgMainBox.SelectedItem as CfgSourceItem)?.SteamId ?? _accounts.FirstOrDefault(a => a.Active)?.SteamId;
+        if (_s.ConfigMode == CfgMode.Off) Cfg.DropQueued(_ => true);   // Sync off: the copies waiting for CS2 to close go too
+        if (_s.ConfigMode == CfgMode.Main && _s.ConfigMainId == null) _s.ConfigMainId = (CfgMainBox.SelectedItem as CfgSourceItem)?.SteamId ?? _accounts.FirstOrDefault(a => a.Active)?.SteamId;
         SaveSettings();
         Log.Info("Config sync: " + _s.ConfigMode switch
         {
-            "main" => _s.ConfigMainId == null || _accounts.All(a => a.SteamId != _s.ConfigMainId) ? "from a main account (pick one below)." : $"from the main account ({CfgName(_s.ConfigMainId)}).",
-            "previous" => "from the previous account.",
-            "latest" => "from the account changed last.", _ => "off.",
+            CfgMode.Main => _s.ConfigMainId == null || _accounts.All(a => a.SteamId != _s.ConfigMainId) ? "from a main account (pick one below)." : $"from the main account ({CfgName(_s.ConfigMainId)}).",
+            CfgMode.Previous => "from the previous account.",
+            CfgMode.Latest => "from the account changed last.", _ => "off.",
         });
         ShowConfigs();
     }
@@ -324,11 +324,11 @@ public partial class MainWindow
 
     void CfgSyncNow_Click(object sender, RoutedEventArgs e)
     {
-        if (_s.ConfigMode == "off") { Toast("Pick a mode under Sync first, or use Copy.", false); return; }
-        if (_s.ConfigMode == "main" && _s.ConfigMainId == null) { Toast("Pick the main account first.", false); return; }
-        var jobs = CfgPlan("manual", null, _accounts.FirstOrDefault(a => a.Active)?.SteamId ?? PreviousAccount(null));
-        if (jobs.Count == 0) { Toast(_s.ConfigMode == "latest" ? "No account has a config changed in game yet." : "No account to copy to: turn Sync on for some.", false); return; }
-        RunCfgJobs(jobs, "manual", true);
+        if (_s.ConfigMode == CfgMode.Off) { Toast("Pick a mode under Sync first, or use Copy.", false); return; }
+        if (_s.ConfigMode == CfgMode.Main && _s.ConfigMainId == null) { Toast("Pick the main account first.", false); return; }
+        var jobs = CfgPlan(CfgTrigger.Manual, null, _accounts.FirstOrDefault(a => a.Active)?.SteamId ?? PreviousAccount(null));
+        if (jobs.Count == 0) { Toast(_s.ConfigMode == CfgMode.Latest ? "No account has a config changed in game yet." : "No account to copy to: turn Sync on for some.", false); return; }
+        RunCfgJobs(jobs, CfgTrigger.Manual, true);
     }
 
     void CfgUndo_Click(object sender, RoutedEventArgs e)
@@ -465,7 +465,7 @@ public partial class MainWindow
         }
         if (_s.ConfigCategories.Count == 0) { Toast("Tick something in Sync > What to copy.", false); return; }
         var jobs = targets.Select(t => new CfgJob { SourceId = from.SteamId, Snapshot = from.Snapshot, Target = t.SteamId, Categories = _s.ConfigCategories.ToList(), At = AppClock.Now }).ToList();
-        RunCfgJobs(jobs, "copy", true);
+        RunCfgJobs(jobs, CfgTrigger.Copy, true);
     }
 
     /// <summary>Account menu > Copy config to: opens Copy with this account as the source.</summary>
@@ -485,7 +485,7 @@ public partial class MainWindow
     {
         if (Acc(sender) is not AccountItem a) return;
         _s.ConfigMainId = a.SteamId;
-        _s.ConfigMode = "main";
+        _s.ConfigMode = CfgMode.Main;
         _s.ConfigOptOut.Remove(a.SteamId);
         SaveSettings();
         Log.Info($"Config sync: from the main account ({a.Name}).");

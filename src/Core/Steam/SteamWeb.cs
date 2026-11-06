@@ -20,6 +20,8 @@ public sealed class SteamWebException : Exception
     public int? EResult { get; }
     /// <summary>Steam is limiting requests (HTTP 429 or EResult 84).</summary>
     public bool Limited => Status == 429 || EResult == 84;
+    /// <summary>The sign-in waited too long (EResult 9 or 27, "took too long"): it has to start again from the password.</summary>
+    public bool SignInTimedOut => EResult is 9 or 27;
     /// <summary>The saved sign-in no longer works (expired, revoked, logged out).</summary>
     public bool Expired { get; init; }
     public TimeSpan? RetryAfter { get; init; }

@@ -11,12 +11,36 @@ namespace SRT.Core;
 public enum KickKind { None, Kick, Ban, Steam, NoAnswer, Vpn, Full, MapChange, Quit }
 
 /// <summary>
-/// One disconnect from a community server, as the app understood it. Reason: in words, from the code or the server's message
-/// (null if neither says). Minutes: how long the ban is, if the server said (0 = permanent). BanCode: the engine code itself
-/// was a ban (BANADDED, KICKBANADDED, REJECT_BANNED, STEAM_BANNED), also under a VPN block.
+/// The reasons the app acts on, not only shows: a ban said by the engine's code alone (no words to add), a server that never
+/// answered (not a timeout in the game), a reserved slot (not worth waiting for a free one). Other = any other reason, or none.
 /// </summary>
-public sealed record Disconnect(KickKind Kind, string Line, string Server, string Reason = null, int? Minutes = null, bool BanCode = false, int? SignOn = null)
+public enum KickReason { Other, Banned, NeverAnswered, ReservedSlot }
+
+public static class KickReasons
 {
+    /// <summary>The words for a reason the app acts on (null for Other: its words come from the code or the server).</summary>
+    public static string Text(KickReason r) => r switch
+    {
+        KickReason.Banned => "banned",
+        KickReason.NeverAnswered => "the server never answered",
+        KickReason.ReservedSlot => "kicked to make room for a reserved slot",
+        _ => null,
+    };
+}
+
+/// <summary>
+/// One disconnect from a community server, as the app understood it. Reason: in words, from the code or the server's message
+/// (null if neither says); given only Why, the words of Why. Minutes: how long the ban is, if the server said (0 = permanent).
+/// BanCode: the engine code itself was a ban (BANADDED, KICKBANADDED, REJECT_BANNED, STEAM_BANNED), also under a VPN block.
+/// </summary>
+public sealed record Disconnect(KickKind Kind, string Line, string Server, string Reason = null, int? Minutes = null, bool BanCode = false, int? SignOn = null,
+    KickReason Why = KickReason.Other)
+{
+    public string Reason { get; init; } = Reason ?? KickReasons.Text(Why);
+
+    /// <summary>" (kicked by a vote)" after "You were kicked from the server", or empty: a plain "banned" adds nothing.</summary>
+    public string ReasonInBrackets => Reason != null && Why != KickReason.Banned ? $" ({Reason})" : "";
+
     /// <summary>"for 30 minutes", "permanently" or empty.</summary>
     public string For => Minutes switch
     {
@@ -175,11 +199,17 @@ public static class Cs2Console
 
     static readonly Regex Code = new(@"NETWORK_DISCONNECT_[A-Z_]+", O);
 
+    static string CodeOf(string line) => Code.Match(line ?? "").Value.ToUpperInvariant();
+
+    /// <summary>The reason the app acts on in a code: only "never answered" is said by a code alone.</summary>
+    public static KickReason WhyOf(string line) =>
+        CodeOf(line) is "NETWORK_DISCONNECT_CONNECT_REQUEST_TIMEDOUT" or "NETWORK_DISCONNECT_REMOTE_TIMEOUT_CONNECTING" ? KickReason.NeverAnswered : KickReason.Other;
+
     /// <summary>What a code means, in words for the toast and the Log (null when the code says no more than "kicked").</summary>
     public static string ReasonOf(string line)
     {
-        var c = Code.Match(line ?? "").Value.ToUpperInvariant();
-        return c switch
+        if (WhyOf(line) is var why and not KickReason.Other) return KickReasons.Text(why);
+        return CodeOf(line) switch
         {
             "NETWORK_DISCONNECT_KICKED_VOTEDOFF" => "kicked by a vote",
             "NETWORK_DISCONNECT_KICKED_IDLE" => "kicked for being AFK",
@@ -192,7 +222,6 @@ public static class Cs2Console
             "NETWORK_DISCONNECT_REJECT_BANNED" => "the server refused you: banned",
             "NETWORK_DISCONNECT_STEAM_BANNED" => "on the server's ban list",
             "NETWORK_DISCONNECT_REJECT_RESERVED_FOR_LOBBY" => "reserved for a lobby",
-            "NETWORK_DISCONNECT_CONNECT_REQUEST_TIMEDOUT" or "NETWORK_DISCONNECT_REMOTE_TIMEOUT_CONNECTING" => "the server never answered",
             "NETWORK_DISCONNECT_SERVER_SHUTDOWN" => "the server shut down or restarted",
             _ => null,
         };
@@ -232,7 +261,7 @@ public static class Cs2Console
         var k = YouKicked.Match(line);
         if (k.Success) return new Hint(false, false, null, k.Groups["why"].Success ? "kicked for " + k.Groups["why"].Value.Trim().TrimEnd('!', '.') : null);
         if (Afk.IsMatch(line)) return new Hint(false, false, null, "kicked for being AFK");
-        if (you && Reserved.IsMatch(line) && KickWeak.IsMatch(line)) return new Hint(false, false, null, "kicked to make room for a reserved slot", Full: true);
+        if (you && Reserved.IsMatch(line) && KickWeak.IsMatch(line)) return new Hint(false, false, null, null, Full: true, Why: KickReason.ReservedSlot);
         return null;
     }
 
@@ -255,7 +284,10 @@ public static class Cs2Console
 }
 
 /// <summary>A server message before a disconnect: whether it was about a VPN, a ban, its length (0 = permanent), the reason, a full server.</summary>
-public sealed record Hint(bool Vpn, bool Ban, int? Minutes, string Reason, bool Full = false);
+public sealed record Hint(bool Vpn, bool Ban, int? Minutes, string Reason, bool Full = false, KickReason Why = KickReason.Other)
+{
+    public string Reason { get; init; } = Reason ?? KickReasons.Text(Why);
+}
 
 /// <summary>
 /// Follows CS2's console as it comes, one batch of new lines at a time: which server CS2 is on (a community server, the menu or
@@ -306,24 +338,30 @@ public sealed class DisconnectTracker
         if (_kind == KickKind.None) return null;
         var kind = _kind;
         var reason = Cs2Console.ReasonOf(_line);
+        var why = Cs2Console.WhyOf(_line);
+        void From(Hint h) { reason = h.Reason; why = h.Why; }
         int? minutes = Cs2Console.MinutesIn(_line) is int lm && Cs2Console.Classify(_line) == KickKind.Ban && !_line.Contains("NETWORK_DISCONNECT_") ? lm : null;
         var hint = _hint != null && now - _hintAt <= HintWindow ? _hint : null;
         if (hint != null && kind is KickKind.Kick or KickKind.Ban or KickKind.Full)
         {
-            if (hint.Vpn) { kind = KickKind.Vpn; reason = hint.Reason; }
+            if (hint.Vpn) { kind = KickKind.Vpn; From(hint); }
             else if (hint.Ban && kind == KickKind.Kick) kind = KickKind.Ban;   // a ban plugin that kicks with a plain "kicked"
-            else if (hint.Full && kind == KickKind.Kick) { kind = KickKind.Full; reason = hint.Reason; }
-            else if (hint.Reason != null && kind == KickKind.Kick && reason == null) reason = hint.Reason;
-            else if (hint.Full && kind == KickKind.Full) reason = hint.Reason;
+            else if (hint.Full && kind == KickKind.Kick) { kind = KickKind.Full; From(hint); }
+            else if (hint.Reason != null && kind == KickKind.Kick && reason == null) From(hint);
+            else if (hint.Full && kind == KickKind.Full) From(hint);
             minutes ??= hint.Minutes;
             _hint = null;   // used: a second disconnect doesn't take it again
         }
         // Kicked before getting into the game, with no reason given: that's how ban plugins refuse a banned player who joins again.
         if (kind == KickKind.Kick && reason == null && _signOn is int st && st < 6) { kind = KickKind.Ban; reason = $"kicked while still joining (sign-on state {st})"; }
         // Full while already in the game: a reserved slots plugin made room
-        if (kind == KickKind.Full && reason == null) reason = _signOn == 6 ? "kicked to make room for a reserved slot" : "the server is full";
-        if (kind == KickKind.Ban && reason == null && _banCode) reason = "banned";
-        var d = new Disconnect(kind, _line, _server, reason, kind is KickKind.Ban or KickKind.Vpn ? minutes : null, _banCode, _signOn);
+        if (kind == KickKind.Full && reason == null)
+        {
+            if (_signOn == 6) why = KickReason.ReservedSlot;
+            else reason = "the server is full";
+        }
+        if (kind == KickKind.Ban && reason == null && _banCode) why = KickReason.Banned;
+        var d = new Disconnect(kind, _line, _server, reason, kind is KickKind.Ban or KickKind.Vpn ? minutes : null, _banCode, _signOn, why);
         Reset();
         return d;
     }

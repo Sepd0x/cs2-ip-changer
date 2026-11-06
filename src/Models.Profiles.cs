@@ -45,6 +45,9 @@ public sealed class ProfileRow : Observable
     public bool Busy { get => _busy; set => Set(ref _busy, value); }
     public bool SignedIn { get => _signedIn; set { if (Set(ref _signedIn, value)) { Raise(nameof(SessionBrush)); Raise(nameof(SignInText)); Raise(nameof(SignInTip)); } } }
     public string Session { get => _session; set { if (Set(ref _session, value)) { Raise(nameof(SessionBrush)); Raise(nameof(SignInTip)); } } }
+    /// <summary>The app had a sign-in for this account and Steam no longer takes it (amber, "Sign-in expired").</summary>
+    public bool Expired { get => _expired; set { if (Set(ref _expired, value)) Raise(nameof(SessionBrush)); } }
+    bool _expired;
     /// <summary>Days the sign-in has left (null = no sign-in). Under <see cref="SoonDays"/> the line turns amber.</summary>
     public int? DaysLeft { get => _daysLeft; set { if (Set(ref _daysLeft, value)) Raise(nameof(SessionBrush)); } }
     int? _daysLeft;
@@ -55,7 +58,8 @@ public sealed class ProfileRow : Observable
     /// </summary>
     public static string SessionLevel(bool signedIn, int? daysLeft, bool expired) =>
         expired || (signedIn && daysLeft < SoonDays) ? "warn" : signedIn ? "ok" : "none";
-    public Brush SessionBrush => SessionLevel(SignedIn, DaysLeft, !SignedIn && Session == "Sign-in expired") switch { "warn" => Ui.Warn, "ok" => Ui.Muted, _ => Ui.Faint };
+    public string SessionLevelNow => SessionLevel(SignedIn, DaysLeft, !SignedIn && Expired);
+    public Brush SessionBrush => SessionLevelNow switch { "warn" => Ui.Warn, "ok" => Ui.Muted, _ => Ui.Faint };
     public string SignInText => SignedIn ? "Sign out" : "Sign in";
     /// <summary>The button stands where the sign-in line was, so it keeps that line in its tooltip.</summary>
     public string SignInTip => (SignedIn ? Session + ". Sign out deletes" : "Sign in: the app keeps") + " Steam's sign-in token for this account" + (SignedIn ? "." : ", encrypted for your Windows user.");

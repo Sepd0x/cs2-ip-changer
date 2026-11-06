@@ -170,7 +170,17 @@ public partial class MainWindow : Window
         else
         {
             var leftOn = false;
-            try { leftOn = Steam.Cs2Running && Firewall.BlockLeft(Firewall.Remaining()); } catch { }
+            try
+            {
+                if (Steam.Cs2Running)
+                {
+                    // A Firewall that couldn't be read counts as the block still there: the match isn't moved to the home IP on a guess
+                    var rules = Firewall.Remaining();
+                    leftOn = Firewall.BlockLeft(rules);
+                    if (rules.Error != null) Log.Warn($"Couldn't read Windows Firewall ({rules.Error}) with CS2 open: protection stays on in case the block from the last run is still there.");
+                }
+            }
+            catch { }
             _protOn = Guard.OnAtStart(_justUpdated, _startArgs, _s.ProtectOnStart, leftOn, Steam.Cs2Running, _s.NoPhone);
             if (_s.NoPhone) { }   // No phone mode says so itself (Guard.HomeMode)
             else if (!_protOn) Log.Info("Protection is off. Turn it on in Status (or the tray icon) when you want to play through the phone.");

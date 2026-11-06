@@ -4,6 +4,15 @@ using System.Reflection;
 
 namespace SRT.Core;
 
+/// <summary>The app's rule names found in the Firewall (<see cref="Firewall.Remaining"/>), or why it couldn't be read.</summary>
+public sealed class FirewallRules : List<string>
+{
+    /// <summary>The Firewall couldn't be read (the list is then empty and says nothing about what is left). Null when it was read.</summary>
+    public string Error { get; init; }
+    /// <summary>The error as the Log and the report show it.</summary>
+    public string ErrorText => Error == null ? null : "(could not read the Firewall: " + Error + ")";
+}
+
 /// <summary>
 /// Windows Firewall through COM (HNetCfg): much faster than Get-NetFirewallRule.
 ///
@@ -334,8 +343,11 @@ public static class Firewall
     /// or the Whole PC rules. Not the app's own IP test rule, which blocks nothing else. With no servers listed only the CS2 lock and
     /// the Whole PC rules are there, so the kill switch alone isn't enough (Guard.OnAtStart).
     /// </summary>
-    public static bool BlockLeft(IEnumerable<string> remaining) =>
-        (remaining ?? Enumerable.Empty<string>()).Any(n => n != EchoRuleName && ProtectionRules.Contains(n));
+    /// <param name="unreadableCounts">A Firewall that couldn't be read (<see cref="FirewallRules.Error"/>) counts as a block still there:
+    /// nothing is known, so it is never "nothing left". False only where saying it is there would be a guess (the Install window).</param>
+    public static bool BlockLeft(IEnumerable<string> remaining, bool unreadableCounts = true) =>
+        remaining is FirewallRules { Error: not null } ? unreadableCounts
+        : (remaining ?? Enumerable.Empty<string>()).Any(n => n != EchoRuleName && ProtectionRules.Contains(n));
 
     /// <summary>
     /// The rules a restore removes. Turn off protection (and closing the app) keep the Regions rule: regions don't depend on the
@@ -354,16 +366,19 @@ public static class Firewall
         foreach (var n in ProtectionRules) Remove(n);
     }
 
-    /// <summary>Names of the app's rules still in the Firewall (current ones and leftovers of an interrupted update).</summary>
-    public static List<string> Remaining()
+    /// <summary>
+    /// Names of the app's rules still in the Firewall (current ones and leftovers of an interrupted update). When the Firewall can't
+    /// be read the list is empty and <see cref="FirewallRules.Error"/> says why: that is "not known", not "nothing left".
+    /// </summary>
+    public static FirewallRules Remaining()
     {
-        var left = new List<string>();
+        var left = new FirewallRules();
         try
         {
             foreach (var r in (IEnumerable)Get(Policy(), "Rules"))
                 if ((string)Get(r, "Name") is string n && n.StartsWith(AppIds.RulePrefix)) left.Add(n);
         }
-        catch (Exception ex) { left.Add("(could not read the Firewall: " + ex.Message + ")"); }
+        catch (Exception ex) { return new FirewallRules { Error = ex.Message }; }
         return left;
     }
 

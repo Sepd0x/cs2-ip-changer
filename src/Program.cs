@@ -166,7 +166,8 @@ public static class Program
     {
         var keep = Directory.Exists(Path.Combine(target, AppIds.DataFolder)) && Directory.Exists(Path.Combine(from, AppIds.DataFolder));
         // beta.11 (audit P5): an older copy updated itself and left its protection on, which stays until the installed app starts
-        var blockLeft = Firewall.BlockLeft(Firewall.Remaining());
+        // A Firewall that couldn't be read says nothing here: the note is only shown for a block that was seen
+        var blockLeft = Firewall.BlockLeft(Firewall.Remaining(), unreadableCounts: false);
         return new NoticeWindow("Install CS2 IP Changer", InstallText(from, target, keep, Installer.InstalledVersion(target), AppInfo.Version, blockLeft), "Install", "Close", action: async w =>
         {
             w.Working = true;

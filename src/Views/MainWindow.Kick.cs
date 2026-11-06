@@ -144,7 +144,7 @@ public partial class MainWindow
     }
 
     /// <summary>The demo's kicks (it has no console): the same path as a real one.</summary>
-    void OnKicked(KickKind kind, string line) => OnKicked(new Disconnect(kind, line, null, kind == KickKind.Ban ? "banned" : null, BanCode: kind == KickKind.Ban));
+    void OnKicked(KickKind kind, string line) => OnKicked(new Disconnect(kind, line, null, BanCode: kind == KickKind.Ban, Why: kind == KickKind.Ban ? KickReason.Banned : KickReason.Other));
 
     /// <summary>
     /// A disconnect from a community server (Valve's never get here). A ban or a VPN block offers New IP + next account; a kick
@@ -156,7 +156,7 @@ public partial class MainWindow
         var kind = d.Kind;
         var line = d.Line;
         var what = kind switch { KickKind.Ban => "banned", KickKind.Vpn => "blocked", KickKind.Full => "turned away", _ => "kicked" };
-        var why = d.Reason != null && d.Reason != "banned" ? $" ({d.Reason})" : "";
+        var why = d.ReasonInBrackets;
         // The server CS2 was really on (also when joined from the console or the game's browser). The last server
         // joined through the app only stands in if that happened in this CS2 session, never one from days ago.
         var server = d.Server ?? _consoleServer
@@ -182,7 +182,7 @@ public partial class MainWindow
         if (kind == KickKind.NoAnswer)
         {
             // The connection, not the admin. A server that never answers may also be down or blocking the IP: said, not assumed.
-            var never = d.Reason == "the server never answered";
+            var never = d.Why == KickReason.NeverAnswered;
             Log.Warn($"{server ?? "The server"} {(never ? "never answered" : "stopped answering")}: that's the connection, not a kick. Console: " + Cut(line));
             Diag.Write("kick", new { kind = "no-answer", line, server });
             Toast(never ? "The server never answered. If other servers work, it may be offline or blocking this IP."
@@ -205,7 +205,7 @@ public partial class MainWindow
             // Turned away right after a Join or Rejoin from the app: the list's count can be old or count spectators (3 nov.: kicked
             // as a spectator for AFK, two left, Rejoin said full). So the app tries again every 15 s, 8 times (2 minutes).
             if (inList != null && server == _s.LastServer && _s.LastServerAt is DateTime at && DateTime.Now - at < TimeSpan.FromMinutes(3)
-                && d.Reason != "kicked to make room for a reserved slot")
+                && d.Why != KickReason.ReservedSlot)
             {
                 if (_fullServer != server || DateTime.Now - _fullSince > TimeSpan.FromMinutes(5)) { _fullServer = server; _fullSince = DateTime.Now; _fullTries = 0; }
                 if (_fullTries < FullTries)
@@ -223,7 +223,7 @@ public partial class MainWindow
                 Toast("The server stayed full for 2 minutes. Try another server, or Wait for a slot on the Servers page.", Tone.Info);
                 return;
             }
-            Toast(d.Reason == "kicked to make room for a reserved slot" ? "The server kicked you to make room for a reserved slot. Not a ban: join again when there's space."
+            Toast(d.Why == KickReason.ReservedSlot ?"The server kicked you to make room for a reserved slot. Not a ban: join again when there's space."
                 : "The server is full. Not a ban: try again in a moment or pick another server.", Tone.Info);
             return;
         }
@@ -268,7 +268,7 @@ public partial class MainWindow
 
     async Task OfferRejoin(Disconnect d)
     {
-        var why = d.Reason != null && d.Reason != "banned" ? $" ({d.Reason})" : "";
+        var why = d.ReasonInBrackets;
         if (!d.WantsSwitch)
         {
             // A kick is not about the IP or the account: the same account joins again, no new IP

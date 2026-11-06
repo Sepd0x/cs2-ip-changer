@@ -94,7 +94,9 @@ public partial class MainWindow
                 sb.AppendLine($"{r.Prefix} if {r.Index} via {r.NextHop}");
         sb.AppendLine();
         sb.AppendLine("== The app's Firewall rules");
-        foreach (var n in Firewall.Remaining()) sb.AppendLine(n);
+        var rules = Firewall.Remaining();
+        if (rules.Error != null) sb.AppendLine(rules.ErrorText);
+        foreach (var n in rules) sb.AppendLine(n);
         return sb.ToString();
     }
 }

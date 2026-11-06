@@ -41,7 +41,7 @@ public partial class MainWindow
     static void LogLaunchOptions(List<Cs2LaunchOptions.AccountResult> r, bool quiet)
     {
         var added = r.Count(x => x.Changed);
-        var failed = r.Where(x => !x.Changed && x.Why != "already there").ToList();
+        var failed = r.Where(x => x.Left).ToList();
         if (added > 0) Log.Ok($"CS2 launch options: added -condebug -conclearlog on {added} account{(added == 1 ? "" : "s")} (backup in SRT_Dados\\launch-options). Kicks and bans are now seen when Steam opens CS2 too.");
         foreach (var f in failed) Log.Warn($"CS2 launch options: one account was left as it is ({f.Why}).");
         if (!quiet && added == 0 && failed.Count == 0) Log.Info(r.Count == 0 ? "CS2 launch options: no Steam account on this PC has launch options yet." : "CS2 launch options: every account already has -condebug -conclearlog.");
@@ -84,7 +84,7 @@ public partial class MainWindow
             var r = await Task.Run(ApplyLaunchOptions);
             LogLaunchOptions(r, quiet: false);
             var added = r.Count(x => x.Changed);
-            var left = r.Count(x => !x.Changed && x.Why != "already there");
+            var left = r.Count(x => x.Left);
             Toast(added > 0 ? $"Added on {added} account{(added == 1 ? "" : "s")}. CS2 now writes its console log however it is opened." + (left > 0 ? $" {left} left as they were (see Log)." : "")
                 : left > 0 ? "Nothing was added: see the Log for why." : "Every account already has them.", left == 0);
         }

@@ -100,7 +100,7 @@ static class RegionTests
         check("Regiões: regra das regiões encontrada", Regions.RuleLeft(new[] { Firewall.RuleName, Firewall.RegionsRuleName }));
         check("Regiões: cópia temporária conta como regra", Regions.RuleLeft(new[] { Firewall.RegionsRuleName + " (updating 0123456789a)" }));
         check("Regiões: só as outras regras = sem regra das regiões", !Regions.RuleLeft(new[] { Firewall.RuleName, Firewall.Cs2RuleName }));
-        check("Regiões: Firewall ilegível só conta quando pedido", !Regions.RuleLeft(new[] { "(could not read the Firewall: x)" }) && Regions.RuleLeft(new[] { "(could not read the Firewall: x)" }, unreadableCounts: true));
+        check("Regiões: Firewall ilegível só conta quando pedido", !Regions.RuleLeft(new FirewallRules { Error = "x" }) && Regions.RuleLeft(new FirewallRules { Error = "x" }, unreadableCounts: true));
 
         // Verificação de 30 s: um Allow all que falhou também se tenta outra vez depois dos 2 min (F56, F57)
         var agora = new DateTime(2026, 10, 29, 12, 0, 0);

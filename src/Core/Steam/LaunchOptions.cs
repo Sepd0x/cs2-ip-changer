@@ -35,7 +35,8 @@ public static class Cs2LaunchOptions
         return (kept.Length == 0 ? "" : kept + " ") + string.Join(" ", missing);
     }
 
-    public sealed record Patched(string Text, string Before, string After, bool Changed, string Why);
+    /// <summary>Already: both options were there, nothing to write (not a failure). Why: the words for the Log when not Changed.</summary>
+    public sealed record Patched(string Text, string Before, string After, bool Changed, string Why, bool Already = false);
 
     /// <summary>
     /// localconfig.vdf with 730's LaunchOptions completed. Changed false with a reason when nothing should be written (already there,
@@ -56,12 +57,16 @@ public static class Cs2LaunchOptions
         if (cs2 == null) { cs2 = new VdfNode(); apps.Items.Add(new("730", cs2)); }
         var before = cs2.Get("LaunchOptions");
         var after = Add(before);
-        if (before != null && after == before) return new(null, before, before, false, "already there");
+        if (before != null && after == before) return new(null, before, before, false, "already there", Already: true);
         cs2.Set("LaunchOptions", after);
         return new(root.Write(), before, after, true, null);
     }
 
-    public sealed record AccountResult(string Id32, bool Changed, string Before, string After, string Why);
+    public sealed record AccountResult(string Id32, bool Changed, string Before, string After, string Why, bool Already = false)
+    {
+        /// <summary>Left as it was for a reason (not because both options were already there): one Log line each.</summary>
+        public bool Left => !Changed && !Already;
+    }
 
     /// <summary>
     /// Every account folder under <paramref name="userData"/> that has config\localconfig.vdf. Steam must be closed (the caller checks,
@@ -89,7 +94,7 @@ public static class Cs2LaunchOptions
                 using (var r = new StreamReader(f, new UTF8Encoding(false)))
                     text = r.ReadToEnd();
                 var p = Patch(text);
-                if (!p.Changed) { results.Add(new(id, false, p.Before, p.After, p.Why)); continue; }
+                if (!p.Changed) { results.Add(new(id, false, p.Before, p.After, p.Why, p.Already)); continue; }
                 if (steamRunning()) { results.Add(new(id, false, p.Before, p.Before, "Steam opened meanwhile")); break; }
                 SafeFile.Write(Path.Combine(backupDir, $"{id}-localconfig-{stamp}.vdf"), new UTF8Encoding(false).GetBytes(text));
                 SafeFile.Write(held.Real, "localconfig.vdf", new UTF8Encoding(false).GetBytes(p.Text));

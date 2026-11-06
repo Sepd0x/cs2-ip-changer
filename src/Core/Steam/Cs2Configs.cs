@@ -21,6 +21,23 @@ public sealed class CfgSet
     public bool Empty => Files.Count == 0;
 }
 
+/// <summary>The sync modes, as saved in settings.json (ConfigMode) and as the Tags of the Sync choices on the Configs page.</summary>
+public static class CfgMode
+{
+    public const string Off = "off", Main = "main", Previous = "previous", Latest = "latest";
+    public static readonly IReadOnlyList<string> All = new[] { Off, Main, Previous, Latest };
+}
+
+/// <summary>
+/// Why a copy was made, as saved in the queue and the backups (CfgJob.Reason, CfgBackup.Reason). New, Login and Cs2 touch one account;
+/// Manual (Sync now) and Closed (CS2 closed, Latest change wins only) every account; Copy is the player's own Copy; Restore and
+/// Queued only name a backup or a report.
+/// </summary>
+public static class CfgTrigger
+{
+    public const string New = "new", Login = "login", Cs2 = "cs2", Closed = "closed", Manual = "manual", Copy = "copy", Restore = "restore", Queued = "queued";
+}
+
 /// <summary>A copy to do: from an account or a snapshot, to one account. Waits in the queue while CS2 is open.</summary>
 public sealed class CfgJob
 {
@@ -320,11 +337,11 @@ public static class Cs2Config
         var list = new List<CfgJob>();
         var cats = categories?.Where(Categories.Contains).Distinct().ToList() ?? new();
         if (cats.Count == 0) return list;
-        if (trigger == "closed" && mode != "latest") return list;
-        var source = mode switch { "main" => mainId, "previous" => previousId, "latest" => latestId, _ => null };
+        if (trigger == CfgTrigger.Closed && mode != CfgMode.Latest) return list;
+        var source = mode switch { CfgMode.Main => mainId, CfgMode.Previous => previousId, CfgMode.Latest => latestId, _ => null };
         if (source == null) return list;
-        if (mode != "main" && optOut?.Contains(source) == true) return list;
-        var targets = trigger is "new" or "login" ? new[] { target } : all ?? Enumerable.Empty<string>();
+        if (mode != CfgMode.Main && optOut?.Contains(source) == true) return list;
+        var targets = trigger is CfgTrigger.New or CfgTrigger.Login ? new[] { target } : all ?? Enumerable.Empty<string>();
         foreach (var t in targets.Where(t => t != null).Distinct())
         {
             if (t == source || optOut?.Contains(t) == true) continue;
@@ -816,7 +833,7 @@ public sealed class Cs2ConfigStore
             // An automatic copy decided before the account was played: what it saved in game since then wins.
             // A Copy or Sync now the player asked for in this run still goes in; one left from an earlier run is treated the same way
             // (the account may have been played since without the app).
-            var asked = j.Reason is "copy" or "manual" && j.At >= _opened;
+            var asked = j.Reason is CfgTrigger.Copy or CfgTrigger.Manual && j.At >= _opened;
             if (!asked && Changed(j.Target) is DateTime c && c > j.At)
             {
                 results.Add(new CfgResult(CfgOutcome.Skipped, j.Target, j.Categories, "it changed in game after the copy was queued"));
@@ -831,7 +848,7 @@ public sealed class Cs2ConfigStore
     /// <summary>Takes sync copies out of the queue (Sync turned off, an account opted out). A Copy the player asked for stays.</summary>
     public int DropQueued(Func<CfgJob, bool> which)
     {
-        var n = State.Pending.RemoveAll(j => j.Reason != "copy" && which(j));
+        var n = State.Pending.RemoveAll(j => j.Reason != CfgTrigger.Copy && which(j));
         if (n > 0) SaveState();
         return n;
     }
@@ -904,7 +921,7 @@ public sealed class Cs2ConfigStore
         try
         {
             var real = Pin(b.SteamId, rels, held);
-            Backup(b.SteamId, dir, rels.Where(r => File.Exists(Path.Combine(dir, r))), "restore", null, syncId, real);
+            Backup(b.SteamId, dir, rels.Where(r => File.Exists(Path.Combine(dir, r))), CfgTrigger.Restore, null, syncId, real);
             foreach (var (rel, text) in saved) WriteHeld(real, rel, text);
             // Files the copy created didn't exist before it: the account goes back to CS2's defaults there (deleted as themselves,
             // only in 730's real folder).

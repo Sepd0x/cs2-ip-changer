@@ -210,6 +210,6 @@ static class Beta11QualidadeTests
         var withBlock = SRT.Program.InstallText(@"C:\Users\x\Downloads", @"C:\Program Files\CS2 IP Changer", false, null, "0.1.0-beta.11", blockLeft: true);
         check("Install: avisa a proteção antiga que ficou e o --restore", withBlock.Contains("Protection from the old copy is still on") && withBlock.Contains("\"C:\\Users\\x\\Downloads\\CS2IPChanger.exe\" --restore"), "");
         check("Install: sem regras não avisa", !SRT.Program.InstallText("a", "b", false).Contains("still on"), "");
-        check("Install: lê as regras ao abrir", prog.Contains("Firewall.BlockLeft(Firewall.Remaining())"), "");
+        check("Install: lê as regras ao abrir", prog.Contains("Firewall.BlockLeft(Firewall.Remaining(), unreadableCounts: false)"), "");
     }
 }

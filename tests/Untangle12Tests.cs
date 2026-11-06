@@ -17,6 +17,73 @@ static class Untangle12Tests
         PhoneLinkState(check);
         AppNames(check);
         await Cs2OpenAndClose(check);
+        TypedValues(check);
+    }
+
+    // B6: a app decide por valores tipados, não por cópias dos textos do ecrã; os textos ficam iguais
+    static void TypedValues(Action<string, bool, string> check)
+    {
+        var t = new DateTime(2026, 11, 6, 20, 0, 0);
+        const string On = "[Client] CL:  Connected to '203.0.113.10:27015'";
+        static string Code(string c, int signOn = 6) => $"[Client] Disconnection during connection phase. Sign-on state: {signOn} (x). Disconnect reason: NETWORK_DISCONNECT_{c}.";
+        Disconnect Take(params string[] lines)
+        {
+            var k = new DisconnectTracker();
+            foreach (var l in lines) k.Feed(l, t);
+            return k.Take(t);
+        }
+        var slot = Take(On, "You were kicked to make room for a reserved slot", Code("KICKED"));
+        var slotCode = Take(On, Code("REJECT_SERVERFULL", 6));
+        check("B6: slot reservado (dito pelo servidor ou pelo código já no jogo) tem o seu motivo, com o texto de sempre",
+            slot?.Why == KickReason.ReservedSlot && slotCode?.Why == KickReason.ReservedSlot && slot.Reason == "kicked to make room for a reserved slot" && slotCode.Reason == slot.Reason, $"{slot} {slotCode}");
+        var full = Take(On, Code("REJECT_SERVERFULL", 2));
+        check("B6: cheio a entrar não é slot reservado", full?.Why == KickReason.Other && full.Reason == "the server is full", $"{full}");
+        var never = Take(On, "[Client] Disconnected from server: NETWORK_DISCONNECT_CONNECT_REQUEST_TIMEDOUT");
+        var lost = Take(On, "[Client] Disconnected from server: NETWORK_DISCONNECT_TIMEDOUT");
+        check("B6: nunca respondeu é um motivo, perder a ligação não", never?.Why == KickReason.NeverAnswered && never.Reason == "the server never answered" && lost?.Why == KickReason.Other, $"{never} {lost}");
+        var ban = Take(On, Code("KICKBANADDED"));
+        check("B6: ban só pelo código diz \"banned\" e não o repete entre parênteses", ban?.Why == KickReason.Banned && ban.Reason == "banned" && ban.ReasonInBrackets == "", $"{ban}");
+        var vote = Take(On, Code("KICKED_VOTEDOFF"));
+        check("B6: outro motivo vai entre parênteses", vote?.Why == KickReason.Other && vote.ReasonInBrackets == " (kicked by a vote)", $"{vote}");
+        check("B6: um motivo escrito à mão igual ao texto não engana a app", new Disconnect(KickKind.Full, "", null, "kicked to make room for a reserved slot").Why == KickReason.Other
+            && new Disconnect(KickKind.Ban, "", null, Why: KickReason.Banned).Reason == "banned", "");
+
+        var vdf = "\"UserLocalConfigStore\"\n{\n\t\"Software\"\n\t{\n\t\t\"Valve\"\n\t\t{\n\t\t\t\"Steam\"\n\t\t\t{\n\t\t\t\t\"apps\"\n\t\t\t\t{\n\t\t\t\t\t\"730\"\n\t\t\t\t\t{\n\t\t\t\t\t\t\"LaunchOptions\"\t\t\"-condebug -conclearlog\"\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}\n";
+        var already = Cs2LaunchOptions.Patch(vdf);
+        var broken = Cs2LaunchOptions.Patch("\"users\"\n{\n}\n");
+        check("B6: opções já lá é um resultado, não um texto", already.Already && !already.Changed && !broken.Already && !broken.Changed, already.Why);
+        check("B6: só as contas deixadas por um motivo contam como falha",
+            !new Cs2LaunchOptions.AccountResult("1", false, "x", "x", "already there", Already: true).Left && new Cs2LaunchOptions.AccountResult("2", false, null, null, "already there").Left
+            && !new Cs2LaunchOptions.AccountResult("3", true, null, null, null).Left, "");
+
+        var row = new ProfileRow(new AccountItem(new LocalAccount("76561198000000001", "l", "Ana", false, 0), new AccountMeta()));
+        row.Session = "Sign-in expired";
+        var byText = row.SessionLevelNow;
+        row.Expired = true;
+        check("B6: o âmbar da sessão expirada vem do estado, não do texto", byText == "none" && row.SessionLevelNow == "warn", byText);
+
+        check("B6: os modos dos configs guardam-se com os mesmos valores", new Settings().ConfigMode == "off" && string.Join(",", CfgMode.All) == "off,main,previous,latest", "");
+        check("B6: o gatilho \"closed\" só copia em Latest change wins",
+            Cs2Config.Plan(CfgMode.Main, "a", null, null, CfgTrigger.Closed, null, new[] { "a", "b" }, new HashSet<string>(), new[] { "binds" }).Count == 0
+            && Cs2Config.Plan(CfgMode.Latest, null, null, "a", CfgTrigger.Closed, null, new[] { "a", "b" }, new HashSet<string>(), new[] { "binds" }).Count == 1, "");
+
+        check("B6: o motivo de desconfiança vem da janela como valor",
+            MainWindow.DistrustNow(true, true, true) == Distrust.SameIp && MainWindow.DistrustNow(false, true, true) == Distrust.PhoneWifi
+            && MainWindow.DistrustNow(false, false, true) == Distrust.NoHome && MainWindow.DistrustNow(false, false, false) == Distrust.None, "");
+        var wifi = new GuardReport { Distrust = Distrust.PhoneWifi };
+        check("B6: o relatório diz o motivo e o texto de sempre", wifi.Distrusted && wifi.DistrustReason == "The phone's Wi-Fi is on, so it may be sharing your home network instead of mobile data."
+            && !new GuardReport().Distrusted && new GuardReport().DistrustReason == null
+            && DistrustText.Of(Distrust.Unchecked) == "The phone connection's public IP hasn't been checked yet.", wifi.DistrustReason);
+
+        check("B6: o tempo esgotado do sign-in tem nome", new SteamWebException("x", eresult: 9).SignInTimedOut && new SteamWebException("x", eresult: 27).SignInTimedOut
+            && !new SteamWebException("x", eresult: 5).SignInTimedOut, "");
+
+        // O bug: um Firewall que não se lê virava um nome de regra falso e "não sobrou nada"
+        var unread = new FirewallRules { Error = "Access is denied." };
+        check("B6: Firewall ilegível não é um nome de regra", unread.Count == 0 && unread.ErrorText == "(could not read the Firewall: Access is denied.)", "");
+        check("B6: Firewall ilegível nunca é \"não sobrou nada\" (o arranque mantém a proteção com o CS2 aberto)", Firewall.BlockLeft(unread), "");
+        check("B6: na janela de Install, ilegível não inventa um bloqueio", !Firewall.BlockLeft(unread, unreadableCounts: false), "");
+        check("B6: lido e vazio é mesmo nada", !Firewall.BlockLeft(new FirewallRules()) && Firewall.BlockLeft(new FirewallRules { Firewall.Cs2RuleName }), "");
     }
 
     // B5: abrir e fechar o CS2 num só ajudante: os argumentos, o carimbo de "fechado pela app" com o motivo, o console.log

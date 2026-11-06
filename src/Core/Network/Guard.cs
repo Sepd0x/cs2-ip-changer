@@ -1,5 +1,24 @@
 namespace SRT.Core;
 
+/// <summary>
+/// Why the phone's connection isn't trusted right now. Unchecked: its public IP wasn't measured yet. SameIp: it is the home IP.
+/// PhoneWifi: the phone's Wi-Fi is on (it may be sharing the home network). NoHome: the home IP wasn't measured, nothing to compare with.
+/// </summary>
+public enum Distrust { None, Unchecked, SameIp, PhoneWifi, NoHome }
+
+public static class DistrustText
+{
+    /// <summary>The words for the Log, the toast and Status (null for None). The only place they are written.</summary>
+    public static string Of(Distrust d) => d switch
+    {
+        Distrust.Unchecked => "The phone connection's public IP hasn't been checked yet.",
+        Distrust.SameIp => "The public IP of the connection is the same as your home IP.",
+        Distrust.PhoneWifi => "The phone's Wi-Fi is on, so it may be sharing your home network instead of mobile data.",
+        Distrust.NoHome => "The home IP hasn't been measured yet.",
+        _ => null,
+    };
+}
+
 public sealed class GuardReport
 {
     public List<Adapter> Adapters { get; init; } = new();
@@ -9,7 +28,8 @@ public sealed class GuardReport
     public Adapter Candidate { get; init; }
     /// <summary>Why there is no protected connection (e.g. the Wi-Fi jumped to the home router).</summary>
     public string EgressProblem { get; init; }
-    public bool Distrusted { get; init; }
+    /// <summary>The candidate is there and isn't trusted (<see cref="Distrust"/> says why).</summary>
+    public bool Distrusted => Distrust != Distrust.None;
     public string FirewallProblem { get; init; }
     public bool KillSwitchOk { get; init; }
     public bool? Cs2LockOk { get; init; }
@@ -31,8 +51,10 @@ public sealed class GuardReport
     /// <summary>The phone's adapter (protected or still being checked), -1 when there is none.</summary>
     public int PhoneIndex { get; init; } = -1;
     public string Error { get; init; }
-    /// <summary>Why the candidate isn't trusted (null = trusted or no candidate).</summary>
-    public string DistrustReason { get; init; }
+    /// <summary>Why the candidate isn't trusted (None = trusted or no candidate).</summary>
+    public Distrust Distrust { get; init; }
+    /// <summary>The same in words (null = trusted or no candidate).</summary>
+    public string DistrustReason => DistrustText.Of(Distrust);
     /// <summary>"ifIndex|localIp" of the candidate: the app only trusts a connection whose public IP it measured.</summary>
     public string CandidateKey { get; init; }
     /// <summary>Routes to Valve's servers go through the protected connection (null = option off or no connection).</summary>
@@ -235,13 +257,11 @@ public sealed class Guard
 
     static readonly IReadOnlySet<string> NoServers = new HashSet<string>();
 
-    public const string WhyUnchecked = "The phone connection's public IP hasn't been checked yet.";
-
     public static string KeyOf(Adapter a) => a == null ? null : $"{a.Index}|{a.LocalIp}";
 
-    /// <param name="distrust">Why the connection can't be trusted right now (null = trusted).</param>
+    /// <param name="distrust">Why the connection can't be trusted right now (None = trusted).</param>
     /// <param name="verifiedKey">The candidate whose public IP was measured and isn't the home IP. Any other candidate stays blocked.</param>
-    public Task<GuardReport> Sync(Settings s, IReadOnlyCollection<string> ips, bool force = false, string distrust = null, bool cs2Running = false, string verifiedKey = null, bool on = true) =>
+    public Task<GuardReport> Sync(Settings s, IReadOnlyCollection<string> ips, bool force = false, Distrust distrust = Distrust.None, bool cs2Running = false, string verifiedKey = null, bool on = true) =>
         Task.Run(async () =>
         {
             await _gate.WaitAsync();
@@ -327,15 +347,16 @@ public sealed class Guard
         catch (Exception ex) { errors.Add((ex.InnerException ?? ex).Message); }
     }
 
-    async Task<GuardReport> SyncCore(Settings s, List<string> ips, bool force, string distrust, bool cs2Running, string verifiedKey, bool on)
+    async Task<GuardReport> SyncCore(Settings s, List<string> ips, bool force, Distrust distrust, bool cs2Running, string verifiedKey, bool on)
     {
         var adapters = Net.Scan();
         var candidate = Net.PickEgress(adapters, s.EgressAdapterId, s.EgressSsid, out var problem);
         _exit = candidate;
         // A new connection (another adapter or local IP) is only trusted after its public IP is measured.
-        if (distrust == null && candidate != null && KeyOf(candidate) != verifiedKey) distrust = WhyUnchecked;
-        var egress = distrust != null ? null : candidate;
-        if (distrust != null && candidate != null) problem = distrust;
+        if (distrust == Distrust.None && candidate != null && KeyOf(candidate) != verifiedKey) distrust = Distrust.Unchecked;
+        var egress = distrust != Distrust.None ? null : candidate;
+        // Why there is no protected connection, in words: the distrust's, when there is a candidate
+        if (distrust != Distrust.None && candidate != null) problem = DistrustText.Of(distrust);
         var mode = PhoneLink.EffectiveMode(on, s.Mode, s.GameMode, cs2Running);
         // Off and No phone block nothing, so "Servers blocked" would be false there; back on protection the problem is said again.
         if (mode is "home" or "off") _lastProblem = null;
@@ -452,8 +473,7 @@ public sealed class Guard
             Egress = egress,
             Candidate = candidate,
             EgressProblem = problem,
-            Distrusted = distrust != null && candidate != null,
-            DistrustReason = candidate != null ? distrust : null,
+            Distrust = candidate != null ? distrust : Distrust.None,
             CandidateKey = KeyOf(candidate),
             FirewallProblem = fwProblem,
             KillSwitchOk = killOk,
@@ -560,7 +580,7 @@ public sealed class Guard
     /// phone is already checked when you turn protection on. Save mobile data keeps the rest of the PC on the home network in both,
     /// whatever mode is picked: so the home IP gets measured on a first start in Whole PC always too (review finding 7).
     /// </summary>
-    async Task<GuardReport> HomeMode(Settings s, List<string> ips, List<Adapter> adapters, Adapter phone, string fwProblem, bool force, string mode, string distrust)
+    async Task<GuardReport> HomeMode(Settings s, List<string> ips, List<Adapter> adapters, Adapter phone, string fwProblem, bool force, string mode, Distrust distrust)
     {
         var off = mode == "off";
         // With Windows Firewall off the old rules can't be removed: the signature changes when it is back on, and they go then
@@ -592,8 +612,7 @@ public sealed class Guard
             Adapters = adapters,
             Candidate = off ? phone : null,
             CandidateKey = off ? KeyOf(phone) : null,
-            DistrustReason = off && phone != null ? distrust : null,
-            Distrusted = off && phone != null && distrust != null,
+            Distrust = off && phone != null ? distrust : Distrust.None,
             FirewallProblem = fwProblem,
             EffectiveMode = mode,
             PcDefaultName = adapters.FirstOrDefault(a => a.Index == pcIdx)?.Name ?? "—",
@@ -756,7 +775,10 @@ public sealed class Guard
             var exit = ExitIndex(_exit, adapters);
             foreach (var rt in await _routes.List())
                 if (IsOurs(rt, _ownedRoutes, adapters, exit, set)) left.Add("route " + rt.Prefix);
-            left.AddRange(Firewall.Remaining().Where(n => !keepRegions || !n.StartsWith(Firewall.RegionsRuleName)).Select(n => "rule \"" + n + "\""));
+            var rules = Firewall.Remaining();
+            // A Firewall that couldn't be read isn't "nothing left": the restore isn't confirmed
+            if (rules.Error != null) left.Add("rule \"" + rules.ErrorText + "\"");
+            left.AddRange(rules.Where(n => !keepRegions || !n.StartsWith(Firewall.RegionsRuleName)).Select(n => "rule \"" + n + "\""));
             if (_metricAppliedTo >= 0) left.Add($"the metric of adapter {_metricAppliedTo}");
             if (left.Count == 0) { Log.Ok("Network restored: app rules and routes removed, checked."); return null; }
             var what = string.Join(", ", left.Take(5)) + (left.Count > 5 ? $" and {left.Count - 5} more" : "");

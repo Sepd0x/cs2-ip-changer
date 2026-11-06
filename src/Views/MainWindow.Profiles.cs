@@ -116,6 +116,7 @@ public partial class MainWindow
         {
             r.SignedIn = _demoSigned.Contains(r.SteamId);
             r.DaysLeft = r.SignedIn ? (r.Name == "drift" ? 9 : 187) : null;   // one about to run out, to see the amber
+            r.Expired = false;
             r.Session = r.SignedIn ? $"Signed in · {r.DaysLeft} d left" : "Not signed in";
             return;
         }
@@ -123,7 +124,8 @@ public partial class MainWindow
         var dead = _profExpired.Contains(r.SteamId);
         r.SignedIn = info?.Valid == true && !dead;
         r.DaysLeft = r.SignedIn ? (int)Math.Ceiling((info.Expires - DateTime.Now).TotalDays) : null;
-        r.Session = info == null ? "Not signed in" : !info.Valid || dead ? "Sign-in expired" : $"Signed in · {r.DaysLeft} d left";
+        r.Expired = info != null && (!info.Valid || dead);
+        r.Session = info == null ? "Not signed in" : r.Expired ? "Sign-in expired" : $"Signed in · {r.DaysLeft} d left";
     }
 
     // ------------------------------------------------------------ Templates
