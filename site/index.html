@@ -372,6 +372,18 @@ footer a:hover{color:var(--ink)}
 .legal{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.6rem 2rem;padding-block:1.6rem 2.2rem;font-size:.84rem}
 @media (max-width:900px){.fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.fbrand{grid-column:1/-1}}
 @media (max-width:420px){.fgrid{grid-template-columns:minmax(0,1fr)}}
+/* a phone (6 Nov.): the footer in two columns, Product and Project side by side and the guides two to a row, every link
+   still there and a full 44 px row to tap. One column of twenty links was a fifth of a guide page */
+@media (max-width:759px){
+  .fgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:1.6rem 1rem;padding-block:2.6rem 0}
+  .fbrand p{margin:.6rem 0 .8rem}
+  .fgrid nav[aria-labelledby=f2]{grid-column:1/-1;order:3}
+  .fgrid nav[aria-labelledby=f2] ul{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:1rem}
+  footer nav h3{margin-bottom:.35rem}
+  footer nav li a{display:flex;align-items:center;min-height:44px;padding-block:.35rem;line-height:1.3}
+  .wordmark{margin-top:2rem}
+  .legal{padding-block:1.2rem 1.6rem}
+}
 a.zoom{display:block;cursor:zoom-in}
 .lightbox{padding:0;border:0;background:transparent;max-width:96vw;max-height:94vh;overflow:visible}
 .lightbox::backdrop{background:rgba(0,0,0,.88)}
@@ -805,6 +817,8 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
   .pause{right:10px;bottom:auto;top:calc(var(--top-h) + 10px);width:44px;height:44px;padding:0;justify-content:center;font-size:0;gap:0;background:var(--t-surface)}
   .where{right:auto;left:10px;bottom:auto;top:calc(var(--top-h) + 10px)}.where-list{right:auto;left:0;bottom:auto;top:calc(100% + 8px)}
   .where.under{opacity:0;visibility:hidden}
+  /* out of the way at once when text comes under them, back slowly when it has gone (6 Nov.) */
+  .where.under,.pause.under{transition:opacity .12s,visibility .12s}
 }
 /* a small phone held upright: the cards get tighter so the world still shows above them */
 @media (max-width:999px) and (orientation:portrait) and (max-height:700px){
@@ -844,6 +858,43 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
   .b-cover .get-note{font-size:.82rem;line-height:1.45}
   .b-cover .facts{font-size:.8rem;margin-top:.7rem}
   .cue{display:none}
+}
+/* a phone held upright (6 Nov.): the story's steps closer together, the same cards, scenes and log lines. The ban's log
+   lit a line every third of a screen while its card stood still for two and a half screens, and read as a page stuck */
+@media (max-width:759px) and (orientation:portrait){
+  #how .beat{min-height:78svh}
+  .beat-long{min-height:226svh}
+  .beat-long>.wrap{padding-top:22svh}
+  .solid.ban-after{padding-bottom:2.5rem}
+}
+/* the app's six pages on a phone held upright: side by side, one swipe each, and on each page its three numbered
+   things cut from the real window at full size (built by home.js), so the app's text reads at its own 11 to 12 px
+   instead of 3 px in a window shrunk to the screen. The window above shows the page, a tap opens it whole */
+@media (max-width:759px) and (orientation:portrait){
+  .js .app-body{padding-bottom:3rem}
+  .js .app-body .win-fig{position:relative;top:auto;z-index:auto;border-bottom:0;padding-bottom:0;scroll-snap-align:start;scroll-margin-top:var(--top-h)}
+  .pg-nav{display:flex;gap:.25rem;margin:1rem 0 .5rem;scroll-snap-align:start;scroll-margin-top:calc(var(--top-h) + .5rem)}
+  .pg-nav button{flex:1;min-width:44px;min-height:44px;padding:0;border:0;border-radius:10px;background:none;color:var(--ink3);font:400 .8rem/1 var(--mono);box-shadow:inset 0 -2px 0 var(--line);cursor:pointer;transition:color .3s,box-shadow .3s}
+  .pg-nav button[aria-current]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--t-accent)}
+  .pg-nav button:focus-visible{outline:2px solid var(--t-accent);outline-offset:-2px}
+  .js .pages{display:flex;align-items:flex-start;gap:.75rem;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scrollbar-width:none;margin:0 calc(-1*var(--gutter));padding:0 var(--gutter) .25rem;scroll-padding-inline:var(--gutter)}
+  .js .pages::-webkit-scrollbar{display:none}
+  .js .pages>li{flex:0 0 88%;min-height:0;justify-content:flex-start;padding:1.1rem 1rem .4rem;border-radius:14px;background:var(--t-surface);box-shadow:inset 0 0 0 1px var(--line);scroll-snap-align:start;scroll-snap-stop:always}
+  .js .pages>li>h3{scroll-snap-align:none;font-size:1.6rem;margin-bottom:.5rem}
+  .js .pages li .big{font-size:1.7rem}
+  .js .pages .mk-key{gap:.8rem;margin-top:.8rem}
+  .js .pages .mk-key li{display:grid;grid-template-columns:1.25rem minmax(0,1fr);gap:.45rem .65rem;align-items:start}
+  .js .pages .mk-key li::before{grid-row:2}
+  .js .pages .mk-key li>span{grid-row:2}
+}
+.cut{display:none}
+@media (max-width:759px) and (orientation:portrait){
+  .cut-in .patch{visibility:visible}
+  .js .cut{display:block;grid-column:1/-1;grid-row:1;position:relative;overflow:hidden;height:clamp(84px,calc(var(--mh) + 48px),150px);border-radius:8px;background:var(--t-bg);box-shadow:inset 0 0 0 1px var(--line)}
+  .cut-in{position:absolute;width:1240px;height:800px;container-type:inline-size;left:clamp(calc(100% - 1240px),calc(50% - var(--cx)),0px);top:clamp(calc(100% - 800px),calc(50% - var(--cy)),0px)}
+  .cut-in picture,.cut-in img{display:block;width:1240px;height:800px;max-width:none}
+  .cut-in .cring{position:absolute;left:calc(var(--cx) - var(--mw)/2 - 3px);top:calc(var(--cy) - var(--mh)/2 - 3px);width:calc(var(--mw) + 6px);height:calc(var(--mh) + 6px);border-radius:6px;box-shadow:0 0 0 2px var(--t-accent),0 0 18px rgba(var(--t-accent-rgb),.35)}
+  .pages>li:not(.on) .cring{box-shadow:0 0 0 1.5px var(--ink3)}
 }
 /* a phone on its side: copy on the left, the route on the right, as on a PC */
 @media (max-height:540px) and (orientation:landscape){

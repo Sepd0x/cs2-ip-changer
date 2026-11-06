@@ -198,6 +198,28 @@ static class DesignSyncTests
         check("SEO: o contador usa o ?ref= (só [a-z0-9-], até 20) e tira-o da barra", noRef.Count == 0, string.Join(", ", noRef));
         var slowLd = new[] { "site/index.html", "site/404.html" }.Concat(guides).Where(f => !Txt(f).Contains("setTimeout(end,matchMedia('(pointer:coarse)').matches?1100:6000)")).ToList();
         check("Site: no telemóvel o ecrã de carregamento sai em ~1,5 s e não espera pelo 3D", slowLd.Count == 0 && homeHtml.Contains("@media (pointer:fine),(pointer:none){html.ld .b-cover .copy>*{animation-play-state:paused}}"), string.Join(", ", slowLd));
+
+        // ---------------- 5. o telemóvel com componentes próprios (6 nov.): as seis páginas lado a lado com recortes a tamanho
+        // real, a história mais curta ao alto, o chip e a pausa fora do texto, o rodapé em duas colunas, o ?ref= na is-it-safe
+        const string carQ = "(max-width:759px) and (orientation:portrait)";
+        check("Site: as seis páginas da janela lado a lado no telemóvel ao alto, com o CSS e o home.js na mesma medida",
+            Regex.IsMatch(homeHtml, @"@media \(max-width:759px\) and \(orientation:portrait\)\{\s*\.js \.app-body\{") && homeHtml.Contains("scroll-snap-type:x mandatory") && homeJs.Contains($"matchMedia('{carQ}')"), "");
+        // cada recorte é a captura a 1240x800 (o tamanho da janela da app), com o anel no sítio das marcas do PC
+        check("Site: os recortes das páginas são a captura a tamanho real, centrados nas marcas da janela",
+            homeHtml.Contains(".cut-in{position:absolute;width:1240px;height:800px;") && homeJs.Contains("'.marks .mk[data-pg=\"' + pg + '\"]'") && homeJs.Contains("* 12.4).toFixed(1) + 'px'") && homeJs.Contains("* 8).toFixed(1) + 'px'"), "");
+        check("Site: um botão por página (44 px) e o endereço segue a página deslizada",
+            homeJs.Contains("nav.className = 'pg-nav'") && homeHtml.Contains(".pg-nav button{flex:1;min-width:44px;min-height:44px;") && homeJs.Contains("take(stepAt(scrollY)); }, 160);"), "");
+        check("Site: no telemóvel ao alto os passos da história mais juntos (o ban de 334 para 226 svh)",
+            Regex.IsMatch(homeHtml, @"@media \(max-width:759px\) and \(orientation:portrait\)\{\s*#how \.beat\{min-height:78svh\}\s*\.beat-long\{min-height:226svh\}"), "");
+        check("Site: a pausa e o chip saem de cima do texto simples (a nota do ban, as secções sólidas) e não só dos cartões",
+            homeJs.Contains("var plain = $$('.ba-copy, section.solid');") && homeJs.Contains("plain.some(") && homeHtml.Contains(".where.under,.pause.under{transition:opacity .12s,visibility .12s}"), "");
+        var guideRow = homeHtml.Contains("ul.guides a::after{content:\"\";position:absolute;inset:0}") && homeHtml.Contains("ul.guides li{position:relative;");
+        check("Site: cada linha das guias é clicável por inteiro", guideRow, "");
+        var footer2 = guides.Where(f => !Txt(f).Contains(".fgrid nav[aria-labelledby=f2] ul{grid-template-columns:repeat(2,minmax(0,1fr));")).ToList();
+        check("Site: o rodapé em duas colunas no telemóvel, na home e em cada guia, com 44 px por link",
+            homeHtml.Contains("footer nav li a{display:flex;align-items:center;min-height:44px;") && footer2.Count == 0, string.Join(", ", footer2));
+        check("Site: a is-it-safe diz que o contador conta o ?ref= de um link",
+            Txt("site/is-it-safe/index.html").Contains("or the short name in the link when there is none (like <code>?ref=tiktok</code>)"), "");
     }
 
     /// <summary>Theme.xaml: as cores de 6 dígitos (Color e SolidColorBrush), em minúsculas, como o design-tokens.mjs.</summary>

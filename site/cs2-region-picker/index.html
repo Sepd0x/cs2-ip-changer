@@ -490,6 +490,18 @@ footer a:hover{color:var(--ink)}
 .legal{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.6rem 2rem;padding-block:1.6rem 2.2rem;font-size:.84rem}
 @media (max-width:900px){.fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.fbrand{grid-column:1/-1}}
 @media (max-width:420px){.fgrid{grid-template-columns:minmax(0,1fr)}}
+/* a phone (6 Nov.): the footer in two columns, Product and Project side by side and the guides two to a row, every link
+   still there and a full 44 px row to tap. One column of twenty links was a fifth of a guide page */
+@media (max-width:759px){
+  .fgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:1.6rem 1rem;padding-block:2.6rem 0}
+  .fbrand p{margin:.6rem 0 .8rem}
+  .fgrid nav[aria-labelledby=f2]{grid-column:1/-1;order:3}
+  .fgrid nav[aria-labelledby=f2] ul{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:1rem}
+  footer nav h3{margin-bottom:.35rem}
+  footer nav li a{display:flex;align-items:center;min-height:44px;padding-block:.35rem;line-height:1.3}
+  .wordmark{margin-top:2rem}
+  .legal{padding-block:1.2rem 1.6rem}
+}
 a.zoom{display:block;cursor:zoom-in}
 .lightbox{padding:0;border:0;background:transparent;max-width:96vw;max-height:94vh;overflow:visible}
 .lightbox::backdrop{background:rgba(0,0,0,.88)}
@@ -619,7 +631,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 /* below the first screen the browser lays these out only when they come near (6 Nov.: the first layout of the whole guide was
    one 600 ms task on a slow phone); the sizes are guesses until each part has been on screen once, then remembered */
 .gtext{content-visibility:auto;contain-intrinsic-size:auto 3400px}.gfaq{content-visibility:auto;contain-intrinsic-size:auto 420px}.gmore{content-visibility:auto;contain-intrinsic-size:auto 800px}footer .fgrid{content-visibility:auto;contain-intrinsic-size:auto 1250px}
-@media (min-width:1000px){.gtext{contain-intrinsic-size:auto 2100px}.gmore{contain-intrinsic-size:auto 380px}footer .fgrid{contain-intrinsic-size:auto 480px}}.gshot{content-visibility:auto;contain-intrinsic-size:auto 400px}.gtoc-m{content-visibility:auto;contain-intrinsic-size:auto 260px}footer .legal{content-visibility:auto;contain-intrinsic-size:auto 120px}
+@media (max-width:759px){footer .fgrid{contain-intrinsic-size:auto 770px}}@media (min-width:1000px){.gtext{contain-intrinsic-size:auto 2100px}.gmore{contain-intrinsic-size:auto 380px}footer .fgrid{contain-intrinsic-size:auto 480px}}.gshot{content-visibility:auto;contain-intrinsic-size:auto 400px}.gtoc-m{content-visibility:auto;contain-intrinsic-size:auto 260px}footer .legal{content-visibility:auto;contain-intrinsic-size:auto 120px}
 .gtext h2::before{content:counter(sec,decimal-leading-zero);content:counter(sec,decimal-leading-zero) / "";display:inline-block;width:3.2rem;font:400 .8rem/1 var(--mono);letter-spacing:0;color:var(--ink3);vertical-align:.55em}
 .gtext h2{background:var(--t-top) 0 0/3rem 2px no-repeat;counter-increment:sec;color:var(--ink);font:500 clamp(1.7rem,1.1rem + 1.7vw,2.8rem)/1.06 var(--disp);letter-spacing:-.035em;margin:clamp(3.25rem,2.4rem + 2.6vw,5rem) 0 1.2rem;padding-top:clamp(1rem,.8rem + .6vw,1.4rem);border-top:0}
 .gtext h2:first-child{margin-top:0;padding-top:clamp(1rem,.8rem + .6vw,1.4rem)}

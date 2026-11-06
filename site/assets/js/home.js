@@ -18,6 +18,8 @@
   var beats = $$('[data-beat]').sort(function (a, b) { return +a.getAttribute('data-beat') - +b.getAttribute('data-beat'); });
   var NB = 6; // beats 0..5 are the story; 6 is the close
   var copies = beats.map(function (b) { return $('.copy', b); });
+  // the plain text the pause and the chip must not sit over either: the ban's note after its card, the solid sections
+  var plain = $$('.ba-copy, section.solid');
   var appBody = $('.app-body'), cta = $('.cta'), railItems = rail ? $$('li', rail) : [], railOl = rail ? $('ol', rail) : null;
   var whereEl = $('#where'), whereBtn = whereEl ? $('button', whereEl) : null, whereList = whereEl ? $('.where-list', whereEl) : null, whereLinks = whereEl ? $$('ol a', whereEl) : [];
   var logLis = $$('#ban-log li'), banIP = $('#ban-ip'), banNote = $('#ban-ip-note'), banSaid = banIP ? banIP.parentNode : null;
@@ -162,7 +164,7 @@
     for (var k = 1; k < NB; k++) { var cc = copies[k]; if (!cc) continue; var o = T ? clamp((cc.getBoundingClientRect().bottom - th - av * .3) / (av * .32)) : 1; if (cc.__o !== o) { cc.__o = o; cc.style.opacity = o < 1 ? o.toFixed(3) : ''; } }
     // the pause button sits on the free part of the scene; while a card passes under it, it steps aside
     // (the "where you are" chip sits at the same height, top left, and steps aside with it)
-    if ((pauseBtn || whereEl) && T) { var pt = th + 10, under = copies.concat([$('.copy', cta)]).some(function (c) { if (!c || c.__o < .2) return false; var r = c.getBoundingClientRect(); return r.top < pt + 44 && r.bottom > pt; }); if (pauseBtn) pauseBtn.classList.toggle('under', under); if (whereEl && whereEl.classList.contains('under') !== under) { whereEl.classList.toggle('under', under); if (under) whereShut(); } }
+    if ((pauseBtn || whereEl) && T) { var pt = th + 10, lo = pt - 24, hi = pt + 44 + 64, under = copies.concat([$('.copy', cta)]).some(function (c) { if (!c || c.__o < .2) return false; var r = c.getBoundingClientRect(); return r.top < hi && r.bottom > lo; }) || plain.some(function (c) { var r = c.getBoundingClientRect(); return r.top < hi && r.bottom > lo; }); if (pauseBtn) pauseBtn.classList.toggle('under', under); if (whereEl && whereEl.classList.contains('under') !== under) { whereEl.classList.toggle('under', under); if (under) whereShut(); } }
     if (whereEl && root.classList.contains('story-off') !== whereOff) { whereOff = !whereOff; if (whereOff) whereShut(); }
     // the rail: how far along the route (which beat is marked once the scroll rests, settle below)
     if (railOl) railOl.style.setProperty('--p', clamp(p / (NB - 1)).toFixed(4));
@@ -306,12 +308,60 @@
   if (fig) {
     var pics = $$('.views picture', fig), zl = $('.views', fig), pages = $$('#pages > li'), cur = 'connection';
     // the page being read while the window is docked, and the way back to it (its title where the snap rests it)
-    pageNow = function (y) { return rests.length && y >= storyEnd - 1 && y <= rests[rests.length - 1] + innerHeight * .6 ? cur : null; };
+    pageNow = function (y) {
+      if (car) { var pe = $('#pages'), b = docTop(pe) + pe.offsetHeight; return y >= storyEnd - 1 && y <= b - innerHeight * .35 ? cur : null; }
+      return rests.length && y >= storyEnd - 1 && y <= rests[rests.length - 1] + innerHeight * .6 ? cur : null;
+    };
+    /* held upright on a phone (6 Nov.) the six pages sit side by side (CSS): a swipe sideways is a page, the numbers above
+       go straight to one, and each of a page's three things gets a cut of the real window at full size, ring and all */
+    var CAR = matchMedia('(max-width:759px) and (orientation:portrait)'), car = CAR.matches, pagesBox = $('#pages'), nav = null, tabs = [];
+    if (pagesBox) {
+      nav = d.createElement('div'); nav.className = 'pg-nav'; nav.hidden = !car; nav.setAttribute('aria-label', 'The six pages');
+      pages.forEach(function (li, i) {
+        var pg = li.getAttribute('data-pg'), bt = d.createElement('button'), name = ($('h3', li).textContent || '').replace(/^\s*\d+\s*/, '');
+        bt.type = 'button'; bt.textContent = ('0' + (i + 1)); bt.setAttribute('aria-label', name); bt.setAttribute('aria-controls', 'pages');
+        bt.addEventListener('click', function () { slide(i, true); });
+        nav.appendChild(bt); tabs.push(bt);
+        // the cuts: the page's own picture, placed so its mark sits in the middle of the strip (the window's edges stop it)
+        var pic = pics.filter(function (pc) { return pc.getAttribute('data-pg') === pg; })[0], keys = $$('.mk-key > li', li);
+        $$('.marks .mk[data-pg="' + pg + '"]', fig).forEach(function (mk, k) {
+          if (!pic || !keys[k]) return;
+          var v = function (n) { return parseFloat(mk.style.getPropertyValue('--' + n)) || 0; };
+          var cut = d.createElement('div'), inn = d.createElement('div'), ring = d.createElement('i'), cp = pic.cloneNode(true);
+          cut.className = 'cut'; cut.setAttribute('aria-hidden', 'true'); inn.className = 'cut-in'; ring.className = 'cring';
+          cp.removeAttribute('class'); cp.removeAttribute('aria-hidden'); var im = $('img', cp); im.alt = ''; im.loading = 'lazy'; im.decoding = 'async';
+          cut.style.setProperty('--cx', ((v('x') + v('w') / 2) * 12.4).toFixed(1) + 'px'); cut.style.setProperty('--cy', ((v('y') + v('h') / 2) * 8).toFixed(1) + 'px');
+          cut.style.setProperty('--mw', (v('w') * 12.4).toFixed(1) + 'px'); cut.style.setProperty('--mh', (v('h') * 8).toFixed(1) + 'px');
+          inn.appendChild(cp);
+          if (pg === 'connection') $$('.patch', win).forEach(function (pt) { inn.appendChild(pt.cloneNode(true)); });
+          inn.appendChild(ring); cut.appendChild(inn); keys[k].insertBefore(cut, keys[k].firstChild);
+        });
+      });
+      pagesBox.parentNode.insertBefore(nav, pagesBox); tabs[0].setAttribute('aria-current', 'true');
+      // the page whose card is most in view is the one shown; the address and the chip follow once the swipe rests
+      var step = function () { return pages.length > 1 ? pages[1].offsetLeft - pages[0].offsetLeft : 1; };
+      var slide = function (i, smooth) { pagesBox.scrollTo({ left: i * step(), behavior: smooth && FX ? 'smooth' : 'auto' }); show(pages[i].getAttribute('data-pg')); holdPg = performance.now() + (smooth ? 500 : 0); };
+      var sq = 0, sT = 0;
+      pagesBox.addEventListener('scroll', function () {
+        if (!car) return;
+        if (!sq) { sq = 1; requestAnimationFrame(function () { sq = 0; pick(); }); }
+        clearTimeout(sT); sT = setTimeout(function () { holdPg = 0; pick(); take(stepAt(scrollY)); }, 160);
+      }, { passive: true });
+      var carSet = function () {
+        car = CAR.matches; nav.hidden = !car;
+        if (car) pagesBox.scrollLeft = Math.max(0, pages.map(function (l) { return l.getAttribute('data-pg'); }).indexOf(cur)) * step();
+      };
+      if (CAR.addEventListener) CAR.addEventListener('change', carSet); else if (CAR.addListener) CAR.addListener(carSet);
+      // a reload on a page keeps its place and its page (the address has it); a link to one goes there with deep() below
+      var hp = PGS.indexOf(location.hash.slice(1));
+      if (hp > 0) addEventListener('load', function () { if (car) slide(hp, false); });
+    }
     // the page's title goes where the snap rests it, and the window keeps that page while the page settles
     var holdPg = 0;
     pageGo = function (pg) {
       var i = pages.map(function (l) { return l.getAttribute('data-pg'); }).indexOf(pg); if (i < 0) return;
-      if (side) scrollTo(0, rests[i]); else ($('h3', pages[i]) || pages[i]).scrollIntoView({ block: 'start', behavior: 'instant' });
+      if (car) { scrollTo(0, Math.round(docTop(nav) - topH() - 8)); slide(i, false); }
+      else if (side) scrollTo(0, rests[i]); else ($('h3', pages[i]) || pages[i]).scrollIntoView({ block: 'start', behavior: 'instant' });
       show(pg); holdPg = performance.now() + 600;
     };
     var show = function (pg) {
@@ -322,7 +372,7 @@
         if (on) { pc.removeAttribute('aria-hidden'); var im = $('img', pc); if (im.loading === 'lazy') im.loading = 'eager'; zl.href = 'img/' + pg + '.png'; }
         else pc.setAttribute('aria-hidden', 'true');
       });
-      pages.forEach(function (li) { li.classList.toggle('on', li.getAttribute('data-pg') === pg); });
+      pages.forEach(function (li, i) { var on = li.getAttribute('data-pg') === pg; li.classList.toggle('on', on); if (tabs[i]) { if (on) tabs[i].setAttribute('aria-current', 'true'); else tabs[i].removeAttribute('aria-current'); } });
       if (win) win.setAttribute('data-pg', pg);
     };
     // rests: the scroll where each page is read (the keyboard and a turn of the phone go there). A phone on its side has
@@ -331,17 +381,20 @@
     // while the text on the left was still the one before)
     var centres = [], rests = [], line0 = 0, side = false, figTop = 0;
     var mPages = function () {
+      car = CAR.matches;
       var pr = $('#pages').getBoundingClientRect(), fr = fig.getBoundingClientRect();
       side = innerWidth < 1000 && fr.left >= pr.right - 4;
       figTop = parseFloat(getComputedStyle(fig).top) || topH();
       centres = pages.map(function (li) { return docTop(li) + li.offsetHeight / 2; });
       line0 = tall() ? Math.min(innerHeight * .78, topH() + fig.offsetHeight + innerHeight * .25) : innerHeight * .5;
       rests = side ? pages.map(function (li) { return Math.round(docTop($('h3', li) || li) - figTop); }) : centres.map(function (c) { return Math.round(c - line0); });
+      if (car) rests = [];
     };
     var pick = function () {
       if (performance.now() < holdPg) return;
       var best = -1, bd = 1e9;
-      if (side) { var lim = scrollY + (innerHeight - figTop) * .5; rests.forEach(function (r, i) { if (r <= lim) best = i; }); best = Math.max(best, 0); }
+      if (car) best = Math.max(0, Math.min(pages.length - 1, Math.round(pagesBox.scrollLeft / step())));
+      else if (side) { var lim = scrollY + (innerHeight - figTop) * .5; rests.forEach(function (r, i) { if (r <= lim) best = i; }); best = Math.max(best, 0); }
       else { var line = scrollY + line0; centres.forEach(function (c, i) { var dd = Math.abs(c - line); if (dd < bd) { bd = dd; best = i; } }); }
       if (best >= 0) show(pages[best].getAttribute('data-pg'));
     };

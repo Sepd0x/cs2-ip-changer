@@ -51,6 +51,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Website: on a phone, a small chip ("2/6 Phone") shows where you are in the story and opens its steps, Setup and Guides. The address follows the step you stop on (#carrier, #ban, #servers...), so a shared link opens there. On a phone on its side, the app's window and the text next to it now always show the same page.
 - Website: on a phone the first words show after about 1.5 s instead of waiting up to 6 s for the 3D scene, which still comes in as before. Under each Download button, a short line says what to do when Windows shows "Windows protected your PC" (More info, then Run anyway), with a link to Is it safe?. Clearer titles for the Android, iPhone, IP ban and region guides, and every guide has a full preview card when you share it.
 - Website: a link with ?ref=<name> (from a bio on TikTok, for example) counts the visit as coming from that name, and the parameter leaves the address bar at once.
+- Website on a phone held upright: the app's six pages sit side by side, one swipe each (or tap 01 to 06), and each page's three numbered things are shown cut from the real window at full size, so the app's text can be read. The story's steps and the IP ban part need less scrolling, with the same text and scenes, the Pause button and the step chip move away from any text, and the footer is in two columns. The home page is about a sixth shorter.
 
 ## [0.1.0-beta.10] - 2026-11-04
 
