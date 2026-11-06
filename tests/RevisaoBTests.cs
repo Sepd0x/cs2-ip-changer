@@ -28,7 +28,7 @@ static class RevisaoBTests
         check("Revisão B1: Android fora do ADB, com conta, também", !MainWindow.QuickSteps(new(true, true, true, true), false, false, adbReady: false).Ip, "");
         check("Revisão B1: Android pronto, o IP fica", MainWindow.QuickSteps(ipRejoin, false, false, adbReady: true).Ip, "");
         check("Revisão B1: iPhone sem conta mantém o Change IP guiado", MainWindow.QuickSteps(ipRejoin, false, iphoneByHand: true, adbReady: false).Ip, "");
-        check("Revisão B1: o switch lê o ADB e o Log diz porquê", kick.Contains("QuickSteps(SwitchChoice, _s.NoPhone, IphoneByHand, _demo || _adb != null && _phone?.Ready == true)")
+        check("Revisão B1: o switch lê o ADB e o Log diz porquê", kick.Contains("QuickSteps(SwitchChoice, _s.NoPhone, IphoneByHand && (_demo || ChangeIpReady), _demo || _adb != null && _phone?.Ready == true)")
             && kick.Contains("\"the phone isn't ready on ADB\"") && kick.Contains("if (ipLeftOut != null) Log.Info($\"{from}: {ipLeftOut}, so the IP stays the same.\");"), "");
         check("Revisão B1: só com o IP e o telemóvel fora do ADB, diz porquê nada corre",
             MainWindow.NothingText(true, false, "the phone isn't ready on ADB") == "Nothing to do now: the IP stays the same (the phone isn't ready on ADB).", MainWindow.NothingText(true, false, "the phone isn't ready on ADB"));
@@ -40,7 +40,9 @@ static class RevisaoBTests
         check("Revisão B2: iPhone com a conta, o nome não promete New IP", !MainWindow.QuickSteps(new(true, true, true, true), false, iphoneByHand: true).Ip, "");
         check("Revisão B2: iPhone sem a conta, o IP fica (Change IP guiado)", MainWindow.QuickSteps(ipRejoin, false, iphoneByHand: true).Ip, "");
         check("Revisão B2: o toast do iPhone diz para usar Change IP", kick.Contains("\"The IP stays the same. The iPhone changes its IP by hand: use Change IP.\""), "");
-        check("Revisão B2: o rejoin fica ativo com o iPhone ligado", kick.Contains("_phone?.Ready == true || IphoneByHand && _last?.Egress != null")
+        // Junto com a área A: o iPhone ligado vem do ChangeIpReady (a regra do botão Change IP, com o iPhone também com a proteção desligada)
+        check("Revisão B2: o rejoin fica ativo com o iPhone ligado", kick.Contains("RejoinEnabled(_changingIp || _rejoining, lastInList, _s.NoPhone, ChangeIpReady,")
+            && MainWindow.CanChangeIp(noPhone: false, adbReady: false, iphone: true, iphoneUp: true)
             && MainWindow.RejoinEnabled(busy: false, lastInList: true, noPhone: false, canChangeIp: true, homeNoBan: false), "");
         // Decisão do coordenador: no iPhone a hotkey do rejoin recusa (o pedido do Airplane Mode não se vê no jogo); nada fica à espera
         check("Revisão B2: iPhone, a hotkey do rejoin recusa", MainWindow.RejoinHotkeyRefused(iphoneByHand: true, noPhone: false, protOn: true, useWithOff: false, bannedOnLast: false), "");

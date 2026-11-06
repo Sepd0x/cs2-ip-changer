@@ -105,7 +105,7 @@ public partial class MainWindow
     }
 
     public const string UseOffWarning =
-        "While protection is off, Servers, Join and Log in with CS2 use your home connection and the app blocks nothing.\n\n" +
+        "While protection is off, Servers, Join and Log in with CS2 use your home connection and the app blocks nothing but the regions you turned off.\n\n" +
         "Every server you join sees your home IP. A ban there can reach that IP, and changing the phone's IP won't help with it.\n\n" +
         "Turn on protection (Status or the tray icon) whenever you want to play through the phone. You can turn this off again here.";
 
@@ -189,7 +189,7 @@ public partial class MainWindow
 
     async void Restore_Click(object sender, RoutedEventArgs e)
     {
-        if (!_protOn || _turningOff || !await Ask("Turn off protection?", TurnOffText, "Turn off protection", danger: true)) return;
+        if (!_protOn || _turningOff || !await Ask("Turn off protection?", TurnOffAsk(!_demo && Steam.Cs2Running), "Turn off protection", danger: true)) return;
         _protOn = false;
         if (_demo) { DemoProtection(false); return; }
         // Everything of protection goes and is read back (the Regions rule stays: regions don't depend on protection); then the
@@ -210,6 +210,11 @@ public partial class MainWindow
 
     const string TurnOffText = "Turns off the kill switch, the routes and the CS2 lock. Until you click Turn on protection (in Status, or the tray icon), servers see your home IP. " +
         "Your servers stay saved, and the regions you turned off stay off (Allow all on Regions lifts them).";
+
+    /// <summary>The Turn off question. With CS2 open, the server you are on sees the home IP at once: said in the same question.</summary>
+    public static string TurnOffAsk(bool cs2Open) => TurnOffText + (cs2Open ? "\n\n" + Cs2OpenHomeNow : "");
+
+    public const string Cs2OpenHomeNow = "CS2 is open: if you are on a server, it sees your home IP from now on.";
 
     void OpenFirewall_Click(object sender, RoutedEventArgs e)
     {

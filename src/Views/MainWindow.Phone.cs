@@ -34,7 +34,8 @@ public partial class MainWindow
         if (_phone?.Ready != true && await IphoneState() is (true, var tethered))
         {
             AdbInstallBtn.Visibility = Visibility.Collapsed;
-            if (tethered) SetPhone(Ui.Good, "iPhone connected", "Change IP: the app tells you when to turn Airplane Mode on and off, then shows the new IP.");
+            if (_s.NoPhone) SetPhone(Ui.Faint, "iPhone not in use", "No phone mode is on");
+            else if (tethered) SetPhone(Ui.Good, "iPhone connected", "Change IP: the app tells you when to turn Airplane Mode on and off, then shows the new IP.");
             else SetPhone(Ui.Warn, "iPhone found, no connection yet", PhoneSetup.IphoneHotspot);
             UpdatePhoneCheck();
             return;
@@ -74,7 +75,9 @@ public partial class MainWindow
             SetPhone(Ui.Warn, "Phone found, no connection yet", info.Summary + ". Turn on USB tethering.");
         else SetPhone(Ui.Good, "Ready to change IP", info.Summary);
         PhoneNotInUse();
-        WifiOffBtn.Visibility = info?.Ready == true && info.WifiOn ? Visibility.Visible : Visibility.Collapsed;
+        // The same rule as the block (PhoneWifiOn): on the hotspot the button stays hidden, since on some phones turning Wi-Fi off
+        // also stops the hotspot (Change IP leaves it alone for that reason). The Phone box still warns when Wi-Fi is on.
+        WifiOffBtn.Visibility = info?.Ready == true && PhoneWifiOn ? Visibility.Visible : Visibility.Collapsed;
         UpdatePhoneCheck();
         // Tethering on in the phone but Windows has no phone adapter: happens after the cable flickers.
         // No phone mode has no candidate, so the adapters say whether Windows sees the phone.
@@ -124,15 +127,28 @@ public partial class MainWindow
     void UpdatePhoneCheck()
     {
         PhoneFirstRun();
-        // Change IP only makes sense with the phone ready on ADB (and not in the no phone mode).
+        // Change IP only makes sense with the phone ready on ADB, or an iPhone connected (and not in the no phone mode).
         var iphone = _iphone && _phone?.Ready != true;
-        ChangeIpBtn.IsEnabled = !_changingIp && (_phone?.Ready == true || iphone && _last?.Egress != null) && !_s.NoPhone;
+        ChangeIpBtn.IsEnabled = !_changingIp && ChangeIpReady;
+        var drop = IpChangeDrops ? " If you are on a server, you will drop." : "";
         ChangeIpBtn.ToolTip = _s.NoPhone ? "Off in the no phone mode: pick another option under What goes through the phone."
-            : iphone ? "Tells you when to turn Airplane Mode on and off on the iPhone, then shows the new IP. If you are on a server, you will drop."
-            : "Turns the phone's mobile data off and on until the carrier gives a new IP. Needs the phone set up over ADB. If you are on a server, you will drop.";
+            : iphone ? "Tells you when to turn Airplane Mode on and off on the iPhone, then shows the new IP." + drop
+            : "Turns the phone's mobile data off and on until the carrier gives a new IP. Needs the phone set up over ADB." + drop;
         UpdateRejoinBtn();
         UpdateDataCheck();
     }
+
+    /// <summary>
+    /// Change IP can run: the phone ready on ADB, or an iPhone whose connection is up, protected or still being checked (with
+    /// protection off there is never a protected one). Never in No phone mode.
+    /// </summary>
+    public static bool CanChangeIp(bool noPhone, bool adbReady, bool iphone, bool iphoneUp) => !noPhone && (adbReady || iphone && iphoneUp);
+
+    /// <summary>
+    /// The one rule for "the phone can change its IP now": the Change IP button, Change IP and rejoin (RejoinEnabled) and the IP step
+    /// of New IP + next account on an iPhone (QuickChoice) follow it. With the account step the switch also needs ADB (SwitchChangesIp).
+    /// </summary>
+    bool ChangeIpReady => CanChangeIp(_s.NoPhone, _phone?.Ready == true, IphoneByHand, PhoneLink.Exit(_last) != null);
 
     /// <summary>The Mobile data row of Checks. While an IP change runs it says the data is off (or coming back), never green.</summary>
     void UpdateDataCheck()
@@ -165,13 +181,23 @@ public partial class MainWindow
         }
         else
         {
-            // Wi-Fi on with the block confirmed: blocked and safe (amber); without the block it's a real risk (red).
             var wifi = PhoneLink.WifiOn(_phone, egress?.IsWifi);
-            _cPhoneData.Waiting = wifi && _last?.KillSwitchOk == true;
-            _cPhoneData.Ok = _cPhoneData.Waiting ? null : !wifi;
-            _cPhoneData.Detail = wifi ? $"Phone Wi-Fi is on{(_phone.WifiSsid != null ? $" ({_phone.WifiSsid})" : "")}" : $"{_phone.Carrier} · {_phone.NetType}".Trim(' ', '·');
+            (_cPhoneData.Ok, _cPhoneData.Waiting) = DataRow(wifi, _last?.KillSwitchOk == true, _last?.Unprotected == true);
+            var detail = wifi ? $"Phone Wi-Fi is on{(_phone.WifiSsid != null ? $" ({_phone.WifiSsid})" : "")}" : $"{_phone.Carrier} · {_phone.NetType}".Trim(' ', '·');
+            _cPhoneData.Detail = _last?.Unprotected == true ? DataDetailOff(detail) : detail;
         }
     }
+
+    /// <summary>
+    /// The Mobile data row with the phone on ADB. Protection off: grey, and it doesn't count as needing you (6 nov.: red and amber only
+    /// while protection is on, like the Phone connection row). Wi-Fi on with the block confirmed: blocked and safe (amber); with
+    /// protection on and no block, a real risk (red).
+    /// </summary>
+    public static (bool? Ok, bool Waiting) DataRow(bool wifiOn, bool killSwitchOk, bool unprotected) =>
+        unprotected ? (null, false) : wifiOn && killSwitchOk ? (null, true) : (!wifiOn, false);
+
+    /// <summary>The Mobile data row with protection off: what the phone says, and that it isn't in use.</summary>
+    public static string DataDetailOff(string detail) => (string.IsNullOrEmpty(detail) ? "" : detail + " · ") + "not in use: protection is off";
 
     async void WifiOff_Click(object sender, RoutedEventArgs e)
     {
@@ -204,6 +230,12 @@ public partial class MainWindow
     /// <summary>Turn on USB tethering only when it can work and isn't on yet.</summary>
     public static bool ShowTetherButton(bool firstRun, bool phoneReady, bool tethered) => !firstRun && phoneReady && !tethered;
 
+    /// <summary>
+    /// Phone setup is the blue button on the first run, and when protection is on and the phone is gone: Status leaves Change IP and
+    /// rejoin grey then (StatusPrimary, fixFirst), so the fix is the one to press. With the phone's Wi-Fi on, Turn off phone Wi-Fi is.
+    /// </summary>
+    public static bool SetupPrimary(bool firstRun, bool phoneLost, bool phoneWifiOn) => firstRun || phoneLost && !phoneWifiOn;
+
     void PhoneFirstRun()
     {
         var first = !PhoneKnown && !_s.NoPhone;
@@ -211,7 +243,9 @@ public partial class MainWindow
         // USB tethering can only be asked of a phone ADB sees: while it isn't found the button would only fail.
         // beta.11 (2nd round, Hugo: "Ready to change IP" next to "Turn on USB tethering"): not while the phone's tethering already carries the connection
         TetherHost.Visibility = ShowTetherButton(first, _phone?.Ready == true, _last?.Egress?.IsPhone == true || _last?.Candidate?.IsPhone == true) ? Visibility.Visible : Visibility.Collapsed;
-        PhoneSetupBtn.Style = (Style)FindResource(first ? "Primary" : typeof(Button));
+        // Protection on and the phone gone (seen before, Wi-Fi off): Phone setup is the fix, so it is the one blue button then too
+        var lost = _protOn && !_s.NoPhone && _last != null && PhoneLink.Exit(_last) == null;
+        PhoneSetupBtn.Style = (Style)FindResource(SetupPrimary(first, lost, PhoneWifiOn) ? "Primary" : typeof(Button));
         WifiOffBtn.Style = (Style)FindResource(first ? typeof(Button) : "Primary");
         var at = PhoneButtons.Children.IndexOf(PhoneSetupBtn);
         var want = first ? 0 : PhoneButtons.Children.Count - 1;
@@ -324,7 +358,7 @@ public partial class MainWindow
     }
 
     /// <summary>Windows can take 20 s or more to add the phone's adapter after the USB mode changes.</summary>
-    static readonly TimeSpan TetherWait = TimeSpan.FromSeconds(30);
+    public static readonly TimeSpan TetherWait = TimeSpan.FromSeconds(30);
     DateTime _tetherAskedAt = DateTime.MinValue;
 
     /// <summary>
@@ -395,7 +429,7 @@ public partial class MainWindow
             _setupRows.Add(new SetupStepRow(i, now, _setupBusy == i.Step ? _setupBusyText : null, _setupBusy == null));
         var ok = steps.Count(i => i.State == PhoneSetup.StepState.Ok);
         SetupSummary.Text = now == null && steps.All(i => i.State == PhoneSetup.StepState.Ok)
-            ? "The phone is ready. The app checks its IP, then servers see it instead of your home IP."
+            ? SetupReadyText(_protOn)
             : now == null ? $"{ok} of {steps.Count} done." : $"{ok} of {steps.Count} done. Next: {now.Title}.";
         SetupFoot.Text = _s.NoPhone ? "You picked No phone under What goes through the phone, so the app isn't using the phone right now."
             : now == null ? "For less lag in game: " + NetReport.Tips(_last?.Egress?.IsWifi == true)
@@ -403,6 +437,11 @@ public partial class MainWindow
         SetupCloseBtn.Content = now == null ? "Done" : "Close";
         SetupCloseBtn.Style = (Style)FindResource(now == null ? "Primary" : "Btn");
     }
+
+    /// <summary>Phone setup with every step done. With protection off servers still see the home IP, so it says what is left.</summary>
+    public static string SetupReadyText(bool protOn) => protOn
+        ? "The phone is ready. The app checks its IP, then servers see it instead of your home IP."
+        : "The phone is ready. Turn on protection so servers see its IP instead of your home IP.";
 
     void SetupClose_Click(object sender, RoutedEventArgs e)
     {
@@ -531,9 +570,11 @@ public partial class MainWindow
             Toast(_adb == null ? "Install the phone tool first (button under Phone)." : "The phone is not ready on ADB. See \"Phone setup\".", false);
             return false;
         }
-        if (confirm && Steam.Cs2Running && !await Ask("CS2 is open", "If you are on a server, you will be disconnected when the IP changes. Continue?", "Change IP")) return false;
+        // With protection off CS2 is on the home connection and doesn't drop, unless the whole PC is on the phone
+        if (confirm && Steam.Cs2Running && IpChangeDrops && !await Ask("CS2 is open", "If you are on a server, you will be disconnected when the IP changes. Continue?", "Change IP")) return false;
 
         _changingIp = true;
+        _ipChangeQuiet = true;   // until the new IP is checked and synced (finally): the drop is on purpose
         // Protection off: the phone's IP changes all the same (servers see it once protection is on). The new IP isn't known yet: untrusted (servers and CS2 blocked) until it is measured again.
         _verifiedKey = null;
         await SyncNow(force: true);
@@ -625,14 +666,14 @@ public partial class MainWindow
             {
                 _distrust = true;
                 Telemetry.Count("ip_home_back");
-                Toast("The phone came back with your home IP. Your servers stay blocked: turn off the phone's Wi-Fi.", Tone.Error);
+                Toast(HomeBackText(_protOn), Tone.Error);
             }
             else if (got != null && first == null)
             {
                 var range = RangeNote(got, out var sameRange);
                 _egressPublic = got;
                 _egressInfo = await PhoneIpInfo(got);
-                AddHistory(got, _egressInfo, "trocado");
+                AddHistory(got, _egressInfo, "trocado", _ipChangedAt);
                 ResetQuality();
                 Log.Ok($"Mobile data back on: {got} (the IP before wasn't known, so it can't be compared). {range}");
                 Toast($"New IP: {got}. {range}" + (_protOn ? "" : " Protection is off: turn it on so servers see this IP."), !sameRange);
@@ -643,7 +684,7 @@ public partial class MainWindow
                 var range = RangeNote(got, out var sameRange);
                 _egressPublic = got;
                 _egressInfo = await PhoneIpInfo(got);
-                AddHistory(got, _egressInfo, "trocado");
+                AddHistory(got, _egressInfo, "trocado", _ipChangedAt);
                 ResetQuality();
                 if (sameRange) Log.Warn($"IP changed: {first} → {got}. {range}");
                 else Log.Ok($"IP changed: {first} → {got}. {range}");
@@ -669,11 +710,21 @@ public partial class MainWindow
             UpdatePhoneCheck();
             HideProgress();
             ShowIps();
-            await SyncNow(force: true);
-            // Measures the new connection: only a confirmed IP that isn't the home one lifts the block.
-            await RefreshPublicIps();
+            try
+            {
+                await SyncNow(force: true);
+                // Measures the new connection: only a confirmed IP that isn't the home one lifts the block.
+                await RefreshPublicIps();
+                await SyncNow();   // waits for the sync that trust started, so no report from before it raises the alarm
+            }
+            finally { _ipChangeQuiet = false; }
         }
     }
+
+    /// <summary>Change IP came back with the home IP: the phone shares the home Wi-Fi. Only protection on blocks your servers then.</summary>
+    public static string HomeBackText(bool protOn) => protOn
+        ? "The phone came back with your home IP. Your servers stay blocked: turn off the phone's Wi-Fi."
+        : "The phone came back with your home IP: it is sharing your Wi-Fi. Turn off the phone's Wi-Fi.";
 
     /// <summary>
     /// "Keep changing until the connection is good": 10 pings to the IP test address, only through the phone. Null when the test

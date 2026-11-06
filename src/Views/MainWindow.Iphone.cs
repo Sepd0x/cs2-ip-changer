@@ -49,32 +49,36 @@ public partial class MainWindow
     /// <summary>Change IP on an iPhone, guided: you toggle Airplane Mode, the app sees the drop, waits for it back and measures.</summary>
     async Task<bool> IphoneChangeIp()
     {
-        if (_last?.Egress == null) { Toast("Connect the iPhone first: " + PhoneSetup.IphoneHotspot, false); return false; }
+        // The iPhone's connection, protected or still being checked: with protection off there is never a protected one (Egress)
+        if (PhoneLink.Exit(_last) is not { } exit) { Toast("Connect the iPhone first: " + PhoneSetup.IphoneHotspot, false); return false; }
         var first = _egressPublic;
         if (!await Ask("Change IP on the iPhone",
                 "1. On the iPhone, turn Airplane Mode on.\n2. Wait 3 seconds.\n3. Turn Airplane Mode off.\n\n"
-                + (_last.Egress.IsWifi ? "Keep Personal Hotspot on. " : "Keep the cable plugged in. ") + "The app waits for the iPhone to come back (up to 90 s) and shows the new IP. "
-                + "If you are on a server, you will drop.", "I'm doing it", "Cancel"))
+                + (exit.IsWifi ? "Keep Personal Hotspot on. " : "Keep the cable plugged in. ") + "The app waits for the iPhone to come back (up to 90 s) and shows the new IP. "
+                + (IpChangeDrops ? "If you are on a server, you will drop." : "Servers see the new IP once protection is on."), "I'm doing it", "Cancel"))
             return false;
         using var wait = CommandWait();
         var sw = Stopwatch.StartNew();
+        var since = DateTime.Now.AddSeconds(-1);   // the history line the IP check adds on the way back belongs to this change
         var sawDrop = false;
+        _ipChangeQuiet = true;   // Airplane Mode drops the iPhone on purpose: no alarm and no cable hint
         try
         {
             while (true)
             {
                 if (CommandCancelled) return false;
                 await SyncNow(force: true);
-                var connected = _last?.Egress != null;
+                var connected = PhoneLink.Exit(_last) != null;
                 sawDrop |= !connected;
                 string now = null;
-                if (connected && sawDrop) { await RefreshPublicIps(); now = _egressFailSince == null ? _egressPublic : null; }
+                // Only a checked IP counts: back on the home Wi-Fi the IP measured is the home one, and it never trusts that
+                if (connected && sawDrop) { await RefreshPublicIps(); now = _egressFailSince == null && _verifiedKey != null && _verifiedKey == _last?.CandidateKey ? _egressPublic : null; }
                 var step = IphoneChangeStep(sawDrop, connected, first, now, sw.Elapsed, IphoneWait);
                 switch (step)
                 {
                     case IphoneChange.BackNew:
                         _egressInfo = await PhoneIpInfo(now);
-                        AddHistory(now, _egressInfo, "trocado");
+                        AddHistory(now, _egressInfo, "trocado", since);
                         ResetQuality();
                         Log.Ok($"iPhone: IP changed: {first ?? "?"} → {now}.");
                         Toast($"New IP: {now}.", true);
@@ -93,6 +97,10 @@ public partial class MainWindow
                 await Task.Delay(1500);
             }
         }
-        finally { await SyncNow(force: true); }
+        finally
+        {
+            try { await SyncNow(force: true); }
+            finally { _ipChangeQuiet = false; }
+        }
     }
 }

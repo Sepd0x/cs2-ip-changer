@@ -40,6 +40,31 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Steam names with invisible characters (direction marks, Unicode tags) showed them in the Log and on screen. They are left out now.
 - With protection off, the Log said the phone's Wi-Fi blocked servers and CS2, and that CS2 went through the phone in Whole PC while CS2 is open. Neither is true with protection off; the Log now says what is.
 - Opening the app twice in a few minutes wrote "Usage stats: the report wasn't sent (the server answered 429)" in the Log. That answer only means "not yet" and the report goes later, so it no longer shows.
+- Before a phone was ever checked on the PC, Status, the Turn on protection message, the leak test and the tooltip of Turn on protection when the app starts said CS2 was blocked too. CS2 is only locked once the app has checked a phone, so they now say only your servers wait, and that CS2 isn't locked yet.
+- When the phone dropped, the message said "your IP can't leak" and Status said "You're safe" even with the CS2 lock off, and the Log always said servers and CS2 were blocked. They now name only what is blocked.
+- The hotspot tooltip said "everything is blocked" when the PC leaves the phone's network; it is your servers and CS2, while protection is on.
+- With protection off, a phone sharing your home Wi-Fi gave an error in the Log, the Windows error sound and the message "Servers and CS2 are now blocked", although nothing is blocked then. The Log now says to turn off the phone's Wi-Fi before you turn on protection, without the sound.
+- With protection off, the box under the IP servers see could show your home IP in full, next to "phone ready", while the phone wasn't ready. It now shows the phone's IP only once it is checked.
+- With protection off, Change IP and Phone setup said servers were blocked, or that servers see the phone's IP. They now say what happens with protection off.
+- With protection off and CS2 on your home connection, Change IP asked "you will be disconnected" and said "If you are on a server, you will drop". It only asks that when CS2 really goes through the phone.
+- Turn off protection with CS2 open now says in the same question that the server you are on sees your home IP from then on.
+- With protection off or No phone, Status said "nothing is blocked" while regions you turned off stay blocked. It now says so, and so does the warning of Use the app with protection off.
+- With protection off and the whole PC on the phone (no other connection), Status said every server sees your home IP. It now says they see the phone's IP, and that nothing protects your home IP if the phone drops.
+- With protection off, the Mobile data row of Checks was red with the phone's Wi-Fi on, and counted as a check that needs you. With protection off it is grey now and says it isn't in use.
+- "Off: 3 servers see your home IP" counted IPs, not servers.
+- With Turn on protection when the app starts on, the question on the first close said the app starts with protection off.
+- The VPN app row of Checks said servers and CS2 still go through the phone with protection off. It now says they see the VPN's IP then.
+- Every Change IP with protection on said "The phone connection dropped", played the error sound with CS2 open and then said "Protection is back". An IP change no longer counts as a drop, on Android or on the iPhone.
+- On the iPhone, the new IP of a Change IP showed in Previous IPs as "at startup", without turning green, and three changes in 10 minutes said the USB cable keeps dropping. It now shows as changed, and the cable hint only counts real drops (not the phone's Wi-Fi coming on either).
+- On the iPhone, Change IP with protection off (or right after plugging it in) said "Connect the iPhone first" although it was connected. It now works there too, and only a checked IP counts as the new one.
+- No phone mode left protection on out of sight, so leaving it turned protection on by itself, without the CS2 open question, or not, with nothing saying which. No phone now turns protection off, and leaving it asks "Turn on protection now?" (with CS2 open, the same question as Turn on protection). Closing the app in No phone mode with CS2 open no longer asks about sending CS2 home: it is already there.
+- With protection off, the Phone connection row of Checks could be red and the Phone IP is not your home IP row too. With protection off they are grey and say whether the phone is ready for when you turn it on.
+- With protection off, Change IP and rejoin stayed grey with an iPhone connected. It follows the same rule as Change IP now.
+- With an iPhone that isn't connected, New IP + next account still said "New IP" and the click stopped at "Connect the iPhone first". It now leaves the IP out, like with an Android phone that isn't ready.
+- With an iPhone in No phone mode, the Phone box said "iPhone connected" and offered Change IP. It now says the iPhone isn't in use.
+- On the phone's hotspot, Turn off phone Wi-Fi showed as the main button, and on some phones it also stops the hotspot. It no longer shows there.
+- The tooltip of Turn on USB tethering said the app waits 15 s for Windows; it waits 30 s.
+- With protection on and a phone you used before gone, Status had no blue button. Phone setup is the blue one then.
 - Configs: an account whose CS2 folder is a link or junction showed as "No CS2 config yet" and "gets the sync", but the sync never reaches it. It now says "CS2 folder is a link", stays out of the group of accounts with no config, and Save snapshot says why it can't read it.
 - Configs: clicking Undo last sync a second time put the sync back and said "Undone" again. After an undo the button is now greyed out (Backups still has everything). Undoing a Restore also removes a file the restore had to create.
 - Configs: when no account could be put back, Undo last sync said "Undone on 0 accounts". It now says nothing was undone.

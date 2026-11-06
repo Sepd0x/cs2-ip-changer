@@ -448,9 +448,9 @@ public partial class MainWindow
     void UpdateRejoinBtn()
     {
         var lastInList = _s.LastServer != null && _servers.Any(x => x.Key == _s.LastServer);
-        // The click works with the phone ready on ADB, an iPhone connected (guided in the app), or on the home connection with no ban there
-        RejoinBtn.IsEnabled = RejoinEnabled(_changingIp || _rejoining, lastInList, _s.NoPhone,
-            _phone?.Ready == true || IphoneByHand && _last?.Egress != null, OnHome && !BannedOnLast());
+        // The click works with the phone ready on ADB, an iPhone connected (guided in the app; ChangeIpReady, the same rule as the
+        // Change IP button, also with protection off), or on the home connection with no ban there
+        RejoinBtn.IsEnabled = RejoinEnabled(_changingIp || _rejoining, lastInList, _s.NoPhone, ChangeIpReady, OnHome && !BannedOnLast());
         RejoinBtn.ToolTip = RejoinTip(_s.NoPhone, _s.LastServer, lastInList, _protOn, _s.UseWithProtectionOff, _s.HotkeyRejoin);
         // Named for what a click does: just "Rejoin" on the home connection on purpose (after a ban the click switches and asks first)
         RejoinBtn.Content = RejoinBtnText(_s.NoPhone, _protOn, _s.UseWithProtectionOff, OnHome && BannedOnLast());
@@ -505,7 +505,8 @@ public partial class MainWindow
     public static SwitchSteps QuickSteps(SwitchSteps choice, bool noPhone, bool iphoneByHand, bool adbReady = true) =>
         choice with { Ip = choice.Ip && !noPhone && !(iphoneByHand && choice.Account) && (adbReady || iphoneByHand) };
 
-    SwitchSteps QuickChoice => QuickSteps(SwitchChoice, _s.NoPhone, IphoneByHand, _demo || _adb != null && _phone?.Ready == true);
+    // An iPhone that isn't connected now can't run its guided change either (ChangeIpReady, the Change IP button's rule): no IP step then
+    SwitchSteps QuickChoice => QuickSteps(SwitchChoice, _s.NoPhone, IphoneByHand && (_demo || ChangeIpReady), _demo || _adb != null && _phone?.Ready == true);
 
     /// <summary>Why <see cref="QuickSteps"/> left the IP step out now, for the Log and the "nothing to do" toast.</summary>
     string IpLeftOutWhy => _s.NoPhone ? "no phone mode" : IphoneByHand ? "the iPhone changes its IP by hand" : "the phone isn't ready on ADB";

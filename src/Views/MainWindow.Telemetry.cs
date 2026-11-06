@@ -46,7 +46,7 @@ public partial class MainWindow
         // came before the phone was seen and always said "none")
         Telemetry.SeenLink(TelemetryLink(rep.Egress));
         var up = rep.Egress != null;
-        if (_egressUp && !up && !_changingIp && !_s.NoPhone)
+        if (IsDrop(_egressUp, up, PhoneLink.Exit(rep) != null, _changingIp || _ipChangeQuiet) && !_s.NoPhone)
         {
             Telemetry.PhoneDrop();
             var now = DateTime.Now;
@@ -63,6 +63,12 @@ public partial class MainWindow
         if (up) _egressUsb = rep.Egress.IsPhone && !rep.Egress.IsWifi;
         _egressUp = up;
     }
+
+    /// <summary>
+    /// The phone's connection dropped: it was protected and its adapter is gone now. Not a drop: a connection that is still there but
+    /// no longer trusted (the phone's Wi-Fi came on, same IP as home), nor an IP change (Airplane Mode on the iPhone, data off on Android).
+    /// </summary>
+    public static bool IsDrop(bool wasUp, bool upNow, bool exitNow, bool changingIp) => wasUp && !upNow && !exitNow && !changingIp;
 
     /// <summary>3 drops of the phone's connection within 10 minutes.</summary>
     public static bool CableHint(IEnumerable<DateTime> drops, DateTime now) => drops.Count(t => now - t <= TimeSpan.FromMinutes(10)) >= 3;

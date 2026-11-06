@@ -422,7 +422,7 @@ public sealed class Guard
                 if (FirewallErrorLine(errors, ref _fwErrors) is string line) { if (errors.Count > 0) Log.Error(line); else Log.Ok(line); }
                 if (errors.Count == 0)
                     Log.Info(egress == null
-                        ? "Kill switch: servers in the list" + (cs2 != null ? " and CS2" : "") + " blocked (no connection)."
+                        ? "Kill switch: servers in the list" + (cs2 != null ? " and CS2" : "") + (candidate != null ? " blocked (the phone isn't trusted yet)." : " blocked (no connection).")
                         : $"Kill switch: servers in the list" + (cs2 != null ? " and CS2" : "") + $" only go out through \"{egress.Name}\" ({egress.LocalIp}).");
                 ReadBack();
             }
