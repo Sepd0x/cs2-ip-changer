@@ -42,7 +42,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Connection > Phone hides Turn on USB tethering while the phone's tethering is already on.
 - The ban notification names the account you rejoin with: "Banned. Press Ctrl+Shift+F10 to rejoin with a new IP as atlas." With no account left, it says so instead of pointing to the key.
 - While the phone's Wi-Fi is on or the phone is gone, the fix (Turn off phone Wi-Fi, Phone setup) is the only blue button. Change IP and rejoin go back to blue once nothing blocks the game.
-- Usage stats count the Phone setup step you were at when you closed it (or closed the app with it open), next to the step it opened at, to see where people get stuck. Nothing new about you is sent: it's the name of a step. README > Telemetry will list it.
+- Usage stats count the Phone setup step you were at when you closed it (or closed the app with it open), next to the step it opened at, to see where people get stuck. Nothing new about you is sent: it's the name of a step. README > Telemetry lists it.
 - Usage stats rows with an install ID are now deleted after 12 months. Counts added up for everyone, with no ID, stay.
 - README > Telemetry, Privacy and security and the "Is it safe?" page now say who keeps the stats, what for, on what basis, where they are stored, for how long, and how to ask about them.
 - Website: a short loading screen (the name and the app's three-color line filling up) while the 3D scene gets ready, so the page comes in once, ready, instead of stuttering as it loads. It shows only with JavaScript and WebGL, never more than 6 seconds.
