@@ -133,6 +133,16 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - When the carrier kept the same IP, the app suggested airplane mode even when it was already the method or on the hotspot, where it isn't used. It now suggests it only when it can help, and says where to set it.
 - Tooltips that didn't change with their button: Checks > Show all and Show less, Show and Hide of a group in Configs, and Cancel in the top bar while the app waits.
 - Some texts named things that aren't on screen or said less than the app does: "Steps" in New IP + next account, "Remove everything" in Start with Windows, "(Accounts)" on the Show button of the Steam key, "Wait for a slot on the Servers page" when a server stays full, "Allow all on Regions", "network" for a server community, which files Import reads, what Backups keeps, the profile picture size, what All and None tick in Copy, and when New IP + next account opens CS2.
+- Someone writing "you got banned" or "no steam logon" in the chat could make the app say you were banned, mark the account as banned on that server and its network, and offer to switch, while you were still playing. Only a real disconnect counts now.
+- A server notice like "VPN/Proxy not allowed on this server" turned a kick by a vote, an AFK kick or a full server in the next half minute into a "VPN block" and offered a new IP and account. Those keep their real reason now.
+- When Steam dropped its connection to Valve or its check timed out, the app said "Steam or VAC refused the connection... check the account". It now says Steam lost its session and to join again once Steam reconnects. An account logged in on another PC says so.
+- A server that turns you away while you join without giving a reason (a whitelist, Prime only, a minimum Steam level) no longer marks the account as banned there and on its whole network. The app says the server refused the join without saying why.
+- With the PC's clock ahead when you last used an account, switching to any other account could end in "Steam logged in to X instead of Y" although Steam logged in to the right one.
+- Restart Steam through the phone and Add account went on when Steam didn't close. They now stop and say to close Steam yourself.
+- The wait on a full server ("tries again every 15 s for 2 minutes") could stop after one try.
+- A server filled with bots showed as full, so Wait for a slot never joined. Bots no longer count, since the server drops one to let you in.
+- If saving the account switch failed half way (a full disk), Steam's list of saved accounts could be left empty. It is now put back as it was.
+- With Steam closed by you, Log in from the app didn't add the console log option to CS2's launch options, so kicks weren't seen when Steam opened CS2 later.
 
 ## [0.1.0-beta.11] - 2026-11-06
 

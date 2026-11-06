@@ -215,7 +215,6 @@ foreach (var l in new[] {
     "[Networking] Disconnected from server: NETWORK_DISCONNECT_KICKBANADDED",
     "Connection rejected by server: NETWORK_DISCONNECT_REJECT_BANNED",
     "Disconnect: You have been banned from this server.",
-    "You have been permanently banned from this server",
     "Server rejected connection: banned (permanent)",
     "CL:  Disconnected: Banned by admin (cheating)" })
     Check("Ban: " + l, Cs2Console.Classify(l) == KickKind.Ban, Cs2Console.Classify(l).ToString());
@@ -233,6 +232,8 @@ foreach (var l in new[] {
     "Disconnect: Server shutting down",
     "Disconnect: NETWORK_DISCONNECT_CHANGELEVEL",
     "Disconnect: NETWORK_DISCONNECT_KICKED_NOSTEAMLOGIN",
+    // Revisão F1: uma frase sozinha, sem código nem desconexão, é só pista (o chat de outro jogador também a diz)
+    "You have been permanently banned from this server",
     "[ALL] Player1: kick him, he got banned yesterday lol",
     "[ALL] someone: disconnect and get banned",
     "*DEAD* [CT] Bob: disconnected kick",
@@ -641,6 +642,7 @@ RevisaoATests.Run(Check);
 RevisaoBTests.Run(Check);
 RevisaoCTests.Run(Check);
 RevisaoDTests.Run(Check);
+RevisaoFTests.Run(Check);
 RevisaoHTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");

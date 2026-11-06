@@ -104,7 +104,8 @@ static class Part4Tests
         var again = Run(t, on, Join("REJECT_BANNED", 2));
         check("Kicks: banido a voltar (REJECT_BANNED a entrar) é ban", again?.Kind == KickKind.Ban && again.BanCode && again.Reason == "the server refused you: banned", $"{again}");
         var joining = Run(t, on, Join("KICKED", 2));
-        check("Kicks: kick sem motivo ainda a entrar conta como ban", joining?.Kind == KickKind.Ban && joining.Reason.Contains("while still joining"), $"{joining}");
+        // Revisão F9 (decisão do dono): uma entrada recusada sem motivo não é marca de ban (whitelist, Prime only)
+        check("Kicks: kick sem motivo ainda a entrar é uma entrada recusada, não ban", joining?.Kind == KickKind.Kick && joining.Why == KickReason.RefusedJoin && !joining.WantsSwitch, $"{joining}");
         var plainBan = Run(t, on, "You have been banned from this server.", "[Client] Disconnected from server: NETWORK_DISCONNECT_KICKED");
         check("Kicks: plugin que bane com kick simples, mas diz que é ban", plainBan?.Kind == KickKind.Ban, $"{plainBan}");
 

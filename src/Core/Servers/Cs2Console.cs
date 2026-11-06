@@ -12,9 +12,10 @@ public enum KickKind { None, Kick, Ban, Steam, NoAnswer, Vpn, Full, MapChange, Q
 
 /// <summary>
 /// The reasons the app acts on, not only shows: a ban said by the engine's code alone (no words to add), a server that never
-/// answered (not a timeout in the game), a reserved slot (not worth waiting for a free one). Other = any other reason, or none.
+/// answered (not a timeout in the game), a reserved slot (not worth waiting for a free one), a join refused with no reason (not
+/// marked as a ban: a whitelist or Prime only server does that too). Other = any other reason, or none.
 /// </summary>
-public enum KickReason { Other, Banned, NeverAnswered, ReservedSlot }
+public enum KickReason { Other, Banned, NeverAnswered, ReservedSlot, RefusedJoin }
 
 public static class KickReasons
 {
@@ -24,6 +25,7 @@ public static class KickReasons
         KickReason.Banned => "banned",
         KickReason.NeverAnswered => "the server never answered",
         KickReason.ReservedSlot => "kicked to make room for a reserved slot",
+        KickReason.RefusedJoin => "the server refused the join without saying why",
         _ => null,
     };
 }
@@ -76,14 +78,21 @@ public static class Cs2Console
         catch { return null; }
     }
 
+    // Steam lost its session with Valve (the "No Steam logon" family): Steam dropped, the VAC check or the ticket never came back,
+    // the ticket was cancelled or used twice. Not the account and not an admin: a new IP won't help, joining again once Steam is
+    // back does. LOGGED_IN_ELSEWHERE is not one of them: another PC has the account (review F3).
+    const string SteamSession = @"NOSTEAMLOGIN|NOSTEAMTICKET|no steam logon|NETWORK_DISCONNECT_STEAM_(LOGON|DROPPED|VAC_CHECK_TIMEDOUT|AUTHCANCELLED|AUTHALREADYUSED|TICKET)\b";
+    // Every console line starts with the time ("11/06 21:43:13 "), so chat and typed commands come after it (review F1)
+    const string Time = @"^\s*(\d{2}/\d{2}\s+\d{2}:\d{2}:\d{2}\s+)?";
+
     // Chat, other players leaving and commands typed in the console are never about you.
     static readonly Regex[] Ignore =
     {
-        new(@"^\s*(\*DEAD\*\s*)?(\[(ALL|CT|T|TEAM|SPEC|SPECTATOR)\]|\((Counter-)?Terrorist\)|\(Spectator\))", O),
-        new(@"^\s*\]", O),
+        new(Time + @"(\*DEAD\*\s*)?(\[(ALL|CT|T|TEAM|SPEC|SPECTATOR)\]|\((Counter-)?Terrorist\)|\(Spectator\))", O),
+        new(Time + @"\]", O),
         new(@"left the game|player_disconnect", O),
         // "No Steam logon" is a Steam session problem, not an admin: a new IP would not help.
-        new(@"NOSTEAMLOGIN|NOSTEAMTICKET|no steam logon|NETWORK_DISCONNECT_STEAM_LOGON\b", O),
+        new(SteamSession, O),
     };
 
     // Steam or VAC said no: it's about the account, so changing the IP and rejoining is no use.
@@ -96,21 +105,16 @@ public static class Cs2Console
     static readonly Regex Context = new(
         @"\bdisconnect(ed|ing|ion)?\b|NETWORK_DISCONNECT_|closed by peer|\b(connection|connect)\s+(was\s+)?rejected|\brejected\b.{0,40}\bconnect|server rejected", O);
 
-    // Enough on their own (engine reason codes, or a message addressed to you). Ban codes: SimpleAdmin and CS2Fixes ban with
-    // KICKBANADDED, a banned player joining again gets REJECT_BANNED (SimpleAdmin) or KICKBANADDED (CS2Fixes); STEAM_BANNED is
-    // the server's ban list (seen on 1 Nov. 2026, in game).
+    // Enough on their own (engine reason codes). Ban codes: SimpleAdmin and CS2Fixes ban with KICKBANADDED, a banned player
+    // joining again gets REJECT_BANNED (SimpleAdmin) or KICKBANADDED (CS2Fixes); STEAM_BANNED is the server's ban list (seen on
+    // 1 Nov. 2026, in game). A message to you ("you have been banned") is only a hint for the code that follows (review F1).
     static readonly Regex BanCode = new(@"NETWORK_DISCONNECT_(KICK)?BANADDED\b|NETWORK_DISCONNECT_(REJECT_|STEAM_)?BANNED\b", O);
-    static readonly Regex[] BanStrong =
-    {
-        BanCode,
-        new(@"\byou\s+(have\s+been|are|were|got)\s+(permanently\s+|temporarily\s+)?banned\b(?!\s+from\s+(the\s+|using\s+)?(chat|voice|mic))", O),
-    };
+    static readonly Regex[] BanStrong = { BanCode };
     static readonly Regex[] KickStrong =
     {
         new(@"NETWORK_DISCONNECT_KICKED\w*", O),
         // The game refused the join (a plugin's ClientConnect said no) or the server dropped you, with no reason given
         new(@"NETWORK_DISCONNECT_(REJECTED_BY_GAME|DISCONNECT_BY_SERVER)\b", O),
-        new(@"\byou\s+(have\s+been|were|got)\s+kicked\b", O),
     };
 
     // Full: the engine's own refusal, or a reserved slots plugin making room (it kicks with the same code)
@@ -173,10 +177,24 @@ public static class Cs2Console
     /// <summary>A Valve server (matchmaking): kicks and bans there aren't the community's, so the app leaves them alone.</summary>
     public static bool IsValveServer(string line) => ValveConnect.IsMatch(line ?? "");
 
-    static readonly Regex NoSteamLogon = new(@"NOSTEAMLOGIN|NOSTEAMTICKET|no steam logon|NETWORK_DISCONNECT_STEAM_LOGON\b", O);
+    static readonly Regex NoSteamLogon = new(SteamSession, O);
+    static readonly Regex NoSteamLogonSaid = new(@"NOSTEAMLOGIN|no steam logon|NETWORK_DISCONNECT_STEAM_LOGON\b", O);
+    static readonly Regex Elsewhere = new(@"NETWORK_DISCONNECT_STEAM_LOGGED_IN_ELSEWHERE\b", O);
 
-    /// <summary>The "No Steam logon" kick: Steam lost its session (another network, a crash). Not the admin, and a new IP won't help.</summary>
+    /// <summary>The "No Steam logon" kick and its family: Steam lost its session (another network, a crash). Not the admin, and a new IP won't help.</summary>
     public static bool IsNoSteamLogon(string line) => !string.IsNullOrWhiteSpace(line) && NoSteamLogon.IsMatch(line) && !Ignore.Take(3).Any(r => r.IsMatch(line));
+
+    /// <summary>The code is "No Steam logon" itself (what CS2 shows), not another code of the same family (Steam dropped, the VAC check timed out).</summary>
+    public static bool SaysNoSteamLogon(string line) => NoSteamLogonSaid.IsMatch(line ?? "");
+
+    /// <summary>Steam ended the session because the account logged in somewhere else (another PC).</summary>
+    public static bool LoggedInElsewhere(string line) => Elsewhere.IsMatch(line ?? "");
+
+    // Codes that already say why it was a game rule (a vote, AFK, team kills): a VPN notice said before doesn't change them (review F2)
+    static readonly Regex GameReasonCode = new(@"NETWORK_DISCONNECT_KICKED_(VOTEDOFF|IDLE|TEAMKILLING|TK_START|TEAMHURTING|HOSTAGEKILLING|SUICIDE)\b", O);
+
+    /// <summary>The kick's code says it was a game rule (a vote, AFK, team kills, hostages, suicides).</summary>
+    public static bool IsGameReason(string line) => GameReasonCode.IsMatch(line ?? "");
 
     public static KickKind Classify(string line)
     {
@@ -342,6 +360,8 @@ public sealed class DisconnectTracker
         void From(Hint h) { reason = h.Reason; why = h.Why; }
         int? minutes = Cs2Console.MinutesIn(_line) is int lm && Cs2Console.Classify(_line) == KickKind.Ban && !_line.Contains("NETWORK_DISCONNECT_") ? lm : null;
         var hint = _hint != null && now - _hintAt <= HintWindow ? _hint : null;
+        // A VPN notice (also the server's rules, said to everyone) never changes a code that already says why: a vote, AFK, a full server
+        if (hint is { Vpn: true } && (kind == KickKind.Full || Cs2Console.IsGameReason(_line))) hint = null;
         if (hint != null && kind is KickKind.Kick or KickKind.Ban or KickKind.Full)
         {
             if (hint.Vpn) { kind = KickKind.Vpn; From(hint); }
@@ -352,8 +372,9 @@ public sealed class DisconnectTracker
             minutes ??= hint.Minutes;
             _hint = null;   // used: a second disconnect doesn't take it again
         }
-        // Kicked before getting into the game, with no reason given: that's how ban plugins refuse a banned player who joins again.
-        if (kind == KickKind.Kick && reason == null && _signOn is int st && st < 6) { kind = KickKind.Ban; reason = $"kicked while still joining (sign-on state {st})"; }
+        // Kicked before getting into the game, with no reason given: a ban plugin refusing a banned player, but also a whitelist, Prime
+        // only or a minimum Steam level. Said as a refused join, never marked as a ban (the owner's call, review F9).
+        if (kind == KickKind.Kick && reason == null && _signOn is int st && st < 6) why = KickReason.RefusedJoin;
         // Full while already in the game: a reserved slots plugin made room
         if (kind == KickKind.Full && reason == null)
         {

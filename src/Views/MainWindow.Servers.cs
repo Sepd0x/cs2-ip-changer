@@ -325,6 +325,7 @@ public partial class MainWindow
             srv.ServerName = info.Name;
             srv.Map = info.Map;
             srv.PlayerCount = info.Players;
+            srv.Bots = info.Bots;
             srv.MaxPlayers = info.MaxPlayers;
             srv.PlayersText = info.Bots > 0 ? $"{info.Players}/{info.MaxPlayers} ({info.Bots} bots)" : $"{info.Players}/{info.MaxPlayers}";
             srv.PingMs = info.PingMs;
@@ -362,9 +363,16 @@ public partial class MainWindow
         srv.Players = null;
         srv.PlayersHidden = false;
         srv.PlayerCount = 0;
+        srv.Bots = 0;
         srv.MaxPlayers = 0;
         srv.Answered = null;
     }
+
+    /// <summary>
+    /// The server has no slot for you: the players without the bots fill it (the server drops a bot to let a player in, review F7).
+    /// The count on screen still shows the bots.
+    /// </summary>
+    public static bool IsFull(int players, int bots, int max) => max > 0 && players - bots >= max;
 
     /// <summary>The Refresh toast: servers not asked (no route through the phone yet) aren't counted as not answering.</summary>
     public static string RespondedText(int ok, int total, int notAsked) =>
@@ -459,7 +467,7 @@ public partial class MainWindow
                     "Join anyway"))
                 return false;
             if (!await WaitAfterCrash(s)) return false;
-            if (!fromSlotWait && (OnHome ? HomeAdapter : _last?.Egress) is Adapter eg && await QueryOne(s, eg) && s.MaxPlayers > 0 && s.PlayerCount >= s.MaxPlayers)
+            if (!fromSlotWait && (OnHome ? HomeAdapter : _last?.Egress) is Adapter eg && await QueryOne(s, eg) && IsFull(s.PlayerCount, s.Bots, s.MaxPlayers))
             {
                 if (await Ask("Server is full", FullText(s.Title, s.PlayersText), "Wait for a slot", "Join anyway")) { StartSlotWait(s); return true; }
                 if (!_dialogCancelClicked) return false;   // Escape: neither
@@ -608,7 +616,7 @@ public partial class MainWindow
         try
         {
             if (!await QueryOne(s, eg) || s.MaxPlayers == 0) return;
-            if (s.PlayerCount >= s.MaxPlayers) { SlotText.Text = $"Waiting for a slot on {s.Title} ({s.PlayersText})."; return; }
+            if (IsFull(s.PlayerCount, s.Bots, s.MaxPlayers)) { SlotText.Text = $"Waiting for a slot on {s.Title} ({s.PlayersText})."; return; }
             System.Media.SystemSounds.Asterisk.Play();
             var auto = SlotAutoBox.IsChecked == true;
             if (SlotAutoJoins(auto, CommandBusy, Dialog.Visibility == Visibility.Visible))
