@@ -94,6 +94,8 @@ public partial class MainWindow
         Telemetry.ChecksFrom(() => _checks.Where(c => c.Ok == false).Select(c => c.Title).ToList());
         Telemetry.AtExit(CountSetupClosed);   // beta.11: the app closed with Phone setup open (its step there is where they stopped)
         Telemetry.WindowFrom(() => (ActualWidth, System.Windows.Media.VisualTreeHelper.GetDpi(this).DpiScaleX));
+        // beta.13: the heat map counts only this window, and not the clicks on Phone setup or a question over the page
+        Telemetry.HeatFrom(this, () => SetupPane.Visibility == Visibility.Visible || Dialog.Visibility == Visibility.Visible);
         Loaded += (_, _) => Telemetry.Ready();
         Activated += (_, _) => Telemetry.Activated();
         Telemetry.Screen(TelemetryScreen());

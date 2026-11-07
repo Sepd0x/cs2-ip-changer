@@ -5,6 +5,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 ## [Unreleased]
 
 ### Changed
+- Usage stats: the coarse map of where you click now places a click where it is on the page, counting how far the page is scrolled (a grid of 24 columns and rows about 40 pixels tall, not the exact point, still added up with everyone's and with no ID). It only counts clicks on the page itself while the app is the window in front, not on Phone setup or a question shown over the page. README > Telemetry says so.
+- Usage stats: they also count how many times CS2 joined a server (only the number, never which server). README > Telemetry says so.
 - Website: the 3D scene on the home page, the guides and the 404 page looks more real. Metal, glass and cloth now reflect a soft studio light, the PC shows its parts through the glass side, the phone sits in a real stand, the mast has its antennas and cables, the servers stand on a raised floor, and the route is mirrored in the floor round the mast and the servers. A far town and other masts stand on the horizon, and the camera moves on smooth arcs between the steps of the story. The glowing route is the same, and with reduced motion the scene stays still.
 
 ### Fixed
@@ -18,6 +20,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Log: an account whose launch options couldn't be changed said "left as it is" twice in the same line.
 - Log: the launch options line said "added on 35 accounts" right after "33 Steam accounts on this PC". It now says it counts every account that ever logged in on this PC, including ones no longer in Steam's list.
 - Log: "CS2 network after 26 min" read like the whole time on the server, but CS2 sums up each connection (a map change starts a new one). It now says "for the last 26 min".
+- Updating the app sent part of the last usage stats twice (the new version read them before the old one had sent them).
 
 ## [0.1.0-beta.12] - 2026-11-06
 

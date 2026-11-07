@@ -107,11 +107,13 @@ public partial class MainWindow
             var sha = await Updater.Download(r, new Progress<string>(t => ProgressText.Text = t));
             Log.Ok($"Update {r.Version} downloaded, SHA-256 matches ({sha[..12]}…). Restarting.");
             ProgressText.Text = "Restarting…";
+            Telemetry.BeforeRestart();   // beta.13: the stats go and are saved before the new copy reads them (they arrived twice)
             Updater.Install(sha, PrepareExitForUpdate, AppIds.Args.UpdateState(_protOn));
             Application.Current.Shutdown();
         }
         catch (Exception ex)
         {
+            Telemetry.AfterFailedRestart();   // beta.13: the install failed after BeforeRestart, so this copy counts again
             Log.Error("Update: " + ex.Message);
             Telemetry.Count("upd_failed");
             Toast("Update failed: " + ex.Message, Tone.Error);

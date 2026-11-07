@@ -157,11 +157,13 @@ function renderPanel() {
   drawChart($('#panel .plotbox'), t, H.markers);
 }
 function renderArrive() {
-  const l = H.arrive, max = Math.max(1, ...l.map((x) => x.n || 0));
   const r = H.rate && H.rate.den >= 20 && H.rate.value > 0 ? Math.max(1, Math.round(1 / H.rate.value)) : null;
-  const bar = (label, n, w, val) => `<div class="br"><span class="br-l">${esc(label)}</span><span class="br-t"><i style="width:${w.toFixed(1)}%"></i></span><span class="br-n">${val}</span></div>`;
-  $('#arrive').innerHTML = `<div class="col"><h2>Como chegam</h2><p class="lead">Últimos 7 dias</p>
-      <div class="bars">${l.map((x) => bar(x.label, x.n, x.n ? Math.max(1.5, (100 * x.n) / max) : 0, x.n == null ? '<span class="na">sem dados</span>' : num(x.n))).join('')}</div>
+  const bar = (label, n, w, val, note) => `<div class="br"><span class="br-l">${esc(label)}</span><span class="br-t"><i style="width:${w.toFixed(1)}%"></i></span><span class="br-n">${val}</span>${note ? `<span class="br-s">${esc(note)}</span>` : ''}</div>`;
+  // Beta.13: two groups with their own bars (the site; GitHub and the app), never one funnel: the site doesn't know who installs
+  const group = (g) => { const max = Math.max(1, ...g.rows.map((x) => x.n || 0));
+    return `<h3 class="grp">${esc(g.title)}</h3><div class="bars">${g.rows.map((x) => bar(x.label, x.n, x.n ? Math.max(1.5, (100 * x.n) / max) : 0, x.n == null ? '<span class="na">sem dados</span>' : num(x.n), x.note)).join('')}</div>`; };
+  $('#arrive').innerHTML = `<div class="col"><h2>Como chegam</h2><p class="lead">Últimos 7 dias completos</p>
+      ${H.arrive.map(group).join('')}
       ${r ? `<p class="note">Cerca de 1 em cada ${num(r)} visitas ao site acaba num clique em Download.</p>` : ''}</div>
     <div class="col"><h2>De onde vêm as visitas</h2><p class="lead">Últimos 7 dias, em percentagem</p>
       ${H.refs.length ? `<div class="bars refs">${H.refs.map((x) => bar(x.name, x.n, 100 * x.share, `${Math.round(100 * x.share)}%`)).join('')}</div>` : '<p class="none">Ainda sem visitas com origem.</p>'}</div>`;
@@ -183,6 +185,7 @@ function renderEmpty() {
 function render() {
   document.body.classList.toggle('empty', H.empty);
   renderHero(); pill(); renderChanges();
+  const cap = document.querySelector('.b-cap'); if (cap && H.cap) cap.textContent = H.cap;   // beta.13: the cards' days, said with their dates
   if (H.empty) renderEmpty(); else { renderBoard(); renderArrive(); renderJourney(); }
   document.body.classList.add('ready');
   first = false;

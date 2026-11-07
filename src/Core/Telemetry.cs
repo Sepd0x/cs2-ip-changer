@@ -270,6 +270,85 @@ public static class Telemetry
         return $"{c},{r}";
     }
 
+    /// <summary>
+    /// Beta.13 (the owner's 1.png: the dots on Accounts were off): the heat map's row is now in the page's content, not in the window.
+    /// Rows of <see cref="RowPx"/> from the top of the window with the scroll of the page added, the same 24 columns as before. The
+    /// cell starts with "s", so the Worker and the dashboard never mix it with the old window grid that beta.12 and before still send.
+    /// </summary>
+    public const double RowPx = 40;
+    public const int PageRows = 150;
+
+    /// <summary>The cell ("s" col,row) of a click at x in a window w wide, <paramref name="docY"/> down the page (scroll included); null outside.</summary>
+    public static string PageCell(double x, double docY, double w)
+    {
+        if (w <= SideBar || x < SideBar || x >= w || docY < 0) return null;
+        var r = (int)(docY / RowPx);
+        if (r >= PageRows) return null;
+        var c = Math.Clamp((int)((x - SideBar) / (w - SideBar) * Cols), 0, Cols - 1);
+        return $"s{c},{r}";
+    }
+
+    /// <summary>The click's height in the page: its height in the window plus how far each list or page around it is scrolled.</summary>
+    public static double DocY(double y, IEnumerable<double> scrolled) => y + (scrolled ?? Enumerable.Empty<double>()).Sum();
+
+    /// <summary>
+    /// A scroll offset in pixels. Most pages scroll by pixels; a long list that scrolls by items (the Servers list) gives items, and
+    /// each item is about the list's height over the items it shows.
+    /// </summary>
+    public static double ScrollPx(double offset, bool pixels, double viewportItems, double height) =>
+        offset <= 0 ? 0 : pixels ? offset : viewportItems > 0 ? offset * height / viewportItems : 0;
+
+    /// <summary>A list's own scroller (ListBox, ListView) with content scrolling moves by items unless the list says pixels.</summary>
+    public static bool ScrollsByPixels(ScrollViewer sv) =>
+        !sv.CanContentScroll || sv.TemplatedParent is not ItemsControl ic || VirtualizingPanel.GetScrollUnit(ic) == ScrollUnit.Pixel;
+
+    /// <summary>How much a scroller has below what it shows, in pixels (the demo's whole-page capture for the dashboard).</summary>
+    public static double ScrollablePx(ScrollViewer sv) => ScrollPx(sv.ScrollableHeight, ScrollsByPixels(sv), sv.ViewportHeight, sv.ActualHeight);
+
+    /// <summary>
+    /// A list in a box of its own height inside a page (Previous IPs, the three lists of Configs: a MaxHeight on it or on its list).
+    /// The whole-page capture shows it as it is, with its start, so its scroll is not added: the click stays inside the box.
+    /// </summary>
+    public static bool InBox(ScrollViewer sv) =>
+        !double.IsInfinity(sv.MaxHeight) || sv.TemplatedParent is FrameworkElement t && !double.IsInfinity(t.MaxHeight);
+
+    /// <summary>
+    /// How far the page and the lists that fill it (Servers, Regions, Log) around <paramref name="d"/> are scrolled down, in pixels
+    /// (MouseDown). A list in a box (InBox) is left out.
+    /// </summary>
+    public static List<double> ScrolledAbove(DependencyObject d, DependencyObject stop)
+    {
+        var list = new List<double>();
+        for (var i = 0; d != null && i < 80 && !ReferenceEquals(d, stop); i++)
+        {
+            if (d is ScrollViewer sv && sv.VerticalOffset > 0 && !InBox(sv)) list.Add(ScrollPx(sv.VerticalOffset, ScrollsByPixels(sv), sv.ViewportHeight, sv.ActualHeight));
+            d = d is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d);
+        }
+        return list;
+    }
+
+    static Window _heatWindow;
+    static Func<bool> _overlay;
+
+    /// <summary>The main window, and whether a pane is over the page (Phone setup, a question): those clicks aren't on the page.</summary>
+    public static void HeatFrom(Window main, Func<bool> overlayOpen) { _heatWindow = main; _overlay = overlayOpen; }
+
+    /// <summary>
+    /// Everything MouseDown decides about a click, without the input system (the tests drive it): null when it doesn't count (not
+    /// the main window, the window not in front or just brought there, a pane over the page, a dropdown's open list, outside the
+    /// grid), else its cell in the page with the scroll (PageCell).
+    /// </summary>
+    public static string HeatClick(Window w, DependencyObject source, Point p, bool active, DateTime now)
+    {
+        if (w == null || !ReferenceEquals(w, _heatWindow ?? Application.Current?.MainWindow) || w.Content is not FrameworkElement root) return null;
+        bool overlay;
+        try { overlay = _overlay?.Invoke() == true; } catch { overlay = false; }
+        if (!Counts(active, _activatedAt, now, overlay)) return null;
+        // a dropdown's open list is a popup of its own, not the page under it
+        if (source is Visual v && !ReferenceEquals(v, root) && !root.IsAncestorOf(v)) return null;
+        return PageCell(p.X, DocY(p.Y, ScrolledAbove(source, w)), root.ActualWidth);
+    }
+
     /// <summary>A rage click: this one and 2 more in the same cell within the last second.</summary>
     public static bool IsRage(IEnumerable<(DateTime T, string Cell)> recent, DateTime now, string cell) =>
         recent.Count(x => x.Cell == cell && now - x.T <= TimeSpan.FromSeconds(1)) >= 2;
@@ -313,17 +392,20 @@ public static class Telemetry
     /// A click that counts on the heat map: the window has the focus and wasn't brought to the front by this click. 3 nov.: false
     /// rage clicks came from clicks back into the app from a game or another window (Alt+Tab, the app behind).
     /// </summary>
-    public static bool Counts(bool active, DateTime activatedAt, DateTime now) => active && now - activatedAt >= TimeSpan.FromMilliseconds(500);
+    public static bool Counts(bool active, DateTime activatedAt, DateTime now, bool overlay = false) =>
+        active && !overlay && now - activatedAt >= TimeSpan.FromMilliseconds(500);
 
-    /// <summary>A click anywhere in the main window: its cell on the screen open, and whether it was dead or rage.</summary>
+    /// <summary>
+    /// A click anywhere in the main window: its cell on the screen open (beta.13: in the page, scroll included), and whether it was
+    /// dead or rage. Only the main window (HeatFrom; never the notice or the Steam sign-in window), only while it is the window in
+    /// front, and not on a pane over the page.
+    /// </summary>
     public static void MouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (!_on || sender is not Window w || !ReferenceEquals(w, Application.Current?.MainWindow) || w.Content is not FrameworkElement root) return;
-        if (!Counts(w.IsActive, _activatedAt, DateTime.UtcNow)) return;
+        if (!_on || sender is not Window w || w.Content is not FrameworkElement root) return;
         try
         {
-            var p = e.GetPosition(root);
-            var cell = Cell(p.X, p.Y, root.ActualWidth, root.ActualHeight);
+            var cell = HeatClick(w, e.OriginalSource as DependencyObject, e.GetPosition(root), w.IsActive, DateTime.UtcNow);
             string screen;
             lock (Gate) screen = _screen;
             if (cell == null || screen == null) return;
@@ -979,6 +1061,8 @@ public static class Telemetry
     /// <summary>Only what went out is taken away: anything counted while sending stays for next time.</summary>
     static void Sent(Snapshot s)
     {
+        // beta.13: after BeforeRestart the new copy owns telemetry.json; a late answer never writes over it
+        if (!_on) return;
         lock (Gate)
         {
             foreach (var (k, v) in s.Clicks) { _st.Clicks[k] -= v; if (_st.Clicks[k] <= 0) _st.Clicks.Remove(k); }
@@ -1006,7 +1090,8 @@ public static class Telemetry
         try
         {
             var s = Build();
-            if (await Post(s.Body, TimeSpan.FromSeconds(8))) Sent(s);
+            // beta.13: not back on the window's thread, so BeforeRestart can wait for it there
+            if (await Post(s.Body, TimeSpan.FromSeconds(8)).ConfigureAwait(false)) Sent(s);
         }
         catch (Exception ex) { NotSent(Url, Kind(ex)); }
         finally { End(); }
@@ -1073,6 +1158,31 @@ public static class Telemetry
         Save();
         SendNow(TimeSpan.FromSeconds(3));
     }
+
+    /// <summary>
+    /// Beta.13 (the owner's diagnostics of 7 nov.): Update starts the new copy and only then closes, so the new copy read
+    /// telemetry.json before the old one had sent and saved it, and upd_accepted (and fs_) arrived twice. Update calls this first:
+    /// the close's report goes and is saved now, and then this copy stops counting and saving (HandOver), so it never writes over
+    /// what the new copy saves. A report already on its way from the timer is waited for (3 s at most), so its save comes first too.
+    /// If the install then fails, Update calls AfterFailedRestart first, so upd_failed and the Log error still count.
+    /// </summary>
+    public static void BeforeRestart()
+    {
+        for (var i = 0; i < 30 && Volatile.Read(ref _busy) == 1; i++) Thread.Sleep(100);
+        SendAtExit();
+        (_on, _handedOver) = HandOver(_on, _handedOver);
+    }
+
+    static bool _handedOver;
+
+    /// <summary>The stats after BeforeRestart: off in this copy (nothing counted or saved any more), and marked handed over when they were on.</summary>
+    public static (bool On, bool HandedOver) HandOver(bool on, bool handedOver) => (false, on || handedOver);
+
+    /// <summary>The stats after a failed install: on again in this copy when it had handed them over, else as they were.</summary>
+    public static (bool On, bool HandedOver) TakeBack(bool on, bool handedOver) => handedOver ? (true, false) : (on, false);
+
+    /// <summary>Beta.13: the install failed after BeforeRestart, so this copy goes on: its stats count again (upd_failed, the Log error).</summary>
+    public static void AfterFailedRestart() => (_on, _handedOver) = TakeBack(_on, _handedOver);
 
     /// <summary>The PC is going to sleep: the minutes so far go out now (sleep isn't a close, so no session length).</summary>
     static void SendBeforeSleep()

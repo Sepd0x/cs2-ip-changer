@@ -133,7 +133,8 @@ static class DesignSyncTests
             var bytes = File.ReadAllBytes(Path_(rel));
             if (Sha(bytes) != listed[rel]) bad.Add($"{rel} mudou fora do script");
             if (rel.StartsWith("docs/screenshots/") && PngSize(bytes) is var (w, h) && (w != b[0] * scale || h != b[1] * scale)) bad.Add($"{rel} {w}x{h}");
-            if (rel.StartsWith("worker/stats/dashboard/ui/") && PngSize(bytes) is var (w1, h1) && (w1 != b[0] || h1 != b[1])) bad.Add($"{rel} {w1}x{h1}");
+            // beta.13: the dashboard's click map is the whole page (tools/shots.mjs --mapa), as wide as the capture and at least as tall
+            if (rel.StartsWith("worker/stats/dashboard/ui/") && PngSize(bytes) is var (w1, h1) && (w1 != b[0] || h1 < b[1])) bad.Add($"{rel} {w1}x{h1}");
         }
         check("Capturas: cada ficheiro é o que o script fez", bad.Count == 0, string.Join("; ", bad.Take(6)) + (bad.Count > 0 ? redo : ""));
 

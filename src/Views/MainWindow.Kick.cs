@@ -49,6 +49,7 @@ public partial class MainWindow
             if (Cs2Console.IsConnectLine(line))
             {
                 _consoleServer = _kicks.Server;
+                Telemetry.Count("join");   // beta.13: CS2 joined a server (only how many times, never which one)
                 if (_consoleServer != null) RejoinBack(_consoleServer);
                 // You went to another server yourself: the retry on the full one stops, or it would pull you out of this one
                 if (FullRetryStops(_fullServer, _consoleServer)) _fullServer = null;

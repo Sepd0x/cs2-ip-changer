@@ -47,7 +47,7 @@ export const DEFINITIONS = {
   active_installs: 'Distinct installs with at least one real report in the day or window. For a single day it equals the install-days of that day.',
   yesterday_same_time: 'Yesterday, counting only the reports sent before this time of day.',
   same_weekday_last_week_same_time: 'The same weekday 7 days ago, counting only the reports sent before this time of day.',
-  exe_downloads: 'Difference between two daily GitHub pictures (03:07 UTC) of the .exe download counts of every release: all origins, including the owner, the VirusTotal workflow and scanners. "yesterday" is the picture dated today minus the one dated yesterday (03:07 to 03:07 UTC). Today is not known until tomorrow\'s picture.',
+  exe_downloads: 'Difference between two daily GitHub pictures (03:07 UTC) of the .exe download counts of every release: all origins, including the owner, the VirusTotal workflow and scanners. "yesterday" is the picture dated today minus the one dated yesterday (03:07 to 03:07 UTC). Today is not known until tomorrow\'s picture. app_updates_d7 (beta.13): of the same 7 complete days, how many times the app updated itself (upd_done), which is also a download of the exe; only on the days d7 has a picture for, the owner\'s PCs and dev builds left out.',
   site_visits: 'Pages opened on the website (no cookie, no ID, Do Not Track and Global Privacy Control respected): the same person on two pages counts 2.',
   site_download_clicks: 'Clicks on the Download buttons of the website.',
   activation_7d: 'Closed cohort: new installs whose first day was 7 to 13 days ago (their first 7 days are over), that saw the phone and reached Protected within day 0 to day 6. prev: the cohort 14 to 20 days ago, at the same age. running: the last 7 days so far (still going, never compared).',
@@ -207,7 +207,7 @@ export function buildBrief({ S, L = null, G = null, GH = { days: [] }, tables = 
       dod_abs: T.fresh - ST.fresh, wow_abs: W ? T.fresh - W.fresh : null, d7_vs_prev7_pct: p7n >= 20 ? Math.round((1000 * (d7n - p7n)) / p7n) / 10 : null, low_n: p7n < 20 },
     active_installs: { today: T.users, yesterday_same_time: ST.users, same_weekday_last_week_same_time: W ? W.users : null, yesterday: Y.users,
       d7: S.windows.c7 ? S.windows.c7.active : null, prev7: S.windows.cp7 ? S.windows.cp7.active : null, low_n: (S.windows.cp7 ? S.windows.cp7.active : 0) < 20 },
-    exe_downloads: { yesterday: picToday ? picToday.exeDay : null, d7: pic7.length ? sum(pic7, 'exeDay') : null, prev7: picP.length ? sum(picP, 'exeDay') : null, days_covered_d7: pic7.length,
+    exe_downloads: { yesterday: picToday ? picToday.exeDay : null, d7: pic7.length ? sum(pic7, 'exeDay') : null, prev7: picP.length ? sum(picP, 'exeDay') : null, days_covered_d7: pic7.length, app_updates_d7: sum(d7.filter((x) => pics.some((q) => q.day === addD(x.date, 1) && q.exeDay != null)), 'updates'),
       today: null, today_reason: 'snapshot_daily_0307utc', ...(picToday ? {} : { yesterday_reason: pics.length ? 'no_picture_pair' : 'no_source_rows' }) },
     site_visits: siteMissing ? { today: null, yesterday: null, d7: null, prev7: null, reason: 'table_missing' }
       : { today: siteDay(today).views, yesterday: siteDay(yesterday).views, d7: sv('views', from7, to7), prev7: S.period >= 15 ? sv('views', from14, to14) : null },
@@ -239,7 +239,10 @@ export function buildBrief({ S, L = null, G = null, GH = { days: [] }, tables = 
   const vis7 = siteMissing ? null : sv('views', from7, to7), clk7 = siteMissing ? null : sv('downloads', from7, to7);
   const funnel = {
     acquisition: { basis: 'counts in the last 7 days, not joined to installs (no ID on the website, by choice)', steps: [
-      { id: 'search_impressions', n: null, reason: 'not_measured' }, { id: 'search_clicks', n: null, reason: 'not_measured' },
+      // beta.13: from the Search Console (snapshotSearch, only with its key); Google gives a day 2 or 3 days late, so days_covered
+      ...(() => { const g = ((GH && GH.search) || []).filter((x) => x.day >= from7 && x.day <= to7);
+        return ['impressions', 'clicks'].map((k) => (GH && GH.search && GH.search.length ? { id: `search_${k}`, n: g.length ? g.reduce((s, x) => s + x[k], 0) : null, days_covered: g.length, ...(g.length ? {} : { reason: 'no_source_rows' }) }
+          : { id: `search_${k}`, n: null, reason: 'not_measured' })); })(),
       { id: 'site_visits', n: vis7, ...(siteMissing ? { reason: 'table_missing' } : {}) },
       { id: 'site_download_clicks', n: clk7, of_prev: vis7 ? r3(clk7 / vis7) : null, ...(siteMissing ? { reason: 'table_missing' } : {}) },
       { id: 'exe_downloads', n: kpis.exe_downloads.d7, note: 'all origins', ...(kpis.exe_downloads.d7 == null ? { reason: 'no_source_rows' } : {}) }], window: [from7, to7] },

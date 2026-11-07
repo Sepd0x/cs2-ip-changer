@@ -149,20 +149,30 @@ export function buildHome({ B, G = null, L = null }) {
     const w = closed ? act.window : B.window && B.window.running7;
     if (st && st[0] && st[0].n) {
       journey = { base: st[0].n, steps: st.map((x) => ({ id: x.id, label: STEP[x.id] || x.id, n: x.n, share: x.n / st[0].n })),
+        // Beta.13 (the owner: "os dados estão confusos"): the running week has today in it, so it is not the cards' "últimos 7 dias"
+        // (the 7 complete days); its dates are said, so 1 new on the cards and 2 here don't read as a contradiction
         text: closed ? `${plural(st[0].n, 'pessoa instalou', 'pessoas instalaram')} a app entre ${dayPt(w[0])} e ${dayPt(w[1])}. Na primeira semana de uso:`
-          : `${plural(st[0].n, 'pessoa instalou', 'pessoas instalaram')} a app nos últimos 7 dias. Até agora:` };
+          : `${plural(st[0].n, 'pessoa instalou', 'pessoas instalaram')} a app de ${dayPt(w[0])} até hoje, ainda a meio da primeira semana. Até agora:` };
       const stk = B.stuck && closed ? B.stuck.buckets.filter((x) => x.id !== 'reached_match' && x.n).sort((a, b) => b.n - a.n)[0] : null;
       if (stk) journey.note = { never_phone: 'Quem desiste, desiste sobretudo antes de ligar o telemóvel', phone_not_protected: 'Quem desiste, desiste sobretudo depois de ligar o telemóvel e antes de ligar a proteção', protected_no_match: 'Quem desiste, desiste sobretudo depois de ligar a proteção e antes de jogar' }[stk.id] + ` (${num(stk.n)} de ${num(st[0].n)}).`;
     }
   }
 
   // ---------------- como chegam (contagens dos últimos 7 dias; o site não sabe quem instala, por isso não se ligam entre si)
+  // Beta.13 (the owner's 3.png: 33 visits, 0 clicks, 6 downloads): two groups, never one funnel. The downloads come from every
+  // origin (the README, GitHub itself, the app updating itself), so they can be more than the site's clicks
+  const upd = dl.app_updates_d7 || 0;
   const arrive = [
-    { label: 'Visitas ao site', n: sv.d7 ?? null },
-    { label: 'Cliques em Download', n: K.site_download_clicks ? K.site_download_clicks.d7 ?? null : null },
-    { label: 'Downloads da app', n: dl.d7 ?? null },
-    { label: 'Instalações novas', n: K.new_installs.d7 ?? null },
+    { title: 'No site', rows: [
+      { label: 'Visitas ao site', n: sv.d7 ?? null },
+      { label: 'Cliques em Download', n: K.site_download_clicks ? K.site_download_clicks.d7 ?? null : null }] },
+    { title: 'No GitHub e na app', rows: [
+      { label: 'Downloads da app', n: dl.d7 ?? null, note: `De todas as origens, não só do site${upd ? `; ${plural(upd, 'foi a app a atualizar-se', 'foram a app a atualizar-se')}` : ''}.` },
+      { label: 'Instalações novas', n: K.new_installs.d7 ?? null }] },
   ];
+  const d7w = B.window && B.window.d7;
+  const cap = d7w ? `Últimos 7 dias completos, de ${dayPt(d7w[0])} a ${dayPt(d7w[1])}, comparados com os 7 dias antes. Hoje fica de fora até acabar. Toca num número para o ver dia a dia.`
+    : 'Últimos 7 dias, comparados com os 7 dias antes. Toca num número para o ver dia a dia.';
   const rate = K.site_download_clicks && K.site_download_clicks.rate_d7;
   const refsSrc = B.acquisition && (B.acquisition.top_site_refs_d7 || B.acquisition.top_github_refs_14d) || [];
   const refs = [];
@@ -185,5 +195,5 @@ export function buildHome({ B, G = null, L = null }) {
 
   const at = B.generated_at ? new Date(B.generated_at) : null;
   const updated = at ? new Intl.DateTimeFormat('pt-PT', { timeZone: 'Europe/Lisbon', hour: '2-digit', minute: '2-digit' }).format(at) : null;
-  return { empty: !anyData, status, headline, tiles, changes, journey, arrive, rate, refs: refs.slice(0, 5), live, markers, updated };
+  return { empty: !anyData, status, headline, tiles, changes, journey, arrive, cap, rate, refs: refs.slice(0, 5), live, markers, updated };
 }

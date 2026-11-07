@@ -104,7 +104,7 @@ test('v5 model: the journey uses the closed week when it has 5 or more, the runn
   B.funnel.activation.steps[0].n = 3;
   const R = buildHome({ B, G: GH_OK });
   assert.equal(R.journey.base, B.funnel.activation.running_steps[0].n);
-  assert.match(R.journey.text, /últimos 7 dias/);
+  assert.match(R.journey.text, /até hoje/);   // beta.13: the running week says its dates (it has today in it, the cards do not)
 });
 
 test('v5 model: where visits come from is a share of the visits with an origin, with the same site merged', async () => {
