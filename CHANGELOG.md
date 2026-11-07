@@ -21,6 +21,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Log: the launch options line said "added on 35 accounts" right after "33 Steam accounts on this PC". It now says it counts every account that ever logged in on this PC, including ones no longer in Steam's list.
 - Log: "CS2 network after 26 min" read like the whole time on the server, but CS2 sums up each connection (a map change starts a new one). It now says "for the last 26 min".
 - Updating the app sent part of the last usage stats twice (the new version read them before the old one had sent them).
+- Start with Windows: after the app started in the notification area, a double click on its icon opened the window as a tiny bar in the bottom left corner of the screen, and you had to click the app on the taskbar to fix it. The window now opens whole, in the middle of the screen.
+- Accounts: with Start Steam minimized on, logging in to another account made Steam ask for the password, even for accounts saved with Remember me. The app now starts Steam the way that uses the saved sign-in.
 
 ## [0.1.0-beta.12] - 2026-11-06
 

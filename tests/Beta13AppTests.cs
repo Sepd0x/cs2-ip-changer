@@ -14,6 +14,47 @@ static class Beta13AppTests
         TempoDosJogadores(check);
         Miras(check);
         ZipDeDiagnostico(check);
+        JanelaDoTray(check);
+        TrocaSemPassword(check);
+    }
+
+    // ------------------------------------------------------------ Ronda 2, A. Arranque com o Windows: o duplo clique no tray abria a janela minúscula no canto
+
+    static void JanelaDoTray(Action<string, bool, string> check)
+    {
+        // Com --tray a janela nasce minimizada e fica escondida. A beta.12 punha WindowState = Normal com ela já escondida: o WPF muda a
+        // propriedade mas não o Windows (sem ShowWindow com a janela invisível), e o Show do tray mostrava-a ainda minimizada, 160x28 no
+        // canto de baixo à esquerda (provado com um programa igual, 7 nov.). Escondida tem de ficar Minimized para o WPF e o Windows.
+        check("Tray: escondida no arranque fica minimizada para o WPF também", MainWindow.TrayStartState(hidden: true) == System.Windows.WindowState.Minimized,
+            MainWindow.TrayStartState(true).ToString());
+        check("Tray: sem ícone no tray abre normal", MainWindow.TrayStartState(hidden: false) == System.Windows.WindowState.Normal, MainWindow.TrayStartState(false).ToString());
+
+        // Restaurada, a posição normal nunca foi a do CenterScreen (nasceu minimizada): a primeira vez fica ao centro da área de trabalho
+        var c = MainWindow.CenterIn(new System.Windows.Rect(0, 0, 1920, 1040), 1280, 800);
+        check("Tray: a primeira abertura fica ao centro", c == (320, 120), c.ToString());
+        var c2 = MainWindow.CenterIn(new System.Windows.Rect(-1920, 40, 1920, 1000), 1280, 800);
+        check("Tray: ao centro também num ecrã à esquerda e com a barra em cima", c2 == (-1600, 140), c2.ToString());
+        var c3 = MainWindow.CenterIn(new System.Windows.Rect(0, 0, 1000, 600), 1280, 800);
+        check("Tray: maior que a área, o canto de cima fica à vista", c3 == (0, 0), c3.ToString());
+
+        var tray = File.ReadAllText(Path.Combine(SecurityTests.Repo(), "src", "Views", "MainWindow.Tray.cs"));
+        var loaded = tray[tray.IndexOf("void StartHiddenIfAsked(")..tray.IndexOf("async void ListenForShow(")];
+        check("Tray: o Loaded usa TrayStartState em vez de WindowState = Normal", loaded.Contains("WindowState = TrayStartState(") && !loaded.Contains("WindowState = WindowState.Normal;"), "");
+        var show = tray[tray.IndexOf("void ShowFromTray()")..tray.IndexOf("void HideToTray()")];
+        check("Tray: a primeira abertura do tray centra a janela", show.Contains("CenterIn(") && show.Contains("_centerOnShow"), "");
+    }
+
+    // ------------------------------------------------------------ Ronda 2, B. Trocar de conta pedia a password com "Start Steam minimized"
+
+    static void TrocaSemPassword(Action<string, bool, string> check)
+    {
+        // O Steam lê "-login <conta> <password>": com Accounts > Start Steam minimized a linha era "-login conta -silent", o -silent ia
+        // como password e o Steam não usava a sessão guardada (connection_log do zip de 7 nov.: "SetLoginInformation",
+        // "BeginAuthSessionViaCredentials failed", "Invalid Password" em todas as trocas desde 1 nov.; no PC sem -silent, nunca).
+        // O -login e a conta têm de ser o fim da linha.
+        check("Troca: o -silent vai antes do -login", Steam.LoginArgs("acc_2", "-silent") == "-silent -login acc_2", Steam.LoginArgs("acc_2", "-silent"));
+        check("Troca: nada fica depois da conta", Steam.LoginArgs("acc_2", " -silent -tcp ").EndsWith("-login acc_2"), Steam.LoginArgs("acc_2", " -silent -tcp "));
+        check("Troca: sem extras só o -login", Steam.LoginArgs("acc_2", null) == "-login acc_2" && Steam.LoginArgs("acc_2", "  ") == "-login acc_2", Steam.LoginArgs("acc_2", null));
     }
 
     // ------------------------------------------------------------ 3. O zip de diagnóstico de 7 nov.

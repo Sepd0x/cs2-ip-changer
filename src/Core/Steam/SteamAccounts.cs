@@ -470,11 +470,13 @@ public static partial class Steam
     /// "-login &lt;account&gt;" plus the extra arguments. Started through Explorer (see <see cref="Launch"/>), Steam ignores AutoLogin in
     /// loginusers.vdf and logs back in to the account it had; with -login it takes that account's saved sign-in (no password here).
     /// Tested on 29 Oct 2026 with the current client: Explorer without -login 0 of 4 on the new account, with -login 2 of 2.
+    /// The extra arguments go first: Steam reads "-login &lt;account&gt; &lt;password&gt;", so "-login acc -silent" sent -silent as the
+    /// password and Steam asked for the real one instead of using the saved sign-in (7 Nov 2026, "Invalid Password" in its connection_log).
     /// </summary>
     public static string LoginArgs(string accountName, string extra)
     {
         var login = accountName != null && Regex.IsMatch(accountName, "^[A-Za-z0-9_]{2,64}$") ? "-login " + accountName : "";
-        return string.Join(" ", new[] { login, extra?.Trim() }.Where(a => !string.IsNullOrEmpty(a)));
+        return string.Join(" ", new[] { extra?.Trim(), login }.Where(a => !string.IsNullOrEmpty(a)));
     }
 
     /// <summary>The whole file replaced through the handle already open on it.</summary>

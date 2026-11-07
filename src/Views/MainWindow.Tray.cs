@@ -72,8 +72,16 @@ public partial class MainWindow
     {
         Show();
         if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
+        if (_centerOnShow)
+        {
+            // Started with --tray the window was never on screen as Normal, so CenterScreen never placed it
+            _centerOnShow = false;
+            (Left, Top) = CenterIn(SystemParameters.WorkArea, ActualWidth, ActualHeight);
+        }
         Activate();
     }
+
+    bool _centerOnShow;
 
     void HideToTray()
     {
@@ -109,11 +117,24 @@ public partial class MainWindow
         Loaded += async (_, _) =>
         {
             if (_tray?.Shown == true) Hide();   // only with the icon really there (Explorer busy at sign-in can refuse it)
-            WindowState = WindowState.Normal;
+            var hidden = !IsVisible;
+            WindowState = TrayStartState(hidden);
             ShowInTaskbar = true;
+            if (hidden) _centerOnShow = true;
+            else (Left, Top) = CenterIn(SystemParameters.WorkArea, ActualWidth, ActualHeight);
             await Startup();
         };
     }
+
+    /// <summary>
+    /// The state after Loaded with --tray. Hidden, it stays Minimized: WPF only changes WindowState on a window you can't see, Windows
+    /// keeps it minimized, and the next Show put it on screen like that (160x28 in the bottom left corner, beta.12). ShowFromTray restores it.
+    /// </summary>
+    public static WindowState TrayStartState(bool hidden) => hidden ? WindowState.Minimized : WindowState.Normal;
+
+    /// <summary>Top left corner that centres a w x h window in <paramref name="area"/>; a window bigger than the area keeps its top left in view.</summary>
+    public static (double Left, double Top) CenterIn(Rect area, double w, double h) =>
+        (area.Left + Math.Max(0, (area.Width - w) / 2), area.Top + Math.Max(0, (area.Height - h) / 2));
 
     /// <summary>A second start of the app (double click while it runs) brings this window back instead of "already running".</summary>
     async void ListenForShow()
