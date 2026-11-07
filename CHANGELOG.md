@@ -4,6 +4,9 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Changed
+- Website: the 3D scene on the home page, the guides and the 404 page looks more real. Metal, glass and cloth now reflect a soft studio light, the PC shows its parts through the glass side, the phone sits in a real stand, the mast has its antennas and cables, the servers stand on a raised floor, and the route is mirrored in the floor round the mast and the servers. A far town and other masts stand on the horizon, and the camera moves on smooth arcs between the steps of the story. The glowing route is the same, and with reduced motion the scene stays still.
+
 ## [0.1.0-beta.12] - 2026-11-06
 
 ### Added
