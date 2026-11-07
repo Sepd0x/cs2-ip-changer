@@ -47,9 +47,16 @@ public partial class MainWindow
         var added = r.Count(x => x.Changed);
         var failed = r.Where(x => x.Left).ToList();
         if (added > 0) Log.Ok($"CS2 launch options: added -condebug -conclearlog on {added} account{(added == 1 ? "" : "s")} (backup in SRT_Dados\\launch-options). Kicks and bans are now seen when Steam opens CS2 too.");
-        foreach (var f in failed) Log.Warn($"CS2 launch options: one account was left as it is ({f.Why}).");
+        foreach (var f in failed) Log.Warn(LeftText(f.Why));
         if (!quiet && added == 0 && failed.Count == 0) Log.Info(r.Count == 0 ? "CS2 launch options: no Steam account on this PC has launch options yet." : "CS2 launch options: every account already has -condebug -conclearlog.");
     }
+
+    /// <summary>
+    /// The Log line for an account left as it was. The reason's own ", so it was left as it is" goes, so the line doesn't say it twice
+    /// (diagnostics of 7 nov.). Patch keeps its words: other places and tests read them.
+    /// </summary>
+    public static string LeftText(string why) =>
+        $"CS2 launch options: one account was left as it is ({(why ?? "").Replace(", so it was left as it is", "", StringComparison.Ordinal)}).";
 
     /// <summary>"3 of 4 accounts have it" under the button.</summary>
     void ShowLaunchOptions()

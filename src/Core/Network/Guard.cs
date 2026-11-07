@@ -379,6 +379,12 @@ public sealed class Guard
         catch (Exception ex) { errors.Add((ex.InnerException ?? ex).Message); }
     }
 
+    /// <summary>
+    /// The Log line when the reason for blocking changes, or null. Same IP as home: the IP check already wrote it as an error, with
+    /// the IP (MainWindow.SameIpText), so a second line here said the same thing (diagnostics of 7 nov., two lines at 00:06:04).
+    /// </summary>
+    public static string ProblemLine(string problem, Distrust distrust) => problem == null || distrust == Distrust.SameIp ? null : problem + " Servers blocked.";
+
     async Task<GuardReport> SyncCore(Settings s, List<string> ips, bool force, Distrust distrust, bool cs2Running, string verifiedKey, bool on)
     {
         var adapters = Net.Scan();
@@ -392,7 +398,7 @@ public sealed class Guard
         var mode = PhoneLink.EffectiveMode(on, s.Mode, s.GameMode, cs2Running);
         // Off and No phone block nothing, so "Servers blocked" would be false there; back on protection the problem is said again.
         if (mode is "home" or "off") _lastProblem = null;
-        else if (problem != _lastProblem) { if (problem != null) Log.Warn(problem + " Servers blocked."); _lastProblem = problem; }
+        else if (problem != _lastProblem) { if (ProblemLine(problem, distrust) is string line) Log.Warn(line); _lastProblem = problem; }
         var fwProblem = Firewall.CheckEnabled();
         if (mode is "home" or "off") return await HomeMode(s, ips, adapters, candidate, fwProblem, force, mode, distrust);
         var cs2 = s.LockCs2 && (s.PhoneSeen || egress != null) ? Steam.FindCs2(s.Cs2Path) : null;

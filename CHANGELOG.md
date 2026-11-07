@@ -4,6 +4,15 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Fixed
+- Servers: the time a player has been on a server read like minutes and seconds ("0:38", "1:05") but was hours and minutes. It now has its unit: "38m", "1h 05m", and "38 min" or "1 h 05 min" in the tooltip.
+- Servers: a server that sent a strange time for one player (far too big) showed no player list at all. Now that time is capped and the list shows.
+- Servers: a server that asked for its challenge twice showed no ping or players for that refresh ("Invalid A2S response" in the Log). The app now answers it again.
+- Configs: the crosshair preview now follows CS2's new crosshair (sizes in pixels at the screen height it was made for, since the September 2026 update). Long bars were cut at the edge of the box and looked shorter than the gap; now the whole crosshair fits with the same proportions as in the game. Half outlines, the outline colour and Dot Only are shown too, and older crosshairs use CS2's old sizes (1/480 of the screen height).
+- Log: Sync now with CS2 open wrote one line per account ("the copy to ... waits until it closes"); now it is one line for all of them.
+- Log: when the phone's IP was the same as your home IP, the Log said it twice. Now once, with the IP.
+- Log: an account whose launch options couldn't be changed said "left as it is" twice in the same line.
+
 ## [0.1.0-beta.12] - 2026-11-06
 
 ### Added
