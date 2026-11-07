@@ -145,6 +145,17 @@ public partial class MainWindow
         ReportCfg(results, why, manual, jobs);
     }
 
+    /// <summary>
+    /// The copies that wait for CS2 to close, in one Log line: Sync now with CS2 open wrote one line per account, 31 the same
+    /// (diagnostics of 7 nov., 01:08:22). Null when none waits.
+    /// </summary>
+    public static string QueuedLine(string reason, List<string> names) => names.Count switch
+    {
+        0 => null,
+        1 => $"Config ({reason}): CS2 is open, so the copy to {names[0]} waits until it closes.",
+        _ => $"Config ({reason}): CS2 is open, so the copies to {names.Count} accounts wait until it closes.",
+    };
+
     /// <summary>One Log line per account changed (never the file contents), and the line under Sync now.</summary>
     void ReportCfg(List<CfgResult> results, string why, bool manual, List<CfgJob> jobs = null)
     {
@@ -156,12 +167,13 @@ public partial class MainWindow
             switch (r.Outcome)
             {
                 case CfgOutcome.Copied: Log.Ok($"Config ({reason}): copied {Cs2Config.CategoryList(r.Categories)}{From(r)} to {who}. Backup saved."); break;
-                case CfgOutcome.Queued: Log.Info($"Config ({reason}): CS2 is open, so the copy to {who} waits until it closes."); break;
+                case CfgOutcome.Queued: break;   // one line for all of them, below
                 case CfgOutcome.Same: if (manual) Log.Info($"Config ({reason}): {who} already has the same config."); break;
                 case CfgOutcome.Skipped: Log.Info($"Config ({reason}): {who} not changed: {r.Detail}."); break;
                 default: Log.Warn($"Config ({reason}): {who} not changed: {r.Detail}."); break;
             }
         }
+        if (QueuedLine(reason, results.Where(r => r.Outcome == CfgOutcome.Queued).Select(r => CfgName(r.Target)).ToList()) is string waits) Log.Info(waits);
         int copied = results.Count(r => r.Outcome == CfgOutcome.Copied), same = results.Count(r => r.Outcome == CfgOutcome.Same),
             queued = results.Count(r => r.Outcome == CfgOutcome.Queued), failed = results.Count(r => r.Outcome is CfgOutcome.Failed or CfgOutcome.Skipped);
         if (copied + queued + failed == 0 && !manual) return;   // an automatic check that found nothing to do stays quiet
@@ -241,7 +253,7 @@ public partial class MainWindow
                     Linked = linked,
                     CrosshairText = xhText,
                     ChangedText = changedText,
-                    CrosshairImage = CrosshairImage(xh),
+                    CrosshairImage = CrosshairImage(xh, 26),   // the Image in the Accounts rows is 26 px
                     GroupKey = set.Empty ? CfgAccountRow.NoConfig : Cs2Config.CrosshairSummary(set) ?? "default",
                 });
             }
@@ -608,8 +620,8 @@ public partial class MainWindow
         var b = CfgCmpB.SelectedItem as CfgSourceItem;
         var sa = CfgRead(a);
         var sb = CfgRead(b);
-        CfgCmpImgA.Source = CrosshairImage(Cs2Config.ReadCrosshair(sa));
-        CfgCmpImgB.Source = CrosshairImage(Cs2Config.ReadCrosshair(sb));
+        CfgCmpImgA.Source = CrosshairImage(Cs2Config.ReadCrosshair(sa), 32);
+        CfgCmpImgB.Source = CrosshairImage(Cs2Config.ReadCrosshair(sb), 32);
         string None(CfgSourceItem it) => it?.SteamId is string id && Cfg.IsLinked(id) ? "CS2 folder is a link" : "No CS2 config";
         CfgCmpXhA.Text = sa == null ? "" : sa.Empty ? None(a) : Cs2Config.CrosshairSummary(sa) ?? "Default crosshair";
         CfgCmpXhB.Text = sb == null ? "" : sb.Empty ? None(b) : Cs2Config.CrosshairSummary(sb) ?? "Default crosshair";
@@ -636,54 +648,70 @@ public partial class MainWindow
         catch (Exception ex) { CfgDiffCount.Text = "Couldn't compare: " + Cs2ConfigStore.Why(ex); CfgDiffList.ItemsSource = null; }
     }
 
-    /// <summary>Roughly how CS2 draws it at 1080p (length = size × 2 px, gap + 4 px from the center), doubled, on a 32 px square.</summary>
-    static ImageSource CrosshairImage(Crosshair c)
+    /// <summary>The crosshair as CS2 draws it at 1080p, on a <paramref name="box"/> px square (26 in the lists, 32 in Compare).</summary>
+    static ImageSource CrosshairImage(Crosshair c, double box)
     {
         if (c == null) return null;
-        const double mid = 16;
-        var g = new DrawingGroup { ClipGeometry = new RectangleGeometry(new Rect(0, 0, 32, 32)) };
+        var g = new DrawingGroup { ClipGeometry = new RectangleGeometry(new Rect(0, 0, box, box)) };
         using (var dc = g.Open())
         {
-            dc.DrawRectangle(Brushes.Transparent, null, new Rect(0, 0, 32, 32));
+            dc.DrawRectangle(Brushes.Transparent, null, new Rect(0, 0, box, box));
             var fill = new SolidColorBrush(Color.FromArgb(Math.Max(c.Alpha, (byte)70), c.R, c.G, c.B));
-            // Drawn at twice the size so it can be seen in a 32 px box.
-            double len, thick, gap;
-            if (c.Pixels)
-            {
-                // The newer crosshair (style 7): pixels at the screen height it was set for, so first brought to 1080p.
-                var k = 1080 / Math.Max(c.ScreenHeight ?? 1080, 1) * 2;
-                len = Math.Clamp((c.Size ?? 8) * k, 0, 14);
-                thick = Math.Clamp(Math.Round((c.Thickness ?? 2) * k), 1, 6);
-                gap = Math.Clamp((c.Gap ?? 4) * k, 0, 12);
-            }
-            else
-            {
-                len = Math.Clamp((c.Size ?? 5) * 4, 0, 14);
-                thick = Math.Clamp(Math.Round((c.Thickness ?? 0.5) * 4), 1, 6);
-                gap = Math.Clamp(((c.Gap ?? 1) + 4) * 2, 0, 12);
-            }
-            var rects = new List<Rect>();
-            if (len > 0)
-            {
-                rects.Add(new Rect(mid + gap, mid - thick / 2, len, thick));
-                rects.Add(new Rect(mid - gap - len, mid - thick / 2, len, thick));
-                rects.Add(new Rect(mid - thick / 2, mid + gap, thick, len));
-                if (c.TStyle != true) rects.Add(new Rect(mid - thick / 2, mid - gap - len, thick, len));
-            }
-            if (c.Dot == true) rects.Add(new Rect(mid - thick / 2, mid - thick / 2, thick, thick));
-            if (c.Outline == true)
-            {
-                var o = Math.Clamp(c.OutlineThickness ?? 1, 0.5, 3);
-                foreach (var r in rects) { var x = r; x.Inflate(o, o); dc.DrawRectangle(Brushes.Black, null, x); }
-            }
-            foreach (var r in rects) dc.DrawRectangle(fill, null, r);
+            var edge = new SolidColorBrush(Color.FromArgb(c.OutlineA, c.OutlineR, c.OutlineG, c.OutlineB));
+            foreach (var s in CrosshairShapes(c, box)) dc.DrawRectangle(s.Outline ? edge : fill, null, s.R);
         }
         g.Freeze();
         var img = new DrawingImage(g);
         img.Freeze();
         return img;
     }
+
+    /// <summary>
+    /// The rectangles of the preview on a <paramref name="box"/> px square, outlines first: CS2's pixels at 1080p
+    /// (<see cref="Cs2Config.CrosshairPixels"/>) at twice the size, or smaller when that doesn't fit, everything by the same amount so
+    /// the bars keep their length against the gap (beta.12 cut big bars at the edge and kept the gap, 7 nov.).
+    /// </summary>
+    public static List<CrosshairShape> CrosshairShapes(Crosshair c, double box)
+    {
+        var shapes = new List<CrosshairShape>();
+        if (c == null) return shapes;
+        var p = Cs2Config.CrosshairPixels(c, 1080);
+        var lines = p.Lines && p.Length > 0;
+        var o = p.Outline > 0 ? p.OutlineWidth : 0;
+        var t = Math.Max(p.Thickness, 1);
+        // How far from the center it reaches, outline included (a negative gap puts the bars across the center)
+        var reach = Math.Max(lines ? Math.Max(p.Gap + p.Length, -p.Gap) : 0, t / 2.0) + o;
+        double len, gap, th, ow, a, right, left;
+        // Whole pixels, so the lines stay sharp; rounding up can leave a bar past the edge, so a little smaller until it fits
+        for (var s = Math.Min(2, (box / 2 - 1) / Math.Max(reach, 0.5)); ; s *= 0.95)
+        {
+            len = Math.Max(1, Math.Round(p.Length * s)); gap = Math.Round(p.Gap * s); th = Math.Max(1, Math.Round(t * s)); ow = o > 0 ? Math.Max(1, Math.Round(o * s)) : 0;
+            a = Math.Floor(box / 2 - th / 2);      // top and left of the bars across the center
+            var cx = a + th / 2;                   // the center line
+            right = Math.Round(cx + gap, MidpointRounding.AwayFromZero);
+            left = 2 * cx - right;                 // the mirror of the right bar's start
+            var far = Math.Max(a + th, lines ? Math.Max(right + len, left) : 0);   // the right edge (the left one is its mirror)
+            if (far + ow <= Math.Min(box, 2 * cx) || s < 0.05) break;
+        }
+        var rects = new List<Rect>();
+        if (lines)
+        {
+            rects.Add(new Rect(right, a, len, th));
+            rects.Add(new Rect(left - len, a, len, th));
+            rects.Add(new Rect(a, right, th, len));
+            if (!p.T) rects.Add(new Rect(a, left - len, th, len));
+        }
+        if (p.Dot) rects.Add(new Rect(a, a, th, th));
+        foreach (var r in rects)
+            shapes.Add(new CrosshairShape(p.Outline == 2 ? new Rect(r.X - ow, r.Y - ow, r.Width + ow, r.Height + ow) : new Rect(r.X - ow, r.Y - ow, r.Width + 2 * ow, r.Height + 2 * ow), true));
+        if (ow == 0) shapes.Clear();
+        foreach (var r in rects) shapes.Add(new CrosshairShape(r, false));
+        return shapes;
+    }
 }
+
+/// <summary>One rectangle of the crosshair preview: the outline (drawn first) or the crosshair itself.</summary>
+public sealed record CrosshairShape(Rect R, bool Outline);
 
 /// <summary>An account on the Configs page (Accounts list and the To ticks in Copy).</summary>
 public sealed class CfgAccountRow : Observable

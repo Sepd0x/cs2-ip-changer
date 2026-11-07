@@ -19,6 +19,32 @@ public static class DistrustText
     };
 }
 
+/// <summary>
+/// The Log line each time the reason servers are blocked changes ("... Servers blocked."), said again when protection comes back on.
+/// Same IP as home: when the IP check has just written it as an error, with the IP (<see cref="SameIpWritten"/>), the line here would
+/// repeat it (diagnostics of 7 nov., two lines at 00:06:04); in every other way of getting there (protection turned on with the phone
+/// still on the home Wi-Fi, a New IP that came back as the home IP) this is the only line, so it stays.
+/// </summary>
+public sealed class ProblemLog
+{
+    string _last;
+    bool _sameIpWritten;
+
+    /// <summary>The IP check wrote "The phone connection IP (...) is the same as your home IP. Servers and CS2 blocked." just now.</summary>
+    public void SameIpWritten() => _sameIpWritten = true;
+
+    /// <summary>The line to write for this sync, or null. <paramref name="unprotected"/>: protection off or No phone, nothing is blocked.</summary>
+    public string Next(bool unprotected, string problem, Distrust distrust)
+    {
+        if (unprotected) { _last = null; _sameIpWritten = false; return null; }
+        if (distrust != Distrust.SameIp) _sameIpWritten = false;
+        if (problem == _last) return null;
+        _last = problem;
+        if (problem == null || distrust == Distrust.SameIp && _sameIpWritten) return null;
+        return problem + " Servers blocked.";
+    }
+}
+
 public sealed class GuardReport
 {
     public List<Adapter> Adapters { get; init; } = new();
@@ -127,7 +153,6 @@ public sealed class Guard
     readonly HashSet<string> _ownedRoutes = new(); // "prefix|ifIndex|nexthop"
     readonly string _ownedFile;
     readonly HashSet<string> _warned = new();
-    string _lastProblem;
     /// <summary>The Firewall errors of the last rewrite, so the same failure on every sync is logged once.</summary>
     string _fwErrors;
     /// <summary>The app is closing with the block kept, or Windows is signing out: from then on no sync writes anything.</summary>
@@ -379,6 +404,23 @@ public sealed class Guard
         catch (Exception ex) { errors.Add((ex.InnerException ?? ex).Message); }
     }
 
+    /// <summary>The Log lines for why servers are blocked (<see cref="ProblemLog"/>).</summary>
+    public ProblemLog Problems { get; } = new();
+
+    string _killLine;
+
+    /// <summary>
+    /// The kill switch line after the rules are written, or null when it would say again what the last one said: each forced sync
+    /// (every change of trust) rewrote the rules and wrote the same line, three times in 3 s at 00:06:01-00:06:04 in the diagnostics
+    /// of 7 nov. Rules that were found missing or wrong (<paramref name="repaired"/>) are always said.
+    /// </summary>
+    public static string KillLine(string text, ref string last, bool repaired)
+    {
+        if (text == last && !repaired) return null;
+        last = text;
+        return text;
+    }
+
     async Task<GuardReport> SyncCore(Settings s, List<string> ips, bool force, Distrust distrust, bool cs2Running, string verifiedKey, bool on)
     {
         var adapters = Net.Scan();
@@ -391,8 +433,8 @@ public sealed class Guard
         if (distrust != Distrust.None && candidate != null) problem = DistrustText.Of(distrust);
         var mode = PhoneLink.EffectiveMode(on, s.Mode, s.GameMode, cs2Running);
         // Off and No phone block nothing, so "Servers blocked" would be false there; back on protection the problem is said again.
-        if (mode is "home" or "off") _lastProblem = null;
-        else if (problem != _lastProblem) { if (problem != null) Log.Warn(problem + " Servers blocked."); _lastProblem = problem; }
+        if (Problems.Next(mode is "home" or "off", problem, distrust) is string blocked) Log.Warn(blocked);
+        if (mode is "home" or "off") _killLine = null;   // back on protection the kill switch line is said again
         var fwProblem = Firewall.CheckEnabled();
         if (mode is "home" or "off") return await HomeMode(s, ips, adapters, candidate, fwProblem, force, mode, distrust);
         var cs2 = s.LockCs2 && (s.PhoneSeen || egress != null) ? Steam.FindCs2(s.Cs2Path) : null;
@@ -419,7 +461,8 @@ public sealed class Guard
                 ipv6Ok = full != null ? Firewall.Verify(full[2]) : null;
             }
             ReadBack();
-            if (force || sig != _fwSignature || !killOk || !echoOk || cs2Ok == false || dnsOk == false || ipv6Ok == false)
+            var repaired = !killOk || !echoOk || cs2Ok == false || dnsOk == false || ipv6Ok == false;
+            if (force || sig != _fwSignature || repaired)
             {
                 // Each rule on its own: one failing must not leave the others on an old allowed IP.
                 var errors = new List<string>();
@@ -433,10 +476,10 @@ public sealed class Guard
                 _fwSignature = sig;
                 // Without admin rights every sync (5 s) fails the same way: one line until it changes, and no "blocked" that isn't true.
                 if (FirewallErrorLine(errors, ref _fwErrors) is string line) { if (errors.Count > 0) Log.Error(line); else Log.Ok(line); }
-                if (errors.Count == 0)
-                    Log.Info(egress == null
+                if (errors.Count == 0 && KillLine(egress == null
                         ? "Kill switch: servers in the list" + (cs2 != null ? " and CS2" : "") + (candidate != null ? " blocked (the phone isn't trusted yet)." : " blocked (no connection).")
-                        : $"Kill switch: servers in the list" + (cs2 != null ? " and CS2" : "") + $" only go out through \"{egress.Name}\" ({egress.LocalIp}).");
+                        : $"Kill switch: servers in the list" + (cs2 != null ? " and CS2" : "") + $" only go out through \"{egress.Name}\" ({egress.LocalIp}).", ref _killLine, repaired) is string kill)
+                    Log.Info(kill);
                 ReadBack();
             }
             if (dnsOk == false && _warned.Add("dns")) Log.Warn("Whole PC: the DNS rule was not confirmed, so name lookups may still go to the home router.");

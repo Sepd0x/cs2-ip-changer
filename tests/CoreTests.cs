@@ -449,7 +449,7 @@ static class CoreTests
             check("Rede CS2: mensagens atrasadas e perdidas", r?.UpLate == 58.0 && r.UpMissedLate == 1.6 && r.DownMissedLate == 2.5 && r.Dropped == 1,
                 $"{r?.UpLate}/{r?.UpMissedLate}/{r?.DownMissedLate}/{r?.Dropped}");
             var line = r?.Line("phone IP 203.0.113.7", "198.51.100.20:27015") ?? "";
-            check("Rede CS2: linha do Log curta com o IP do telemóvel", line == "CS2 network after 21 min on 198.51.100.20:27015 (phone IP 203.0.113.7): ping 37 ms (P95 52), "
+            check("Rede CS2: linha do Log curta com o IP do telemóvel", line == "CS2 network for the last 21 min on 198.51.100.20:27015 (phone IP 203.0.113.7): ping 37 ms (P95 52), "
                 + "jitter 13 ms up, 6 ms down, your messages late 58.0%, lost late 1.6%, server ticks lost late 2.5%, 1 packet dropped.", line);
             check("Rede CS2: esta partida conta como lag", r?.Laggy == true);
             check("Rede CS2: partida limpa não conta como lag, nem com um pacote perdido", !new NetReport { PingP50 = 30, JitterUp = 3, UpLate = 4, UpMissedLate = 0.1, DownMissedLate = 0.3, Dropped = 1 }.Laggy);

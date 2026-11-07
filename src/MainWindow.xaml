@@ -269,7 +269,7 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="44"/>
+                        <ColumnDefinition Width="56"/>
                     </Grid.ColumnDefinitions>
                     <Border Background="{Binding FlagSoftBrush}" Padding="5,0" Margin="0,0,6,0" VerticalAlignment="Center" Visibility="{Binding HasFlag, Converter={StaticResource Vis}}">
                         <TextBlock Text="{Binding FlagLabel}" Foreground="{Binding FlagBrush}" FontSize="11" FontWeight="SemiBold" MaxWidth="70" TextTrimming="CharacterEllipsis"/>

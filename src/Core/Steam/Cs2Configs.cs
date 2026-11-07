@@ -98,7 +98,13 @@ public sealed record CfgDiff(string Category, string Key, string Label, string A
 /// <paramref name="Pixels"/>: CS2's newer crosshair (style 7), whose length, gap and thickness are pixels at <paramref name="ScreenHeight"/>.
 /// </summary>
 public sealed record Crosshair(double? Style, double? Size, double? Gap, double? Thickness, bool? Dot, bool? Outline, double? OutlineThickness, int Color, byte R, byte G, byte B, byte Alpha, bool? TStyle,
-    bool Pixels = false, double? ScreenHeight = null);
+    bool Pixels = false, double? ScreenHeight = null, int OutlineMode = 0, byte OutlineR = 0, byte OutlineG = 0, byte OutlineB = 0, byte OutlineA = 255);
+
+/// <summary>
+/// What CS2 draws, in whole screen pixels: bar length, gap from the center to each bar, thickness (also the dot's size), whether the
+/// bars show (not with Dot Only), the dot, T style (no top bar), the outline (0 off, 1 all round, 2 only the top and left sides) and its width.
+/// </summary>
+public sealed record CrosshairPx(int Length, int Gap, int Thickness, bool Lines, bool Dot, bool T, int Outline, int OutlineWidth);
 
 /// <summary>
 /// CS2 writes its config files without escapes: a bind on the \ key is saved as "\" (seen on a real keys file). The Steam dialect
@@ -426,10 +432,37 @@ public static class Cs2Config
             _ => (B("cl_crosshaircolor_r", 50), B("cl_crosshaircolor_g", 250), B("cl_crosshaircolor_b", 50)),
         };
         var alpha = px ? B("cl_crosshaircolor_a", 255) : Bool(m, "cl_crosshairusealpha") == false ? (byte)255 : B("cl_crosshairalpha", 200);
+        // The outline: "true"/"false" in the older files; 0, 1 (all round) or 2 (half: top and left only) since Sep 2026
+        int? outline = m.TryGetValue("cl_crosshair_drawoutline", out var ov) ? ov switch { "true" => 1, "false" => 0, _ => Num(m, "cl_crosshair_drawoutline") is double d ? Math.Clamp((int)d, 0, px ? 2 : 1) : 0 } : null;
+        // Without the key CS2 uses its default: on (1) in the new crosshair (cs2crosshaircode.com, boostpirate.com), off in the older one
+        if (outline == null && px) outline = 1;
         return new Crosshair(Num(m, "cl_crosshairstyle"), Num(m, px ? "cl_crosshair_length" : "cl_crosshairsize"), Num(m, px ? "cl_crosshair_gap" : "cl_crosshairgap"),
             Num(m, px ? "cl_crosshair_thickness" : "cl_crosshairthickness"),
-            Bool(m, "cl_crosshairdot"), Bool(m, "cl_crosshair_drawoutline"), Num(m, "cl_crosshair_outlinethickness"), color, r, g, b, alpha, Bool(m, "cl_crosshair_t"),
-            px, px ? Num(m, "cl_crosshair_screen_height") : null);
+            Bool(m, "cl_crosshairdot"), outline == null ? null : outline > 0, Num(m, "cl_crosshair_outlinethickness"), color, r, g, b, alpha, Bool(m, "cl_crosshair_t"),
+            px, px ? Num(m, "cl_crosshair_screen_height") : null, outline ?? 0,
+            px ? B("cl_crosshairoutline_r", 0) : (byte)0, px ? B("cl_crosshairoutline_g", 0) : (byte)0, px ? B("cl_crosshairoutline_b", 0) : (byte)0, px ? B("cl_crosshairoutline_a", 255) : (byte)255);
+    }
+
+    /// <summary>
+    /// The crosshair in CS2's pixels on a screen <paramref name="height"/> px high.
+    /// Since CS2's update of 22-23 Sep 2026: length, gap (from the center) and thickness are pixels on a screen
+    /// cl_crosshair_screen_height high, rescaled to the screen in use (720p with 2 px is 4 px at 1440p); the outline is 1 px, all
+    /// round (1) or only on the top and left (2); style 6 is Dot Only, with the dot as big as the thickness.
+    /// The older files: length and thickness in 1/480 of the screen height, rounded to whole pixels half to even (size 2 is 4 px at
+    /// 1080p and 3 px at 768p), and the gap 4 + the value, in pixels.
+    /// </summary>
+    public static CrosshairPx CrosshairPixels(Crosshair c, int height = 1080)
+    {
+        static int Px(double v) => (int)Math.Round(v, MidpointRounding.ToEven);
+        if (c.Pixels)
+        {
+            var k = (double)height / Math.Clamp(c.ScreenHeight ?? 1080, 240, 65535);
+            var dotOnly = c.Style == 6;
+            return new CrosshairPx(Px((c.Size ?? 8) * k), Px((c.Gap ?? 4) * k), Px((c.Thickness ?? 2) * k), !dotOnly, c.Dot == true || dotOnly, c.TStyle == true, c.OutlineMode, 1);
+        }
+        var o = height / 480.0;
+        return new CrosshairPx(Px((c.Size ?? 5) * o), Px(4 + (c.Gap ?? 1)), Math.Max(1, Px((c.Thickness ?? 0.5) * o)), true, c.Dot == true, c.TStyle == true,
+            c.OutlineMode, Math.Max(1, Px(c.OutlineThickness ?? 1)));
     }
 
     /// <summary>"size 1 · gap -4 · thick 1 · cyan · dot off", or null without crosshair settings.</summary>
@@ -439,7 +472,7 @@ public static class Cs2Config
         if (c == null) return null;
         string N(double? v) => v?.ToString("0.##", CultureInfo.InvariantCulture) ?? "?";
         var color = c.Color >= 0 && c.Color < ColorNames.Length - 1 ? ColorNames[c.Color] : $"#{c.R:X2}{c.G:X2}{c.B:X2}";
-        return $"{(c.Pixels ? "length" : "size")} {N(c.Size)} · gap {N(c.Gap)} · thick {N(c.Thickness)} · {color}" + (c.Dot == true ? " · dot" : "") + (c.Outline == true ? " · outline" : "");
+        return $"{(c.Pixels ? "length" : "size")} {N(c.Size)} · gap {N(c.Gap)} · thick {N(c.Thickness)} · {color}" + (c.Dot == true ? " · dot" : "") + (c.Outline == true ? c.OutlineMode == 2 ? " · half outline" : " · outline" : "");
     }
 }
 

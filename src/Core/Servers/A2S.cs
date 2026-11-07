@@ -30,12 +30,12 @@ public static class A2S
         var req = Header.Concat(new byte[] { 0x54 }).Concat(Encoding.ASCII.GetBytes("Source Engine Query\0")).ToArray();
         var sw = Stopwatch.StartNew();
         var data = await Exchange(udp, ep, req, timeoutMs, 0x41, 0x49);
-        if (data.Length >= 9 && data[4] == 0x41)
+        // Challenge: repeat the request with the 4 bytes received. A server can answer that with a challenge again (a new one, or the
+        // first arriving twice): the diagnostics of 7 nov. had "Invalid A2S response" from it. Up to 3 rounds, each with the latest.
+        for (var round = 0; round < 3 && data.Length >= 9 && data[4] == 0x41; round++)
         {
-            // Challenge: repeat the request with the 4 bytes received.
-            req = req.Concat(data.Skip(5).Take(4)).ToArray();
             sw.Restart();   // the ping is one round trip: the challenge's own one doesn't count (review C3, it came out about double)
-            data = await Exchange(udp, ep, req, timeoutMs, 0x41, 0x49);
+            data = await Exchange(udp, ep, req.Concat(data.Skip(5).Take(4)).ToArray(), timeoutMs, 0x41, 0x49);
         }
         sw.Stop();
         if (data.Length < 6 || data[4] != 0x49) throw new InvalidDataException("Invalid A2S response");
@@ -65,11 +65,8 @@ public static class A2S
     {
         var req = Header.Concat(new byte[] { 0x55, 0xFF, 0xFF, 0xFF, 0xFF }).ToArray();
         var data = await Exchange(udp, ep, req, timeoutMs, 0x41, 0x44);
-        if (data.Length >= 9 && data[4] == 0x41)
-        {
-            req = Header.Concat(new byte[] { 0x55 }).Concat(data.Skip(5).Take(4)).ToArray();
-            data = await Exchange(udp, ep, req, timeoutMs, 0x41, 0x44);
-        }
+        for (var round = 0; round < 3 && data.Length >= 9 && data[4] == 0x41; round++)   // a challenge again, as for the info
+            data = await Exchange(udp, ep, Header.Concat(new byte[] { 0x55 }).Concat(data.Skip(5).Take(4)).ToArray(), timeoutMs, 0x41, 0x44);
         if (data.Length < 6 || data[4] != 0x44) return null;
         var count = data[5];
         var o = 6;
@@ -85,8 +82,14 @@ public static class A2S
             if (!string.IsNullOrWhiteSpace(n)) list.Add((n, score, t));
         }
         return list.OrderByDescending(p => p.score)
-            .Select(p => new A2SPlayer(p.n, p.score, TimeSpan.FromSeconds(float.IsFinite(p.t) && p.t > 0 ? p.t : 0))).ToList();
+            .Select(p => new A2SPlayer(p.n, p.score, PlayerTime(p.t))).ToList();
     }
+
+    /// <summary>
+    /// A2S_PLAYER's duration: seconds on the server, as a float. NaN, infinite or negative is 0; a value past a year is a year, because
+    /// TimeSpan.FromSeconds throws on a huge one and that threw away the whole player list.
+    /// </summary>
+    public static TimeSpan PlayerTime(float seconds) => TimeSpan.FromSeconds(float.IsFinite(seconds) && seconds > 0 ? Math.Min(seconds, 365 * 86400.0) : 0);
 
     /// <summary>
     /// Sends and waits for an answer of one of the <paramref name="accept"/> types. A late answer to an earlier request
