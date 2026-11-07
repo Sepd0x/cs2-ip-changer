@@ -14,10 +14,16 @@ import {
   BoxGeometry, PlaneGeometry, SphereGeometry, CylinderGeometry, TorusGeometry, RingGeometry, TubeGeometry, CircleGeometry, BufferGeometry, BufferAttribute,
   CatmullRomCurve3, QuadraticBezierCurve3, CubicBezierCurve3, InstancedMesh, Object3D,
   MeshStandardMaterial, MeshPhysicalMaterial, MeshBasicMaterial, ShaderMaterial, Material,
-  CanvasTexture, HemisphereLight, DirectionalLight, PointLight, RectAreaLight, FogExp2, PMREMGenerator, EquirectangularReflectionMapping,
-  SRGBColorSpace, AdditiveBlending, DoubleSide, BackSide, ColorManagement, SRGBTransfer, PCFShadowMap, RepeatWrapping, LinearFilter,
+  CanvasTexture, HemisphereLight, DirectionalLight, PointLight, RectAreaLight, FogExp2, PMREMGenerator, VSMShadowMap,
+  SRGBColorSpace, AdditiveBlending, DoubleSide, BackSide, ColorManagement, SRGBTransfer, RepeatWrapping, LinearFilter,
+  ShaderChunk, Shape, Path, ExtrudeGeometry, Matrix4, Quaternion, Euler, Vector4, LinearMipmapLinearFilter,
 } from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { Reflector } from 'three/addons/objects/Reflector.js';
+import { HorizontalBlurShader } from 'three/addons/shaders/HorizontalBlurShader.js';
+import { VerticalBlurShader } from 'three/addons/shaders/VerticalBlurShader.js';
+import { FullScreenQuad } from 'three/addons/postprocessing/Pass.js';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -74,6 +80,35 @@ function* build(canvas, opts = {}) {
   };
   const mul = (c, k) => c.clone().multiplyScalar(k);
 
+  // ---------- the air: the horizon takes the route's colours in the route's order (blue on the home side, magenta behind the
+  // mast, yellow round the servers only), so far things melt into the sky behind them. (A ground haze lifted the blacks: out) ----------
+  const v3 = c => `vec3(${c.r.toFixed(5)},${c.g.toFixed(5)},${c.b.toFixed(5)})`;
+  const HZ = `
+  vec3 hzTint(vec3 d){ vec2 h = d.xz / max(length(d.xz), 1e-4); float s = dot(h, vec2(.94, -.34));
+    return s < 0. ? mix(${v3(C.top2)}, ${v3(C.top1)}, -s) : mix(${v3(C.top2)}, ${v3(C.top3)}, smoothstep(.85, .98, s)); }
+  float hzGlow(vec3 d){ return exp(-abs(d.y)*24.) * (.35 + .65*smoothstep(.3, -.9, d.z)) * .012; }`;
+  ShaderChunk.fog_pars_vertex = `#ifdef USE_FOG\nvarying float vFogDepth; varying vec3 vFogV;\n#endif`;
+  ShaderChunk.fog_vertex = `#ifdef USE_FOG\nvFogDepth = - mvPosition.z; vFogV = mvPosition.xyz;\n#endif`;
+  ShaderChunk.fog_pars_fragment = `#ifdef USE_FOG
+  uniform vec3 fogColor; varying float vFogDepth; varying vec3 vFogV;
+  #ifdef FOG_EXP2
+  uniform float fogDensity;
+  #else
+  uniform float fogNear; uniform float fogFar;
+  #endif
+  ${HZ}
+  #endif`;
+  ShaderChunk.fog_fragment = `#ifdef USE_FOG
+  vec3 fgD = (vec4(vFogV, 0.) * viewMatrix).xyz; float fgL = length(fgD);
+  #ifdef FOG_EXP2
+  float fogFactor = 1.0 - exp(-fogDensity*fogDensity*vFogDepth*vFogDepth);
+  #else
+  float fogFactor = smoothstep(fogNear, fogFar, vFogDepth);
+  #endif
+  vec3 fgN = fgD / max(fgL, 1e-4);
+  gl_FragColor.rgb = mix(gl_FragColor.rgb, fogColor + hzTint(fgN)*hzGlow(fgN), fogFactor);
+  #endif`;
+
   // ---------- renderer: MSAA into a half float buffer, so edges are clean and the bloom has room ----------
   let renderer;
   try { renderer = new WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' }); }
@@ -85,31 +120,35 @@ function* build(canvas, opts = {}) {
   const dpr = () => Math.min(devicePixelRatio, small() ? 2 : 1.75);
   renderer.setPixelRatio(dpr());
   renderer.setClearColor(C.bg, 1);
-  renderer.shadowMap.enabled = true; renderer.shadowMap.type = PCFShadowMap; renderer.shadowMap.autoUpdate = false;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = VSMShadowMap; renderer.shadowMap.autoUpdate = false;
   RectAreaLightUniformsLib.init();
   const scene = new Scene();
-  scene.fog = new FogExp2(C.bg, 0.02);
+  scene.fog = new FogExp2(C.bg, 0.018);
   const camera = new PerspectiveCamera(30, 1, 0.1, 320);
 
   yield;
-  // ---------- a studio environment for reflections: dark, two soft boxes and the route's colours low on the horizon ----------
-  const envCv = document.createElement('canvas'); envCv.width = 512; envCv.height = 256;
+  // ---------- a studio for reflections, from the tokens: a dark room, the key's soft box, two tall strips for rims, the route's
+  // colours low on the horizon where each runs in the world. Brighter than white, so metal gets a real highlight. Until 7 Nov.
+  // it was only built when asked (opts.env), so no material had any reflection and every bevel was invisible ----------
+  const ENV_K = 1; let envRT = null;
+  const envScene = new Scene();
   {
-    const g = envCv.getContext('2d');
-    const sky = g.createLinearGradient(0, 0, 0, 256);
-    sky.addColorStop(0, cssv('--t-surface')); sky.addColorStop(0.5, cssv('--t-surface3')); sky.addColorStop(0.56, cssv('--t-edge')); sky.addColorStop(1, cssv('--t-edge'));
-    g.fillStyle = sky; g.fillRect(0, 0, 512, 256);
-    const box = (x, y, w, h, col, a) => { g.globalAlpha = a; const r = g.createRadialGradient(x + w / 2, y + h / 2, 2, x + w / 2, y + h / 2, Math.max(w, h)); r.addColorStop(0, col); r.addColorStop(1, 'transparent'); g.fillStyle = r; g.fillRect(x - w, y - h, w * 3, h * 3); g.globalAlpha = 1; };
-    box(60, 96, 140, 22, cssv('--t-text'), 0.55); box(330, 100, 110, 18, cssv('--t-muted'), 0.35); box(200, 20, 60, 14, cssv('--t-faint'), 0.12);
-    box(10, 110, 120, 18, cssv('--t-top1'), 0.5); box(200, 112, 120, 16, cssv('--t-top2'), 0.45); box(380, 110, 120, 18, cssv('--t-top3'), 0.4);
+    const room = new Mesh(new BoxGeometry(44, 24, 44), new MeshBasicMaterial({ color: C.surface, side: BackSide })); room.position.y = 8; envScene.add(room);
+    const ground = new Mesh(new PlaneGeometry(44, 44), new MeshBasicMaterial({ color: C.edge })); ground.rotation.x = -Math.PI / 2; ground.position.y = -3.9; envScene.add(ground);
+    const box = (w, h, col, k, x, y, z) => { const m = new Mesh(new PlaneGeometry(w, h), new MeshBasicMaterial({ color: mul(col, k), side: DoubleSide })); m.position.set(x, y, z); m.lookAt(0, 0, 0); envScene.add(m); };
+    box(16, 7, C.text, 3, -8, 17, 9);        // the key's soft box, on the key light's side
+    box(1.4, 14, C.text, 2.2, 9, 5, -20);    // a tall strip behind, on the rim side: long highlights down the mast and the rack edges
+    box(1.4, 12, C.muted, 1.4, -20, 5, -5);  // a second strip, left
+    box(12, 1.6, C.top1, 1.6, -18, 1, 9);    // blue on the desk's side
+    box(12, 1.6, C.top2, 1.6, 3, 1, -20);    // magenta towards the mast
+    box(12, 1.6, C.top3, 1.6, 20, 1, -7);    // yellow towards the server
   }
-  const envTex = new CanvasTexture(envCv); envTex.mapping = EquirectangularReflectionMapping; envTex.colorSpace = SRGBColorSpace;
 
   yield;
   // ---------- light: a dim world; each part of the route lights what is near it, the screen lights the desk ----------
-  const hemi = new HemisphereLight(C.surface3, C.bg, 0.9); scene.add(hemi);
-  const key = new DirectionalLight(mul(C.muted, 1), 0.75); key.position.set(-14, 26, 16); key.target.position.set(2, 0, -3);
-  key.castShadow = true; key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02; key.shadow.radius = 4;
+  const hemi = new HemisphereLight(C.surface3, C.bg, 0.35); scene.add(hemi);
+  const key = new DirectionalLight(mul(C.muted, 1), 1.5); key.position.set(-14, 26, 16); key.target.position.set(2, 0, -3);
+  key.castShadow = true; key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -0.0015; key.shadow.normalBias = 0.05; key.shadow.radius = 12; key.shadow.blurSamples = 16;
   Object.assign(key.shadow.camera, { left: -22, right: 24, top: 18, bottom: -16, near: 4, far: 70 });
   scene.add(key, key.target);
   const rim = new DirectionalLight(mul(C.text, 1), 1.0); rim.position.set(8, 1.6, -22); scene.add(rim); // separates the silhouettes from the dark
@@ -121,35 +160,110 @@ function* build(canvas, opts = {}) {
   const Lsrv = new PointLight(C.bad, 0, 7, 1.6); Lsrv.position.set(SX, 2.6, SZ + 2.4); scene.add(Lsrv);
   const Lbad = new PointLight(C.bad, 0, 6, 1.8); Lbad.position.set(-8.4, 1.4, -1.6); scene.add(Lbad);
 
-  // sky: a dark dome with a faint cool-to-warm horizon, so the world has an edge
-  scene.add(new Mesh(new SphereGeometry(150, 32, 16), new ShaderMaterial({
-    side: BackSide, depthWrite: false, fog: false,
-    uniforms: { uBg: { value: C.bg }, uA: { value: C.top1 }, uB: { value: C.top2 } },
-    vertexShader: `varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
-    fragmentShader: `uniform vec3 uBg,uA,uB; varying vec3 vP; void main(){ float h = exp(-abs(vP.y)*14.); float side = smoothstep(-1.,1.,vP.x); vec3 tint = mix(uA,uB,side); gl_FragColor = vec4(uBg + tint*h*.014, 1.); }`,
-  })));
+  // sky: darker overhead; low down the same haze the fog uses, seen from the camera, so far things melt into it. A hair of dither
+  const sky = new Mesh(new SphereGeometry(150, 48, 24), new ShaderMaterial({
+    side: BackSide, depthWrite: false, fog: false, uniforms: { uBg: { value: C.bg } },
+    vertexShader: `varying vec3 vP; void main(){ vec4 w = modelMatrix*vec4(position,1.); vP = w.xyz - cameraPosition; gl_Position = projectionMatrix*viewMatrix*w; }`,
+    fragmentShader: `uniform vec3 uBg; varying vec3 vP; ${HZ}
+    void main(){ vec3 d = normalize(vP); vec3 c = uBg*(1. - .3*smoothstep(.15, .8, d.y)) + hzTint(d)*hzGlow(d);
+      c += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)))*43758.5453) - .5)*.0006;
+      gl_FragColor = vec4(c, 1.); }`,
+  })); scene.add(sky);
+  yield;
+  // the far town: 130 m out, low roofs on the home side, taller blocks towards the servers; its foot sinks into the haze.
+  // No lit windows: it is a silhouette against the glow
+  const skyline = new Mesh(new CylinderGeometry(130, 130, 30, 192, 1, true), new ShaderMaterial({
+    side: BackSide, fog: false, alphaToCoverage: true, uniforms: { uSil: { value: mul(C.bg, 0.45) }, uBg: { value: C.bg } },
+    vertexShader: `varying vec3 vW; void main(){ vec4 w = modelMatrix*vec4(position,1.); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }`,
+    fragmentShader: `uniform vec3 uSil,uBg; varying vec3 vW; ${HZ}
+    float hs(float n){ return fract(sin(n*12.9898)*43758.5453); }
+    float lot(float x, float sd, float lo, float hi, float pw){
+      float id = floor(x), f = fract(x), r = hs(id + sd), h = mix(lo, hi, pow(r, pw));
+      h += step(.65, hs(id*5.7 + sd))*step(f, .45)*h*.22;
+      h += step(.84, hs(id*3.1 + sd))*step(abs(f - .3 - .4*hs(id + 9.)), .03)*(1.5 + 2.5*r);
+      return h*step(.05, f)*step(f, .95); }
+    void main(){
+      float az = atan(vW.z, vW.x), a = az/6.2831853 + .5, town = smoothstep(-.1, .7, cos(az + .9));
+      float land = 1.4 + .9*sin(az*3. + 1.) + .5*sin(az*7. + 2.) + .3*sin(az*19.);
+      float h = .72*max(land, max(lot(a*180., 3., 1.2, 4.5, 2.)*(.35 + .65*town), lot(a*64., 11., 2.5, 12., 3.)*town));
+      float d = h - vW.y, cov = clamp(d/max(fwidth(d), 1e-3) + .5, 0., 1.); if (cov < .01) discard;
+      vec3 v = normalize(vW - cameraPosition), haze = uBg + hzTint(v)*hzGlow(v);
+      gl_FragColor = vec4(mix(uSil, haze, .45 + .4*(1. - smoothstep(-2., 8., vW.y))), cov); }`,
+  }));
+  skyline.position.y = 11; scene.add(skyline);
+  yield;
+  // the near land: low ridges from 40 m out, other carriers' masts on them as dark silhouettes (no lights: red means blocked here)
+  const hillY = (az, r) => Math.max(0, 2.2 + 1.6 * Math.sin(az * 3 + 0.4) + 1.1 * Math.sin(az * 7 + 2.3) + 0.6 * Math.sin(az * 13 + 4.1) + 0.3 * Math.sin(az * 29 + 1.2) + 0.22 * Math.sin(az * 53 + 0.7) + 0.12 * Math.sin(az * 97 + 2.9) + 0.07 * Math.sin(az * 181 + 1.6))
+    * smooth(38, 62, r) * (1 - smooth(96, 112, r)) * (0.75 + 0.25 * Math.sin(r * 0.11 + az * 5)) - 0.05;
+  const hills = (() => {
+    const g = new RingGeometry(38, 112, 192, 18), p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i); p.setZ(i, hillY(Math.atan2(-y, x), Math.hypot(x, y))); }
+    g.computeVertexNormals(); const m = new Mesh(g, new MeshStandardMaterial({ color: mul(C.bg, 0.3), roughness: 0.95, metalness: 0 }));
+    m.rotation.x = -Math.PI / 2; scene.add(m); return m;
+  })();
+  const FAR = [[-2.7, 98, 6.5], [-2.25, 92, 7.5], [-1.9, 104, 6], [-1.55, 88, 8], [-1.2, 106, 6.5], [-0.85, 90, 7.5], [-0.45, 100, 5.5]]; // azimuth, metres out, height
+  const farMasts = (() => {
+    // a thin pole, and at its top a ring of three panels (the head every cell mast has), in one unit-high shape scaled per mast
+    const pole = new CylinderGeometry(0.008, 0.022, 1, 6, 1).translate(0, 0.5, 0);
+    const heads = [0, 1, 2].map(k => new BoxGeometry(0.025, 0.09, 0.012).translate(0.045, 0.93, 0).rotateY(k * Math.PI * 2 / 3));
+    const g = mergeGeometries([pole, ...heads]);
+    const im = new InstancedMesh(g, new MeshBasicMaterial({ color: mul(C.bg, 1.25), fog: false }), FAR.length), o = new Object3D();
+    FAR.forEach(([az, r, h], i) => {
+      const x = Math.cos(az) * r, z = Math.sin(az) * r, y0 = hillY(az, r) - 0.3;
+      o.position.set(x, y0, z); o.scale.setScalar(h); o.rotation.y = az; o.updateMatrix(); im.setMatrixAt(i, o.matrix);
+    });
+    scene.add(im); return im;
+  })();
 
   yield;
-  // ---------- materials ----------
+  // roughness as grey data (not colour): soft blotches, fine grain, optional streaks along x; seeded, so every load is the same
+  function roughMap(size, base, blot, grain, streak = 0, seed = 7) {
+    let s = seed; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    const t = cvTex(size, size, (g, w, h) => {
+      const grey = (v, a) => `rgba(${v | 0},${v | 0},${v | 0},${a})`;
+      g.fillStyle = grey(base, 1); g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 70; i++) {
+        const x = rnd() * w, y = rnd() * h, r = (0.04 + rnd() * 0.16) * w, v = clamp(base + (rnd() - 0.5) * 2 * blot, 0, 255);
+        for (const dx of [-w, 0, w]) for (const dy of [-h, 0, h]) { const gr = g.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, r); gr.addColorStop(0, grey(v, 0.55)); gr.addColorStop(1, grey(v, 0)); g.fillStyle = gr; g.fillRect(x + dx - r, y + dy - r, 2 * r, 2 * r); }
+      }
+      const im = g.getImageData(0, 0, w, h), d = im.data, row = new Float32Array(h);
+      for (let y = 0; y < h; y++) row[y] = (rnd() - 0.5) * 2 * streak;
+      for (let i = 0, p = 0; i < d.length; i += 4, p++) { const v = d[i] + (rnd() - 0.5) * 2 * grain + row[(p / w) | 0]; d[i] = d[i + 1] = d[i + 2] = v; }
+      g.putImageData(im, 0, 0);
+    }, false);
+    t.wrapS = t.wrapT = RepeatWrapping; return t;
+  }
+  const R = { concrete: roughMap(256, 215, 35, 18), spangle: roughMap(128, 110, 70, 10, 0, 11), powder: roughMap(128, 165, 12, 26, 0, 3), brushed: roughMap(256, 120, 20, 8, 22, 5) };
+
+  yield;
+  // ---------- materials: what each thing is made of; the studio's reflections give them their edges (no emissive lift) ----------
   const M = {
-    metal: new MeshStandardMaterial({ color: C.surface3, emissive: C.surface2, emissiveIntensity: 0.25, metalness: 0.35, roughness: 0.4, envMapIntensity: 0.6 }),
-    metalDark: new MeshStandardMaterial({ color: C.surface2, emissive: C.surface2, emissiveIntensity: 0.35, metalness: 0.3, roughness: 0.6, envMapIntensity: 0.55 }),
-    plastic: new MeshStandardMaterial({ color: C.side, metalness: 0, roughness: 0.55, envMapIntensity: 0.5 }),
-    rubber: new MeshStandardMaterial({ color: C.edge, metalness: 0, roughness: 0.9 }),
-    mat: new MeshStandardMaterial({ color: C.surface, metalness: 0, roughness: 0.95 }),
-    galv: new MeshStandardMaterial({ color: mul(C.muted, 0.5), metalness: 0.4, roughness: 0.45, envMapIntensity: 0.7 }),
-    radome: new MeshStandardMaterial({ color: mul(C.muted, 0.62), metalness: 0.05, roughness: 0.62, envMapIntensity: 0.5 }),
-    glass: new MeshPhysicalMaterial({ color: C.edge, metalness: 0.1, roughness: 0.08, transparent: true, opacity: 0.55, envMapIntensity: 1.1, clearcoat: 1, clearcoatRoughness: 0.05 }),
+    metal: new MeshStandardMaterial({ color: mul(C.muted, 0.42), metalness: 1, roughness: 0.8, roughnessMap: R.brushed }),      // anodised aluminium
+    metalDark: new MeshStandardMaterial({ color: mul(C.muted, 0.2), metalness: 1, roughness: 0.95, roughnessMap: R.brushed }),  // dark anodised
+    plastic: new MeshStandardMaterial({ color: C.surface2, metalness: 0, roughness: 0.62 }),                                     // black ABS
+    rubber: new MeshStandardMaterial({ color: C.edge, metalness: 0, roughness: 0.92 }),
+    mat: new MeshPhysicalMaterial({ color: C.surface, roughness: 0.95, sheen: 1, sheenRoughness: 0.55, sheenColor: C.surface3 }),  // cloth
+    galv: new MeshStandardMaterial({ color: mul(C.muted, 0.55), metalness: 0.75, roughness: 1, roughnessMap: R.spangle }),     // weathered zinc
+    radome: new MeshStandardMaterial({ color: mul(C.muted, 0.62), metalness: 0, roughness: 0.55 }),
+    powder: new MeshStandardMaterial({ color: C.surface2, metalness: 0, roughness: 1, roughnessMap: R.powder }),                 // powder-coated steel
+    concrete: new MeshStandardMaterial({ color: mul(C.surface3, 0.7), metalness: 0, roughness: 1, roughnessMap: R.concrete }),
+    glass: new MeshStandardMaterial({ color: C.edge, metalness: 0, roughness: 0.05, transparent: true, opacity: 0.45 }),        // the tint
+    glassSpec: new MeshStandardMaterial({ color: C.edge, metalness: 0, roughness: 0.04, transparent: true, blending: AdditiveBlending, depthWrite: false }), // its reflection, added
     // bead-blasted aluminium: the tower and the phone stand catch the light without a hot spot
-    matte: new MeshStandardMaterial({ color: C.surface3, emissive: C.surface2, emissiveIntensity: 0.25, metalness: 0.3, roughness: 0.85 }),
-    matteDark: new MeshStandardMaterial({ color: C.surface2, emissive: C.surface2, emissiveIntensity: 0.35, metalness: 0.25, roughness: 0.85 }),
-    chrome: new MeshStandardMaterial({ color: C.muted, metalness: 0.5, roughness: 0.3, envMapIntensity: 1 }),
+    matte: new MeshStandardMaterial({ color: mul(C.muted, 0.36), metalness: 1, roughness: 0.58 }),
+    matteDark: new MeshStandardMaterial({ color: mul(C.muted, 0.16), metalness: 1, roughness: 0.62 }),
+    chrome: new MeshStandardMaterial({ color: mul(C.muted, 1.3), metalness: 1, roughness: 0.16 }),
   };
   const shadowy = o => { o.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); return o; };
   // one geometry per size: the racks, the props and the cards repeat the same boxes, and building each again was a third of
   // the start's longest task on a slow phone (6 Nov.). Nothing changes a box's geometry after it is made
   const RB = new Map();
-  const rbox = (w, h, d, r, mat, seg = 3) => { const rr = Math.min(r, w / 2, h / 2, d / 2), k = w + ',' + h + ',' + d + ',' + rr + ',' + seg; let g = RB.get(k); if (!g) RB.set(k, g = new RoundedBoxGeometry(w, h, d, seg, rr)); return new Mesh(g, mat); };
+  const rgeo = (w, h, d, r, seg = 3) => { const rr = Math.min(r, w / 2, h / 2, d / 2), k = w + ',' + h + ',' + d + ',' + rr + ',' + seg; let g = RB.get(k); if (!g) RB.set(k, g = new RoundedBoxGeometry(w, h, d, seg, rr)); return g; };
+  const rbox = (w, h, d, r, mat, seg = 3) => new Mesh(rgeo(w, h, d, r, seg), mat);
+  // many small parts in one draw: [x, y, z, rx, ry, rz, sx, sy, sz]
+  const inst = (geo, mat, list) => { const m = new InstancedMesh(geo, mat, list.length), o = new Object3D(); list.forEach(([x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1], i) => { o.position.set(x, y, z); o.rotation.set(rx, ry, rz); o.scale.set(sx, sy, sz); o.updateMatrix(); m.setMatrixAt(i, o.matrix); }); return m; };
+  const unitBox = new BoxGeometry(1, 1, 1);
+  const rrect = (p, x, y, w, h, r) => { p.moveTo(x + r, y); p.lineTo(x + w - r, y); p.quadraticCurveTo(x + w, y, x + w, y + r); p.lineTo(x + w, y + h - r); p.quadraticCurveTo(x + w, y + h, x + w - r, y + h); p.lineTo(x + r, y + h); p.quadraticCurveTo(x, y + h, x, y + h - r); p.lineTo(x, y + r); p.quadraticCurveTo(x, y, x + r, y); return p; };
 
   // small canvas textures, drawn with the app's tokens
   function cvTex(w, h, draw, srgb = true) {
@@ -158,34 +272,121 @@ function* build(canvas, opts = {}) {
   }
 
   yield;
-  // ---------- ground: a matte floor with A's quiet dot lattice, lit for real by the route's lights ----------
-  const floor = new Mesh(new PlaneGeometry(260, 260), new MeshStandardMaterial({ color: mul(C.bg, 0.6), roughness: 1, metalness: 0 }));
+  // ---------- ground: dark polished concrete with A's quiet dot lattice; the route lights it and is mirrored in it ----------
+  const floor = new Mesh(new PlaneGeometry(260, 260), new MeshStandardMaterial({ color: mul(C.bg, 0.2), roughness: 1, metalness: 0 }));
   floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+  // the dots, slow wear like a poured floor, and the light the route's radio leg and arc throw on the ground under them
+  // (18 small lamps along them, filled in once the route is built; they go out with the line)
   const dots = new Mesh(new PlaneGeometry(260, 260), new ShaderMaterial({
     transparent: true, depthWrite: false, blending: AdditiveBlending,
-    uniforms: { uDot: { value: C.faint }, uCam: { value: camera.position } },
+    uniforms: { uDot: { value: C.faint }, uSurf: { value: C.surface3 }, uCam: { value: camera.position }, c1: { value: C.top1 }, c2: { value: C.top2 }, c3: { value: C.top3 },
+      uRL: { value: Array.from({ length: 18 }, () => new Vector4()) }, uLeg: { value: V3(0, 0, 0) }, uDraw: { value: 1 }, uReveal: { value: 0 }, uK: { value: 0.35 } },
     vertexShader: `varying vec3 vW; void main(){ vec4 w = modelMatrix*vec4(position,1.); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }`,
-    fragmentShader: `uniform vec3 uDot,uCam; varying vec3 vW;
+    fragmentShader: `uniform vec3 uDot,uSurf,uCam,c1,c2,c3,uLeg; uniform vec4 uRL[18]; uniform float uDraw,uReveal,uK; varying vec3 vW;
+    float h2(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7)))*43758.5453); }
+    float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3. - 2.*f);
+      return mix(mix(h2(i), h2(i + vec2(1., 0.)), f.x), mix(h2(i + vec2(0., 1.)), h2(i + 1.), f.x), f.y); }
     void main(){
-      vec2 p = vW.xz;
-      vec2 g = abs(fract(p+.5)-.5); float d = length(g);
-      float aa = fwidth(d)*1.1; float dotm = 1.-smoothstep(.026-aa,.026+aa,d);
-      vec2 g5 = abs(fract(p/6.+.5)-.5)*6.; float ln = min(g5.x,g5.y); float la = fwidth(ln); float line = 1.-smoothstep(0.,la*1.1,ln);
-      float fade = exp(-length(vW-uCam)*.028);
-      gl_FragColor = vec4(uDot*dotm*.42*fade, 1.);
+      vec2 p = vW.xz; float dist = length(vW - uCam);
+      vec2 g = abs(fract(p + .5) - .5); float d = length(g);
+      float aa = fwidth(d)*1.1; float dotm = 1. - smoothstep(.026 - aa, .026 + aa, d);
+      vec3 c = uDot*dotm*.42*exp(-dist*.028)*smoothstep(4., 9., dist); // close to the lens a dot is a grey disc, not a lattice
+      float tone = vn(p*.045)*.55 + vn(p*.15 + 7.)*.3 + vn(p*.6 + 3.)*.15;
+      c += uSurf*smoothstep(.45, .9, tone)*.05*exp(-dist*.014);
+      vec3 lt = vec3(0.);
+      if (p.x > -12. && p.x < 30. && p.y > -22. && p.y < 12.) for (int i = 0; i < 18; i++) {
+        vec4 q = uRL[i]; float u = q.w;
+        if (u > uReveal || (u > .58 && (u - .58)/.42 > uDraw)) continue;
+        vec3 dv = q.xyz - vW; vec3 col = u < .5 ? mix(c1, c2, u*2.) : mix(c2, c3, u*2. - 1.);
+        lt += col*(u < .58 ? uLeg.y*.45 : uLeg.z)*q.y/pow(dot(dv, dv) + .3, 1.5);
+      }
+      gl_FragColor = vec4(c + min(lt*uK, vec3(.008)), 1.);
     }`,
   }));
   dots.rotation.x = -Math.PI / 2; dots.position.y = 0.003; scene.add(dots);
-  // contact shadows: soft dark pools where things meet the ground
+  // the mirror: only what glows (layer REFL) is drawn into it, at half size, blurred through its mips by the floor's roughness
+  const REFL = 1;
+  const mirror = new Reflector(new PlaneGeometry(260, 260), { textureWidth: 512, textureHeight: 512, multisample: 0, clipBias: 0.003, color: C.text, shader: {
+    name: 'RouteMirror',
+    uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null }, tRough: { value: null }, uK: { value: 1.8 }, uBg: { value: C.bg }, uZoneA: { value: new Vector2(17, -9.5) }, uZoneB: { value: new Vector2(5.5, -6.5) } },
+    vertexShader: `uniform mat4 textureMatrix; varying vec4 vUv; varying vec3 vW;
+      void main(){ vUv = textureMatrix*vec4(position,1.); vec4 w = modelMatrix*vec4(position,1.); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }`,
+    fragmentShader: `uniform sampler2D tDiffuse,tRough; uniform float uK; uniform vec3 uBg; uniform vec2 uZoneA,uZoneB; varying vec4 vUv; varying vec3 vW;
+      void main(){
+        float r = texture2D(tRough, vW.xz*.1).r*.6 + texture2D(tRough, vW.xz*.023).r*.4;
+        vec2 uv = vUv.xy/vUv.w;
+        vec3 v = cameraPosition - vW; float dist = length(v);
+        vec3 c = max(textureLod(tDiffuse, uv, 2.2 + r*1.2 + dist*.02).rgb - uBg, 0.);
+        float f = .04 + .96*pow(1. - clamp(normalize(v).y,0.,1.), 5.);
+        vec2 dq = abs(vW.xz - vec2(-4.1, 1.75)) - vec2(5.8, 3.4); float desk = smoothstep(.2, 2.2, max(dq.x, dq.y));
+        vec2 za = abs(vW.xz - uZoneA) - vec2(3.6, 1.6); float zone = max(1. - smoothstep(0., 3., max(za.x, za.y)), 1. - smoothstep(2.5, 5., length(vW.xz - uZoneB))); desk *= zone;
+        gl_FragColor = vec4(c*uK*(.35+.65*f)*(1.15-.5*r)*exp(-dist*.02)*desk, 1.);
+      }`,
+  } });
+  mirror.getReflectionCamera(camera).layers.set(REFL);
+  { const t = mirror.getRenderTarget().texture; t.generateMipmaps = true; t.minFilter = LinearMipmapLinearFilter; }
+  Object.assign(mirror.material, { transparent: true, depthWrite: false, blending: AdditiveBlending });
+  mirror.material.uniforms.tRough.value = R.concrete;
+  mirror.rotation.x = -Math.PI / 2; mirror.position.y = 0.002; scene.add(mirror);
+  const mirrorDraw = mirror.onBeforeRender; let mirrorAt = -1, frameNo = 0;
+  mirror.onBeforeRender = function (...a) { if (mirrorAt === frameNo) return; mirrorAt = frameNo; mirrorDraw.apply(this, a); }; // once a frame, not once per render
+  const glows = o => { o.layers.enable(REFL); return o; };
+  // contact shadows, baked once from the real shapes: everything that casts a shadow is drawn from below in an orthographic
+  // view, darker the nearer the ground, then blurred; dark pools on the floor, the desk mat, the mast's pad and the raised
+  // floor take it. Until 7 Nov. these were round blobs, and the desk's lay under the mat where nobody saw them.
+  // A part that moves or hides (the phone, the plug, the firewall, a guide's prop) is marked userData.noBake
   const blobTex = cvTex(128, 128, (g) => { const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, 'rgba(0,0,0,.85)'); r.addColorStop(.55, 'rgba(0,0,0,.35)'); r.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = r; g.fillRect(0, 0, 128, 128); }, false);
   const blobMat = new MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false, opacity: 1 });
-  function blob(x, z, w, d, ry = 0) { const m = new Mesh(new PlaneGeometry(w, d), blobMat); m.rotation.set(-Math.PI / 2, 0, ry); m.position.set(x, 0.006, z); scene.add(m); }
+  function blobAt(x, y, z, w, d, ry = 0) { const m = new Mesh(new PlaneGeometry(w, d), blobMat); m.rotation.set(-Math.PI / 2, 0, ry); m.position.set(x, y, z); scene.add(m); return m; }
+  function blob() {}
+  const AO = { x0: -14, x1: 21, z0: -12.5, z1: 6.5 }, AO_H = 1.2, aoA = new WebGLRenderTarget(1024, 512), aoB = new WebGLRenderTarget(1024, 512);
+  const aoCam = new OrthographicCamera(AO.x0, AO.x1, AO.z1, AO.z0, 0, AO_H); aoCam.up.set(0, 0, 1); aoCam.lookAt(0, 1, 0); aoCam.updateMatrixWorld();
+  const aoMat = new ShaderMaterial({
+    side: DoubleSide, uniforms: { uH: { value: AO_H } },
+    vertexShader: `varying float vH; void main(){
+      #ifdef USE_INSTANCING
+      vec4 w = modelMatrix*instanceMatrix*vec4(position,1.);
+      #else
+      vec4 w = modelMatrix*vec4(position,1.);
+      #endif
+      vH = w.y; gl_Position = projectionMatrix*viewMatrix*w; }`,
+    fragmentShader: `uniform float uH; varying float vH; void main(){ float k = 1.-clamp(vH/uH,0.,1.); gl_FragColor = vec4(0.,0.,0.,k*k); }`,
+  });
+  const aoShow = new ShaderMaterial({
+    transparent: true, depthWrite: false,
+    uniforms: { tAO: { value: aoB.texture }, uM: { value: new Matrix4().multiplyMatrices(aoCam.projectionMatrix, aoCam.matrixWorldInverse) }, uK: { value: 0.9 } },
+    vertexShader: `varying vec3 vW; void main(){ vec4 w = modelMatrix*vec4(position,1.); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }`,
+    fragmentShader: `uniform sampler2D tAO; uniform mat4 uM; uniform float uK; varying vec3 vW;
+      void main(){ vec2 uv = (uM*vec4(vW.x,0.,vW.z,1.)).xy*.5+.5; if(any(lessThan(uv,vec2(0.)))||any(greaterThan(uv,vec2(1.)))) discard;
+        gl_FragColor = vec4(0.,0.,0.,texture2D(tAO,uv).a*uK); }`,
+  });
+  const aoRecv = []; // the mat, the pad, the raised floor: they take the shadows, they are not baked into them
+  function aoPlane(w, d, x, y, z) { const m = new Mesh(new PlaneGeometry(w, d), aoShow); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); scene.add(m); return m; }
+  aoPlane(AO.x1 - AO.x0, AO.z1 - AO.z0, (AO.x0 + AO.x1) / 2, 0.006, (AO.z0 + AO.z1) / 2);
+  function bakeContact() {
+    const hid = [];
+    scene.traverse(o => {
+      let skip = false; for (let q = o; q; q = q.parent) if (q.userData.noBake) skip = true;
+      if ((o.isMesh || o.isPoints) && o.visible && (skip || !o.castShadow || o.material.isShaderMaterial || aoRecv.includes(o))) { o.visible = false; hid.push(o); }
+    });
+    scene.overrideMaterial = aoMat; renderer.setClearColor(C.bg, 0);
+    renderer.setRenderTarget(aoA); renderer.clear(); renderer.render(scene, aoCam);
+    scene.overrideMaterial = null; renderer.setClearColor(C.bg, 1); hid.forEach(o => (o.visible = true));
+    const h = new FullScreenQuad(new ShaderMaterial(HorizontalBlurShader)), v = new FullScreenQuad(new ShaderMaterial(VerticalBlurShader));
+    for (const k of [2.5, 1]) {
+      h.material.uniforms.tDiffuse.value = aoA.texture; h.material.uniforms.h.value = k / 1024; renderer.setRenderTarget(aoB); h.render(renderer);
+      v.material.uniforms.tDiffuse.value = aoB.texture; v.material.uniforms.v.value = k / 512; renderer.setRenderTarget(aoA); v.render(renderer);
+    }
+    h.material.uniforms.tDiffuse.value = aoA.texture; renderer.setRenderTarget(aoB); h.render(renderer); // the last pass ends in aoB
+    renderer.setRenderTarget(null); h.dispose(); v.dispose(); h.material.dispose(); v.material.dispose(); aoA.dispose();
+  }
 
   let stitchRef = null;
   yield;
   // ---------- your desk: a mat that groups PC, screen, keyboard and phone ----------
   {
-    const deskMat = rbox(11.6, 0.05, 6.8, 0.025, M.mat); deskMat.position.set(-4.1, 0.025, 1.75); deskMat.receiveShadow = true; scene.add(deskMat);
+    const deskMat = rbox(11.6, 0.05, 6.8, 0.025, M.mat); deskMat.position.set(-4.1, 0.025, 1.75); deskMat.receiveShadow = true; scene.add(deskMat); aoRecv.push(deskMat);
+    aoPlane(11.54, 6.74, -4.1, 0.052, 1.75);
     const stitch = new Mesh(new RingGeometry(0.995, 1, 4, 1), new MeshBasicMaterial({ color: C.line })); stitchRef = stitch;
     stitch.rotation.set(-Math.PI / 2, 0, Math.PI / 4); stitch.scale.set(8.05, 4.72, 1); stitch.position.set(-4.1, 0.052, 1.75); scene.add(stitch);
   }
@@ -196,7 +397,13 @@ function* build(canvas, opts = {}) {
   const TW = 1.15, TH = 2.5, TD = 2.5, TX = -7.6, TZ = 0.6;
   {
     const t = new Group(); t.position.set(TX, 0, TZ); pc.add(t);
-    const body = rbox(TW, TH, TD, 0.07, M.matteDark); body.position.y = TH / 2 + 0.06; t.add(body);
+    // a shell, not a block: a solid body filled the case, so nothing behind the glass ever showed (7 Nov.)
+    const Y0 = 0.06, YC = TH / 2 + Y0;
+    for (const [w, h, d, x, y, z] of [[0.05, TH, TD, TW / 2 - 0.025, YC, 0], [TW, 0.08, TD, 0, TH + Y0 - 0.04, 0], [TW, 0.1, TD, 0, Y0 + 0.05, 0], [TW, TH, 0.07, 0, YC, TD / 2 - 0.035], [TW, TH, 0.05, 0, YC, -TD / 2 + 0.025]]) { const p = rbox(w, h, d, 0.03, M.matteDark); p.position.set(x, y, z); t.add(p); }
+    for (const [h, d, y, z] of [[0.1, TD - 0.1, TH + Y0 - 0.09, 0], [0.1, TD - 0.1, Y0 + 0.1, 0], [TH, 0.1, YC, TD / 2 - 0.08], [TH, 0.1, YC, -TD / 2 + 0.08]]) { const b = rbox(0.035, h, d, 0.012, M.matteDark); b.position.set(-TW / 2 + 0.018, y, z); t.add(b); }
+    const meshTex = cvTex(256, 560, (g, w, h) => { g.fillStyle = cssv('--t-side'); g.fillRect(0, 0, w, h); g.fillStyle = cssv('--t-edge'); for (let y = 12; y < h - 12; y += 8) for (let x = 12 + ((y / 8) % 2) * 4; x < w - 12; x += 8) { g.beginPath(); g.arc(x, y, 2.6, 0, 7); g.fill(); } });
+    const topMesh = new Mesh(new PlaneGeometry(TW - 0.22, TD - 0.62), new MeshStandardMaterial({ map: meshTex, roughness: 0.8, metalness: 0.3 })); topMesh.rotation.x = -Math.PI / 2; topMesh.position.set(0, TH + Y0 + 0.002, -0.2); t.add(topMesh);
+    for (const [w, d, x] of [[0.1, 0.035, -0.28], [0.1, 0.035, -0.14], [0.06, 0.022, -0.02]]) { const s = rbox(w, 0.012, d, 0.006, M.rubber); s.position.set(x, TH + Y0, TD / 2 - 0.2); t.add(s); } // USB-A, USB-A, USB-C
     // feet
     for (const [x, z] of [[-0.4, -1], [0.4, -1], [-0.4, 1], [0.4, 1]]) { const f = new Mesh(new CylinderGeometry(0.08, 0.09, 0.06, 16), M.rubber); f.position.set(x, 0.03, z); t.add(f); }
     // front panel (+z): fine vents and the top line, vertical
@@ -206,7 +413,7 @@ function* build(canvas, opts = {}) {
       for (let y = 40; y < h - 40; y += 9) for (let x = 30 + ((y / 9) % 2) * 4; x < w - 60; x += 9) { g.beginPath(); g.arc(x, y, 2.4, 0, 7); g.fill(); }
       g.fillStyle = cssv('--t-surface3'); g.fillRect(w - 40, 40, 2, h - 80);
     });
-    const front = new Mesh(new PlaneGeometry(TW - 0.12, TH - 0.12), new MeshStandardMaterial({ map: frontTex, roughness: 0.7, metalness: 0.3, envMapIntensity: 0.4 }));
+    const front = new Mesh(new PlaneGeometry(TW - 0.12, TH - 0.12), new MeshStandardMaterial({ map: frontTex, roughness: 0.7, metalness: 0 }));
     front.position.set(0, TH / 2 + 0.06, TD / 2 + 0.002); t.add(front);
     const lineGeo = new PlaneGeometry(0.035, TH - 0.5);
     const topLine = new Mesh(lineGeo, new ShaderMaterial({
@@ -220,14 +427,40 @@ function* build(canvas, opts = {}) {
     const pl = new Mesh(new RingGeometry(0.062, 0.075, 32), new MeshBasicMaterial({ color: mul(C.top1, 1.2) })); pl.position.set(-0.28, TH - 0.18, TD / 2 + 0.021); t.add(pl);
     // glass side (-x, towards the camera) and what is inside
     const glass = new Mesh(new PlaneGeometry(TD - 0.24, TH - 0.24), M.glass); glass.rotation.y = -Math.PI / 2; glass.position.set(-TW / 2 - 0.003, TH / 2 + 0.06, 0); t.add(glass);
-    const inside = new Group(); inside.position.set(-0.15, 0, 0); t.add(inside);
-    const board = new Mesh(new PlaneGeometry(TD - 0.5, TH - 0.5), new MeshStandardMaterial({ color: C.side, roughness: 0.8 })); board.rotation.y = -Math.PI / 2; board.position.set(0.3, TH / 2 + 0.1, -0.05); inside.add(board);
-    const gpu = rbox(0.36, 0.3, 1.6, 0.03, M.metal); gpu.position.set(0.05, 1.0, 0.1); inside.add(gpu);
-    const gpuLine = new Mesh(new PlaneGeometry(1.3, 0.012), new MeshBasicMaterial({ color: mul(C.top1, 0.8) })); gpuLine.rotation.y = -Math.PI / 2; gpuLine.position.set(-0.131, 1.08, 0.1); inside.add(gpuLine);
-    const cooler = new Mesh(new CylinderGeometry(0.24, 0.24, 0.22, 28), M.metal); cooler.rotation.z = Math.PI / 2; cooler.position.set(0.12, 1.85, -0.2); inside.add(cooler);
-    for (const y of [1.9, 1.15]) { const fan = new Mesh(new TorusGeometry(0.3, 0.025, 8, 40), new MeshBasicMaterial({ color: mul(C.top1, 0.45) })); fan.position.set(0.05, y, TD / 2 - 0.12); inside.add(fan); const hub = new Mesh(new CylinderGeometry(0.08, 0.08, 0.04, 16), M.metalDark); hub.rotation.x = Math.PI / 2; hub.position.set(0.05, y, TD / 2 - 0.12); inside.add(hub); }
-    const psu = rbox(0.5, 0.35, 0.9, 0.02, M.metalDark); psu.position.set(0.1, 0.32, -0.6); inside.add(psu);
-    const glow = new PointLight(C.top1, 3, 1.8, 2); glow.position.set(-0.1, 1.6, 0.2); inside.add(glow); // the parts read through the glass
+    const gs = glass.clone(); gs.material = M.glassSpec; gs.position.x -= 0.001; t.add(gs);
+    // the parts, seen through the glass: a vertical GPU with its fans to the glass, a tower cooler, RAM, sleeved cables
+    const pcbMat = new MeshStandardMaterial({ color: C.edge, roughness: 0.7, metalness: 0.15 });
+    const part = (w, h, d, r, m, x, y, z) => { const p = rbox(w, h, d, r, m); p.position.set(x, y, z); t.add(p); return p; };
+    part(0.03, 1.4, 1.4, 0.01, pcbMat, 0.36, 1.72, -0.45);                    // the board
+    part(TW - 0.09, 0.42, TD - 0.1, 0.02, M.matteDark, -0.02, 0.37, 0);        // PSU shroud
+    part(0.05, 0.26, 0.26, 0.01, M.metal, 0.32, 1.98, -0.55);                  // cooler's cold plate
+    part(0.09, 0.12, 0.55, 0.02, M.metal, 0.3, 2.33, -0.6);                    // VRM heatsinks
+    part(0.12, 0.45, 0.14, 0.02, M.metalDark, 0.28, 2.15, -1.05);              // rear I/O cover
+    t.add(inst(unitBox, M.galv, Array.from({ length: 24 }, (_, i) => [-0.08, 1.72 + i * 0.023, -0.55, 0, 0, 0, 0.64, 0.006, 0.24]))); // fin stack
+    t.add(inst(new CylinderGeometry(0.016, 0.016, 0.07, 8), M.galv, [-0.32, -0.18, -0.04, 0.1].flatMap(x => [[x, 2.28, -0.6], [x, 2.28, -0.5]])));
+    t.add(inst(rgeo(0.19, 0.7, 0.035, 0.008), M.metalDark, [0, 1, 2, 3].map(i => [0.25, 1.95, -0.2 + i * 0.06])));        // RAM
+    t.add(inst(rgeo(0.03, 0.7, 0.038, 0.008), M.galv, [0, 1, 2, 3].map(i => [0.145, 1.95, -0.2 + i * 0.06])));
+    part(0.24, 0.6, 1.58, 0.03, M.metalDark, -0.32, 0.97, -0.35);              // the GPU
+    part(0.015, 0.6, 1.58, 0.006, M.metal, -0.195, 0.97, -0.35);
+    part(0.3, 0.1, 0.14, 0.02, M.matteDark, -0.3, 0.62, -1.0);                 // its vertical mount
+    const shroudGeo = (() => { const s = rrect(new Shape(), -0.79, -0.3, 1.58, 0.6, 0.05); for (const z of [-0.52, 0, 0.52]) { const h = new Path(); h.absarc(z, 0, 0.21, 0, Math.PI * 2, true); s.holes.push(h); } return new ExtrudeGeometry(s, { depth: 0.03, bevelEnabled: true, bevelThickness: 0.008, bevelSize: 0.008, bevelSegments: 1, curveSegments: 24 }).rotateY(-Math.PI / 2); })();
+    const shroud = new Mesh(shroudGeo, M.metal); shroud.position.set(-0.44, 0.97, -0.35); t.add(shroud);
+    const bar = new Mesh(new PlaneGeometry(1.3, 0.014), new MeshBasicMaterial({ color: mul(C.top1, 0.8) })); bar.rotation.y = -Math.PI / 2; bar.position.set(-0.482, 1.235, -0.35); t.add(bar);
+    // fans: [centre, facing, size, frame ring]
+    const fans = [...[-0.87, -0.35, 0.17].map(z => [V3(-0.455, 0.97, z), new Euler(0, -Math.PI / 2, 0), 1, 0]), [V3(-0.08, 1.985, -0.4), new Euler(), 1.15, 1], [V3(-0.05, 2.0, -1.15), new Euler(), 1, 1], ...[0.95, 1.42, 1.89].map(y => [V3(-0.05, y, 1.15), new Euler(), 1, 1])];
+    const blades = new InstancedMesh(new BoxGeometry(0.155, 0.07, 0.006).translate(0.1225, 0, 0), M.plastic, fans.length * 7);
+    const hubs = new InstancedMesh(new CylinderGeometry(0.06, 0.06, 0.03, 16).rotateX(Math.PI / 2), M.metalDark, fans.length);
+    const frames = new InstancedMesh(new TorusGeometry(0.215, 0.02, 6, 32), M.metalDark, fans.length);
+    const FM = new Matrix4(), BM = new Matrix4(), TM = new Matrix4(), pitch = new Matrix4().makeRotationX(0.5), fq = new Quaternion(), fs = V3(1, 1, 1);
+    let nb = 0, nr = 0;
+    fans.forEach(([p, e, sc, ring], i) => { FM.compose(p, fq.setFromEuler(e), fs.setScalar(sc)); hubs.setMatrixAt(i, FM); if (ring) frames.setMatrixAt(nr++, FM); for (let k = 0; k < 7; k++) blades.setMatrixAt(nb++, TM.multiplyMatrices(FM, BM.makeRotationZ(k * Math.PI * 2 / 7 + i).multiply(pitch))); });
+    frames.count = nr; t.add(blades, hubs, frames);
+    t.add(new Mesh(mergeGeometries([
+      [V3(0.5, 1.5, 0.4), V3(0.36, 1.62, 0.42), V3(0.33, 1.8, 0.33), V3(0.33, 1.86, 0.27)],                 // 24-pin from the grommet
+      [V3(0.5, 2.42, -1.02), V3(0.4, 2.44, -0.95), V3(0.34, 2.4, -0.9)],                                     // CPU power
+      [V3(0.5, 0.75, 0.55), V3(0.1, 0.62, 0.62), V3(-0.25, 1.0, 0.52), V3(-0.32, 1.27, 0.35)],               // GPU power
+    ].map(p => new TubeGeometry(new CatmullRomCurve3(p), 20, 0.028, 6))), M.plastic));
+    const glow = new PointLight(C.top1, 5, 2.2, 2); glow.position.set(-0.25, 1.6, 0.2); t.add(glow); // the parts read through the glass
     shadowy(t); glass.castShadow = false; front.castShadow = false;
     blob(TX, TZ, 2.2, 3.4);
   }
@@ -240,11 +473,18 @@ function* build(canvas, opts = {}) {
   const mon = new Group(); mon.position.set(-4.5, 0.05, 0.1); mon.rotation.y = -0.28; pc.add(mon);
   const SW = 3.42, SH = 2.21, SY = 2.5;
   {
-    const panel = rbox(SW + 0.12, SH + 0.14, 0.07, 0.03, M.plastic); panel.position.set(0, SY, 0); mon.add(panel);
-    const back = rbox(1.6, 1.1, 0.26, 0.12, M.metalDark); back.position.set(0, SY - 0.1, -0.14); mon.add(back);
-    const chin = new Mesh(new PlaneGeometry(SW + 0.06, 0.02), new MeshBasicMaterial({ color: C.lineStrong })); chin.position.set(0, SY - SH / 2 - 0.035, 0.037); mon.add(chin);
-    const neck = rbox(0.34, 1.6, 0.1, 0.04, M.metalDark); neck.position.set(0, 1.08, -0.3); neck.rotation.x = 0.12; mon.add(neck);
-    const foot = rbox(1.3, 0.05, 0.85, 0.02, M.metalDark); foot.position.set(0, 0.025, -0.2); mon.add(foot);
+    // thin bezels and a chin, a back shell with a VESA boss, a hinge, and a neck that reaches the foot (it stopped 0.24 above it)
+    const panel = rbox(SW + 0.06, SH + 0.15, 0.06, 0.025, M.plastic); panel.position.set(0, SY - 0.045, 0); mon.add(panel);
+    const shell = rbox(SW - 0.24, SH - 0.2, 0.09, 0.045, M.metalDark); shell.position.set(0, SY - 0.05, -0.07); mon.add(shell);
+    const boss = rbox(0.8, 0.8, 0.14, 0.07, M.metalDark); boss.position.set(0, SY - 0.2, -0.16); mon.add(boss);
+    const chin = new Mesh(new PlaneGeometry(SW + 0.02, 0.02), new MeshBasicMaterial({ color: C.lineStrong })); chin.position.set(0, SY - SH / 2 - 0.035, 0.031); mon.add(chin);
+    const mh = new Mesh(new CylinderGeometry(0.06, 0.06, 0.36, 20), M.metal); mh.rotation.z = Math.PI / 2; mh.position.set(0, SY - 0.25, -0.26); mon.add(mh);
+    const ny0 = 0.04, nz0 = -0.4, ny1 = SY - 0.25, nz1 = -0.3, NL = Math.hypot(ny1 - ny0, nz1 - nz0);
+    const neckSh = rrect(new Shape(), -0.17, -NL / 2, 0.34, NL, 0.06); neckSh.holes.push(rrect(new Path(), -0.08, -NL / 2 + 0.35, 0.16, 0.42, 0.06));
+    const neck = new Mesh(new ExtrudeGeometry(neckSh, { depth: 0.07, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.01, bevelSegments: 2, curveSegments: 6 }).translate(0, 0, -0.035), M.matteDark);
+    neck.position.set(0, (ny0 + ny1) / 2, (nz0 + nz1) / 2); neck.rotation.x = Math.atan2(nz1 - nz0, ny1 - ny0); mon.add(neck);
+    const foot = rbox(1.36, 0.035, 0.78, 0.017, M.matteDark); foot.position.set(0, 0.0175, -0.25); mon.add(foot);
+    const footBoss = rbox(0.44, 0.05, 0.24, 0.02, M.matteDark); footBoss.position.set(0, 0.04, -0.4); mon.add(footBoss);
     shadowy(mon);
     blob(-4.5, 0, 2.2, 1.6, 0.28);
   }
@@ -253,7 +493,7 @@ function* build(canvas, opts = {}) {
   const scrG = scrCv.getContext('2d');
   scrG.fillStyle = cssv('--t-surface'); scrG.fillRect(0, 0, 1240, 800);
   const scrTex = new CanvasTexture(scrCv); scrTex.colorSpace = SRGBColorSpace; scrTex.anisotropy = 8; scrTex.minFilter = LinearFilter; scrTex.generateMipmaps = false;
-  const screenMat = new MeshBasicMaterial({ map: scrTex, toneMapped: false }); screenMat.color.setScalar(0.78);
+  const screenMat = new MeshBasicMaterial({ map: scrTex, toneMapped: false, fog: false }); screenMat.color.setScalar(0.78);
   const screen = new Mesh(new PlaneGeometry(SW, SH), screenMat); screen.position.set(0, SY, 0.037); mon.add(screen);
   const screenLight = new RectAreaLight(mul(C.text, 1), 3.6, SW, SH); screenLight.position.set(0, SY, 0.06); mon.add(screenLight); // faces +z by default
   let scrImg = null, scrIP = '';
@@ -275,14 +515,16 @@ function* build(canvas, opts = {}) {
   // keyboard and mouse
   {
     const kb = new Group(); kb.position.set(-4.25, 0.05, 1.75); kb.rotation.y = -0.28; pc.add(kb);
-    const base = rbox(2.75, 0.07, 0.9, 0.03, M.metalDark); base.position.y = 0.035; kb.add(base);
-    const keyGeo = new RoundedBoxGeometry(0.14, 0.05, 0.14, 2, 0.02);
-    const keys = new InstancedMesh(keyGeo, M.plastic, 15 * 5); const o = new Object3D(); let n = 0;
-    for (let r = 0; r < 4; r++) for (let c = 0; c < 15; c++) { o.position.set(-1.27 + c * 0.18 + (r % 2) * 0.03, 0.09, -0.34 + r * 0.17); o.scale.set(1, 1, 1); o.updateMatrix(); keys.setMatrixAt(n++, o.matrix); }
-    for (const [x, w] of [[-1.17, 2.2], [-0.62, 1], [0.17, 5.6], [0.98, 1], [1.17, 1.4]]) { o.position.set(x, 0.09, -0.34 + 4 * 0.17); o.scale.set(w, 1, 1); o.updateMatrix(); keys.setMatrixAt(n++, o.matrix); }
+    // a 75% layout on a deck tilted 3 degrees: a function row with its gaps, the wide keys at their real widths
+    const deck = new Group(); deck.rotation.x = 0.05; kb.add(deck);
+    const base = rbox(2.85, 0.07, 1.05, 0.03, M.metalDark); base.position.y = 0.035; deck.add(base);
+    const ROWS = [[1, -1, 1, 1, 1, 1, -0.5, 1, 1, 1, 1, -0.5, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2], [1.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.5], [1.75, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2.25], [2.25, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2.75], [1.25, 1.25, 1.25, 6.25, 1.25, 1.25, 1.25, 1.25]];
+    const P = 0.165, keyGeo = rgeo(0.15, 0.05, 0.135, 0.02, 2), keys = new InstancedMesh(keyGeo, M.plastic, 80), o = new Object3D(); let n = 0;
+    ROWS.forEach((row, r) => { let x = -15 * P / 2; for (const w of row) { if (w < 0) { x -= w * P; continue; } o.position.set(x + w * P / 2, 0.09, -0.42 + r * 0.15 + (r ? 0.04 : 0)); o.scale.set((w * P - 0.015) / 0.15, 1, 1); o.updateMatrix(); keys.setMatrixAt(n++, o.matrix); x += w * P; } });
     keys.count = n;
-    kb.add(keys);
+    deck.add(keys);
     const mouse = new Mesh(new SphereGeometry(0.15, 24, 16), M.plastic); mouse.scale.set(0.75, 0.35, 1.15); mouse.position.set(1.9, 0.06, 0.1); kb.add(mouse);
+    const wheel = new Mesh(new CylinderGeometry(0.022, 0.022, 0.014, 12), M.rubber); wheel.rotation.z = Math.PI / 2; wheel.position.set(1.9, 0.108, 0.01); kb.add(wheel);
     shadowy(kb); blob(-4.25, 1.75, 3.2, 1.3, 0.28);
   }
 
@@ -294,18 +536,28 @@ function* build(canvas, opts = {}) {
   {
     const stand = new Group(); phone.add(stand);
     const plate = rbox(1.0, 0.04, 0.95, 0.02, M.matte); plate.position.set(0, 0.02, -0.08); stand.add(plate);
-    const back = rbox(0.6, 1.2, 0.05, 0.02, M.matte); back.position.set(0, 0.62, -0.3); back.rotation.x = TILT; stand.add(back);
-    const lip = rbox(1.0, 0.12, 0.08, 0.03, M.matte); lip.position.set(0, 0.1, 0.2); stand.add(lip);
+    // the phone rests on the stand in its own tilt (it floated 0.2 in front of the old back), two hooks hold its bottom edge
+    // with a slot between them for the USB-C plug, a kickstand on a hinge holds it up
+    const rest = rbox(0.62, 1.25, 0.04, 0.02, M.matte); rest.position.set(0, 0.5, -PD / 2 - 0.022); tilt.add(rest);
+    for (const x of [-0.3, 0.3]) { const h = rbox(0.24, 0.035, 0.17, 0.012, M.matte); h.position.set(x, -0.018, 0); tilt.add(h); const l = rbox(0.24, 0.08, 0.03, 0.012, M.matte); l.position.set(x, 0.005, PD / 2 + 0.02); tilt.add(l); }
+    const tl = (y, z) => [0.16 + y * Math.cos(TILT) - z * Math.sin(TILT), 0.12 + y * Math.sin(TILT) + z * Math.cos(TILT)];
+    const [hy, hz] = tl(0.78, -PD / 2 - 0.06), fy = 0.04, fz = -0.48;
+    const leg = rbox(0.48, Math.hypot(hy - fy, hz - fz), 0.035, 0.015, M.matte); leg.position.set(0, (hy + fy) / 2, (hz + fz) / 2); leg.rotation.x = Math.atan2(hz - fz, hy - fy); stand.add(leg);
+    const hinge = new Mesh(new CylinderGeometry(0.03, 0.03, 0.54, 16), M.matte); hinge.rotation.z = Math.PI / 2; hinge.position.set(0, hy, hz); stand.add(hinge);
+    const btn = (x, y, h) => { const b = rbox(0.03, h, 0.04, 0.012, M.chrome); b.position.set(x, y, 0); tilt.add(b); };
+    if (opts.ios) { btn(-PW / 2 - 0.008, PH - 0.42, 0.1); btn(-PW / 2 - 0.008, PH - 0.62, 0.17); btn(-PW / 2 - 0.008, PH - 0.84, 0.17); btn(PW / 2 + 0.008, PH - 0.7, 0.26); }
+    else { btn(PW / 2 + 0.008, PH - 0.48, 0.13); btn(PW / 2 + 0.008, PH - 0.78, 0.28); }
     const body = rbox(PW, PH, PD, 0.1, M.metalDark, 4); body.position.set(0, PH / 2, 0); tilt.add(body);
     if (opts.ios) { const cam = rbox(0.36, 0.36, 0.035, 0.08, M.metalDark); cam.position.set(-0.2, PH - 0.3, -PD / 2 - 0.014); tilt.add(cam); for (const [lx, ly] of [[-0.08, 0.08], [-0.08, -0.08], [0.08, 0]]) { const l = new Mesh(new CylinderGeometry(0.055, 0.055, 0.03, 20), M.chrome); l.rotation.x = Math.PI / 2; l.position.set(-0.2 + lx, PH - 0.3 + ly, -PD / 2 - 0.035); tilt.add(l); } }
     else { const cam = rbox(0.7, 0.18, 0.035, 0.08, M.plastic); cam.position.set(0, PH - 0.25, -PD / 2 - 0.014); tilt.add(cam); }
-    shadowy(phone); blob(-0.55, 2.85, 1.4, 1.4, 0.6);
+    shadowy(phone); phone.userData.noBake = true; blobAt(-0.55, 0.053, 2.85, 1.3, 1.3, 0.6); // it hides in some shots: a soft blob of its own
   }
   const phCv = document.createElement('canvas'); phCv.width = 512; phCv.height = 1060;
   const phTex = new CanvasTexture(phCv); phTex.colorSpace = SRGBColorSpace; phTex.anisotropy = 8;
-  const phScreen = new Mesh(new PlaneGeometry(PW - 0.07, PH - 0.08), new MeshBasicMaterial({ map: phTex, toneMapped: false }));
+  const phScreen = new Mesh(new PlaneGeometry(PW - 0.07, PH - 0.08), new MeshBasicMaterial({ map: phTex, toneMapped: false, fog: false }));
   phScreen.material.color.setScalar(0.85);
   phScreen.position.set(0, PH / 2, PD / 2 + 0.002); tilt.add(phScreen);
+  { const pg = new Mesh(phScreen.geometry, M.glassSpec); pg.position.copy(phScreen.position); pg.position.z += 0.001; tilt.add(pg); } // its glass
   let phState = '';
   function drawPhone(data, tether) {
     const k = data + '|' + tether; if (k === phState) return; phState = k;
@@ -348,23 +600,45 @@ function* build(canvas, opts = {}) {
     const s = new Group(); s.position.copy(mastBase); scene.add(s);
     const pole = new Mesh(new CylinderGeometry(0.16, 0.34, mastH, 28, 1), M.galv); pole.position.y = mastH / 2; s.add(pole);
     for (const y of [2.6, 5.2]) { const j = new Mesh(new CylinderGeometry(0.3 - y * 0.022, 0.3 - y * 0.022, 0.12, 28), M.galv); j.position.y = y; s.add(j); } // the flanged joints
-    const tray = new Mesh(new BoxGeometry(0.08, mastH - 0.6, 0.05), M.metalDark); tray.position.set(0.25, (mastH - 0.6) / 2, 0.12); tray.rotation.z = -0.017; s.add(tray);
+    const tray = rbox(0.08, mastH - 0.6, 0.05, 0.015, M.metalDark); tray.position.set(0.25, (mastH - 0.6) / 2, 0.12); tray.rotation.z = -0.017; s.add(tray);
     const ring = new Mesh(new TorusGeometry(0.62, 0.035, 8, 48), M.galv); ring.rotation.x = Math.PI / 2; ring.position.y = mastH - 0.35; s.add(ring);
     const ring2 = ring.clone(); ring2.position.y = mastH - 1.55; s.add(ring2);
+    // each sector: a panel on its own pipe with a 4 degree downtilt, its radio strapped to the pole, jumpers with a drip loop
+    const brk = [], feeds = [], pipeGeo = new CylinderGeometry(0.025, 0.025, 1.9, 8);
     for (let k = 0; k < 3; k++) {
-      const a = (k / 3) * Math.PI * 2 + 0.4;
-      const arm = new Mesh(new BoxGeometry(0.62, 0.05, 0.05), M.galv); arm.position.set(Math.cos(a) * 0.31, mastH - 0.95, Math.sin(a) * 0.31); arm.rotation.y = -a; s.add(arm);
-      const ant = rbox(0.3, 1.45, 0.12, 0.05, M.radome); ant.position.set(Math.cos(a) * 0.64, mastH - 0.95, Math.sin(a) * 0.64); ant.rotation.y = -a + Math.PI / 2; s.add(ant);
-      const rru = rbox(0.2, 0.32, 0.12, 0.02, M.metalDark); rru.position.set(Math.cos(a) * 0.42, mastH - 1.9, Math.sin(a) * 0.42); rru.rotation.y = -a + Math.PI / 2; s.add(rru);
+      const a = (k / 3) * Math.PI * 2 + 0.4, ca = Math.cos(a), sa = Math.sin(a), ry = -a + Math.PI / 2;
+      const at = (r, dy, sd = 0) => V3(ca * r - sa * sd, mastH + dy, sa * r + ca * sd);
+      const arm = rbox(0.62, 0.05, 0.05, 0.012, M.galv); arm.position.copy(at(0.31, -0.95)); arm.rotation.y = -a; s.add(arm);
+      const ant = rbox(0.3, 1.45, 0.12, 0.05, M.radome); ant.rotation.order = 'YXZ'; ant.rotation.set(0.07, ry, 0); ant.position.copy(at(0.64, -0.95)); s.add(ant);
+      const pipe = new Mesh(pipeGeo, M.galv); pipe.position.copy(at(0.48, -0.95)); s.add(pipe);
+      for (const dy of [0.55, -0.55]) { const back = 0.58 + Math.sin(0.07) * dy; brk.push([...at((0.505 + back) / 2, -0.95 + dy).toArray(), 0, ry, 0, 0.035, 0.04, back - 0.505]); }
+      const rru = rbox(0.2, 0.32, 0.12, 0.02, M.metalDark); rru.position.copy(at(0.42, -1.9)); rru.rotation.y = ry; s.add(rru);
+      for (const dy of [0.09, -0.09]) brk.push([...at(0.29, -1.9 + dy).toArray(), 0, ry, 0, 0.05, 0.035, 0.16]);
+      for (const sd of [-0.05, 0.05]) feeds.push([at(0.42, -1.74, sd), at(0.47, -1.64, sd), at(0.56, -1.86, sd), at(0.6, -1.69, sd)]);
+      let d = a - 0.45; d = Math.atan2(Math.sin(d), Math.cos(d));
+      feeds.push([0, 0.4, 0.8].map(f => V3(Math.cos(0.45 + d * f) * 0.3, mastH - 2.6 + f * 0.4, Math.sin(0.45 + d * f) * 0.3)).concat([at(0.42, -2.07)]));
     }
+    s.add(inst(unitBox, M.galv, brk));
+    const pegs = []; // step bolts, alternating, from 2.4 m up (real ones start out of reach)
+    for (let y = 2.4, i = 0; y < mastH - 3.0; y += 0.19, i++) { if (Math.abs(y - 2.6) < 0.1 || Math.abs(y - 5.2) < 0.1) continue; const th = 1.95 + (i % 2 ? 0.2 : -0.2), r = 0.34 - 0.18 * y / mastH + 0.06; pegs.push([Math.cos(th) * r, y, Math.sin(th) * r, 0, Math.PI - th, Math.PI / 2]); }
+    s.add(inst(new CylinderGeometry(0.011, 0.011, 0.16, 6), M.galv, pegs));
     const dishG = new Group(); dishG.position.set(-0.4, mastH - 2.7, 0.26); dishG.rotation.y = -0.9; s.add(dishG);
     const dish = new Mesh(new SphereGeometry(0.34, 28, 10, 0, Math.PI * 2, 0, 0.55), new MeshStandardMaterial({ color: mul(C.muted, 0.62), roughness: 0.6, side: DoubleSide })); dish.rotation.x = -Math.PI / 2; dish.position.z = 0.29; dishG.add(dish);
     const dishRim = new Mesh(new TorusGeometry(0.175, 0.012, 6, 32), M.galv); dishRim.position.z = 0.13; dishG.add(dishRim);
     const feed = new Mesh(new CylinderGeometry(0.012, 0.012, 0.25, 6), M.galv); feed.rotation.x = Math.PI / 2; feed.position.z = 0.24; dishG.add(feed);
-    const mount = new Mesh(new BoxGeometry(0.05, 0.05, 0.3), M.galv); mount.position.z = -0.12; dishG.add(mount);
-    const cab = rbox(1.1, 1.5, 0.75, 0.04, M.metalDark); cab.position.set(1.3, 0.75, 0.5); s.add(cab);
+    const mount = rbox(0.05, 0.05, 0.3, 0.012, M.galv); mount.position.z = -0.12; dishG.add(mount);
+    const cab = rbox(1.1, 1.5, 0.75, 0.04, M.powder); cab.position.set(1.3, 0.75, 0.5); s.add(cab);
     const door = new Mesh(new PlaneGeometry(0.004, 1.3), new MeshBasicMaterial({ color: C.surface })); door.position.set(1.3, 0.75, 0.876); s.add(door);
-    const pad = rbox(4.2, 0.12, 3.6, 0.03, M.mat); pad.position.set(0.6, 0.06, 0.2); s.add(pad);
+    // the cabinet's roof and handles, and the ice bridge that carries the feeders from the pole to it
+    const roofC = rbox(1.22, 0.05, 0.86, 0.02, M.metal); roofC.position.set(1.3, 1.53, 0.5); s.add(roofC);
+    for (const x of [1.22, 1.38]) { const h = rbox(0.03, 0.18, 0.04, 0.01, M.chrome); h.position.set(x, 0.85, 0.89); s.add(h); }
+    for (const z of [0.26, 0.44]) { const r = rbox(0.95, 0.03, 0.03, 0.008, M.galv); r.position.set(0.75, 1.95, z); s.add(r); }
+    s.add(inst(unitBox, M.galv, [0.35, 0.51, 0.67, 0.83, 0.99, 1.15].map(x => [x, 1.95, 0.35, 0, 0, 0, 0.03, 0.02, 0.18])));
+    const post = new Mesh(new CylinderGeometry(0.03, 0.03, 1.83, 8), M.galv); post.position.set(0.5, 1.035, 0.35); s.add(post);
+    feeds.push([V3(0.25, 2.4, 0.16), V3(0.32, 2.0, 0.34), V3(1.0, 1.99, 0.35), V3(1.15, 1.75, 0.38), V3(1.2, 1.52, 0.4)]);
+    s.add(new Mesh(mergeGeometries(feeds.map((p, i) => new TubeGeometry(new CatmullRomCurve3(p), 16, i % 3 === 2 ? 0.02 : 0.011, 5))), M.rubber));
+    const pad = rbox(4.2, 0.12, 3.6, 0.03, M.concrete); pad.position.set(0.6, 0.06, 0.2); s.add(pad); aoRecv.push(pad);
+    aoPlane(4.14, 3.54, mastBase.x + 0.6, 0.122, mastBase.z + 0.2);
     // a low fence round the site
     const posts = [], rail = [];
     const fx0 = -1.5, fx1 = 2.7, fz0 = -1.6, fz1 = 2.0;
@@ -386,21 +660,31 @@ function* build(canvas, opts = {}) {
   }
   // the aviation light: real masts carry one; it blinks slowly, as theirs do
   const beacon = new Mesh(new SphereGeometry(0.07, 12, 12), new MeshBasicMaterial({ color: C.bad }));
-  beacon.position.copy(mastBase).add(V3(0, mastH + 0.05, 0)); scene.add(beacon);
+  beacon.position.copy(mastBase).add(V3(0, mastH + 0.05, 0)); scene.add(glows(beacon));
 
   yield;
   // ---------- the CS2 server: three cabinets on a raised floor; the middle one is the server you play on ----------
   const serverTop = V3(SX, 4.62, SZ);
   const RW = 1.75, RH = 4.6, RD = 1.5;
-  const unitTex = cvTex(256, 512, (g, w, h) => {
-    g.fillStyle = cssv('--t-edge'); g.fillRect(0, 0, w, h);
-    const U = h / 30;
-    for (let u = 0; u < 30; u++) {
-      const y = u * U; if (u % 7 === 6) continue; // gaps, as real racks have
-      g.fillStyle = (u % 3) ? cssv('--t-surface2') : cssv('--t-surface3'); g.fillRect(10, y + 1, w - 20, U - 2);
-      g.fillStyle = cssv('--t-side');
-      for (let b = 0; b < 8; b++) g.fillRect(70 + b * 20, y + 4, 16, U - 8);
-      g.fillStyle = cssv('--t-line-strong'); g.fillRect(16, y + U / 2 - 1, 30, 2);
+  // the servers behind the mesh doors: 1U, 2U and 4U machines with drive bays, ears and rails, a blanking panel every 7th U
+  const unitTex = cvTex(512, 1024, (g, w, h) => {
+    const v = cssv, U = h / 30;
+    g.fillStyle = v('--t-edge'); g.fillRect(0, 0, w, h);
+    g.fillStyle = v('--t-surface2'); g.fillRect(0, 0, 20, h); g.fillRect(w - 20, 0, 20, h);
+    g.fillStyle = v('--t-edge'); for (let y = 0; y < h; y += U / 3) { g.fillRect(7, y + 3, 6, 6); g.fillRect(w - 13, y + 3, 6, 6); }
+    const server = (y, n, alt) => {
+      const hh = n * U - 3;
+      g.fillStyle = alt ? v('--t-surface3') : v('--t-surface2'); g.fillRect(24, y + 1, w - 48, hh);
+      g.fillStyle = v('--t-side'); g.fillRect(24, y + 1, 12, hh); g.fillRect(w - 36, y + 1, 12, hh);
+      g.fillStyle = v('--t-edge');
+      if (n >= 4) { for (let yy = y + 8; yy < y + hh - 6; yy += 9) for (let xx = 74 + ((yy / 9) % 2) * 5; xx < w - 60; xx += 10) { g.beginPath(); g.arc(xx, yy, 3, 0, 7); g.fill(); } return; }
+      for (let k = 0; k < 4; k++) g.fillRect(70 + k * 10, y + 4, 5, hh - 8);
+      for (let r = 0; r < n; r++) for (let b = 0; b < 9; b++) { const bx = 120 + b * 34, by = y + 3 + r * U; g.fillStyle = v('--t-side'); g.fillRect(bx, by, 30, U - 7); g.fillStyle = v('--t-line-strong'); g.fillRect(bx + 3, by + U - 12, 24, 2); }
+    };
+    let u = 0;
+    for (const b of [[1, 1, 2, 2], [2, 1, 1, 1, 1], [4, 2], [1, 1, 1, 1, 2], [2]]) {
+      let alt = false; for (const n of b) { server(u * U, n, alt); alt = !alt; u += n; }
+      if (u < 30) { g.fillStyle = v('--t-surface'); g.fillRect(24, u * U + 1, w - 48, U - 3); g.fillStyle = v('--t-line-strong'); for (const x of [30, w - 30]) { g.beginPath(); g.arc(x, u * U + U / 2, 3, 0, 7); g.fill(); } u++; }
     }
   });
   const doorTex = cvTex(256, 512, (g, w, h) => {
@@ -410,23 +694,41 @@ function* build(canvas, opts = {}) {
   const ledPts = [];
   {
     const s = new Group(); scene.add(s);
-    const floorTiles = rbox(7.2, 0.18, 3.2, 0.03, M.metalDark); floorTiles.position.set(SX, 0.09, SZ); s.add(floorTiles);
-    const tileLines = new Mesh(new PlaneGeometry(7.1, 3.1), new MeshBasicMaterial({ map: cvTex(512, 224, (g, w, h) => { g.fillStyle = cssv('--t-surface2'); g.fillRect(0, 0, w, h); g.strokeStyle = cssv('--t-edge'); g.lineWidth = 3; for (let x = 0; x <= w; x += w / 11) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } for (let y = 0; y <= h; y += h / 5) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); } }) }));
-    tileLines.material.color.setScalar(0.5); tileLines.rotation.x = -Math.PI / 2; tileLines.position.set(SX, 0.181, SZ); s.add(tileLines);
+    // a raised floor on pedestals (the void shows at its edge), perforated tiles in the cold aisle, a cable ladder overhead
+    const slab = rbox(7.2, 0.045, 3.2, 0.015, M.powder); slab.position.set(SX, 0.1575, SZ); s.add(slab);
+    aoPlane(7.1, 3.1, SX, 0.186, SZ);
+    const ped = []; for (let i = 0; i <= 11; i++) for (let j = 0; j <= 5; j++) ped.push([SX - 3.55 + i * 7.1 / 11, 0.0675, SZ - 1.55 + j * 0.62]);
+    s.add(inst(new CylinderGeometry(0.03, 0.045, 0.135, 8), M.galv, ped));
+    const tileLines = new Mesh(new PlaneGeometry(7.1, 3.1), new MeshStandardMaterial({ roughness: 0.7, metalness: 0, map: cvTex(512, 224, (g, w, h) => { g.fillStyle = cssv('--t-surface2'); g.fillRect(0, 0, w, h); g.strokeStyle = cssv('--t-edge'); g.lineWidth = 3; for (let x = 0; x <= w; x += w / 11) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } for (let y = 0; y <= h; y += h / 5) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); } }) }));
+    tileLines.receiveShadow = true; tileLines.rotation.x = -Math.PI / 2; tileLines.position.set(SX, 0.181, SZ); s.add(tileLines);
+    const perfMat = new MeshStandardMaterial({ roughness: 0.6, metalness: 0.4, map: cvTex(128, 128, (g, w, h) => { g.fillStyle = cssv('--t-surface3'); g.fillRect(0, 0, w, h); g.fillStyle = cssv('--t-edge'); for (let y = 14; y < h - 10; y += 8) for (let x = 14; x < w - 10; x += 8) { g.beginPath(); g.arc(x, y, 2.6, 0, 7); g.fill(); } }) });
+    const perf = inst(new PlaneGeometry(0.625, 0.6), perfMat, [2, 5, 8].map(i => [SX - 3.55 + (i + 0.5) * 7.1 / 11, 0.183, SZ + 1.24, -Math.PI / 2])); perf.receiveShadow = true; s.add(perf);
+    const TY = 0.18 + RH + 0.42, TZc = SZ - 0.45;
+    for (const dz of [-0.22, 0.22]) { const r = rbox(5.9, 0.07, 0.025, 0.008, M.powder); r.position.set(SX, TY, TZc + dz); s.add(r); }
+    const lad = []; for (let x = -2.85; x <= 2.86; x += 0.3) lad.push([SX + x, TY - 0.02, TZc, 0, 0, 0, 0.025, 0.02, 0.44]);
+    for (const x of [SX - 2.05, SX, SX + 2.05]) for (const dx of [-0.55, 0.55]) lad.push([x + dx, (TY + 4.84) / 2, TZc + 0.22, 0, 0, 0, 0.02, TY - 4.84, 0.02]);
+    s.add(inst(unitBox, M.powder, lad));
+    s.add(new Mesh(mergeGeometries([[V3(SX - 2.9, TY + 0.05, TZc), V3(SX + 2.9, TY + 0.05, TZc)], ...[SX - 2.05, SX, SX + 2.05].map(x => [V3(x + 0.4, TY + 0.05, TZc), V3(x + 0.4, TY + 0.04, TZc - 0.3), V3(x + 0.4, TY - 0.15, SZ - 0.62), V3(x + 0.4, 4.84, SZ - 0.6)])].map(p => new TubeGeometry(new CatmullRomCurve3(p), 16, 0.05, 6))), M.rubber));
+    const doorFrameGeo = (() => { const w = RW - 0.08, h = RH - 0.12, b = 0.07, sh = rrect(new Shape(), -w / 2, -h / 2, w, h, 0.02); sh.holes.push(rrect(new Path(), -w / 2 + b, -h / 2 + b, w - 2 * b, h - 2 * b, 0.01)); return new ExtrudeGeometry(sh, { depth: 0.03, bevelEnabled: true, bevelThickness: 0.006, bevelSize: 0.006, bevelSegments: 1 }); })();
+    const hinges = [];
     for (const [i, x] of [[0, SX - 2.05], [1, SX], [2, SX + 2.05]]) {
       const r = new Group(); r.position.set(x, 0.18, SZ); s.add(r);
-      const frame = rbox(RW, RH, RD, 0.04, M.metalDark); frame.position.y = RH / 2; r.add(frame);
-      const units = new Mesh(new PlaneGeometry(RW - 0.2, RH - 0.3), new MeshStandardMaterial({ map: unitTex, roughness: 0.6, metalness: 0.4, envMapIntensity: 0.4 }));
+      const frame = rbox(RW, RH, RD, 0.04, M.powder); frame.position.y = RH / 2; r.add(frame);
+      const units = new Mesh(new PlaneGeometry(RW - 0.2, RH - 0.3), new MeshStandardMaterial({ map: unitTex, roughness: 0.5, metalness: 0.6 }));
       units.position.set(0, RH / 2, RD / 2 + 0.005); r.add(units);
-      const door = new Mesh(new PlaneGeometry(RW - 0.12, RH - 0.16), new MeshStandardMaterial({ color: C.surface3, metalness: 0.45, roughness: 0.55, alphaMap: doorTex, transparent: true, side: DoubleSide, envMapIntensity: 0.5 }));
+      const door = new Mesh(new PlaneGeometry(RW - 0.12, RH - 0.16), new MeshStandardMaterial({ color: C.surface3, metalness: 0, roughness: 0.6, alphaMap: doorTex, transparent: true, side: DoubleSide }));
       door.position.set(0, RH / 2, RD / 2 + 0.05); r.add(door);
       const handle = rbox(0.04, 0.5, 0.05, 0.015, M.chrome); handle.position.set(RW / 2 - 0.16, RH / 2, RD / 2 + 0.09); r.add(handle);
+      const df = new Mesh(doorFrameGeo, M.metalDark); df.position.set(0, RH / 2, RD / 2 + 0.035); r.add(df);
+      const hp = rbox(0.08, 0.62, 0.02, 0.01, M.metalDark); hp.position.set(RW / 2 - 0.16, RH / 2, RD / 2 + 0.065); r.add(hp);
+      for (const f of [0.15, 0.5, 0.85]) hinges.push([x - RW / 2 + 0.02, 0.18 + RH * f, SZ + RD / 2 + 0.05]);
       const top = rbox(RW, 0.06, RD, 0.02, M.metal); top.position.y = RH + 0.03; r.add(top);
       // power and activity lights on each unit: the middle cabinet's blink with the game's packets
       const U = (RH - 0.3) / 30;
       for (let u = 0; u < 30; u++) { if (u % 7 === 6) continue; ledPts.push([x - RW / 2 + 0.24, 0.18 + 0.15 + RH - 0.3 - (u + 0.5) * U, SZ + RD / 2 + 0.085, i === 1 ? 1 : 0, Math.random()]); }
       shadowy(r); door.castShadow = false;
     }
+    s.add(inst(new CylinderGeometry(0.025, 0.025, 0.16, 10), M.galv, hinges));
     // where the route comes down into the server: a cable entry on the middle cabinet's roof
     const entry = new Mesh(new CylinderGeometry(0.16, 0.2, 0.18, 20), M.metal); entry.position.set(SX, 0.18 + RH + 0.12, SZ); s.add(entry);
     blob(SX, SZ, 8.4, 4.2);
@@ -445,7 +747,7 @@ function* build(canvas, opts = {}) {
         vA = max(act, aK*uBan); vBan = aK*uBan; gl_PointSize = min(uPx*(46. + 46.*aK*uBan)/-mv.z, 4.*uPx); gl_Position = projectionMatrix*mv; }`,
       fragmentShader: `uniform vec3 uG,uB; varying float vA; varying float vBan; void main(){ float d = length(gl_PointCoord-.5); float a = smoothstep(.5,.0,d); gl_FragColor = vec4(mix(uG,uB,vBan)*a*vA*1.3, 1.); }`,
     });
-    scene.add(new Points(g, m)); return m;
+    scene.add(glows(new Points(g, m))); return m;
   })();
 
   yield;
@@ -453,13 +755,18 @@ function* build(canvas, opts = {}) {
   const routerPos = V3(-11, 0, -4.8);
   {
     const r = new Group(); r.position.copy(routerPos); r.rotation.y = 0.35; scene.add(r);
-    const body = rbox(1.9, 0.34, 1.2, 0.12, M.plastic); body.position.y = 0.2; r.add(body);
+    // a body and a lid with vent slots, feet, rear ports, four paddle antennas on hinge knuckles
+    const body = rbox(1.9, 0.26, 1.2, 0.1, M.plastic); body.position.y = 0.17; r.add(body);
+    const lid = rbox(1.74, 0.08, 1.04, 0.04, M.plastic); lid.position.y = 0.32; r.add(lid);
     const face = new Mesh(new PlaneGeometry(1.5, 0.05), new MeshBasicMaterial({ color: C.surface3 })); face.position.set(0, 0.2, 0.602); r.add(face);
     for (let i = 0; i < 4; i++) { const led = new Mesh(new CircleGeometry(0.025, 12), new MeshBasicMaterial({ color: mul(C.text, 0.9) })); led.position.set(-0.55 + i * 0.16, 0.26, 0.604); r.add(led); }
+    r.add(inst(unitBox, M.rubber, Array.from({ length: 11 }, (_, i) => [-0.6 + i * 0.12, 0.361, -0.05, 0, 0, 0, 0.04, 0.006, 0.62]).concat([0, 1, 2, 3].map(i => [-0.45 + i * 0.2, 0.15, -0.602, 0, 0, 0, 0.13, 0.09, 0.01]))));
+    r.add(inst(new CylinderGeometry(0.07, 0.08, 0.04, 12), M.rubber, [[-0.75, 0.02, -0.45], [0.75, 0.02, -0.45], [-0.75, 0.02, 0.45], [0.75, 0.02, 0.45]]));
+    const knGeo = new CylinderGeometry(0.055, 0.055, 0.1, 16);
     for (const [dx, rz] of [[-0.75, 0.22], [-0.25, 0.06], [0.25, -0.06], [0.75, -0.22]]) {
-      const a = new Group(); a.position.set(dx, 0.36, -0.5); a.rotation.z = rz; r.add(a);
-      const st = new Mesh(new CylinderGeometry(0.035, 0.045, 1.0, 12), M.plastic); st.position.y = 0.5; a.add(st);
-      const tip = new Mesh(new SphereGeometry(0.035, 12, 8), M.plastic); tip.position.y = 1.0; a.add(tip);
+      const a = new Group(); a.position.set(dx, 0.3, -0.52); a.rotation.z = rz; r.add(a);
+      const kn = new Mesh(knGeo, M.plastic); kn.rotation.z = Math.PI / 2; kn.position.y = 0.06; a.add(kn);
+      const pad = rbox(0.14, 0.95, 0.04, 0.035, M.plastic); pad.position.y = 0.56; a.add(pad);
     }
     shadowy(r); blob(routerPos.x, routerPos.z, 2.6, 1.8, -0.35);
   }
@@ -472,8 +779,8 @@ function* build(canvas, opts = {}) {
   const routeVS = `varying vec2 vUv; varying vec3 vN; varying vec3 vV;
   void main(){ vUv = uv; vec4 mv = modelViewMatrix*vec4(position,1.); vN = normalize(normalMatrix*normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix*mv; }`;
   const homeMat = new ShaderMaterial({ uniforms: { uC: { value: mul(C.lineStrong, 1.7) }, uHi: { value: C.muted }, uTime: { value: 0 }, uLive: { value: 0 } }, vertexShader: routeVS, fragmentShader: homeFS });
-  scene.add(new Mesh(new TubeGeometry(homeCable, 80, 0.04, 8), homeMat));
-  scene.add(new Mesh(new TubeGeometry(homeOut, 90, 0.035, 6), homeMat));
+  scene.add(glows(new Mesh(new TubeGeometry(homeCable, 80, 0.04, 8), homeMat)));
+  scene.add(glows(new Mesh(new TubeGeometry(homeOut, 90, 0.035, 6), homeMat)));
 
   yield;
   // ---------- the kill switch: Windows Firewall on the PC. CS2's way home ends at it; the rest of the PC still goes home ----------
@@ -488,7 +795,7 @@ function* build(canvas, opts = {}) {
     vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
     fragmentShader: `uniform vec3 uC; uniform float uHot,uTime; varying vec2 vUv; void main(){ vec2 e = min(vUv, 1.-vUv); float rim = 1.-smoothstep(.0,.025,min(e.x,e.y)); gl_FragColor = vec4(uC*(rim*.9 + .14)*uHot, 1.); }`,
   });
-  { const pane = new Mesh(new PlaneGeometry(1.55, 1.45), hatch); pane.position.set(0, 0.79, 0); gate.add(pane); }
+  { const pane = new Mesh(new PlaneGeometry(1.55, 1.45), hatch); pane.position.set(0, 0.79, 0); gate.add(glows(pane)); }
   gate.scale.setScalar(0.001);
   // CS2 trying the home connection: a red dashed run from the PC that stops at the firewall
   const homeTry = new CatmullRomCurve3([LAN_PC.clone().add(V3(0.2, 0.15, 0)), LAN_PC.clone().lerp(gatePos, 0.5).setY(0.45), gatePos.clone().add(V3(0, 0.55, 0))]);
@@ -499,7 +806,7 @@ function* build(canvas, opts = {}) {
     fragmentShader: `uniform float uTime,uHot; uniform vec3 uBad; varying vec2 vUv;
     void main(){ if(fract(vUv.x*14. - uTime*1.2)>.55) discard; if(vUv.x > uHot*1.05) discard; gl_FragColor = vec4(uBad*1.1, uHot); }`,
   });
-  scene.add(new Mesh(new TubeGeometry(homeTry, 60, 0.035, 6), tryMat));
+  scene.add(glows(new Mesh(new TubeGeometry(homeTry, 60, 0.035, 6), tryMat)));
 
   yield;
   // ---------- the route itself: proposal A's line, at full strength ----------
@@ -528,9 +835,12 @@ function* build(canvas, opts = {}) {
     });
   }
   const mCable = routeMat(0, 0.3), mAir = routeMat(0.3, 0.58, { uDash: { value: 46 } }), mArc = routeMat(0.58, 1);
-  scene.add(new Mesh(new TubeGeometry(cable, 220, 0.06, 12), mCable));
-  scene.add(new Mesh(new TubeGeometry(air, 200, 0.022, 6), mAir));
-  scene.add(new Mesh(new TubeGeometry(arc, 220, 0.05, 10), mArc));
+  scene.add(glows(new Mesh(new TubeGeometry(cable, 220, 0.06, 12), mCable)));
+  const airTube = glows(new Mesh(new TubeGeometry(air, 200, 0.022, 6), mAir)); scene.add(airTube);
+  const arcTube = glows(new Mesh(new TubeGeometry(arc, 220, 0.05, 10), mArc)); scene.add(arcTube);
+  { const a = dots.material.uniforms.uRL.value; let n = 0; // the ground's lamps: 6 on the radio leg, 12 on the arc
+    for (let j = 0; j < 6; j++) { const t = (j + 0.5) / 6, q = air.getPointAt(t); a[n++].set(q.x, q.y, q.z, lerp(0.3, 0.58, t)); }
+    for (let j = 0; j < 12; j++) { const t = (j + 0.5) / 12, q = arc.getPointAt(t); a[n++].set(q.x, q.y, q.z, lerp(0.58, 1, t)); } }
   // the two USB-C plugs: real ends on a real cable; the phone's one comes out when the cable is pulled
   function plug(at, dir) {
     const g = new Group(); g.position.copy(at); g.lookAt(at.clone().add(dir)); scene.add(g);
@@ -549,7 +859,7 @@ function* build(canvas, opts = {}) {
   const mastRings = [];
   for (let i = 0; i < 2; i++) {
     const m = new Mesh(ringGeo, new MeshBasicMaterial({ color: C.top2, transparent: true, depthWrite: false, blending: AdditiveBlending, side: DoubleSide }));
-    m.position.copy(mastTop).add(V3(0, -0.95, 0)); m.rotation.x = -Math.PI / 2; scene.add(m); mastRings.push(m);
+    m.position.copy(mastTop).add(V3(0, -0.95, 0)); m.rotation.x = -Math.PI / 2; scene.add(glows(m)); mastRings.push(m);
   }
 
   // the game's packets, PC to server
@@ -568,7 +878,23 @@ function* build(canvas, opts = {}) {
     vertexShader: `attribute float aU,aA; uniform float uPx; varying float vU,vA; void main(){ vU = aU; vA = aA; vec4 mv = modelViewMatrix*vec4(position,1.); gl_PointSize = uPx*44./-mv.z; gl_Position = projectionMatrix*mv; }`,
     fragmentShader: `uniform vec3 c1,c2,c3; varying float vU,vA; void main(){ float d = length(gl_PointCoord-.5); float a = smoothstep(.5,0.,d); a = a*a*(1.+2.*smoothstep(.18,0.,d)); vec3 col = vU < .5 ? mix(c1,c2,vU*2.) : mix(c2,c3,vU*2.-1.); gl_FragColor = vec4(col*a*vA*1.5, 1.); }`,
   });
-  const packets = new Points(pGeo, pMat); packets.frustumCulled = false; scene.add(packets);
+  const packets = new Points(pGeo, pMat); packets.frustumCulled = false; scene.add(glows(packets));
+
+  // the USB cable lights the cloth under it along its whole length (blue to violet), not only round one point light
+  const SPN = 16, spU = { uSp: { value: [] }, uSpC1: { value: C.top1 }, uSpC2: { value: C.top2 }, uSpK: { value: 10 }, uSpRev: { value: 1 } };
+  for (let i = 0; i < SPN; i++) spU.uSp.value.push(cable.getPointAt(i / (SPN - 1)));
+  M.mat.onBeforeCompile = sh => {
+    Object.assign(sh.uniforms, spU);
+    sh.vertexShader = 'varying vec3 vSpW;\n' + sh.vertexShader.replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\n vSpW = (modelMatrix*vec4(transformed,1.)).xyz;');
+    sh.fragmentShader = `varying vec3 vSpW; uniform vec3 uSp[${SPN}]; uniform vec3 uSpC1,uSpC2; uniform float uSpK,uSpRev;
+    vec3 spill(vec3 p){ vec3 acc = vec3(0.);
+      if(p.x < -9. || p.x > .5 || p.z < .5 || p.z > 5.5) return acc;
+      for(int i=0;i<${SPN - 1};i++){ vec3 a = uSp[i], b = uSp[i+1]-a; float t = clamp(dot(p-a,b)/dot(b,b),0.,1.);
+        float d = length(p-a-b*t), u = (float(i)+t)/${(SPN - 1).toFixed(1)}*.3;
+        acc = max(acc, mix(uSpC1,uSpC2,u*2.)*step(u,uSpRev)/(1.+d*d*30.)); }
+      return acc*uSpK; }\n` + sh.fragmentShader.replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\n reflectedLight.indirectDiffuse += spill(vSpW)*diffuseColor.rgb;');
+  };
+  M.mat.customProgramCacheKey = () => 'spill';
 
   yield;
   // ---------- shots: one per beat. Positions are proposal A's where A had them ----------
@@ -642,7 +968,7 @@ function* build(canvas, opts = {}) {
   wrap.className = 'wd-labels'; wrap.setAttribute('aria-hidden', 'true');
   const LAB = {
     pc: { at: V3(TX + 0.2, TH + 0.25, TZ), beats: [0, 1], html: '<b>Your PC</b><span>CS2 and Steam</span>' },
-    phone: { at: PHONE_TOP.clone().add(V3(0, 0.1, 0)), beats: [0, 1, 2, 3], side: { wide: [0, 0], tall: [1, 0] }, html: '<b>Phone</b><span data-k="ph">mobile data on</span>' },
+    phone: { at: PHONE_TOP.clone().add(V3(0, 0.1, 0)), atTall: tw(-PW / 2 - 0.22, PH * 0.82, 0), beats: [0, 1, 2, 3], side: { wide: [0, 0], tall: [1, 1] }, html: '<b>Phone</b><span data-k="ph">mobile data on</span>' },
     cable: { at: cable.getPointAt(0.62), beats: [1], side: { wide: [1, 1], tall: [1, 1] }, html: '<b>USB cable</b><span>USB tethering, or the phone\'s hotspot</span>' },
     router: { at: routerPos.clone().add(V3(0, 1.45, 0)), beats: [1, 3], side: { wide: [0, 0], tall: [0, 0] }, html: '<b>Home router</b><span>browser, Discord, downloads</span>' },
     mast: { at: mastTop.clone().add(V3(0, 0.3, 0)), beats: [0, 2, 4], r: 1, one: 1, html: '<b>Your carrier</b><span data-k="mast">4G / 5G</span>' },
@@ -652,7 +978,7 @@ function* build(canvas, opts = {}) {
     cut: { at: PORT.clone().add(V3(0, 0.05, 0)), beats: [3], dn: 1, side: { wide: [1, 1], tall: [1, 1] }, html: '<b>Cable pulled</b><span>CS2 is cut off, not sent home</span>' },
   };
   // the guides build on this world: they may add props, labels and shots, and run their own story each frame
-  const __gx = (opts.extend && opts.extend({ scene, camera, renderer, C, M, LAB, SHOTS, K, rbox, cable, air, arc, mCable, mAir, mArc, homeMat, hatch, tryMat, gate, gateFrameMat, Lbad, L2, L3, leds, mastTop, mastBase, serverTop, routerPos, gatePos, PORT, PHONE_TOP, SX, SZ, monW, scrC, scrN, mon })) || {};
+  const __gx = (opts.extend && opts.extend({ scene, camera, renderer, C, M, LAB, SHOTS, K, rbox, cable, air, arc, mCable, mAir, mArc, homeMat, hatch, tryMat, gate, gateFrameMat, Lbad, L2, L3, leds, mastTop, mastBase, serverTop, routerPos, gatePos, PORT, PHONE_TOP, SX, SZ, monW, scrC, scrN, mon, REFL, glows, spU })) || {};
   for (const k in LAB) {
     const el = document.createElement('div'); el.className = 'wd-lab' + (LAB[k].hot ? ' wd-hot' : ''); el.dataset.lab = k; el.innerHTML = '<i></i><div>' + LAB[k].html + '</div>';
     wrap.appendChild(el); LAB[k].el = el; LAB[k].s = {};
@@ -673,7 +999,7 @@ function* build(canvas, opts = {}) {
   for (let i = 0; i <= 16; i++) LINE_PTS.push(cable.getPoint(i / 16));
   for (const x of [TX - TW / 2, TX + TW / 2]) for (const y of [0.2, TH / 2, TH]) for (const z of [TZ - TD / 2, TZ, TZ + TD / 2]) LINE_PTS.push(V3(x, y, z));
   for (const dy of [-1.9, -0.95, 0]) for (const [dx, dz] of [[-0.7, 0], [0.7, 0], [0, -0.7], [0, 0.7]]) LINE_PTS.push(mastTop.clone().add(V3(dx, dy, dz)));
-  for (const y of [0.1, PH / 2, PH]) for (const x of [-PW / 2, PW / 2]) LINE_PTS.push(tw(x, y, 0));
+  for (const y of [0.1, PH / 4, PH / 2, PH * 3 / 4, PH]) for (const x of [-PW / 2, 0, PW / 2]) LINE_PTS.push(tw(x, y, 0));
   // the monitor's face: a label over the app's screen hides what the beat is about
   for (const fy of [-0.5, -0.25, 0, 0.25, 0.5]) for (const fx of [-0.5, -0.25, 0, 0.25, 0.5]) LINE_PTS.push(monW(fx * SW, SY + fy * SH));
   let lineScr = [];
@@ -693,7 +1019,7 @@ function* build(canvas, opts = {}) {
       o = clamp(o);
       let x = 0, y = 0, r = !!lb.r, dn = !!lb.dn;
       if (o > 0.01) {
-        proj.copy(lb.at).project(camera);
+        proj.copy(layout === 'tall' && lb.atTall ? lb.atTall : lb.at).project(camera);
         x = (proj.x * 0.5 + 0.5) * W; y = (-proj.y * 0.5 + 0.5) * H;
         const box2 = el.lastElementChild;
         if (s.gen !== labGen) { s.w = box2.offsetWidth || 170; s.h = box2.offsetHeight || 50; s.gen = labGen; }
@@ -754,10 +1080,21 @@ function* build(canvas, opts = {}) {
   composer.addPass(addBloom);
   const outPass = new OutputPass();
   composer.addPass(outPass);
+  const noBloom = [sky, skyline, hills, farMasts, dots];
   function renderAll() {
-    const sm = screen.material, pm = phScreen.material;
+    frameNo++;
+    // the ground under the radio leg and the arc is lit as they are (guides may hide or change them)
+    const lu = dots.material.uniforms;
+    lu.uLeg.value.set(0, airTube.visible ? mAir.uniforms.uOn.value : 0, arcTube.visible ? mArc.uniforms.uOn.value * mArc.uniforms.uGain.value / 1.25 : 0);
+    lu.uDraw.value = mArc.uniforms.uDraw.value; lu.uReveal.value = mArc.uniforms.uReveal.value;
+    const sm = screen.material, pm = phScreen.material, ki = key.intensity, ri = rim.intensity, hi = hemi.intensity;
     screen.material = black; phScreen.material = black;
+    // the bloom sees only what glows: no studio reflections, no white key or rim highlights on the metals
+    scene.environmentIntensity = 0; key.intensity = rim.intensity = hemi.intensity = 0;
+    const hv = noBloom.map(o => o.visible); noBloom.forEach(o => (o.visible = false)); // the far world never reaches the threshold
     renderer.setRenderTarget(bloomIn); renderer.clear(); renderer.render(scene, camera);
+    noBloom.forEach((o, i) => (o.visible = hv[i]));
+    scene.environmentIntensity = ENV_K; key.intensity = ki; rim.intensity = ri; hemi.intensity = hi;
     screen.material = sm; phScreen.material = pm;
     bloom.render(renderer, null, bloomIn, 0, false);
     addBloom.uniforms.tBloom.value = bloom.renderTargetsHorizontal[0].texture;
@@ -771,7 +1108,7 @@ function* build(canvas, opts = {}) {
     wrap.classList.toggle('wd-tall', layout === 'tall');
     renderer.setPixelRatio(dpr()); renderer.setSize(W, H, false);
     composer.setPixelRatio(renderer.getPixelRatio()); composer.setSize(W, H);
-    const pr = renderer.getPixelRatio(); bloomIn.setSize(Math.round(W * pr / 2), Math.round(H * pr / 2)); bloom.setSize(Math.round(W * pr), Math.round(H * pr));
+    const pr = renderer.getPixelRatio(); mirror.getRenderTarget().setSize(Math.round(W * pr / 2), Math.round(H * pr / 2)); bloomIn.setSize(Math.round(W * pr / 2), Math.round(H * pr / 2)); bloom.setSize(Math.round(W * pr), Math.round(H * pr));
     for (let i = 0; i < NS; i++) fitShot(i);
     labGen++;
     renderer.shadowMap.needsUpdate = true;
@@ -784,6 +1121,22 @@ function* build(canvas, opts = {}) {
   let pNow = 0, time = 0, reveal = still || opts.lit ? 1 : 0, dirty = true;
   const mouse = { x: 0, y: 0, sx: 0, sy: 0 };
   const camPos = V3(0, 0, 0), camTgt = V3(0, 0, 0), tmp = V3(0, 0, 0);
+  // the move between two shots: a quintic ease (no jerk where it starts and stops); a crane on an arc round the middle of what
+  // the two shots look at, the distance changing in log space like a dolly, the head turning a little before the body moves.
+  // Each shot is still met exactly at 0 and 1, so the fitted frames, the labels and the cuts of reduced motion do not change
+  const ease5 = f => { const t = clamp((f - 0.12) / 0.76); return t * t * t * (t * (t * 6 - 15) + 10); };
+  const piv = V3(0, 0, 0), oA = V3(0, 0, 0), oB = V3(0, 0, 0);
+  function travel(a, b, e, k) {
+    if (e <= 0) { camPos.copy(a.pos); camTgt.copy(a.tgt); return; }
+    if (e >= 1) { camPos.copy(b.pos); camTgt.copy(b.tgt); return; }
+    const et = k === 2 ? smooth(0.25, 1, e) : smooth(0, 0.8, e), ep = k === 2 ? smooth(0, 0.75, e) : smooth(0.08, 1, e);
+    camTgt.lerpVectors(a.tgt, b.tgt, et);
+    piv.lerpVectors(a.tgt, b.tgt, 0.5); oA.subVectors(a.pos, piv); oB.subVectors(b.pos, piv);
+    const ra = oA.length(), rb = oB.length(), za = Math.atan2(oA.x, oA.z);
+    let dz = Math.atan2(oB.x, oB.z) - za; dz -= Math.round(dz / (2 * Math.PI)) * 2 * Math.PI;
+    const el = lerp(Math.asin(oA.y / ra), Math.asin(oB.y / rb), ep), az = za + dz * ep, rr = ra * Math.pow(rb / ra, ep);
+    camPos.set(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el)).multiplyScalar(rr).add(piv);
+  }
   let ipShown = IP_OLD, banShown = -1;
 
   function stateAt(p, sub) {
@@ -813,19 +1166,25 @@ function* build(canvas, opts = {}) {
     // camera between the two nearest shots: it travels only between 12% and 88% of the way, so text reads with the camera still
     const S = SHOTS[layout];
     const k = Math.min(Math.floor(p), NS - 2), f = p - k;
-    const e = calm ? Math.round(f) : smooth(0.12, 0.88, f);
+    const e = calm ? Math.round(f) : ease5(f);
     const a = S[k], b = S[k + 1], fa = fits[k], fb = fits[k + 1];
-    camPos.lerpVectors(a.pos, b.pos, e); camTgt.lerpVectors(a.tgt, b.tgt, e);
-    if (!calm && k !== 4 && k !== 5) camPos.y += Math.sin(e * Math.PI) * 2.2; // a crane, not a slide
+    // into the screen and back out of it the camera keeps its straight move (on an arc it swung past the mast, the phone huge in front)
+    if (k < 4) travel(a, b, e, k); else { camPos.lerpVectors(a.pos, b.pos, e); camTgt.lerpVectors(a.tgt, b.tgt, e); }
+    if (!calm && k < 4) camPos.y += Math.sin(e * Math.PI) * (k === 2 ? 3 : 1.2); // a lighter crane: the arc already lifts
     if (!calm) {
       const kk = 1 - Math.exp(-dt * 3);
       mouse.sx += (mouse.x - mouse.sx) * kk; mouse.sy += (mouse.y - mouse.sy) * kk;
       const near = 1 - smooth(4.4, 5, p) * (1 - smooth(5.2, 5.8, p)); // still in front of the screen
       camPos.x += mouse.sx * 1.2 * near;
       camPos.y += -mouse.sy * 0.7 * near;
+      // a held camera, not a locked one: a sway of about a tenth of a degree while a beat holds, none while it travels
+      const sw = camPos.distanceTo(camTgt) * 0.0017 * (1 - Math.sin(Math.PI * e)) * near * (opts.drift === false ? 0 : 1);
+      camTgt.x += sw * (0.6 * Math.sin(time * 0.23) + 0.4 * Math.sin(time * 0.61 + 1.3));
+      camTgt.y += sw * (0.42 * Math.sin(time * 0.19 + 0.7) + 0.28 * Math.sin(time * 0.47 + 2.1));
+      camPos.y += sw * 0.9 * Math.sin(time * 0.31 + 0.4);
     }
     const zoom = lerp(fa.zoom, fb.zoom, e), dx = k === 4 ? lerp(fa.dx, fb.dx, smooth(0, 0.35, f)) : lerp(fa.dx, fb.dx, e), dy = lerp(fa.dy, fb.dy, e);
-    camera.position.copy(camPos); camera.lookAt(camTgt); camera.fov = lerp(a.fov, b.fov, e); camera.zoom = zoom;
+    camera.position.copy(camPos); camera.lookAt(camTgt); camera.fov = lerp(a.fov, b.fov, e) + (calm || k >= 4 ? 0 : 4 * Math.sin(Math.PI * e)); camera.zoom = zoom; // the lens opens a little mid-move
     camera.aspect = W / H; camera.setViewOffset(W, H, -dx, -dy, W, H); camera.updateProjectionMatrix(); camera.updateMatrixWorld();
     const box = [0, 1, 2, 3].map(j => lerp(fa.box[j], fb.box[j], e));
 
@@ -838,6 +1197,7 @@ function* build(canvas, opts = {}) {
     mArc.uniforms.uDraw.value = s.redraw;
     mArc.uniforms.uGain.value = mAir.uniforms.uGain.value = 1.25 + 0.9 * s.fresh;
     for (const m of [mCable, mAir, mArc]) { m.uniforms.uTime.value = time; m.uniforms.uReveal.value = reveal * 1.02; }
+    spU.uSpRev.value = reveal * 1.02 * (s.cut > 0.02 ? 0.92 : 1);
     homeMat.uniforms.uTime.value = time;
     homeMat.uniforms.uLive.value = smooth(0.4, 0.85, p) * (1 - smooth(1.4, 1.8, p)) + smooth(2.5, 2.9, p) * (1 - smooth(3.2, 3.6, p));
     // the firewall: comes up with the cut, CS2's run home stops at it
@@ -935,11 +1295,15 @@ function* build(canvas, opts = {}) {
   const tell = f => { try { canvas.dispatchEvent(new CustomEvent('worldprogress', { detail: f })); } catch (e) { /* old browser */ } };
   (async () => {
     await yieldTask(); if (destroyed) return;
-    // reflections from a small studio environment; on GPUs where its programs link slowly this is the longest step, so it runs only when asked
-    if (opts.env) { const pmrem = new PMREMGenerator(renderer); scene.environment = pmrem.fromEquirectangular(envTex).texture; pmrem.dispose(); }
-    envTex.dispose();
+    // the studio's reflections, for every material (on GPUs where its program links slowly this is the longest step: it has a task of its own)
+    { const pmrem = new PMREMGenerator(renderer); envRT = pmrem.fromScene(envScene, 0, 0.1, 80, { size: 128 }); pmrem.dispose(); }
+    envScene.traverse(o => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } });
+    scene.environment = envRT.texture; scene.environmentIntensity = ENV_K;
+    floor.material.envMap = envRT.texture; floor.material.envMapIntensity = 0.03; floor.material.needsUpdate = true; // the ground stays dark
     await yieldTask(); if (destroyed) return;
     update(0); tell(0.1);
+    bakeContact(); aoMat.dispose();
+    await yieldTask(); if (destroyed) return;
     // the programs start compiling three objects at a time, the page getting the thread back in between (6 Nov.: all at once
     // it was one 200 ms task on a slow phone). Objects with a light inside are left to the whole-scene pass below: compiled on
     // their own they would count their light twice and get a program the real frame never uses. That pass then finds the
@@ -1023,7 +1387,7 @@ function* build(canvas, opts = {}) {
         if (o.geometry && !seen.has(o.geometry)) { seen.add(o.geometry); o.geometry.dispose(); }
         const m = o.material; if (m && !seen.has(m)) { seen.add(m); m.dispose(); }
       });
-      composer.dispose(); bloom.dispose(); bloomIn.dispose(); renderer.dispose();
+      composer.dispose(); bloom.dispose(); bloomIn.dispose(); if (envRT) envRT.dispose(); aoB.dispose(); mirror.dispose(); renderer.dispose();
     },
   };
 }
