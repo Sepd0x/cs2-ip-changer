@@ -647,6 +647,9 @@ RevisaoFTests.Run(Check);
 await RevisaoGTests.Run(Check);
 RevisaoHTests.Run(Check);
 CanaisTests.Run(Check);
+// 7 nov.: o que o dono trouxe da beta.12 (app; telemetria, dashboard e mapa de calor)
+Beta13AppTests.Run(Check);
+Beta13TelemetriaTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;
