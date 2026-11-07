@@ -101,7 +101,7 @@ const BANDS = {
 // v4: the counters read per install-day (funnel, cohorts, real or automated, per day, per version, list sizes); every other one is
 // summed by D1 (summary's sums 'sql')
 const INSTALL_NAMES = ['first_start', 'accounts', 'net_dc', 'app_start', 'crash', 'ip_changed', 'ip_same', 'ip_no_network', 'ip_home_back', 'min_prot', 'm_valve', 'm_comm',
-  'm_valve_lag', 'm_comm_lag', 'unclean_exit', 'leak_ok', 'leak_bad', 'log_error', 'upd_failed', 'rep_exit', 'cable_hint', 'cs2_start', 'upd_done', ...SIZES];
+  'm_valve_lag', 'm_comm_lag', 'unclean_exit', 'leak_ok', 'leak_bad', 'log_error', 'upd_failed', 'rep_exit', 'cable_hint', 'cs2_start', 'upd_done', 'join', ...SIZES];
 const INSTALL_GLOBS = ['tp_*', 'phone_*', 'chk_*', 'data_*', 'age_*'];
 // Phone setup steps (PhoneSetup.Key of PhoneStep, contract.setup), in the app's order, with the dashboard's label
 const SETUP_LABEL = { noadbtool: 'Sem ADB', adbfailed: 'ADB falhou', nousb: 'Sem cabo USB', usbdrivererror: 'Driver USB', nousbdebugging: 'Depuração USB desligada',
@@ -730,7 +730,7 @@ function v4Blocks({ now, today, since, prevSince, okAll, inWin, seen, errors, er
       ret: RET_WIN.map(([a, b]) => (addD(d0, b) < today ? ds.some((x) => x >= addD(d0, a) && x <= addD(d0, b)) : null)),
       seg: { link: d0i.link, country: d0i.country, version: d0i.app, mode: d0i.mode },
       open: names('phone_setup_'), left: names('phone_left_'), pressed,
-      help: win.some((i) => i.k.PhoneHelp_Click), cs2: sum('cs2_start') > 0,
+      help: win.some((i) => i.k.PhoneHelp_Click), cs2: sum('cs2_start') > 0, joined: sum('join') > 0,   // beta.13: CS2 joined a server
       red: names('chk_'),
       day1: !!d0i.c.crash || errAt.has(`${id}|${d0}`),
     });
@@ -804,7 +804,7 @@ function v4Blocks({ now, today, since, prevSince, okAll, inWin, seen, errors, er
     buckets: STUCK.map((id, b) => ({ id, n: A.buckets[b], share: cur.length ? A.buckets[b] / cur.length : null, prev: P.buckets[b], prev_share: prv.length ? P.buckets[b] / prv.length : null })),
     setup, never_opened: never.filter((m) => !m.open.size && !m.help).length, left_measured: leftMeasured,
     phone_not_protected: { n: notProt.length, ip_new: notProt.filter((m) => m.ipNew).length, ip_same_only: notProt.filter((m) => !m.ipNew && m.ipSame).length, red: redTop(notProt) },
-    protected_no_match: { n: A.buckets[2], cs2_opened: cur.filter((m) => m.bucket === 2 && m.cs2).length },
+    protected_no_match: { n: A.buckets[2], cs2_opened: cur.filter((m) => m.bucket === 2 && m.cs2).length, joined: cur.filter((m) => m.bucket === 2 && m.joined).length },
     signals: [
       { id: 'rage_clicks', n: rage.reduce((s, x) => s + x.n, 0), installs: null, top: rage.slice(0, 20) },
       { id: 'dead_clicks', n: dead.reduce((s, x) => s + x.n, 0), installs: null, top: dead.slice(0, 20) },

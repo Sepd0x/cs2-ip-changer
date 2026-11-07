@@ -113,6 +113,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
+            Telemetry.AfterFailedRestart();   // beta.13: the install failed after BeforeRestart, so this copy counts again
             Log.Error("Update: " + ex.Message);
             Telemetry.Count("upd_failed");
             Toast("Update failed: " + ex.Message, Tone.Error);

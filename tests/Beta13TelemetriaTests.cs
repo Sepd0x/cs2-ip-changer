@@ -12,6 +12,98 @@ static class Beta13TelemetriaTests
         check("Beta13 telemetria: o repositório encontra-se", Directory.Exists(Path.Combine(repo, "src")), repo);
         Mapa(check, repo);
         Atualizacao(check, repo);
+        CliqueNaJanela(check);
+        Entrada(check, repo);
+    }
+
+    /// <summary>
+    /// Verificação de 7 nov.: o MouseDown passa pelo HeatClick, que se testa aqui numa janela WPF a sério (STA, sem a mostrar):
+    /// a célula nova com o scroll da página, só a janela principal, nada com um painel por cima, e as listas numa caixa (Previous
+    /// IPs, as listas das Configs) sem o seu scroll somado. Cada verificação falha com a linha antiga correspondente.
+    /// </summary>
+    static void CliqueNaJanela(Action<string, bool, string> check)
+    {
+        string page = null, other = null, overlaid = null, inBox = null, inList = null, popup = null;
+        List<double> boxScroll = null;
+        Exception err = null;
+        var t = new Thread(() =>
+        {
+            try
+            {
+                System.Windows.Controls.Border Row(double h) => new() { Height = h };
+                // a list in a box (MaxHeight 120, like Previous IPs) half way down a page that scrolls
+                var boxRows = new System.Windows.Controls.StackPanel();
+                for (var i = 0; i < 20; i++) boxRows.Children.Add(Row(30));
+                var box = new System.Windows.Controls.ScrollViewer { MaxHeight = 120, Content = boxRows, VerticalScrollBarVisibility = System.Windows.Controls.ScrollBarVisibility.Auto };
+                var target = Row(40);
+                var pageRows = new System.Windows.Controls.StackPanel();
+                pageRows.Children.Add(Row(900)); pageRows.Children.Add(box); pageRows.Children.Add(target); pageRows.Children.Add(Row(1500));
+                var pageSv = new System.Windows.Controls.ScrollViewer { Content = pageRows, VerticalScrollBarVisibility = System.Windows.Controls.ScrollBarVisibility.Auto };
+                var root = new System.Windows.Controls.Grid();
+                root.Children.Add(pageSv);
+                var w = new System.Windows.Window { Content = root, Width = 1240, Height = 800 };
+                root.Measure(new System.Windows.Size(1240, 800)); root.Arrange(new System.Windows.Rect(0, 0, 1240, 800));
+                pageSv.ScrollToVerticalOffset(700); box.ScrollToVerticalOffset(200);
+                root.UpdateLayout();
+                var overlay = false;
+                Telemetry.HeatFrom(w, () => overlay);
+                Telemetry.Activated();
+                var later = DateTime.UtcNow.AddSeconds(2);
+                // a click 500 px down the window, on the row under the box: 500 + 700 of page scroll = 1200 → row 30
+                page = Telemetry.HeatClick(w, target, new System.Windows.Point(400, 500), true, later);
+                if (page == null) err = new Exception($"dbg anc={root.IsAncestorOf(target)} counts={Telemetry.Counts(true, DateTime.UtcNow, later)} content={w.Content is System.Windows.FrameworkElement} w={root.ActualWidth} sc={string.Join("+", Telemetry.ScrolledAbove(target, w))} app={System.Windows.Application.Current != null} hw={ReferenceEquals(typeof(Telemetry).GetField("_heatWindow", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!.GetValue(null), w)} act={typeof(Telemetry).GetField("_activatedAt", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!.GetValue(null):o} later={later:o}");
+                other = Telemetry.HeatClick(new System.Windows.Window { Content = new System.Windows.Controls.Grid() }, target, new System.Windows.Point(400, 500), true, later);
+                overlay = true;
+                overlaid = Telemetry.HeatClick(w, target, new System.Windows.Point(400, 500), true, later);
+                overlay = false;
+                // a click on a row of the box scrolled 200: only the page's 700 is added (the capture shows the box from its start)
+                var boxRow = (System.Windows.Controls.Border)boxRows.Children[10];
+                boxScroll = Telemetry.ScrolledAbove(boxRow, w);
+                inBox = Telemetry.HeatClick(w, boxRow, new System.Windows.Point(400, 300), true, later);
+                // a list that fills the page (no MaxHeight, like Servers or Log) does add its scroll
+                inList = Telemetry.PageCell(400, Telemetry.DocY(300, Telemetry.ScrolledAbove(target, w)), 1240);
+                // an element outside the window's tree (a dropdown's open list) is not the page
+                popup = Telemetry.HeatClick(w, new System.Windows.Controls.Border(), new System.Windows.Point(400, 300), true, later);
+                Telemetry.HeatFrom(null, null);
+            }
+            catch (Exception e) { err = e; }
+        });
+        t.SetApartmentState(ApartmentState.STA);
+        t.Start(); t.Join();
+        check("Mapa (janela): o clique numa página com scroll dá a célula nova com o scroll somado", err == null && page == "s6,30", $"{page} {err?.Message}");
+        check("Mapa (janela): outra janela que não a principal não conta", err == null && other == null, other ?? "");
+        check("Mapa (janela): com o Phone setup ou uma pergunta por cima não conta", err == null && overlaid == null, overlaid ?? "");
+        check("Mapa (janela): uma lista numa caixa (Previous IPs, Configs) não soma o seu scroll, só o da página",
+            err == null && boxScroll != null && boxScroll.SequenceEqual(new[] { 700.0 }) && inBox == "s6,25", $"{string.Join("+", boxScroll ?? new())} {inBox}");
+        check("Mapa (janela): fora da árvore da janela (a lista aberta de uma ComboBox) não conta", err == null && popup == null, popup ?? "");
+        check("Mapa (janela): o MouseDown passa pelo HeatClick", File.ReadAllText(Path.Combine(SecurityTests.Repo(), "src", "Core", "Telemetry.cs")) is var src
+            && src[src.IndexOf("public static void MouseDown(", StringComparison.Ordinal)..].Split("static void AddHeat")[0].Contains("HeatClick("), inList ?? "");
+    }
+
+    /// <summary>
+    /// Verificação de 7 nov.: depois do BeforeRestart a cópia velha não conta nem grava (HandOver), e se o Install falhar volta a
+    /// contar (TakeBack), para o upd_failed e o erro no Log chegarem.
+    /// </summary>
+    static void Entrada(Action<string, bool, string> check, string repo)
+    {
+        check("Atualização: depois do BeforeRestart a cópia velha deixa de contar e fica marcada",
+            Telemetry.HandOver(true, false) == (false, true) && Telemetry.HandOver(false, false) == (false, false), "");
+        check("Atualização: se a instalação falhar, volta a contar só quem estava ligado",
+            Telemetry.TakeBack(false, true) == (true, false) && Telemetry.TakeBack(false, false) == (false, false) && Telemetry.TakeBack(true, false) == (true, false), "");
+        var src = File.ReadAllText(Path.Combine(repo, "src", "Core", "Telemetry.cs"));
+        var before = src[src.IndexOf("public static void BeforeRestart()", StringComparison.Ordinal)..];
+        before = before[..before.IndexOf('}')];
+        check("Atualização: o BeforeRestart usa o HandOver e espera por um envio a meio", before.Contains("HandOver(_on, _handedOver)") && before.Contains("_busy"), "");
+        var sent = src[src.IndexOf("static void Sent(Snapshot s)", StringComparison.Ordinal)..];
+        check("Atualização: uma resposta que chega depois não grava por cima da cópia nova", sent[..sent.IndexOf("lock (Gate)", StringComparison.Ordinal)].Contains("if (!_on) return;"), "");
+        var upd = File.ReadAllText(Path.Combine(repo, "src", "Views", "MainWindow.Update.cs"));
+        var c = upd[upd.IndexOf("catch (Exception ex)", upd.IndexOf("Telemetry.BeforeRestart()", StringComparison.Ordinal), StringComparison.Ordinal)..];
+        check("Atualização: se o Install falhar, a telemetria volta antes de contar upd_failed e o erro",
+            c.IndexOf("Telemetry.AfterFailedRestart()", StringComparison.Ordinal) is var a && a > 0 && a < c.IndexOf("Log.Error(", StringComparison.Ordinal) && a < c.IndexOf("upd_failed", StringComparison.Ordinal), "");
+        // 1.ª entrada num servidor: a app conta as entradas (só quantas, nunca qual)
+        var kick = File.ReadAllText(Path.Combine(repo, "src", "Views", "MainWindow.Kick.cs"));
+        var con = kick[kick.IndexOf("if (Cs2Console.IsConnectLine(line))", StringComparison.Ordinal)..];
+        check("Entrada num servidor: cada entrada conta join, sem o servidor", con[..con.IndexOf("continue;", StringComparison.Ordinal)].Contains("Telemetry.Count(\"join\")"), "");
     }
 
     /// <summary>

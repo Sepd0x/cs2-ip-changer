@@ -199,6 +199,34 @@ test('point 8: with GSC_KEY and GSC_SITE the daily cron keeps Google\'s search i
   assert.equal(B0.funnel.acquisition.steps[0].reason, 'not_measured');
 });
 
+test('point 7: the same old window cell ("3,4") from beta.11 and beta.12 is one dot with the sum (the cells in the D1 today are all old ones)', async () => {
+  const DB = fakeD1();
+  await ingest.fetch(post(report({ app: '0.1.0-beta.11', heat: [['servers', 'c', '3,4', 2]] })), { DB });
+  await ingest.fetch(post(report({ id: ID(2), app: '0.1.0-beta.12', heat: [['servers', 'c', '3,4', 5]] })), { DB });
+  const s = await sum(DB);
+  assert.deepEqual(s.heat.servers.c, [[3, 4, 7]]);
+});
+
+test('point 7 (verification): each window is said with its dates: Hoje\'s funnel and the rules are the 7 complete days, Funil says how it differs', () => {
+  const app = read('../dashboard/v4/app.js');
+  assert.doesNotMatch(app, /do \/api\/brief, últimos 7 dias, sem filtros/);
+  assert.doesNotMatch(app, /dispararam · últimos 7 dias, sem filtros/);
+  assert.doesNotMatch(app, /'aquisição: 7 dias completos · /);
+  assert.match(app, /const d7Txt = /);
+  assert.ok((app.match(/d7Txt\(B\)/g) || []).length >= 3, 'the rules band, the rules list and Hoje\'s funnel');
+  assert.match(app, /No Hoje e no Resumo o funil usa os \$\{esc\(d7Txt\(D\.B\)\)\} \(hoje fica de fora\); aqui é o período escolhido/);
+});
+
+test('point 8: "1.ª entrada num servidor" is measured: of the new installs Protected without a match, how many joined a server (join)', async () => {
+  const NOW = Date.parse('2026-11-04T15:30:00Z');
+  const DB = seed([[2, 1, 'usb', { first_start: 1, tp_10_30: 1, join: 2 }], [2, 2, 'usb', { first_start: 1, tp_10_30: 1 }], [2, 3, 'usb', { first_start: 1, tp_10_30: 1, join: 1, m_comm: 1 }]], { now: NOW });
+  const s = await sum(DB, { now: NOW });
+  assert.deepEqual({ n: s.stuck.protected_no_match.n, joined: s.stuck.protected_no_match.joined }, { n: 2, joined: 1 });
+  const app = read('../dashboard/v4/app.js');
+  assert.doesNotMatch(app, /"1\.ª entrada num servidor" não é recolhida/);
+  assert.match(app, /PM\.joined/);
+});
+
 test('point 8: the data page reads Google\'s numbers when they exist instead of always drawing "não medido"', () => {
   const app = read('../dashboard/v4/app.js');
   assert.doesNotMatch(app, /k: 'Impressões no Google', n: null/);

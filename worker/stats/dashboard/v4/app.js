@@ -245,12 +245,14 @@
     ].join('');
   }
   /** As regras desta página (do motor do brief), numa faixa por cima dos blocos. */
+  /** Beta.13 (verification): the brief's 7 days are complete days (today left out), said with their dates. */
+  const d7Txt = (B) => (B && B.window && B.window.d7 ? `7 dias completos, ${dd(B.window.d7[0])} a ${dd(B.window.d7[1])}` : '7 dias completos');
   function rulesBand(D, page, opt = {}) {
     const B = D.B;
     if (!B) return '';
     const list = B.anomalies.filter((a) => a.page === '#' + page && (!opt.kind || a.kind === opt.kind));
     if (!list.length) return '';
-    return box('Regras desta página', `${list.length} de ${B.rules_checked} · do /api/brief, últimos 7 dias, sem filtros`, [['b', 'anomalies']],
+    return box('Regras desta página', `${list.length} de ${B.rules_checked} · do /api/brief, ${d7Txt(B)}, sem filtros`, [['b', 'anomalies']],
       `<div class="rband">${list.map((a) => `<div class="${esc(a.severity)}">${esc(a.text_pt)}${a.base != null ? `<div class="rr">base ${N(a.base)}</div>` : ''}</div>`).join('')}</div>`, 's12');
   }
   const fEcho = () => { const a = Object.entries(st.f).filter(([, v]) => v !== 'all'); return a.length ? ` <span class="fecho">Filtro: ${a.map(([k, v]) => esc(k === 'version' ? short(v) : k === 'country' ? COUNTRY[v] || v : k === 'mode' ? MODES[v] || v : LINKS[v] || v)).join(' · ')}</span>` : ''; };
@@ -372,7 +374,7 @@
         <p class="note">As ${N(S.n)} novas de há 7 a 13 dias, cada uma no último passo a que chegou nos 7 primeiros dias; antes: as de há 14 a 20 dias. A decorrer: ${N(S.running)} novas nos últimos 7 dias. Detalhe em <a href="#encalham">Onde encalham</a>.</p>`
         : empty('Nenhuma instalação nova de há 7 a 13 dias.', `A decorrer: ${N(S.running)} novas nos últimos 7 dias.`);
     }
-    const funBox = box('Funil', 'aquisição: 7 dias completos · ativação: coorte fechada · barras lineares', [['b', 'funnel']], fun, 's7');
+    const funBox = box('Funil', `aquisição: ${d7Txt(B)}, como no Resumo · ativação: coorte fechada · barras lineares`, [['b', 'funnel']], fun, 's7');
     const stkBox = box('Onde encalham', 'novas de há 7 a 13 dias', [['b', 'stuck']], stk, 's5');
     const hourly = H.hourly || { today: Array(24).fill(null), yday: Array(24).fill(0), hour: now.h };
     const hourSmall = isSmall([...hourly.today, ...hourly.yday]);
@@ -425,7 +427,7 @@
     const d1 = A.d1, d7 = A.d7;
     return `${title('Funil', `${periodTxt(D)} · dois blocos que não se ligam: as contagens do site e as instalações`)}
     <div class="g">${rulesBand(D, 'funil')}
-      ${box('A. Aquisição', `${periodTxt(D)} · contagens, sem ID`, [['e', 'site'], ['e', 'github.history'], ['x', 'Search Console']], linFunnel(acq, { label: 'Passo' }) + '<p class="note">Barras normalizadas às visitas ao site. Os downloads do exe ficam ao lado: vêm também do README, do GitHub direto, das atualizações feitas pela própria app, dos teus PCs e de scanners, por isso não são um passo depois dos cliques nem têm %.</p>', 's6')}
+      ${box('A. Aquisição', `${periodTxt(D)} · contagens, sem ID`, [['e', 'site'], ['e', 'github.history'], ['x', 'Search Console']], linFunnel(acq, { label: 'Passo' }) + '<p class="note">Barras normalizadas às visitas ao site. Os downloads do exe ficam ao lado: vêm também do README, do GitHub direto, das atualizações feitas pela própria app, dos teus PCs e de scanners, por isso não são um passo depois dos cliques nem têm %.</p>' + `<p class="note">No Hoje e no Resumo o funil usa os ${esc(d7Txt(D.B))} (hoje fica de fora); aqui é o período escolhido em cima, ${esc(periodTxt(D))}, por isso os números podem ser diferentes.</p>`, 's6')}
       ${box('B. Ativação', `novas no período · cada passo nos 7 primeiros dias`, [['e', 'activation']], A.n ? linFunnel(act, { label: 'Passo', worst: big && act[big.k].id }) + `
         <div class="lf"><div class="side">Ao lado: ${N(A.ip_changed.n)} das ${N(A.ip_changed.of)} que viram o telemóvel trocaram para um IP novo${A.ip_changed.same_only ? `; ${N(A.ip_changed.same_only)} trocaram e ficaram com o mesmo IP` : ''}. Protected não precisa de trocar de IP.</div></div>
         <p class="note">${A.immature ? `${A.immature === A.n ? 'Todas' : `${N(A.immature)} das ${N(A.n)}`} ainda estão nos primeiros 7 dias: estes números ainda podem subir (vê 30 dias para ver coortes fechadas). ` : ''}Cada passo conta quem também passou os anteriores. Fora de ordem: ${N(A.any.protected)} chegaram a Protected e ${N(A.any.first_match)} a uma partida.</p>` : empty('Nenhuma instalação nova no período.'), 's6')}
@@ -510,7 +512,7 @@
         <p class="note">Nunca abriram o Phone setup (nem a ajuda): <b>${N(S.never_opened)}</b> de ${N(never)}. "Ao abrir": o passo em que o painel estava quando o abriram (não é onde desistiram). "Ao fechar": ${S.left_measured ? 'o passo quando o fecharam.' : 'ainda não medido; chega com o contador phone_left_ na próxima beta.'} Uma instalação pode ter aberto em mais de um passo.</p>` : empty(tot ? 'Todas as novas viram o telemóvel.' : 'Nenhuma instalação nova no período.'), 'grow')}</div>
       <div class="s6 stack" id="e-prot">
         ${box('Viram o telemóvel, nunca Protected', `${N(NP.n)}`, [['e', 'stuck.phone_not_protected']], NP.n ? `<div class="kv2"><span>Trocaram para um IP novo</span><span>${N(NP.ip_new)}</span><span>Trocaram e ficou o mesmo IP (ou sem rede)</span><span>${N(NP.ip_same_only)}</span><span>Nunca trocaram de IP</span><span>${N(NP.n - NP.ip_new - NP.ip_same_only)}</span></div>${NP.red.length ? `<h3>Checks a vermelho</h3>${bl(NP.red.map((c) => [c.title, c.installs]), { tone: 'warn' })}` : '<p class="note">Nenhum Check a vermelho nestas instalações.</p>'}` : empty('Ninguém neste grupo.'))}
-        <div id="e-match">${box('Protected, sem partida', `${N(PM.n)}`, [['e', 'stuck.protected_no_match']], PM.n ? `<div class="kv2"><span>Abriram o CS2 com a app aberta</span><span>${N(PM.cs2_opened)}</span><span>Nunca abriram o CS2</span><span>${N(PM.n - PM.cs2_opened)}</span></div><p class="note">A partida vem do resumo de rede que o CS2 escreve ao sair de um servidor. "1.ª entrada num servidor" não é recolhida.</p>` : empty('Ninguém neste grupo.'))}</div>
+        <div id="e-match">${box('Protected, sem partida', `${N(PM.n)}`, [['e', 'stuck.protected_no_match']], PM.n ? `<div class="kv2"><span>Abriram o CS2 com a app aberta</span><span>${N(PM.cs2_opened)}</span><span>Nunca abriram o CS2</span><span>${N(PM.n - PM.cs2_opened)}</span><span>Entraram num servidor</span><span>${PM.joined == null ? 'sem dados' : N(PM.joined)}</span></div><p class="note">A partida vem do resumo de rede que o CS2 escreve ao sair de um servidor; a entrada num servidor (join, desde a beta.13) vem do mesmo console do CS2. Os dois só chegam com o -condebug nas opções de arranque do CS2; antes da beta.13 a entrada não era contada.</p>` : empty('Ninguém neste grupo.'))}</div>
       </div>
       ${box('Sinais de frustração', periodTxt(D), [['e', 'stuck.signals'], ['e', 'heat']], `<div class="tw"><table class="t"><thead><tr><th>Sinal</th><th class="n">Vezes</th><th class="n">Instalações</th><th>Onde</th></tr></thead><tbody>
         <tr><td>Cliques repetidos (3 ou mais em 1 s)</td><td class="n">${N(sig.rage_clicks.n)}</td><td class="n dim">sem ID</td><td>${where(sig.rage_clicks.top)}</td></tr>
@@ -867,7 +869,7 @@
     return `${title('Sistema e dados', `a saúde dos dados, as versões, o ambiente e o que cada número quer dizer · ${periodTxt(D)}`)}
     <div class="g">
       ${box('Saúde dos dados', B ? `brief das ${lx(Date.parse(B.generated_at)).hm} · ${B.health.checks.filter((c) => c.status !== 'ok').length} a pedir atenção` : '', [['b', 'health']], health, 's12')}
-      ${box('Regras', B ? `${B.anomalies.length} de ${B.rules_checked} dispararam · últimos 7 dias, sem filtros` : '', [['b', 'anomalies']], B ? (B.anomalies.length ? `<div class="rband">${B.anomalies.map((a) => `<div class="${esc(a.severity)}"><b>${esc(a.kind === 'data' ? 'Dados' : 'Produto')}</b> · ${esc(a.text_pt)}<div class="rr">${esc(a.id)} · ${esc(a.rule)} · <a href="${esc(a.page)}">ver</a></div></div>`).join('')}</div>${B.suggested_actions.length ? `<h3>A seguir</h3><div class="kv2">${B.suggested_actions.map((s) => `<span>${s.rank}. ${esc(s.text_pt)}</span><span></span>`).join('')}</div>` : ''}` : empty('Nenhuma regra disparou.')) : empty('A ler o brief…'), 's6')}
+      ${box('Regras', B ? `${B.anomalies.length} de ${B.rules_checked} dispararam · ${d7Txt(B)}, sem filtros` : '', [['b', 'anomalies']], B ? (B.anomalies.length ? `<div class="rband">${B.anomalies.map((a) => `<div class="${esc(a.severity)}"><b>${esc(a.kind === 'data' ? 'Dados' : 'Produto')}</b> · ${esc(a.text_pt)}<div class="rr">${esc(a.id)} · ${esc(a.rule)} · <a href="${esc(a.page)}">ver</a></div></div>`).join('')}</div>${B.suggested_actions.length ? `<h3>A seguir</h3><div class="kv2">${B.suggested_actions.map((s) => `<span>${s.rank}. ${esc(s.text_pt)}</span><span></span>`).join('')}</div>` : ''}` : empty('Nenhuma regra disparou.')) : empty('A ler o brief…'), 's6')}
       ${box('Orçamento da D1', '14 dias', [['e', 'budgetDays']], budget, 's6')}
       ${box('Adoção ao longo do tempo', '% das instalações abertas em cada dia, por versão', [['e', 'adoption']], adopt, 's12')}
       ${box('Comparar duas versões', periodTxt(D), [['e', 'versionMetrics']], cmp, 's7')}

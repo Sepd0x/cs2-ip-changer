@@ -305,13 +305,23 @@ public static class Telemetry
     /// <summary>How much a scroller has below what it shows, in pixels (the demo's whole-page capture for the dashboard).</summary>
     public static double ScrollablePx(ScrollViewer sv) => ScrollPx(sv.ScrollableHeight, ScrollsByPixels(sv), sv.ViewportHeight, sv.ActualHeight);
 
-    /// <summary>How far every list and page around <paramref name="d"/> is scrolled down, in pixels (MouseDown).</summary>
-    static List<double> ScrolledAbove(DependencyObject d, Window stop)
+    /// <summary>
+    /// A list in a box of its own height inside a page (Previous IPs, the three lists of Configs: a MaxHeight on it or on its list).
+    /// The whole-page capture shows it as it is, with its start, so its scroll is not added: the click stays inside the box.
+    /// </summary>
+    public static bool InBox(ScrollViewer sv) =>
+        !double.IsInfinity(sv.MaxHeight) || sv.TemplatedParent is FrameworkElement t && !double.IsInfinity(t.MaxHeight);
+
+    /// <summary>
+    /// How far the page and the lists that fill it (Servers, Regions, Log) around <paramref name="d"/> are scrolled down, in pixels
+    /// (MouseDown). A list in a box (InBox) is left out.
+    /// </summary>
+    public static List<double> ScrolledAbove(DependencyObject d, DependencyObject stop)
     {
         var list = new List<double>();
         for (var i = 0; d != null && i < 80 && !ReferenceEquals(d, stop); i++)
         {
-            if (d is ScrollViewer sv && sv.VerticalOffset > 0) list.Add(ScrollPx(sv.VerticalOffset, ScrollsByPixels(sv), sv.ViewportHeight, sv.ActualHeight));
+            if (d is ScrollViewer sv && sv.VerticalOffset > 0 && !InBox(sv)) list.Add(ScrollPx(sv.VerticalOffset, ScrollsByPixels(sv), sv.ViewportHeight, sv.ActualHeight));
             d = d is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d);
         }
         return list;
@@ -322,6 +332,22 @@ public static class Telemetry
 
     /// <summary>The main window, and whether a pane is over the page (Phone setup, a question): those clicks aren't on the page.</summary>
     public static void HeatFrom(Window main, Func<bool> overlayOpen) { _heatWindow = main; _overlay = overlayOpen; }
+
+    /// <summary>
+    /// Everything MouseDown decides about a click, without the input system (the tests drive it): null when it doesn't count (not
+    /// the main window, the window not in front or just brought there, a pane over the page, a dropdown's open list, outside the
+    /// grid), else its cell in the page with the scroll (PageCell).
+    /// </summary>
+    public static string HeatClick(Window w, DependencyObject source, Point p, bool active, DateTime now)
+    {
+        if (w == null || !ReferenceEquals(w, _heatWindow ?? Application.Current?.MainWindow) || w.Content is not FrameworkElement root) return null;
+        bool overlay;
+        try { overlay = _overlay?.Invoke() == true; } catch { overlay = false; }
+        if (!Counts(active, _activatedAt, now, overlay)) return null;
+        // a dropdown's open list is a popup of its own, not the page under it
+        if (source is Visual v && !ReferenceEquals(v, root) && !root.IsAncestorOf(v)) return null;
+        return PageCell(p.X, DocY(p.Y, ScrolledAbove(source, w)), root.ActualWidth);
+    }
 
     /// <summary>A rage click: this one and 2 more in the same cell within the last second.</summary>
     public static bool IsRage(IEnumerable<(DateTime T, string Cell)> recent, DateTime now, string cell) =>
@@ -376,14 +402,10 @@ public static class Telemetry
     /// </summary>
     public static void MouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (!_on || sender is not Window w || !ReferenceEquals(w, _heatWindow ?? Application.Current?.MainWindow) || w.Content is not FrameworkElement root) return;
-        bool overlay;
-        try { overlay = _overlay?.Invoke() == true; } catch { overlay = false; }
-        if (!Counts(w.IsActive, _activatedAt, DateTime.UtcNow, overlay)) return;
+        if (!_on || sender is not Window w || w.Content is not FrameworkElement root) return;
         try
         {
-            var p = e.GetPosition(root);
-            var cell = PageCell(p.X, DocY(p.Y, ScrolledAbove(e.OriginalSource as DependencyObject, w)), root.ActualWidth);
+            var cell = HeatClick(w, e.OriginalSource as DependencyObject, e.GetPosition(root), w.IsActive, DateTime.UtcNow);
             string screen;
             lock (Gate) screen = _screen;
             if (cell == null || screen == null) return;
@@ -1039,6 +1061,8 @@ public static class Telemetry
     /// <summary>Only what went out is taken away: anything counted while sending stays for next time.</summary>
     static void Sent(Snapshot s)
     {
+        // beta.13: after BeforeRestart the new copy owns telemetry.json; a late answer never writes over it
+        if (!_on) return;
         lock (Gate)
         {
             foreach (var (k, v) in s.Clicks) { _st.Clicks[k] -= v; if (_st.Clicks[k] <= 0) _st.Clicks.Remove(k); }
@@ -1066,7 +1090,8 @@ public static class Telemetry
         try
         {
             var s = Build();
-            if (await Post(s.Body, TimeSpan.FromSeconds(8))) Sent(s);
+            // beta.13: not back on the window's thread, so BeforeRestart can wait for it there
+            if (await Post(s.Body, TimeSpan.FromSeconds(8)).ConfigureAwait(false)) Sent(s);
         }
         catch (Exception ex) { NotSent(Url, Kind(ex)); }
         finally { End(); }
@@ -1137,14 +1162,27 @@ public static class Telemetry
     /// <summary>
     /// Beta.13 (the owner's diagnostics of 7 nov.): Update starts the new copy and only then closes, so the new copy read
     /// telemetry.json before the old one had sent and saved it, and upd_accepted (and fs_) arrived twice. Update calls this first:
-    /// the close's report goes and is saved now, and then this copy stops counting and saving, so it never writes over what the new
-    /// copy saves. (If the update then fails, the stats of this session stop there; the next start goes on as before.)
+    /// the close's report goes and is saved now, and then this copy stops counting and saving (HandOver), so it never writes over
+    /// what the new copy saves. A report already on its way from the timer is waited for (3 s at most), so its save comes first too.
+    /// If the install then fails, Update calls AfterFailedRestart first, so upd_failed and the Log error still count.
     /// </summary>
     public static void BeforeRestart()
     {
+        for (var i = 0; i < 30 && Volatile.Read(ref _busy) == 1; i++) Thread.Sleep(100);
         SendAtExit();
-        _on = false;
+        (_on, _handedOver) = HandOver(_on, _handedOver);
     }
+
+    static bool _handedOver;
+
+    /// <summary>The stats after BeforeRestart: off in this copy (nothing counted or saved any more), and marked handed over when they were on.</summary>
+    public static (bool On, bool HandedOver) HandOver(bool on, bool handedOver) => (false, on || handedOver);
+
+    /// <summary>The stats after a failed install: on again in this copy when it had handed them over, else as they were.</summary>
+    public static (bool On, bool HandedOver) TakeBack(bool on, bool handedOver) => handedOver ? (true, false) : (on, false);
+
+    /// <summary>Beta.13: the install failed after BeforeRestart, so this copy goes on: its stats count again (upd_failed, the Log error).</summary>
+    public static void AfterFailedRestart() => (_on, _handedOver) = TakeBack(_on, _handedOver);
 
     /// <summary>The PC is going to sleep: the minutes so far go out now (sleep isn't a close, so no session length).</summary>
     static void SendBeforeSleep()

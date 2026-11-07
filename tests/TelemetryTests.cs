@@ -134,7 +134,7 @@ static class TelemetryTests
             ["open_with_admin"] = Telemetry.Band(1), ["regions_blocked"] = Telemetry.Band(2),
         };
         foreach (var n in new[] { "first_start", "app_start", "start_hand", "unclean_exit", "ip_changed", "ip_same", "ip_no_network", "ip_home_back", "kick_seen", "vpn_seen", "ban_seen",
-            "log_error", "crash", "st_1_2", "tp_10_30", "sess_15_30", "drop_1", "scl_connection_50", "fs_servers", "rej_try", "rej_back", "rej_wait", "cable_hint", "cs2_start",
+            "log_error", "crash", "st_1_2", "tp_10_30", "sess_15_30", "drop_1", "scl_connection_50", "fs_servers", "rej_try", "rej_back", "rej_wait", "cable_hint", "cs2_start", "join",
             "m_valve", "m_valve_lag", "ping_30_50", "jit_5_10", "jitd_lt5", "late_lt1", "loss_0", "chg_air", "chgt_5_10", "chga_1", "chgq_good", "chg_retry",
             "upd_seen", "upd_accepted", "upd_done", "updfrom_0_1_0_beta_9", "phone_setup_tetheroff", "phone_setup_done", "leak_ok", "leak_bad" })
             counts[n] = 1;
