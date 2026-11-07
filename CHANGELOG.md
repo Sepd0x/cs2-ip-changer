@@ -4,6 +4,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+## [0.1.0-beta.13] - 2026-11-07
+
 ### Changed
 - Usage stats: the coarse map of where you click now places a click where it is on the page, counting how far the page is scrolled (a grid of 24 columns and rows about 40 pixels tall, not the exact point, still added up with everyone's and with no ID). It only counts clicks on the page itself while the app is the window in front, not on Phone setup or a question shown over the page. README > Telemetry says so.
 - Usage stats: they also count how many times CS2 joined a server (only the number, never which server). README > Telemetry says so.
@@ -652,7 +654,8 @@ First public release, as ServerRouteTool.
 - Restore network, to undo every route and rule in one click.
 - Dark interface in Portuguese.
 
-[Unreleased]: ../../compare/v0.1.0-beta.12...HEAD
+[Unreleased]: ../../compare/v0.1.0-beta.13...HEAD
+[0.1.0-beta.13]: ../../releases/tag/v0.1.0-beta.13
 [0.1.0-beta.12]: ../../releases/tag/v0.1.0-beta.12
 [0.1.0-beta.11]: ../../releases/tag/v0.1.0-beta.11
 [0.1.0-beta.10]: ../../releases/tag/v0.1.0-beta.10
