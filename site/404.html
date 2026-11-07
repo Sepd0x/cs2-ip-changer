@@ -85,8 +85,8 @@ a:hover{text-decoration-color:var(--t-accent)}
 .more{padding:.85rem 1rem .25rem;border-radius:12px;background:color-mix(in srgb,var(--t-bg) 92%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 0 0 1px var(--t-line)}
 .more li:last-child{border-bottom:0}
 .demo::before{content:"";flex:none;width:8px;height:10px;border-inline:2.5px solid currentColor}
-.demo[aria-pressed=true]::before{border:0;border-left:9px solid currentColor;border-block:5px solid transparent;width:0;height:0}
-.demo[aria-pressed=true]{background:color-mix(in srgb,var(--t-accent) 16%,transparent);box-shadow:inset 0 0 0 1px var(--t-accent)}
+.demo[aria-pressed=true]::before,.demo.play::before{border:0;border-left:9px solid currentColor;border-block:5px solid transparent;width:0;height:0}
+.demo[aria-pressed=true],.demo.play{background:color-mix(in srgb,var(--t-accent) 16%,transparent);box-shadow:inset 0 0 0 1px var(--t-accent)}
 .no-gl .gw,.no-gl .groom,.no-gl .demo{display:none}
 @media (max-width:760px){.gw .wd-lab>div{padding:.4rem .55rem;width:max-content;max-width:min(11.5rem,46vw);white-space:normal}.gw .wd-lab b{font-size:.82rem}.gw .wd-lab span,.gw .wd-lab small{font-size:.8125rem}}
 .ro{margin-bottom:2.25rem}
@@ -177,7 +177,8 @@ html.ldw .stage.ready .stage-still{opacity:0;transition:none}
 (function(){document.querySelectorAll('[data-share]').forEach(function(b){b.addEventListener('click',function(){var u=b.getAttribute('data-copy'),l=b.textContent,c=function(){if(navigator.clipboard)navigator.clipboard.writeText(u).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent=l},1800)},function(){})};if(navigator.share)navigator.share({title:'CS2 IP Changer',url:u}).catch(function(x){if(x&&x.name!=='AbortError')c()});else c()})})})();
 /* 404 rolls in once from other digits, then stays */
 (function(){
-  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  var on=false;try{on=localStorage.getItem('cs2-fx')==='on'}catch(x){}
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches&&!on)return;
   var cells=document.querySelectorAll('#num span[aria-hidden] b');
   cells.forEach(function(b,k){
     var last=b.textContent,h='',n=6+k*2;
@@ -201,13 +202,16 @@ html.ldw .stage.ready .stage-still{opacity:0;transition:none}
       place=function(){var n=nf.getBoundingClientRect();if(wide()){gw.style.removeProperty('--gw-top');gw.style.removeProperty('--gw-h');gw.style.setProperty('--gw-l',((cp.getBoundingClientRect().right-n.left)/Math.max(1,n.width)*100).toFixed(1)+'%');return}var r=room.getBoundingClientRect();gw.style.setProperty('--gw-top',(r.top-n.top)+'px');gw.style.setProperty('--gw-h',r.height+'px')},
       frame=function(W,H){if(!wide())return{box:[14,14,W-14,H-10]};var c=cv.getBoundingClientRect(),r=cp.getBoundingClientRect(),f=foot.getBoundingClientRect();return{box:[r.right-c.left+24,18,W-24,more.getBoundingClientRect().top-c.top-24]}};
     place();addEventListener('resize',place);
-    var fx=!matchMedia('(prefers-reduced-motion: reduce)').matches,api=null,pz=nf.querySelector('.demo'),live=nf.querySelector('[role=status]'),held=false;
+    /* fewer animations asked by the system: still, unless Play motion was pressed in this browser (cs2-fx, as on the home and the guides) */
+    var rm=matchMedia('(prefers-reduced-motion: reduce)').matches,opt=false;try{opt=localStorage.getItem('cs2-fx')==='on'}catch(x){}
+    var fx=!rm||opt,api=null,pz=nf.querySelector('.demo'),live=nf.querySelector('[role=status]'),held=false;
     try{held=localStorage.getItem('cs2-motion')==='paused'}catch(x){}
     try{api=window.GuideWorld.mount(cv,{scene:'lost',still:!fx,img:'/cs2-ip-changer/img/',frame:frame})}catch(x){api=null}
     if(!api){d.documentElement.classList.add('no-gl');return}
     cv.addEventListener('worldready',function(){gw.classList.add('ready')},{once:true});
     if(held)api.pause();
-    if(fx){pz.hidden=false;pz.setAttribute('aria-pressed',held);pz.addEventListener('click',function(){held=!held;pz.setAttribute('aria-pressed',held);try{localStorage.setItem('cs2-motion',held?'paused':'')}catch(x){}if(held)api.pause();else api.resume()})}
+    if(fx){pz.hidden=false;pz.setAttribute('aria-pressed',held);pz.addEventListener('click',function(){held=!held;pz.setAttribute('aria-pressed',held);try{localStorage.setItem('cs2-motion',held?'paused':'');if(rm)localStorage.setItem('cs2-fx',held?'':'on')}catch(x){}if(held)api.pause();else api.resume()})}
+    else if((function(){try{localStorage.getItem('cs2-fx');return true}catch(x){return false}})()){pz.hidden=false;pz.removeAttribute('aria-pressed');pz.classList.add('play');pz.textContent=pz.title='Play motion';pz.addEventListener('click',function(){try{localStorage.setItem('cs2-fx','on');localStorage.setItem('cs2-motion','')}catch(x){return}location.reload()})}
   };
   if(window.GuideWorld)window.__gw();
 })();

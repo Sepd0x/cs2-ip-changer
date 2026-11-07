@@ -480,7 +480,9 @@ code{font-size:max(12px,.86em)}
 .log b{font-weight:400}
 .js .log li{color:var(--t-faint)}
 .js .log li.past{color:var(--ink2)}.js .log li.past b{color:var(--ink)}
-.js .log li.now{color:var(--ink);box-shadow:inset 3px 0 0 var(--t-accent-light);padding-left:.7rem}.js .log li.now b{color:var(--t-accent-light)}.js .log li.now time{color:var(--t-accent-light)}
+/* the line being read steps right by a transform, not by padding, so its text wraps as before and nothing under it jumps (7 Nov.) */
+.js .log li>*{transition:transform .35s var(--ease-out)}
+.js .log li.now{color:var(--ink);box-shadow:inset 3px 0 0 var(--t-accent-light)}.js .log li.now>*{transform:translateX(.7rem)}.js .log li.now b{color:var(--t-accent-light)}.js .log li.now time{color:var(--t-accent-light)}
 .log li .w,.js .log li.past .w,.js .log li.now .w{color:var(--t-warn)}
 .log li .g,.js .log li.past .g,.js .log li.now .g{color:var(--t-good)}
 .js .log li:not(.past):not(.now) .w,.js .log li:not(.past):not(.now) .g{color:var(--t-faint)}
@@ -814,6 +816,8 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
   /* the ban card holds the log and the IP; the Valve note and the made-up times note follow right after the beat */
   .beat-long .sub,.beat-long .ban-cap{display:none}.ban-cap-s{display:block;margin-bottom:1rem}
   .said.big{margin:.6rem 0 .7rem;flex-direction:row;align-items:baseline;flex-wrap:wrap;gap:.2rem .8rem}
+  /* the note always on its own line: beside the shorter IPs it went up a line and the log jumped with it (7 Nov.) */
+  .said.big>span:last-child{flex-basis:100%}
   .said.big .ip{font-size:1.6rem}
   .log{font-size:.78rem;margin-bottom:0}.log li{padding-block:.15rem}
   .ban-cap{font-size:.8rem}

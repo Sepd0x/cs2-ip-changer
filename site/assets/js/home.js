@@ -31,8 +31,18 @@
   /* ------------------------------------------------------------ where the story is, from the scroll */
   // each beat holds the camera while its text is read: an anchor (or, for the ban, a stretch) in scroll px
   var A = [], ctaAt = 0, ctaH = 0, storyEnd = 0, H = innerHeight;
+  // the note under the ban's IP keeps the height of its longest text, so its three texts never push the log (7 Nov.)
+  var BAN_NOTES = ['IP servers see. Example, banned on this server', 'Mobile data off, then on: getting a new IP', 'New IP, new /16 range. Example IP'];
+  function noteHeight() {
+    if (!banNote) return;
+    var keep = banNote.textContent, mh = 0;
+    banNote.style.minHeight = '';
+    BAN_NOTES.forEach(function (t) { banNote.textContent = t; mh = Math.max(mh, banNote.offsetHeight); });
+    banNote.textContent = keep; banNote.style.minHeight = mh + 'px';
+  }
   function measure() {
     H = innerHeight;
+    noteHeight();
     var T = tall();
     A = beats.slice(0, NB).map(function (b, i) {
       var c = copies[i], bt = docTop(b), bh = b.offsetHeight, ch = c ? c.offsetHeight : 0;
@@ -182,7 +192,7 @@
           banSaid.setAttribute('data-st', st);
           banSaid.classList.toggle('banned', st === 'banned'); banSaid.classList.toggle('wait', st === 'wait');
           var ip = st === 'banned' ? '198.51.100.23' : st === 'wait' ? '•••.•.•.•••' : '192.0.2.140';
-          banNote.textContent = st === 'banned' ? 'IP servers see. Example, banned on this server' : st === 'wait' ? 'Mobile data off, then on: getting a new IP' : 'New IP, new /16 range. Example IP';
+          banNote.textContent = BAN_NOTES[st === 'banned' ? 0 : st === 'wait' ? 1 : 2];
           var R = W.CS2Readout && W.CS2Readout.Readout;
           if (R && FX) { if (!banIP.__r) banIP.__r = new R(banIP); banIP.__r.set(ip, { blank: st === 'wait' }); } else banIP.textContent = ip;
         }

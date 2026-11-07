@@ -111,3 +111,84 @@ test('Site: o nome do rodape acende com uma frente suave, sem corte a direito, e
   assert.ok(fadePx > clip.width * 0.1, `the front is wide enough to read as soft (${fadePx}px of ${clip.width})`);
   await page.close();
 });
+
+// Point 10: with Windows set to fewer animations the home and the guides start still and offer Play motion (beta.12);
+// the 404 had no Play motion, and ignored it when pressed on another page: its world stayed still and the button hidden.
+test('Site: a 404 tambem oferece Play motion com menos animacoes no Windows, e lembra a escolha das outras paginas', async (t) => {
+  if (!browser) return t.skip(why);
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  const page = await ctx.newPage();
+  const btn = () => page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => /motion/i.test(x.title)); return b && { t: b.textContent.trim(), title: b.title, shown: !b.hidden && getComputedStyle(b).display !== 'none' && getComputedStyle(b).visibility !== 'hidden', pressed: b.getAttribute('aria-pressed') }; });
+  await page.goto(origin + '404.html', { waitUntil: 'load' });
+  await page.waitForFunction(() => document.querySelector('.gw.ready') || document.documentElement.classList.contains('no-gl'), null, { timeout: 15000 });
+  if (await page.evaluate(() => document.documentElement.classList.contains('no-gl'))) { await ctx.close(); return t.skip('no WebGL: the 404 shows no world and no button'); }
+  const still = await btn();
+  assert.equal(still?.shown, true, 'the button is there with fewer animations');
+  assert.equal(still.title, 'Play motion', 'and it is Play motion');
+  await Promise.all([page.waitForEvent('load'), page.click('.demo')]);
+  await page.waitForFunction(() => document.querySelector('.gw.ready'), null, { timeout: 15000 });
+  assert.equal(await page.evaluate(() => localStorage.getItem('cs2-fx')), 'on', 'remembered in this browser, like the home and the guides');
+  const moving = await btn();
+  assert.deepEqual([moving.shown, moving.title, moving.pressed], [true, 'Pause motion', 'false'], 'after Play motion the world moves and the button is Pause motion');
+  await ctx.close();
+});
+
+// Point 10/11: in "IP banned? Back in with one click" the log plays with the scroll. The line being read moved right by
+// padding, so on a phone (320 px) or a small PC window (1024 px) its text wrapped to another line and the log and the
+// caption under it jumped by a line at every step; and the note under the IP changed its number of lines with its text,
+// or (upright, 760 to 999 px) went up beside the shorter IPs. A text that is replaced (the chip's 4/6 to 5/6) is not a move.
+test('Site: no "IP banned?" o registo toca sem empurrar as linhas de baixo', async (t) => {
+  if (!browser) return t.skip(why);
+  const bad = [];
+  for (const [w, h, phone] of [[320, 568, 1], [390, 844, 1], [768, 1024, 1], [1024, 768, 0]]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h }, ...(phone ? { isMobile: true, hasTouch: true, deviceScaleFactor: 2 } : {}) });
+    await ctx.addInitScript(() => { window.__moves = []; new PerformanceObserver((l) => { for (const e of l.getEntries()) for (const s of e.sources || []) { if (!s.node || !s.node.isConnected) continue; const dy = Math.abs(s.currentRect.y - s.previousRect.y), dh = Math.abs(s.currentRect.height - s.previousRect.height); if ((dy >= 4 || dh >= 4) && s.currentRect.height && s.previousRect.height) window.__moves.push(`${s.node && s.node.nodeType === 1 ? (s.node.id || s.node.tagName + '.' + s.node.className) : '?'} y${Math.round(s.previousRect.y)}>${Math.round(s.currentRect.y)} h${Math.round(s.previousRect.height)}>${Math.round(s.currentRect.height)}`); } }).observe({ type: 'layout-shift', buffered: true }); });
+    const page = await ctx.newPage();
+    await page.goto(origin, { waitUntil: 'load' });
+    await page.waitForTimeout(2500);
+    const top = await page.evaluate(() => document.getElementById('ban').getBoundingClientRect().top + scrollY);
+    await page.evaluate((y) => window.__lenis.scrollTo(y, { immediate: true, force: true }), top - h);
+    await page.waitForTimeout(500);
+    await page.evaluate(() => { window.__moves = []; });
+    for (let y = top - h; y < top + 4 * h; y += Math.round(h * 0.12)) {
+      await page.evaluate((yy) => window.__lenis.scrollTo(yy, { immediate: true, force: true }), y);
+      await page.waitForTimeout(450);
+    }
+    const moves = await page.evaluate(() => window.__moves);
+    if (moves.length) bad.push(`${w}x${h}: ${[...new Set(moves)].slice(0, 4).join(' ; ')}`);
+    await ctx.close();
+  }
+  assert.deepEqual(bad, [], 'parts of the ban card that moved by themselves while the log played');
+});
+
+// Point 10/11: on a tablet held upright and on a phone in "Desktop site" (a 980 px page), the guides' footer jumped up
+// as it came on screen: its height was guessed at 1250 px until laid out, and it is about 955 (760 to 899 px wide, two
+// columns) or 465 (900 to 999, four columns), and the last line was guessed at 120 px everywhere. Scrolled to the end a
+// screen at a time, nothing on screen may move by itself.
+test('Site: nas guias nada salta ao chegar ao rodape, num tablet ao alto e num telemovel em versao de computador', async (t) => {
+  if (!browser) return t.skip(why);
+  const sizes = [{ width: 980, height: 2100, deviceScaleFactor: 2.75, hasTouch: true }, { width: 820, height: 1180, deviceScaleFactor: 2 }, { width: 768, height: 1024, deviceScaleFactor: 2, isMobile: true, hasTouch: true }, { width: 1280, height: 800 }, { width: 390, height: 844, deviceScaleFactor: 3 }];
+  const bad = [];
+  for (const { width, height, ...o } of sizes) {
+    for (const g of ['change-ip-with-phone/', 'cs2-ip-ban/']) {
+      const ctx = await browser.newContext({ viewport: { width, height }, ...o });
+      await ctx.addInitScript(() => { window.__cls = []; new PerformanceObserver((l) => { for (const e of l.getEntries()) if (!e.hadRecentInput) window.__cls.push({ v: e.value, src: (e.sources || []).map((s) => s.node && s.node.nodeType === 1 ? s.node.tagName + '.' + s.node.className : '?').join(',') }); }).observe({ type: 'layout-shift', buffered: true }); });
+      const page = await ctx.newPage();
+      await page.goto(origin + g, { waitUntil: 'load' });
+      await page.waitForTimeout(1500);
+      await page.evaluate(() => { window.__cls = []; });   // the first screen settling is not what is measured here
+      // a screen at a time, the way Page Down, a fling on a phone or a link to a part of the page moves it
+      for (let i = 0; i < 40; i++) {
+        await page.evaluate(() => { const y = scrollY + innerHeight * 0.8; if (window.__lenis) window.__lenis.scrollTo(y, { immediate: true, force: true }); else scrollTo(0, y); });
+        await page.waitForTimeout(300);
+        if (await page.evaluate(() => innerHeight + scrollY >= document.documentElement.scrollHeight - 2)) break;
+      }
+      await page.waitForTimeout(800);
+      const cls = await page.evaluate(() => window.__cls);
+      const sum = cls.reduce((s, e) => s + e.v, 0);
+      if (sum > 0.01) bad.push(`${width}x${height} ${g}: ${sum.toFixed(3)} (${[...new Set(cls.map((e) => e.src))].join(' ; ')})`);
+      await ctx.close();
+    }
+  }
+  assert.deepEqual(bad, [], 'layout shifts while scrolling a guide to its end');
+});
