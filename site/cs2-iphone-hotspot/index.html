@@ -65,7 +65,7 @@ addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.docume
     "@id": "https://sepd0x.github.io/cs2-ip-changer/#author"
    },
    "datePublished": "2026-11-05",
-   "dateModified": "2026-11-06",
+   "dateModified": "2026-11-07",
    "breadcrumb": {
     "@id": "https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/#crumbs"
    },
@@ -355,14 +355,16 @@ footer a{color:var(--ink3);text-decoration:none;transition:color .15s;display:in
 footer a:hover{color:var(--ink)}
 /* the name at the very end: its outline lit in the app's three colors, a packet of light that runs through the letters,
    the horizon as the route with its packets, and the name's reflection on the floor, as in the 3D world (6 Nov.).
-   It draws itself in as the page reaches it; the light follows the pointer. Reduced motion or Pause motion: lit and still */
+   It draws itself in as the page reaches it; the light follows the pointer. Reduced motion or Pause motion: lit and still.
+   The lit part's front fades over 260 of the name's 1433 units (wm-edge), so the outline and its glow light up letter by
+   letter with no straight cut between lit and unlit (7 Nov.); --wmp, 0 to 1, slides it in (readout.js) */
 .wordmark{position:relative;max-width:calc(var(--max) + 2*var(--gutter));margin:clamp(2.5rem,2rem + 3vw,5rem) auto 0;padding-inline:var(--gutter);user-select:none}
 .wordmark svg{display:block;width:100%;height:auto;overflow:visible;font:600 200px/1 var(--disp);letter-spacing:-4px}
 .wordmark use{fill:none;vector-effect:non-scaling-stroke}
 .wm-base{stroke:rgba(255,255,255,.1);stroke-width:1px}
 .wm-line{stroke:url(#wm-c);stroke-width:1.5px}
 .wm-glow{stroke:url(#wm-c);stroke-width:5px;opacity:.85}
-.wm-drawn{width:calc(var(--wm,100%) * 1.06)}
+.wm-drawn{transform:translateX(calc(var(--wmp,1) * 1840px))}
 .wm-hz{stroke:url(#wm-c);stroke-width:1px;opacity:.55;vector-effect:non-scaling-stroke}
 .wm-hz-glow{stroke:url(#wm-c);stroke-width:6;opacity:.35}
 .wm-pk{stroke:url(#wm-c);stroke-width:2.5;stroke-linecap:round;stroke-dasharray:0 1420;opacity:0}
@@ -518,9 +520,16 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 /* the text: a 68ch column, numbered sections */
 .gtext{color:var(--ink2);max-width:42rem;counter-reset:sec}
 /* below the first screen the browser lays these out only when they come near (6 Nov.: the first layout of the whole guide was
-   one 600 ms task on a slow phone); the sizes are guesses until each part has been on screen once, then remembered */
-.gtext{content-visibility:auto;contain-intrinsic-size:auto 3400px}.gfaq{content-visibility:auto;contain-intrinsic-size:auto 420px}.gmore{content-visibility:auto;contain-intrinsic-size:auto 800px}footer .fgrid{content-visibility:auto;contain-intrinsic-size:auto 1250px}
-@media (max-width:759px){footer .fgrid{contain-intrinsic-size:auto 770px}}@media (min-width:1000px){.gtext{contain-intrinsic-size:auto 2100px}.gmore{contain-intrinsic-size:auto 380px}footer .fgrid{contain-intrinsic-size:auto 480px}}.gshot{content-visibility:auto;contain-intrinsic-size:auto 400px}.gtoc-m{content-visibility:auto;contain-intrinsic-size:auto 260px}footer .legal{content-visibility:auto;contain-intrinsic-size:auto 120px}
+   one 600 ms task on a slow phone); the sizes are guesses until each part has been on screen once, then remembered.
+   7 Nov.: guessed per width as they are laid out, without their padding (the guess is the content's height), in rem so they
+   grow with the type on big screens: the footer is two columns to 900 px (taller from 760, where the brand gets a row) and four after. With the old guesses
+   (1250 px for the footer from 760 to 999 px, 120 for the last line everywhere) the page got shorter as the end came on
+   screen, and on a tablet held upright or a phone in Desktop site the name at the end jumped */
+.gtext{content-visibility:auto;contain-intrinsic-size:auto 3400px}.gfaq{content-visibility:auto;contain-intrinsic-size:auto 19rem}.gmore{content-visibility:auto;contain-intrinsic-size:auto 45rem}footer .fgrid{content-visibility:auto;contain-intrinsic-size:auto 45rem}
+@media (min-width:600px){.gmore{contain-intrinsic-size:auto 34.5rem}}@media (min-width:760px){.gmore{contain-intrinsic-size:auto 31rem}footer .fgrid{contain-intrinsic-size:auto 56.2rem}}@media (min-width:901px){.gmore{contain-intrinsic-size:auto 19.5rem}footer .fgrid{contain-intrinsic-size:auto 25.1rem}}@media (min-width:1000px){.gtext{contain-intrinsic-size:auto 2100px}.gmore{contain-intrinsic-size:auto 20rem}}.gshot{content-visibility:auto;contain-intrinsic-size:auto 400px}.gtoc-m{content-visibility:auto;contain-intrinsic-size:auto 260px}footer .legal{content-visibility:auto;contain-intrinsic-size:auto 6rem}
+@media (min-width:600px){footer .legal{contain-intrinsic-size:auto 4.6rem}}@media (min-width:820px){footer .legal{contain-intrinsic-size:auto 3.3rem}}@media (min-width:1000px){footer .legal{contain-intrinsic-size:auto 1.3rem}}
+/* a touch screen: the links are 44 px rows, so the guides list and the footer are taller */
+@media (pointer:coarse){.gmore{contain-intrinsic-size:auto 50rem}}@media (pointer:coarse) and (min-width:600px){.gmore{contain-intrinsic-size:auto 37rem}}@media (pointer:coarse) and (min-width:760px){.gmore{contain-intrinsic-size:auto 32.5rem}footer .fgrid{contain-intrinsic-size:auto 59.1rem}}@media (pointer:coarse) and (min-width:901px){.gmore{contain-intrinsic-size:auto 19.5rem}footer .fgrid{contain-intrinsic-size:auto 27rem}}
 .gtext h2::before{content:counter(sec,decimal-leading-zero);content:counter(sec,decimal-leading-zero) / "";display:inline-block;width:3.2rem;font:400 .8rem/1 var(--mono);letter-spacing:0;color:var(--ink3);vertical-align:.55em}
 .gtext h2{background:var(--t-top) 0 0/3rem 2px no-repeat;counter-increment:sec;color:var(--ink);font:500 clamp(1.7rem,1.1rem + 1.7vw,2.8rem)/1.06 var(--disp);letter-spacing:-.035em;margin:clamp(3.25rem,2.4rem + 2.6vw,5rem) 0 1.2rem;padding-top:clamp(1rem,.8rem + .6vw,1.4rem);border-top:0}
 .gtext h2:first-child{margin-top:0;padding-top:clamp(1rem,.8rem + .6vw,1.4rem)}
@@ -762,7 +771,8 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
       <filter id="wm-blur" x="-10%" y="-40%" width="120%" height="180%"><feGaussianBlur stdDeviation="7"/></filter>
       <filter id="wm-blur2" x="-10%" y="-400%" width="120%" height="900%"><feGaussianBlur stdDeviation="5"/></filter>
       <clipPath id="wm-down"><rect x="-33" y="196" width="1513" height="56"/></clipPath>
-      <mask id="wm-lit" maskUnits="userSpaceOnUse" x="-33" y="0" width="1513" height="252"><rect class="wm-drawn" x="-33" width="1513" height="252" fill="white" fill-opacity=".6"/><rect class="wm-pass" x="-453" width="420" height="252" fill="url(#wm-band)"/><circle class="wm-spot" cx="-400" cy="100" r="190" fill="url(#wm-spot)"/></mask>
+      <linearGradient id="wm-edge"><stop offset="0" stop-color="white"/><stop offset=".86" stop-color="white"/><stop offset=".895" stop-color="white" stop-opacity=".84"/><stop offset=".93" stop-color="white" stop-opacity=".5"/><stop offset=".965" stop-color="white" stop-opacity=".16"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient>
+      <mask id="wm-lit" maskUnits="userSpaceOnUse" x="-33" y="0" width="1513" height="252"><rect class="wm-drawn" x="-1893" width="1860" height="252" fill="url(#wm-edge)" fill-opacity=".6"/><rect class="wm-pass" x="-453" width="420" height="252" fill="url(#wm-band)"/><circle class="wm-spot" cx="-400" cy="100" r="190" fill="url(#wm-spot)"/></mask>
       <mask id="wm-floor" maskUnits="userSpaceOnUse" x="-33" y="196" width="1513" height="56"><rect x="-33" y="196" width="1513" height="56" fill="url(#wm-fade)"/></mask>
       <text id="wm-t" x="0" y="150">CS2 IP Changer</text>
     </defs>
