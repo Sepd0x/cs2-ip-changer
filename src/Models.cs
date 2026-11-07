@@ -383,9 +383,10 @@ public sealed class PlayerRow : Observable
     public string TimeText => ShortTime(Time);
     /// <summary>
     /// Time on the server in the player chip, always with its unit: "&lt;1m", "38m", "1h 05m". It was "0:38" and "1:05" (hours and
-    /// minutes) until 7 nov., which read as minutes and seconds.
+    /// minutes) until 7 nov., which read as minutes and seconds. From 100 h it is "99h+" (only servers that send made-up times for
+    /// bots get there), so it always fits its 56 px column.
     /// </summary>
-    public static string ShortTime(TimeSpan t) => t.TotalMinutes < 1 ? "<1m" : t.TotalHours < 1 ? $"{(int)t.TotalMinutes}m" : $"{(int)t.TotalHours}h {t.Minutes:00}m";
+    public static string ShortTime(TimeSpan t) => t.TotalMinutes < 1 ? "<1m" : t.TotalHours < 1 ? $"{(int)t.TotalMinutes}m" : t.TotalHours >= 100 ? "99h+" : $"{(int)t.TotalHours}h {t.Minutes:00}m";
     /// <summary>Time on the server in the tooltip, in words like the rest of the app: "38 min", "1 h 05 min".</summary>
     public static string LongTime(TimeSpan t) => t.TotalMinutes < 1 ? "under 1 min" : t.TotalHours < 1 ? $"{(int)t.TotalMinutes} min"
         : t.Minutes == 0 ? $"{(int)t.TotalHours} h" : $"{(int)t.TotalHours} h {t.Minutes:00} min";

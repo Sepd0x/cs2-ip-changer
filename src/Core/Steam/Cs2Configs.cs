@@ -434,6 +434,8 @@ public static class Cs2Config
         var alpha = px ? B("cl_crosshaircolor_a", 255) : Bool(m, "cl_crosshairusealpha") == false ? (byte)255 : B("cl_crosshairalpha", 200);
         // The outline: "true"/"false" in the older files; 0, 1 (all round) or 2 (half: top and left only) since Sep 2026
         int? outline = m.TryGetValue("cl_crosshair_drawoutline", out var ov) ? ov switch { "true" => 1, "false" => 0, _ => Num(m, "cl_crosshair_drawoutline") is double d ? Math.Clamp((int)d, 0, px ? 2 : 1) : 0 } : null;
+        // Without the key CS2 uses its default: on (1) in the new crosshair (cs2crosshaircode.com, boostpirate.com), off in the older one
+        if (outline == null && px) outline = 1;
         return new Crosshair(Num(m, "cl_crosshairstyle"), Num(m, px ? "cl_crosshair_length" : "cl_crosshairsize"), Num(m, px ? "cl_crosshair_gap" : "cl_crosshairgap"),
             Num(m, px ? "cl_crosshair_thickness" : "cl_crosshairthickness"),
             Bool(m, "cl_crosshairdot"), outline == null ? null : outline > 0, Num(m, "cl_crosshair_outlinethickness"), color, r, g, b, alpha, Bool(m, "cl_crosshair_t"),

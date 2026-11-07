@@ -49,6 +49,45 @@ static class Beta13AppTests
             }
             catch (Exception ex) { check("Zip: um servidor que pede o challenge duas vezes responde", false, ex.GetType().Name + ": " + ex.Message); }
         }
+        // O mesmo no A2S_PLAYER: um servidor que pede o challenge duas vezes para a lista de jogadores ficava "hidden"
+        {
+            using var srv = new System.Net.Sockets.UdpClient(new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 0));
+            var port = ((System.Net.IPEndPoint)srv.Client.LocalEndPoint!).Port;
+            byte[] Str(string t) => System.Text.Encoding.UTF8.GetBytes(t + "\0");
+            byte[] FF = { 0xFF, 0xFF, 0xFF, 0xFF };
+            var info = FF.Concat(new byte[] { 0x49, 17 }).Concat(Str("Lista")).Concat(Str("de_mirage")).Concat(Str("csgo")).Concat(Str("CS2")).Concat(new byte[] { 0xDA, 0x02, 2, 10, 0 }).ToArray();
+            byte[] Player(byte i, string n, int score, float t) => new[] { i }.Concat(Str(n)).Concat(BitConverter.GetBytes(score)).Concat(BitConverter.GetBytes(t)).ToArray();
+            var list = FF.Concat(new byte[] { 0x44, 2 }).Concat(Player(0, "ana", 12, 2280.7f)).Concat(Player(1, "rui", 30, 3900f)).ToArray();
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            var fake = Task.Run(async () =>
+            {
+                try
+                {
+                    while (!cts.IsCancellationRequested)
+                    {
+                        var r = await srv.ReceiveAsync(cts.Token);
+                        var b = r.Buffer;
+                        if (b[4] == 0x54) { await srv.SendAsync(info, r.RemoteEndPoint); continue; }
+                        // A2S_PLAYER: FF FF FF FF -> challenge 1; com o 1 -> challenge 2; com o 2 -> a lista
+                        var ch = b.Length >= 9 ? b[5] : (byte)0xFF;
+                        var reply = ch == 2 ? list : FF.Concat(new byte[] { 0x41, ch == 1 ? (byte)2 : (byte)1, 0, 0, 0 }).ToArray();
+                        await srv.SendAsync(reply, r.RemoteEndPoint);
+                    }
+                }
+                catch { }
+            });
+            try
+            {
+                var q = A2S.Query("127.0.0.1", port, "127.0.0.1", 1500).GetAwaiter().GetResult();
+                var lista = q.PlayerList == null ? "null" : string.Join(",", q.PlayerList.Select(p => $"{p.Name} {p.Time.TotalSeconds:0}"));
+                check("Zip: o A2S_PLAYER com o challenge duas vezes dá a lista", q.PlayerList is { Count: 2 } && lista == "rui 3900,ana 2281", lista);
+            }
+            catch (Exception ex) { check("Zip: o A2S_PLAYER com o challenge duas vezes dá a lista", false, ex.GetType().Name + ": " + ex.Message); }
+            cts.Cancel();
+        }
+        var a2sSrc = File.ReadAllText(Path.Combine(SecurityTests.Repo(), "src", "Core", "Servers", "A2S.cs"));
+        check("Zip: o QueryPlayers converte o tempo pelo PlayerTime", a2sSrc.Contains("new A2SPlayer(p.n, p.score, PlayerTime(p.t))")
+            && Regex.Matches(a2sSrc, @"TimeSpan\.FromSeconds\(").Count == 1, "");
 
         // registo.log 2793 (00:04:09): "one account was left as it is (the file has something the app can't keep exactly, so it was left as it is)"
         var naoVolta = Cs2LaunchOptions.Patch("\"UserLocalConfigStore\"\n{\n\t\"a\"\t\t\"{\"\n}\n");
@@ -57,12 +96,79 @@ static class Beta13AppTests
             !naoVolta.Changed && Regex.Matches(linha, "left as it is").Count == 1 && linha.EndsWith("(the file has something the app can't keep exactly)."), linha);
 
         // registo.log 2803 e 2805 (00:06:04): o mesmo IP de casa dito duas vezes, um Error com o IP e logo um Warn sem ele
-        check("Zip: o IP igual ao de casa fica só na linha de erro com o IP",
-            Guard.ProblemLine(DistrustText.Of(Distrust.SameIp), Distrust.SameIp) == null
-            && MainWindow.SameIpText("1.2.3.4", unprotected: false).Contains("same as your home IP"), "");
-        check("Zip: os outros motivos de bloqueio continuam no Log",
-            Guard.ProblemLine(DistrustText.Of(Distrust.PhoneWifi), Distrust.PhoneWifi) == DistrustText.Of(Distrust.PhoneWifi) + " Servers blocked."
-            && Guard.ProblemLine(DistrustText.Of(Distrust.Unchecked), Distrust.Unchecked) != null && Guard.ProblemLine(null, Distrust.None) == null, "");
+        string same = DistrustText.Of(Distrust.SameIp), wifi = DistrustText.Of(Distrust.PhoneWifi), unchecked_ = DistrustText.Of(Distrust.Unchecked);
+        {
+            // o caminho do zip: proteção ligada, Wi-Fi do telemóvel ligado (aviso), a verificação do IP escreve o Error com o IP, o Guard cala-se
+            var p = new ProblemLog();
+            var l1 = p.Next(false, wifi, Distrust.PhoneWifi);
+            p.SameIpWritten();
+            var l2 = p.Next(false, same, Distrust.SameIp);
+            check("Zip: o IP igual ao de casa fica só na linha de erro com o IP", l1 == wifi + " Servers blocked." && l2 == null, $"{l1} | {l2}");
+        }
+        {
+            // a regressão que o verificador viu: proteção desligada com o IP igual ao de casa (só o aviso "unprotected", sem Error), depois ligar
+            var p = new ProblemLog();
+            var off = p.Next(true, same, Distrust.SameIp);
+            var on = p.Next(false, same, Distrust.SameIp);
+            check("Zip: ligar a proteção com o IP igual ao de casa diz Servers blocked", off == null && on == same + " Servers blocked.", $"{off} | {on}");
+            // e depois de desligar e voltar a ligar diz outra vez
+            p.SameIpWritten();
+            p.Next(true, same, Distrust.SameIp);
+            check("Zip: desligar e voltar a ligar diz outra vez", p.Next(false, same, Distrust.SameIp) == same + " Servers blocked.", "");
+        }
+        {
+            // New IP que volta com o IP de casa: só um toast, sem Error, por isso a linha do Guard é a única no Log
+            var p = new ProblemLog();
+            p.Next(false, unchecked_, Distrust.Unchecked);
+            check("Zip: IP de casa depois de um New IP fica no Log", p.Next(false, same, Distrust.SameIp) == same + " Servers blocked.", "");
+            // o Error de uma vez antiga não cala uma volta nova ao mesmo motivo
+            p.SameIpWritten();
+            p.Next(false, wifi, Distrust.PhoneWifi);
+            check("Zip: um Error antigo não cala o IP de casa mais tarde", p.Next(false, same, Distrust.SameIp) == same + " Servers blocked.", "");
+        }
+        {
+            var p = new ProblemLog();
+            check("Zip: os outros motivos de bloqueio continuam no Log, uma vez cada",
+                p.Next(false, wifi, Distrust.PhoneWifi) == wifi + " Servers blocked." && p.Next(false, wifi, Distrust.PhoneWifi) == null
+                && p.Next(false, unchecked_, Distrust.Unchecked) == unchecked_ + " Servers blocked." && p.Next(false, null, Distrust.None) == null, "");
+        }
+        var guardSrc = File.ReadAllText(Path.Combine(SecurityTests.Repo(), "src", "Core", "Network", "Guard.cs"));
+        var protSrc = File.ReadAllText(Path.Combine(SecurityTests.Repo(), "src", "Views", "MainWindow.Protection.cs"));
+        check("Zip: o SyncCore escreve o motivo pelo ProblemLog",
+            Regex.IsMatch(guardSrc, @"Problems\.Next\(mode is ""home"" or ""off"", problem, distrust\) is string (\w+)\) Log\.Warn\(\1\)")
+            && !guardSrc.Contains("Log.Warn(problem"), "");
+        check("Zip: o Error do IP de casa avisa o Guard logo a seguir",
+            Regex.IsMatch(protSrc, @"Log\.Error\(SameIpText\(e, unprotected: false\)\);\s*if \(Steam\.Cs2Running\) System\.Media\.SystemSounds\.Hand\.Play\(\);\s*_guard\.Problems\.SameIpWritten\(\);"), "");
+
+        // registo.log 2800, 2804, 2806 (00:06:01-00:06:04): "Kill switch: ... blocked (the phone isn't trusted yet)." três vezes em 3 s
+        {
+            string last = null;
+            var k = "Kill switch: servers in the list and CS2 blocked (the phone isn't trusted yet).";
+            var a1 = Guard.KillLine(k, ref last, false);
+            var a2 = Guard.KillLine(k, ref last, false);
+            var a3 = Guard.KillLine(k, ref last, false);
+            var a4 = Guard.KillLine("Kill switch: servers in the list and CS2 only go out through \"Ethernet 3\" (192.0.2.10).", ref last, false);
+            var a5 = Guard.KillLine(a4, ref last, repaired: true);
+            check("Zip: a mesma linha do kill switch não se repete", a1 == k && a2 == null && a3 == null, $"{a1} | {a2} | {a3}");
+            check("Zip: a linha do kill switch sai quando muda ou quando as regras foram refeitas", a4 != null && a5 == a4, "");
+            check("Zip: o SyncCore passa a linha do kill switch pelo KillLine e esquece-a com a proteção desligada",
+                guardSrc.Contains("ref _killLine, repaired) is string kill)") && guardSrc.Contains("if (mode is \"home\" or \"off\") _killLine = null;"), "");
+        }
+
+        // registo.log 2788 e 2792: "33 Steam accounts on this PC" e logo "added ... on 35 accounts" (e 1 deixada): as launch options vão a
+        // todas as pastas do userdata, uma por cada conta que já entrou neste PC, mesmo as que já não estão na lista do Steam
+        var lancSrc = File.ReadAllText(Path.Combine(SecurityTests.Repo(), "src", "Views", "MainWindow.LaunchOptions.cs"));
+        check("Zip: a linha das launch options diz que contas conta",
+            MainWindow.AddedText(35).StartsWith("CS2 launch options: added -condebug -conclearlog for 35 Steam accounts that logged in on this PC at some point, including any no longer in Steam's list")
+            && MainWindow.AddedText(1).Contains("for 1 Steam account that"), MainWindow.AddedText(35));
+        check("Zip: o LogLaunchOptions usa o AddedText e o LeftText",
+            lancSrc.Contains("Log.Ok(AddedText(added))") && lancSrc.Contains("Log.Warn(LeftText(f.Why))") && !lancSrc.Contains("one account was left as it is ({f.Why})"), "");
+
+        // registo.log 2828, 2831, 2835: "CS2 network after 9 min / 22 min / 26 min" no mesmo jogo de 57 min: cada resumo do CS2 é de uma
+        // ligação (a troca de mapa liga de novo), e "after 26 min" lia-se como o tempo todo no servidor
+        var net = new NetReport { Seconds = 26 * 60 + 5, PingP50 = 30, PingP95 = 33, JitterUp = 4, JitterDown = 1, UpLate = 14.4, UpMissedLate = 0.2, DownMissedLate = 0.4 }
+            .Line("phone IP 203.0.113.7", "198.51.100.20:27009");
+        check("Zip: a linha da rede do CS2 diz que é o último pedaço", net.StartsWith("CS2 network for the last 26 min on 198.51.100.20:27009") && !net.Contains(" after "), net);
 
         // registo.log 2845 a 2876 (01:08:22): Sync now com o CS2 aberto escreveu 31 linhas iguais, uma por conta
         var nomes = Enumerable.Range(1, 31).Select(i => "conta" + i).ToList();
@@ -91,7 +197,8 @@ static class Beta13AppTests
         check("Jogadores: um tempo absurdo do servidor não deita a lista fora", enorme && e > TimeSpan.Zero, enorme ? e.ToString() : "exceção");
 
         // No cartão do jogador: curto, sempre com unidade, nunca "0:38" (lia-se 38 segundos) nem "1:05" (lia-se 1 minuto)
-        var curtos = new (double s, string want)[] { (0, "<1m"), (59, "<1m"), (59.9, "<1m"), (60, "1m"), (2280.7, "38m"), (3599, "59m"), (3600, "1h 00m"), (3900, "1h 05m"), (45000, "12h 30m") };
+        var curtos = new (double s, string want)[] { (0, "<1m"), (59, "<1m"), (59.9, "<1m"), (60, "1m"), (2280.7, "38m"), (3599, "59m"), (3600, "1h 00m"), (3900, "1h 05m"), (45000, "12h 30m"),
+            (99 * 3600 + 59 * 60, "99h 59m"), (100 * 3600, "99h+"), (365 * 86400, "99h+") };
         foreach (var (s, want) in curtos)
             check($"Jogadores: {s} s no cartão é \"{want}\"", PlayerRow.ShortTime(S(s)) == want, PlayerRow.ShortTime(S(s)));
 
@@ -103,13 +210,16 @@ static class Beta13AppTests
         var todos = curtos.Select(x => PlayerRow.ShortTime(S(x.s))).Concat(longos.Select(x => PlayerRow.LongTime(S(x.s)))).ToList();
         check("Jogadores: nenhum tempo é só um número", todos.All(t => Regex.IsMatch(t, "[a-z]")), string.Join(" | ", todos));
 
-        // O cartão tem uma coluna fixa para o tempo: "12h 30m" (7 letras de Cascadia Mono a 11 px, 0,6 em cada) cabe sem tocar nos pontos
+        // O cartão tem uma coluna fixa para o tempo: o texto mais comprido que pode sair (até o ano do PlayerTime; Cascadia Mono a 11 px,
+        // 0,6 em cada letra) cabe sem tocar nos pontos
+        var maisComprido = Enumerable.Range(0, 24 * 366).SelectMany(h => new[] { 0, 59 }.Select(m => PlayerRow.ShortTime(TimeSpan.FromHours(h) + TimeSpan.FromMinutes(m))))
+            .Append(PlayerRow.ShortTime(A2S.PlayerTime(1e30f))).MaxBy(t => t.Length)!;
         var xaml = File.ReadAllText(Path.Combine(SecurityTests.Repo(), "src", "MainWindow.xaml"));
         var chip = xaml[xaml.IndexOf("x:Key=\"PlayerChip\"", StringComparison.Ordinal)..];
         chip = chip[..chip.IndexOf("</DataTemplate>", StringComparison.Ordinal)];
         var cols = Regex.Matches(chip, "<ColumnDefinition Width=\"([^\"]+)\"").Select(m => m.Groups[1].Value).ToList();
         var largura = cols.Count == 4 && double.TryParse(cols[3], System.Globalization.CultureInfo.InvariantCulture, out var w) ? w : 0;
-        check("Jogadores: o tempo mais comprido cabe no cartão", largura >= PlayerRow.ShortTime(S(45000)).Length * 11 * 0.6 + 8, $"coluna {largura}, precisa {PlayerRow.ShortTime(S(45000)).Length * 6.6 + 8:0.#}");
+        check("Jogadores: o tempo mais comprido cabe no cartão", largura >= maisComprido.Length * 11 * 0.6 + 8, $"\"{maisComprido}\": coluna {largura}, precisa {maisComprido.Length * 6.6 + 8:0.#}");
 
         var row = new PlayerRow { Name = "ana", Score = 12, Time = S(3900) };
         check("Jogadores: a dica diz o tempo por extenso", row.Tip.Contains("1 h 05 min on the server") && row.TimeText == "1h 05m", row.Tip.Replace("\n", " / ") + " · " + row.TimeText);
@@ -157,10 +267,13 @@ static class Beta13AppTests
         Mede("feita a 720p", Nova("4", "8", "4", "2", "720"), 1440, 16, 8, 4);
         // A mira por omissão do CS2 (Dynamic Quad)
         Mede("por omissão do CS2", Nova("7", "8", "4", "2", "1080"), 1080, 8, 4, 2);
-        // b1t (NAVI), código CSqvLJtn4UrvzStpGJP9PjwVCYhsA44tkbwDWbeiLZKGhF: comprimento 2, espessura 2, gap 1, feita a 960
+        // b1t (NAVI), código CSqvLJtn4UrvzStpGJP9PjwVCYhsA44tkbwDWbeiLZKGhF: comprimento 2, espessura 2, gap 1, feita a 960 (o verificador
+        // descodificou o código: altura 960, estilo 4, verde, contorno 0)
         Mede("do b1t", Nova("4", "2", "1", "2", "960"), 960, 2, 1, 2);
         Mede("do b1t", Nova("4", "2", "1", "2", "960"), 1920, 4, 2, 4);
-        // Valores de um ficheiro real do CS2 de nov. 2026 (amarela, feita a 1536): a 1080p fica 7,7 -> 8, 4,2 -> 4, 2,1 -> 2
+        // Valores de um ficheiro real do CS2 de nov. 2026 (amarela, feita a 1536): a 1080p fica 7,7 -> 8, 4,2 -> 4, 2,1 -> 2.
+        // NÃO CONFIRMADO: ninguém publicou como o CS2 arredonda o reescalonamento; isto é o arredondamento ao mais perto que a app escolheu
+        // (se o CS2 truncar, a barra é 7)
         Mede("feita a 1536", Nova("4", "11", "6", "3", "1536"), 1536, 11, 6, 3);
         Mede("feita a 1536", Nova("4", "11", "6", "3", "1536"), 1080, 8, 4, 2);
         // Sistema antigo: size 2 dá 4 px a 1080 e 3 px a 768; gap -2 dá 2 px; espessura 1 dá 2,25 -> 2 px
@@ -176,6 +289,11 @@ static class Beta13AppTests
         var corContorno = Cs2Config.ReadCrosshair(Convars(("cl_crosshair_length", "8"), ("cl_crosshair_drawoutline", "1"),
             ("cl_crosshairoutline_r", "255"), ("cl_crosshairoutline_g", "0"), ("cl_crosshairoutline_b", "128"), ("cl_crosshairoutline_a", "200")));
         check("Mira: a cor do contorno novo lê-se", corContorno is { OutlineR: 255, OutlineG: 0, OutlineB: 128, OutlineA: 200 }, corContorno?.ToString());
+        // Sem a chave cl_crosshair_drawoutline o CS2 usa a omissão: ligado (1) na mira nova (fontes da comunidade), desligado na antiga
+        var semChaveNova = Cs2Config.ReadCrosshair(Convars(("cl_crosshairstyle", "4"), ("cl_crosshair_length", "8"), ("cl_crosshair_gap", "4"), ("cl_crosshair_thickness", "2")));
+        var semChaveAntiga = Cs2Config.ReadCrosshair(Convars(("cl_crosshairstyle", "4"), ("cl_crosshairsize", "2"), ("cl_crosshairgap", "-2")));
+        check("Mira: sem cl_crosshair_drawoutline a mira nova tem contorno", Cs2Config.CrosshairPixels(semChaveNova).Outline == 1 && semChaveNova.Outline == true, semChaveNova?.ToString());
+        check("Mira: sem cl_crosshair_drawoutline a mira antiga não tem", Cs2Config.CrosshairPixels(semChaveAntiga).Outline == 0, semChaveAntiga?.ToString());
         // Estilo 6 do sistema novo: só o ponto
         var ponto = Cs2Config.CrosshairPixels(Nova("6", "8", "4", "3", "1080", dot: "false"));
         check("Mira: estilo 6 (Dot Only) é só o ponto", !ponto.Lines && ponto.Dot, ponto.ToString());
@@ -197,15 +315,20 @@ static class Beta13AppTests
                 var g0 = direita == null ? double.NaN : direita.R.Left - centro;
                 var prop = direita == null ? double.NaN : direita.R.Width / Math.Max(g0, 0.5);
                 var quer = px.Length / (double)Math.Max(px.Gap, 1);
-                // com espessura ímpar o centro cai a meio de um píxel: meio píxel de arredondamento no gap é o que o ecrã permite
-                var perto = direita != null && new[] { g0 - 0.5, g0, g0 + 0.5 }.Any(g => g > 0 && Math.Abs(direita.R.Width / g - quer) / quer < 0.2);
+                // Uma só escala s para barra e gap: |barra - s·comprimento| <= 0,5 px e |gap - s·gap| <= 0,5 px (os píxeis inteiros da imagem),
+                // mais meio píxel no gap só com espessura ímpar (o centro cai a meio de um píxel). Há um s que serve aos dois?
+                var folgaGap = baixo != null && baixo.R.Width % 2 == 1 ? 1.0 : 0.5;
+                var perto = direita != null && px.Length > 0 && px.Gap > 0
+                    && Math.Max((direita.R.Width - 0.5) / px.Length, (g0 - folgaGap) / px.Gap) <= Math.Min((direita.R.Width + 0.5) / px.Length, (g0 + folgaGap) / px.Gap) + 1e-9;
                 check($"Mira: a imagem {nome} cabe na caixa de {box}", dentro, string.Join(" ", shapes.Select(s => s.R.ToString())));
                 check($"Mira: a imagem {nome} tem as proporções do CS2 ({box})", perto, $"imagem {prop:0.00}, CS2 {quer:0.00}");
             }
-            // Uma mira pequena de pro fica ao dobro, como antes: barras de 4 px na imagem para 2 px no jogo
+            // Uma mira pequena de pro fica ao dobro dos píxeis do CS2 a 1080p, como antes: a do b1t tem 2 px de barra -> 4 px na imagem
+            // (a beta.12 dava 4,5: o dobro de 2 × 1080/960 sem arredondar ao píxel)
+            var b1tPx = Cs2Config.CrosshairPixels(Nova("4", "2", "1", "2", "960"), 1080);
             var b1t = MainWindow.CrosshairShapes(Nova("4", "2", "1", "2", "960"), box);
             var barra = b1t.Where(s => !s.Outline && s.R.Left > box / 2).OrderBy(s => s.R.Left).FirstOrDefault();
-            check($"Mira: a mira do b1t aparece ao dobro ({box})", barra != null && Math.Abs(barra.R.Width - 2 * 2 * 1080 / 960.0) < 0.6, barra?.R.ToString());
+            check($"Mira: a mira do b1t aparece ao dobro ({box})", barra != null && b1tPx.Length == 2 && Math.Abs(barra.R.Width - 2 * b1tPx.Length) < 0.01, barra?.R.ToString());
         }
         // Meio contorno: o contorno sai à esquerda e em cima de cada barra, nunca à direita nem em baixo
         var meio = MainWindow.CrosshairShapes(Nova("4", "8", "4", "2", "1080", outline: "2"), 32);
