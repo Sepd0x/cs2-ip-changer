@@ -318,35 +318,35 @@
   "files": [
    {
     "file": "site/img/poster-1280.webp",
-    "sha256": "4dd6b1a5e62420647e03d374dcc4b9069b63caab9531855a63d28e2145463c35"
+    "sha256": "986979648c4bb8cad0b286433bccc370c632211e88f9998abd32d83bd26446e4"
    },
    {
     "file": "site/img/poster-1366.webp",
-    "sha256": "f4da393a73690fec7e15365eed304fede87a545ae101e79f6aa389c21a565662"
+    "sha256": "c284c4adf088a41368328db5038c9a1370fbabcfe93ea2660455a4b129b9677d"
    },
    {
     "file": "site/img/poster-1440.webp",
-    "sha256": "54c4d7732ad33f6e27c134cc717a9dda99a01c1f360cfcc83d802f9c06401463"
+    "sha256": "d1c114872e48e55a655b9df0ef967a8c120f5e51555c5e0e182bf61a1d61c196"
    },
    {
     "file": "site/img/poster-1536.webp",
-    "sha256": "27429ea5972245c67d76b70b1d4e951a9be85ee83882e8c574f55538fda5b3aa"
+    "sha256": "bf80abae5275f606aaa5fc92d1bf08fe77456074df9f48c94b259297534f7d88"
    },
    {
     "file": "site/img/poster-1920.webp",
-    "sha256": "a7fdc7c7eb87864f67e403899350a2af2c2a1f2960250b3148522ce0e7bfe3ed"
+    "sha256": "595b8dc96eb87190419f804c92ed363185c003a05bf109749538541d2df304e0"
    },
    {
     "file": "site/img/poster-390.webp",
-    "sha256": "fc828f7cf6ca7ab40e32d638b0fd5955e3f9d42cabe94a7efbb70d3e50e44752"
+    "sha256": "3db60dc2cbeaa89bccd8fc5577da87bcc5f66747100fee39a44ffa4b8760da50"
    },
    {
     "file": "site/img/world-tower.webp",
-    "sha256": "21a8819b8cba5d98afa5f39bc55bbf89f5f8c63857c1364c2b942f705adef126"
+    "sha256": "e2bb41fcdeca34d9dafc1f148a8c9aba48e6a3295225c9e99eea9708f7cfa7d6"
    },
    {
     "file": "site/img/world-plug.webp",
-    "sha256": "81af48d947b7a4e7e924f22b3b73b842dfb4aa76935cd1ca98af0a500ea6f574"
+    "sha256": "3f571c4d446d3b419e48ad87dbbcff9405f90d4b0ded9b9506e2905ebd29f617"
    }
   ]
  },
