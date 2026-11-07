@@ -51,7 +51,6 @@ static class Beta13TelemetriaTests
                 var later = DateTime.UtcNow.AddSeconds(2);
                 // a click 500 px down the window, on the row under the box: 500 + 700 of page scroll = 1200 → row 30
                 page = Telemetry.HeatClick(w, target, new System.Windows.Point(400, 500), true, later);
-                if (page == null) err = new Exception($"dbg anc={root.IsAncestorOf(target)} counts={Telemetry.Counts(true, DateTime.UtcNow, later)} content={w.Content is System.Windows.FrameworkElement} w={root.ActualWidth} sc={string.Join("+", Telemetry.ScrolledAbove(target, w))} app={System.Windows.Application.Current != null} hw={ReferenceEquals(typeof(Telemetry).GetField("_heatWindow", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!.GetValue(null), w)} act={typeof(Telemetry).GetField("_activatedAt", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!.GetValue(null):o} later={later:o}");
                 other = Telemetry.HeatClick(new System.Windows.Window { Content = new System.Windows.Controls.Grid() }, target, new System.Windows.Point(400, 500), true, later);
                 overlay = true;
                 overlaid = Telemetry.HeatClick(w, target, new System.Windows.Point(400, 500), true, later);
