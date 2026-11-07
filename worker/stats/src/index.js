@@ -86,6 +86,18 @@ const MAX_MINUTES = contract.limits.maxMinutes;
 const SCREEN = /^[a-z]{1,12}$/;
 const CELL = /^(\d{1,2}),(\d{1,2})$/;
 const { cols: COLS, rows: ROWS } = contract.grid;
+// beta.13: a cell in the page's content (scroll included), s<col>,<row>, kept as it comes; the old window grid (beta.9 to beta.12)
+// stays as it was, and the dashboard draws the two apart (never on the same map)
+const PAGE_CELL = /^s(\d{1,2}),(\d{1,3})$/;
+const { cols: PCOLS, rows: PROWS } = contract.page;
+/** A heat cell of either grid, inside it. */
+export function cellOk(cell) {
+  if (typeof cell !== 'string') return false;
+  const o = CELL.exec(cell);
+  if (o) return +o[1] < COLS && +o[2] < ROWS;
+  const p = PAGE_CELL.exec(cell);
+  return !!p && +p[1] < PCOLS && +p[2] < PROWS;
+}
 const AGES = { '0': '0', '1': '1', '2-3': '2_3', '4-6': '4_6', '7-13': '7_13', '14-29': '14_29', '30+': '30p' };
 // Hosting and cloud networks (Google, Amazon, Microsoft, OVH, Hetzner, DigitalOcean, Linode, Vultr, Alibaba, Tencent, Oracle, M247,
 // Datacamp, Contabo, Scaleway, netcup). Online virus scanners run the exe there. Only a yes/no is kept (count net_dc), never the network.
@@ -400,8 +412,7 @@ export default {
       for (const h of b.heat.slice(0, contract.limits.heat)) {
         if (!Array.isArray(h) || h.length !== 4) continue;
         const [s, kind, cell, n] = h;
-        const m = typeof cell === 'string' ? CELL.exec(cell) : null;
-        if (!SCREEN.test(s || '') || !['c', 'd', 'r'].includes(kind) || !m || +m[1] >= COLS || +m[2] >= ROWS || !int(n, 10000)) continue;
+        if (!SCREEN.test(s || '') || !['c', 'd', 'r'].includes(kind) || !cellOk(cell) || !int(n, 10000)) continue;
         stmts.push(env.DB.prepare('INSERT INTO heat (day, app, screen, kind, cell, n, dev) VALUES (?, ?, ?, ?, ?, ?, ?) '
           + 'ON CONFLICT (day, app, screen, kind, cell, dev) DO UPDATE SET n = n + excluded.n').bind(day, b.app, s, kind, cell, Math.min(n, MAX_HEAT), dev));
         cost += 2;

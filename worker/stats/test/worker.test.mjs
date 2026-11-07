@@ -771,7 +771,8 @@ test('K3: the body the app makes (Telemetry.Body, app-report.json) goes through 
     clicks: () => Object.entries(body.clicks).every(([k, n]) => s.buttons[k]?.n === n),
     counts: () => true,   // name by name below
     errors: () => body.errors.every((e) => (e.type.startsWith('Fatal_') ? s.crashPlaces.some((c) => c.at === e.at && c.n === e.n) : s.errors.some((x) => x.type === e.type && x.at === e.at && x.n === e.n))),
-    heat: () => body.heat.every(([sc, kind, cell, n]) => s.heat[sc]?.[kind]?.some(([c, r, v]) => `${c},${r}` === cell && v === n)),
+    // beta.13: the page cells ("s1,5") in heatPage, the old window cells ("1,4") in heat
+    heat: () => body.heat.every(([sc, kind, cell, n]) => (cell.startsWith('s') ? s.heatPage : s.heat)[sc]?.[kind]?.some(([c, r, v]) => `${cell.startsWith('s') ? 's' : ''}${c},${r}` === cell && v === n)),
     screens: () => Object.entries(body.screens).every(([k, m]) => s.screens[k]?.minutes === m),
     paths: () => Object.entries(body.paths).every(([p, n]) => { const [from, to] = p.split('>'); return s.paths.some((x) => x.from === from && x.to === to && x.n === n); }),
     age: () => s.age.some((a) => a.band === body.age && a.n === 1),

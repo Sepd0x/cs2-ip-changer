@@ -1,9 +1,12 @@
 // Mapa da UI da app: onde fica cada botão em cada ecrã, gerado das capturas do modo demo (--mapa: o handler do Click, o texto e a caixa de cada botão).
 // Fica no dashboard (não vem da API): a app só envia o nome do handler do Click (o id daqui, sem _Click) e a célula da grelha 24×16.
 // r = [x, y, largura, altura] em píxeis da captura. A grelha cobre a área à direita da barra lateral (x >= 81).
+// Beta.13: a captura é a página inteira, com o que está para baixo do scroll (1240 de largura, a altura de cada página). Duas grelhas:
+// a nova (célula "s", linhas de ROWPX píxeis pela página abaixo, até PAGEROWS, contract.json page) e a antiga das versões até à
+// beta.12 (ROWS linhas da janela de H píxeis, sem o scroll, contract.json grid). Nunca no mesmo mapa.
 'use strict';
 const UI = {
-  W: 1240, H: 800, X0: 81, COLS: 24, ROWS: 16,
+  W: 1240, H: 800, X0: 81, COLS: 24, ROWS: 16, ROWPX: 40, PAGEROWS: 150,
   screens: [
     { id: 'connection', name: 'Connection', img: 'ui/connection.png', icon: 'shield',
       buttons: [

@@ -12,6 +12,7 @@
     "bodyBytes": 16384
   },
   "grid": { "cols": 24, "rows": 16 },
+  "page": { "_": "beta.13: the heat map in the page's content (scroll included), cells sent as s<col>,<row>; grid is the old window grid of beta.9 to beta.12", "cols": 24, "rowPx": 40, "rows": 150 },
   "screens": ["connection", "servers", "regions", "accounts", "configs", "profiles", "log", "settings"],
   "settings": ["GameMode", "SteamOnEgress", "KeepPcOffPhone", "RequireGoodLink", "CheckUpdates", "SteamSilent", "SteamOffline", "StreamerMode",
     "AutoStreamer", "AutoQuery", "CleanupOnExit", "CloseToTray", "AutoJoinFollowed", "SwitchIp", "SwitchAccount", "SwitchRejoin",

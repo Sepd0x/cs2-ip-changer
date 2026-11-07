@@ -2,9 +2,12 @@
 //   docs/screenshots/<page>.png           at 2x (2480x1600): the site (.github/workflows/pages.yml copies them to img/, with a
 //                                         WebP each; the 3D monitor shows connection) and the README frames
 //   docs/assets/shots/<page>.png|webp     the framed copies for README.md and docs/FEATURES.md (python tools/readme-shots.py)
-//   worker/stats/dashboard/ui/<page>.png  at 1x (1240x800): the dashboard's click map. 1x on purpose: the Worker carries them
-//                                         inside src/assets.js. The button map of each (.json, --mapa) goes to publish/ui-mapa/,
-//                                         to bring worker/stats/dashboard/ui-map.js up to date by hand
+//   worker/stats/dashboard/ui/<page>.png  at 1x, 1240 wide and as tall as the whole page (beta.13: --mapa makes the demo's window
+//                                         tall enough that nothing on the page scrolls, because the app counts a click at its height
+//                                         in the page, scroll included; Accounts with 21 accounts, like a real list): the
+//                                         dashboard's click map. 1x on purpose: the Worker carries them inside src/assets.js. The
+//                                         button map of each (.json, --mapa) goes to publish/ui-mapa/, to bring
+//                                         worker/stats/dashboard/ui-map.js up to date by hand
 //   docs/assets/shots.json                the manifest: the app version and the fingerprint of its XAML the captures were made
 //                                         from, and every file's size and SHA-256. tests/DesignSyncTests.cs fails when the XAML or
 //                                         the version moved on, or when a capture no longer matches its line.
@@ -28,6 +31,8 @@ const EXE = join(ROOT, 'src/bin/Debug/net8.0-windows/win-x64/CS2IPChanger.exe');
 export const PAGES = { connection: 'net', servers: 'servers', regions: 'regions', accounts: 'accounts', configs: 'configs', profiles: 'profiles', log: 'log', settings: 'settings' };
 export const SITE = ['connection', 'servers', 'regions', 'accounts', 'configs', 'profiles'];
 export const SIZE = [1240, 800], SCALE = 2;
+// beta.13: the dashboard's whole-page capture of a page with a list long enough to scroll, as people have it (the owner has 21 accounts)
+export const MAP_EXTRA = { accounts: ['--contas', '21'] };
 
 const sha = (buf) => createHash('sha256').update(buf).digest('hex');
 const lf = (p) => readFileSync(p, 'utf8').replace(/^\uFEFF/, '').replaceAll('\r\n', '\n');
@@ -143,7 +148,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
   const size = SIZE.join('x');
   for (const [name, page] of Object.entries(PAGES)) {
     // 1x for the dashboard, with --mapa (the button boxes are in 1x pixels, as ui-map.js has them)
-    run(EXE, ['--demo', '--shot', join(map, `${name}.png`), page, '--size', size, '--scale', '1', '--mapa']);
+    run(EXE, ['--demo', '--shot', join(map, `${name}.png`), page, '--size', size, '--scale', '1', '--mapa', ...(MAP_EXTRA[name] || [])]);
     copyFileSync(join(map, `${name}.png`), join(ui, `${name}.png`));
     // 2x for the site and the README
     if (SITE.includes(name)) run(EXE, ['--demo', '--shot', join(shots, `${name}.png`), page, '--size', size, '--scale', String(SCALE)]);

@@ -145,7 +145,8 @@ static class TelemetryTests
             Clicks = new() { ["ChangeIp_Click"] = 4, ["Rejoin_Click"] = 1, ["Hotkey_Rejoin"] = 2, ["Tray_open"] = 1 },
             Counts = counts,
             Errors = new() { new() { Type = "IOException", At = "Store.Save", N = 2 }, new() { Type = "Fatal_NullReferenceException", At = "MainWindow.QueryServers", N = 1 } },
-            Heat = new() { ["connection|c|1,4"] = 3, ["connection|d|12,9"] = 1, ["connection|r|1,4"] = 1 },
+            // beta.13: the cells are in the page (Telemetry.PageCell, scroll included); beta.12 and before sent "1,4" (Beta9Tests)
+            Heat = new() { ["connection|c|s1,5"] = 3, ["connection|d|s12,9"] = 1, ["connection|r|s1,5"] = 1, ["accounts|c|s6,30"] = 2 },
             Screens = new() { ["connection"] = 20, ["servers"] = 5 },
             Paths = new() { ["connection>servers"] = 2 },
             Age = Telemetry.AgeBand(2), Active7 = 3, Settings = new() { "CloseToTray", "Mode" }, Regions = new() { "fra", "mad" }, Data = Telemetry.DataBand(600_000_000),

@@ -270,6 +270,59 @@ public static class Telemetry
         return $"{c},{r}";
     }
 
+    /// <summary>
+    /// Beta.13 (the owner's 1.png: the dots on Accounts were off): the heat map's row is now in the page's content, not in the window.
+    /// Rows of <see cref="RowPx"/> from the top of the window with the scroll of the page added, the same 24 columns as before. The
+    /// cell starts with "s", so the Worker and the dashboard never mix it with the old window grid that beta.12 and before still send.
+    /// </summary>
+    public const double RowPx = 40;
+    public const int PageRows = 150;
+
+    /// <summary>The cell ("s" col,row) of a click at x in a window w wide, <paramref name="docY"/> down the page (scroll included); null outside.</summary>
+    public static string PageCell(double x, double docY, double w)
+    {
+        if (w <= SideBar || x < SideBar || x >= w || docY < 0) return null;
+        var r = (int)(docY / RowPx);
+        if (r >= PageRows) return null;
+        var c = Math.Clamp((int)((x - SideBar) / (w - SideBar) * Cols), 0, Cols - 1);
+        return $"s{c},{r}";
+    }
+
+    /// <summary>The click's height in the page: its height in the window plus how far each list or page around it is scrolled.</summary>
+    public static double DocY(double y, IEnumerable<double> scrolled) => y + (scrolled ?? Enumerable.Empty<double>()).Sum();
+
+    /// <summary>
+    /// A scroll offset in pixels. Most pages scroll by pixels; a long list that scrolls by items (the Servers list) gives items, and
+    /// each item is about the list's height over the items it shows.
+    /// </summary>
+    public static double ScrollPx(double offset, bool pixels, double viewportItems, double height) =>
+        offset <= 0 ? 0 : pixels ? offset : viewportItems > 0 ? offset * height / viewportItems : 0;
+
+    /// <summary>A list's own scroller (ListBox, ListView) with content scrolling moves by items unless the list says pixels.</summary>
+    public static bool ScrollsByPixels(ScrollViewer sv) =>
+        !sv.CanContentScroll || sv.TemplatedParent is not ItemsControl ic || VirtualizingPanel.GetScrollUnit(ic) == ScrollUnit.Pixel;
+
+    /// <summary>How much a scroller has below what it shows, in pixels (the demo's whole-page capture for the dashboard).</summary>
+    public static double ScrollablePx(ScrollViewer sv) => ScrollPx(sv.ScrollableHeight, ScrollsByPixels(sv), sv.ViewportHeight, sv.ActualHeight);
+
+    /// <summary>How far every list and page around <paramref name="d"/> is scrolled down, in pixels (MouseDown).</summary>
+    static List<double> ScrolledAbove(DependencyObject d, Window stop)
+    {
+        var list = new List<double>();
+        for (var i = 0; d != null && i < 80 && !ReferenceEquals(d, stop); i++)
+        {
+            if (d is ScrollViewer sv && sv.VerticalOffset > 0) list.Add(ScrollPx(sv.VerticalOffset, ScrollsByPixels(sv), sv.ViewportHeight, sv.ActualHeight));
+            d = d is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d);
+        }
+        return list;
+    }
+
+    static Window _heatWindow;
+    static Func<bool> _overlay;
+
+    /// <summary>The main window, and whether a pane is over the page (Phone setup, a question): those clicks aren't on the page.</summary>
+    public static void HeatFrom(Window main, Func<bool> overlayOpen) { _heatWindow = main; _overlay = overlayOpen; }
+
     /// <summary>A rage click: this one and 2 more in the same cell within the last second.</summary>
     public static bool IsRage(IEnumerable<(DateTime T, string Cell)> recent, DateTime now, string cell) =>
         recent.Count(x => x.Cell == cell && now - x.T <= TimeSpan.FromSeconds(1)) >= 2;
@@ -313,17 +366,24 @@ public static class Telemetry
     /// A click that counts on the heat map: the window has the focus and wasn't brought to the front by this click. 3 nov.: false
     /// rage clicks came from clicks back into the app from a game or another window (Alt+Tab, the app behind).
     /// </summary>
-    public static bool Counts(bool active, DateTime activatedAt, DateTime now) => active && now - activatedAt >= TimeSpan.FromMilliseconds(500);
+    public static bool Counts(bool active, DateTime activatedAt, DateTime now, bool overlay = false) =>
+        active && !overlay && now - activatedAt >= TimeSpan.FromMilliseconds(500);
 
-    /// <summary>A click anywhere in the main window: its cell on the screen open, and whether it was dead or rage.</summary>
+    /// <summary>
+    /// A click anywhere in the main window: its cell on the screen open (beta.13: in the page, scroll included), and whether it was
+    /// dead or rage. Only the main window (HeatFrom; never the notice or the Steam sign-in window), only while it is the window in
+    /// front, and not on a pane over the page.
+    /// </summary>
     public static void MouseDown(object sender, MouseButtonEventArgs e)
     {
-        if (!_on || sender is not Window w || !ReferenceEquals(w, Application.Current?.MainWindow) || w.Content is not FrameworkElement root) return;
-        if (!Counts(w.IsActive, _activatedAt, DateTime.UtcNow)) return;
+        if (!_on || sender is not Window w || !ReferenceEquals(w, _heatWindow ?? Application.Current?.MainWindow) || w.Content is not FrameworkElement root) return;
+        bool overlay;
+        try { overlay = _overlay?.Invoke() == true; } catch { overlay = false; }
+        if (!Counts(w.IsActive, _activatedAt, DateTime.UtcNow, overlay)) return;
         try
         {
             var p = e.GetPosition(root);
-            var cell = Cell(p.X, p.Y, root.ActualWidth, root.ActualHeight);
+            var cell = PageCell(p.X, DocY(p.Y, ScrolledAbove(e.OriginalSource as DependencyObject, w)), root.ActualWidth);
             string screen;
             lock (Gate) screen = _screen;
             if (cell == null || screen == null) return;
@@ -1072,6 +1132,18 @@ public static class Telemetry
         }
         Save();
         SendNow(TimeSpan.FromSeconds(3));
+    }
+
+    /// <summary>
+    /// Beta.13 (the owner's diagnostics of 7 nov.): Update starts the new copy and only then closes, so the new copy read
+    /// telemetry.json before the old one had sent and saved it, and upd_accepted (and fs_) arrived twice. Update calls this first:
+    /// the close's report goes and is saved now, and then this copy stops counting and saving, so it never writes over what the new
+    /// copy saves. (If the update then fails, the stats of this session stop there; the next start goes on as before.)
+    /// </summary>
+    public static void BeforeRestart()
+    {
+        SendAtExit();
+        _on = false;
     }
 
     /// <summary>The PC is going to sleep: the minutes so far go out now (sleep isn't a close, so no session length).</summary>

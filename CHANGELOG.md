@@ -4,6 +4,12 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Changed
+- Usage stats: the coarse map of where you click now places a click where it is on the page, counting how far the page is scrolled (a grid of 24 columns and rows about 40 pixels tall, not the exact point, still added up with everyone's and with no ID). It only counts clicks on the page itself while the app is the window in front, not on Phone setup or a question shown over the page. README > Telemetry says so.
+
+### Fixed
+- Updating the app sent part of the last usage stats twice (the new version read them before the old one had sent them).
+
 ## [0.1.0-beta.12] - 2026-11-06
 
 ### Added
