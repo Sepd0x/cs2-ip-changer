@@ -2,7 +2,8 @@
 
 **This is a test version.** It fixes what came up while using beta.12, and every fix has its own test, but it hasn't had its test rounds on a real PC with a phone yet. Only copies with **Settings > App > Get test versions** on are offered it. To try it, download it here; once it is tested it becomes the stable version.
 
-### Accounts and start
+### Phone, accounts and start
+- A phone that came with mobile data off lost its Wi-Fi and stayed on "Checking the phone's IP…" until Change IP. The app now turns mobile data on when it turns the phone's Wi-Fi off, and after 30 s with no answer it says **The phone has no internet** and turns mobile data on if it is off.
 - With **Start Steam minimized** on, logging in to another account made Steam ask for the password, even for accounts saved with Remember me. The app now starts Steam the way that uses the saved sign-in.
 - After **Start with Windows**, a double click on the icon next to the clock opened the window as a tiny bar in the corner. It now opens whole, in the middle of the screen.
 
