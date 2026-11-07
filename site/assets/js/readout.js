@@ -641,8 +641,8 @@
   // the three colors draw through its outline with the scroll; then a packet of light runs through the letters and packets
   // run along the horizon, only while it is on screen; Pause motion holds them; the light follows a mouse near it
   var wm = $('.wordmark');
-  if (wm && HAS) ST.create({ trigger: wm, start: 'top bottom', end: 'max', scrub: .6, onUpdate: function (s) { wm.style.setProperty('--wm', (s.progress * 100).toFixed(1) + '%'); } });
-  else if (wm) wm.style.setProperty('--wm', '100%');
+  if (wm && HAS) ST.create({ trigger: wm, start: 'top bottom', end: 'max', scrub: .6, onUpdate: function (s) { wm.style.setProperty('--wmp', s.progress.toFixed(4)); } });
+  else if (wm) wm.style.setProperty('--wmp', '1');
   if (wm && FX) {
     var wmHeld = function () { var h = false; try { h = localStorage.getItem('cs2-motion') === 'paused'; } catch (x) {} wm.classList.toggle('wm-hold', h); return h; };
     wm.classList.add('wm-run'); wmHeld();
