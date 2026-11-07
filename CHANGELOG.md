@@ -23,6 +23,9 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Log: an account whose launch options couldn't be changed said "left as it is" twice in the same line.
 - Log: the launch options line said "added on 35 accounts" right after "33 Steam accounts on this PC". It now says it counts every account that ever logged in on this PC, including ones no longer in Steam's list.
 - Log: "CS2 network after 26 min" read like the whole time on the server, but CS2 sums up each connection (a map change starts a new one). It now says "for the last 26 min".
+- Website: the name at the end of each page lit up with a hard straight edge; it now lights up with a soft front, with the same glow.
+- Website: nothing jumps while you read any more (the log under "IP banned? Back in with one click", and the footer of the guides, also on a phone showing the desktop site).
+- Website: the 404 page offers Play motion too when Windows is set to show fewer animations.
 - Updating the app sent part of the last usage stats twice (the new version read them before the old one had sent them).
 - Start with Windows: after the app started in the notification area, a double click on its icon opened the window as a tiny bar in the bottom left corner of the screen, and you had to click the app on the taskbar to fix it. The window now opens whole, in the middle of the screen.
 - Accounts: with Start Steam minimized on, logging in to another account made Steam ask for the password, even for accounts saved with Remember me. The app now starts Steam the way that uses the saved sign-in.
