@@ -420,9 +420,13 @@ public sealed class NetReport
     /// </summary>
     public bool Laggy => UpLate >= 25 || UpMissedLate >= 2 || DownMissedLate >= 2;
 
-    /// <summary>One short Log line, to compare matches by the phone's place, its IP and the time.</summary>
+    /// <summary>
+    /// One short Log line, to compare matches by the phone's place, its IP and the time. CS2 writes the summary for each connection
+    /// (a map change on a community server is a new one), so the time is that stretch only: "for the last 26 min", not "after 26 min",
+    /// which read as the whole time on the server (diagnostics of 7 nov.: 9, 22 and 26 min in one 57 min stay).
+    /// </summary>
     public string Line(string via, string server) =>
-        $"CS2 network after {(Seconds >= 60 ? $"{Seconds / 60} min" : $"{Seconds} s")}" + (server != null ? $" on {server}" : "") + $" ({via}): "
+        $"CS2 network for the last {(Seconds >= 60 ? $"{Seconds / 60} min" : $"{Seconds} s")}" + (server != null ? $" on {server}" : "") + $" ({via}): "
         + $"ping {N(PingP50)} ms (P95 {N(PingP95)}), jitter {N(JitterUp)} ms up, {N(JitterDown)} ms down, "
         + $"your messages late {P(UpLate)}, lost late {P(UpMissedLate)}, server ticks lost late {P(DownMissedLate)}, "
         + Fmt.Count(Dropped, "packet") + " dropped.";

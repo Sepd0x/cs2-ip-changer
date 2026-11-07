@@ -842,6 +842,7 @@ public partial class MainWindow
                 {
                     Log.Error(SameIpText(e, unprotected: false));
                     if (Steam.Cs2Running) System.Media.SystemSounds.Hand.Play();
+                    _guard.Problems.SameIpWritten();   // the Guard's own "Servers blocked." line would say it again
                     Toast("The phone's IP is the same as your home IP. Servers and CS2 are now blocked.", false);
                 }
                 else Log.Ok("The phone connection IP is different from your home IP again.");
