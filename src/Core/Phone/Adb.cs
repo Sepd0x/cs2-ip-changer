@@ -517,6 +517,27 @@ public static class Adb
     public static Task<ProcResult> DisableWifi(string adb, string serial) =>
         Run(adb, $"-s {serial} shell svc wifi disable");
 
+    /// <summary>
+    /// What the app turns on and off so the phone shares mobile data: Wi-Fi off (not on the hotspot, it would stop it), and mobile data
+    /// on unless the phone says it is on (7 nov.: a phone that came with data off lost Wi-Fi and was left with no internet, stuck on
+    /// "Checking the phone's IP…"). "svc data enable" changes nothing when data is already on, so an unknown state turns it on too.
+    /// </summary>
+    public static (bool WifiOff, bool DataOn) PhoneNetSteps(bool wifiOn, bool? dataOn, bool hotspot) => (wifiOn && !hotspot, dataOn != true);
+
+    /// <summary>"settings get global mobile_data" (Settings.Global "mobile_data", read the same way as wifi_on): 1 on, 0 off, anything else unknown.</summary>
+    public static bool? ParseMobileData(string output) => output?.Trim() switch { "1" => true, "0" => false, _ => null };
+
+    /// <summary>Whether mobile data is on in the phone's settings (null: the phone didn't say).</summary>
+    public static async Task<bool?> MobileDataOn(string adb, string serial)
+    {
+        var r = await Run(adb, $"-s {serial} shell settings get global mobile_data", 6000);
+        return r.Ok ? ParseMobileData(r.Output) : null;
+    }
+
+    /// <summary>Turns mobile data on (the "on" half of <see cref="Cycle"/>).</summary>
+    public static Task<ProcResult> EnableData(string adb, string serial) =>
+        Run(adb, $"-s {serial} shell svc data enable");
+
     /// <summary>Asks Android to turn on USB tethering (may not work on every model).</summary>
     public static Task<ProcResult> EnableUsbTether(string adb, string serial) =>
         Run(adb, $"-s {serial} shell svc usb setFunctions rndis");

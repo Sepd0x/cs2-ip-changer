@@ -366,7 +366,10 @@ public partial class MainWindow
         if (rep.FirewallProblem != null)
             SetHero("bad", "Windows Firewall is off", rep.FirewallProblem + ". " + FirewallHint("there is no kill switch"));
         else if (rep.Distrust == Distrust.Unchecked)
-            SetHero(held, "Checking the phone's IP…", $"{Blocked(rep)} stay blocked until the app confirms the phone's public IP is not your home IP.");
+        {
+            var (title, sub) = UncheckedHero(NoAnswerTooLong(_noAnswerSince, DateTime.Now), Blocked(rep));
+            SetHero(held, title, sub);
+        }
         else if (rep.Distrust == Distrust.NoHome)
             SetHero(held, "Home IP not known yet", NoHomeSub(Blocked(rep), VpnIsDefault(rep)));
         else if (rep.Distrust == Distrust.PhoneWifi && !same)
@@ -769,6 +772,36 @@ public partial class MainWindow
     string _egressKey;
     bool _egressFailLogged;
 
+    /// <summary>Since when the phone's connection hasn't answered the IP check (null: it answered, or there is no phone connection).</summary>
+    DateTime? _noAnswerSince;
+    bool _noAnswerHandled;
+
+    public static DateTime? NoAnswerSince(string measured, string key, DateTime? since, DateTime now) =>
+        measured != null || key == null ? null : since ?? now;
+
+    public static bool NoAnswerTooLong(DateTime? since, DateTime now) => since != null && now - since.Value >= TimeSpan.FromSeconds(30);
+
+    /// <summary>The Status while the phone's IP isn't checked yet: after 30 s with no answer it says why it may be.</summary>
+    public static (string Title, string Sub) UncheckedHero(bool noAnswer, string blocked) => noAnswer
+        ? ("The phone has no internet", $"{blocked} stay blocked. The phone's IP doesn't answer: check that mobile data is on on the phone. The app keeps checking.")
+        : ("Checking the phone's IP…", $"{blocked} stay blocked until the app confirms the phone's public IP is not your home IP.");
+
+    /// <summary>No answer through the phone: mobile data may be off (the app turns it on), then the IP is checked again.</summary>
+    async Task PhoneDataOnWhenNoAnswer()
+    {
+        try
+        {
+            if (_adb == null || _phone?.Ready != true || _iphone) return;
+            var serial = _phone.Serial;
+            var dataOn = await Adb.MobileDataOn(_adb, serial);
+            if (dataOn != false) return;
+            await TurnPhoneDataOn(serial, dataOn);
+            await Task.Delay(5000);
+            await RefreshPublicIps();
+        }
+        catch (Exception ex) { Log.Warn("Checking the phone's mobile data: " + ex.Message); }
+    }
+
     async Task RefreshPublicIps()
     {
         _ipRunning++;
@@ -823,6 +856,17 @@ public partial class MainWindow
 
         // A newer check started meanwhile (or the connection changed): this result is stale.
         if (seq != _ipSeq || key != Guard.KeyOf(_last?.Candidate)) return;
+
+        // The check can't wait forever with no word (7 nov.: mobile data off, stuck on "Checking the phone's IP…"): after 30 s with no
+        // answer the Status says so, and the phone's mobile data is turned on if it is off.
+        _noAnswerSince = NoAnswerSince(e, key, _noAnswerSince, DateTime.Now);
+        if (_noAnswerSince == null) _noAnswerHandled = false;
+        else if (!_noAnswerHandled && !_changingIp && NoAnswerTooLong(_noAnswerSince, DateTime.Now))
+        {
+            _noAnswerHandled = true;
+            Log.Warn("The phone's IP hasn't answered for 30 s: the phone may have no internet.");
+            _ = PhoneDataOnWhenNoAnswer();
+        }
 
         // 3rd barrier: phone connection IP equal to the home IP = it isn't using mobile data. Block everything.
         // A failed measurement (e == null) changes nothing: it never lifts a block and never grants trust.

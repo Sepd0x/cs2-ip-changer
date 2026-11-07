@@ -10,6 +10,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Website: the 3D scene on the home page, the guides and the 404 page looks more real. Metal, glass and cloth now reflect a soft studio light, the PC shows its parts through the glass side, the phone sits in a real stand, the mast has its antennas and cables, the servers stand on a raised floor, and the route is mirrored in the floor round the mast and the servers. A far town and other masts stand on the horizon, and the camera moves on smooth arcs between the steps of the story. The glowing route is the same, and with reduced motion the scene stays still.
 
 ### Fixed
+- Phone: a phone that came with mobile data off lost its Wi-Fi and was left with no internet, stuck on "Checking the phone's IP…" until Change IP. Now the app turns mobile data on when it turns the phone's Wi-Fi off, and after 30 s with no answer the Status says "The phone has no internet" and the app turns mobile data on if it is off.
 - Servers: the time a player has been on a server read like minutes and seconds ("0:38", "1:05") but was hours and minutes. It now has its unit: "38m", "1h 05m" ("99h+" from 100 hours), and "38 min" or "1 h 05 min" in the tooltip.
 - Servers: a server that sent a strange time for one player (far too big) showed no player list at all. Now that time is capped and the list shows.
 - Servers: a server that asked for its challenge twice showed no ping or players for that refresh ("Invalid A2S response" in the Log). The app now answers it again.

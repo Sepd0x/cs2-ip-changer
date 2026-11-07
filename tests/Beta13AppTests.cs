@@ -16,6 +16,46 @@ static class Beta13AppTests
         ZipDeDiagnostico(check);
         JanelaDoTray(check);
         TrocaSemPassword(check);
+        DadosMoveisDesligados(check);
+    }
+
+    // ------------------------------------------------------------ Ronda 3. Telemóvel com os dados móveis desligados: a app desligava o Wi-Fi e ficava em "Checking the phone's IP…"
+
+    static void DadosMoveisDesligados(Action<string, bool, string> check)
+    {
+        // O dono: com os dados móveis desligados a app desligava o Wi-Fi do telemóvel mas não ligava os dados, e ficava em "Checking the
+        // phone's IP…" sem fim; só o Change IP (que faz svc data disable/enable) os ligava. Quem desliga o Wi-Fi liga também os dados.
+        var a = Adb.PhoneNetSteps(wifiOn: true, dataOn: false, hotspot: false);
+        check("Dados: Wi-Fi ligado e dados desligados, desliga o Wi-Fi e liga os dados", a.WifiOff && a.DataOn, a.ToString());
+        var b = Adb.PhoneNetSteps(wifiOn: true, dataOn: true, hotspot: false);
+        check("Dados: com os dados ligados só desliga o Wi-Fi", b.WifiOff && !b.DataOn, b.ToString());
+        var c = Adb.PhoneNetSteps(wifiOn: false, dataOn: false, hotspot: false);
+        check("Dados: Wi-Fi já desligado e dados desligados, liga os dados", !c.WifiOff && c.DataOn, c.ToString());
+        var d = Adb.PhoneNetSteps(wifiOn: true, dataOn: null, hotspot: false);
+        check("Dados: estado dos dados desconhecido, liga-os na mesma (svc data enable não muda nada se já estão ligados)", d.WifiOff && d.DataOn, d.ToString());
+        var e = Adb.PhoneNetSteps(wifiOn: true, dataOn: false, hotspot: true);
+        check("Dados: no hotspot o Wi-Fi fica, mas os dados ligam-se", !e.WifiOff && e.DataOn, e.ToString());
+
+        check("Dados: settings get global mobile_data 0 é desligado", Adb.ParseMobileData("0\r\n") == false, "");
+        check("Dados: 1 é ligado", Adb.ParseMobileData("1") == true, "");
+        check("Dados: null, vazio ou erro é desconhecido", Adb.ParseMobileData("null") == null && Adb.ParseMobileData("") == null && Adb.ParseMobileData(null) == null
+            && Adb.ParseMobileData("error: device offline") == null, "");
+
+        // A verificação do IP não pode ficar presa: sem resposta do telemóvel há mais de 30 s, o Status diz porquê e a app vê os dados
+        var t0 = new DateTime(2026, 11, 7, 12, 0, 0);
+        var s1 = MainWindow.NoAnswerSince(null, "k", null, t0);
+        check("IP: a primeira falta de resposta marca a hora", s1 == t0, s1?.ToString() ?? "null");
+        check("IP: a hora fica nas faltas seguintes", MainWindow.NoAnswerSince(null, "k", t0, t0.AddSeconds(20)) == t0, "");
+        check("IP: uma resposta limpa a hora", MainWindow.NoAnswerSince("1.2.3.4", "k", t0, t0.AddSeconds(20)) == null, "");
+        check("IP: sem ligação do telemóvel não há hora", MainWindow.NoAnswerSince(null, null, t0, t0.AddSeconds(20)) == null, "");
+        check("IP: 29 s ainda é a verificar", !MainWindow.NoAnswerTooLong(t0, t0.AddSeconds(29)), "");
+        check("IP: 30 s sem resposta é tempo a mais", MainWindow.NoAnswerTooLong(t0, t0.AddSeconds(30)), "");
+        check("IP: sem hora nunca é tempo a mais", !MainWindow.NoAnswerTooLong(null, t0), "");
+        var h1 = MainWindow.UncheckedHero(noAnswer: false, "Servers and CS2");
+        check("IP: no início o Status diz que verifica", h1.Title == "Checking the phone's IP…", h1.Title);
+        var h2 = MainWindow.UncheckedHero(noAnswer: true, "Servers and CS2");
+        check("IP: sem resposta o Status diz que o telemóvel não tem internet e fala dos dados móveis",
+            h2.Title == "The phone has no internet" && h2.Sub.Contains("mobile data") && h2.Sub.StartsWith("Servers and CS2") && !h2.Sub.Contains('—'), h2.Title + " | " + h2.Sub);
     }
 
     // ------------------------------------------------------------ Ronda 2, A. Arranque com o Windows: o duplo clique no tray abria a janela minúscula no canto

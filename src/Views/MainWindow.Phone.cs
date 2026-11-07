@@ -210,9 +210,22 @@ public partial class MainWindow
 
     async Task TurnPhoneWifiOff()
     {
-        var r = await Adb.DisableWifi(_adb, _phone.Serial);
+        var serial = _phone.Serial;
+        // Read before Wi-Fi goes off: a phone with mobile data off would be left with no internet (Adb.PhoneNetSteps)
+        var dataOn = await Adb.MobileDataOn(_adb, serial);
+        var r = await Adb.DisableWifi(_adb, serial);
         if (r.Ok) { Log.Ok("Phone Wi-Fi turned off: tethering now uses mobile data."); Toast("Phone Wi-Fi turned off.", true); }
         else { Log.Warn("Turning off the phone Wi-Fi: " + r.Output); Toast("The phone refused. Turn off Wi-Fi manually.", false); }
+        await TurnPhoneDataOn(serial, dataOn);
+    }
+
+    /// <summary>Mobile data on, unless the phone says it already is. Said in the Log only when the phone said it was off.</summary>
+    async Task TurnPhoneDataOn(string serial, bool? dataOn)
+    {
+        if (!Adb.PhoneNetSteps(false, dataOn, false).DataOn) return;
+        if (dataOn == false) Log.Warn("Mobile data is off on the phone: turning it on.");
+        var r = await Adb.EnableData(_adb, serial);
+        if (!r.Ok && dataOn == false) { Log.Warn("Turning on the phone's mobile data: " + r.Output); Toast("Turn on mobile data on the phone.", false); }
     }
 
     void SetPhone(Brush dot, string state, string detail)
