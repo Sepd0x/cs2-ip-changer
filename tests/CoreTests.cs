@@ -20,7 +20,8 @@ static class CoreTests
     {
         // Troca de conta: o Steam aberto pelo Explorer só entra na conta nova com -login (testado a 29 out.)
         check("Troca: -login com a conta", Steam.LoginArgs("vanityidacc2", "") == "-login vanityidacc2", Steam.LoginArgs("vanityidacc2", ""));
-        check("Troca: -login junta os outros argumentos", Steam.LoginArgs("acc_2", "-silent") == "-login acc_2 -silent", Steam.LoginArgs("acc_2", "-silent"));
+        // Os outros argumentos vão antes: o que vem depois da conta o Steam lê como a password (Beta13AppTests, ronda 2)
+        check("Troca: -login junta os outros argumentos", Steam.LoginArgs("acc_2", "-silent") == "-silent -login acc_2", Steam.LoginArgs("acc_2", "-silent"));
         check("Troca: login estranho não entra na linha de comandos", Steam.LoginArgs("a b\" -x", "-silent") == "-silent", Steam.LoginArgs("a b\" -x", "-silent"));
         // F03: as DLLs nativas do WPF só contam vindas de %ProgramData%\CS2IPChanger\net só de admins
         {
