@@ -1,6 +1,19 @@
 /* CS2 IP Changer · stats v4 (4 nov. 2026). Por cima do style.css da v3 (os mesmos tokens, as mesmas caixas): só o que é novo.
    Nenhuma cor copiada à mão: tudo por var(--…) do style.css. */
 
+/* Beta.13: o topo como o do Resumo: o logo da app, os separadores Resumo | Dados (o caminho de volta, do tamanho certo) e a página */
+.brand { display: flex; align-items: center; gap: 8px; color: var(--ink); font-weight: 600; font-size: 13.5px; white-space: nowrap; text-decoration: none; }
+.brand:hover { text-decoration: none; color: var(--ink); }
+.mark { width: 22px; height: 22px; flex: none; display: block; }
+header.bar .tabs { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--line2); background: var(--panel); margin: 0; }
+header.bar .tabs a { padding: 5px 14px; color: var(--ink2); font-size: 13px; text-decoration: none; white-space: nowrap; }
+header.bar .tabs a:hover { color: var(--ink); background: var(--hover); }
+header.bar .tabs a[aria-current] { background: var(--btn-acc); color: var(--acc-ink); box-shadow: inset 0 0 0 1px var(--acc); }
+/* the page's name is already the title of the page and lit in the side bar: the top bar keeps room for the health strip */
+.bar-row .crumb { display: none; }
+.bar-row .health { margin-left: auto; }
+@media (max-width: 1700px) { header.bar .brand span { display: none; } }
+
 /* faixa de saúde dos dados no topo (substitui a pílula de frescura): um quadrado por verificação, verde, amarelo ou vermelho */
 .health { display: inline-flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; text-decoration: none; color: var(--ink2); font-size: 12.5px; }
 .health .hc { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
@@ -120,3 +133,11 @@ table.brief-t tr.bad td:first-child, table.brief-t tr.high td:first-child { colo
 table.brief-t tr.medium td:first-child, table.brief-t tr.warn td:first-child { color: var(--warn); font-weight: 600; }
 table.brief-t tr.ok td:first-child { color: var(--good); }
 pre.md { margin: 0; font-family: var(--mono); font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; color: var(--ink); max-height: none; }
+
+/* Beta.13: o mapa de cliques sobre a captura da página inteira (com o scroll). A altura vem da imagem; os pontos são colocados em
+   píxeis da captura sobre a sua altura (--ih, lida da imagem). Páginas compridas rolam dentro da caixa. A escolha da grelha por cima. */
+.mapwrap { max-height: 880px; overflow-y: auto; border: 1px solid var(--line); }
+.mapwrap .map { aspect-ratio: auto; border: 0; background: #000; }
+.mapwrap .map > img { display: block; width: 100%; height: auto; }
+.hfmt { margin: 0 0 10px; }
+.hfmt button { font-size: 12px; }

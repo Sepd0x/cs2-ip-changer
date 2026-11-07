@@ -41,7 +41,8 @@ h1, h2 { margin: 0; font-family: var(--font-d); }
 .top-in { max-width: 1160px; margin: 0 auto; padding: 10px max(20px, env(safe-area-inset-left)); display: flex; align-items: center; gap: 20px; }
 .brand { display: flex; align-items: center; gap: 9px; color: var(--ink); font-weight: 600; letter-spacing: -.01em; white-space: nowrap; }
 .brand:hover { text-decoration: none; }
-.mark { width: 18px; height: 18px; border-radius: 5px; background: linear-gradient(135deg, var(--t-top1), var(--t-top2) 55%, var(--t-top3)); flex: none; }
+/* beta.13: the app's logo (docs/assets/logo-24.svg, copied to dashboard/logo.svg), not a gradient square */
+.mark { width: 22px; height: 22px; flex: none; display: block; }
 .tabs { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
 .tabs a { padding: 4px 12px; border-radius: 7px; color: var(--ink2); font-size: 13px; }
 .tabs a:hover { color: var(--ink); text-decoration: none; background: var(--card2); }
@@ -146,6 +147,10 @@ svg { display: block; }
 .refs .br-t i { background: var(--acc-bar2); }
 .br-n { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; white-space: nowrap; }
 .na { color: var(--ink3); font-weight: 400; font-size: 12.5px; }
+/* beta.13: Como chegam in two groups (the site; GitHub and the app), and what a number includes under its bar */
+.arrive h3.grp { margin: 14px 0 8px; font-size: 12px; font-weight: 600; color: var(--ink3); text-transform: none; letter-spacing: 0; }
+.arrive h3.grp:first-of-type { margin-top: 4px; }
+.br-s { grid-column: 1 / -1; margin-top: -6px; color: var(--ink3); font-size: 12px; line-height: 1.4; }
 @keyframes grow { from { transform: scaleX(0); } }
 .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
 .st-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 14px; margin-bottom: 7px; }

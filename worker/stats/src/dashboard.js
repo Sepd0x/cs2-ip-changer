@@ -53,6 +53,8 @@ export default {
       let failed = null;
       try { await prune(env.DB, now); } catch (e) { failed = e; }
       await snapshotGithub(env.DB, env, fetch, now).catch(() => false);
+      // beta.13: Google's search impressions and clicks (only with GSC_KEY and GSC_SITE)
+      await snapshotSearch(env.DB, env, fetch, now).catch(() => false);
       if (failed) throw failed;
       return;
     }
@@ -355,6 +357,43 @@ export async function snapshotGithub(db, env, fetchFn, now) {
   return rows.length + traffic.length;
 }
 
+/**
+ * Beta.13 (the owner, point 8: what says "n\u00E3o medido" should be measured): Google's search impressions and clicks of the site, per
+ * day, from the Search Console API, in the daily cron, kept in gh_daily as kind "search" (name impressions or clicks, day = the
+ * day Google counted, written over while Google still updates it). Two secrets: GSC_KEY, the JSON key of a Google service account
+ * that is a user (read only) of the site's Search Console property, and GSC_SITE, that property (https://sepd0x.github.io/cs2-ip-changer/).
+ * Without them nothing is asked and the funnel still says "n\u00E3o medido". Only Google's daily totals for the whole site (dimension
+ * date): no search terms, pages, countries or anything about a visitor.
+ */
+export async function snapshotSearch(db, env, fetchFn, now) {
+  const key = String(env.GSC_KEY || '').replace(/^\uFEFF/, '').trim(), site = String(env.GSC_SITE || '').trim();
+  if (!key || !site) return 0;
+  const k = JSON.parse(key);
+  const b64u = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const txt = (s) => b64u(new TextEncoder().encode(s));
+  const der = Uint8Array.from(atob(String(k.private_key).replace(/-----[^-]+-----/g, '').replace(/\s+/g, '')), (c) => c.charCodeAt(0));
+  const pk = await crypto.subtle.importKey('pkcs8', der, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+  const iat = Math.floor(now / 1000);
+  const unsigned = `${txt(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))}.${txt(JSON.stringify({ iss: k.client_email, scope: 'https://www.googleapis.com/auth/webmasters.readonly', aud: 'https://oauth2.googleapis.com/token', iat, exp: iat + 3600 }))}`;
+  const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', pk, new TextEncoder().encode(unsigned));
+  const tr = await fetchFn('https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: `grant_type=${encodeURIComponent('urn:ietf:params:oauth:grant-type:jwt-bearer')}&assertion=${unsigned}.${b64u(sig)}` });
+  if (!tr.ok) throw new Error(`Search Console: the key was refused (${tr.status})`);
+  const { access_token: token } = await tr.json();
+  // the last 16 days: Google gives a day 2 or 3 days late and still corrects the last ones
+  const qr = await fetchFn(`https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(site)}/searchAnalytics/query`, { method: 'POST',
+    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ startDate: ymd(now - 16 * 864e5), endDate: ymd(now), dimensions: ['date'], rowLimit: 100 }) });
+  if (!qr.ok) throw new Error(`Search Console said ${qr.status}`);
+  const num = (x) => (Number.isFinite(x) && x >= 0 ? Math.floor(x) : 0);
+  const rows = ((await qr.json()).rows || []).filter((r) => Array.isArray(r.keys) && DAY.test(String(r.keys[0])));
+  if (!rows.length) return 0;
+  await db.prepare(GH_TABLE).run();
+  await db.batch(rows.slice(0, 40).flatMap((r) => [['impressions', r.impressions], ['clicks', r.clicks]].map(([name, n]) =>
+    db.prepare("INSERT INTO gh_daily (day, kind, name, n) VALUES (?, 'search', ?, ?) ON CONFLICT (day, kind, name) DO UPDATE SET n = excluded.n").bind(String(r.keys[0]), name, num(n)))));
+  return rows.length;
+}
+
 const cleanToken = (env) => String(env.GITHUB_TOKEN || '').replace(/^\uFEFF/, '').trim();
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 /** The traffic as gh_daily rows [day, kind, name, n], or none without a token or when GitHub refuses it (never an error). */
@@ -424,7 +463,11 @@ export async function githubHistory(db, now, days = 120, until = null) {
     traffic[key] = mine.filter((r) => r.day === lastDay).map((r) => ({ name: r.name, n: r.n, u: u.get(`${r.day}|${r.name}`) ?? null })).sort((a, b) => b.n - a.n);
   }
   traffic.refsByDay = rows.filter((r) => r.kind === 'traffic_ref').map((r) => ({ day: r.day, name: r.name, n: r.n }));
-  return { days: list, first: list[0]?.day ?? null, traffic, byRelease };
+  // beta.13: Google's search impressions and clicks per day (snapshotSearch), when the Search Console key is there
+  const sd = new Map();
+  for (const r of rows) if (r.kind === 'search') { const x = sd.get(r.day) || sd.set(r.day, { day: r.day, impressions: 0, clicks: 0 }).get(r.day); if (r.name in x) x[r.name] = r.n; }
+  const search = [...sd.values()].sort((a, b) => (a.day < b.day ? -1 : 1));
+  return { days: list, first: list[0]?.day ?? null, traffic, byRelease, search };
 }
 
 let ghCache = { at: 0, data: null };

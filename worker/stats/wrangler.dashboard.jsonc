@@ -3,7 +3,9 @@
 // (outside the repo). Deploy from this folder: npx wrangler deploy -c wrangler.dashboard.jsonc
 // Secrets (wrangler secret put NAME -c wrangler.dashboard.jsonc): TEAM_DOMAIN, POLICY_AUD, DASHBOARD_EMAIL, GITHUB_TOKEN,
 // and optionally EXCLUDE_IDS (old fixed install IDs of your own PCs) and SERVICE_TOKEN_IDS (v4: the Client IDs of the Access
-// service tokens allowed to read /api/brief, and nothing else).
+// service tokens allowed to read /api/brief, and nothing else). Beta.13, optional: GSC_KEY (the JSON key of a Google service account
+// added as a read-only user of the site's Search Console property) and GSC_SITE (that property, e.g. https://sepd0x.github.io/cs2-ip-changer/):
+// the daily cron then keeps Google's search impressions and clicks per day (src/dashboard.js snapshotSearch).
 {
   "name": "stats-dashboard",
   "main": "src/dashboard.js",

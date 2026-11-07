@@ -132,9 +132,12 @@
     const cellP = (v, t) => (!t ? '<td class="n dim">-</td>' : `<td class="n">${share(v, t) && t >= 10 ? share(v, t) : N(v)}</td>`);
     return `<div class="tw"><table class="t"><thead><tr><th>Banda</th><th class="n">USB <small class="dim">n=${N(tu)}</small></th><th class="n">Hotspot <small class="dim">n=${N(th)}</small></th></tr></thead><tbody>${rows.map((x) => `<tr><td>${esc(x.band)}</td>${cellP(x.usb || 0, tu)}${cellP(x.hotspot || 0, th)}</tr>`).join('')}</tbody></table></div>`;
   }
-  function btnAt(S, c, r) {
-    const { W, H, X0, COLS, ROWS } = UI;
-    const x = X0 + (c + 0.5) * ((W - X0) / COLS), y = (r + 0.5) * (H / ROWS);
+  /** The height of a heat cell in pixels of the capture: the page grid's rows (beta.13) or the old window grid's (800 / 16). */
+  const cellH = (page) => (page ? UI.ROWPX : UI.H / UI.ROWS);
+  /** The button under a heat cell: page cells (beta.13) by their row in the page, old cells by their row in the window. */
+  function btnAt(S, c, r, page = false) {
+    const { W, X0, COLS } = UI;
+    const x = X0 + (c + 0.5) * ((W - X0) / COLS), y = (r + 0.5) * cellH(page);
     const b = S.buttons.find((q2) => q2.r && [q2.r, ...(q2.more || [])].some((rr) => x >= rr[0] - 4 && x <= rr[0] + rr[2] + 4 && y >= rr[1] - 4 && y <= rr[1] + rr[3] + 4));
     return b ? b.label : null;
   }
@@ -264,9 +267,9 @@
     const cnt = {};
     if (B) for (const a of B.anomalies) { const p = (a.page || '').slice(1); if (a.kind === 'product' && (a.severity === 'high' || a.severity === 'bad')) cnt[p] = (cnt[p] || 0) + 1; }
     if (B && B.health.status !== 'ok') cnt.sistema = B.health.checks.filter((c) => c.status !== 'ok').length;
-    $('#nav').innerHTML = PAGES.map(([id, label, icon]) => `<a href="#${id}"${id === st.page ? ' aria-current="page"' : ''}><svg viewBox="0 0 24 24">${icon}</svg>${label}${cnt[id] ? `<span class="cnt ${id === 'sistema' && B.health.status === 'warn' ? 'warn' : 'bad'}">${cnt[id]}</span>` : ''}</a>`).join('')
-      + '<div class="foot">Unidade: a instalação (ID fixo desde a beta.9); instalação-dia só onde o diz. Dias em UTC, horas de Lisboa. Só tu vês este painel: números exatos.</div>'
-      + '<div class="links"><a href="/dashboard">← Resumo (a página do dono)</a></div>';
+    $('#nav').innerHTML = PAGES.map(([id, label, icon]) => `<a href="#${id}"${id === st.page ? ' aria-current="page"' : ''}><svg viewBox="0 0 24 24">${icon}</svg>${label}${cnt[id] ? `<span class="cnt ${id === 'sistema' && B.health.status === 'warn' ? 'warn' : 'bad'}">${cnt[id]}</span>` : ''}</a>`).join('');
+    // Beta.13 (the owner): no loose line about units under the pages (it is in "Como se conta", at the foot of every page), and the
+    // way back to Resumo is the Resumo | Dados tabs at the top (v4/index.html), not a small link here
     $('#crumbPage').textContent = PAGES.find((p) => p[0] === st.page)[1];
     document.title = `${PAGES.find((p) => p[0] === st.page)[1]} · CS2 IP Changer dados`;
     renderFilters(D);
@@ -276,7 +279,9 @@
     bindPage();
     document.documentElement.style.setProperty('--hdr', $('#hdr').offsetHeight + 'px');
   }
-  const periodTxt = (D) => (D.R.period === 1 ? 'hoje' : `últimos ${D.R.period} dias`);
+  // Beta.13 (the owner: numbers that seemed not to agree): the period here has today in it, the Resumo's and the brief's 7 days
+  // don't (complete days), so the dates are said; "últimos 7 dias" alone meant two different things
+  const periodTxt = (D) => (D.R.period === 1 ? 'hoje' : `últimos ${D.R.period} dias, ${dd(D.R.days[0].date)} a hoje`);
   const foot = (D) => `<div class="foot"><span>Lido às ${lx(Date.now()).hm} de ${dd(lx(Date.now()).date)}${D.B ? ` · brief das ${lx(Date.parse(D.B.generated_at)).hm}` : ''} · ${V4.DEV ? 'só os teus PCs' : D.R.excluded ? `sem os teus ${D.R.excluded} PCs (EXCLUDE_IDS) e sem builds de dev` : 'sem builds de dev'}${D.R.automated ? ` · ${N(D.R.automated)} ${D.R.automated === 1 ? 'análise automática deixada' : 'análises automáticas deixadas'} de fora` : ''}</span>
     <details><summary>Como se conta</summary><p>Instalação: um ID de instalação (fixo desde a beta.9), contado uma vez no período. Instalação-dia: um ID num dia (a mesma pessoa em 3 dias conta 3). Nova: aceitou o aviso nesse dia (1.º arranque); quem atualizou de uma beta antiga não conta como nova. Os primeiros 7 dias de uma instalação nova são o dia 0 ao dia 6; cada passo do funil pode acontecer em qualquer um deles. Os teus PCs (builds de dev e EXCLUDE_IDS) ficam de fora; "Os meus PCs" mostra só esses. Análises automáticas (0 contas Steam, 0 cliques, 0 minutos) nunca contam. Percentagens só com 10 ou mais casos; abaixo disso, "3 de 4"; com menos de 30, o intervalo. "Não medido" (tracejado): não há fonte. "Sem dados": a fonte existe mas não tem linhas. 0 só quando a fonte disse 0. Nunca somar contagens do site (sem ID) com instalações (por ID). Dias em UTC, horas de Lisboa. As definições de cada número estão em Sistema e dados.</p></details></div>`;
 
@@ -327,7 +332,7 @@
       : '<div class="kc"><div class="kl">A usar agora</div><div class="kv na">sem resposta</div></div>';
     const ex = K && K.exe_downloads, sc = K && K.site_download_clicks;
     const dl = !K ? wait('Downloads do exe') : `<div class="kc" data-k="exe_downloads.yesterday" data-v="${ex.yesterday ?? ''}"><div class="kl" title="Ontem, dia completo (de retrato a retrato, 03:07 UTC)">Downloads do exe <small>ontem</small></div><div class="kv${ex.yesterday == null ? ' na' : ''}">${ex.yesterday == null ? 'sem retrato' : N(ex.yesterday)}</div>
-      <div class="kd">7 dias <b>${ex.d7 == null ? 'sem dados' : N(ex.d7)}</b>${ex.days_covered_d7 && ex.days_covered_d7 < 7 ? ` (${ex.days_covered_d7} dias)` : ''}</div><div class="kd">site hoje: <b>${sc && sc.today != null ? N(sc.today) : 'sem dados'}</b> cliques em Download</div>${mini(B.series.exe_downloads.slice(-15, -1).map((v) => v || 0))}</div>`;
+      <div class="kd">7 dias <b>${ex.d7 == null ? 'sem dados' : N(ex.d7)}</b>${ex.days_covered_d7 && ex.days_covered_d7 < 7 ? ` (só ${ex.days_covered_d7} de 7 dias com retrato)` : ''}</div><div class="kd">site hoje: <b>${sc && sc.today != null ? N(sc.today) : 'sem dados'}</b> ${sc && sc.today === 1 ? 'clique' : 'cliques'} em Download</div>${mini(B.series.exe_downloads.slice(-15, -1).map((v) => v || 0))}</div>`;
     const ac = K && K.activation_7d;
     const rt = (x) => (!x || !x.den ? 'sem novas' : x.den < 10 ? `${x.num} de ${x.den}` : pc(x.value));
     const act = !K ? wait('Ativação') : `<div class="kc" data-k="activation_7d.value" data-v="${ac.value ?? ''}"><div class="kl" title="Novas de há 7 a 13 dias (os 7 dias já fecharam) que chegaram a Protected">Ativação <small>novas de há 7 a 13 dias</small></div><div class="kv${ac.value == null ? ' na' : ''}">${ac.value == null ? 'nenhuma nova' : rt(ac)}${ac.den >= 10 ? ciTxt(ac.num, ac.den) : ''}</div>
@@ -356,8 +361,9 @@
     let stk = fun;
     if (B) {
       const A = B.funnel.activation, Q = B.funnel.acquisition;
-      const acq = Q.steps.filter((s) => s.id !== 'search_impressions' && s.id !== 'search_clicks');
-      fun = linFunnel([...acq.map((s) => ({ k: { site_visits: 'Visitas ao site', site_download_clicks: 'Cliques em Download', exe_downloads: 'Downloads do exe' }[s.id], n: s.n, ext: true, open: s.id === 'exe_downloads' ? 'todas as origens' : null, none: s.reason }))], { label: 'Aquisição · contagens, sem ID' })
+      // beta.13: Google's steps only once the Search Console key gives numbers (a "não medido" line on Hoje helps no one)
+      const acq = Q.steps.filter((s) => !s.id.startsWith('search_') || s.n != null);
+      fun = linFunnel([...acq.map((s) => ({ k: { search_impressions: 'Impressões no Google', search_clicks: 'Cliques no Google', site_visits: 'Visitas ao site', site_download_clicks: 'Cliques em Download', exe_downloads: 'Downloads do exe' }[s.id], n: s.n, ext: true, outside: s.id === 'exe_downloads' || s.id.startsWith('search_'), sub: s.id === 'exe_downloads' ? exeSub(B.kpis.exe_downloads.app_updates_d7) : null, none: s.reason }))], { label: 'Aquisição · contagens, sem ID' })
         + (A.steps[0].n ? linFunnel(A.steps.map((s) => ({ id: s.id, k: STEPN[s.id], n: s.n })), { label: 'Ativação · novas de há 7 a 13 dias', worst: A.biggest_drop && A.biggest_drop.to })
           : `<p class="note">Ativação: nenhuma instalação nova de há 7 a 13 dias.</p>`)
         + `<p class="note">Ativação: as novas de há 7 a 13 dias, que já fecharam os 7 primeiros dias. A decorrer (últimos 7 dias): ${N(A.running_steps[0].n)} novas, ${N(A.running_steps[2].n)} já em Protected. Os dois blocos não se ligam (o site não tem ID, por escolha): nunca somar.</p>`;
@@ -374,31 +380,42 @@
     return `${title('Hoje', `${wday(now.date)}, ${dd(now.date)} · ${now.hm} (Lisboa)${early ? ' · antes do meio-dia o número grande é ontem' : ''}`)}
     <div class="g">${kp}${changed}${liveBox}${funBox}${stkBox}${hourBox}</div>`;
   }
+  /** Beta.13: what the exe downloads include, with the app's own updates (upd_done) counted in the same days, when there were any. */
+  const exeSub = (upd) => `GitHub, todas as origens${upd ? `; ${N(upd)} ${upd === 1 ? 'foi a app a atualizar-se' : 'foram a app a atualizar-se'}` : ''}`;
   /** Barras lineares de um bloco do funil, normalizadas ao 1.º passo do bloco; % do 1.º e do anterior; "não medido" a tracejado. */
+  // Beta.13 (the owner's 3.png): the numbers come from V4F.funnelRows (v4/funnel.js, tested on its own). A step from another source
+  // (outside) goes under a dashed line, "ao lado", with no bar and no %; a step bigger than the one before says so instead of a %.
   function linFunnel(steps, opt = {}) {
-    const first = steps.find((s) => s.n != null);
-    const top = Math.max(1, first ? first.n : 1);
-    let prev = null;
-    const rows = steps.map((s, i) => {
+    const pc2 = (p) => (p ? share(p[0], p[1]) || '-' : '');
+    const row = (s) => {
       const na = s.n == null;
-      const pf = !na && s !== first && first && first.n && !s.open ? share(s.n, first.n) : '';
-      const pp = !na && prev != null && !s.open && prev !== top ? share(s.n, prev) : '';
-      if (!na) prev = s.n;
-      return `<div class="k">${esc(s.k)}${s.sub ? `<small>${esc(s.sub)}</small>` : ''}</div><div><div class="t ${na ? 'na' : ''} ${s.ext ? 'ext' : ''}">${na || !s.n ? '' : `<i style="width:${Math.min(100, (100 * s.n) / top)}%"></i>`}</div></div>
-        <div class="n ${na ? 'na' : ''}">${na ? (s.none === 'not_measured' ? NM : 'sem dados') : N(s.n)}</div><div class="p pf">${pf}</div><div class="p ${opt.worst && s.id === opt.worst ? 'worst' : ''}">${s.open ? `<span class="dim">${esc(s.open)}</span>` : i && pp ? pp : ''}</div>`;
-    }).join('');
-    return `<div class="lf"><div class="hd">${esc(opt.label || 'Passo')}</div><div class="hd"></div><div class="hd n">Número</div><div class="hd n pf">do 1.º</div><div class="hd n">do anterior</div>${rows}</div>`;
+      return `<div class="k">${esc(s.k)}${s.sub ? `<small>${esc(s.sub)}</small>` : ''}</div><div><div class="t ${na ? 'na' : ''} ${s.ext ? 'ext' : ''}">${na || !s.bar ? '' : `<i style="width:${s.bar}%"></i>`}</div></div>
+        <div class="n ${na ? 'na' : ''}">${na ? (s.none === 'not_measured' ? NM : 'sem dados') : N(s.n)}</div><div class="p pf">${s.bigger ? '' : pc2(s.ofFirst)}</div><div class="p ${opt.worst && s.id === opt.worst ? 'worst' : ''}">${s.bigger ? '<span class="dim" title="Um funil só desce: este número vem de outra conta ou de outro período">maior do que o anterior</span>' : pc2(s.ofPrev)}</div>`;
+    };
+    const rows = V4F.funnelRows(steps);
+    const inside = rows.filter((s) => !s.outside).map(row).join('');
+    const beside = rows.filter((s) => s.outside).map((s) => `<b>${s.n == null ? (s.none === 'not_measured' ? NM : 'sem dados') : N(s.n)}</b> ${esc(s.k)}${s.sub ? ` (${esc(s.sub)})` : ''}`).join(' · ');
+    return `<div class="lf"><div class="hd">${esc(opt.label || 'Passo')}</div><div class="hd"></div><div class="hd n">Número</div><div class="hd n pf">do 1.º</div><div class="hd n">do anterior</div>${inside}${beside ? `<div class="side">Ao lado, de outra fonte, não é um passo deste funil: ${beside}</div>` : ''}</div>`;
   }
 
+  /**
+   * Beta.13 (point 8): Google's impressions or clicks in the period, from the Search Console (gh_daily kind search, /api/github
+   * history.search), once the key is there; Google gives a day 2 or 3 days late, so the days it covers are said.
+   */
+  function googleStep(D, key, label) {
+    const gs = (D.G && D.G.history && D.G.history.search) || [];
+    if (!gs.length) return { k: label, n: null, none: 'not_measured', sub: 'precisa da chave do Search Console (GSC_KEY)' };
+    const g = gs.filter((x) => x.day >= D.R.days[0].date && x.day <= D.R.asOf);
+    return { k: label, n: g.length ? g.reduce((s, x) => s + x[key], 0) : null, none: g.length ? null : 'no_rows', sub: `Search Console, ${g.length} de ${D.R.period} dias (o Google dá cada dia 2 a 3 dias depois)` };
+  }
   // ------------------------------------------------ Funil: aquisição por dia (contagens) e ativação por instalação
   function pFunil(D) {
     const R = D.R, A = R.activation, SI = R.site || { views: 0, downloads: 0, days: [] }, GP = ghPeriod(D), sOk = siteOk(D);
     const acq = [
-      { k: 'Impressões no Google', n: null, none: 'not_measured', sub: 'precisa do Search Console' },
-      { k: 'Cliques no Google', n: null, none: 'not_measured', sub: 'vem com o Search Console' },
+      { ...googleStep(D, 'impressions', 'Impressões no Google'), outside: true }, { ...googleStep(D, 'clicks', 'Cliques no Google'), outside: true },
       { k: 'Visitas ao site', n: sOk ? SI.views : null, ext: true, sub: 'sem cookies e sem ID' },
       { k: 'Cliques em Download', n: sOk ? SI.downloads : null, ext: true },
-      { k: 'Downloads do exe', n: GP.downloads, ext: true, open: 'todas as origens', sub: GP.covered ? `${GP.covered} de ${R.period} dias com retrato` : 'sem retratos seguidos' },
+      { k: 'Downloads do exe', n: GP.downloads, ext: true, outside: true, sub: `${exeSub(R.days.filter((d) => GP.byDay.has(d.date)).reduce((a, d) => a + (d.updates || 0), 0))}; ${GP.covered ? `${GP.covered} de ${R.period} dias com retrato` : 'sem retratos seguidos'}` },
     ];
     const big = (() => { let w = null; for (let k = 1; k < A.steps.length; k++) { const a = A.steps[k - 1].n, b = A.steps[k].n; if (a < 20) continue; const d = 1 - b / a; if (!w || d > w.d) w = { k, d, a, b }; } return w; })();
     const pv = A.prev, pvOk = big && pv.steps[big.k - 1].n >= 20;
@@ -408,7 +425,7 @@
     const d1 = A.d1, d7 = A.d7;
     return `${title('Funil', `${periodTxt(D)} · dois blocos que não se ligam: as contagens do site e as instalações`)}
     <div class="g">${rulesBand(D, 'funil')}
-      ${box('A. Aquisição', `${periodTxt(D)} · contagens, sem ID`, [['e', 'site'], ['e', 'github.history'], ['x', 'Search Console']], linFunnel(acq, { label: 'Passo' }) + '<p class="note">Barras normalizadas às visitas ao site. Os downloads do exe vêm também do README, do GitHub direto, dos teus e de scanners: por isso não têm %.</p>', 's6')}
+      ${box('A. Aquisição', `${periodTxt(D)} · contagens, sem ID`, [['e', 'site'], ['e', 'github.history'], ['x', 'Search Console']], linFunnel(acq, { label: 'Passo' }) + '<p class="note">Barras normalizadas às visitas ao site. Os downloads do exe ficam ao lado: vêm também do README, do GitHub direto, das atualizações feitas pela própria app, dos teus PCs e de scanners, por isso não são um passo depois dos cliques nem têm %.</p>', 's6')}
       ${box('B. Ativação', `novas no período · cada passo nos 7 primeiros dias`, [['e', 'activation']], A.n ? linFunnel(act, { label: 'Passo', worst: big && act[big.k].id }) + `
         <div class="lf"><div class="side">Ao lado: ${N(A.ip_changed.n)} das ${N(A.ip_changed.of)} que viram o telemóvel trocaram para um IP novo${A.ip_changed.same_only ? `; ${N(A.ip_changed.same_only)} trocaram e ficaram com o mesmo IP` : ''}. Protected não precisa de trocar de IP.</div></div>
         <p class="note">${A.immature ? `${A.immature === A.n ? 'Todas' : `${N(A.immature)} das ${N(A.n)}`} ainda estão nos primeiros 7 dias: estes números ainda podem subir (vê 30 dias para ver coortes fechadas). ` : ''}Cada passo conta quem também passou os anteriores. Fora de ordem: ${N(A.any.protected)} chegaram a Protected e ${N(A.any.first_match)} a uma partida.</p>` : empty('Nenhuma instalação nova no período.'), 's6')}
@@ -480,7 +497,9 @@
     const never = S.buckets[0].n;
     const setupRows = S.setup.filter((x) => x.open || x.left || x.pressed);
     const sig = Object.fromEntries(S.signals.map((x) => [x.id, x]));
-    const cellName = (x) => { const sc = UI.screens.find((s) => s.id === x.screen); return `${scrName(x.screen)} · ${sc ? btnAt(sc, x.c, x.r) || 'fora dos botões' : 'ecrã desconhecido'}`; };
+    const cellName = (x) => { const sc = UI.screens.find((s) => s.id === x.screen); return `${scrName(x.screen)} · ${sc ? btnAt(sc, x.c, x.r, !!x.page) || 'fora dos botões' : 'ecrã desconhecido'}`; };
+    // Beta.13: the cells added up by the place they name (before, "Connection · fora dos botões (1)" came twice, one per cell)
+    const where = (top) => { const by = new Map(); for (const x of top) { const k = cellName(x); by.set(k, (by.get(k) || 0) + x.n); } return [...by].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => `${esc(k)} (${N(n)})`).join(' · ') || '-'; };
     const NP = S.phone_not_protected, PM = S.protected_no_match;
     const sug = improve(D).filter((x) => x.href !== '#sistema');
     return `${title('Onde encalham', `cada instalação nova no último passo a que chegou nos 7 primeiros dias · novas: ${periodTxt(D)}`)}
@@ -494,8 +513,8 @@
         <div id="e-match">${box('Protected, sem partida', `${N(PM.n)}`, [['e', 'stuck.protected_no_match']], PM.n ? `<div class="kv2"><span>Abriram o CS2 com a app aberta</span><span>${N(PM.cs2_opened)}</span><span>Nunca abriram o CS2</span><span>${N(PM.n - PM.cs2_opened)}</span></div><p class="note">A partida vem do resumo de rede que o CS2 escreve ao sair de um servidor. "1.ª entrada num servidor" não é recolhida.</p>` : empty('Ninguém neste grupo.'))}</div>
       </div>
       ${box('Sinais de frustração', periodTxt(D), [['e', 'stuck.signals'], ['e', 'heat']], `<div class="tw"><table class="t"><thead><tr><th>Sinal</th><th class="n">Vezes</th><th class="n">Instalações</th><th>Onde</th></tr></thead><tbody>
-        <tr><td>Cliques repetidos (3 ou mais em 1 s)</td><td class="n">${N(sig.rage_clicks.n)}</td><td class="n dim">sem ID</td><td>${sig.rage_clicks.top.slice(0, 3).map((x) => `${esc(cellName(x))} (${N(x.n)})`).join(' · ') || '-'}</td></tr>
-        <tr><td>Cliques sem efeito</td><td class="n">${N(sig.dead_clicks.n)}</td><td class="n dim">sem ID</td><td>${sig.dead_clicks.top.slice(0, 3).map((x) => `${esc(cellName(x))} (${N(x.n)})`).join(' · ') || '-'}</td></tr>
+        <tr><td>Cliques repetidos (3 ou mais em 1 s)</td><td class="n">${N(sig.rage_clicks.n)}</td><td class="n dim">sem ID</td><td>${where(sig.rage_clicks.top)}</td></tr>
+        <tr><td>Cliques sem efeito</td><td class="n">${N(sig.dead_clicks.n)}</td><td class="n dim">sem ID</td><td>${where(sig.dead_clicks.top)}</td></tr>
         <tr><td>Aviso do cabo USB (caiu 3 vezes em 10 min)</td><td class="n">${N(sig.cable_hint.n)}</td><td class="n">${N(sig.cable_hint.installs)}</td><td></td></tr>
         <tr class="${sig.home_ip_back.n ? 'bad' : ''}"><td>O IP de casa voltou</td><td class="n ${sig.home_ip_back.n ? 'bad' : ''}">${N(sig.home_ip_back.n)}</td><td class="n">${N(sig.home_ip_back.installs)}</td><td></td></tr>
         <tr><td>Checks a vermelho</td><td class="n">${N(sig.red_checks.n)}</td><td class="n">${N(sig.red_checks.installs)}</td><td>${sig.red_checks.top.map((c) => `${esc(c.title)} (${N(c.installs)})`).join(' · ') || '-'}</td></tr>
@@ -552,7 +571,7 @@
       ${box('Rejoin, kicks, bans e VPN', '', [['e', 'cs2.rejoin'], ['e', 'counters']], `<div class="kv2"><span>Rejoin voltou a entrar</span><span>${C.rejoin.tries ? share(C.rejoin.back, C.rejoin.tries) : '-'} <small class="dim">${N(C.rejoin.back)} de ${N(C.rejoin.tries)}</small></span><span>À espera de vaga</span><span>${N(C.rejoin.waits)}</span><span>Kick (servidor cheio, AFK…)</span><span>${N(kicks)}</span><span>VPN visto pelo servidor</span><span>${N(kc.vpn_seen || 0)}</span><span>Ban marcado</span><span class="${kc.ban_seen ? 'bad' : ''}">${N(kc.ban_seen || 0)}</span></div><p class="note">Kicks, bans e VPN são contadores da app; as partidas vêm do resumo de rede do CS2 (podem não bater).</p>`, 's4')}
       ${box('Quedas do telemóvel', `por sessão`, [['e', 'phone.drops'], ['e', 'phone.data']], `${bandBl(P.drops, 'Sem sessões fechadas no período.')}<h3>Dados móveis por dia</h3>${bandBl(P.data, 'Sem dados móveis no período.')}<p class="note">Aviso do cabo USB: ${N(P.cableHints)} ${P.cableHints === 1 ? 'vez' : 'vezes'}.</p>`, 's4')}
       ${box('Arranque e Protected', 'sessões', [['e', 'sessions.startup'], ['e', 'sessions.toProtected']], `<h3>Até a app estar pronta</h3>${bandBl(R.sessions.startup, 'Sem arranques medidos.')}<h3>Do arranque a Protected</h3>${bandBl(R.sessions.toProtected, 'Nenhuma sessão chegou a Protected.')}`, 's4')}
-      ${box('Atualizações', 'o aviso de atualização da app', [['e', 'updates']], `${bl([['Viram o aviso', U.seen], ['Aceitaram', U.accepted], ['Concluíram', U.done, null, 'good'], ['Recusaram', U.declined, null, 'warn'], ['Falharam', U.failed, null, 'bad']])}<h3>Vieram de</h3>${(U.from || []).length ? bl(U.from.map((x) => [short(x.v), x.n, null, 'dim'])) : '<p class="note">Nenhuma atualização concluída no período.</p>'}`, 's4')}
+      ${box('Atualizações', 'o aviso de atualização da app', [['e', 'updates']], `${bl([['Viram o aviso', U.seen], ['Aceitaram', U.accepted], ['Concluíram', U.done, null, 'good'], ['Recusaram', U.declined, null, 'warn'], ['Falharam', U.failed, null, 'bad']])}<h3>Vieram de</h3>${(U.from || []).length ? bl(U.from.map((x) => [short(x.v), x.n, null, 'dim'])) : '<p class="note">Nenhuma atualização concluída no período.</p>'}${U.accepted > U.seen ? '<p class="note">Aceitaram pode passar Viram: o Check for updates das definições não mostra o aviso. E até à beta.12 uma atualização contava Aceitaram duas vezes (a versão nova lia o que a antiga ainda ia mandar); corrigido na beta.13.</p>' : ''}`, 's4')}
     </div>`;
   }
 
@@ -575,7 +594,7 @@
         ${k('Downloads do exe', GP.downloads != null ? N(GP.downloads) : 'sem dados', GP.downloads != null ? `${GP.covered} de ${R.period} dias com retrato` : 'sem dois retratos seguidos', GP.downloads == null)}
         ${k('Estrelas', ok ? N(G.stars) : 'sem dados', GP.hist.length ? `${GP.stars >= 0 ? '+' : ''}${N(GP.stars)} no período` : 'sem retratos', !ok)}
         ${k('Visitas ao GitHub', tv.length ? N(tvSum) : views ? N(views.count) : 'precisa de token', tv.length ? `${N(tvU)} únicos somados por dia · guardado` : views ? `${N(views.uniques)} únicos · 14 dias` : 'o tráfego só com o token', !tv.length && !views)}
-        ${k('Google', NM, 'precisa do Search Console', true)}
+        ${(() => { const g = googleStep(D, 'clicks', ''); return g.n == null ? k('Cliques no Google', NM, g.sub, true) : k('Cliques no Google', N(g.n), g.sub); })()}
       </div>`, 's12'));
     const merge = (l) => { const m = new Map(); for (const r of l) { const k = host(r.k); const x = m.get(k) || m.set(k, { k, n: 0, u: r.u == null ? null : 0 }).get(k); x.n += r.n; if (r.u != null) x.u = (x.u || 0) + r.u; } return [...m.values()].sort((a, b) => b.n - a.n); };
     const refsS = merge(sOk ? SI.refs : []), refsG = merge(ok && G.referrers ? G.referrers.map((r) => ({ k: r.name, n: r.n, u: r.u })) : TR.refs.map((r) => ({ k: r.name, n: r.n, u: r.u })));
@@ -623,30 +642,42 @@
   // ------------------------------------------------ Na app (como na v3, mais regiões, listas e "fora do mapa" por tipo)
   function pApp(D) {
     const R = D.R;
-    const { W, H, X0, COLS, ROWS } = UI;
-    const cw = (W - X0) / COLS, chh = H / ROWS;
-    const heatOf = (id) => (R.heat && R.heat[id]) || { c: [], d: [], r: [] };
+    const { W, X0, COLS } = UI;
+    const cw = (W - X0) / COLS;
+    // Beta.13: two grids, never on the same map. "page": the cell in the page with its scroll (beta.13 and later), rows of UI.ROWPX
+    // down the whole page capture. "old": the window grid of beta.9 to beta.12, 16 rows of the window as it was, with no scroll
+    // (so it only covers the top 800 px of the capture, and a click after scrolling fell in the wrong place: the owner's 1.png).
+    const grids = { page: R.heatPage || {}, old: R.heat || {} };
+    const heatIn = (g, id) => grids[g][id] || { c: [], d: [], r: [] };
+    const any = (g) => Object.values(grids[g]).some((x) => x.c.length || x.d.length || x.r.length);
+    if (!st.heatFmt) st.heatFmt = any('page') || !any('old') ? 'page' : 'old';
+    const fmt = st.heatFmt, page = fmt === 'page';
+    const heatOf = (id) => heatIn(fmt, id);
     const totalOf = (id) => heatOf(id).c.reduce((s, x) => s + x[2], 0);
     const tabs = UI.screens.filter((s) => s.id === 'connection' || totalOf(s.id) || heatOf(s.id).d.length || heatOf(s.id).r.length);
     if (!tabs.some((s) => s.id === st.appTab)) st.appTab = 'connection';
     const S = UI.screens.find((s) => s.id === st.appTab);
     const h = heatOf(S.id), total = totalOf(S.id);
-    const nameAt = (c, r) => btnAt(S, c, r) || 'fora dos botões';
+    const nameAt = (c, r) => btnAt(S, c, r, page) || 'fora dos botões';
     const dots = total < 30;
     const m = Math.max(1, ...h.c.map((x) => x[2]));
-    const pos = (c, r) => ({ x: ((X0 + c * cw) / W) * 100, y: ((r * chh) / H) * 100, w: (cw / W) * 100, hh: (chh / H) * 100 });
+    // Across: a share of the capture's width. Down: pixels of the capture, over its height (--ih, read from the image when it loads)
+    const ch = cellH(page);
+    const pos = (c, r) => ({ x: ((X0 + c * cw) / W) * 100, y: r * ch, w: (cw / W) * 100, hh: ch });
+    const at = (x, y, w, hh) => `left:${x}%;top:calc(100% * ${y} / var(--ih));width:${w}%;height:calc(100% * ${hh} / var(--ih))`;
     const cells = h.c.map(([c, r, n]) => {
       const p = pos(c, r), name = nameAt(c, r);
-      if (dots) return `<div class="cell" style="left:${p.x}%;top:${p.y}%;width:${p.w}%;height:${p.hh}%" data-tip="${N(n)} ${n === 1 ? 'clique' : 'cliques'} · ${esc(name)}"><span class="dot">${n}</span></div>`;
+      if (dots) return `<div class="cell" style="${at(p.x, p.y, p.w, p.hh)}" data-tip="${N(n)} ${n === 1 ? 'clique' : 'cliques'} · ${esc(name)}"><span class="dot">${n}</span></div>`;
       const a = 0.04 + (0.8 * n) / m;
-      return `<div class="hot" style="left:${p.x - p.w * 0.6}%;top:${p.y - p.hh * 0.6}%;width:${p.w * 2.2}%;height:${p.hh * 2.2}%;background:radial-gradient(circle, rgba(255,241,184,${a}) 0, rgba(240,90,79,${a * 0.6}) 45%, transparent 70%)"></div><div class="cell" style="left:${p.x}%;top:${p.y}%;width:${p.w}%;height:${p.hh}%" data-tip="${N(n)} cliques · ${esc(name)}"></div>`;
+      return `<div class="hot" style="${at(p.x - p.w * 0.6, p.y - p.hh * 0.6, p.w * 2.2, p.hh * 2.2)};background:radial-gradient(circle, rgba(255,241,184,${a}) 0, rgba(240,90,79,${a * 0.6}) 45%, transparent 70%)"></div><div class="cell" style="${at(p.x, p.y, p.w, p.hh)}" data-tip="${N(n)} cliques · ${esc(name)}"></div>`;
     }).join('');
     const rings = [...h.d.map((x) => [...x, 'd']), ...h.r.map((x) => [...x, 'r'])].map(([c, r, n, kind]) => {
       const p = pos(c, r);
-      return `<div class="ring ${kind}" style="left:${p.x}%;top:${p.y}%;width:${p.w}%;height:${p.hh}%" data-tip="${N(n)} ${kind === 'd' ? (n === 1 ? 'clique sem efeito' : 'cliques sem efeito') : (n === 1 ? 'clique repetido' : 'cliques repetidos')} · ${esc(nameAt(c, r))}"></div>`;
+      return `<div class="ring ${kind}" style="${at(p.x, p.y, p.w, p.hh)}" data-tip="${N(n)} ${kind === 'd' ? (n === 1 ? 'clique sem efeito' : 'cliques sem efeito') : (n === 1 ? 'clique repetido' : 'cliques repetidos')} · ${esc(nameAt(c, r))}"></div>`;
     }).join('');
     const dN = h.d.reduce((s, x) => s + x[2], 0), rN = h.r.reduce((s, x) => s + x[2], 0);
-    const map = `<div class="map" style="background-image:url(/ui/${S.id}.png)"><div class="dim"></div>${cells}${rings}${total || dN || rN ? '' : '<div class="mapmsg">Sem cliques neste ecrã no período.</div>'}</div>`;
+    const fmtSeg = `<div class="seg hfmt" role="group" aria-label="Grelha do mapa"><button data-hfmt="page" aria-pressed="${page}" title="A posição na página, com o scroll. A partir da beta.13.">Na página, com scroll</button><button data-hfmt="old" aria-pressed="${!page}" title="A posição na janela, sem o scroll. Até à beta.12: depois de rolar a página, o ponto cai no sítio errado.">Grelha antiga (até à beta.12)</button></div>`;
+    const map = `<div class="mapwrap"><div class="map" style="--ih:${UI.H}"><img src="/ui/${S.id}.png" alt="" data-map><div class="dim"></div>${cells}${rings}${total || dN || rN ? '' : `<div class="mapmsg">Sem cliques neste ecrã no período${page && any('old') ? ' com a grelha nova. A grelha antiga tem cliques das versões até à beta.12.' : '.'}</div>`}</div></div>`;
     const btn = (id) => R.buttons[id + '_Click'] || R.buttons[id] || null;
     const UD = R.days.reduce((s2, d) => s2 + d.users, 0);
     const btns = S.buttons.map((b) => [b.label, btn(b.id)]).filter(([, r]) => r && r.n).map(([k2, r]) => [k2, r.n, r.days]).sort((a, b) => b[1] - a[1]);
@@ -667,8 +698,10 @@
     const C = R.cs2, sizes = (R.sizes || []).filter((z) => z.bands.length);
     return `${title('Na app', `o que clicam e por onde andam · ${periodTxt(D)}`)}
     <div class="g">${rulesBand(D, 'app')}
-      ${box('Onde clicam', `${esc(S.name)} · ${N(total)} ${total === 1 ? 'clique' : 'cliques'}`, [['e', `heat.${S.id}`]], `<div class="tabs">${tabs.map((s) => `<button data-tab="${s.id}" aria-pressed="${s.id === S.id}">${esc(s.name)}<span class="c">${N(totalOf(s.id))}</span></button>`).join('')}</div>${map}
-        <p class="note">${dots ? 'Menos de 30 cliques neste ecrã: o número em cada célula, sem mancha de calor.' : 'Mapa de calor: 30 ou mais cliques neste ecrã.'}${dN || rN ? ` Círculos: ${N(dN)} sem efeito (tracejado) e ${N(rN)} repetidos (cheio).` : ''} Grelha de 24 × 16 sobre a captura da app; só segue o filtro de versão.</p>`, 's8')}
+      ${box('Onde clicam', `${esc(S.name)} · ${N(total)} ${total === 1 ? 'clique' : 'cliques'}`, [['e', `${page ? 'heatPage' : 'heat'}.${S.id}`]], `${fmtSeg}<div class="tabs">${tabs.map((s) => `<button data-tab="${s.id}" aria-pressed="${s.id === S.id}">${esc(s.name)}<span class="c">${N(totalOf(s.id))}</span></button>`).join('')}</div>${map}
+        <p class="note">${dots ? 'Menos de 30 cliques neste ecrã: o número em cada célula, sem mancha de calor.' : 'Mapa de calor: 30 ou mais cliques neste ecrã.'}${dN || rN ? ` Círculos: ${N(dN)} sem efeito (tracejado) e ${N(rN)} repetidos (cheio).` : ''} ${page
+          ? `Só cliques com a app à frente, fora do Phone setup e das perguntas. A captura é a página inteira, com o scroll: cada ponto está onde foi clicado no conteúdo da página (numa janela mais larga as listas arrumam-se de outra forma, por isso é aproximado).`
+          : `Grelha antiga (até à beta.12): a posição na janela, sem o scroll, por isso só cobre o topo da página e um clique depois de rolar cai mais acima do que foi.`} Só segue o filtro de versão.</p>`, 's8')}
       <div class="s4 stack">${box(`Botões do ${esc(S.name)}`, 'vezes · instalações-dia', [['e', 'buttons']], bl(btns, { extra: (u) => `${N(u)} inst.-dia${UD >= 10 ? ` · ${Math.round((100 * u) / UD)}%` : ''}`, none: 'Nenhum botão deste ecrã clicado no período.' }) + (rare.length ? `<h3>Quase não se usa <small class="dim">3% das instalações-dia ou menos</small></h3><div class="chips">${rare.map((x) => `<span>${esc(x)}</span>`).join('')}</div>` : UD < 30 ? `<p class="note">Poucos dados para dizer o que não se usa (${N(UD)} instalações-dia; a partir de 30).</p>` : '') + `<h3>Atalho contra rato</h3><div class="tw"><table class="t"><thead><tr><th>Ação</th><th class="n">Atalho</th><th class="n">Rato</th></tr></thead><tbody>${shortcuts.map(([a2, kb, ms]) => `<tr><td>${a2}</td><td class="n">${N(kb)}</td><td class="n">${N(ms)}</td></tr>`).join('')}</tbody></table></div>`)}
         ${box('1.º ecrã', 'o primeiro que abrem no 1.º arranque', [['e', 'firstScreen']], fsTot ? bl(R.firstScreen.map((x) => [scrName(x.screen), x.n]), { pct: true }) : empty('Nenhuma instalação nova com 1.º ecrã no período.'), 'grow')}</div>
       ${thisScreen(D, S, total, dN, rN, UD)}
@@ -678,7 +711,7 @@
       ${box('Cliques fora do mapa', 'por tipo', [['e', 'buttons (sem ui-map)']], Object.keys(groups).length ? `<div class="envg">${Object.entries(groups).map(([g, l]) => `<div><h3>${esc(g)}</h3>${bl(l.sort((a, b) => b[1] - a[1]).slice(0, 8))}</div>`).join('')}</div>` : empty('Nenhum clique fora do mapa no período.'), 's8')}
       ${box('Definições mudadas', 'instalações-dia que mudaram cada uma', [['e', 'settings']], R.settings.length ? `<div class="chips">${R.settings.map((x) => `<span>${esc(x.name)} <b>${N(x.n)}</b>${UD >= 10 ? ` <small class="dim">${Math.round((100 * x.n) / UD)}%</small>` : ''}</span>`).join('')}</div>` : empty('Nenhuma definição mudada no período.'), 's4')}
       ${box('Regiões mais bloqueadas', `instalações-dia · de ${N(C.regionsDen)}`, [['e', 'cs2.regions']], C.regions.length ? bl(C.regions.map((r) => [`${r.code} · ${r.name}`, r.n]), { fmt: (v) => (C.regionsDen >= 10 ? `${Math.round((100 * v) / C.regionsDen)}%` : `${v} de ${C.regionsDen}`) }) : empty('Ninguém bloqueou regiões no período.'), 's6')}
-      ${box('Tamanho das listas', 'instalações-dia em cada banda', [['e', 'sizes']], sizes.length ? `<div class="tw"><table class="t"><tbody>${sizes.map((z) => `<tr><td>${esc(LISTN[z.name] || z.name)}<div class="note" style="margin:2px 0 0">${z.bands.map((b) => `${esc(b.band)}: ${N(b.n)}`).join(' · ')}</div></td></tr>`).join('')}</tbody></table></div>` : empty('Nada no período.'), 's6')}
+      ${box('Tamanho das listas', 'instalações-dia em cada banda', [['e', 'sizes']], sizes.length ? `<div class="tw"><table class="t"><tbody>${sizes.map((z) => `<tr><td>${esc(LISTN[z.name] || z.name)}<div class="note" style="margin:2px 0 0">${z.bands.map((b) => `${N(b.n)} com ${esc(b.band)}`).join(' · ')}</div></td></tr>`).join('')}</tbody></table></div>` : empty('Nada no período.'), 's6')}
     </div>`;
   }
   function sessBox(R) {
@@ -723,10 +756,12 @@
     const R = D.R, out = [];
     const UD = R.days.reduce((a, d) => a + d.users, 0);
     for (const S of UI.screens) {
-      const h = (R.heat || {})[S.id]; if (!h) continue;
+      // both grids (beta.13 page cells and the old window cells), each cell named on its own grid, added up by button
+      const hs = [[(R.heat || {})[S.id], false], [(R.heatPage || {})[S.id], true]].filter(([h]) => h);
+      if (!hs.length) continue;
       for (const [kind, min, label] of [['d', 5, 'Cliques sem efeito'], ['r', 3, 'Cliques repetidos']]) {
         const by = {};
-        for (const [c, r, n] of h[kind] || []) { const name = btnAt(S, c, r) || ''; by[name] = (by[name] || 0) + n; }
+        for (const [h, page] of hs) for (const [c, r, n] of h[kind] || []) { const name = btnAt(S, c, r, page) || ''; by[name] = (by[name] || 0) + n; }
         for (const [name, n] of Object.entries(by)) if (n >= min) out.push({ tone: 'warn', t: `${label} ${name ? `em ${name}` : 'numa área sem botão'} (${S.name})`, d: `${N(n)} ${kind === 'd' ? 'cliques que não fizeram nada' : 'rajadas de cliques'} no período.`, rule: `${kind === 'd' ? 'cliques sem efeito' : 'cliques repetidos'} no mesmo sítio: ${min} ou mais`, href: '#app' });
       }
     }
@@ -871,6 +906,9 @@
     $('#main').onmousemove = (e) => { const t = e.target.closest('[data-tip]'); if (!t) { tip.style.display = 'none'; return; } tip.textContent = t.dataset.tip; tip.style.display = 'block'; tip.style.left = Math.max(4, Math.min(innerWidth - tip.offsetWidth - 8, e.clientX + 12)) + 'px'; tip.style.top = e.clientY + 14 + 'px'; };
     $('#main').onmouseleave = () => { tip.style.display = 'none'; };
     for (const b of $$('.tabs button[data-tab]')) b.onclick = () => { st.appTab = b.dataset.tab; const y = scrollY; render(); scrollTo(0, y); };
+    for (const b of $$('button[data-hfmt]')) b.onclick = () => { st.heatFmt = b.dataset.hfmt; const y = scrollY; render(); scrollTo(0, y); };
+    // Beta.13: the capture is the whole page (its height varies by screen); the dots are placed in pixels of the capture over its height
+    for (const img of $$('img[data-map]')) { const fit = () => { if (img.naturalHeight) img.parentElement.style.setProperty('--ih', img.naturalHeight); }; if (img.complete) fit(); else img.onload = fit; }
     for (const id of ['cmpA', 'cmpB']) { const el = $('#' + id); if (el) el.onchange = () => { st[id] = el.value; const y = scrollY; render(); scrollTo(0, y); }; }
     // As ligações "#e-…" dentro de Onde encalham levam ao bloco, sem mudar de página
     for (const a of $$('#main a[href^="#e-"]')) a.onclick = (e) => { e.preventDefault(); const t = document.getElementById(a.getAttribute('href').slice(1)); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); };

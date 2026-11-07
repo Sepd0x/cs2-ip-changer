@@ -101,7 +101,7 @@ const BANDS = {
 // v4: the counters read per install-day (funnel, cohorts, real or automated, per day, per version, list sizes); every other one is
 // summed by D1 (summary's sums 'sql')
 const INSTALL_NAMES = ['first_start', 'accounts', 'net_dc', 'app_start', 'crash', 'ip_changed', 'ip_same', 'ip_no_network', 'ip_home_back', 'min_prot', 'm_valve', 'm_comm',
-  'm_valve_lag', 'm_comm_lag', 'unclean_exit', 'leak_ok', 'leak_bad', 'log_error', 'upd_failed', 'rep_exit', 'cable_hint', 'cs2_start', ...SIZES];
+  'm_valve_lag', 'm_comm_lag', 'unclean_exit', 'leak_ok', 'leak_bad', 'log_error', 'upd_failed', 'rep_exit', 'cable_hint', 'cs2_start', 'upd_done', ...SIZES];
 const INSTALL_GLOBS = ['tp_*', 'phone_*', 'chk_*', 'data_*', 'age_*'];
 // Phone setup steps (PhoneSetup.Key of PhoneStep, contract.setup), in the app's order, with the dashboard's label
 const SETUP_LABEL = { noadbtool: 'Sem ADB', adbfailed: 'ADB falhou', nousb: 'Sem cabo USB', usbdrivererror: 'Driver USB', nousbdebugging: 'Depuração USB desligada',
@@ -255,7 +255,7 @@ export async function summary(db, { period, f, dev, now, exclude = [], sums = 's
   // tests failed, the home IP back, errors written to the Log, failed updates, reports sent at close (rep_exit) and the
   // automated install-days on a hosting network
   const dayRow = (date) => ({ date, users: 0, fresh: 0, minutes: 0, ipNew: 0, ipSame: 0, ipNone: 0, errors: 0, automated: 0, sessions: 0, crashes: 0, matches: 0, laggy: 0,
-    reports: 0, oldReports: 0, usersOld: 0, none: 0, unclean: 0, leakBad: 0, leakOk: 0, homeBack: 0, logErr: 0, updFailed: 0, exits: 0, automatedDc: 0 });
+    reports: 0, oldReports: 0, usersOld: 0, none: 0, unclean: 0, leakBad: 0, leakOk: 0, homeBack: 0, logErr: 0, updFailed: 0, exits: 0, automatedDc: 0, updates: 0 });
   for (let t = period - 1; t >= 0; t--) days.push(dayRow(day(now - t * 864e5)));
   const byDay = new Map(days.map((x) => [x.date, x]));
   const addDay = (x, i) => {
@@ -268,6 +268,7 @@ export async function summary(db, { period, f, dev, now, exclude = [], sums = 's
     if (i.link === 'none') x.none++;
     x.unclean += i.c.unclean_exit || 0; x.leakBad += i.c.leak_bad || 0; x.leakOk += i.c.leak_ok || 0; x.homeBack += i.c.ip_home_back || 0;
     x.logErr += i.c.log_error || 0; x.updFailed += i.c.upd_failed || 0; x.exits += i.c.rep_exit || 0;
+    x.updates += i.c.upd_done || 0;   // beta.13: the app updated itself (a download of the exe from GitHub, beside the exe downloads)
   };
   for (const [, i] of inWin) { const x = byDay.get(i.day); if (x) addDay(x, i); }
   for (const [dd, n] of Object.entries(autoDays)) if (byDay.has(dd)) byDay.get(dd).automated = n;
@@ -341,12 +342,17 @@ export async function summary(db, { period, f, dev, now, exclude = [], sums = 's
   }
 
   // The heat map has no install ID (added up on arrival): only the version filter applies to it
-  const heatOut = {};
+  // beta.13: heat is the old window grid (beta.9 to beta.12), heatPage the page grid with the scroll ("s" cells); never mixed
+  const heatOut = {}, heatPage = {};
   for (const h of heat) {
     if (f.version !== 'all' && h.app !== f.version) continue;
-    const m = /^(\d+),(\d+)$/.exec(h.cell); if (!m) continue;
-    const s = heatOut[h.screen] || (heatOut[h.screen] = { c: [], d: [], r: [] });
-    if (s[h.kind]) s[h.kind].push([+m[1], +m[2], h.n]);
+    const m = /^(s?)(\d+),(\d+)$/.exec(h.cell); if (!m) continue;
+    const to = m[1] ? heatPage : heatOut;
+    const s = to[h.screen] || (to[h.screen] = { c: [], d: [], r: [] });
+    if (s[h.kind]) {
+      const same = s[h.kind].find((x) => x[0] === +m[2] && x[1] === +m[3]);   // the same cell from two versions: one dot
+      if (same) same[2] += h.n; else s[h.kind].push([+m[2], +m[3], h.n]);
+    }
   }
 
   // beta.9 part 2. Matches by how the phone was connected that install-day (its last report), sessions, scroll, settings, days active
@@ -606,7 +612,7 @@ export async function summary(db, { period, f, dev, now, exclude = [], sums = 's
     days, prev, automated, automatedDc, funnel, when, sizes,
     countries: tally((i) => i.country), versions: tally((i) => i.app), modes: tally((i) => i.mode), links: tally((i) => i.link), oses: tally((i) => i.os),
     counters, screens, paths, age: Object.values(AGE).filter((b) => age[b]).map((band) => ({ band, n: age[band] })),
-    buttons: btn, heat: heatOut,
+    buttons: btn, heat: heatOut, heatPage,
     errors: errOut,
     // v3 (Nov. 2026): added, nothing above changed
     fresh, recentDays, hourly, sameTime, funnelProtected, funnelDays, cohortsDaily, site,
@@ -781,9 +787,10 @@ function v4Blocks({ now, today, since, prevSince, okAll, inWin, seen, errors, er
   const cells = (kind) => {
     const out = new Map();
     for (const h of heat) if (h.kind === kind && (f.version === 'all' || h.app === f.version)) {
-      const m = /^(\d+),(\d+)$/.exec(h.cell); if (!m) continue;
+      // beta.13: page cells ("s") too, marked page, so the dashboard finds the button on the right grid
+      const m = /^(s?)(\d+),(\d+)$/.exec(h.cell); if (!m) continue;
       const k = `${h.screen}|${h.cell}`;
-      if (out.has(k)) out.get(k).n += h.n; else out.set(k, { screen: h.screen, c: +m[1], r: +m[2], n: h.n });
+      if (out.has(k)) out.get(k).n += h.n; else out.set(k, { screen: h.screen, c: +m[2], r: +m[3], n: h.n, ...(m[1] ? { page: true } : {}) });
     }
     return [...out.values()].sort((a, b) => b.n - a.n);
   };
@@ -799,8 +806,8 @@ function v4Blocks({ now, today, since, prevSince, okAll, inWin, seen, errors, er
     phone_not_protected: { n: notProt.length, ip_new: notProt.filter((m) => m.ipNew).length, ip_same_only: notProt.filter((m) => !m.ipNew && m.ipSame).length, red: redTop(notProt) },
     protected_no_match: { n: A.buckets[2], cs2_opened: cur.filter((m) => m.bucket === 2 && m.cs2).length },
     signals: [
-      { id: 'rage_clicks', n: rage.reduce((s, x) => s + x.n, 0), installs: null, top: rage.slice(0, 5) },
-      { id: 'dead_clicks', n: dead.reduce((s, x) => s + x.n, 0), installs: null, top: dead.slice(0, 5) },
+      { id: 'rage_clicks', n: rage.reduce((s, x) => s + x.n, 0), installs: null, top: rage.slice(0, 20) },
+      { id: 'dead_clicks', n: dead.reduce((s, x) => s + x.n, 0), installs: null, top: dead.slice(0, 20) },
       sig('cable_hint', 'cable_hint'), sig('home_ip_back', 'ip_home_back'), sig('leak_test_failed', 'leak_bad'), sig('update_failed', 'upd_failed'), sig('crash', 'crash'),
       { id: 'red_checks', n: Object.values(allRed).reduce((s, x) => s + x.size, 0), installs: ids((i) => Object.keys(i.c).some((n) => n.startsWith('chk_'))),
         top: Object.entries(allRed).map(([key, s]) => ({ key, title: title(key), installs: s.size })).sort((a, b) => b.installs - a.installs).slice(0, 3) },
