@@ -61,7 +61,7 @@ Heuristics look at what a program can do, not why. Every sensitive thing the app
 
 | What it uses | What for |
 |---|---|
-| Windows Firewall (COM `HNetCfg.FwPolicy2`) | The kill switch, the CS2 lock and the Regions block: outbound rules named `ServerRouteTool v9 - ...` |
+| Windows Firewall (COM `HNetCfg.FwPolicy2`) | The kill switch, the CS2 lock, the Regions block and the block on servers that banned the IP you have now: outbound rules named `ServerRouteTool v9 - ...` |
 | `netsh interface ipv4 ... route` | Routes that send your servers (or the whole PC) through the phone |
 | PowerShell `NetTCPIP\Set-NetIPInterface` (module loaded by full path) | Keeps the rest of the PC off the phone's mobile data, and undoes it |
 | `GetExtendedTcpTable`, `SetTcpEntry` | Closes Steam's own connections so Steam reconnects through the phone after an IP change. Steam only, never CS2 |
