@@ -652,6 +652,8 @@ Beta13AppTests.Run(Check);
 Beta13TelemetriaTests.Run(Check);
 // 9 nov.: o teste com o iPhone do dono por cabo: driver da Apple, Change IP que espera, Log sem ruído (IphoneNov9Tests.cs)
 await IphoneNov9Tests.Run(Check);
+// 9 nov.: o feedback de um utilizador da beta.12: login, tethering que a app não via, IP já banido, cooldown (Xao9NovTests.cs)
+Xao9NovTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

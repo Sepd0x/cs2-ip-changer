@@ -578,15 +578,23 @@ public partial class MainWindow
     {
         if (Acc(sender) is not AccountItem a || sender is not MenuItem mi) return;
         var minutes = int.Parse((string)mi.CommandParameter);
-        if (minutes < 0)
-        {
-            DialogInput.Text = "";
-            DialogInput.Tag = "E.g. 21h, 3d, 90m, 2d 12h";
-            if (!await Ask($"Cooldown for {a.Name}", "How much time is left? Use d (days), h (hours) and m (minutes).", "Set", "Cancel", inputs: 1, label1: "Time left")) return;
-            var t = Fmt.ParseDuration(DialogInput.Text);
-            if (t == null) { Toast("Could not read that duration. Example: 3d 4h", false); return; }
-            minutes = (int)Math.Ceiling(t.Value.TotalMinutes);
-        }
+        if (minutes < 0) await AskCooldown(a);
+        else SetCooldown(a, minutes);
+    }
+
+    /// <summary>Asks how much of the cooldown is left (d, h, m) and sets it.</summary>
+    async Task AskCooldown(AccountItem a)
+    {
+        DialogInput.Text = "";
+        DialogInput.Tag = "E.g. 21h, 3d, 90m, 2d 12h";
+        if (!await Ask($"Cooldown for {a.Name}", "How much time is left? Use d (days), h (hours) and m (minutes).", "Set", "Cancel", inputs: 1, label1: "Time left")) return;
+        var t = Fmt.ParseDuration(DialogInput.Text);
+        if (t == null) { Toast("Could not read that duration. Example: 3d 4h", false); return; }
+        SetCooldown(a, (int)Math.Ceiling(t.Value.TotalMinutes));
+    }
+
+    void SetCooldown(AccountItem a, int minutes)
+    {
         a.Meta.CooldownUntil = minutes == 0 ? null : DateTime.Now.AddMinutes(minutes);
         a.RefreshAll();
         SaveAccounts();

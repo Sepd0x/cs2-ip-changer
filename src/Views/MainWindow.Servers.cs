@@ -466,6 +466,8 @@ public partial class MainWindow
                     + $" on {Fmt.When(ban.Value?.At)}. Communities usually share their ban list, and if the ban is on the account, a new IP won't help.\n\n" + BanJoinTip(_s.HotkeySwitch, OnHome),
                     "Join anyway"))
                 return false;
+            // beta.13: the IP the server would see was banned there (any account): never joined with it, protection on or off
+            if (IpBanOn(s) is { } ib && !await LeaveBannedIp(s, ib)) return false;
             if (!await WaitAfterCrash(s)) return false;
             if (!fromSlotWait && (OnHome ? HomeAdapter : _last?.Egress) is Adapter eg && await QueryOne(s, eg) && IsFull(s.PlayerCount, s.Bots, s.MaxPlayers))
             {
@@ -508,6 +510,31 @@ public partial class MainWindow
             return true;
         }
         catch (Exception ex) { Toast("Couldn't open Steam: " + ex.Message, Tone.Error); return false; }
+    }
+
+    /// <summary>
+    /// Join on an IP that was banned on <paramref name="s"/>: says so and offers the fix (Change IP, or protection on when the server
+    /// would see the home IP). True only once the IP the server sees is no longer that one.
+    /// </summary>
+    async Task<bool> LeaveBannedIp(ServerItem s, (string Account, string Key, ServerBan Ban) ib)
+    {
+        var text = IpBanText(s.Title, ShownIp(ib.Ban.Ip), ib.Account, ib.Ban.At, PingedOnHome, _s.NoPhone);
+        Log.Warn($"Not joining {s.Key}: the IP the server would see was banned on {ib.Key} on {ib.Ban.At:g} ({ib.Account}).");
+        if (_s.NoPhone) { Toast(text, Tone.Error); return false; }
+        if (PingedOnHome)
+        {
+            if (!await Ask("This IP was banned here", text, "Turn on protection", "Cancel")) return false;
+            if (!await TurnProtectionOn(ask: false)) return false;
+            await RefreshPublicIps();
+        }
+        else
+        {
+            if (!SwitchChangesIp && !IphoneByHand) { Toast(text, Tone.Error); return false; }
+            if (!await Ask("This IP was banned here", text, "Change IP", "Cancel")) return false;
+            if (!await ChangeIp(confirm: false)) return false;
+        }
+        if (IpBanOn(s) is not null) { Toast($"The IP is still one {s.Title} banned. Not joining.", Tone.Error); return false; }
+        return true;
     }
 
     void JoinStarted(ServerItem s)

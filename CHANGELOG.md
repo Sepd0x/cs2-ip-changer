@@ -6,6 +6,10 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [0.1.0-beta.13] - 2026-11-07
 
+### Added
+- Servers: when CS2 says a server banned you, the app now also remembers the IP that server saw. If you try to join that server again (or another server of the same community) with that same IP, on any account, the app stops and tells you, with protection on or off: going back in with a banned IP can get the new account banned too. It offers Change IP (or Turn on protection, when the server would see your home IP). Joins from CS2's own browser or console are blocked too: a Windows Firewall rule stops the game's traffic to those servers only, and only while your IP is the banned one. The rule goes as soon as the IP changes, when you clear the ban marks (right-click the server), when you turn protection off or close the app (it is checked again right after). A ban you mark by hand, or one from an older version, has no IP, so it never blocks a join this way.
+- Accounts: when CS2 refuses an account for Valve's competitive cooldown, the app says so and its Set time button asks how long is left, so New IP + next account skips that account until then. CS2 doesn't say how long a cooldown lasts (not in its console nor in any file the app can read), so the app asks instead of guessing. The app never reads the game's memory.
+
 ### Changed
 - Usage stats: the coarse map of where you click now places a click where it is on the page, counting how far the page is scrolled (a grid of 24 columns and rows about 40 pixels tall, not the exact point, still added up with everyone's and with no ID). It only counts clicks on the page itself while the app is the window in front, not on Phone setup or a question shown over the page. README > Telemetry says so.
 - Usage stats: they also count how many times CS2 joined a server (only the number, never which server). README > Telemetry says so.
@@ -32,13 +36,15 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Website: the 404 page offers Play motion too when Windows is set to show fewer animations.
 - Updating the app sent part of the last usage stats twice (the new version read them before the old one had sent them).
 - Start with Windows: after the app started in the notification area, a double click on its icon opened the window as a tiny bar in the bottom left corner of the screen, and you had to click the app on the taskbar to fix it. The window now opens whole, in the middle of the screen.
-- Accounts: with Start Steam minimized on, logging in to another account made Steam ask for the password, even for accounts saved with Remember me. The app now starts Steam the way that uses the saved sign-in.
+- Accounts: with Start Steam minimized on, logging in to another account made Steam ask for the password, even for accounts saved with Remember me. The app now starts Steam the way that uses the saved sign-in. It didn't depend on how many accounts you have. If Steam still asks once for an account, log in to it once with Remember me ticked; the next switches use it.
 - Log: Change IP on an iPhone wrote "The phone connection dropped" when you turned Airplane Mode on while the question was still open. It now writes when Change IP starts and when you cancel it, and no drop.
 - Log: when the iPhone dropped, three "Couldn't delete the route ... Element not found" warnings came, for routes Windows had already removed with the connection. They no longer show.
 - Log: while the iPhone came back, the Kill switch line went back and forth between "no connection" and "the phone isn't trusted yet" six times in 16 seconds, and "hasn't been checked yet" came three times. Now one blocked line until the connection opens, and that warning at most once a minute.
 - Log: "The phone's adapter 68 is gone, and its Save mobile data setting with it" now says it in plain words.
 - iPhone: Change IP no longer asks first ("I'm doing it"). It starts waiting at once, the bar at the top says what to do on the iPhone, and Cancel is there.
 - Phone: with the PC's Wi-Fi off and only the phone connected, the app said "The phone's IP is the same as your home IP: it is sharing your Wi-Fi". It had read the "home IP" through the phone. With no home network it no longer compares, and the home IP is never read through a phone.
+- Phone setup: with USB tethering already on in the phone, it could still say "Off. The app can turn it on". Phones that share over NCM (newer ones, which Windows 11 shows as "UsbNcm Host Device") weren't recognised, nor a phone whose network adapter Windows names in a way the app didn't know. Now the app also asks the phone (over USB debugging) which address it shares on, and the adapter that uses it is the phone, whatever its name.
+- Phone setup: with the PC on the phone's Wi-Fi hotspot but the hotspot not picked in the app, it said USB tethering was off. It now says the PC is on the phone's hotspot and its Use it button picks it. If the app was set to an adapter that is gone while the phone's USB tethering is on, Use it goes back to USB cable (automatic).
 - Log: in the second the iPhone went into Airplane Mode, the Log blamed "another VPN" for the test servers and listed five routes Windows refused ("Element not found", "The object already exists"). Those warnings now only come while the phone's connection is really there.
 
 ## [0.1.0-beta.12] - 2026-11-06

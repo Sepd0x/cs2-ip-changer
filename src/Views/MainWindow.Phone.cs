@@ -79,6 +79,18 @@ public partial class MainWindow
         // also stops the hotspot (Change IP leaves it alone for that reason). The Phone box still warns when Wi-Fi is on.
         WifiOffBtn.Visibility = info?.Ready == true && PhoneWifiOn ? Visibility.Visible : Visibility.Collapsed;
         UpdatePhoneCheck();
+        // No phone adapter by its name: the phone says which addresses it shares on, and an adapter with one as its gateway is the phone
+        // (a driver name the app doesn't know, 9 nov.). Read again at most every 5 s, only while there is none.
+        if (info?.Ready == true && _last?.Adapters != null && _last.Candidate == null && !_last.Adapters.Any(a => a.IsPhone && a.Up && a.LocalIp != null))
+        {
+            await ReadPhoneAddresses(info.Serial);
+            if (_last.Adapters.Any(a => !a.IsWifi && a.Up && a.Gateway != null && Net.PhoneUsbIps.Contains(a.Gateway)))
+            {
+                Log.Info("Found the phone's USB tethering by its address (Windows gives its adapter a name the app didn't know).");
+                await SyncNow(force: true);
+                _ = RefreshPublicIps();
+            }
+        }
         // Tethering on in the phone but Windows has no phone adapter: happens after the cable flickers.
         // No phone mode has no candidate, so the adapters say whether Windows sees the phone.
         if (info?.Ready == true && _last != null && _last.Candidate == null && !(_last.Adapters?.Any(a => a.IsPhone && a.Up && a.LocalIp != null) ?? false)
@@ -515,6 +527,11 @@ public partial class MainWindow
                     Busy("Starting the phone tool again…");
                     _adb = Adb.Find();
                     break;
+                case PhoneStep.TetherOff when _setupState?.Offer is { CanUse: true } offer:
+                    Busy(offer.Ssid != null ? "Using the phone's hotspot…" : "Using the phone over USB…");
+                    await UseOffer(offer);
+                    await Task.Delay(1500);
+                    break;
                 case PhoneStep.TetherOff:
                     Busy("Turning on USB tethering…");
                     var (adapter, w) = await TurnOnTethering(t => Busy(t));
@@ -553,6 +570,8 @@ public partial class MainWindow
         var info = _adb == null ? null : Adb.SteadyWifi(await Adb.Status(_adb), _phone, ref _wifiOnReads);
         if (info != null) _phone = info;
         var usb = info?.Ready == true ? PhoneUsbState.None : await Task.Run(PhoneUsb.Scan);
+        // The phone's own addresses first: an adapter Windows names in a way the app doesn't know is still found by its gateway
+        var phoneIps = info?.Ready == true ? await ReadPhoneAddresses(info.Serial) : null;
         var adapters = await Task.Run(Net.Scan);
         var phone = Net.PickEgress(adapters, _s.EgressAdapterId, _s.EgressSsid);
         var hotspot = PhoneLink.IsHotspot(_s.EgressSsid, phone?.IsWifi);
@@ -570,7 +589,44 @@ public partial class MainWindow
             PcOnPhone = Guard.NeedsPcOffPhone(mode, true, Net.BestInterface(Net.PcProbeIp), phone?.Index ?? -1, other),
             Iphone = iphone,
             AppleDriver = !iphone || phone != null || await Task.Run(PhoneUsb.AppleNetDriver),
+            Offer = iphone ? null : ConnectionOffer.Find(adapters, phoneIps, _s.EgressAdapterId, !string.IsNullOrEmpty(_s.EgressSsid), phone),
         };
+    }
+
+    List<Adb.PhoneAddress> _phoneAddrs;
+    DateTime _phoneAddrsAt = DateTime.MinValue;
+
+    /// <summary>
+    /// The phone's sharing addresses over ADB, read again at most every 5 s; the USB ones go to Net.Scan, so the phone's adapter is
+    /// found whatever Windows calls it.
+    /// </summary>
+    async Task<List<Adb.PhoneAddress>> ReadPhoneAddresses(string serial)
+    {
+        if (_adb == null || serial == null) return _phoneAddrs;
+        if (_phoneAddrs != null && DateTime.UtcNow - _phoneAddrsAt < TimeSpan.FromSeconds(5)) return _phoneAddrs;
+        _phoneAddrsAt = DateTime.UtcNow;
+        try
+        {
+            var list = await Adb.SharingAddresses(_adb, serial);
+            var usb = list.Where(a => !a.Wifi).Select(a => a.Ip).ToList();
+            if (!usb.ToHashSet().SetEquals(Net.PhoneUsbIps)) Net.SetPhoneUsbIps(usb);
+            _phoneAddrs = list;
+        }
+        catch (Exception ex) { Log.Warn("Could not read the phone's addresses: " + ex.Message); }
+        return _phoneAddrs;
+    }
+
+    /// <summary>Phone setup's "Use it": the connection the PC already has from the phone (its hotspot, or the USB cable when pinned elsewhere).</summary>
+    async Task UseOffer(ConnectionOffer offer)
+    {
+        _s.EgressAdapterId = offer.AdapterId;
+        _s.EgressSsid = offer.Ssid;
+        _distrust = false;
+        SaveSettings();
+        EgressCombo.Tag = null;
+        Log.Info(offer.Ssid != null ? $"Phone connection: hotspot \"{offer.Ssid}\" (Phone setup saw the PC on it)." : "Phone connection: phone over USB (automatic).");
+        await SyncNow(force: true);
+        _ = RefreshPublicIps();
     }
 
     async void ChangeIp_Click(object sender, RoutedEventArgs e) => await RunCommand("Change IP", "starting…", () => ChangeIp(confirm: true));

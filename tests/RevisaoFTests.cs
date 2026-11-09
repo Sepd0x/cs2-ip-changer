@@ -151,7 +151,7 @@ static class RevisaoFTests
         check("Revisão F9: o toast diz que o servidor recusou sem motivo e que não ficou marcado", MainWindow.RefusedJoinToast.Contains("refused the join without saying why")
             && MainWindow.RefusedJoinToast.Contains("Not marked as a ban"), "");
         var branch = kick.IndexOf("if (kind == KickKind.Kick && d.Why == KickReason.RefusedJoin)");
-        check("Revisão F9: a entrada recusada sai antes da marca de ban e da pergunta", branch > 0 && branch < kick.IndexOf("MarkServerBan(acc, inList, d.Minutes)")
-            && kick[branch..kick.IndexOf("MarkServerBan(acc, inList, d.Minutes)")].Contains("Toast(RefusedJoinToast, Tone.Warn);\n            UpdateRejoinBtn();\n            return;"), "");
+        check("Revisão F9: a entrada recusada sai antes da marca de ban e da pergunta", branch > 0 && branch < kick.IndexOf("MarkServerBan(acc, inList, d.Minutes")
+            && kick[branch..kick.IndexOf("MarkServerBan(acc, inList, d.Minutes")].Contains("Toast(RefusedJoinToast, Tone.Warn);\n            UpdateRejoinBtn();\n            return;"), "");
     }
 }

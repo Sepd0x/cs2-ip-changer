@@ -210,6 +210,9 @@ public partial class MainWindow
             await SyncNow(force: true);
         }
         finally { _turningOff = false; }
+        // RestoreAll took the banned-IP block off with the rest; with protection off the home IP decides it again
+        _bannedIpSig = "?";
+        ApplyBannedIpBlock();
         ShowRegionsStatus();
         if (left == null) Toast("Protection is off and checked. Turn on protection (Status or the tray icon) brings it back.", true);
         else Toast("Couldn't remove: " + left + ". Restart the PC to clear the routes, or run the app with --restore.", Tone.Error);

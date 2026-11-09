@@ -31,6 +31,29 @@ public static class Firewall
     public const string Ipv6RuleName = AppIds.RulePrefix + " - IPv6 bloqueado";
     // Regions page: cs2.exe can't reach the Valve relays of the regions you turned off (see Regions.cs).
     public const string RegionsRuleName = AppIds.RulePrefix + " - CS2 regioes bloqueadas";
+    // Servers that banned the IP the PC has now (beta.13): UDP to them is blocked, with protection on or off, until the IP changes.
+    public const string BannedIpRuleName = AppIds.RulePrefix + " - IP banido no servidor";
+
+    /// <summary>
+    /// The banned-IP rule from "IP:port" endpoints: the hosts and the ports (one rule, so a host and a port of two different servers
+    /// are blocked together; both belong to servers that banned this IP). Null when there is nothing to block.
+    /// </summary>
+    public static FwRule BannedIpRule(IEnumerable<string> endpoints)
+    {
+        var hosts = new List<string>();
+        var ports = new List<string>();
+        foreach (var e in endpoints ?? Enumerable.Empty<string>())
+        {
+            var i = e?.LastIndexOf(':') ?? -1;
+            if (i <= 0 || !IPAddress.TryParse(e[..i], out var a) || a.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork
+                || !int.TryParse(e[(i + 1)..], out var p) || p is < 1 or > 65535) continue;
+            if (!hosts.Contains(a.ToString())) hosts.Add(a.ToString());
+            if (!ports.Contains(p.ToString())) ports.Add(p.ToString());
+        }
+        return hosts.Count == 0 ? null
+            : new FwRule(BannedIpRuleName, hosts, null, null, "CS2 IP Changer: servers that banned the IP this PC has now. Goes when the IP changes or the ban mark is cleared.",
+                NET_FW_IP_PROTOCOL_UDP, string.Join(",", ports));
+    }
 
     const int NET_FW_RULE_DIR_OUT = 2;
     const int NET_FW_ACTION_BLOCK = 0;
@@ -359,7 +382,8 @@ public static class Firewall
     /// The rules a restore removes. Turn off protection (and closing the app) keep the Regions rule: regions don't depend on the
     /// phone or on protection, only Allow all lifts them. --restore and tools\restore.cmd are the way out and remove everything.
     /// </summary>
-    public static string[] RulesToRemove(bool keepRegions) => keepRegions ? ProtectionRules : ProtectionRules.Append(RegionsRuleName).ToArray();
+    public static string[] RulesToRemove(bool keepRegions) =>
+        keepRegions ? ProtectionRules.Append(BannedIpRuleName).ToArray() : ProtectionRules.Append(RegionsRuleName).Append(BannedIpRuleName).ToArray();
 
     public static void RemoveAll(bool keepRegions = false)
     {
@@ -413,6 +437,7 @@ public static class Firewall
         DnsUdpRuleName or DnsTcpRuleName => "Whole PC: DNS only through the phone",
         Ipv6RuleName => "Whole PC: IPv6 blocked",
         RegionsRuleName => "Matchmaking regions you turned off",
+        BannedIpRuleName => "Servers that banned the IP you have now",
         _ => "From an older version",
     };
 

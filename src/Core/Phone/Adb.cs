@@ -377,11 +377,51 @@ public static class Adb
         if (File.Exists(copy)) { try { Task.Run(() => Run(copy, "kill-server", 3000)).Wait(4000); } catch { } }
     }
 
-    /// <summary>The phone says USB tethering (rndis) is on.</summary>
+    /// <summary>The phone says USB tethering is on (rndis, or ncm on newer phones).</summary>
     public static async Task<bool> TetheringOn(string adb, string serial)
     {
         var r = await Run(adb, $"-s {serial} shell getprop sys.usb.state", 6000);
-        return r.Code == 0 && r.Output.Contains("rndis");
+        return r.Code == 0 && TetherInUsbState(r.Output);
+    }
+
+    /// <summary>
+    /// sys.usb.state with USB tethering on: "rndis,adb" on most phones, "ncm,adb" on newer ones (9 nov.: a user had tethering on and
+    /// the app only looked for rndis).
+    /// </summary>
+    public static bool TetherInUsbState(string state) =>
+        System.Text.RegularExpressions.Regex.IsMatch(state ?? "", @"(^|[,\s])(rndis|ncm)([,\s]|$)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+    /// <summary>An IPv4 address of the phone on one of its sharing interfaces: USB tethering (rndis, ncm, usb) or Wi-Fi (wlan, swlan, ap).</summary>
+    public sealed record PhoneAddress(string Interface, string Ip, bool Wifi);
+
+    static readonly System.Text.RegularExpressions.Regex AddrLine = new(@"^\s*\d+:\s+([\w.-]+)(?:@\S+)?\s+inet\s+(\d{1,3}(?:\.\d{1,3}){3})/\d+",
+        System.Text.RegularExpressions.RegexOptions.Multiline);
+    static readonly System.Text.RegularExpressions.Regex UsbIface = new(@"^(rndis|ncm|usb)\d+$");
+    static readonly System.Text.RegularExpressions.Regex WifiIface = new(@"^(wlan|swlan|ap|softap)\d+$");
+
+    /// <summary>
+    /// "ip -4 -o addr show" on the phone: its addresses on the interfaces it shares its connection through. The mobile data ones
+    /// (rmnet, ccmni) and the rest are left out. When the PC's adapter has one of these as its gateway, the PC goes through the phone.
+    /// </summary>
+    public static List<PhoneAddress> ParseAddresses(string output)
+    {
+        var list = new List<PhoneAddress>();
+        foreach (System.Text.RegularExpressions.Match m in AddrLine.Matches(output ?? ""))
+        {
+            var iface = m.Groups[1].Value;
+            var ip = m.Groups[2].Value;
+            if (!System.Net.IPAddress.TryParse(ip, out _)) continue;
+            if (UsbIface.IsMatch(iface)) list.Add(new(iface, ip, false));
+            else if (WifiIface.IsMatch(iface)) list.Add(new(iface, ip, true));
+        }
+        return list;
+    }
+
+    /// <summary>The phone's addresses on its sharing interfaces (<see cref="ParseAddresses"/>); empty when adb doesn't answer.</summary>
+    public static async Task<List<PhoneAddress>> SharingAddresses(string adb, string serial)
+    {
+        var r = await Run(adb, $"-s {serial} shell ip -4 -o addr show", 6000);
+        return r.Code == 0 ? ParseAddresses(r.Output) : new();
     }
 
     public static async Task<PhoneInfo> Status(string adb)

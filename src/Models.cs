@@ -430,6 +430,41 @@ public sealed class ServerBan
     public DateTime? Until { get; set; }
     /// <summary>A timed ban that has ended: it no longer counts, and the next look at the list drops it.</summary>
     public bool Over => Until is DateTime u && u <= AppClock.Now;
+    /// <summary>
+    /// The public IP the server saw when CS2's console said ban (9 nov., a user: "warn me before I go back in with an IP that was
+    /// banned there"). Null for a ban marked by hand or from before beta.13: the app can't know which IP that was.
+    /// </summary>
+    public string Ip { get; set; }
+
+    /// <summary>
+    /// The servers to keep away from while the servers see <paramref name="ip"/>: each ban taken with that IP (not ended), on its own
+    /// server and on the servers of your list in the same community. Endpoints "IP:port", each once.
+    /// </summary>
+    public static List<string> IpTargets(IEnumerable<KeyValuePair<string, ServerBan>> bans, IEnumerable<(string Key, string Name, string Network)> servers, string ip)
+    {
+        var list = new List<string>();
+        if (string.IsNullOrEmpty(ip)) return list;
+        var listed = (servers ?? Enumerable.Empty<(string, string, string)>()).ToList();
+        foreach (var (key, b) in bans ?? Enumerable.Empty<KeyValuePair<string, ServerBan>>())
+        {
+            if (b?.Ip != ip || b.Over || key == null) continue;
+            if (!list.Contains(key)) list.Add(key);
+            foreach (var s in listed)
+                if (s.Key != null && !list.Contains(s.Key) && ServerNetwork.Same(key, b.Name, b.Network, s.Key, s.Name, s.Network)) list.Add(s.Key);
+        }
+        return list;
+    }
+
+    /// <summary>The ban (any account) taken with <paramref name="ip"/> that covers this server or its community; null when none.</summary>
+    public static (string Account, string Key, ServerBan Ban)? IpBanFor(IEnumerable<(string Account, IEnumerable<KeyValuePair<string, ServerBan>> Bans)> accounts,
+        string ip, string key, string name, string network)
+    {
+        if (string.IsNullOrEmpty(ip) || key == null) return null;
+        foreach (var (acc, bans) in accounts ?? Enumerable.Empty<(string, IEnumerable<KeyValuePair<string, ServerBan>>)>())
+            foreach (var (k, b) in bans ?? Enumerable.Empty<KeyValuePair<string, ServerBan>>())
+                if (b?.Ip == ip && !b.Over && (k == key || ServerNetwork.Same(k, b.Name, b.Network, key, name, network))) return (acc, k, b);
+        return null;
+    }
 }
 
 public sealed class AccountItem : Observable

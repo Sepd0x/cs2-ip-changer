@@ -50,6 +50,7 @@ public partial class MainWindow
             {
                 _consoleServer = _kicks.Server;
                 Telemetry.Count("join");   // beta.13: CS2 joined a server (only how many times, never which one)
+                WarnBannedIpJoin(_consoleServer);
                 if (_consoleServer != null) RejoinBack(_consoleServer);
                 // You went to another server yourself: the retry on the full one stops, or it would pull you out of this one
                 if (FullRetryStops(_fullServer, _consoleServer)) _fullServer = null;
@@ -137,6 +138,11 @@ public partial class MainWindow
         ? "This account was logged in somewhere else, so Steam ended its session here. Log out there, then join again."
         : "Steam or VAC refused the connection. A new IP won't help: check the account.";
 
+    /// <summary>The competitive cooldown: CS2 doesn't say how long, so Set time asks it (the rotation then skips the account).</summary>
+    public static string CooldownToast(string name) => name == null
+        ? "CS2 says this account has a competitive cooldown. A new IP won't help."
+        : $"CS2 says {name} has a competitive cooldown. CS2 doesn't say for how long: Set time, and the rotation skips {name} until then.";
+
     /// <summary>A join refused before getting in, with no reason: not marked as a ban (a whitelist or Prime only server does it too).</summary>
     public const string RefusedJoinToast = "The server refused the join without saying why. Not marked as a ban: it may let in only some players, or this account may be banned there.";
 
@@ -216,6 +222,13 @@ public partial class MainWindow
         var acc = ActiveAccount();
         if (acc == null && !_demo && Steam.InUseSteamId() != null) { LoadAccounts(); acc = ActiveAccount(); }   // an account Steam logged in to a moment ago
         var on = acc != null ? $" on {acc.Name}" : "";
+        if (kind == KickKind.NoAnswer && server != null && _bannedIpTargets.Contains(server))
+        {
+            // The app's own block (the IP was banned there): not the connection
+            Log.Info($"{server} didn't answer because the app blocks it: the IP you have now was banned there. Console: " + Cut(line));
+            UpdateRejoinBtn();
+            return;
+        }
         if (kind == KickKind.NoAnswer)
         {
             // The connection, not the admin. A server that never answers may also be down or blocking the IP: said, not assumed.
@@ -230,6 +243,15 @@ public partial class MainWindow
         {
             // VAC or Steam refused the account: no rejoin offer and no server ban mark, a new IP changes nothing.
             var elsewhere = Cs2Console.LoggedInElsewhere(line);
+            if (Cs2Console.IsCooldown(line))
+            {
+                // beta.13 (a user: "detect the cooldown and the hours"): CS2 says there is one, never how long, so one click asks the time
+                Log.Warn($"CS2 says {(acc != null ? acc.Name : "this account")} has a competitive cooldown. A new IP won't help. Console: " + Cut(line));
+                Diag.Write("kick", new { kind = "cooldown", line, server });
+                if (acc != null && !acc.InCooldown) Toast(CooldownToast(acc.Name), Tone.Warn, "Set time", () => AskCooldown(acc));
+                else Toast(CooldownToast(acc?.Name), Tone.Warn);
+                return;
+            }
             Log.Warn((elsewhere ? $"The account{on} was logged in somewhere else, so Steam ended its session on {server ?? "the server"}."
                 : $"Steam or VAC refused the connection to {server ?? "the server"}{on}.") + " A new IP won't help. Console: " + Cut(line));
             Diag.Write("kick", new { kind = "steam", line, server });
@@ -281,11 +303,11 @@ public partial class MainWindow
         if ((kind == KickKind.Ban || (kind == KickKind.Vpn && d.BanCode)) && server != null)
         {
             if (acc == null) Log.Warn($"The ban on {server} wasn't marked: the account Steam is logged in to isn't in Accounts. Log in once with \"Remember me\" so it shows up.");
-            else if (inList != null) MarkServerBan(acc, inList, d.Minutes);
+            else if (inList != null) MarkServerBan(acc, inList, d.Minutes, ServersSeeIp());
             else
             {
                 // Not in your list: marked by address, so it counts as soon as you add the server.
-                MarkServerBan(acc, server, null, null, d.Minutes);
+                MarkServerBan(acc, server, null, null, d.Minutes, ServersSeeIp());
                 Log.Info($"{server} isn't in your server list. Add it on Servers to rejoin it with the app and see the ban mark there.");
             }
         }
@@ -394,13 +416,16 @@ public partial class MainWindow
     public static bool JoinedByApp(string server, string lastServer, DateTime? lastAt, DateTime now) =>
         server != null && server == lastServer && lastAt is DateTime at && now - at < TimeSpan.FromMinutes(3);
 
-    void MarkServerBan(AccountItem a, ServerItem s, int? minutes = null) => MarkServerBan(a, s.Key, s.ServerName, s.Network, minutes);
+    void MarkServerBan(AccountItem a, ServerItem s, int? minutes = null, string ip = null) => MarkServerBan(a, s.Key, s.ServerName, s.Network, minutes, ip);
 
-    /// <summary><paramref name="minutes"/>: a timed ban the server said (the mark ends with it); null or 0 stays until cleared.</summary>
-    void MarkServerBan(AccountItem a, string key, string name, string network, int? minutes = null)
+    /// <summary>
+    /// <paramref name="minutes"/>: a timed ban the server said (the mark ends with it); null or 0 stays until cleared.
+    /// <paramref name="ip"/>: the IP the server saw, only for a ban read in CS2's console (a mark by hand may be from another IP).
+    /// </summary>
+    void MarkServerBan(AccountItem a, string key, string name, string network, int? minutes = null, string ip = null)
     {
         a.Meta.ServerBans ??= new();
-        a.Meta.ServerBans[key] = new ServerBan { At = DateTime.Now, Name = name, Network = ServerNetwork.Clean(network), Until = minutes > 0 ? DateTime.Now.AddMinutes(minutes.Value) : null };
+        a.Meta.ServerBans[key] = new ServerBan { At = DateTime.Now, Name = name, Network = ServerNetwork.Clean(network), Until = minutes > 0 ? DateTime.Now.AddMinutes(minutes.Value) : null, Ip = ip };
         a.RefreshAll();
         SaveAccounts();
         ApplyServerBans();
@@ -423,6 +448,75 @@ public partial class MainWindow
             var b = acc?.BanFor(s.Key, s.ServerName, s.Network);
             s.BannedText = b == null ? null : b.Value.Key == s.Key ? $"Banned here ({acc.Name})" : $"Banned on this network ({acc.Name})";
         }
+        ApplyBannedIpBlock();
+    }
+
+    // ------------------------------------------------------------ A server that banned the IP you have now (beta.13)
+
+    /// <summary>
+    /// The public IP game servers see: the phone's while protected (null until it is measured), the home one with protection off or
+    /// No phone, unless the whole PC goes through the phone then.
+    /// </summary>
+    public static string ServersSee(bool onHome, bool pcOnPhone, string egressIp, string homeIp) =>
+        onHome ? (pcOnPhone && egressIp != null ? egressIp : homeIp) : egressIp;
+
+    /// <summary>The home IP stays masked on screen and in the Log (as in the IP box); the phone's is shown.</summary>
+    string ShownIp(string ip) => ip != null && ip == (_homePublic ?? _s.LastHomeIp) ? Fmt.MaskIp(ip) : ip;
+
+    string ServersSeeIp() =>ServersSee(PingedOnHome, _last != null && !_s.NoPhone && PcOnPhone(_last), _egressPublic, _homePublic ?? _s.LastHomeIp);
+
+    IEnumerable<AccountItem> AllAccounts => _accounts.Concat(_accHiddenItems);
+
+    /// <summary>A ban (any account) taken with the IP the servers see now, on this server or its community.</summary>
+    (string Account, string Key, ServerBan Ban)? IpBanOn(ServerItem s) =>
+        ServerBan.IpBanFor(AllAccounts.Select(a => (a.Name, (IEnumerable<KeyValuePair<string, ServerBan>>)a.Meta.ServerBans ?? Array.Empty<KeyValuePair<string, ServerBan>>())),
+            ServersSeeIp(), s.Key, s.ServerName, s.Network);
+
+    /// <summary>What Join says when the IP the server would see was banned there, and what fixes it.</summary>
+    public static string IpBanText(string server, string ip, string account, DateTime at, bool onHome, bool noPhone) =>
+        $"Your current IP ({ip}) was banned on {server} on {at:g} (account {account}). Going back in with the same IP can get this account banned too, "
+        + "so the app blocks this server until the IP changes."
+        + (noPhone ? "\n\nNo phone mode uses your home IP: switch to the phone to play there."
+            : onHome ? "\n\nThe server sees your home IP: turn on protection to play through the phone."
+            : "\n\nChange IP gives you a new one.");
+
+    HashSet<string> _bannedIpTargets = new();
+    string _bannedIpSig = "?";   // "?" = not applied yet in this run: the first look removes a rule a crash left behind
+
+    /// <summary>
+    /// Keeps the Firewall rule that blocks UDP to the servers that banned the IP the servers see now (with protection on or off).
+    /// Read again when a ban mark, the server list or the IP changes; the rule goes with the IP, the mark, and when the app closes.
+    /// </summary>
+    void ApplyBannedIpBlock()
+    {
+        if (_demo || _restored) return;
+        var ip = ServersSeeIp();
+        var targets = ServerBan.IpTargets(AllAccounts.Where(a => a.Meta.ServerBans != null).SelectMany(a => a.Meta.ServerBans),
+            _servers.Select(s => (s.Key, s.ServerName, s.Network)), ip);
+        var sig = string.Join(",", targets.OrderBy(t => t, StringComparer.Ordinal));
+        if (sig == _bannedIpSig) return;
+        var first = _bannedIpSig == "?";
+        _bannedIpSig = sig;
+        _bannedIpTargets = targets.ToHashSet();
+        var rule = Firewall.BannedIpRule(targets);
+        _ = Task.Run(() =>
+        {
+            try { if (rule != null) Firewall.Apply(rule); else Firewall.Remove(Firewall.BannedIpRuleName); }
+            catch (Exception ex) { Log.Warn("Could not update the block on servers that banned this IP: " + (ex.InnerException ?? ex).Message); }
+        });
+        if (rule != null) Log.Warn($"Your IP ({ShownIp(ip)}) was banned on {string.Join(", ", targets)}: the app blocks {(targets.Count == 1 ? "that server" : "those servers")} until the IP changes.");
+        else if (!first) Log.Info("The IP changed (or the ban mark went): the block on the servers that banned the old IP is off.");
+    }
+
+    /// <summary>CS2 went to a server the app blocks for the IP (from its own browser or the console): said at once, not as a timeout.</summary>
+    void WarnBannedIpJoin(string server)
+    {
+        if (server == null || !_bannedIpTargets.Contains(server)) return;
+        var ib = _servers.FirstOrDefault(x => x.Key == server) is ServerItem si ? IpBanOn(si) : null;
+        var text = $"{server} banned the IP you have now{(ib is { } b ? $" on {b.Ban.At:g} ({b.Account})" : "")}. The app blocks it until the IP changes"
+            + (PingedOnHome ? ": turn on protection to play through the phone." : ": press Change IP.");
+        Log.Warn(text);
+        Toast(text, Tone.Warn);
     }
 
     void SrvMarkBan_Click(object sender, RoutedEventArgs e)

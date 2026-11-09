@@ -693,6 +693,8 @@ public sealed class Guard
         {
             var rules = Firewall.Remaining();
             foreach (var n in Firewall.WholePcRules) if (rules.Error != null || rules.Contains(n)) Firewall.Remove(n);
+            // The banned-IP block only holds while the app watches the IP: with the app closed the phone's IP can change under it
+            if (rules.Error != null || rules.Contains(Firewall.BannedIpRuleName)) Firewall.Remove(Firewall.BannedIpRuleName);
             if (!cs2Running) await RemoveSplitRoutes(Net.Scan());
             await RestoreMetric();
         }

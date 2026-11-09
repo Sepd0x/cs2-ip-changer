@@ -962,6 +962,7 @@ public partial class MainWindow
         DiagIps(e, h, same);
         ShowIps();
         UpdateStatusUi();
+        ApplyBannedIpBlock();   // the IP the servers see may have changed
     }
 
     /// <summary>The phone's IP is the home IP, only when there is a home network (no report yet: as before, it counts).</summary>

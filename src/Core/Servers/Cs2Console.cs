@@ -101,6 +101,14 @@ public static class Cs2Console
     static readonly Regex SteamStrong = new(@"NETWORK_DISCONNECT_KICKED_VAC\w*|NETWORK_DISCONNECT_(KICKED_)?VACBANNED|NETWORK_DISCONNECT_STEAM_(?!BANNED\b)\w*"
         + @"|NETWORK_DISCONNECT_KICKED_(UNTRUSTEDACCOUNT|CONVICTEDACCOUNT|INSECURECLIENT|INPUTAUTOMATION|COMPETITIVECOOLDOWN)\b|NETWORK_DISCONNECT_REJECT_STEAM\b", O);
 
+    static readonly Regex CooldownCode = new(@"NETWORK_DISCONNECT_KICKED_COMPETITIVECOOLDOWN\b", O);
+
+    /// <summary>
+    /// Valve's competitive cooldown refused the account. CS2 doesn't say for how long (not in the console, nor in a file the app can
+    /// read), so the app asks you the time instead of guessing it.
+    /// </summary>
+    public static bool IsCooldown(string line) => CooldownCode.IsMatch(line ?? "");
+
     // The line is about the connection ending or being refused.
     static readonly Regex Context = new(
         @"\bdisconnect(ed|ing|ion)?\b|NETWORK_DISCONNECT_|closed by peer|\b(connection|connect)\s+(was\s+)?rejected|\brejected\b.{0,40}\bconnect|server rejected", O);

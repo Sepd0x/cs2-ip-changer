@@ -176,6 +176,38 @@ public sealed record PhoneSetupState
     public bool Iphone { get; init; }
     /// <summary>Apple's network driver is installed (<see cref="PhoneUsb.AppleNetDriver"/>). Only read for an iPhone.</summary>
     public bool AppleDriver { get; init; } = true;
+    /// <summary>
+    /// The phone already shares its connection with the PC, but not the way the app is set to use (9 nov.: "it's on in the phone but
+    /// the app doesn't see it"): the PC is on the phone's Wi-Fi hotspot, or the app is pinned to another adapter. Null = nothing to offer.
+    /// </summary>
+    public ConnectionOffer Offer { get; init; }
+}
+
+/// <summary>
+/// A connection to the phone the PC already has: the adapter (null = USB cable, automatic) and, for the hotspot, its Wi-Fi name.
+/// <paramref name="Detail"/> is the line in Phone setup; <paramref name="CanUse"/> false when the app can't take it (the Wi-Fi name
+/// can't be read).
+/// </summary>
+public sealed record ConnectionOffer(string AdapterId, string Ssid, string Detail, bool CanUse)
+{
+    /// <summary>
+    /// What the PC already has from the phone that the app doesn't use. <paramref name="phoneIps"/>: the phone's own addresses over ADB
+    /// (null = ADB not ready). The hotspot: a Wi-Fi adapter whose gateway is the phone (only when the hotspot isn't the one picked).
+    /// Pinned elsewhere: the app is set to an adapter that isn't there while the phone's USB adapter is up.
+    /// </summary>
+    public static ConnectionOffer Find(IReadOnlyList<Adapter> adapters, IReadOnlyCollection<Adb.PhoneAddress> phoneIps, string pinnedId, bool hotspotPicked, Adapter picked)
+    {
+        if (picked != null || adapters == null) return null;
+        var wifi = phoneIps == null || hotspotPicked ? null
+            : adapters.FirstOrDefault(a => a.IsWifi && a.Up && a.Gateway != null && phoneIps.Any(p => p.Wifi && p.Ip == a.Gateway));
+        if (wifi != null)
+            return wifi.Ssid != null
+                ? new(wifi.Id, wifi.Ssid, $"The PC is on the phone's hotspot ({wifi.Ssid}), but the app isn't set to use it.", true)
+                : new(wifi.Id, null, "The PC is on the phone's hotspot. " + Net.SsidLocationText, false);
+        if (pinnedId != null && adapters.Any(a => a.IsPhone && !a.IsWifi && a.Up && a.LocalIp != null && a.Gateway != null))
+            return new(null, null, "On, but the app is set to another connection. Use it switches to USB cable (automatic).", true);
+        return null;
+    }
 }
 
 public enum PhoneStep { NoAdbTool, AdbFailed, NoUsb, UsbDriverError, NoUsbDebugging, Unauthorized, Offline, TetherOff, WifiOn, PcOnPhone, Done }
@@ -327,11 +359,12 @@ public static class PhoneSetup
 
             s.Hotspot ? new(PhoneStep.TetherOff, "Connection", StepState.Ok, ssid != null ? $"The phone's hotspot ({ssid})" : "The phone's hotspot", null)
             : s.Tethered ? new(PhoneStep.TetherOff, "USB tethering", StepState.Ok, "On", null)
+            : s.Offer is { } offer ? new(PhoneStep.TetherOff, offer.Ssid != null || !offer.CanUse ? "Connection" : "USB tethering", StepState.Todo, offer.Detail, offer.CanUse ? "Use it" : null)
             : adb ? new(PhoneStep.TetherOff, "USB tethering", StepState.Todo, "Off. The app can turn it on (on some phones you do it by hand).", "Turn on")
             : plugged ? new(PhoneStep.TetherOff, "USB tethering", StepState.Todo, paths.Tethering + (paths.Brand == null ? "\n" + SearchHint : ""), null)
             : new(PhoneStep.TetherOff, "USB tethering", StepState.Waiting, "Once the phone is plugged in.", null),
 
-            s.Hotspot ? new(PhoneStep.WifiOn, "Phone Wi-Fi", StepState.Ok, "Stays on for the hotspot", null)
+            s.Hotspot || s.Offer?.Ssid != null || s.Offer is { CanUse: false } ? new(PhoneStep.WifiOn, "Phone Wi-Fi", StepState.Ok, "Stays on for the hotspot", null)
             : !adb ? new(PhoneStep.WifiOn, "Phone Wi-Fi off", StepState.Waiting, "Turn off Wi-Fi on the phone. Keep mobile data on.", null)
             : s.WifiOn ? new(PhoneStep.WifiOn, "Phone Wi-Fi off", StepState.Todo, "On: tethering may share your home Wi-Fi instead of mobile data.", "Turn off")
             : new(PhoneStep.WifiOn, "Phone Wi-Fi off", StepState.Ok, "Off: mobile data", null),

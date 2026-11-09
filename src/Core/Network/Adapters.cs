@@ -37,9 +37,28 @@ public sealed class Adapter
 public static partial class Net
 {
     // Only what phones (and 4G dongles that act like one) show up as. A laptop dock's USB-Ethernet is the home network.
+    // "UsbNcm Host Device": Windows 11's own driver for phones that share over NCM instead of RNDIS (9 nov., tethering on and the app said Off).
     static readonly Regex PhonePattern = new(
-        "Remote NDIS|RNDIS|Internet Sharing Device|Mobile USB|Android|Apple Mobile Device Ethernet|iPhone",
+        "Remote NDIS|RNDIS|Internet Sharing Device|Mobile USB|Android|Apple Mobile Device Ethernet|iPhone|UsbNcm",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    static volatile string[] _phoneUsbIps = Array.Empty<string>();
+
+    /// <summary>
+    /// The phone's own USB tethering addresses, read over ADB (Adb.SharingAddresses). An adapter whose gateway is one of them is the
+    /// phone whatever Windows calls it (a brand's own driver name the pattern doesn't know).
+    /// </summary>
+    public static void SetPhoneUsbIps(IEnumerable<string> ips) => _phoneUsbIps = (ips ?? Enumerable.Empty<string>()).Where(i => i != null).Distinct().ToArray();
+    public static IReadOnlyCollection<string> PhoneUsbIps => _phoneUsbIps;
+
+    /// <summary>
+    /// An adapter is the phone's: by its name, or (not Wi-Fi) because its gateway is the phone's USB tethering address. A Wi-Fi adapter
+    /// on the phone's hotspot is never taken by itself: the hotspot is picked by its name (Settings), so the app knows when the PC
+    /// jumps to another network.
+    /// </summary>
+    public static bool IsPhoneAdapter(string description, string name, bool wifi, string gateway, IReadOnlyCollection<string> phoneUsbIps) =>
+        PhonePattern.IsMatch(description ?? "") || PhonePattern.IsMatch(name ?? "")
+        || !wifi && gateway != null && phoneUsbIps != null && phoneUsbIps.Contains(gateway);
 
     static readonly Regex UsbNetPattern = new("USB.*Ethernet|USB.*Network|USB.*GbE|USB.*LAN", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
@@ -75,6 +94,8 @@ public static partial class Net
                 if (gw == null && addr != null && ni.OperationalStatus == OperationalStatus.Up &&
                     (PhonePattern.IsMatch(desc) || PhonePattern.IsMatch(ni.Name) || ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211))
                     gw = SavedGateway(ni.Id, v4.IsDhcpEnabled, addr.Address, addr.IPv4Mask);
+                var wifi = ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211;
+                var phone = IsPhoneAdapter(desc, ni.Name, wifi, gw, _phoneUsbIps);
                 list.Add(new Adapter
                 {
                     Index = v4.Index,
@@ -84,10 +105,10 @@ public static partial class Net
                     Up = ni.OperationalStatus == OperationalStatus.Up,
                     LocalIp = local,
                     Gateway = gw,
-                    IsPhone = PhonePattern.IsMatch(desc) || PhonePattern.IsMatch(ni.Name),
-                    IsUsbNet = !(PhonePattern.IsMatch(desc) || PhonePattern.IsMatch(ni.Name)) && (UsbNetPattern.IsMatch(desc) || UsbNetPattern.IsMatch(ni.Name)),
+                    IsPhone = phone,
+                    IsUsbNet = !phone && (UsbNetPattern.IsMatch(desc) || UsbNetPattern.IsMatch(ni.Name)),
                     IsVpn = ni.NetworkInterfaceType is NetworkInterfaceType.Ppp or NetworkInterfaceType.Tunnel || VpnPattern.IsMatch(desc) || VpnPattern.IsMatch(ni.Name),
-                    IsWifi = ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211,
+                    IsWifi = wifi,
                 });
             }
             catch { }
