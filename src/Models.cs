@@ -162,7 +162,7 @@ public sealed class IpHistoryEntry
     public string Isp { get; set; }
     public string Reason { get; set; }
     [JsonIgnore] public string TimeText => Time.ToString(Time.Date == AppClock.Today ? "HH:mm" : "d MMM", System.Globalization.CultureInfo.InvariantCulture);
-    [JsonIgnore] public string ReasonText => Reason switch { "trocado" => "changed", "detetado" => "at startup", _ => Reason };
+    [JsonIgnore] public string ReasonText => Reason switch { "trocado" => "changed", "detetado" => "detected", _ => Reason };   // 9 nov.: not only at startup (also when the phone comes back)
     /// <summary>"ISP · City · Country" without the country, so the city still fits at the smallest window (the tooltip has it all).</summary>
     [JsonIgnore] public string IspShort => Isp?.Split(" · ") is { Length: >= 3 } p ? string.Join(" · ", p[..^1]) : Isp;
 }

@@ -4,6 +4,17 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Changed
+- iPhone: when Windows sees the iPhone but doesn't have Apple's network driver, Phone setup now says so and its Install button opens "Apple Devices" (free, by Apple) in the Microsoft Store, where you press Get. Before, it stopped at "Trust this computer" even though the missing driver was the problem.
+- iPhone: Change IP now waits up to 5 minutes for the iPhone to come back (it gave up after 90 s), and after 25 s without it tells you how to bring it back: open Settings > Personal Hotspot on the iPhone, or plug the cable in again. Cancel still stops it at any time.
+- Previous IPs: an IP the app measures outside Change IP says "detected", not "at startup" (it is also measured when the phone comes back).
+
+### Fixed
+- Log: Change IP on an iPhone wrote "The phone connection dropped" when you turned Airplane Mode on while the question was still open. It now writes when Change IP starts and when you cancel it, and no drop.
+- Log: when the iPhone dropped, three "Couldn't delete the route ... Element not found" warnings came, for routes Windows had already removed with the connection. They no longer show.
+- Log: while the iPhone came back, the Kill switch line went back and forth between "no connection" and "the phone isn't trusted yet" six times in 16 seconds, and "hasn't been checked yet" came three times. Now one blocked line until the connection opens, and that warning at most once a minute.
+- Log: "The phone's adapter 68 is gone, and its Save mobile data setting with it" now says it in plain words.
+
 ## [0.1.0-beta.13] - 2026-11-07
 
 ### Changed

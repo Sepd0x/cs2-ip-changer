@@ -39,10 +39,12 @@ static class Beta11QualidadeTests
         check("Setup iPhone: pronto, a linha Change IP continua a dizer como", PhoneSetup.Shown(iphoneDone.Last(), null) == PhoneSetup.IphoneChangeIp, "");
         var iphonePlugged = PhoneSetup.Steps(new PhoneSetupState { Iphone = true, Usb = new PhoneUsbState(true, null, "Apple") });
         var iNow = PhoneSetup.Current(iphonePlugged);
-        check("Setup iPhone: o driver da Apple passa para o passo aberto", iNow?.Step == PhoneStep.Unauthorized && iNow.Detail.Contains("Apple Devices"), iNow?.Detail);
+        // 9 nov.: o driver de rede da Apple passou a ser lido (AppleDriver). Com ele instalado, o passo aberto e o Personal Hotspot
+        // dizem como trazer o iPhone (ecrã do Personal Hotspot, o cabo), e a linha do driver fica verde; sem ele, IphoneNov9Tests.
+        check("Setup iPhone: com o driver, o passo aberto é o Trust e diz como trazer o iPhone", iNow?.Step == PhoneStep.Unauthorized && iNow.Detail.Contains("Personal Hotspot"), iNow?.Detail);
         var iHotspot = PhoneSetup.Steps(new PhoneSetupState { Iphone = true, Usb = new PhoneUsbState(true, null, "Apple") }).First(i => i.Step == PhoneStep.TetherOff);
-        check("Setup iPhone: o Personal Hotspot também lembra o driver", iHotspot.Detail.Contains("Still red? ") && iHotspot.Detail.Contains("Apple Devices"), iHotspot.Detail);
-        check("Setup iPhone: a linha do driver em espera fica só com o título", PhoneSetup.Shown(iphonePlugged[0], iNow) == null, "");
+        check("Setup iPhone: o Personal Hotspot ainda vermelho lembra o cabo", iHotspot.Detail.Contains("Still red? ") && iHotspot.Detail.Contains("plug it back in"), iHotspot.Detail);
+        check("Setup iPhone: com o driver instalado, a linha do driver fica verde", iphonePlugged[0].State == PhoneSetup.StepState.Ok && PhoneSetup.Shown(iphonePlugged[0], iNow) == "Done", "");
         check("Setup: XAML esconde o texto vazio", Src("MainWindow.xaml").Contains("Visibility=\"{Binding DetailVisibility}\""), "");
 
         // ---------------- 2. Menus por marca: só os verificados chegam ao ecrã

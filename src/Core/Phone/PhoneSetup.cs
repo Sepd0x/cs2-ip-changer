@@ -84,6 +84,21 @@ public static class PhoneUsb
         catch { return PhoneUsbState.None; }
     }
 
+    /// <summary>
+    /// Windows has Apple's network driver for the iPhone's Personal Hotspot over USB (netaapl64.inf, "Apple Mobile Device Ethernet").
+    /// Windows Update only brings Apple's plain USB driver: the network one comes with the Apple Devices app (or iTunes). Without it the
+    /// iPhone shows up on USB but no network adapter ever appears (9 nov., on the owner's PC).
+    /// </summary>
+    public static bool AppleNetDriver()
+    {
+        try
+        {
+            var repo = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "System32", "DriverStore", "FileRepository");
+            return Directory.EnumerateDirectories(repo, "netaapl*.inf_*").Any();
+        }
+        catch { return true; }   // can't tell: don't send anyone to install what may already be there
+    }
+
     const int CR_SUCCESS = 0, CM_GETIDLIST_FILTER_ENUMERATOR = 0x1, CM_GETIDLIST_FILTER_PRESENT = 0x100, CM_DRP_DEVICEDESC = 1, CM_DRP_FRIENDLYNAME = 0x0D;
     const uint DN_HAS_PROBLEM = 0x400;
 
@@ -139,6 +154,8 @@ public sealed record PhoneSetupState
     public bool PcOnPhone { get; init; }
     /// <summary>The phone is an iPhone (seen on USB as Apple, or its tethering adapter is "Apple Mobile Device Ethernet").</summary>
     public bool Iphone { get; init; }
+    /// <summary>Apple's network driver is installed (<see cref="PhoneUsb.AppleNetDriver"/>). Only read for an iPhone.</summary>
+    public bool AppleDriver { get; init; } = true;
 }
 
 public enum PhoneStep { NoAdbTool, AdbFailed, NoUsb, UsbDriverError, NoUsbDebugging, Unauthorized, Offline, TetherOff, WifiOn, PcOnPhone, Done }
@@ -154,8 +171,10 @@ public static class PhoneSetup
     {
         var adb = s.AdbState == "device";
         var connected = s.Tethered || s.Hotspot;
-        // An iPhone has no ADB: connected is done (Change IP is by hand), otherwise the driver, the cable, then Personal Hotspot
-        if (s.Iphone) return connected ? PhoneStep.Done : s.Usb.Problem != null ? PhoneStep.UsbDriverError : !s.Usb.Seen ? PhoneStep.NoUsb : PhoneStep.TetherOff;
+        // An iPhone has no ADB: connected is done (Change IP is by hand), otherwise the driver, the cable, Apple's network driver,
+        // then Personal Hotspot
+        if (s.Iphone) return connected ? PhoneStep.Done : s.Usb.Problem != null ? PhoneStep.UsbDriverError : !s.Usb.Seen ? PhoneStep.NoUsb
+            : !s.AppleDriver ? PhoneStep.UsbDriverError : PhoneStep.TetherOff;
         if (!adb && !connected) return AdbStep(s);
         if (adb && !connected) return PhoneStep.TetherOff;
         if (adb && s.WifiOn && !s.Hotspot) return PhoneStep.WifiOn;
@@ -305,17 +324,33 @@ public static class PhoneSetup
     public const string IphoneHotspot = "On the iPhone: Settings > Personal Hotspot > turn on \"Allow Others to Join\". Keep the cable plugged in.";
     public const string IphoneChangeIp = "Change IP on an iPhone is done on the iPhone: turn Airplane Mode on, wait 3 seconds, turn it off. Change IP in the app tells you when, and shows the new IP.";
 
+    /// <summary>Apple Devices in the Microsoft Store (free, by Apple): it brings the iPhone's network driver.</summary>
+    public const string AppleDevicesStoreId = "9NP83LWLPZ9K";
+    public const string IphoneDriverMissing = "Windows sees the iPhone but doesn't have Apple's network driver yet. Press Install: the Microsoft Store opens on \"Apple Devices\" (free, by Apple), press Get there. Then unplug the iPhone and plug it in again.";
+
     /// <summary>
-    /// The iPhone's own steps (beta.11): no ADB (Android only), so nothing here is done by the app. The driver, the cable, Trust,
-    /// Personal Hotspot. An iPhone's hotspot always shares mobile data, never Wi-Fi, so there is no Wi-Fi step.
+    /// The Store's small install window for Apple Devices. The Store installs it as you, not the app: running winget from an app that
+    /// runs as admin would run whatever winget.exe sits in your user folder with admin rights.
+    /// </summary>
+    public static string AppleDevicesStoreUri => $"ms-windows-store://pdp/?ProductId={AppleDevicesStoreId}&mode=mini";
+    /// <summary>What to do when the iPhone's connection doesn't come back by itself (after Airplane Mode, or a cable that came out).</summary>
+    public const string IphoneBringBack = "On the iPhone, open Settings > Personal Hotspot and leave that screen open. Still nothing after 10 seconds? Unplug the cable and plug it back in.";
+
+    /// <summary>
+    /// The iPhone's own steps (beta.11): no ADB (Android only). The driver (the app installs Apple's when it is missing, 9 nov.), the
+    /// cable, Trust, Personal Hotspot. An iPhone's hotspot always shares mobile data, never Wi-Fi, so there is no Wi-Fi step. Without
+    /// Apple's network driver the iPhone never trusts or shares anything the PC can see, so the rows after it wait for it.
     /// </summary>
     static List<SetupItem> IphoneSteps(PhoneSetupState s, string ssid)
     {
         var plugged = s.Usb.Seen || s.Tethered;
+        var noDriver = plugged && !s.Tethered && !s.Hotspot && !s.AppleDriver;
         return new List<SetupItem>
         {
-            s.Usb.Problem is int code ? new(PhoneStep.UsbDriverError, "Apple driver", StepState.Todo, IphoneDriver + $" (Windows says code {code}.)", null)
+            s.Usb.Problem is int code ? new(PhoneStep.UsbDriverError, "Apple driver", StepState.Todo, IphoneDriver + $" (Windows says code {code}.)", "Install")
             : s.Tethered ? new(PhoneStep.UsbDriverError, "Apple driver", StepState.Ok, "Installed", null)
+            : noDriver ? new(PhoneStep.UsbDriverError, "Apple driver", StepState.Todo, IphoneDriverMissing, "Install")
+            : s.AppleDriver && plugged ? new(PhoneStep.UsbDriverError, "Apple driver", StepState.Ok, "Installed", null)
             : new(PhoneStep.UsbDriverError, "Apple driver", StepState.Waiting, "If the steps below stay red: " + IphoneDriver, null),
 
             plugged ? new(PhoneStep.NoUsb, "USB cable", StepState.Ok, "iPhone plugged in", null)
@@ -323,12 +358,14 @@ public static class PhoneSetup
             : new(PhoneStep.NoUsb, "USB cable", StepState.Todo, Advice(PhoneStep.NoUsb), null),
 
             s.Tethered || s.Hotspot ? new(PhoneStep.Unauthorized, "Trust this computer", StepState.Ok, "Trusted", null)
-            : plugged ? new(PhoneStep.Unauthorized, "Trust this computer", StepState.Todo, "Unlock the iPhone. If it asks \"Trust This Computer?\", tap Trust and enter your passcode.\nNo question on the iPhone? " + IphoneDriver, null)
+            : noDriver ? new(PhoneStep.Unauthorized, "Trust this computer", StepState.Waiting, "Once Apple's driver is installed.", null)
+            : plugged ? new(PhoneStep.Unauthorized, "Trust this computer", StepState.Todo, "Unlock the iPhone. If it asks \"Trust This Computer?\", tap Trust and enter your passcode.\nNo question? " + IphoneBringBack, null)
             : new(PhoneStep.Unauthorized, "Trust this computer", StepState.Waiting, "The iPhone asks once it is plugged in.", null),
 
             s.Hotspot ? new(PhoneStep.TetherOff, "Connection", StepState.Ok, ssid != null ? $"The iPhone's hotspot ({ssid})" : "The iPhone's hotspot", null)
             : s.Tethered ? new(PhoneStep.TetherOff, "Personal Hotspot", StepState.Ok, "On, through the cable (mobile data)", null)
-            : plugged ? new(PhoneStep.TetherOff, "Personal Hotspot", StepState.Todo, IphoneHotspot + "\nStill red? " + IphoneDriver, null)
+            : noDriver ? new(PhoneStep.TetherOff, "Personal Hotspot", StepState.Waiting, "Once Apple's driver is installed.", null)
+            : plugged ? new(PhoneStep.TetherOff, "Personal Hotspot", StepState.Todo, IphoneHotspot + "\nStill red? " + IphoneBringBack, null)
             : new(PhoneStep.TetherOff, "Personal Hotspot", StepState.Waiting, "Once the iPhone is plugged in.", null),
 
             new(PhoneStep.Done, "Change IP", s.Tethered || s.Hotspot ? StepState.Ok : StepState.Waiting, IphoneChangeIp, null),

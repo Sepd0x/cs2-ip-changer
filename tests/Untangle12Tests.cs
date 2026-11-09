@@ -671,7 +671,7 @@ static class Untangle12Tests
         var refuse = true;
         var guard = new Guard(file, (a, ms) => Task.FromResult(new ProcResult(0, "")), new Guard.RouteTable(
             () => Task.FromResult(table.ToList()),
-            rt => { deletes++; if (refuse) return Task.FromResult(new ProcResult(1, "Element not found.")); table.Remove(rt); return Task.FromResult(new ProcResult(0, "Ok.")); }));
+            rt => { deletes++; if (refuse) return Task.FromResult(new ProcResult(1, "Access is denied." /* 9 nov.: "Element not found" is a route already gone */)); table.Remove(rt); return Task.FromResult(new ProcResult(0, "Ok.")); }));
         check("B1: o Guard lê a rota do owned.json", guard.Owned().Routes.Contains(key), "");
 
         var warned = 0;

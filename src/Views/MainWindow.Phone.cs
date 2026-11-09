@@ -500,6 +500,17 @@ public partial class MainWindow
                         if (!await InstallAdb(t => Busy(t), showProgress: false)) why = "The phone tool (ADB) didn't install. See the Log.";
                     }
                     break;
+                case PhoneStep.UsbDriverError:
+                    // Only the iPhone's rows have this button: Apple Devices brings its network driver (9 nov.)
+                    Busy("Opening Apple Devices in the Microsoft Store…");
+                    try
+                    {
+                        Process.Start(new ProcessStartInfo(PhoneSetup.AppleDevicesStoreUri) { UseShellExecute = true });
+                        Log.Info("Phone setup opened Apple Devices in the Microsoft Store, for the iPhone's network driver.");
+                        Toast("In the Microsoft Store, press Get. When it's installed, unplug the iPhone and plug it in again.", true);
+                    }
+                    catch (Exception ex) { Log.Warn("Couldn't open the Microsoft Store: " + ex.Message); why = "Couldn't open the Microsoft Store. Open it and install \"Apple Devices\" (by Apple)."; }
+                    break;
                 case PhoneStep.AdbFailed:
                     Busy("Starting the phone tool again…");
                     _adb = Adb.Find();
@@ -547,6 +558,7 @@ public partial class MainWindow
         var hotspot = PhoneLink.IsHotspot(_s.EgressSsid, phone?.IsWifi);
         var other = phone != null && PhoneLink.HasHome(adapters, phone);
         var mode = PhoneLink.EffectiveMode(_protOn, _s.Mode, _s.GameMode, Steam.Cs2Running);
+        var iphone = NotePhoneKind(PhoneUsb.IphoneSeen(info?.Ready == true, usb, phone, _s.EgressSsid));
         return new PhoneSetupState
         {
             AdbTool = _adb != null,
@@ -556,7 +568,8 @@ public partial class MainWindow
             Tethered = phone != null && !hotspot,
             WifiOn = PhoneLink.WifiOn(info, phone?.IsWifi),
             PcOnPhone = Guard.NeedsPcOffPhone(mode, true, Net.BestInterface(Net.PcProbeIp), phone?.Index ?? -1, other),
-            Iphone = NotePhoneKind(PhoneUsb.IphoneSeen(info?.Ready == true, usb, phone, _s.EgressSsid)),
+            Iphone = iphone,
+            AppleDriver = !iphone || phone != null || await Task.Run(PhoneUsb.AppleNetDriver),
         };
     }
 

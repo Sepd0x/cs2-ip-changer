@@ -34,15 +34,26 @@ public sealed class ProblemLog
     public void SameIpWritten() => _sameIpWritten = true;
 
     /// <summary>The line to write for this sync, or null. <paramref name="unprotected"/>: protection off or No phone, nothing is blocked.</summary>
-    public string Next(bool unprotected, string problem, Distrust distrust)
+    public string Next(bool unprotected, string problem, Distrust distrust, DateTime? now = null)
     {
-        if (unprotected) { _last = null; _sameIpWritten = false; return null; }
+        if (unprotected) { _last = null; _sameIpWritten = false; _uncheckedAt = null; return null; }
         if (distrust != Distrust.SameIp) _sameIpWritten = false;
         if (problem == _last) return null;
         _last = problem;
         if (problem == null || distrust == Distrust.SameIp && _sameIpWritten) return null;
+        // "hasn't been checked yet" comes back every time the connection drops and returns: an iPhone coming back after Airplane
+        // Mode did it three times in 12 s (9 nov.). Once a minute is enough; any other problem is still said at once.
+        if (distrust == Distrust.Unchecked)
+        {
+            var t = now ?? DateTime.Now;
+            if (_uncheckedAt is DateTime at && t - at < UncheckedQuiet) return null;
+            _uncheckedAt = t;
+        }
         return problem + " Servers blocked.";
     }
+
+    DateTime? _uncheckedAt;
+    static readonly TimeSpan UncheckedQuiet = TimeSpan.FromMinutes(1);
 }
 
 public sealed class GuardReport
@@ -299,6 +310,14 @@ public sealed class Guard
             if (!pick(rt) || !IsOurs(rt, _ownedRoutes, adapters, exit, serverIps, anyHostOnPhone)) continue;
             var key = RouteKey.Of(rt);
             var r = await _routes.Delete(rt);
+            if (!r.Ok && RouteAlreadyGone(r.Output))
+            {
+                // The route went with its adapter (9 nov.: the iPhone in Airplane Mode left three "Couldn't delete the route ...:
+                // Element not found" in the Log). Nothing is left to delete, so it is no longer the app's and nothing is said.
+                _warned.Remove("route " + key);
+                Disown(key);
+                continue;
+            }
             if (!r.Ok)
             {
                 if (_warned.Add("route " + key)) Log.Warn($"Couldn't delete the route {rt.Prefix} on adapter {rt.Index}: {(r.Output ?? "").Trim()}");
@@ -414,12 +433,25 @@ public sealed class Guard
     /// (every change of trust) rewrote the rules and wrote the same line, three times in 3 s at 00:06:01-00:06:04 in the diagnostics
     /// of 7 nov. Rules that were found missing or wrong (<paramref name="repaired"/>) are always said.
     /// </summary>
+    /// <summary>Windows answered that the route isn't there (English or Portuguese Windows, or the error code): it already went.</summary>
+    public static bool RouteAlreadyGone(string output) =>
+        output != null && (output.Contains("Element not found", StringComparison.OrdinalIgnoreCase)
+            || output.Contains("Elemento não encontrado", StringComparison.OrdinalIgnoreCase)
+            || output.Contains("0x80070490", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// The kill switch line, once. While everything stays blocked, the reason going back and forth ("no connection", "the phone isn't
+    /// trusted yet") as an iPhone comes back is no news (9 nov.: six lines in 16 s): one blocked line until it opens again.
+    /// </summary>
     public static string KillLine(string text, ref string last, bool repaired)
     {
         if (text == last && !repaired) return null;
+        if (!repaired && IsBlockedLine(text) && IsBlockedLine(last)) return null;
         last = text;
         return text;
     }
+
+    static bool IsBlockedLine(string line) => line != null && line.Contains(" blocked (", StringComparison.Ordinal);
 
     async Task<GuardReport> SyncCore(Settings s, List<string> ips, bool force, Distrust distrust, bool cs2Running, string verifiedKey, bool on)
     {
@@ -588,7 +620,7 @@ public sealed class Guard
         {
             // The cable came out (or tethering went off): Windows removed the adapter and its setting with it, so there is nothing
             // to give back, and PowerShell on an index that is gone would fail on every sync
-            Log.Info($"The phone's adapter {_metricAppliedTo} is gone, and its Save mobile data setting with it.");
+            Log.Info("The phone's connection went away (cable, Personal Hotspot or Airplane Mode). Save mobile data is set again when it comes back.");
             _metricAppliedTo = -1;
             SaveOwned();
             return;
