@@ -538,7 +538,9 @@ public sealed class Guard
             foreach (var ip in ips)
             {
                 routeOk[ip] = Net.BestInterface(ip) == egress.Index;
-                if (!routeOk[ip] && _warned.Add(ip)) Log.Warn($"Windows does not pick the protected connection for {ip}. Another VPN may be overriding it.");
+                // Only while the connection is still there: in the second it goes (Airplane Mode) Windows picks another adapter and
+                // there is no VPN (9 nov., the iPhone)
+                if (!routeOk[ip] && StillUp(egress) && _warned.Add(ip)) Log.Warn($"Windows does not pick the protected connection for {ip}. Another VPN may be overriding it.");
                 if (routeOk[ip]) _warned.Remove(ip);
             }
         }
@@ -861,11 +863,25 @@ public sealed class Guard
         foreach (var p in missing)
         {
             var r = await Net.AddRoute(p, via);
-            if (r.Ok) { Own(RouteKey.Of(p, via)); added++; }
-            else Log.Warn($"Route {(p.EndsWith("/32") ? p[..^3] : p)}: {r.Output}");
+            if (r.Ok) { Own(RouteKey.Of(p, via)); added++; _warned.Remove("add " + p); }
+            else if (RouteAlreadyThere(r.Output)) Own(RouteKey.Of(p, via));   // the same route is there already: it is the app's
+            // An adapter on its way out (Airplane Mode, the cable) refuses routes: no news, the drop says it (9 nov., 5 lines)
+            else if (!RouteAlreadyGone(r.Output) && StillUp(via) && _warned.Add("add " + p)) Log.Warn($"Route {(p.EndsWith("/32") ? p[..^3] : p)}: {r.Output}");
         }
         return added;
     }
+
+    /// <summary>Windows answered that the route exists already (English or Portuguese Windows, or the error code).</summary>
+    public static bool RouteAlreadyThere(string output) =>
+        output != null && (output.Contains("already exists", StringComparison.OrdinalIgnoreCase)
+            || output.Contains("já existe", StringComparison.OrdinalIgnoreCase)
+            || output.Contains("0x80071392", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>The adapter is still there and up with the same local IP (read again now, not from the sync's start).</summary>
+    static bool StillUp(Adapter a) => a != null && StillUp(a, Net.Scan());
+
+    public static bool StillUp(Adapter a, IEnumerable<Adapter> now) =>
+        a != null && now?.Any(x => x.Index == a.Index && x.Up && x.LocalIp == a.LocalIp) == true;
 
     async Task RemovePrefixRoutes(string[] prefixes, List<Adapter> adapters)
     {

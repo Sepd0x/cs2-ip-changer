@@ -13,6 +13,7 @@ static class IphoneNov9Tests
         LogSemRuido(check);
         await RotaJaSaiu(check);
         PreviousIps(check);
+        AvisosNaQueda(check);
     }
 
     static string Src(params string[] p) => File.ReadAllText(Path.Combine(new[] { SecurityTests.Repo(), "src" }.Concat(p).ToArray()));
@@ -133,6 +134,25 @@ static class IphoneNov9Tests
                 warned == 0 && !guard.Owned().Routes.Contains(key), $"{warned} linhas");
         }
         finally { Log.Added -= Seen; }
+    }
+
+    // 2.ª volta (11:20): no segundo do modo de avião, "Another VPN may be overriding it" e cinco "Route ...: Element not found /
+    // The object already exists" ao pôr as rotas numa placa que estava a sair
+    static void AvisosNaQueda(Action<string, bool, string> check)
+    {
+        check("iPhone 9 nov.: 'already exists' (e o português, e o código) é rota que já lá está",
+            Guard.RouteAlreadyThere("The object already exists.") && Guard.RouteAlreadyThere("O objeto já existe.") && Guard.RouteAlreadyThere("0x80071392")
+            && !Guard.RouteAlreadyThere("Element not found.") && !Guard.RouteAlreadyThere(null), "");
+        var phone = new Adapter { Index = 68, Up = true, LocalIp = "172.20.10.3" };
+        check("iPhone 9 nov.: a placa ainda lá, com o mesmo IP, conta como ligada",
+            Guard.StillUp(phone, new[] { phone }) && !Guard.StillUp(phone, new[] { new Adapter { Index = 68, Up = false, LocalIp = "172.20.10.3" } })
+            && !Guard.StillUp(phone, new[] { new Adapter { Index = 68, Up = true, LocalIp = "169.254.152.150" } }) && !Guard.StillUp(phone, Array.Empty<Adapter>())
+            && !Guard.StillUp(null, new[] { phone }), "");
+        var guard = Src("Core", "Network", "Guard.cs");
+        check("iPhone 9 nov.: o aviso da VPN e o das rotas só com a placa ainda ligada",
+            guard.Contains("if (!routeOk[ip] && StillUp(egress) && _warned.Add(ip))")
+            && guard.Contains("else if (!RouteAlreadyGone(r.Output) && StillUp(via) && _warned.Add(\"add \" + p))")
+            && guard.Contains("else if (RouteAlreadyThere(r.Output)) Own(RouteKey.Of(p, via));"), "");
     }
 
     // O IP novo do iPhone ficou "at startup" em Previous IPs, quando a app já estava aberta há 10 minutos
