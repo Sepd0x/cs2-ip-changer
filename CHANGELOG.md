@@ -4,24 +4,16 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
-### Changed
-- iPhone: when Windows sees the iPhone but doesn't have Apple's network driver, Phone setup now says so and its Install button opens "Apple Devices" (free, by Apple) in the Microsoft Store, where you press Get. Before, it stopped at "Trust this computer" even though the missing driver was the problem.
-- iPhone: Change IP now waits up to 5 minutes for the iPhone to come back (it gave up after 90 s), and after 25 s without it tells you how to bring it back: open Settings > Personal Hotspot on the iPhone, or plug the cable in again. Cancel still stops it at any time.
-- Previous IPs: an IP the app measures outside Change IP says "detected", not "at startup" (it is also measured when the phone comes back).
-
-### Fixed
-- Log: Change IP on an iPhone wrote "The phone connection dropped" when you turned Airplane Mode on while the question was still open. It now writes when Change IP starts and when you cancel it, and no drop.
-- Log: when the iPhone dropped, three "Couldn't delete the route ... Element not found" warnings came, for routes Windows had already removed with the connection. They no longer show.
-- Log: while the iPhone came back, the Kill switch line went back and forth between "no connection" and "the phone isn't trusted yet" six times in 16 seconds, and "hasn't been checked yet" came three times. Now one blocked line until the connection opens, and that warning at most once a minute.
-- Log: "The phone's adapter 68 is gone, and its Save mobile data setting with it" now says it in plain words.
-- Log: in the second the iPhone went into Airplane Mode, the Log blamed "another VPN" for the test servers and listed five routes Windows refused ("Element not found", "The object already exists"). Those warnings now only come while the phone's connection is really there.
-
 ## [0.1.0-beta.13] - 2026-11-07
 
 ### Changed
 - Usage stats: the coarse map of where you click now places a click where it is on the page, counting how far the page is scrolled (a grid of 24 columns and rows about 40 pixels tall, not the exact point, still added up with everyone's and with no ID). It only counts clicks on the page itself while the app is the window in front, not on Phone setup or a question shown over the page. README > Telemetry says so.
 - Usage stats: they also count how many times CS2 joined a server (only the number, never which server). README > Telemetry says so.
 - Website: the 3D scene on the home page, the guides and the 404 page looks more real. Metal, glass and cloth now reflect a soft studio light, the PC shows its parts through the glass side, the phone sits in a real stand, the mast has its antennas and cables, the servers stand on a raised floor, and the route is mirrored in the floor round the mast and the servers. A far town and other masts stand on the horizon, and the camera moves on smooth arcs between the steps of the story. The glowing route is the same, and with reduced motion the scene stays still.
+- iPhone: when Windows sees the iPhone but doesn't have Apple's network driver, Phone setup now says so and its Install button opens "Apple Devices" (free, by Apple) in the Microsoft Store, where you press Get. Before, it stopped at "Trust this computer" even though the missing driver was the problem.
+- iPhone: Change IP now waits up to 5 minutes for the iPhone to come back (it gave up after 90 s), and after 25 s without it tells you how to bring it back: open Settings > Personal Hotspot on the iPhone, or plug the cable in again. Cancel still stops it at any time.
+- Previous IPs: an IP the app measures outside Change IP says "detected", not "at startup" (it is also measured when the phone comes back).
+- iPhone: when the iPhone's connection doesn't come back by itself (after Airplane Mode in Change IP, or a drop while protected), the app reconnects it over USB on its own, the same as the cable out and in: 15 s after it dropped, then every 20 s. Only when that doesn't help does it ask you to open Personal Hotspot or plug the cable in again.
 
 ### Fixed
 - Phone: a phone that came with mobile data off lost its Wi-Fi and was left with no internet, stuck on "Checking the phone's IP…" until Change IP. Now the app turns mobile data on when it turns the phone's Wi-Fi off, and after 30 s with no answer the Status says "The phone has no internet" and the app turns mobile data on if it is off.
@@ -41,6 +33,11 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Updating the app sent part of the last usage stats twice (the new version read them before the old one had sent them).
 - Start with Windows: after the app started in the notification area, a double click on its icon opened the window as a tiny bar in the bottom left corner of the screen, and you had to click the app on the taskbar to fix it. The window now opens whole, in the middle of the screen.
 - Accounts: with Start Steam minimized on, logging in to another account made Steam ask for the password, even for accounts saved with Remember me. The app now starts Steam the way that uses the saved sign-in.
+- Log: Change IP on an iPhone wrote "The phone connection dropped" when you turned Airplane Mode on while the question was still open. It now writes when Change IP starts and when you cancel it, and no drop.
+- Log: when the iPhone dropped, three "Couldn't delete the route ... Element not found" warnings came, for routes Windows had already removed with the connection. They no longer show.
+- Log: while the iPhone came back, the Kill switch line went back and forth between "no connection" and "the phone isn't trusted yet" six times in 16 seconds, and "hasn't been checked yet" came three times. Now one blocked line until the connection opens, and that warning at most once a minute.
+- Log: "The phone's adapter 68 is gone, and its Save mobile data setting with it" now says it in plain words.
+- Log: in the second the iPhone went into Airplane Mode, the Log blamed "another VPN" for the test servers and listed five routes Windows refused ("Element not found", "The object already exists"). Those warnings now only come while the phone's connection is really there.
 
 ## [0.1.0-beta.12] - 2026-11-06
 

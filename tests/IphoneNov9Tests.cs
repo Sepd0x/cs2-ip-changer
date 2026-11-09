@@ -60,9 +60,32 @@ static class IphoneNov9Tests
             MainWindow.IphoneChangeStep(true, true, "1.1.1.1", "2.2.2.2", TimeSpan.FromMinutes(4), MainWindow.IphoneLimit(true)) == MainWindow.IphoneChange.BackNew, "");
         check("iPhone 9 nov.: ao fim de 5 minutos sem voltar acaba",
             MainWindow.IphoneChangeStep(true, false, "1.1.1.1", null, TimeSpan.FromMinutes(5.1), MainWindow.IphoneLimit(true)) == MainWindow.IphoneChange.TimedOut, "");
-        check("iPhone 9 nov.: aos 25 s sem o iPhone diz como o trazer; ligado ou antes disso, não",
-            MainWindow.IphoneNeedsNudge(false, TimeSpan.FromSeconds(25)) && !MainWindow.IphoneNeedsNudge(false, TimeSpan.FromSeconds(20))
-            && !MainWindow.IphoneNeedsNudge(true, TimeSpan.FromSeconds(60)), "");
+        // 3.ª volta (13:41): ligar e desligar o modo de avião várias vezes não o trouxe; o pnputil /restart-device trouxe-o logo.
+        // A app reconecta sozinha e só depois das suas tentativas pede a mão dele.
+        check("iPhone 9 nov.: aos 75 s sem o iPhone diz como o trazer à mão; ligado ou antes disso, não",
+            MainWindow.IphoneNeedsNudge(false, TimeSpan.FromSeconds(75)) && !MainWindow.IphoneNeedsNudge(false, TimeSpan.FromSeconds(60))
+            && !MainWindow.IphoneNeedsNudge(true, TimeSpan.FromSeconds(90)), "");
+        check("iPhone 9 nov.: reconecta aos 15 s, depois de 20 em 20 s, no máximo 8 vezes",
+            !MainWindow.IphoneRestartDue(TimeSpan.FromSeconds(10), null, 0) && MainWindow.IphoneRestartDue(TimeSpan.FromSeconds(15), null, 0)
+            && !MainWindow.IphoneRestartDue(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(15), 1) && MainWindow.IphoneRestartDue(TimeSpan.FromSeconds(35), TimeSpan.FromSeconds(20), 1)
+            && !MainWindow.IphoneRestartDue(TimeSpan.FromMinutes(4), TimeSpan.FromMinutes(1), MainWindow.IphoneRestartMax), "");
+        var ids = new[]
+        {
+            new UsbDevice(@"USB\VID_05AC&PID_12A8&MI_02\7&1B6DAF1B&0&0002", "Apple Mobile Device Ethernet", null),
+            new UsbDevice(@"USB\VID_05AC&PID_12A8\00008120001E48EE26D1A01E", "Apple Mobile Device USB Composite Device", null),
+            new UsbDevice(@"USB\VID_05AC&PID_024F\ABCDEF012345", "Magic Keyboard", null),
+        };
+        check("iPhone 9 nov.: reinicia o dispositivo USB inteiro do iPhone, não uma parte nem um teclado da Apple",
+            PhoneUsb.IphoneDeviceId(ids) == @"USB\VID_05AC&PID_12A8\00008120001E48EE26D1A01E"
+            && PhoneUsb.IphoneDeviceId(new[] { ids[0], ids[2] }) == null, PhoneUsb.IphoneDeviceId(ids));
+        check("iPhone 9 nov.: o pnputil só recebe um ID de iPhone (nada mais passa para a linha de comando)",
+            PhoneUsb.RestartArgs(@"USB\VID_05AC&PID_12A8\00008120001E48EE26D1A01E") == "/restart-device \"USB\\VID_05AC&PID_12A8\\00008120001E48EE26D1A01E\""
+            && PhoneUsb.RestartArgs("USB\\VID_05AC&PID_12A8\\0000\" & calc") == null && PhoneUsb.RestartArgs(@"USB\VID_04E8&PID_6860\R58N12345") == null
+            && PhoneUsb.RestartArgs(null) == null, "");
+        var isrc = Src("Views", "MainWindow.Iphone.cs");
+        check("iPhone 9 nov.: o Change IP e a proteção reconectam o iPhone sozinhos",
+            isrc.Contains("IphoneRestartDue(sw.Elapsed - dr, sw.Elapsed - restartedAt, restarts)") && isrc.Contains("await Proc.Run(\"pnputil\", args, 30000)")
+            && Src("Views", "MainWindow.Protection.cs").Contains("IphoneWatch(rep, home);"), "");
         check("iPhone 9 nov.: o texto para o trazer fala do Personal Hotspot e do cabo",
             PhoneSetup.IphoneBringBack.Contains("Personal Hotspot") && PhoneSetup.IphoneBringBack.Contains("cable"), "");
         var src = Src("Views", "MainWindow.Iphone.cs");

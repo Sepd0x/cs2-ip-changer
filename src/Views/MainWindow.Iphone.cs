@@ -38,8 +38,65 @@ public partial class MainWindow
     /// </summary>
     static readonly TimeSpan IphoneBackWait = TimeSpan.FromMinutes(5);
 
-    /// <summary>After this long without the iPhone, Change IP says how to bring it back (Personal Hotspot screen, or the cable).</summary>
-    public static readonly TimeSpan IphoneNudgeAfter = TimeSpan.FromSeconds(25);
+    /// <summary>
+    /// After this long without the iPhone, Change IP says how to bring it back by hand (Personal Hotspot screen, or the cable): by
+    /// then the app's own reconnects (<see cref="IphoneRestartDue"/>) had their go.
+    /// </summary>
+    public static readonly TimeSpan IphoneNudgeAfter = TimeSpan.FromSeconds(75);
+
+    /// <summary>
+    /// The app reconnects the iPhone itself (a USB restart, the same as the cable out and in) when it hasn't come back this long after
+    /// it dropped, then again every <see cref="IphoneRestartEvery"/>, at most <see cref="IphoneRestartMax"/> times. 9 nov.: after
+    /// Airplane Mode the iPhone's hotspot over USB only came back with the cable out and in, and the restart brought it back at once.
+    /// Airplane Mode still on: a restart does nothing and the next one comes 20 s later.
+    /// </summary>
+    public static readonly TimeSpan IphoneRestartAfter = TimeSpan.FromSeconds(15), IphoneRestartEvery = TimeSpan.FromSeconds(20);
+    public const int IphoneRestartMax = 8;
+
+    public static bool IphoneRestartDue(TimeSpan sinceDrop, TimeSpan? sinceRestart, int restarts) =>
+        sinceDrop >= IphoneRestartAfter && restarts < IphoneRestartMax && (sinceRestart == null || sinceRestart >= IphoneRestartEvery);
+
+    /// <summary>Restarts the iPhone's USB device (pnputil, from System32; the app runs as admin). False when there is no iPhone on USB.</summary>
+    async Task<bool> ReconnectIphone()
+    {
+        if (_demo) return false;
+        var args = PhoneUsb.RestartArgs(await Task.Run(PhoneUsb.IphoneDeviceId));
+        if (args == null) return false;
+        var r = await Proc.Run("pnputil", args, 30000);
+        if (!r.Ok && _iphoneRestartFailed++ == 0) Log.Warn("iPhone: couldn't reconnect it over USB: " + r.Output);
+        return r.Ok;
+    }
+
+    int _iphoneRestartFailed;
+
+    // The iPhone dropped while protected, with no Change IP running: the same reconnects, on their own (9 nov.)
+    DateTime? _iphoneLostAt, _iphoneRestartAt;
+    int _iphoneRestarts;
+    bool _iphoneReconnecting;
+
+    /// <summary>
+    /// Called on every report: while protection is on and the iPhone's connection is gone (not during Change IP, which has its own),
+    /// the app reconnects it over USB on the same schedule. Its connection back resets everything.
+    /// </summary>
+    async void IphoneWatch(GuardReport rep, bool home)
+    {
+        if (_demo || home || _changingIp || _ipChangeQuiet || !(_iphone || _s.PhoneIsIphone) || PhoneLink.Exit(rep) != null)
+        {
+            _iphoneLostAt = _iphoneRestartAt = null;
+            _iphoneRestarts = 0;
+            return;
+        }
+        var now = DateTime.Now;
+        _iphoneLostAt ??= now;
+        if (_iphoneReconnecting || !IphoneRestartDue(now - _iphoneLostAt.Value, _iphoneRestartAt is DateTime at ? now - at : null, _iphoneRestarts)) return;
+        _iphoneReconnecting = true;
+        try
+        {
+            _iphoneRestartAt = now;
+            if (await ReconnectIphone() && _iphoneRestarts++ == 0) Log.Info("iPhone: its connection didn't come back, so the app reconnected it over USB (like the cable out and in).");
+        }
+        finally { _iphoneReconnecting = false; }
+    }
 
     /// <summary>The wait that applies now: to see the drop, or (once it dropped) for the iPhone to come back.</summary>
     public static TimeSpan IphoneLimit(bool sawDrop) => sawDrop ? IphoneBackWait : IphoneWait;
@@ -84,6 +141,8 @@ public partial class MainWindow
             var sawDrop = PhoneLink.Exit(_last) == null;   // already off while the question was open
             var droppedAt = sawDrop ? TimeSpan.Zero : (TimeSpan?)null;
             var nudged = false;
+            TimeSpan? restartedAt = null;
+            var restarts = 0;
             while (true)
             {
                 if (CommandCancelled) { Log.Info("iPhone: Change IP cancelled."); return false; }
@@ -94,7 +153,14 @@ public partial class MainWindow
                 string now = null;
                 // Only a checked IP counts: back on the home Wi-Fi the IP measured is the home one, and it never trusts that
                 if (connected && sawDrop) { await RefreshPublicIps(); now = _egressFailSince == null && _verifiedKey != null && _verifiedKey == _last?.CandidateKey ? _egressPublic : null; }
-                // The hotspot over USB doesn't always come back by itself after Airplane Mode: say how, once, and keep waiting
+                // The hotspot over USB doesn't always come back by itself after Airplane Mode: the app reconnects it over USB
+                if (!connected && droppedAt is TimeSpan dr && IphoneRestartDue(sw.Elapsed - dr, sw.Elapsed - restartedAt, restarts))
+                {
+                    restartedAt = sw.Elapsed;
+                    Step("reconnecting the iPhone over USB…");
+                    if (await ReconnectIphone() && restarts++ == 0) Log.Info("iPhone: not back yet, so the app reconnected it over USB (like the cable out and in).");
+                }
+                // Still not back after the app's own tries: say how by hand, once, and keep waiting
                 if (!nudged && droppedAt is TimeSpan d && IphoneNeedsNudge(connected, sw.Elapsed - d))
                 {
                     nudged = true;

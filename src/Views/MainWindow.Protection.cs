@@ -232,6 +232,7 @@ public partial class MainWindow
         // A connection that went away (or changed) loses its trust: back with the same adapter and DHCP lease, it is measured again
         // before CS2 traffic is let through it.
         _verifiedKey = TrustAfter(_verifiedKey, rep.CandidateKey);
+        IphoneWatch(rep, home);   // an iPhone gone while protected: the app reconnects it over USB (9 nov.)
 
         // Alert when protection drops (with a sound if CS2 is open).
         var protectedNow = rep.Egress != null && rep.FirewallProblem == null && rep.KillSwitchOk;

@@ -84,6 +84,26 @@ public static class PhoneUsb
         catch { return PhoneUsbState.None; }
     }
 
+    // The iPhone's whole USB device ("Apple Mobile Device USB Composite Device"), not one of its parts (…&MI_02\…): Apple's vendor ID
+    // and its serial. Nothing else can pass, so it is safe in a command line.
+    static readonly Regex AppleWhole = new(@"^USB\\VID_05AC&PID_[0-9A-F]{4}\\[0-9A-Z]{8,40}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    /// <summary>The instance ID of the iPhone's whole USB device, or null (no iPhone, or an ID that doesn't look like one).</summary>
+    public static string IphoneDeviceId(IEnumerable<UsbDevice> devices) =>
+        devices?.FirstOrDefault(d => AppleWhole.IsMatch(d.InstanceId ?? "") && PhoneName.IsMatch(d.Name ?? ""))?.InstanceId;
+
+    public static string IphoneDeviceId()
+    {
+        try { return IphoneDeviceId(Read()); }
+        catch { return null; }
+    }
+
+    /// <summary>
+    /// pnputil's arguments to restart the iPhone's USB device: the same as unplugging the cable and plugging it back in (9 nov.: after
+    /// Airplane Mode the iPhone's hotspot over USB didn't come back by itself; this brought it back at once). Null for any other ID.
+    /// </summary>
+    public static string RestartArgs(string instanceId) => instanceId != null && AppleWhole.IsMatch(instanceId) ? $"/restart-device \"{instanceId}\"" : null;
+
     /// <summary>
     /// Windows has Apple's network driver for the iPhone's Personal Hotspot over USB (netaapl64.inf, "Apple Mobile Device Ethernet").
     /// Windows Update only brings Apple's plain USB driver: the network one comes with the Apple Devices app (or iTunes). Without it the
