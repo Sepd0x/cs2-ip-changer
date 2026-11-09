@@ -156,7 +156,20 @@ public partial class MainWindow
         _ => $"Config ({reason}): CS2 is open, so the copies to {names.Count} accounts wait until it closes.",
     };
 
-    /// <summary>One Log line per account changed (never the file contents), and the line under Sync now.</summary>
+    /// <summary>
+    /// The copies done, one Log line for each kind (the same settings from the same source), with the accounts named up to 5 and the
+    /// rest counted. 9 nov., the owner's call: the 31 "copied" lines of one Sync now go in one line. Never the file contents.
+    /// </summary>
+    public static List<string> CopiedLines(string reason, List<(string Cats, string From, string Who)> copies) =>
+        copies.GroupBy(c => (c.Cats, c.From)).Select(g =>
+        {
+            var who = g.Select(c => c.Who).ToList();
+            var names = who.Count == 1 ? who[0]
+                : $"{who.Count} accounts ({string.Join(", ", who.Take(5))}{(who.Count > 5 ? $" and {who.Count - 5} more" : "")})";
+            return $"Config ({reason}): copied {g.Key.Cats}{g.Key.From} to {names}. {(who.Count == 1 ? "Backup" : "Backups")} saved.";
+        }).ToList();
+
+    /// <summary>The Log lines of a copy (never the file contents), and the line under Sync now.</summary>
     void ReportCfg(List<CfgResult> results, string why, bool manual, List<CfgJob> jobs = null)
     {
         string From(CfgResult r) => jobs?.FirstOrDefault(j => j.Target == r.Target) is CfgJob j ? " from " + CfgSourceLabel(j) : "";
@@ -166,13 +179,16 @@ public partial class MainWindow
             var who = CfgName(r.Target);
             switch (r.Outcome)
             {
-                case CfgOutcome.Copied: Log.Ok($"Config ({reason}): copied {Cs2Config.CategoryList(r.Categories)}{From(r)} to {who}. Backup saved."); break;
+                case CfgOutcome.Copied: break;   // one line per kind of copy, below (9 nov.: 31 "copied" lines for one Sync now)
                 case CfgOutcome.Queued: break;   // one line for all of them, below
                 case CfgOutcome.Same: if (manual) Log.Info($"Config ({reason}): {who} already has the same config."); break;
                 case CfgOutcome.Skipped: Log.Info($"Config ({reason}): {who} not changed: {r.Detail}."); break;
                 default: Log.Warn($"Config ({reason}): {who} not changed: {r.Detail}."); break;
             }
         }
+        foreach (var line in CopiedLines(reason, results.Where(r => r.Outcome == CfgOutcome.Copied)
+                     .Select(r => (Cs2Config.CategoryList(r.Categories), From(r), CfgName(r.Target))).ToList()))
+            Log.Ok(line);
         if (QueuedLine(reason, results.Where(r => r.Outcome == CfgOutcome.Queued).Select(r => CfgName(r.Target)).ToList()) is string waits) Log.Info(waits);
         int copied = results.Count(r => r.Outcome == CfgOutcome.Copied), same = results.Count(r => r.Outcome == CfgOutcome.Same),
             queued = results.Count(r => r.Outcome == CfgOutcome.Queued), failed = results.Count(r => r.Outcome is CfgOutcome.Failed or CfgOutcome.Skipped);

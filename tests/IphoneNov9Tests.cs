@@ -15,6 +15,21 @@ static class IphoneNov9Tests
         PreviousIps(check);
         AvisosNaQueda(check);
         SoOIphone(check);
+        CopiasNumaLinha(check);
+    }
+
+    // Decisão de 9 nov. (o dono deixou-a comigo): as linhas "copied" de Configs, uma por conta, ficam numa só
+    static void CopiasNumaLinha(Action<string, bool, string> check)
+    {
+        var many = Enumerable.Range(1, 7).Select(i => ("crosshair", " from Acc1", "Acc" + (i + 1))).ToList();
+        var lines = MainWindow.CopiedLines("Sync now", many);
+        check("Configs 9 nov.: sete cópias iguais dão uma linha, com 5 nomes e o resto contado",
+            lines.Count == 1 && lines[0] == "Config (Sync now): copied crosshair from Acc1 to 7 accounts (Acc2, Acc3, Acc4, Acc5, Acc6 and 2 more). Backups saved.", lines.FirstOrDefault());
+        var one = MainWindow.CopiedLines("Sync now", new() { ("crosshair", " from Acc1", "Acc2") });
+        check("Configs 9 nov.: uma cópia diz a conta, como antes", one.Count == 1 && one[0] == "Config (Sync now): copied crosshair from Acc1 to Acc2. Backup saved.", one.FirstOrDefault());
+        var two = MainWindow.CopiedLines("Sync now", new() { ("crosshair", "", "A"), ("video", "", "B") });
+        check("Configs 9 nov.: cópias diferentes ficam em linhas diferentes; nenhuma cópia, nenhuma linha",
+            two.Count == 2 && MainWindow.CopiedLines("Sync now", new()).Count == 0, string.Join(" | ", two));
     }
 
     // 14:08: o Wi-Fi do PC desligado, só o iPhone; a app acabada de abrir mediu o "IP de casa" pelo iPhone e disse
