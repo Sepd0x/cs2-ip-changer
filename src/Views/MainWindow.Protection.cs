@@ -825,7 +825,13 @@ public partial class MainWindow
     /// (its IP isn't your home IP, so a phone sharing your home Wi-Fi would pass the check). -1 = not measured now: the last home IP counts.
     /// </summary>
     public static int HomeIf(GuardReport rep, Adapter candidate) =>
-        rep == null || rep.PcDefaultIsEgress || candidate?.Index == rep.PcDefaultIndex || VpnIsDefault(rep) ? -1 : rep.PcDefaultIndex;
+        rep == null || rep.PcDefaultIsEgress || candidate?.Index == rep.PcDefaultIndex || VpnIsDefault(rep) || PhoneIsDefault(rep) ? -1 : rep.PcDefaultIndex;
+
+    /// <summary>
+    /// The rest of the PC goes out through a phone's adapter (9 nov.: the PC's Wi-Fi off, only the iPhone, and the app just started
+    /// with no candidate yet): its IP is the phone's, never a home IP.
+    /// </summary>
+    public static bool PhoneIsDefault(GuardReport rep) => rep?.Adapters.Any(a => a.Index == rep.PcDefaultIndex && a.IsPhone) == true;
 
     /// <summary>The rest of the PC goes out through a VPN app's adapter.</summary>
     public static bool VpnIsDefault(GuardReport rep) => rep?.Adapters.Any(a => a.Index == rep.PcDefaultIndex && a.IsVpn) == true;
@@ -872,7 +878,9 @@ public partial class MainWindow
         // 3rd barrier: phone connection IP equal to the home IP = it isn't using mobile data. Block everything.
         // A failed measurement (e == null) changes nothing: it never lifts a block and never grants trust.
         var homeRef = h ?? _s.LastHomeIp;
-        var same = e != null && homeRef != null && e == homeRef;
+        // Without a home network at all (only the phone), there is no home IP to compare with: a home IP kept from before, or one
+        // read through the phone, says nothing (9 nov.: "the phone is sharing your Wi-Fi" with the PC's Wi-Fi off)
+        var same = SameAsHome(e, homeRef, rep?.HasHome);
         // Protection off (or No phone): the phone is still checked for when protection is on, but nothing is blocked now
         var unprotected = rep?.Unprotected == true;
         if (e != null)
@@ -955,6 +963,9 @@ public partial class MainWindow
         ShowIps();
         UpdateStatusUi();
     }
+
+    /// <summary>The phone's IP is the home IP, only when there is a home network (no report yet: as before, it counts).</summary>
+    public static bool SameAsHome(string phoneIp, string homeIp, bool? hasHome) => phoneIp != null && homeIp != null && phoneIp == homeIp && hasHome != false;
 
     /// <summary>The phone's IP is the home IP. With protection off nothing is blocked: the Log says what to do before turning it on.</summary>
     public static string SameIpText(string ip, bool unprotected) => unprotected

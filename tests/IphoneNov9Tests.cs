@@ -14,6 +14,22 @@ static class IphoneNov9Tests
         await RotaJaSaiu(check);
         PreviousIps(check);
         AvisosNaQueda(check);
+        SoOIphone(check);
+    }
+
+    // 14:08: o Wi-Fi do PC desligado, só o iPhone; a app acabada de abrir mediu o "IP de casa" pelo iPhone e disse
+    // "The phone's IP (...) is the same as your home IP: it is sharing your Wi-Fi"
+    static void SoOIphone(Action<string, bool, string> check)
+    {
+        var iphone = new Adapter { Index = 68, IsPhone = true, Up = true, LocalIp = "172.20.10.3" };
+        var wifi = new Adapter { Index = 18, IsWifi = true, Up = true, LocalIp = "192.168.87.14" };
+        check("iPhone 9 nov.: o IP de casa nunca se mede pela placa de um telemóvel (nem antes de a app saber qual é)",
+            MainWindow.HomeIf(new GuardReport { Adapters = new() { iphone }, PcDefaultIndex = 68 }, null) == -1
+            && MainWindow.HomeIf(new GuardReport { Adapters = new() { iphone, wifi }, PcDefaultIndex = 18 }, null) == 18, "");
+        check("iPhone 9 nov.: sem rede de casa não há 'mesmo IP que o de casa'",
+            !MainWindow.SameAsHome("92.250.100.160", "92.250.100.160", hasHome: false)
+            && MainWindow.SameAsHome("92.250.100.160", "92.250.100.160", hasHome: true) && MainWindow.SameAsHome("1.1.1.1", "1.1.1.1", null)
+            && !MainWindow.SameAsHome("1.1.1.1", "2.2.2.2", true) && !MainWindow.SameAsHome(null, "2.2.2.2", true), "");
     }
 
     static string Src(params string[] p) => File.ReadAllText(Path.Combine(new[] { SecurityTests.Repo(), "src" }.Concat(p).ToArray()));
@@ -89,8 +105,11 @@ static class IphoneNov9Tests
         check("iPhone 9 nov.: o texto para o trazer fala do Personal Hotspot e do cabo",
             PhoneSetup.IphoneBringBack.Contains("Personal Hotspot") && PhoneSetup.IphoneBringBack.Contains("cable"), "");
         var src = Src("Views", "MainWindow.Iphone.cs");
-        check("iPhone 9 nov.: o silêncio da troca começa antes da pergunta (o modo de avião ligado a ler não dá 'dropped')",
-            src.IndexOf("_ipChangeQuiet = true;") > 0 && src.IndexOf("_ipChangeQuiet = true;") < src.IndexOf("await Ask(\"Change IP on the iPhone\""), "");
+        // 4.ª volta (14:13): o dono achou confuso carregar em "I'm doing it"; o Change IP começa logo a esperar
+        check("iPhone 9 nov.: o Change IP do iPhone começa logo a esperar, sem a pergunta 'I'm doing it'",
+            !src.Contains("\"I'm doing it\"") && !src.Contains("await Ask(\"Change IP on the iPhone\"")
+            && src.IndexOf("_ipChangeQuiet = true;") > 0 && src.IndexOf("_ipChangeQuiet = true;") < src.IndexOf("Log.Info(\"iPhone: Change IP started.")
+            && src.Contains("\"on the iPhone: Airplane Mode on, wait 3 s, then off…\""), "");
         check("iPhone 9 nov.: o Log diz quando o Change IP do iPhone começa e quando é cancelado",
             src.Contains("Log.Info(\"iPhone: Change IP started.") && src.Contains("Log.Info(\"iPhone: Change IP cancelled.\")"), "");
         check("iPhone 9 nov.: o Change IP já não promete 'up to 90 s'", !src.Contains("up to 90 s"), "");
