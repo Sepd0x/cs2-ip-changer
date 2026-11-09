@@ -14,6 +14,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Log: when the iPhone dropped, three "Couldn't delete the route ... Element not found" warnings came, for routes Windows had already removed with the connection. They no longer show.
 - Log: while the iPhone came back, the Kill switch line went back and forth between "no connection" and "the phone isn't trusted yet" six times in 16 seconds, and "hasn't been checked yet" came three times. Now one blocked line until the connection opens, and that warning at most once a minute.
 - Log: "The phone's adapter 68 is gone, and its Save mobile data setting with it" now says it in plain words.
+- Log: in the second the iPhone went into Airplane Mode, the Log blamed "another VPN" for the test servers and listed five routes Windows refused ("Element not found", "The object already exists"). Those warnings now only come while the phone's connection is really there.
 
 ## [0.1.0-beta.13] - 2026-11-07
 
