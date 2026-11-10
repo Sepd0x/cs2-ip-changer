@@ -654,6 +654,9 @@ Beta13TelemetriaTests.Run(Check);
 await IphoneNov9Tests.Run(Check);
 // 9 nov.: o feedback de um utilizador da beta.12: login, tethering que a app não via, IP já banido, cooldown (Xao9NovTests.cs)
 Xao9NovTests.Run(Check);
+// 10 nov.: a contagem da dashboard com os dados reais: join só num servidor, o iPhone conta como o Android, partidas em casa,
+// minutos do sinal ao vivo e o PC do dono (Dashboard10NovTests.cs)
+Dashboard10NovTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

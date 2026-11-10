@@ -49,7 +49,8 @@ public partial class MainWindow
             if (Cs2Console.IsConnectLine(line))
             {
                 _consoleServer = _kicks.Server;
-                Telemetry.Count("join");   // beta.13: CS2 joined a server (only how many times, never which one)
+                // beta.13: CS2 joined a server (only how many times, never which one); the menu and local maps aren't one (10 nov.)
+                if (Cs2Console.IsJoin(line)) Telemetry.Count("join");
                 WarnBannedIpJoin(_consoleServer);
                 if (_consoleServer != null) RejoinBack(_consoleServer);
                 // You went to another server yourself: the retry on the full one stops, or it would pull you out of this one
@@ -108,7 +109,8 @@ public partial class MainWindow
             Toast("That match lagged on the phone's connection. " + NetReport.Tips(_last?.Egress?.IsWifi == true), Tone.Info);
         }
         // The stats: Valve or community and the numbers in bands (never the server). A local map or the menu isn't a match.
-        if (_kicks.OnValve || _consoleServer != null) Telemetry.Match(r, _kicks.OnValve);
+        // 10 nov. (P8): a match on the home connection says so (m_home) and leaves the lag bands, which are about the phone
+        if (_kicks.OnValve || _consoleServer != null) Telemetry.Match(r, _kicks.OnValve, home);
         Diag.Write("cs2-network", new { r.Seconds, r.PingP50, r.PingP95, r.JitterUp, r.JitterDown, r.UpLate, r.UpMissedLate, r.DownMissedLate, r.Dropped });
     }
 

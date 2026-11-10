@@ -185,6 +185,12 @@ public static class Cs2Console
     /// <summary>A Valve server (matchmaking): kicks and bans there aren't the community's, so the app leaves them alone.</summary>
     public static bool IsValveServer(string line) => ValveConnect.IsMatch(line ?? "");
 
+    /// <summary>
+    /// 10 nov. (dashboard audit, P1): CS2 joined a server, a community one (an address) or Valve's (a relay). The menu (loopback),
+    /// a local map and anything else CS2 "connects" to are not a join, so the stats' "join" isn't the same as "opened CS2".
+    /// </summary>
+    public static bool IsJoin(string line) => IsConnectLine(line) && !IsMenu(line) && (ConnectedServer(line) != null || IsValveServer(line));
+
     static readonly Regex NoSteamLogon = new(SteamSession, O);
     static readonly Regex NoSteamLogonSaid = new(@"NOSTEAMLOGIN|no steam logon|NETWORK_DISCONNECT_STEAM_LOGON\b", O);
     static readonly Regex Elsewhere = new(@"NETWORK_DISCONNECT_STEAM_LOGGED_IN_ELSEWHERE\b", O);

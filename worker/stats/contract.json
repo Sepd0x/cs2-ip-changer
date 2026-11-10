@@ -23,7 +23,7 @@
   "brands": ["samsung", "google", "xiaomi", "oneplus", "motorola", "oppo", "realme", "vivo", "huawei", "honor", "nothing", "sony", "asus", "nokia", "zte", "tcl", "other"],
   "data": ["lt250m", "250_500m", "500m_1g", "1_2g", "gt2g"],
   "bands": {
-    "m": ["valve", "valve_lag", "comm", "comm_lag"],
+    "m": ["valve", "valve_lag", "comm", "comm_lag", "home"],
     "ping": ["lt30", "30_50", "50_80", "80_120", "gt120"],
     "jit": ["lt5", "5_10", "10_20", "20_40", "gt40"],
     "jitd": ["lt5", "5_10", "10_20", "20_40", "gt40"],

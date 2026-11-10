@@ -197,6 +197,23 @@ public static class Telemetry
         if (NewId(st)) Write(file, st, true);
     }
 
+    static string DevPcFile => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CS2 IP Changer", "dev-pc");
+
+    /// <summary>
+    /// 10 nov. (P4). The development build leaves an empty file <paramref name="marker"/> in the Windows user's local app data;
+    /// a release build there finds it. True when this PC is the developer's. Nothing about the PC or the user goes in the file.
+    /// </summary>
+    public static bool DevPc(string marker, bool devBuild)
+    {
+        try
+        {
+            if (!devBuild) return File.Exists(marker);
+            if (!File.Exists(marker)) { Directory.CreateDirectory(Path.GetDirectoryName(marker)!); File.WriteAllText(marker, ""); }
+            return true;
+        }
+        catch { return devBuild; }   // a folder that can't be written only loses the mark on the release
+    }
+
     static void TurnOn()
     {
         if (_on) return;
@@ -212,6 +229,9 @@ public static class Telemetry
             _st.Counts["updfrom_" + from] = _st.Counts.GetValueOrDefault("updfrom_" + from) + 1;
         _st.LastApp = appNow;
         if (NewId(_st)) Save(newDay: true);
+        // 10 nov. (dashboard audit, P4): a release on a PC where the development build ran is the developer's, so it counts as Mine
+        // (the dashboard showed 46 of 49 matches from the developer's second PC, a release install with its own ID)
+        if (DevPc(DevPcFile, Dev) && !_st.Mine) { _st.Mine = true; Save(); }
         if (!_hooked)
         {
             _hooked = true;
@@ -449,7 +469,10 @@ public static class Telemetry
         return false;
     }
 
-    static bool _cs2Was;
+    static bool _cs2Was, _protWas;
+
+    /// <summary>The minutes one live signal adds to min_cs2 or min_prot: 5 when it was on at the signal before too, else none.</summary>
+    public static int LiveMinutes(bool before, bool now) => before && now ? 5 : 0;
 
     static async Task SendLive()
     {
@@ -459,9 +482,12 @@ public static class Telemetry
             (string screen, bool cs2, bool prot, bool tray) = _liveNow();
             // the daily report's minutes with CS2 open and with protection on, and CS2 starts, from this 5-minute signal
             if (cs2 && !_cs2Was) Count("cs2_start");
+            // 10 nov. (P7): 5 minutes only when the signal before (5 minutes ago) saw it too; the first one, 30 s after the start,
+            // added 5 minutes to a session of 1
+            if (LiveMinutes(_cs2Was, cs2) is int mc and > 0) Count("min_cs2", mc);
+            if (LiveMinutes(_protWas, prot) is int mp and > 0) Count("min_prot", mp);
             _cs2Was = cs2;
-            if (cs2) Count("min_cs2", 5);
-            if (prot) Count("min_prot", 5);
+            _protWas = prot;
             (string mode, string link, _) = _now != null ? _now() : (null, null, null);
             SeenLink(link);
             string id;
@@ -490,10 +516,13 @@ public static class Telemetry
     public static string ScrollBand(double f) => f >= 0.99 ? "100" : f >= 0.75 ? "75" : f >= 0.5 ? "50" : f >= 0.25 ? "25" : "0";
 
     /// <summary>The counters for one match: Valve or community, lagged or not, and its numbers in bands. Never the server or the time.</summary>
-    public static List<string> MatchCounts(NetReport r, bool valve)
+    /// <remarks>10 nov. (dashboard audit, P8): <paramref name="home"/> is a match on the home connection (No phone, or protection off). It still
+    /// counts as a match, with m_home beside it, but without the lag and the bands: those are the phone's numbers on the dashboard.</remarks>
+    public static List<string> MatchCounts(NetReport r, bool valve, bool home = false)
     {
         var k = valve ? "valve" : "comm";
         var list = new List<string> { "m_" + k };
+        if (home) { list.Add("m_home"); return list; }
         if (r.Laggy) list.Add("m_" + k + "_lag");
         if (r.PingP50 is int p) list.Add("ping_" + PingBand(p));
         if (r.JitterUp is int ju) list.Add("jit_" + JitterBand(ju));
@@ -603,7 +632,7 @@ public static class Telemetry
         v != null && Regex.IsMatch(v, @"^\d+\.\d+\.\d+(-[0-9A-Za-z.]{1,20})?$") ? v.Replace('.', '_').Replace('-', '_') : null;
 
     /// <summary>At the end of each CS2 match (MainWindow.LogNetReport).</summary>
-    public static void Match(NetReport r, bool valve) { if (r != null) foreach (var n in MatchCounts(r, valve)) Count(n); }
+    public static void Match(NetReport r, bool valve, bool home = false) { if (r != null) foreach (var n in MatchCounts(r, valve, home)) Count(n); }
 
     static DateTime _started = DateTime.UtcNow;
     static bool _readyCounted, _protCounted;

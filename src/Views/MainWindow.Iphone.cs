@@ -118,6 +118,19 @@ public partial class MainWindow
         : !connected ? IphoneChange.Off
         : IphoneChange.WaitingOff;
 
+    /// <summary>
+    /// 10 nov. (dashboard audit, P2): the stats of a guided Change IP on an iPhone, as on Android: a new IP counts its method
+    /// (Airplane Mode), time and one attempt (ip_changed comes from the history line), the same IP counts ip_same, and no
+    /// connection back after the drop counts ip_no_network. Never seeing Airplane Mode isn't a network failure: nothing.
+    /// </summary>
+    public static List<string> IphoneChangeCounts(IphoneChange step, bool sawDrop, TimeSpan took) => step switch
+    {
+        IphoneChange.BackNew => Telemetry.ChangeCounts(airplane: true, took, 1, null, 0),
+        IphoneChange.BackSame => new() { "ip_same" },
+        IphoneChange.TimedOut when sawDrop => new() { "ip_no_network" },
+        _ => new(),
+    };
+
     /// <summary>Change IP on an iPhone, guided: you toggle Airplane Mode, the app sees the drop, waits for it back and measures.</summary>
     async Task<bool> IphoneChangeIp()
     {
@@ -166,6 +179,7 @@ public partial class MainWindow
                     Toast("Airplane Mode off and the iPhone still isn't back? " + PhoneSetup.IphoneBringBack, false);
                 }
                 var step = IphoneChangeStep(sawDrop, connected, first, now, sw.Elapsed, IphoneLimit(sawDrop));
+                foreach (var n in IphoneChangeCounts(step, sawDrop, sw.Elapsed)) Telemetry.Count(n);
                 switch (step)
                 {
                     case IphoneChange.BackNew:
