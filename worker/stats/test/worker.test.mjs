@@ -517,6 +517,8 @@ test('dashboard beta.9: live is only counts of the last 6 minutes', async () => 
   const token = await jwt(claims());
   const sig = (id, over) => ingest.fetch(new Request('https://x/v1/live', post({ v: 1, id: ID(id), app: '0.1.0-beta.9', mode: 'cs2open', link: 'usb', screen: 'connection', cs2: true, prot: true, tray: false, dev: false, ...over })), { DB });
   await sig(1); await sig(2, { cs2: false, tray: true }); await sig(3);
+  // 10 nov. (P3): real installs (a report with minutes); the live counts leave the others out (dashboard-10nov.test.mjs)
+  for (const n of [1, 2, 3]) DB.raw.prepare('INSERT INTO pings (day, ts, id, app, minutes, dev) VALUES (?, ?, ?, ?, 5, 0)').run(new Date().toISOString().slice(0, 10), Date.now(), ID(n), '0.1.0-beta.9');
   DB.raw.prepare('UPDATE live SET ts = ts - 3600000 WHERE id = ?').run(ID(3));
   const l = await (await dashboard.fetch(get('/api/live', token), { ...env0(), DB })).json();
   assert.equal(l.now, 2);
@@ -1054,6 +1056,8 @@ test('medir: the 10-minute cron keeps the highest live count of each hour, per v
   const now = Date.now();
   const put = (id, ts, over = {}) => DB.raw.prepare('INSERT OR REPLACE INTO live (id, ts, app, cs2, prot, dev) VALUES (?, ?, ?, ?, ?, ?)').run(ID(id), ts, '0.1.0-beta.10', over.cs2 ?? 1, over.prot ?? 1, over.dev ?? 0);
   put(1, now); put(2, now); put(3, now, { dev: 1 }); put(4, now, { cs2: 0 }); put(0xe, now);
+  // 10 nov. (P3): each one a real install (a report with minutes), as the live counts need
+  for (const n of [1, 2, 3, 4, 0xe]) DB.raw.prepare('INSERT INTO pings (day, ts, id, app, minutes, dev) VALUES (?, ?, ?, ?, 5, ?)').run(new Date(now).toISOString().slice(0, 10), now, ID(n), '0.1.0-beta.10', n === 3 ? 1 : 0);
   await sampleLive(DB, { now, exclude: [ID(0xe)] });
   DB.raw.exec('DELETE FROM live WHERE id IN (' + [2, 4].map((n) => `'${ID(n)}'`).join(',') + ')');
   await sampleLive(DB, { now: now + 60_000, exclude: [ID(0xe)] });
@@ -1164,6 +1168,8 @@ test('medir: the crons are in wrangler.dashboard.jsonc, and scheduled() runs the
   const DB = fakeD1();
   const now = Date.now();
   DB.raw.prepare('INSERT INTO live (id, ts, app) VALUES (?, ?, ?)').run(ID(1), now, '0.1.0-beta.10');
+  // 10 nov. (P3): a real install (a click today), as the live counts need
+  DB.raw.prepare("INSERT INTO clicks (day, id, name, n, dev) VALUES (?, ?, 'NavServers', 1, 0)").run(new Date(now).toISOString().slice(0, 10), ID(1));
   DB.raw.prepare('INSERT INTO pings (day, ts, id, app) VALUES (?, ?, ?, ?)').run('2020-01-01', 1, ID(9), '0.1.0-alpha.1');
   globalThis.fetch = ghPublic(5, 50);
   await dashboard.scheduled({ cron: '*/10 * * * *', scheduledTime: now }, { DB });

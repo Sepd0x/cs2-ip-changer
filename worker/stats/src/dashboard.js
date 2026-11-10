@@ -8,7 +8,7 @@
 // RETAIN_DAYS are deleted (added-up counts with no ID stay). The cron is the only thing here that writes.
 
 import { verifyAccess } from './access.js';
-import { params, summary, live, who, compareVersions } from './api.js';
+import { params, summary, live, liveReal, who, compareVersions } from './api.js';
 import { ASSETS } from './assets.js';
 import { buildBrief, renderMd } from './brief.js';
 import { annotations } from './annotations.js';
@@ -294,8 +294,10 @@ export async function sampleLive(db, { now, exclude = [] }) {
     const W = who(dev, exclude);
     let r = null;
     try {
-      r = await db.prepare(`SELECT COUNT(*) AS n, COALESCE(SUM(cs2 = 1), 0) AS game, COALESCE(SUM(prot = 1), 0) AS prot FROM live WHERE ${W.sql} AND ts >= ?`)
-        .bind(...W.args, now - 6 * 60_000).first();
+      // 10 nov. (P3): only real installs, as on Agora (liveReal), so a sandbox never makes an hour's peak
+      const R = liveReal(now);
+      r = await db.prepare(`SELECT COUNT(*) AS n, COALESCE(SUM(cs2 = 1), 0) AS game, COALESCE(SUM(prot = 1), 0) AS prot FROM live WHERE ${W.sql} AND ts >= ? AND ${R.sql}`)
+        .bind(...W.args, now - 6 * 60_000, ...R.args).first();
     } catch (e) { if (!noTable(e)) throw e; }
     stmts.push(db.prepare('INSERT INTO live_hourly (hour, dev, n, game, prot) VALUES (?, ?, ?, ?, ?) ON CONFLICT (hour, dev) DO UPDATE SET '
       + 'n = MAX(n, excluded.n), game = MAX(game, excluded.game), prot = MAX(prot, excluded.prot)').bind(hour, dev ? 1 : 0, r?.n || 0, r?.game || 0, r?.prot || 0));

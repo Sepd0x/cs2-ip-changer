@@ -101,7 +101,7 @@ const BANDS = {
 // v4: the counters read per install-day (funnel, cohorts, real or automated, per day, per version, list sizes); every other one is
 // summed by D1 (summary's sums 'sql')
 const INSTALL_NAMES = ['first_start', 'accounts', 'net_dc', 'app_start', 'crash', 'ip_changed', 'ip_same', 'ip_no_network', 'ip_home_back', 'min_prot', 'm_valve', 'm_comm',
-  'm_valve_lag', 'm_comm_lag', 'unclean_exit', 'leak_ok', 'leak_bad', 'log_error', 'upd_failed', 'rep_exit', 'cable_hint', 'cs2_start', 'upd_done', 'join', ...SIZES];
+  'm_valve_lag', 'm_comm_lag', 'unclean_exit', 'leak_ok', 'leak_bad', 'log_error', 'upd_failed', 'rep_exit', 'cable_hint', 'cs2_start', 'upd_done', 'join', 'm_home', ...SIZES];
 const INSTALL_GLOBS = ['tp_*', 'phone_*', 'chk_*', 'data_*', 'age_*'];
 // Phone setup steps (PhoneSetup.Key of PhoneStep, contract.setup), in the app's order, with the dashboard's label
 const SETUP_LABEL = { noadbtool: 'Sem ADB', adbfailed: 'ADB falhou', nousb: 'Sem cabo USB', usbdrivererror: 'Driver USB', nousbdebugging: 'Depuração USB desligada',
@@ -255,7 +255,7 @@ export async function summary(db, { period, f, dev, now, exclude = [], sums = 's
   // tests failed, the home IP back, errors written to the Log, failed updates, reports sent at close (rep_exit) and the
   // automated install-days on a hosting network
   const dayRow = (date) => ({ date, users: 0, fresh: 0, minutes: 0, ipNew: 0, ipSame: 0, ipNone: 0, errors: 0, automated: 0, sessions: 0, crashes: 0, matches: 0, laggy: 0,
-    reports: 0, oldReports: 0, usersOld: 0, none: 0, unclean: 0, leakBad: 0, leakOk: 0, homeBack: 0, logErr: 0, updFailed: 0, exits: 0, automatedDc: 0, updates: 0 });
+    reports: 0, oldReports: 0, usersOld: 0, none: 0, unclean: 0, leakBad: 0, leakOk: 0, homeBack: 0, logErr: 0, updFailed: 0, exits: 0, automatedDc: 0, updates: 0, home: 0 });
   for (let t = period - 1; t >= 0; t--) days.push(dayRow(day(now - t * 864e5)));
   const byDay = new Map(days.map((x) => [x.date, x]));
   const addDay = (x, i) => {
@@ -264,6 +264,7 @@ export async function summary(db, { period, f, dev, now, exclude = [], sums = 's
     x.ipNew += i.c.ip_changed || 0; x.ipSame += i.c.ip_same || 0; x.ipNone += i.c.ip_no_network || 0;
     x.sessions += i.c.app_start || 0; x.crashes += i.c.crash || 0;
     x.matches += (i.c.m_valve || 0) + (i.c.m_comm || 0); x.laggy += (i.c.m_valve_lag || 0) + (i.c.m_comm_lag || 0);
+    x.home += i.c.m_home || 0;   // 10 nov. (P8): of those matches, the ones on the home connection (no lag measured for them)
     x.reports += i.r; if (compareVersions(i.app, NEW_CADENCE) < 0) { x.oldReports += i.r; x.usersOld++; }
     if (i.link === 'none') x.none++;
     x.unclean += i.c.unclean_exit || 0; x.leakBad += i.c.leak_bad || 0; x.leakOk += i.c.leak_ok || 0; x.homeBack += i.c.ip_home_back || 0;
@@ -361,7 +362,7 @@ export async function summary(db, { period, f, dev, now, exclude = [], sums = 's
   const byLink = (name) => { const e = AG.get(name); return { usb: e ? e.usb : 0, hotspot: e ? e.hotspot : 0 }; };
   const lagCell = (link, k) => ({ n: byLink(`m_${k}`)[link], lag: byLink(`m_${k}_lag`)[link] });
   const cs2 = {
-    matches: C('m_valve') + C('m_comm'), laggy: C('m_valve_lag') + C('m_comm_lag'), valve: C('m_valve'), community: C('m_comm'),
+    matches: C('m_valve') + C('m_comm'), laggy: C('m_valve_lag') + C('m_comm_lag'), valve: C('m_valve'), community: C('m_comm'), home: C('m_home'),
     lag: { usb: { valve: lagCell('usb', 'valve'), community: lagCell('usb', 'comm') }, hotspot: { valve: lagCell('hotspot', 'valve'), community: lagCell('hotspot', 'comm') } },
     ping: bandRows('ping', (b) => byLink(`ping_${b}`)), jitter: bandRows('jit', (b) => byLink(`jit_${b}`)), jitterDown: bandRows('jit', (b) => byLink(`jitd_${b}`)),
     late: bandRows('late', (b) => ({ n: C(`late_${b}`) })), loss: bandRows('loss', (b) => ({ n: C(`loss_${b}`) })),
@@ -625,16 +626,30 @@ export async function summary(db, { period, f, dev, now, exclude = [], sums = 's
   };
 }
 
+/**
+ * 10 nov. (dashboard audit, P3, with the real data): a live signal counts only from an install that is real by the same rule as
+ * the reports (an account, a click or a minute): 4 antivirus sandboxes (no Steam, no click, 0 minutes) showed up in Agora.
+ * Its accounts and clicks from yesterday on (the day indexes), its minutes from any day (pings_id_ts). <t> is the live table's name.
+ */
+export function liveReal(now, t = 'live') {
+  const since = day(now - 864e5);
+  return {
+    sql: `(EXISTS (SELECT 1 FROM pings p WHERE p.id = ${t}.id AND p.minutes >= 1) OR EXISTS (SELECT 1 FROM counts c WHERE c.day >= ? AND c.name = 'accounts' AND c.id = ${t}.id AND c.n >= 1)`
+      + ` OR EXISTS (SELECT 1 FROM clicks k WHERE k.day >= ? AND k.id = ${t}.id))`,
+    args: [since, since],
+  };
+}
+
 /** Who has the app open now: installs with a signal in the last 6 minutes, only as counts, and when the last signal came. */
 export async function live(db, { dev, now, exclude = [] }) {
-  const W = who(dev, exclude);
+  const W = who(dev, exclude), R = liveReal(now);
   let rows = [], lastTs = null;
   // Nov. 2026 (performance review): the three reads at once, one D1 round trip instead of three in a row
   const peaksP = livePeaks(db, { dev, now });
   peaksP.catch(() => {});
   try {
     const [r, last] = await Promise.all([
-      db.prepare(`SELECT app, mode, link, screen, cs2, prot, tray FROM live WHERE ${W.sql} AND ts >= ?`).bind(...W.args, now - 6 * 60_000).all(),
+      db.prepare(`SELECT app, mode, link, screen, cs2, prot, tray FROM live WHERE ${W.sql} AND ts >= ? AND ${R.sql}`).bind(...W.args, now - 6 * 60_000, ...R.args).all(),
       db.prepare(`SELECT ts FROM live WHERE ${W.sql} ORDER BY ts DESC LIMIT 1`).bind(...W.args).first(),
     ]);
     rows = r.results ?? [];
@@ -688,6 +703,8 @@ const TPN = BANDS.tp.map(([b]) => `tp_${b}`);
 // The steps in order, each inside the one before. Protected does not need a Change IP (the Status box says Protected when the
 // phone's connection is good, MainWindow.Protection.cs), so the IP change is shown beside the steps, not as one of them.
 export const ACT_STEPS = ['first_start', 'phone_seen', 'protected', 'first_match'];
+/** The first version that sends join (CS2 joined a server, src/Views/MainWindow.Kick.cs). */
+export const JOIN_FROM = '0.1.0-beta.13';
 export const STUCK = ['never_phone', 'phone_not_protected', 'protected_no_match', 'reached_match'];
 const SETUP_KEYS = SETUP.map(([k]) => k);
 // The return curve: open again on day 1, 2 to 6, 7 to 13, 14 to 29, 30 to 59 (the windows of the v3 cohort table)
@@ -731,6 +748,8 @@ function v4Blocks({ now, today, since, prevSince, okAll, inWin, seen, errors, er
       seg: { link: d0i.link, country: d0i.country, version: d0i.app, mode: d0i.mode },
       open: names('phone_setup_'), left: names('phone_left_'), pressed,
       help: win.some((i) => i.k.PhoneHelp_Click), cs2: sum('cs2_start') > 0, joined: sum('join') > 0,   // beta.13: CS2 joined a server
+      // 10 nov. (P1): only beta.13 and later send join; before, "no join" is not known, never 0
+      joinKnown: win.some((i) => compareVersions(i.app, JOIN_FROM) >= 0),
       red: names('chk_'),
       day1: !!d0i.c.crash || errAt.has(`${id}|${d0}`),
     });
@@ -804,7 +823,8 @@ function v4Blocks({ now, today, since, prevSince, okAll, inWin, seen, errors, er
     buckets: STUCK.map((id, b) => ({ id, n: A.buckets[b], share: cur.length ? A.buckets[b] / cur.length : null, prev: P.buckets[b], prev_share: prv.length ? P.buckets[b] / prv.length : null })),
     setup, never_opened: never.filter((m) => !m.open.size && !m.help).length, left_measured: leftMeasured,
     phone_not_protected: { n: notProt.length, ip_new: notProt.filter((m) => m.ipNew).length, ip_same_only: notProt.filter((m) => !m.ipNew && m.ipSame).length, red: redTop(notProt) },
-    protected_no_match: { n: A.buckets[2], cs2_opened: cur.filter((m) => m.bucket === 2 && m.cs2).length, joined: cur.filter((m) => m.bucket === 2 && m.joined).length },
+    protected_no_match: { n: A.buckets[2], cs2_opened: cur.filter((m) => m.bucket === 2 && m.cs2).length,
+      joined: cur.some((m) => m.bucket === 2 && m.joinKnown) ? cur.filter((m) => m.bucket === 2 && m.joinKnown && m.joined).length : null },
     signals: [
       { id: 'rage_clicks', n: rage.reduce((s, x) => s + x.n, 0), installs: null, top: rage.slice(0, 20) },
       { id: 'dead_clicks', n: dead.reduce((s, x) => s + x.n, 0), installs: null, top: dead.slice(0, 20) },

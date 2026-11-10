@@ -49,6 +49,12 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Phone setup: with USB tethering already on in the phone, it could still say "Off. The app can turn it on". Phones that share over NCM (newer ones, which Windows 11 shows as "UsbNcm Host Device") weren't recognised, nor a phone whose network adapter Windows names in a way the app didn't know. Now the app also asks the phone (over USB debugging) which address it shares on, and the adapter that uses it is the phone, whatever its name.
 - Phone setup: with the PC on the phone's Wi-Fi hotspot but the hotspot not picked in the app, it said USB tethering was off. It now says the PC is on the phone's hotspot and its Use it button picks it. If the app was set to an adapter that is gone while the phone's USB tethering is on, Use it goes back to USB cable (automatic).
 - Log: in the second the iPhone went into Airplane Mode, the Log blamed "another VPN" for the test servers and listed five routes Windows refused ("Element not found", "The object already exists"). Those warnings now only come while the phone's connection is really there.
+- Usage stats: "CS2 joined a server" also counted CS2's main menu, so it was almost the same as "CS2 opened". Now only a community or Valve server counts.
+- Usage stats: Change IP on an iPhone only counted a new IP. It now counts like on Android: how the IP changed, the same IP again, or the network not coming back.
+- Usage stats: a match played on your home connection (No phone, or protection off) counted as if it went through the phone, with its lag. It still counts as a match, marked as home, without the lag numbers, which are about the phone.
+- Usage stats: the minutes with CS2 open and with protection on started with 5 minutes the moment the app opened. They now count only between two checks 5 minutes apart.
+- Usage stats: on a PC where the developer's own build ran (same Windows user), a release now counts as the developer's and stays out of everyone's numbers. Only an empty file in your local app data says so; nothing about it is sent.
+- Stats dashboard: "Using now" and the hourly peaks counted antivirus test machines (no Steam account, no click, no minute). They now count only real installs, by the same rule as the daily numbers. "Joined a server" says no data for versions before beta.13 instead of 0, and the share of matches with lag counts only matches through the phone.
 
 ## [0.1.0-beta.12] - 2026-11-06
 

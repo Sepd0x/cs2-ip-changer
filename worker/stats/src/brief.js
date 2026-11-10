@@ -99,7 +99,7 @@ export const DEFINITIONS = {
   home_ip_back_d7: 'Times the app saw the home IP come back while it should go through the phone, last 7 days.',
   log_errors_d7: 'Errors written to the app Log, last 7 days.',
   ip_new_rate_d7: 'Change IP attempts that gave a new IP, as a share of all attempts (new, same IP, no network), last 7 days.',
-  laggy_match_rate_d7: 'Matches with lag (jitter or late messages over the limit) as a share of the matches, last 7 days.',
+  laggy_match_rate_d7: 'Matches with lag (jitter or late messages over the limit) as a share of the matches through the phone, last 7 days (since beta.13 a match on the home connection, m_home, is left out).',
   new_errors: 'Errors first seen in the last 7 days (looked up over 90 days), with installs hit and new installs hit on their first day.',
   old_cadence_share_today: 'Share of today\'s reports from builds before beta.10, which send only at start, at a UTC day change and at close: their minutes and matches arrive late or not at all.',
   link_none_share_7d: 'Share of install-days in the last 7 days whose best link was none.',
@@ -269,7 +269,7 @@ export function buildBrief({ S, L = null, G = null, GH = { days: [] }, tables = 
     crashes_d7: cr7, sessions_d7: ses7, crashes_prev7: sum(p7, 'crashes'), sessions_prev7: sum(p7, 'sessions'),
     unclean_exits_d7: sum(d7, 'unclean'), leak_test_failed_d7: sum(d7, 'leakBad'), leak_tests_d7: sum(d7, 'leakBad') + sum(d7, 'leakOk'), home_ip_back_d7: sum(d7, 'homeBack'), log_errors_d7: sum(d7, 'logErr'), home_ip_back_today: T.homeBack, leak_test_failed_today: T.leakBad,
     update_failed_d7: sum(d7, 'updFailed'),
-    ip_new_rate_d7: rate(sum(d7, 'ipNew'), ipAll), laggy_match_rate_d7: rate(sum(d7, 'laggy'), sum(d7, 'matches')),
+    ip_new_rate_d7: rate(sum(d7, 'ipNew'), ipAll), laggy_match_rate_d7: rate(sum(d7, 'laggy'), sum(d7, 'matches') - sum(d7, 'home')),   // 10 nov. (P8): only the phone's matches
     new_errors: ER.filter((e) => e.is_new).slice(0, 10).map((e) => ({ type: e.type, at: e.at, first_day: e.first_day, first_version: e.first_version, last_day: e.last_day, times_d7: e.times, installs_d7: e.installs, new_installs_day1: e.new_installs_day1,
       versions: (e.by_version || []).map((v) => ({ version: v.version, times: v.times, installs: v.installs })) })),
     top_errors_d7: ER.slice(0, 5).map((e) => ({ type: e.type, at: e.at, times_d7: e.times, installs_d7: e.installs, is_new: e.is_new, last_day: e.last_day })),

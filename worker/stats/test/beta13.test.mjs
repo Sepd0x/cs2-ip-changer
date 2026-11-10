@@ -221,9 +221,14 @@ test('point 7 (verification): each window is said with its dates: Hoje\'s funnel
 
 test('point 8: "1.ª entrada num servidor" is measured: of the new installs Protected without a match, how many joined a server (join)', async () => {
   const NOW = Date.parse('2026-11-04T15:30:00Z');
-  const DB = seed([[2, 1, 'usb', { first_start: 1, tp_10_30: 1, join: 2 }], [2, 2, 'usb', { first_start: 1, tp_10_30: 1 }], [2, 3, 'usb', { first_start: 1, tp_10_30: 1, join: 1, m_comm: 1 }]], { now: NOW });
+  // 10 nov.: join comes from beta.13 on, so the installs here run it
+  const b13 = '0.1.0-beta.13';
+  const DB = seed([[2, 1, 'usb', { first_start: 1, tp_10_30: 1, join: 2 }, b13], [2, 2, 'usb', { first_start: 1, tp_10_30: 1 }, b13], [2, 3, 'usb', { first_start: 1, tp_10_30: 1, join: 1, m_comm: 1 }, b13]], { now: NOW });
   const s = await sum(DB, { now: NOW });
   assert.deepEqual({ n: s.stuck.protected_no_match.n, joined: s.stuck.protected_no_match.joined }, { n: 2, joined: 1 });
+  // 10 nov. (P1): before beta.13 nothing sends join, so "Entraram num servidor" is unknown (null, "sem dados"), never 0
+  const old = await sum(seed([[2, 1, 'usb', { first_start: 1, tp_10_30: 1 }, '0.1.0-beta.12'], [2, 2, 'usb', { first_start: 1, tp_10_30: 1 }, '0.1.0-beta.12']], { now: NOW }), { now: NOW });
+  assert.deepEqual({ n: old.stuck.protected_no_match.n, joined: old.stuck.protected_no_match.joined }, { n: 2, joined: null });
   const app = read('../dashboard/v4/app.js');
   assert.doesNotMatch(app, /"1\.ª entrada num servidor" não é recolhida/);
   assert.match(app, /PM\.joined/);
