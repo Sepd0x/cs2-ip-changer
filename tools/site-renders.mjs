@@ -40,9 +40,10 @@ const STILLS = {
   'world-plug': { w: 1680, h: 720, p: 1, cam: { i: 1, pos: [-2.2, 3.0, 9.6], tgt: [-4.0, 0.7, 1.9], fov: 30, keys: false }, extra: '&full' },
   'world-mast': { w: 1000, h: 1000, p: 2, cam: { i: 2, pos: [2, 1.6, 5.2], tgt: [5.5, 4.6, -6.5], fov: 46, keys: false }, extra: '&full' },
   'world-racks': { w: 1000, h: 1000, p: 3, noarc: true, cam: { i: 3, pos: [13.5, 2.4, -1.5], tgt: [17, 2.1, -9.5], fov: 42, keys: false }, extra: '&full' },
-  'world-iphone': { w: 1000, h: 1000, p: 1, cam: { i: 1, pos: [-3.9, 2.4, 7.8], tgt: [-0.62, 0.95, 2.78], fov: 21, keys: false }, extra: '&full&ios' },
-  'world-android': { w: 1000, h: 1000, p: 1, cam: { i: 1, pos: [-3.9, 2.4, 7.8], tgt: [-0.62, 0.95, 2.78], fov: 21, keys: false }, extra: '&full' },
+  'world-iphone': { w: 1000, h: 1000, p: 1, cam: { i: 1, pos: [-3.9, 2.5, 7.8], tgt: [-0.62, 1.05, 2.78], fov: 21, keys: false }, extra: '&full&ios' },
+  'world-android': { w: 1000, h: 1000, p: 1, cam: { i: 1, pos: [-3.9, 2.5, 7.8], tgt: [-0.62, 1.05, 2.78], fov: 21, keys: false }, extra: '&full' },
 };
+// world-iphone/android: camera and target 0.1 higher since 9 Nov., with the phone (LIFT in world.js), the same framing
 const STILL_SCALE = 1.5, STILL_OUT = 1.25;   // shot at 1.5x, the WebP at 1.25x of the css size
 
 // Only the scene on the page's ground, with the site's own fonts and tokens (read from site/index.html when served)

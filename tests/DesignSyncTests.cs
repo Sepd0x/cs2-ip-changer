@@ -207,8 +207,10 @@ static class DesignSyncTests
         var workerSrc = Txt("worker/stats/src/index.js");
         check("SEO: o ?ref= chega ao Worker no formato que ele guarda (ref:<nome>)",
             workerSrc.Contains("const REF_TAG = /^ref:[a-z0-9-]{1,20}$/;") && workerSrc.Contains("!REF_TAG.test(ref)"), "");
-        var slowLd = new[] { "site/index.html", "site/404.html" }.Concat(guides).Where(f => !Txt(f).Contains("setTimeout(end,matchMedia('(pointer:coarse)').matches?1100:6000)")).ToList();
-        check("Site: no telemóvel o ecrã de carregamento sai em ~1,5 s e não espera pelo 3D", slowLd.Count == 0 && homeHtml.Contains("@media (pointer:fine),(pointer:none){html.ld .b-cover .copy>*{animation-play-state:paused}}"), string.Join(", ", slowLd));
+        // 9 nov. (o dono viu o ecrã sair antes do 3D) e 10 nov. (LD-001, decidido que fica): o ecrã espera pelo primeiro frame
+        // do mundo também no telemóvel, sem temporizador fixo; desiste ao fim de 45 s. Os testes no browser: tools/site-loading.test.mjs
+        var slowLd = new[] { "site/index.html", "site/404.html" }.Concat(guides).Where(f => Txt(f) is var s && (!s.Contains("addEventListener('worldready',end,true)") || !s.Contains("45e3") || s.Contains("setTimeout(end,matchMedia('(pointer:coarse)')"))).ToList();
+        check("Site: o ecrã de carregamento sai com o primeiro frame do mundo (telemóvel e PC), sem temporizador fixo, e desiste aos 45 s", slowLd.Count == 0 && homeHtml.Contains("\nhtml.ld .b-cover .copy>*{animation-play-state:paused}"), string.Join(", ", slowLd));
 
         // ---------------- 5. o telemóvel com componentes próprios (6 nov.): as seis páginas lado a lado com recortes a tamanho
         // real, a história mais curta ao alto, o chip e a pausa fora do texto, o rodapé em duas colunas, o ?ref= na is-it-safe

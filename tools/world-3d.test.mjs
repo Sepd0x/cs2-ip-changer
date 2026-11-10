@@ -50,6 +50,38 @@ test('the shots are still met exactly, so the fitted frames and the labels do no
 
 test('the built scenes are this world.js: the home and the guides (and the 404) both', () => {
   for (const [name, built] of [['site/assets/js/scenes.min.js', home], ['site/assets/guides/world.min.js', guides]]) {
-    for (const mark of ['RouteMirror', 'hzGlow', 'vSpW', 'smoothstep(4., 9., dist)']) assert.ok(built.includes(mark), `${name} is not built from the current world.js (missing ${mark})`);
+    for (const mark of ['RouteMirror', 'hzGlow', 'vSpW', '52.9829189']) assert.ok(built.includes(mark), `${name} is not built from the current world.js (missing ${mark})`);
   }
+});
+
+test('the USB cable and its plugs share their contact points (9 Nov.; measured by node tools/world-3d-contacts.mjs)', () => {
+  assert.doesNotMatch(src, /uCut/, 'the pulled cable is not cut off in the shader any more: its last stretch moves with the plug');
+  assert.match(src, /const qIn = qOf\(PH_X, PH_Y\);/, 'the phone plug sits on the port\'s own axes, not on the cable\'s slant');
+  assert.match(src, /placePhonePlug\(s\.cut\);/);
+  assert.match(src, /tailCur = tailTo\(pose\(plugPhone, plugPos, plugQ\)\);/, 'the last stretch is rebuilt from where the plug is');
+  assert.match(src, /plugPhone\.g\.visible = tailMesh\.visible = phone\.visible;/, 'no plug in mid air when the phone hides');
+});
+
+test('OLED (6c, 3D-011): no sine hashes in the shaders, the dither last and never on black, no dot lattice on the floor', () => {
+  for (const bad of ['fract(sin(dot(gl_FragCoord', 'float h2(vec2 p){ return fract(sin', 'float hs(float n){ return fract(sin', 'uDot*dotm'])
+    assert.ok(!src.includes(bad), 'gone: ' + bad + ' (a sine hash turns into a grid on mobile GPUs; the 1 m dot lattice read as points on an OLED)');
+  assert.ok(src.includes('sRGBTransferOETF( gl_FragColor ); { float n = fract(52.9829189'), 'the dither runs after the sRGB step, in the screen\'s own 8-bit steps');
+  assert.ok(src.includes('smoothstep(.5/255., 4./255., max(gl_FragColor.r'), 'no dither on black: an OLED\'s black pixels stay off');
+});
+
+test('OLED (6c, 3D-010): the route\'s bloom is the same, only its two widest layers (the veil over the frame) are low', () => {
+  assert.ok(src.includes('new UnrealBloomPass(new Vector2(256, 256), 0.95, 0.55, 0.12)'));
+  assert.ok(src.includes('[1, 0.9, 0.55, 0.2, 0.05].forEach((k, i) => bloom.bloomTintColors[i].setScalar(k))'));
+  assert.ok(src.includes('c.rgb *= (l + .002)/(l + .005);'), 'the OLED toe: darks down, the route (far brighter) kept');
+});
+
+test('the horizon (6c, 3D-012): the floor runs out to the town, no unlit ring of hills in between', () => {
+  assert.ok(!src.includes('new RingGeometry(38, 112'));
+  assert.ok(src.includes('const skyline = new Mesh(new CylinderGeometry(130, 130, 30'));
+  assert.ok(src.includes('new PlaneGeometry(260, 260), new MeshLambertMaterial'), 'the floor reaches the town at 130 m in every direction');
+});
+
+test('the route stays neon (6c-bis): over 1 the brightest channel rolls off and the others keep their ratio, a fifth of the old clip kept', () => {
+  assert.ok(src.includes('if (mx > .75) { float f = .75 + .25*(1. - exp(-(mx - .75)/.25)); c.rgb = mix(c.rgb*(f/mx), min(c.rgb, vec3(1.)), .2); }'));
+  assert.ok(src.includes('new UnrealBloomPass(new Vector2(256, 256), 0.95, 0.55, 0.12)'), 'the bloom itself is the same');
 });

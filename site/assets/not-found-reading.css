@@ -1,0 +1,12 @@
+/* Recovery actions precede the decorative world on narrow screens. */
+.nf h1{text-wrap:balance}
+.recovery-links{display:flex;flex-wrap:wrap;gap:.25rem 1.4rem;margin-top:.75rem}
+.recovery-links a{display:inline-flex;align-items:center;min-height:44px;font-size:.95rem;color:var(--t-accent-light)}
+@media (max-width:999px){
+  .nf{padding-top:1.5rem}
+  .num{font-size:clamp(4rem,22vw,8rem)}
+  .nf .acts{gap:.6rem}
+  .nf .groom{height:min(55vw,38svh);margin-top:1rem}
+  .nf .more{margin-top:1.5rem}
+}
+@media (max-width:380px){.top{gap:.5rem}.brand{font-size:.9rem;gap:.4rem}.btn.sm{padding-inline:.7rem}}

@@ -26,21 +26,34 @@
 <link rel="preload" href="../fonts/fragment-mono.woff2" as="font" type="font/woff2" crossorigin>
 <script>(function(h){h.classList.add('js');var o=0;try{o=localStorage.getItem('cs2-fx')==='on'}catch(x){}if(!matchMedia('(prefers-reduced-motion: reduce)').matches)h.classList.add('fx');else if(o)h.classList.add('fx','fx-opt')})(document.documentElement)</script>
 <script>
-/* the loading screen: only with JS and WebGL. The line fills (its own transform: a custom property on <html> made every step restyle the whole page) as the page gets ready (HTML, fonts, the 3D script) and the page
-   comes in on the world's first frame, or after 6 s (on a phone or tablet it is gone by about 1.5 s, 6 Nov.: the first words wait no longer), or at once without WebGL. While it shows, the wheel, touch and the
-   scroll keys wait, so nothing moves under it. Reduced motion: the line steps and the screen goes at once */
-(function(h){try{var c=document.createElement('canvas');if(!(c.getContext('webgl2')||c.getContext('webgl')))return}catch(x){return}
-h.classList.add('ld','ldu');var t0=performance.now(),p=0,done=false,K={32:1,33:1,34:1,35:1,36:1,37:1,38:1,39:1,40:1},O={capture:true,passive:false},
+/* the loading screen: only with JS and WebGL. It stays until the 3D world has drawn its first frame (worldready: the scene built,
+   every shader program made, the screens and the fonts in), on a phone too. 9 Nov.: the owner saw it go before the scenes were
+   there; it went after 1.1 s on a phone and 6 s on a PC whatever the world was doing. The line (its own transform: a custom
+   property on <html> made every step restyle the whole page) follows the real steps: the page, the fonts, the 3D script's bytes
+   as they come in (__ldGet), then the world's own steps (worldprogress). It gives up only when nothing has moved for 12 s (a
+   stalled network), after 45 s, when the world fails (no-gl), and it never shows without WebGL; then the poster stays until the
+   world comes. While it shows, the wheel, touch and the scroll keys wait, so nothing moves under it. Reduced motion: it does not
+   hold the page (input passes, at most 1.2 s) and the still world takes the poster's place without a fade */
+(function(h){var w=window,d=document;
+/* the 3D script, read as its bytes come in so the line can follow them (size: its length in bytes, checked by tools/site.test.mjs),
+   then run from those bytes. A browser without streams, a failed read or a blocked blob: a plain <script> */
+w.__ldGet=function(src,size,ok,ko){var go=function(u,b){var s=d.createElement('script');s.src=u;s.onload=function(){if(b)URL.revokeObjectURL(u);w.__ldStep&&__ldStep(.5);ok&&ok()};s.onerror=function(){if(b){URL.revokeObjectURL(u);go(src)}else ko&&ko()};(d.body||d.head).appendChild(s)};
+if(!(w.fetch&&w.ReadableStream&&w.Blob&&w.URL&&URL.createObjectURL))return go(src);
+fetch(src).then(function(r){if(!r.ok||!r.body)throw r.status;var rd=r.body.getReader(),bits=[],n=0,pump=function(){return rd.read().then(function(x){if(x.done)return;bits.push(x.value);n+=x.value.length;w.__ldStep&&__ldStep(.15+.32*Math.min(1,n/size));return pump()})};
+return pump().then(function(){go(URL.createObjectURL(new Blob(bits,{type:'text/javascript'})),1)})}).catch(function(){go(src)})};
+try{var c=d.createElement('canvas');if(!(c.getContext('webgl2')||c.getContext('webgl')))return}catch(x){return}
+h.classList.add('ld','ldu');var rm=matchMedia('(prefers-reduced-motion: reduce)').matches&&(function(){try{return localStorage.getItem('cs2-fx')!=='on'}catch(x){return true}})(),t0=performance.now(),seen=t0,p=0,done=false,K={32:1,33:1,34:1,35:1,36:1,37:1,38:1,39:1,40:1},O={capture:true,passive:false},EV=rm?[]:['wheel','touchmove','keydown'],
 hold=function(e){if(e.type!=='keydown'||K[e.keyCode]){e.preventDefault();e.stopImmediatePropagation()}},
-set=function(v){if(v>p){p=v;var e=document.querySelector('.ld-bar b');if(e)e.style.transform='scaleX('+v+')'}},
-end=function(e){if(done)return;done=true;if(e&&e.type==='worldready')h.classList.add('ldw');set(1);['wheel','touchmove','keydown'].forEach(function(t){removeEventListener(t,hold,O)});
+set=function(v){if(v>p){p=v;seen=performance.now();var e=d.querySelector('.ld-bar b');if(e)e.style.transform='scaleX('+v+')'}},
+dog=setInterval(function(){var n=performance.now();if(d.hidden){seen=n;return}if(n-seen>12e3||n-t0>45e3)end()},500),
+end=function(e){if(done)return;done=true;clearInterval(dog);if(e&&e.type==='worldready')h.classList.add('ldw');set(1);EV.forEach(function(t){removeEventListener(t,hold,O)});
 setTimeout(function(){h.classList.add('ld-out');setTimeout(function(){h.classList.remove('ld','ld-out')},400)},Math.max(90,300-(performance.now()-t0)))};
-['wheel','touchmove','keydown'].forEach(function(t){addEventListener(t,hold,O)});
-window.__ldStep=set;window.__ldEnd=end;set(.12);
-document.addEventListener('worldready',end,true);setTimeout(end,matchMedia('(pointer:coarse)').matches?1100:6000);
-document.addEventListener('DOMContentLoaded',function(){set(.25)});
-document.addEventListener('worldprogress',function(e){set(.45+.52*(+e.detail||0))},true);
-if(document.fonts)document.fonts.ready.then(function(){set(.35)});
+EV.forEach(function(t){addEventListener(t,hold,O)});
+w.__ldStep=set;w.__ldEnd=end;set(.08);
+d.addEventListener('worldready',end,true);if(rm)setTimeout(end,1200);
+d.addEventListener('DOMContentLoaded',function(){set(.12)});
+d.addEventListener('worldprogress',function(e){set(.5+.48*(+e.detail||0))},true);
+if(d.fonts)d.fonts.ready.then(function(){set(.15)});
 new MutationObserver(function(){if(h.classList.contains('no-gl'))end()}).observe(h,{attributes:true,attributeFilter:['class']});
 addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.documentElement)
 </script>
@@ -150,6 +163,7 @@ html.lb-open{overflow:hidden}
 html{color-scheme:dark;font-size:100%;-webkit-text-size-adjust:100%;scrollbar-color:var(--line2) var(--bg);scroll-padding-top:calc(var(--top-h) + 1rem)}
 @media (min-width:1600px){html{font-size:clamp(1rem,1vw,1.125rem)}}
 @media (min-width:1915px){html{font-size:clamp(1.125rem,.94vw,1.5rem)}}
+@media (min-width:2561px){html{font-size:clamp(1.5rem,min(.94vw,1.67vh),3rem)}}
 html:not(.fx){scroll-behavior:smooth}
 @media (prefers-reduced-motion:reduce){html:not(.fx-opt) *,html:not(.fx-opt) *::before,html:not(.fx-opt) *::after,html:not(.fx-opt) ::details-content{transition-duration:.01ms!important;animation-duration:.01ms!important}}
 @media (prefers-reduced-motion:reduce){html:not(.fx){scroll-behavior:auto}}
@@ -186,7 +200,7 @@ html.ld-out .ld-scr{opacity:0;visibility:hidden}
 @media (prefers-reduced-motion:no-preference){.ld-bar i{display:block;position:absolute;top:-2px;bottom:-2px;left:0;width:3rem;background:linear-gradient(90deg,transparent,rgba(255,255,255,.8),transparent);animation:ld-glint 1.25s cubic-bezier(.45,0,.25,1) infinite}}
 @keyframes ld-glint{from{transform:translateX(-3rem)}to{transform:translateX(min(14rem,62vw))}}
 /* what comes in after it: the cover's lines and the first reveals wait for it; when the world was drawn under it (ldw), no fade from the poster */
-@media (pointer:fine),(pointer:none){html.ld .b-cover .copy>*{animation-play-state:paused}}
+html.ld .b-cover .copy>*{animation-play-state:paused}
 html.fx.ld .rv.in{opacity:0;transform:translateY(24px)}
 html.ldw .stage.ready canvas,html.ldw .gw.ready canvas{transition:none}
 html.ldw .stage.ready .stage-still{opacity:0;transition:none}
@@ -635,6 +649,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
   .gcard{padding:1rem 0}
 }
 </style>
+<link rel="stylesheet" href="../assets/guide-reading.css">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -662,6 +677,11 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
       <p class="crumbs"><a href="../">CS2 IP Changer</a><i aria-hidden="true">/</i><span>Steam account switcher</span></p>
       <h1 class="long">Steam account switcher for CS2, with ban marks per server</h1>
       <p class="lead">CS2 IP Changer switches between the Steam accounts saved on your PC without asking for passwords, and knows which account is banned where. One hotkey gets a new IP, logs into the next clean account and joins the server again.</p>
+      <div class="guide-entry"><a class="guide-start" href="#what-it-does">Read the guide</a><details class="guide-contents"><summary>On this page</summary><nav aria-label="Guide contents"><ol>
+      <li><a href="#what-it-does">What it does</a></li>
+      <li><a href="#made-for-community-servers">Made for community servers</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ol></nav></details></div>
       <div class="groom" aria-hidden="true"></div>
       <div class="gw-foot">
         <p class="gw-cap">Example: the account banned on that server is skipped and the next one logs in, with no password typed.</p>
@@ -776,7 +796,9 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
   <div class="wrap legal"><span>CS2 IP Changer by Sepd0x. Not affiliated with Valve. Counter-Strike and Steam are trademarks of Valve Corporation.</span><span>Made for community servers.</span></div>
 </footer>
 <script>
-(function(){var b='../assets/js/',l=(document.documentElement.classList.contains('fx')?(matchMedia('(pointer: fine)').matches?['gsap.min.js','ScrollTrigger.min.js','lenis.min.js']:[]):[]).concat(['readout.js','../guides/world.min.js']);l.forEach(function(f){var s=document.createElement('script');s.src=b+f;s.async=false;if(/world/.test(f)){s.onload=function(){window.__ldStep&&__ldStep(.45);window.__gw&&window.__gw()};s.onerror=function(){document.documentElement.classList.add('no-gl')}}document.body.appendChild(s)})})();
+(function(){var b='../assets/js/',l=(document.documentElement.classList.contains('fx')?(matchMedia('(pointer: fine)').matches?['gsap.min.js','ScrollTrigger.min.js','lenis.min.js']:[]):[]).concat(['readout.js']);l.forEach(function(f){var s=document.createElement('script');s.src=b+f;s.async=false;document.body.appendChild(s)});
+/* the world's script on its own, its bytes counted by the loading screen */
+__ldGet('../assets/guides/world.min.js',964648,function(){window.__gw&&window.__gw()},function(){document.documentElement.classList.add('no-gl')})})();
 </script>
 <script>
 (function(){

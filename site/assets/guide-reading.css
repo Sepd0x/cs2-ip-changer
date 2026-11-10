@@ -1,0 +1,30 @@
+/* Shared by the nine generated guides; generator links this stylesheet too. */
+.guide-entry{display:flex;align-items:flex-start;flex-wrap:wrap;gap:.4rem 1.5rem;margin-top:1rem}
+.guide-start{display:inline-flex;align-items:center;gap:.8rem;min-height:44px;color:var(--t-accent-light);font:500 .95rem/1.4 var(--sans)}
+.guide-start::after{content:'↓';font-family:var(--mono)}
+.guide-contents{display:none}
+.gtext h2{scroll-margin-top:calc(var(--top-h) + 1.25rem)}
+.gtext img{max-width:100%}
+@media (max-width:999px){
+  .guide-entry{display:block}
+  .guide-contents{display:block;border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:.75rem 0 0;padding:0;counter-increment:none}
+  .guide-contents summary{display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:.6rem 0;font:500 .95rem/1.4 var(--sans);color:var(--ink)}
+  .guide-contents summary::before{display:none}
+  .guide-contents summary::after{content:'+';position:static;font:400 1.2rem/1 var(--mono);transform:none;background:none;width:auto;height:auto}
+  .guide-contents[open] summary::after{content:'−';transform:none}
+  .guide-contents ol{list-style:none;padding:0 0 .75rem;margin:0}
+  .guide-contents a{display:flex;align-items:center;min-height:44px;padding:.5rem 0;color:var(--ink2);font-size:.95rem;text-decoration:none}
+  .guide-contents a:hover{color:var(--t-accent-light)}
+  .guide-contents a:focus-visible{outline-offset:0}
+  .gtoc-m{display:none}
+  .ghero-copy{padding-right:0}
+  .ghero{padding-bottom:1.5rem}
+  .groom{height:min(clamp(15rem,70vw,28rem),48svh)}
+  .gtext{min-width:0}
+  .gtext ol.tl>li{padding-left:2.5rem}
+}
+@media (min-width:2000px){
+  .gmain>.gstage>.wrap,.gline>.wrap,body>footer>.wrap{max-width:min(100% - 2*var(--gutter),100rem)}
+  .gtext{max-width:70ch}
+}
+@media (max-width:380px){.top .brand{font-size:.9rem;gap:.45rem}.top nav{gap:.35rem}.top nav>.btn-ghost{display:none}}

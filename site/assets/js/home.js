@@ -7,6 +7,9 @@
   'use strict';
   var d = document, root = d.documentElement, W = window;
   var FX = root.classList.contains('fx');
+  var MOBILE = matchMedia('(max-width:759px),(max-width:999px) and (max-height:540px) and (orientation:landscape)');
+  var mobileTour = null;
+  var initialMobileHash = location.hash;
   var $ = function (s, el) { return (el || d).querySelector(s); };
   var $$ = function (s, el) { return [].slice.call((el || d).querySelectorAll(s)); };
   var clamp = function (v, a, b) { return Math.min(b === undefined ? 1 : b, Math.max(a || 0, v)); };
@@ -69,6 +72,7 @@
     if (fig) fig.style.position = fp;
     // whole px: the snap rests the window on a whole px, and half a px short left the 3D on and the window hidden (6 Nov.)
     storyEnd = Math.floor(wr ? figTop - wr.fig : (appBody ? docTop(appBody) : 1e9));
+    if (mobileTour && MOBILE.matches) storyEnd = Math.floor(mobileTour.element.getBoundingClientRect().top + scrollY - topH() - 12);
     ctaAt = cta ? docTop(cta) : 1e9; ctaH = cta ? cta.offsetHeight : 0;
   }
   function where(y) {
@@ -92,6 +96,7 @@
   var fig = $('#win-fig'), win = fig ? $('.win', fig) : null;
   function winRect() {
     if (!fig || !win) return null;
+    if (mobileTour && MOBILE.matches) return null;
     var th = topH(), r = fig.getBoundingClientRect(), wr = win.getBoundingClientRect();
     var top = getComputedStyle(fig).position === 'sticky' ? parseFloat(getComputedStyle(fig).top) || th : th;
     var pad = wr.top - r.top;
@@ -112,7 +117,8 @@
     var r = col ? col.getBoundingClientRect() : null;
     var right = r && r.width ? r.left + r.width : Wd * .4;
     var land = innerHeight < 541;
-    return { box: [right + Math.max(24, Wd * .025), th + (land ? 8 : 18), Wd - Math.max(16, Wd * .02), Hh - (land ? 12 : 70)], bias: [.5, .5] };
+    // 9 Nov. (session 6b): the cover's scene comes down to the foot of the screen, the desk under the chapter bar (34 px, was 70)
+    return { box: [right + Math.max(24, Wd * .025), th + (land ? 8 : 18), Wd - Math.max(16, Wd * .02), Hh - (land ? 12 : shot === 0 ? 34 : 70)], bias: [.5, .5] };
   }
   // what the scene's labels must not sit under: the beat cards on screen and the pause button (css px of the canvas)
   var pauseRect = null, whereRect = null; addEventListener('resize', function () { pauseRect = whereRect = null; });
@@ -142,6 +148,20 @@
   }
 
   var railGo = null;
+  $$('.story-next').forEach(function (link) { link.addEventListener('click', function (event) {
+    if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button) return;
+    var i = STEPS.indexOf(link.getAttribute('href'));
+    if (i < 0 || !A[i]) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (W.__lenis) W.__lenis.stop();
+    history.pushState(null, '', STEPS[i]);
+    scrollTo(0, Math.round(A[i].s));
+    mark(i); update();
+    var heading = copies[i] && $('h2,h3', copies[i]);
+    if (heading) { heading.setAttribute('tabindex', '-1'); heading.focus({preventScroll:true}); }
+    if (W.__lenis) W.__lenis.start();
+  }); });
   if (rail) rail.addEventListener('click', function (e) { var a = e.target.closest && e.target.closest('a'); if (!a) return; var i = railItems.indexOf(a.parentNode); if (i >= 0) { railGo = { p: i, until: performance.now() + 1300, first: true }; mark(i); requestAnimationFrame(update); } });
 
   /* ------------------------------------------------------------ every scroll: the scene, the rail, the log */
@@ -276,11 +296,16 @@
   // was is kept from the last scroll, before the browser moved the page for the new layout (6 Nov.: turned on a page of the
   // window, a phone landed in the ban, and stayed there when turned back)
   var was = null;
-  addEventListener('resize', function () { var coarse = matchMedia('(pointer:coarse)').matches; if (coarse && innerWidth === lastW) { measure(); update(); return; } lastW = innerWidth; if (!was) was = seen; clearTimeout(rq); rq = setTimeout(function () { var w0 = was || { inStory: scrollY < storyEnd, p: where(scrollY).p, sub: where(scrollY).sub, pg: pageNow(scrollY) }; was = null; measure(); veil(); if (api) api.resize(); if (w0.inStory && A.length) { var i = Math.min(Math.round(w0.p), A.length - 1), a = A[i]; scrollTo(0, Math.round(a.s + (a.e - a.s) * (i === 4 ? w0.sub : 0))); } else if (w0.pg) pageGo(w0.pg); update(); }, 120); });
+  addEventListener('resize', function () { var coarse = matchMedia('(pointer:coarse)').matches; if (coarse && innerWidth === lastW) { measure(); update(); return; } lastW = innerWidth; if (!was && seen) was = { inStory: seen.inStory, p: seen.p, sub: seen.sub, pg: seen.pg }; clearTimeout(rq); rq = setTimeout(function () { var w0 = was || { inStory: scrollY < storyEnd, p: where(scrollY).p, sub: where(scrollY).sub, pg: pageNow(scrollY) }; was = null; measure(); veil(); if (api) api.resize(); if (w0.inStory && A.length) { var i = Math.min(Math.round(w0.p), A.length - 1), a = A[i]; scrollTo(0, Math.round(a.s + (a.e - a.s) * (i === 4 ? w0.sub : 0))); } else if (w0.pg) pageGo(w0.pg); update(); }, 120); });
   d.addEventListener('visibilitychange', function () { if (api) api.hide(d.hidden || !onStage); });
   measure(); veil(); update();
   if (d.fonts && d.fonts.ready) d.fonts.ready.then(function () { measure(); veil(); if (api) api.resize(); update(); });
-  addEventListener('load', function () { measure(); update(); deep(); settle(); });
+  addEventListener('load', function () {
+    measure(); update();
+    var pg = initialMobileHash === '#features' ? 'connection' : initialMobileHash.slice(1);
+    if (mobileTour && MOBILE.matches && PGS.indexOf(pg) >= 0) pageGo(pg); else deep();
+    settle();
+  });
 
   /* ------------------------------------------------------------ keyboard in the story: one beat per PageDown or Space, one log
      line in the ban (6 Nov.: like a finger on a phone, a key never lands between two beats with the camera half way) */
@@ -331,6 +356,7 @@
     var pics = $$('.views picture', fig), zl = $('.views', fig), pages = $$('#pages > li'), cur = 'connection';
     // the page being read while the window is docked, and the way back to it (its title where the snap rests it)
     pageNow = function (y) {
+      if (mobileTour) return y >= storyEnd - 1 && y < docTop(appBody) + appBody.offsetHeight - topH() ? cur : null;
       if (car) { var pe = $('#pages'), b = docTop(pe) + pe.offsetHeight; return y >= storyEnd - 1 && y <= b - innerHeight * .35 ? cur : null; }
       return rests.length && y >= storyEnd - 1 && y <= rests[rests.length - 1] + innerHeight * .6 ? cur : null;
     };
@@ -351,6 +377,7 @@
           var v = function (n) { return parseFloat(mk.style.getPropertyValue('--' + n)) || 0; };
           var cut = d.createElement('div'), inn = d.createElement('div'), ring = d.createElement('i'), cp = pic.cloneNode(true);
           cut.className = 'cut'; cut.setAttribute('aria-hidden', 'true'); inn.className = 'cut-in'; ring.className = 'cring';
+          if (mk.dataset.crop) cut.dataset.crop = mk.dataset.crop;
           cp.removeAttribute('class'); cp.removeAttribute('aria-hidden'); var im = $('img', cp); im.alt = ''; im.loading = 'lazy'; im.decoding = 'async';
           cut.style.setProperty('--cx', ((v('x') + v('w') / 2) * 12.4).toFixed(1) + 'px'); cut.style.setProperty('--cy', ((v('y') + v('h') / 2) * 8).toFixed(1) + 'px');
           cut.style.setProperty('--mw', (v('w') * 12.4).toFixed(1) + 'px'); cut.style.setProperty('--mh', (v('h') * 8).toFixed(1) + 'px');
@@ -384,8 +411,16 @@
     var holdPg = 0;
     pageGo = function (pg) {
       var i = pages.map(function (l) { return l.getAttribute('data-pg'); }).indexOf(pg); if (i < 0) return;
+      if (mobileTour && MOBILE.matches) {
+        show(pg);
+        measure();
+        var y = Math.ceil(mobileTour.element.getBoundingClientRect().top + scrollY - topH() - 12);
+        storyEnd = y;
+        if (W.__lenis) W.__lenis.scrollTo(y, { immediate: true, force: true }); else scrollTo(0, y);
+        holdPg = performance.now() + 600; return;
+      }
       if (car) { scrollTo(0, Math.round(docTop(pagesBox) - topH() - fig.offsetHeight - 8)); slide(i, false); }
-      else if (side) scrollTo(0, rests[i]); else ($('h3', pages[i]) || pages[i]).scrollIntoView({ block: 'start', behavior: 'instant' });
+      else if (side || (mobileTour && innerWidth >= 1000)) scrollTo(0, rests[i]); else ($('h3', pages[i]) || pages[i]).scrollIntoView({ block: 'start', behavior: 'instant' });
       show(pg); holdPg = performance.now() + 600;
     };
     var show = function (pg) {
@@ -398,16 +433,57 @@
       });
       pages.forEach(function (li, i) { var on = li.getAttribute('data-pg') === pg; li.classList.toggle('on', on); if (tabs[i]) { if (on) tabs[i].setAttribute('aria-current', 'true'); else tabs[i].removeAttribute('aria-current'); } });
       if (win) win.setAttribute('data-pg', pg);
+      if (mobileTour) mobileTour.select(pg);
     };
+    if (W.CS2MobileTour) {
+      mobileTour = W.CS2MobileTour({pages: pages, fig: fig, onMeasure: function () { measure(); update(); }, onSelect: function (pg) {
+        pageGo(pg);
+        var h = pg === 'connection' ? '#features' : '#' + pg;
+        if (location.hash !== h) history.pushState(null, '', h);
+        update();
+      }});
+      root.classList.add('mobile-app');
+      var syncMobile = function () { if (MOBILE.matches) mobileTour.select(cur); };
+      MOBILE.addEventListener('change', syncMobile);
+      var mobileHash = function () {
+        if (!MOBILE.matches || (history.state && history.state.lb)) return;
+        var pg = location.hash === '#features' ? 'connection' : location.hash.slice(1);
+        if (PGS.indexOf(pg) >= 0) { pageGo(pg); update(); }
+      };
+      addEventListener('hashchange', mobileHash);
+      addEventListener('popstate', mobileHash);
+      addEventListener('load', function () { measure(); mobileHash(); });
+      var initialPg = initialMobileHash === '#features' ? 'connection' : initialMobileHash.slice(1);
+      if (MOBILE.matches && PGS.indexOf(initialPg) >= 0 && 'ResizeObserver' in W) {
+        // The app-body's responsive padding can settle after the load handler.
+        // Follow its actual size until the visitor takes control of the page.
+        var anchoring = true, anchorFrame = 0;
+        var anchorObserver = new ResizeObserver(function () {
+          cancelAnimationFrame(anchorFrame);
+          anchorFrame = requestAnimationFrame(function () {
+            if (!anchoring || !MOBILE.matches) return;
+            pageGo(initialPg); update(); take(stepAt(scrollY));
+          });
+        });
+        anchorObserver.observe(appBody, { box: 'border-box' });
+        var releaseAnchor = function () {
+          anchoring = false; anchorObserver.disconnect(); cancelAnimationFrame(anchorFrame);
+          ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(function (type) { removeEventListener(type, releaseAnchor, true); });
+        };
+        ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(function (type) { addEventListener(type, releaseAnchor, {capture:true, passive:true}); });
+      }
+      measure();
+    }
     // rests: the scroll where each page is read (the keyboard and a turn of the phone go there). A phone on its side has
     // the window beside a short column: each page rests with its title level with the window's top, and the window shows
     // the page that fills most of the column, its title above the column's middle (6 Nov.: by the middle of the screen it showed the next page
     // while the text on the left was still the one before)
     var centres = [], rests = [], line0 = 0, side = false, figTop = 0;
     var mPages = function () {
+      if (mobileTour && MOBILE.matches) { rests = []; side = false; return; }
       car = CAR.matches;
       var pr = $('#pages').getBoundingClientRect(), fr = fig.getBoundingClientRect();
-      side = innerWidth < 1000 && fr.left >= pr.right - 4;
+      side = innerWidth >= 1600 || (innerWidth < 1000 && fr.left >= pr.right - 4);
       figTop = parseFloat(getComputedStyle(fig).top) || topH();
       centres = pages.map(function (li) { return docTop(li) + li.offsetHeight / 2; });
       line0 = tall() ? Math.min(innerHeight * .78, topH() + fig.offsetHeight + innerHeight * .25) : innerHeight * .5;
@@ -415,6 +491,7 @@
       if (car) rests = [];
     };
     var pick = function () {
+      if (mobileTour && MOBILE.matches) return;
       if (performance.now() < holdPg) return;
       var best = -1, bd = 1e9;
       if (car) best = Math.max(0, Math.min(pages.length - 1, Math.round(pagesBox.scrollLeft / step())));
@@ -452,7 +529,8 @@
   /* ------------------------------------------------------------ start the scene once its script is in */
   var idle = W.requestIdleCallback || function (fn) { return setTimeout(fn, 600); };
   // after the cover has come in (its lines take about 1.3 s), so building the world never takes a frame from it
-  var later = function () { setTimeout(function () { idle(start, { timeout: 1200 }); }, FX ? 900 : 0); };
+  // Under the loading screen (html.ld) the lines wait too, so it starts at once: the screen stays until the world's first frame
+  var later = function () { var under = root.classList.contains('ld'); setTimeout(function () { idle(start, { timeout: under ? 100 : 1200 }); }, FX && !under ? 900 : 0); };
   if (W.WorldScene) later(); else W.__worldReady = later;
 })();
 /* Android or iPhone, on a phone: a switch of two tabs over the two cards (6 Nov., the owner asked for it). It opens on the

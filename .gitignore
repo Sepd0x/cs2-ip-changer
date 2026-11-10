@@ -18,3 +18,6 @@ SRT_Dados/
 # Wrangler local state (worker/stats dev runs)
 .wrangler/
 node_modules/
+
+# The isolated lab copy where the site was redone (Nov 2026); it stays local
+ServerRouteToolCodex/

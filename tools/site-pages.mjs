@@ -701,21 +701,34 @@ function render(p, modified) {
 <link rel="preload" href="../fonts/fragment-mono.woff2" as="font" type="font/woff2" crossorigin>
 <script>(function(h){h.classList.add('js');var o=0;try{o=localStorage.getItem('cs2-fx')==='on'}catch(x){}if(!matchMedia('(prefers-reduced-motion: reduce)').matches)h.classList.add('fx');else if(o)h.classList.add('fx','fx-opt')})(document.documentElement)</script>
 <script>
-/* the loading screen: only with JS and WebGL. The line fills (its own transform: a custom property on <html> made every step restyle the whole page) as the page gets ready (HTML, fonts, the 3D script) and the page
-   comes in on the world's first frame, or after 6 s (on a phone or tablet it is gone by about 1.5 s, 6 Nov.: the first words wait no longer), or at once without WebGL. While it shows, the wheel, touch and the
-   scroll keys wait, so nothing moves under it. Reduced motion: the line steps and the screen goes at once */
-(function(h){try{var c=document.createElement('canvas');if(!(c.getContext('webgl2')||c.getContext('webgl')))return}catch(x){return}
-h.classList.add('ld','ldu');var t0=performance.now(),p=0,done=false,K={32:1,33:1,34:1,35:1,36:1,37:1,38:1,39:1,40:1},O={capture:true,passive:false},
+/* the loading screen: only with JS and WebGL. It stays until the 3D world has drawn its first frame (worldready: the scene built,
+   every shader program made, the screens and the fonts in), on a phone too. 9 Nov.: the owner saw it go before the scenes were
+   there; it went after 1.1 s on a phone and 6 s on a PC whatever the world was doing. The line (its own transform: a custom
+   property on <html> made every step restyle the whole page) follows the real steps: the page, the fonts, the 3D script's bytes
+   as they come in (__ldGet), then the world's own steps (worldprogress). It gives up only when nothing has moved for 12 s (a
+   stalled network), after 45 s, when the world fails (no-gl), and it never shows without WebGL; then the poster stays until the
+   world comes. While it shows, the wheel, touch and the scroll keys wait, so nothing moves under it. Reduced motion: it does not
+   hold the page (input passes, at most 1.2 s) and the still world takes the poster's place without a fade */
+(function(h){var w=window,d=document;
+/* the 3D script, read as its bytes come in so the line can follow them (size: its length in bytes, checked by tools/site.test.mjs),
+   then run from those bytes. A browser without streams, a failed read or a blocked blob: a plain <script> */
+w.__ldGet=function(src,size,ok,ko){var go=function(u,b){var s=d.createElement('script');s.src=u;s.onload=function(){if(b)URL.revokeObjectURL(u);w.__ldStep&&__ldStep(.5);ok&&ok()};s.onerror=function(){if(b){URL.revokeObjectURL(u);go(src)}else ko&&ko()};(d.body||d.head).appendChild(s)};
+if(!(w.fetch&&w.ReadableStream&&w.Blob&&w.URL&&URL.createObjectURL))return go(src);
+fetch(src).then(function(r){if(!r.ok||!r.body)throw r.status;var rd=r.body.getReader(),bits=[],n=0,pump=function(){return rd.read().then(function(x){if(x.done)return;bits.push(x.value);n+=x.value.length;w.__ldStep&&__ldStep(.15+.32*Math.min(1,n/size));return pump()})};
+return pump().then(function(){go(URL.createObjectURL(new Blob(bits,{type:'text/javascript'})),1)})}).catch(function(){go(src)})};
+try{var c=d.createElement('canvas');if(!(c.getContext('webgl2')||c.getContext('webgl')))return}catch(x){return}
+h.classList.add('ld','ldu');var rm=matchMedia('(prefers-reduced-motion: reduce)').matches&&(function(){try{return localStorage.getItem('cs2-fx')!=='on'}catch(x){return true}})(),t0=performance.now(),seen=t0,p=0,done=false,K={32:1,33:1,34:1,35:1,36:1,37:1,38:1,39:1,40:1},O={capture:true,passive:false},EV=rm?[]:['wheel','touchmove','keydown'],
 hold=function(e){if(e.type!=='keydown'||K[e.keyCode]){e.preventDefault();e.stopImmediatePropagation()}},
-set=function(v){if(v>p){p=v;var e=document.querySelector('.ld-bar b');if(e)e.style.transform='scaleX('+v+')'}},
-end=function(e){if(done)return;done=true;if(e&&e.type==='worldready')h.classList.add('ldw');set(1);['wheel','touchmove','keydown'].forEach(function(t){removeEventListener(t,hold,O)});
+set=function(v){if(v>p){p=v;seen=performance.now();var e=d.querySelector('.ld-bar b');if(e)e.style.transform='scaleX('+v+')'}},
+dog=setInterval(function(){var n=performance.now();if(d.hidden){seen=n;return}if(n-seen>12e3||n-t0>45e3)end()},500),
+end=function(e){if(done)return;done=true;clearInterval(dog);if(e&&e.type==='worldready')h.classList.add('ldw');set(1);EV.forEach(function(t){removeEventListener(t,hold,O)});
 setTimeout(function(){h.classList.add('ld-out');setTimeout(function(){h.classList.remove('ld','ld-out')},400)},Math.max(90,300-(performance.now()-t0)))};
-['wheel','touchmove','keydown'].forEach(function(t){addEventListener(t,hold,O)});
-window.__ldStep=set;window.__ldEnd=end;set(.12);
-document.addEventListener('worldready',end,true);setTimeout(end,matchMedia('(pointer:coarse)').matches?1100:6000);
-document.addEventListener('DOMContentLoaded',function(){set(.25)});
-document.addEventListener('worldprogress',function(e){set(.45+.52*(+e.detail||0))},true);
-if(document.fonts)document.fonts.ready.then(function(){set(.35)});
+EV.forEach(function(t){addEventListener(t,hold,O)});
+w.__ldStep=set;w.__ldEnd=end;set(.08);
+d.addEventListener('worldready',end,true);if(rm)setTimeout(end,1200);
+d.addEventListener('DOMContentLoaded',function(){set(.12)});
+d.addEventListener('worldprogress',function(e){set(.5+.48*(+e.detail||0))},true);
+if(d.fonts)d.fonts.ready.then(function(){set(.15)});
 new MutationObserver(function(){if(h.classList.contains('no-gl'))end()}).observe(h,{attributes:true,attributeFilter:['class']});
 addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.documentElement)
 </script>
@@ -723,6 +736,7 @@ addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.docume
 ${JSON.stringify(ld, null, 1)}
 </script>
 ${style}
+<link rel="stylesheet" href="../assets/guide-reading.css">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -750,6 +764,7 @@ ${style}
       <p class="crumbs"><a href="../">CS2 IP Changer</a><i aria-hidden="true">/</i><span>${esc(p.nav)}</span></p>
       <h1${p.h1.length > 56 ? ' class="long"' : ''}>${esc(p.h1)}</h1>
       <p class="lead">${p.leadHtml || esc(p.lead)}</p>
+      <div class="guide-entry"><a class="guide-start" href="#${toc[0][0]}">Read the guide</a><details class="guide-contents"><summary>On this page</summary><nav aria-label="Guide contents"><ol>${toc.map(([id, h]) => `<li><a href="#${id}">${esc(h)}</a></li>`).join('')}</ol></nav></details></div>
       <div class="groom" aria-hidden="true"></div>
       <div class="gw-foot">
         <p class="gw-cap">${esc(world[1])}</p>
@@ -808,7 +823,9 @@ ${p.faq?.length ? `    <section class="gfaq" aria-labelledby="faq">
 </main>
 ${footer}
 <script>
-(function(){var b='../assets/js/',l=(document.documentElement.classList.contains('fx')?(matchMedia('(pointer: fine)').matches?['gsap.min.js','ScrollTrigger.min.js','lenis.min.js']:[]):[]).concat(['readout.js','../guides/world.min.js']);l.forEach(function(f){var s=document.createElement('script');s.src=b+f;s.async=false;if(/world/.test(f)){s.onload=function(){window.__ldStep&&__ldStep(.45);window.__gw&&window.__gw()};s.onerror=function(){document.documentElement.classList.add('no-gl')}}document.body.appendChild(s)})})();
+(function(){var b='../assets/js/',l=(document.documentElement.classList.contains('fx')?(matchMedia('(pointer: fine)').matches?['gsap.min.js','ScrollTrigger.min.js','lenis.min.js']:[]):[]).concat(['readout.js']);l.forEach(function(f){var s=document.createElement('script');s.src=b+f;s.async=false;document.body.appendChild(s)});
+/* the world's script on its own, its bytes counted by the loading screen */
+__ldGet('../assets/guides/world.min.js',964648,function(){window.__gw&&window.__gw()},function(){document.documentElement.classList.add('no-gl')})})();
 </script>
 <script>
 (function(){

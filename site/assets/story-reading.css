@@ -1,0 +1,20 @@
+/* Session 4: the route keeps its world; the reader gets a clear next step. */
+.story-next{display:inline-flex;align-items:center;gap:.8rem;min-height:44px;margin-top:.5rem;font:500 .9rem/1.4 var(--sans);color:var(--t-accent-light);text-underline-offset:.3em}
+.story-next::after{content:'↓';font-family:var(--mono)}
+.b-cover>.cue{display:none}
+@media (max-width:999px) and (orientation:portrait){
+  .b-cover h1{max-width:20ch;text-wrap:balance;font-size:clamp(1.85rem,1rem + 4.6vw,2.8rem)}
+  .b-cover .facts{max-width:44ch}
+  .b-cover{padding-bottom:1rem}
+  #how .beat{min-height:100svh}
+  .beat:not(.b-cover):not(.beat-long) .copy{margin-inline:0;border-radius:12px}
+  .beat .story-next{margin-bottom:0}
+}
+/* The static fallback follows the same reading order if scripts or WebGL fail. */
+.no-gl .b-cover{min-height:0;padding-block:2rem}
+.no-gl #how .beat{min-height:0;padding-block:1.5rem}
+.no-gl .beat-long{min-height:0}
+.no-gl .beat-long>.wrap{padding-block:1.5rem}
+.no-gl .beat-long .copy{position:static}
+.no-gl #how .copy,.no-gl .beat-long .copy{opacity:1!important}
+@media (prefers-reduced-motion:reduce){.story-next{transition:none}}
