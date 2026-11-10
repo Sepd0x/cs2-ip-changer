@@ -128,7 +128,7 @@ const style = home.match(/<style>[\s\S]*?<\/style>/)[0].replace(/\/\* home: [\s\
 @media (pointer:coarse){.gstar a,.crumbs a,.checks a{display:inline-flex;align-items:center;min-height:44px;margin-block:-.7rem}}
 @media (min-width:600px) and (max-width:900px){.top nav a.hide-s[href$="is-it-safe/"]{display:inline-flex;align-items:center;min-height:44px}}
 .crumbs{font:400 .86rem/1.4 var(--sans);color:var(--ink3);margin:0 0 1.5rem;display:flex;flex-wrap:wrap;gap:.2rem .6rem}
-.crumbs a{color:var(--ink2);text-decoration:none;display:inline-flex;align-items:center;min-height:24px}.crumbs a:hover{color:var(--ink)}
+.crumbs a{color:var(--ink2);text-decoration:none;display:inline-flex;align-items:center;min-height:24px}@media (hover:hover){.crumbs a:hover{color:var(--ink)}}
 @media (pointer:coarse){.crumbs a{min-height:44px}}
 .crumbs i{font-style:normal;color:var(--line2)}
 .ghero h1{font:500 clamp(2.4rem,1rem + 3.1vw,4.9rem)/.98 var(--disp);letter-spacing:-.045em;margin:0 0 1.4rem;max-width:16ch}
@@ -141,7 +141,7 @@ const style = home.match(/<style>[\s\S]*?<\/style>/)[0].replace(/\/\* home: [\s\
 /* with motion the two buttons keep their place before the picture is up, so nothing moves when they appear */
 html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 .gw-ctl .demo{background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-.gw-pause{width:44px;padding:0;gap:0;justify-content:center;font-size:0;color:var(--ink3)}.gw-pause:hover,.gw-pause:focus-visible{color:var(--ink)}
+.gw-pause{width:44px;padding:0;gap:0;justify-content:center;font-size:0;color:var(--ink3)}.gw-pause:focus-visible{color:var(--ink)}@media (hover:hover){.gw-pause:hover{color:var(--ink)}}
 .gw-pause::before{content:"";flex:none;width:8px;height:10px;border-inline:2.5px solid currentColor}
 .gw-pause[aria-pressed=true]::before,.gw-pause.play::before{border:0;border-left:9px solid currentColor;border-block:5px solid transparent;width:0;height:0}
 .gw-pause[aria-pressed=true],.gw-pause.play{background:color-mix(in srgb,var(--t-accent) 16%,transparent);box-shadow:inset 0 0 0 1px var(--t-accent)}
@@ -188,7 +188,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 .toc ul{list-style:none;margin:0;padding:0 0 0 1rem;border-left:1px solid var(--line)}
 .toc li{position:relative;margin:.45rem 0;font-size:.92rem;line-height:1.4}
 .toc a{color:var(--ink3);text-decoration:none;transition:color .2s}
-.toc a:hover{color:var(--ink)}
+@media (hover:hover){.toc a:hover{color:var(--ink)}}
 .toc a::before{content:"";position:absolute;left:calc(-1rem - 1px);top:.1em;bottom:.1em;width:2px;border-radius:2px;background:var(--accent);transform:scaleY(0);transition:transform .3s var(--ease-out)}
 .toc a.on{color:var(--ink)}
 .toc a.on::before{transform:none}
@@ -743,7 +743,7 @@ ${style}
 <div class="ld-scr" aria-hidden="true"><div class="ld-in"><span class="ld-name"><img src="../img/icon.png" alt="" width="28" height="28">CS2 IP Changer</span><span class="ld-bar"><b></b><i></i></span></div></div>
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="../"><img src="../img/icon.png" alt="" width="28" height="28">CS2 IP Changer</a>
+    <a class="brand" href="../"><img src="../img/icon.png" alt="" width="28" height="28"><span>CS2 IP Changer</span></a>
     <nav aria-label="Main">
       <a class="hide-s" href="../#features">Features</a>
       <a class="hide-s" href="../#how">How it works</a>

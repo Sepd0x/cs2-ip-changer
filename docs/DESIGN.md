@@ -257,6 +257,23 @@ serves the site and the lab to look at.
 
 `node tools/shots.mjs --out <folder>` is a trial run that changes nothing in the repo.
 
+## The site on a phone
+
+Under 760 px, and on a phone held on its side (up to 999 px wide and 540 px tall), the home has its own parts: the menu
+button with every section, the app as six tabs with a close-up of each page and More details (`assets/js/mobile-tour.js`,
+`assets/mobile-tour.css`), Android | iPhone as a switch of two equal halves, and each guide opens with its contents.
+Rules, checked by `node --test tools/site-touch.test.mjs` with taps and flicks (10 Nov 2026):
+
+- every `:hover` style sits in `@media (hover:hover)`, so a phone, which keeps `:hover` on what was tapped, leaves nothing
+  lit; a `:focus-visible` that shared the rule stays outside it;
+- `html` has `scroll-padding-top: calc(var(--top-h) + 1rem)`, so a heading's `scroll-margin-top` never adds the header
+  again;
+- every target is at least 44 px; a label never breaks inside a word;
+- by touch the beats' cards snap with `proximity` and `snap-stop: always`: a flick rests on a card, never between two and
+  never back against the finger. A hard flick can pass a card (Chrome keeps snap-stop only when it snaps); the plain
+  sections scroll freely;
+- a step picked on the rail or the chip rests on that step's shot (`A[i].s` in `home.js`), not where its anchor would go.
+
 ## Checks
 
 - `CI=true dotnet run --project tests` (`tests/DesignSyncTests.cs`): fails if a file's tokens are behind `Theme.xaml`, a
@@ -277,6 +294,8 @@ Any visual change to the app (a color, a text, a layout, anything in a `.xaml`) 
 2. `node tools/design-tokens.mjs` (if `Theme.xaml` changed);
 3. `node tools/shots.mjs`, a look at the new captures, `ui-map.js` if it lists moved buttons, and `node tools/site-renders.mjs` (the 3D renders) if
    Connection changed;
-4. the tests: `CI=true dotnet run --project tests` and `node --test worker/stats/test/`.
+4. the tests: `CI=true dotnet run --project tests` and `node --test worker/stats/test/*.test.mjs` (Node 24 on Windows
+   refuses the folder alone); for the site also `node --test tools/site.test.mjs tools/site-touch.test.mjs
+   tools/site-loading.test.mjs tools/world-3d.test.mjs`.
 
 At every release the version changes, so the captures (the sidebar shows it) are taken again before the release commit.

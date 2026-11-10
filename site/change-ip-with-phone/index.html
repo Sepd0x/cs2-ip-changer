@@ -78,7 +78,7 @@ addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.docume
     "@id": "https://sepd0x.github.io/cs2-ip-changer/#author"
    },
    "datePublished": "2026-10-31",
-   "dateModified": "2026-11-07",
+   "dateModified": "2026-11-10",
    "breadcrumb": {
     "@id": "https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/#crumbs"
    },
@@ -180,7 +180,7 @@ body{margin:0;border-top:2px solid transparent;border-image:var(--t-top) 1;backg
 ::selection{background:rgba(var(--t-accent-rgb),.34);color:#fff}
 main{overflow-x:clip;position:relative}
 a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--t-faint);text-decoration-thickness:1px;text-underline-offset:.22em;transition:text-decoration-color .15s,color .15s}
-a:hover{text-decoration-color:var(--accent)}
+@media (hover:hover){a:hover{text-decoration-color:var(--accent)}}
 :focus-visible{outline:2px solid var(--t-accent-light);outline-offset:3px;border-radius:2px}
 a.zoom:focus-visible,.copyrow .btn:focus-visible{outline-offset:-3px}
 @media (pointer:coarse){.instr p a,.vs .src a,.setup-foot a,details p a,.rel a{display:inline-block;padding-block:.6em;margin-block:-.6em}footer nav li a{display:inline-flex;align-items:center;min-height:44px}}
@@ -233,26 +233,26 @@ main>*,footer{position:relative;z-index:1}
 .brand img{width:28px;height:28px;border-radius:6px;flex:none}
 .top nav{display:flex;align-items:center;gap:1.5rem;font-size:.94rem}
 .top nav a:not(.btn){color:var(--ink2);text-decoration:none;padding-block:.6rem}
-.top nav a:not(.btn):hover{color:var(--ink)}
+@media (hover:hover){.top nav a:not(.btn):hover{color:var(--ink)}}
 .top nav a,.top nav .btn{white-space:nowrap}
 /* buttons: the app's accent with dark text (7.6:1), a hairline ghost, and a spring on press */
 .btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;background:var(--t-accent);color:var(--t-bg);font:600 1rem/1.2 var(--sans);padding:.85rem 1.4rem;border:0;border-radius:999px;text-decoration:none;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 0 1px rgba(var(--t-accent-rgb),.5);transition:background-color .2s,box-shadow .25s,transform .5s var(--ease-spring)}
-.btn:hover{background:var(--t-accent-light)}
+@media (hover:hover){.btn:hover{background:var(--t-accent-light)}}
 .btn:active{transform:scale(.96);transition-duration:.06s}
 .btn svg{width:1.125em;height:1.125em;flex:none}
 .btn-s{min-height:38px;padding:.55rem 1rem;font-size:.9rem}
 .btn-ghost{background:rgba(255,255,255,.03);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line2)}
-.btn-ghost:hover{background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px var(--ink3)}
+@media (hover:hover){.btn-ghost:hover{background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px var(--ink3)}}
 .btn-ghost svg{width:1.05em;height:1.05em}
 .link{color:var(--ink2);font-weight:500;display:inline-flex;align-items:center;min-height:44px}
-.link:hover{color:var(--ink)}
+@media (hover:hover){.link:hover{color:var(--ink)}}
 .actions{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1.6rem}
 .rel{color:var(--ink2);font-size:.86rem;line-height:1.5;margin:.75rem 0 0}
 .rel a{color:var(--ink2);display:inline-block;padding-block:.25rem}
-.rel a:hover{color:var(--ink)}
+@media (hover:hover){.rel a:hover{color:var(--ink)}}
 /* 6 Nov.: under Download, what to do at the SmartScreen warning (the .exe is not code-signed yet) */
 .rel-ss,.beat p.rel-ss{color:var(--ink3);font-size:.78rem;line-height:1.45;margin:.3rem 0 0;max-width:34rem}
-.rel-ss a{color:var(--ink2)}.rel-ss a:hover{color:var(--ink)}
+.rel-ss a{color:var(--ink2)}@media (hover:hover){.rel-ss a:hover{color:var(--ink)}}
 .nowrap-bits a{white-space:nowrap}
 .req,.safe{color:var(--ink3);font-size:.88rem;line-height:1.5;margin:.8rem 0 0}
 .req{margin-top:.45rem}
@@ -315,7 +315,7 @@ h3{font:500 1.12rem/1.35 var(--disp);letter-spacing:-.01em;margin:0 0 .35rem}
 .phone.down .bars i:nth-child(1){transition-delay:.18s}.phone.down .bars i:nth-child(2){transition-delay:.12s}.phone.down .bars i:nth-child(3){transition-delay:.06s}
 /* the demo button: it plays Change IP on this picture with example IPs */
 .demo{display:inline-flex;align-items:center;gap:.6rem;min-height:44px;padding:.55rem 1.05rem .55rem .8rem;border:0;border-radius:999px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px var(--line2);color:var(--ink);font:500 .92rem/1.2 var(--sans);cursor:pointer;transition:background-color .2s,box-shadow .2s,transform .5s var(--ease-spring)}
-.demo:hover{background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px var(--ink3)}
+@media (hover:hover){.demo:hover{background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px var(--ink3)}}
 .demo:active{transform:scale(.96);transition-duration:.06s}
 .demo i{width:1.4rem;height:1.4rem;border-radius:50%;display:grid;place-items:center;background:var(--t-accent);color:var(--t-bg)}
 .demo i svg{width:.7rem;height:.7rem}
@@ -353,7 +353,7 @@ summary::before,summary::after{content:"";position:absolute;right:.35rem;top:50%
 summary::before{transform:rotate(90deg)}
 details[open] summary::before{transform:rotate(135deg)}
 details[open] summary::after{transform:rotate(45deg)}
-summary:hover,details[open] summary{color:var(--ink)}
+details[open] summary{color:var(--ink)}@media (hover:hover){summary:hover{color:var(--ink)}}
 details p{margin:0;padding:0 3.5rem 1.7rem 0;color:var(--ink2);max-width:68ch}
 /* tables */
 .tbl{overflow-x:auto}
@@ -374,7 +374,7 @@ footer{position:relative;border-top:1px solid var(--line);color:var(--ink3);font
 footer nav h3{font:500 .9rem/1.4 var(--sans);color:var(--ink);margin:0 0 1rem}
 footer nav ul{list-style:none;margin:0;padding:0;display:grid;gap:0}
 footer a{color:var(--ink3);text-decoration:none;transition:color .15s;display:inline-block;padding-block:.55rem}
-footer a:hover{color:var(--ink)}
+@media (hover:hover){footer a:hover{color:var(--ink)}}
 /* the name at the very end: its outline lit in the app's three colors, a packet of light that runs through the letters,
    the horizon as the route with its packets, and the name's reflection on the floor, as in the 3D world (6 Nov.).
    It draws itself in as the page reaches it; the light follows the pointer. Reduced motion or Pause motion: lit and still.
@@ -475,7 +475,7 @@ a.zoom{display:block;cursor:zoom-in}
 @media (pointer:coarse){.gstar a,.crumbs a,.checks a{display:inline-flex;align-items:center;min-height:44px;margin-block:-.7rem}}
 @media (min-width:600px) and (max-width:900px){.top nav a.hide-s[href$="is-it-safe/"]{display:inline-flex;align-items:center;min-height:44px}}
 .crumbs{font:400 .86rem/1.4 var(--sans);color:var(--ink3);margin:0 0 1.5rem;display:flex;flex-wrap:wrap;gap:.2rem .6rem}
-.crumbs a{color:var(--ink2);text-decoration:none;display:inline-flex;align-items:center;min-height:24px}.crumbs a:hover{color:var(--ink)}
+.crumbs a{color:var(--ink2);text-decoration:none;display:inline-flex;align-items:center;min-height:24px}@media (hover:hover){.crumbs a:hover{color:var(--ink)}}
 @media (pointer:coarse){.crumbs a{min-height:44px}}
 .crumbs i{font-style:normal;color:var(--line2)}
 .ghero h1{font:500 clamp(2.4rem,1rem + 3.1vw,4.9rem)/.98 var(--disp);letter-spacing:-.045em;margin:0 0 1.4rem;max-width:16ch}
@@ -488,7 +488,7 @@ a.zoom{display:block;cursor:zoom-in}
 /* with motion the two buttons keep their place before the picture is up, so nothing moves when they appear */
 html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 .gw-ctl .demo{background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-.gw-pause{width:44px;padding:0;gap:0;justify-content:center;font-size:0;color:var(--ink3)}.gw-pause:hover,.gw-pause:focus-visible{color:var(--ink)}
+.gw-pause{width:44px;padding:0;gap:0;justify-content:center;font-size:0;color:var(--ink3)}.gw-pause:focus-visible{color:var(--ink)}@media (hover:hover){.gw-pause:hover{color:var(--ink)}}
 .gw-pause::before{content:"";flex:none;width:8px;height:10px;border-inline:2.5px solid currentColor}
 .gw-pause[aria-pressed=true]::before,.gw-pause.play::before{border:0;border-left:9px solid currentColor;border-block:5px solid transparent;width:0;height:0}
 .gw-pause[aria-pressed=true],.gw-pause.play{background:color-mix(in srgb,var(--t-accent) 16%,transparent);box-shadow:inset 0 0 0 1px var(--t-accent)}
@@ -535,7 +535,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 .toc ul{list-style:none;margin:0;padding:0 0 0 1rem;border-left:1px solid var(--line)}
 .toc li{position:relative;margin:.45rem 0;font-size:.92rem;line-height:1.4}
 .toc a{color:var(--ink3);text-decoration:none;transition:color .2s}
-.toc a:hover{color:var(--ink)}
+@media (hover:hover){.toc a:hover{color:var(--ink)}}
 .toc a::before{content:"";position:absolute;left:calc(-1rem - 1px);top:.1em;bottom:.1em;width:2px;border-radius:2px;background:var(--accent);transform:scaleY(0);transition:transform .3s var(--ease-out)}
 .toc a.on{color:var(--ink)}
 .toc a.on::before{transform:none}
@@ -664,7 +664,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 <div class="ld-scr" aria-hidden="true"><div class="ld-in"><span class="ld-name"><img src="../img/icon.png" alt="" width="28" height="28">CS2 IP Changer</span><span class="ld-bar"><b></b><i></i></span></div></div>
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="../"><img src="../img/icon.png" alt="" width="28" height="28">CS2 IP Changer</a>
+    <a class="brand" href="../"><img src="../img/icon.png" alt="" width="28" height="28"><span>CS2 IP Changer</span></a>
     <nav aria-label="Main">
       <a class="hide-s" href="../#features">Features</a>
       <a class="hide-s" href="../#how">How it works</a>
@@ -685,13 +685,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
       <p class="crumbs"><a href="../">CS2 IP Changer</a><i aria-hidden="true">/</i><span>Change IP with your phone</span></p>
       <h1 class="long">Set up an Android phone for CS2: USB tethering, and a new IP in one click</h1>
       <p class="lead">The whole setup, start to finish: the phone shares its mobile data over USB, only CS2, Steam and your servers use it, and Change IP gets a new carrier IP from the PC.</p>
-      <div class="guide-entry"><a class="guide-start" href="#what-you-need">Read the guide</a><details class="guide-contents"><summary>On this page</summary><nav aria-label="Guide contents"><ol>
-      <li><a href="#what-you-need">What you need</a></li>
-      <li><a href="#set-it-up">Set it up</a></li>
-      <li><a href="#change-ip-from-the-pc">Change IP from the PC</a></li>
-      <li><a href="#game-only-whole-pc-or-no-phone">Game only, whole PC or no phone</a></li>
-      <li><a href="#faq">FAQ</a></li>
-    </ol></nav></details></div>
+      <div class="guide-entry"><a class="guide-start" href="#what-you-need">Read the guide</a><details class="guide-contents"><summary>On this page</summary><nav aria-label="Guide contents"><ol><li><a href="#what-you-need">What you need</a></li><li><a href="#set-it-up">Set it up</a></li><li><a href="#change-ip-from-the-pc">Change IP from the PC</a></li><li><a href="#game-only-whole-pc-or-no-phone">Game only, whole PC or no phone</a></li><li><a href="#faq">FAQ</a></li></ol></nav></details></div>
       <div class="groom" aria-hidden="true"></div>
       <div class="gw-foot">
         <p class="gw-cap">Only CS2, Steam and your servers take the phone; the browser, Discord and downloads stay home. Example IP.</p>

@@ -44,7 +44,9 @@
       var crop = find('.tour-crop'), cut = crop.firstElementChild;
       if (!cut || !crop.clientWidth) return;
       var width = parseFloat(cut.style.getPropertyValue('--mw')) + 32;
-      var wide = width > crop.clientWidth;
+      // "Scroll image sideways" only when there is something to see: the cut has 32 px of margin round its mark, and a
+      // phone on its side had the hint for a 13 px scroll (10 Nov.)
+      var wide = width > crop.clientWidth + 24;
       crop.tabIndex = wide ? 0 : -1;
       crop.setAttribute('role', 'region');
       crop.setAttribute('aria-label', wide ? 'Screenshot detail. Scroll horizontally to see the full row.' : 'Screenshot detail');

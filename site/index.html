@@ -168,7 +168,7 @@ body{margin:0;border-top:2px solid transparent;border-image:var(--t-top) 1;backg
 ::selection{background:rgba(var(--t-accent-rgb),.34);color:#fff}
 main{overflow-x:clip;position:relative}
 a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--t-faint);text-decoration-thickness:1px;text-underline-offset:.22em;transition:text-decoration-color .15s,color .15s}
-a:hover{text-decoration-color:var(--accent)}
+@media (hover:hover){a:hover{text-decoration-color:var(--accent)}}
 :focus-visible{outline:2px solid var(--t-accent-light);outline-offset:3px;border-radius:2px}
 a.zoom:focus-visible,.copyrow .btn:focus-visible{outline-offset:-3px}
 @media (pointer:coarse){.instr p a,.vs .src a,.setup-foot a,details p a,.rel a{display:inline-block;padding-block:.6em;margin-block:-.6em}footer nav li a{display:inline-flex;align-items:center;min-height:44px}}
@@ -221,26 +221,26 @@ main>*,footer{position:relative;z-index:1}
 .brand img{width:28px;height:28px;border-radius:6px;flex:none}
 .top nav{display:flex;align-items:center;gap:1.5rem;font-size:.94rem}
 .top nav a:not(.btn){color:var(--ink2);text-decoration:none;padding-block:.6rem}
-.top nav a:not(.btn):hover{color:var(--ink)}
+@media (hover:hover){.top nav a:not(.btn):hover{color:var(--ink)}}
 .top nav a,.top nav .btn{white-space:nowrap}
 /* buttons: the app's accent with dark text (7.6:1), a hairline ghost, and a spring on press */
 .btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;background:var(--t-accent);color:var(--t-bg);font:600 1rem/1.2 var(--sans);padding:.85rem 1.4rem;border:0;border-radius:999px;text-decoration:none;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 0 1px rgba(var(--t-accent-rgb),.5);transition:background-color .2s,box-shadow .25s,transform .5s var(--ease-spring)}
-.btn:hover{background:var(--t-accent-light)}
+@media (hover:hover){.btn:hover{background:var(--t-accent-light)}}
 .btn:active{transform:scale(.96);transition-duration:.06s}
 .btn svg{width:1.125em;height:1.125em;flex:none}
 .btn-s{min-height:38px;padding:.55rem 1rem;font-size:.9rem}
 .btn-ghost{background:rgba(255,255,255,.03);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line2)}
-.btn-ghost:hover{background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px var(--ink3)}
+@media (hover:hover){.btn-ghost:hover{background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px var(--ink3)}}
 .btn-ghost svg{width:1.05em;height:1.05em}
 .link{color:var(--ink2);font-weight:500;display:inline-flex;align-items:center;min-height:44px}
-.link:hover{color:var(--ink)}
+@media (hover:hover){.link:hover{color:var(--ink)}}
 .actions{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1.6rem}
 .rel{color:var(--ink2);font-size:.86rem;line-height:1.5;margin:.75rem 0 0}
 .rel a{color:var(--ink2);display:inline-block;padding-block:.25rem}
-.rel a:hover{color:var(--ink)}
+@media (hover:hover){.rel a:hover{color:var(--ink)}}
 /* 6 Nov.: under Download, what to do at the SmartScreen warning (the .exe is not code-signed yet) */
 .rel-ss,.beat p.rel-ss{color:var(--ink3);font-size:.78rem;line-height:1.45;margin:.3rem 0 0;max-width:34rem}
-.rel-ss a{color:var(--ink2)}.rel-ss a:hover{color:var(--ink)}
+.rel-ss a{color:var(--ink2)}@media (hover:hover){.rel-ss a:hover{color:var(--ink)}}
 .nowrap-bits a{white-space:nowrap}
 .req,.safe{color:var(--ink3);font-size:.88rem;line-height:1.5;margin:.8rem 0 0}
 .req{margin-top:.45rem}
@@ -303,7 +303,7 @@ h3{font:500 1.12rem/1.35 var(--disp);letter-spacing:-.01em;margin:0 0 .35rem}
 .phone.down .bars i:nth-child(1){transition-delay:.18s}.phone.down .bars i:nth-child(2){transition-delay:.12s}.phone.down .bars i:nth-child(3){transition-delay:.06s}
 /* the demo button: it plays Change IP on this picture with example IPs */
 .demo{display:inline-flex;align-items:center;gap:.6rem;min-height:44px;padding:.55rem 1.05rem .55rem .8rem;border:0;border-radius:999px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px var(--line2);color:var(--ink);font:500 .92rem/1.2 var(--sans);cursor:pointer;transition:background-color .2s,box-shadow .2s,transform .5s var(--ease-spring)}
-.demo:hover{background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px var(--ink3)}
+@media (hover:hover){.demo:hover{background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px var(--ink3)}}
 .demo:active{transform:scale(.96);transition-duration:.06s}
 .demo i{width:1.4rem;height:1.4rem;border-radius:50%;display:grid;place-items:center;background:var(--t-accent);color:var(--t-bg)}
 .demo i svg{width:.7rem;height:.7rem}
@@ -341,7 +341,7 @@ summary::before,summary::after{content:"";position:absolute;right:.35rem;top:50%
 summary::before{transform:rotate(90deg)}
 details[open] summary::before{transform:rotate(135deg)}
 details[open] summary::after{transform:rotate(45deg)}
-summary:hover,details[open] summary{color:var(--ink)}
+details[open] summary{color:var(--ink)}@media (hover:hover){summary:hover{color:var(--ink)}}
 details p{margin:0;padding:0 3.5rem 1.7rem 0;color:var(--ink2);max-width:68ch}
 /* tables */
 .tbl{overflow-x:auto}
@@ -362,7 +362,7 @@ footer{position:relative;border-top:1px solid var(--line);color:var(--ink3);font
 footer nav h3{font:500 .9rem/1.4 var(--sans);color:var(--ink);margin:0 0 1rem}
 footer nav ul{list-style:none;margin:0;padding:0;display:grid;gap:0}
 footer a{color:var(--ink3);text-decoration:none;transition:color .15s;display:inline-block;padding-block:.55rem}
-footer a:hover{color:var(--ink)}
+@media (hover:hover){footer a:hover{color:var(--ink)}}
 /* the name at the very end: its outline lit in the app's three colors, a packet of light that runs through the letters,
    the horizon as the route with its packets, and the name's reflection on the floor, as in the 3D world (6 Nov.).
    It draws itself in as the page reaches it; the light follows the pointer. Reduced motion or Pause motion: lit and still.
@@ -453,7 +453,7 @@ section.solid{border-top:1px solid var(--line)}
 .get-note a{display:inline-block;padding-block:.85rem;margin-block:-.85rem}
 .cue{position:absolute;left:max(var(--gutter),(100% - var(--max))/2);bottom:1.4rem;display:inline-flex;align-items:center;gap:.6rem;min-height:44px;color:var(--ink3);font:400 .82rem/1 var(--mono);text-decoration:none}
 .cue svg{width:1rem;height:1rem}
-.cue:hover{color:var(--ink)}
+@media (hover:hover){.cue:hover{color:var(--ink)}}
 .fx .cue svg{animation:cue 2.4s var(--ease-in-out) 3 2.2s}
 @keyframes cue{50%{transform:translateY(4px)}}
 /* the cover comes in once, line by line, as the route draws itself */
@@ -683,7 +683,7 @@ code{font-size:max(12px,.86em)}
 #vpn .us{background:none;padding-inline:0 1.4rem;color:var(--ink)}
 #vpn td:not(.us){color:var(--ink3)}
 #vpn thead .us{box-shadow:none;border-top:2px solid transparent;border-image:var(--t-top) 1;color:var(--ink);font:500 .95rem/1.4 var(--disp)}
-#vpn tbody tr:hover th,#vpn tbody tr:hover td:not(.us){color:var(--ink)}
+@media (hover:hover){#vpn tbody tr:hover th,#vpn tbody tr:hover td:not(.us){color:var(--ink)}}
 /* setup */
 .steps4{list-style:none;margin:0 0 4rem;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line);counter-reset:st}
 .steps4 li{counter-increment:st;position:relative;padding:1.6rem 1.5rem 1.6rem 0;color:var(--ink2);font-size:.95rem;line-height:1.55;min-width:0}
@@ -708,12 +708,12 @@ ul.guides{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
 ul.guides li{position:relative;display:grid;grid-template-columns:3.5rem minmax(0,1.2fr) minmax(0,1fr) 1.4rem;gap:1.5rem;align-items:baseline;padding:1.45rem 0;border-bottom:1px solid var(--line)}
 ul.guides li::before{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--t-top);transform:scaleX(0);transform-origin:left;transition:transform .6s var(--ease-out)}
 ul.guides li::after{content:"";width:.55rem;height:.55rem;border-top:1.5px solid var(--ink3);border-right:1.5px solid var(--ink3);transform:rotate(45deg);transition:transform .4s var(--ease-out),border-color .25s;justify-self:end}
-ul.guides li:hover::before,ul.guides li:focus-within::before{transform:scaleX(1)}
-ul.guides li:hover::after{transform:translateX(5px) rotate(45deg);border-color:var(--ink)}
+ul.guides li:focus-within::before{transform:scaleX(1)}@media (hover:hover){ul.guides li:hover::before{transform:scaleX(1)}}
+@media (hover:hover){ul.guides li:hover::after{transform:translateX(5px) rotate(45deg);border-color:var(--ink)}}
 ul.guides .n{font:400 .8rem/1 var(--mono);color:var(--ink3)}
 ul.guides a{font:500 clamp(1.25rem,1rem + .8vw,2rem)/1.15 var(--disp);letter-spacing:-.03em;text-decoration:none}
 ul.guides a .t{display:inline-block;transition:transform .5s var(--ease-out)}
-ul.guides li:hover a .t{transform:translateX(.5rem)}
+@media (hover:hover){ul.guides li:hover a .t{transform:translateX(.5rem)}}
 ul.guides a::after{content:"";position:absolute;inset:0}
 ul.guides a:focus-visible{outline:0}ul.guides a:focus-visible::after{outline:2px solid var(--t-accent-light);outline-offset:2px}
 ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
@@ -744,11 +744,11 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
 .rail ol::before,.rail ol::after{content:"";position:absolute;left:.7rem;right:.7rem;bottom:.2rem;height:1px;background:var(--line2)}
 .rail ol::after{height:2px;bottom:-.5px;background:var(--t-top);transform-origin:0 50%;transform:scaleX(var(--p,0))}
 .rail a{display:inline-flex;align-items:center;min-height:32px;color:var(--ink2);text-decoration:none;transition:color .3s}
-.rail a:hover{color:var(--ink)}
+@media (hover:hover){.rail a:hover{color:var(--ink)}}
 .rail li.on a{color:var(--ink);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.5em;text-decoration-color:currentColor}
 /* 5 Nov.: a quiet round icon, not a labelled pill (the owner found the pill tacky). The text stays as the accessible name. */
 .pause{position:fixed;right:max(var(--gutter),(100% - var(--max))/2);bottom:calc(2.3rem + 32px);z-index:5;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;padding:0;gap:0;border:0;border-radius:50%;background:color-mix(in srgb,var(--t-surface) 70%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink3);font-size:0;cursor:pointer;opacity:.7;transition:opacity .4s,visibility .4s,color .2s,background-color .2s,box-shadow .2s}
-.pause:hover,.pause:focus-visible{opacity:1;color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink3)}
+.pause:focus-visible{opacity:1;color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink3)}@media (hover:hover){.pause:hover{opacity:1;color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink3)}}
 .pause::before{content:"";flex:none;width:8px;height:10px;border-inline:2.5px solid currentColor}
 .pause[aria-pressed=true],.pause.play{opacity:1;color:var(--ink);background:color-mix(in srgb,var(--t-accent) 16%,var(--t-surface));box-shadow:inset 0 0 0 1px var(--t-accent)}
 .pause[aria-pressed=true]::before,.pause.play::before{border:0;border-left:9px solid currentColor;border-block:5px solid transparent;width:0;height:0}
@@ -767,7 +767,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
 .where-list li{counter-increment:st}
 .where-list a{display:flex;align-items:center;gap:.7rem;min-height:44px;padding:0 .7rem;border-radius:8px;color:var(--ink2);text-decoration:none}
 .where-list ol a::before{content:counter(st);min-width:1ch;color:var(--ink3)}
-.where-list a:hover,.where-list a:focus-visible{background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--ink)}
+.where-list a:focus-visible{background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--ink)}@media (hover:hover){.where-list a:hover{background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--ink)}}
 .where-list a[aria-current]{color:var(--ink)}.where-list a[aria-current]::before{color:var(--t-accent-light)}
 .where-list p{display:flex;gap:.2rem;margin:.3rem 0 0;padding-top:.3rem;border-top:1px solid var(--line)}
 .where-list p a{flex:1;justify-content:center}

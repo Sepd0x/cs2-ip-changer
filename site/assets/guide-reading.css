@@ -3,7 +3,8 @@
 .guide-start{display:inline-flex;align-items:center;gap:.8rem;min-height:44px;color:var(--t-accent-light);font:500 .95rem/1.4 var(--sans)}
 .guide-start::after{content:'↓';font-family:var(--mono)}
 .guide-contents{display:none}
-.gtext h2{scroll-margin-top:calc(var(--top-h) + 1.25rem)}
+/* the page's scroll-padding-top already leaves the header and 1rem; a margin with the header too put a heading 100 px under it */
+.gtext h2{scroll-margin-top:.25rem}
 .gtext img{max-width:100%}
 @media (max-width:999px){
   .guide-entry{display:block}
@@ -14,7 +15,7 @@
   .guide-contents[open] summary::after{content:'−';transform:none}
   .guide-contents ol{list-style:none;padding:0 0 .75rem;margin:0}
   .guide-contents a{display:flex;align-items:center;min-height:44px;padding:.5rem 0;color:var(--ink2);font-size:.95rem;text-decoration:none}
-  .guide-contents a:hover{color:var(--t-accent-light)}
+  @media (hover:hover){.guide-contents a:hover{color:var(--t-accent-light)}}
   .guide-contents a:focus-visible{outline-offset:0}
   .gtoc-m{display:none}
   .ghero-copy{padding-right:0}
@@ -28,3 +29,14 @@
   .gtext{max-width:70ch}
 }
 @media (max-width:380px){.top .brand{font-size:.9rem;gap:.45rem}.top nav{gap:.35rem}.top nav>.btn-ghost{display:none}}
+/* text at 200% on a phone (UI-004): the header's name and buttons no longer fit and pushed the page 663 px wide. As on the
+   home, the header measures itself; when it is narrow for its text the star goes and the name keeps only the logo
+   (the name stays for screen readers) */
+@media (max-width:999px){
+  .top>.wrap{container-type:inline-size}
+  .top .brand{min-width:0}
+}
+@container (max-width:16rem){
+  .top nav>.btn-ghost{display:none}
+  .top .brand span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+}

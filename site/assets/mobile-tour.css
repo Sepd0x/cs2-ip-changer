@@ -4,7 +4,7 @@
   .mobile-app .app-grid>.win-fig,.mobile-app .app-grid>.pages,.mobile-app .app-grid>.pg-cap{display:none}
   .mobile-app .app-grid{display:block}
   .mobile-app .app-body{background:var(--t-bg);padding-block:1.5rem 3rem}
-  .mobile-tour{--tour-gap:.75rem;display:block;position:relative;scroll-margin-top:calc(var(--top-h) + .75rem);color:var(--ink)}
+  .mobile-tour{--tour-gap:.75rem;display:block;position:relative;color:var(--ink)}
   .tour-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.25rem;padding-bottom:var(--tour-gap);border-bottom:1px solid var(--line)}
   .tour-tabs button{min-width:0;min-height:44px;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--ink2);font:500 .9rem/1.2 var(--sans);cursor:pointer}
   .tour-tabs button[aria-selected=true]{color:var(--t-accent-light);background:color-mix(in srgb,var(--t-accent) 10%,var(--t-bg));border-color:color-mix(in srgb,var(--t-accent) 45%,var(--line))}

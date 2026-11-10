@@ -61,7 +61,7 @@ html{color-scheme:dark;-webkit-text-size-adjust:100%}
 @media (min-width:2561px){html{font-size:clamp(1.5rem,min(.94vw,1.67vh),3rem)}}
 body{margin:0;min-height:100svh;display:grid;grid-template-rows:auto 1fr;background:var(--t-bg);color:var(--ink);font:400 1rem/1.6 var(--sans);-webkit-font-smoothing:antialiased;border-top:2px solid transparent;border-image:var(--t-top) 1;overflow-x:clip}
 a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--t-line-strong);text-underline-offset:.22em;transition:color .15s,text-decoration-color .15s}
-a:hover{text-decoration-color:var(--t-accent)}
+@media (hover:hover){a:hover{text-decoration-color:var(--t-accent)}}
 :focus-visible{outline:2px solid var(--t-accent-light);outline-offset:3px;border-radius:2px}
 .cols{position:fixed;inset:0;z-index:0;pointer-events:none;padding-inline:var(--g)}
 .cols i{display:block;height:100%;max-width:88rem;margin-inline:auto;background-image:linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:calc(100%/12) 100%;border-right:1px solid rgba(255,255,255,.035)}
@@ -93,9 +93,9 @@ a:hover{text-decoration-color:var(--t-accent)}
 .cap{flex:1 1 14rem;margin:0;max-width:none;font:400 .86rem/1.5 var(--sans);color:var(--ink2);padding:.6rem .85rem;border-radius:8px;background:color-mix(in srgb,var(--t-bg) 90%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--t-text) 10%,transparent)}
 .demo{display:inline-flex;align-items:center;gap:.6rem;min-height:44px;padding:.55rem 1.1rem .55rem 1rem;border:0;border-radius:999px;background:color-mix(in srgb,var(--t-bg) 88%,transparent);box-shadow:inset 0 0 0 1px var(--t-line-strong);color:var(--ink);font:500 .92rem/1.2 var(--sans);cursor:pointer}
 .demo[hidden]{visibility:hidden}@media (prefers-reduced-motion:reduce){.demo[hidden]{display:none}}
-.demo:hover{box-shadow:inset 0 0 0 1px var(--ink3)}
+@media (hover:hover){.demo:hover{box-shadow:inset 0 0 0 1px var(--ink3)}}
 /* 6 Nov.: the quiet round icon of the home and the guides, not a labelled pill; the text stays as its name */
-.foot .demo{width:44px;padding:0;gap:0;justify-content:center;font-size:0;color:var(--ink3);flex:none}.foot .demo:hover,.foot .demo:focus-visible{color:var(--ink)}
+.foot .demo{width:44px;padding:0;gap:0;justify-content:center;font-size:0;color:var(--ink3);flex:none}.foot .demo:focus-visible{color:var(--ink)}@media (hover:hover){.foot .demo:hover{color:var(--ink)}}
 .more{padding:.85rem 1rem .25rem;border-radius:12px;background:color-mix(in srgb,var(--t-bg) 92%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 0 0 1px var(--t-line)}
 .more li:last-child{border-bottom:0}
 .demo::before{content:"";flex:none;width:8px;height:10px;border-inline:2.5px solid currentColor}
@@ -108,10 +108,10 @@ h1{font:500 clamp(2.2rem,1.2rem + 3vw,4.4rem)/.98 var(--disp);letter-spacing:-.0
 .cp>p{margin:0 0 1.8rem;color:var(--ink2);font-size:1.08rem;max-width:44ch}
 .acts{display:flex;flex-wrap:wrap;gap:.75rem 1rem}
 .btn{display:inline-flex;align-items:center;gap:.6rem;min-height:44px;padding:.8rem 1.35rem;border-radius:999px;background:var(--t-accent);color:var(--t-bg);font:600 1rem/1.2 var(--sans);text-decoration:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 14px 34px -14px rgba(var(--t-accent-rgb),.8);transition:background-color .2s}
-.btn:hover{background:var(--t-accent-light)}
+@media (hover:hover){.btn:hover{background:var(--t-accent-light)}}
 .btn svg{width:1.1em;height:1.1em}
 .btn.ghost{background:rgba(255,255,255,.03);color:var(--ink);box-shadow:inset 0 0 0 1px var(--t-line-strong)}
-.btn.ghost:hover{background:rgba(255,255,255,.07)}
+@media (hover:hover){.btn.ghost:hover{background:rgba(255,255,255,.07)}}
 .btn.sm{min-height:44px;padding:.5rem 1rem;font-size:.9rem}
 .get-top,.get-phone{display:none}
 @media (pointer:coarse){.get-top,.get-phone{display:inline-flex}.get-desk{display:none}}
@@ -120,7 +120,7 @@ h1{font:500 clamp(2.2rem,1.2rem + 3vw,4.4rem)/.98 var(--disp);letter-spacing:-.0
 .more li{border-bottom:1px solid var(--t-line)}
 .more a{display:flex;justify-content:space-between;align-items:center;padding:.85rem 0;color:var(--ink2);text-decoration:none;font:500 1.05rem/1.3 var(--disp);letter-spacing:-.01em}
 .more a::after{content:"";width:.5rem;height:.5rem;border-top:1.5px solid var(--ink3);border-right:1.5px solid var(--ink3);transform:rotate(45deg);transition:transform .35s var(--ease-out)}
-.more a:hover{color:var(--ink)}.more a:hover::after{transform:translateX(4px) rotate(45deg)}
+@media (hover:hover){.more a:hover{color:var(--ink)}.more a:hover::after{transform:translateX(4px) rotate(45deg)}}
 .skip{position:absolute;left:-999px;top:8px;z-index:60;display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:5px;background:var(--t-accent);color:var(--t-bg);font-weight:600;text-decoration:none}.skip:focus{left:12px}
 main:focus{outline:0}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}

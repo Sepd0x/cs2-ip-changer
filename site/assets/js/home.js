@@ -162,7 +162,19 @@
     if (heading) { heading.setAttribute('tabindex', '-1'); heading.focus({preventScroll:true}); }
     if (W.__lenis) W.__lenis.start();
   }); });
-  if (rail) rail.addEventListener('click', function (e) { var a = e.target.closest && e.target.closest('a'); if (!a) return; var i = railItems.indexOf(a.parentNode); if (i >= 0) { railGo = { p: i, until: performance.now() + 1300, first: true }; mark(i); requestAnimationFrame(update); } });
+  // a step picked on the rail or the chip rests on that step's own shot (A[i].s). As a plain anchor it rested where the
+  // beat's top goes under the header, 81 px before the shot, and the camera eased back off it once the jump was over
+  // (10 Nov., found by touch on a phone on its side; the rail on a PC did the same). The app (step 6) keeps its anchor.
+  function stepGo(i, e) {
+    if (i < 1 || i > NB - 2 || !A[i] || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button) return;
+    e.preventDefault(); e.stopPropagation();
+    var y = Math.round(A[i].s);
+    try { history.pushState(null, '', STEPS[i]); } catch (x) {}
+    if (W.__lenis) W.__lenis.scrollTo(y, { duration: 1.1, lock: true }); else scrollTo({ top: y, behavior: FX ? 'smooth' : 'auto' });
+    var heading = copies[i] && $('h2,h3', copies[i]);
+    if (heading) { heading.setAttribute('tabindex', '-1'); heading.focus({ preventScroll: true }); }
+  }
+  if (rail) rail.addEventListener('click', function (e) { var a = e.target.closest && e.target.closest('a'); if (!a) return; var i = railItems.indexOf(a.parentNode); if (i >= 0) { railGo = { p: i, until: performance.now() + 1300, first: true }; mark(i); requestAnimationFrame(update); stepGo(i, e); } });
 
   /* ------------------------------------------------------------ every scroll: the scene, the rail, the log */
   var lastLine = -2, uq = 0, onStage = true;
@@ -283,7 +295,7 @@
     whereList.addEventListener('click', function (e) {
       var a = e.target.closest && e.target.closest('a'); if (!a) return;
       var i = whereLinks.indexOf(a);
-      if (i >= 0) { railGo = { p: i, until: performance.now() + 1300, first: true }; mark(i); requestAnimationFrame(update); }
+      if (i >= 0) { railGo = { p: i, until: performance.now() + 1300, first: true }; mark(i); requestAnimationFrame(update); stepGo(i, e); }
       whereOpen(false);
     });
     d.addEventListener('click', function (e) { if (!whereEl.contains(e.target)) whereShut(); });
