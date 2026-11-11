@@ -18,6 +18,10 @@ public sealed partial class Settings
     /// <summary>A phone connection was checked at least once. Until then cs2.exe isn't locked, so trying the app without a phone
     /// (and closing it) never leaves CS2 unable to connect at home.</summary>
     public bool PhoneSeen { get; set; }
+    /// <summary>The first-run tour was shown (10 Nov 2026). It opens by itself once, only before a phone is seen; Settings > App opens it again.</summary>
+    public bool TourSeen { get; set; }
+    /// <summary>Regions said once what the phone adds (10 Nov 2026: every new user used Regions, none plugged in a phone).</summary>
+    public bool RegionsPitchSeen { get; set; }
     /// <summary>The phone was last seen as an iPhone (beta.12): a hotspot over Wi-Fi alone can't tell, so this decides there.</summary>
     public bool PhoneIsIphone { get; set; }
     // CS2 open = whole PC through the phone connection. Off for new installs since beta.10: only CS2 (and Steam) use the phone,

@@ -63,7 +63,7 @@ public partial class MainWindow
             NoteUsb(usb);
             if (usb.Problem is int code) SetPhone(Ui.Bad, "Phone driver failed", PhoneSetup.Advice(PhoneStep.UsbDriverError, code, usb.Vendor == "Samsung"));
             // No jargon before there is a reason for it (4 nov., simulated users): Phone setup explains USB debugging when it's the step
-            else SetPhone(Ui.Faint, "Phone not found", usb.Seen ? "Phone plugged in. Press Phone setup to finish." : "Plug in your phone with a USB cable, then press Phone setup.");
+            else SetPhone(Ui.Faint, "Phone not found", usb.Seen ? "Phone plugged in. Press Phone setup to finish." : Texts.PhoneBoxPlugIn);
         }
         else if (!info.Ready) SetPhone(Ui.Warn, "Waiting for authorization", info.Summary);
         else if (info.WifiOn && info.WifiConnected == false)
@@ -313,21 +313,66 @@ public partial class MainWindow
         await InstallAdb(t => ProgressText.Text = t, showProgress: true);
     }
 
-    /// <summary>Downloads ADB (you said yes first). True when it's installed.</summary>
-    async Task<bool> InstallAdb(Action<string> report, bool showProgress)
+    /// <summary>Downloads ADB (you pressed Install, or opened Phone setup without it). True when it's installed.</summary>
+    async Task<bool> InstallAdb(Action<string> report, bool showProgress, Action<double> percent = null)
     {
         AdbInstallBtn.IsEnabled = false;
+        _adbError = null;
         if (showProgress) ShowProgress("Downloading the phone tool (ADB) from Google…");
         try
         {
-            _adb = await Adb.Download(new Progress<string>(report));
-            if (_adb != null) { Log.Ok("ADB installed at " + _adb); Toast("ADB installed.", true); }
-            else Toast("Downloaded, but adb.exe was not found.", Tone.Error);
+            _adb = await Adb.Download(new Progress<string>(report), percent == null ? null : new Progress<double>(percent));
+            if (_adb != null) { Log.Ok("ADB installed at " + _adb); Toast(showProgress ? "ADB installed." : Texts.AdbInstalledToast, true); }
+            else { _adbError = "adb.exe was not found in it"; Toast("Downloaded, but adb.exe was not found.", Tone.Error); }
         }
-        catch (Exception ex) { Log.Error("ADB download: " + ex.Message); Toast("Couldn't download ADB: " + ex.Message, Tone.Error); }
+        catch (Exception ex)
+        {
+            _adbError = AdbErrorText(ex);
+            Log.Error("ADB download: " + ex.Message);
+            if (showProgress) Toast("Couldn't download ADB: " + ex.Message, Tone.Error);
+        }
         finally { if (showProgress) HideProgress(); AdbInstallBtn.IsEnabled = true; await RefreshPhone(); }
         return _adb != null;
     }
+
+    /// <summary>Why the last ADB download failed, short (Phone setup shows it in the row with Try again).</summary>
+    string _adbError;
+
+    /// <summary>The download's failure in a few words: no internet, too slow, or what the server said.</summary>
+    public static string AdbErrorText(Exception ex) => ex switch
+    {
+        TaskCanceledException => "it took too long",
+        System.Net.Http.HttpRequestException { StatusCode: { } code } => $"Google answered {(int)code}",
+        System.Net.Http.HttpRequestException => "no connection to dl.google.com",
+        IOException => "the file couldn't be saved",
+        _ => ex.GetType().Name,
+    };
+
+    /// <summary>Phone setup's own download of ADB: in the row, with the MB and a bar (10 Nov: one new user left Phone setup here twice).</summary>
+    async Task SetupInstallAdb(bool auto)
+    {
+        if (_setupBusy != null || _adb != null) return;
+        _setupBusy = PhoneStep.NoAdbTool;
+        _setupPercent = 0;
+        // The dashboard's "pressed Install" (Setup_ clicks): since 10 Nov also when Phone setup starts the download by itself
+        Telemetry.Click("Setup_" + PhoneSetup.Key(PhoneStep.NoAdbTool));
+        if (auto) { Telemetry.Count("adb_auto"); Log.Info("Phone setup: downloading the phone tool (ADB) from Google."); }
+        void Busy(string text) { if (text != null) _setupBusyText = text; if (_setupState != null && SetupPane.Visibility == Visibility.Visible) ShowSetup(_setupState); }
+        bool ok;
+        try
+        {
+            Busy(Texts.AdbDownloading(0, null));
+            ok = await InstallAdb(Busy, showProgress: false, percent: p => { _setupPercent = p; Busy(null); });
+        }
+        finally { _setupBusy = null; _setupBusyText = null; _setupPercent = null; }
+        _adbFailed = ok ? null : _adbError ?? "unknown error";
+        Telemetry.Count(ok ? "adb_ok" : "adb_fail");
+        await ReadSetupNow();
+    }
+
+    /// <summary>The last ADB download from Phone setup failed (the row says why and offers Try again); null after one that worked.</summary>
+    string _adbFailed;
+    double? _setupPercent;
 
     async void Tether_Click(object sender, RoutedEventArgs e)
     {
@@ -420,13 +465,24 @@ public partial class MainWindow
         if (_demo) { DemoPhoneSetup(); return; }
         if (_setupTimer?.IsEnabled == true) return;
         Log.Info("Phone setup opened.");
-        _setupFirstTodo = _setupLeft = null;
+        _setupFirstTodo = _setupLeft = _setupStepKey = null;
         _setupTimer ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _setupTimer.Tick -= SetupTick;
         _setupTimer.Tick += SetupTick;
         _setupTimer.Start();
         await ReadSetupNow();
+        // No phone tool: the download starts with the panel (10 Nov), unless the PC is on mobile data (then the row waits for Install)
+        // or the last one failed (Try again). Opening Phone setup is the yes: it can't do anything without it.
+        if (AutoInstallAdb(_adb != null, _adbFailed != null, MobileDataNote().Length > 0, _setupState?.Iphone == true)) await SetupInstallAdb(auto: true);
     }
+
+    /// <summary>Phone setup downloads the phone tool by itself: missing, not failed already, not on mobile data, not for an iPhone (no ADB there).</summary>
+    public static bool AutoInstallAdb(bool adbThere, bool failedBefore, bool onMobileData, bool iphone) => !adbThere && !failedBefore && !onMobileData && !iphone;
+
+    string _setupStepKey;
+    DateTime _setupStepSince = DateTime.UtcNow;
+    /// <summary>Demo only: how long the step to do now has been on screen, to capture the hints that come after a while.</summary>
+    partial void DemoSetupSeconds(ref int seconds);
 
     async void SetupTick(object sender, EventArgs e) => await ReadSetupNow();
 
@@ -449,9 +505,22 @@ public partial class MainWindow
         // The usage counts: where it stood when you opened it, and where it is now (counted when you close it, beta.11)
         _setupFirstTodo ??= PhoneSetup.StepKey(steps);
         _setupLeft = PhoneSetup.StepKey(steps);
+        // How long the step to do now has been the one (the cable and Allow steps add what to try after a while), and USB debugging
+        // turning on is said out loud: the person is looking at the phone, not at the PC (10 Nov)
+        var key = PhoneSetup.StepKey(steps);
+        if (key != _setupStepKey)
+        {
+            if (!_demo && PhoneSetup.DebugJustOn(_setupStepKey, key)) { Log.Ok("USB debugging is on."); Toast(Texts.DebugSeenToast, true); }
+            _setupStepKey = key;
+            _setupStepSince = DateTime.UtcNow;
+        }
+        var seconds = (int)(DateTime.UtcNow - _setupStepSince).TotalSeconds;
+        DemoSetupSeconds(ref seconds);
         _setupRows.Clear();
         foreach (var i in steps)
-            _setupRows.Add(new SetupStepRow(i, now, _setupBusy == i.Step ? _setupBusyText : null, _setupBusy == null));
+            _setupRows.Add(new SetupStepRow(i, now, _setupBusy == i.Step ? _setupBusyText : null, _setupBusy == null,
+                i == now ? PhoneSetup.LiveDetail(i, seconds) : null, _setupBusy == i.Step ? _setupPercent : null));
+        ShowGuide(now?.Step == PhoneStep.NoUsbDebugging && _setupBusy == null ? st : null);
         var ok = steps.Count(i => i.State == PhoneSetup.StepState.Ok);
         SetupSummary.Text = now == null && steps.All(i => i.State == PhoneSetup.StepState.Ok)
             ? SetupReadyText(_protOn)
@@ -497,6 +566,8 @@ public partial class MainWindow
         if ((sender as FrameworkElement)?.DataContext is not SetupStepRow row || _setupBusy != null) return;
         if (_demo) { Toast("Demo: " + row.Action + ".", true); return; }
         var step = row.Item.Step;
+        // Install (on mobile data) and Try again: the download in the row, no second question (pressing it is the yes)
+        if (step == PhoneStep.NoAdbTool) { await SetupInstallAdb(auto: false); return; }
         Telemetry.Click("Setup_" + PhoneSetup.Key(step));
         string Busy(string text) { _setupBusyText = text; if (_setupState != null) ShowSetup(_setupState); return text; }
         _setupBusy = step;
@@ -505,13 +576,6 @@ public partial class MainWindow
         {
             switch (step)
             {
-                case PhoneStep.NoAdbTool:
-                    if (await Ask("Phone setup", "Download Google's official platform-tools (about 7 MB) from dl.google.com?" + MobileDataNote(), "Download", "Not now"))
-                    {
-                        Busy("Downloading from Google…");
-                        if (!await InstallAdb(t => Busy(t), showProgress: false)) why = "The phone tool (ADB) didn't install. See the Log.";
-                    }
-                    break;
                 case PhoneStep.UsbDriverError:
                     // Only the iPhone's rows have this button: Apple Devices brings its network driver (9 nov.)
                     Busy("Opening Apple Devices in the Microsoft Store…");
@@ -590,6 +654,8 @@ public partial class MainWindow
             Iphone = iphone,
             AppleDriver = !iphone || phone != null || await Task.Run(PhoneUsb.AppleNetDriver),
             Offer = iphone ? null : ConnectionOffer.Find(adapters, phoneIps, _s.EgressAdapterId, !string.IsNullOrEmpty(_s.EgressSsid), phone),
+            AdbFailed = _adb == null ? _adbFailed : null,
+            AdbWaits = _adb == null && MobileDataNote().Length > 0,
         };
     }
 
@@ -879,13 +945,18 @@ public partial class MainWindow
 /// <summary>One line of the Phone setup panel: green done, red to do (the current one stands out), grey waiting for the one before.</summary>
 public sealed class SetupStepRow
 {
-    public SetupStepRow(PhoneSetup.SetupItem item, PhoneSetup.SetupItem now, string busy, bool idle)
+    /// <param name="live">The step to do now as it reads while it lasts (PhoneSetup.LiveDetail); null = its usual text.</param>
+    /// <param name="percent">The download's progress (0 to 100) while the row's step runs one; null = no bar.</param>
+    public SetupStepRow(PhoneSetup.SetupItem item, PhoneSetup.SetupItem now, string busy, bool idle, string live = null, double? percent = null)
     {
-        Item = item; Current = item == now; Busy = busy; Idle = idle;
+        Item = item; Current = item == now; Busy = busy; Idle = idle; Percent = percent;
         // beta.11: only the step to do now is open; the ones after it are only their title, in grey, until it is their turn
         _later = now != null && !Current && item.State != PhoneSetup.StepState.Ok;
-        _shown = PhoneSetup.Shown(item, now);
+        _shown = Current && live != null ? live : PhoneSetup.Shown(item, now);
     }
+    public double? Percent { get; }
+    public double PercentValue => Percent ?? 0;
+    public Visibility PercentVisibility => Percent == null ? Visibility.Collapsed : Visibility.Visible;
     readonly bool _later;
     readonly string _shown;
     /// <summary>After the step to do now: grey, title only, no button.</summary>

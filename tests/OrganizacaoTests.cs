@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
@@ -164,11 +164,14 @@ static class OrganizacaoTests
         {
             var page = ById(row[1]);
             if (page == null) continue;
-            labels[row[0]] = page.DescendantsAndSelf().SelectMany(e => new[] { "Header", "Text", "Content", "Tag" }.Select(a => (string?)e.Attribute(a)))
+            labels[row[0]] = page.DescendantsAndSelf().SelectMany(e => new[] { "Header", "Text", "Content", "Tag" }.Select(a => Resolve((string?)e.Attribute(a))))
                 .OfType<string>().Where(s => s.Length > 1 && !s.StartsWith('{')).Concat(row[0] == "Settings" ? external : menus).Distinct().ToList();
         }
-        static IEnumerable<string> Strings(XElement el) => el.DescendantsAndSelf().SelectMany(e => new[] { "Header", "Text", "Content", "Tag" }.Select(a => (string?)e.Attribute(a)))
+        static IEnumerable<string> Strings(XElement el) => el.DescendantsAndSelf().SelectMany(e => new[] { "Header", "Text", "Content", "Tag" }.Select(a => Resolve((string?)e.Attribute(a))))
             .OfType<string>().Where(s => s.Length > 1 && !s.StartsWith('{'));
+        // 10 nov.: os textos novos vêm de Texts ({x:Static local:Texts.Nome}), para a tradução; lidos como a janela os mostra
+        static string? Resolve(string? s) => Regex.Match(s ?? "", @"^\{x:Static local:Texts\.(\w+)\}$") is { Success: true } m
+            ? typeof(SRT.Texts).GetField(m.Groups[1].Value)?.GetValue(null) as string : s;
         static bool Starts(string rest, IEnumerable<string> ls) =>
             ls.Any(l => rest.StartsWith(l, StringComparison.Ordinal) && (rest.Length == l.Length || !char.IsLetterOrDigit(rest[l.Length])));
         var refRx = new Regex(@"\b(Settings|Connection|Servers|Regions|Accounts|Configs|Profiles|Log)(?: page)? (?:>|›) ([A-Z][^\n.,;:()""<]*)");

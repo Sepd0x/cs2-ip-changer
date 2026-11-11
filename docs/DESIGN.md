@@ -227,6 +227,22 @@ programs) and the buttons are not named here.
 To move or add an option: change it here and in `MainWindow.xaml` in the same step, and the texts that point to it
 (the test lists them).
 
+### First run, notes and drawn phone screens (10 Nov 2026)
+
+- **Texts.** Every visible text added since then lives in `src/Texts.cs`, and the XAML reads it with
+  `{x:Static local:Texts.Name}`, so the app can be translated in one place. `tests/OrganizacaoTests.cs` reads them the same way.
+- **The tour** (`TourPane`, `src/Views/MainWindow.Tour.cs`): the window under a `#B0000000` shade (the same as the dialogs)
+  with a hole 6 px larger than the real control it points at, a 1 px `Accent` ring round the hole, and a `DialogGroup` box
+  360 px wide, 14 px from the control (right, else below, else above, else left) and at least 12 px inside the window.
+  4 to 6 stops; the buttons are Skip tour, Back and Next, the last stop's are Later and Open Phone setup. Nothing in it
+  is clickable but its box.
+- **A note inside a group** (the Regions note): `Surface2` with a 2 px left border, `Warn` for a warning, `Accent` for what
+  the app offers; buttons on its right. One note per group.
+- **Drawn phone screens** (Phone setup's USB debugging, `src/Views/PhoneGuide.cs`): square like the rest of the app,
+  132x150, `Bg` with a 1 px `LineStrong` border and a short `Line` bar for the earpiece. Only the line to tap has words
+  (`AccentSoft`, 2 px `Accent` left border, its mark in `Accent`: "tap 7×", a switch that is on, or Allow); the other
+  lines are `Surface3` bars, since they differ from model to model. Three screens in a row, the step's text under each.
+
 ## Captures
 
 `node tools/shots.mjs` takes every capture of the app in one run, from the demo of the dev build (needs `src/Privado`;

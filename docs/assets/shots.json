@@ -1,7 +1,7 @@
 {
  "note": "Made by tools/shots.mjs. Do not edit: tests/DesignSyncTests.cs checks it against the app and the files.",
  "app": "0.1.0-beta.13",
- "ui": "75edc21091fb27e040df81d666febb8cf90dda41db365cd0dbdd7ec9991f8051",
+ "ui": "4869b8fd1f32d06148d199129c3213f74dba593a02346281293d8ae58aa50aea",
  "uiFiles": [
   "src/App.xaml",
   "src/MainWindow.xaml",
@@ -9,7 +9,7 @@
   "src/Views/NoticeWindow.xaml",
   "src/Views/SteamLoginWindow.xaml"
  ],
- "made": "2026-11-07",
+ "made": "2026-11-10",
  "scale": 2,
  "base": [
   1240,
@@ -290,10 +290,10 @@
   },
   {
    "file": "worker/stats/dashboard/ui/settings.png",
-   "sha256": "d0277be750abae8e89953c7b8e72a7c88889c2fd0d9b4cda6fd2778409a13239",
+   "sha256": "5a7c2b3815f2b8991eb2c0d788f4a16f661e0f821d198ff90be8d3341494d4da",
    "size": [
     1240,
-    1349
+    1389
    ]
   },
   {

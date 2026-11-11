@@ -54,11 +54,16 @@ static class Beta11QualidadeTests
         check("Marca: desconhecida ou nula, o genérico", PhoneSetup.PathsFor("Nothing") == PhoneSetup.GenericPaths && PhoneSetup.PathsFor(null) == PhoneSetup.GenericPaths, "");
         check("Marca: nenhum caminho por verificar chega ao ecrã", PhoneSetup.BrandPaths.Where(p => !p.Verified).All(p => PhoneSetup.PathsFor(p.Brand) == PhoneSetup.GenericPaths), "");
         check("Marca: Xiaomi e Motorola estão escritos, por verificar", PhoneSetup.BrandPaths.Count(p => !p.Verified) >= 2, "");
-        var samsungDebug = PhoneSetup.Steps(debugOff, samsung: true).First(i => i.Step == PhoneStep.NoUsbDebugging).Detail;
-        check("Marca: Samsung, a depuração USB diz Software information", samsungDebug.Contains("Software information") && !samsungDebug.Contains(PhoneSetup.SearchHint), samsungDebug);
+        // 10 nov. (onboarding): os passos saíram da linha para o guia desenhado por marca (Texts.Guides); a linha diz porquê
+        var samsungGuide = PhoneSetup.GuideFor("Samsung", null);
+        var samsungText = string.Join("\n", samsungGuide.Steps.Select(s => s.Text));
+        check("Marca: Samsung, a depuração USB diz Software information", samsungText.Contains("Software information") && samsungGuide.Checked, samsungText);
+        var genericGuide = PhoneSetup.GuideFor(null, null);
+        var genericText = string.Join("\n", genericGuide.Steps.Select(s => s.Text));
+        check("Marca: genérico, sem Samsung no texto e com a dica da pesquisa", genericGuide.Brand == "other" && !genericText.Contains("Samsung") && !genericGuide.Checked
+            && Texts.GuideNotChecked.Contains("use the search at the top of Settings"), genericText);
         var genericDebug = steps.First(i => i.Step == PhoneStep.NoUsbDebugging).Detail;
-        check("Marca: genérico, sem Samsung no texto e com a dica da pesquisa", !genericDebug.Contains("Samsung") && genericDebug.Contains(PhoneSetup.SearchHint), genericDebug);
-        check("Marca: começa pelo porquê e diz o que tocar", genericDebug.StartsWith(PhoneSetup.UsbDebuggingWhy) && genericDebug.Contains("tap Allow"), "");
+        check("Marca: começa pelo porquê e diz o que tocar", genericDebug.StartsWith("Needed for Change IP") && genericGuide.Steps.Last().Text.Contains("tap Allow"), genericDebug);
         var noAdb = PhoneSetup.Steps(new PhoneSetupState { AdbTool = true, AdbState = "none", Tethered = false, Usb = new PhoneUsbState(true, null, "Samsung") }, samsung: true);
         var tetherSamsung = PhoneSetup.Steps(new PhoneSetupState { AdbTool = true, AdbState = "unauthorized", Usb = new PhoneUsbState(true, null, "Samsung") }, samsung: true).First(i => i.Step == PhoneStep.TetherOff);
         check("Marca: tethering à mão na Samsung, o caminho da Samsung", tetherSamsung.State != PhoneSetup.StepState.Todo || tetherSamsung.Detail.Contains("Mobile Hotspot and Tethering"), tetherSamsung.Detail);

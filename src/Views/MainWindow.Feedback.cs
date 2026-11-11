@@ -221,7 +221,8 @@ public partial class MainWindow
 
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {
-        if (Dialog.Visibility == Visibility.Visible && e.Key == Key.Escape) { DialogCancel_Click(this, null); e.Handled = true; }
+        if (Dialog.Visibility != Visibility.Visible && TourKey(e.Key)) e.Handled = true;
+        else if (Dialog.Visibility == Visibility.Visible && e.Key == Key.Escape) { DialogCancel_Click(this, null); e.Handled = true; }
         else if (Dialog.Visibility == Visibility.Visible && e.Key == Key.Enter && Keyboard.FocusedElement != DialogCancel) { DialogOk_Click(this, null); e.Handled = true; }
         base.OnPreviewKeyDown(e);
     }

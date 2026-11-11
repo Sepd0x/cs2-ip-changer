@@ -181,6 +181,10 @@ public sealed record PhoneSetupState
     /// the app doesn't see it"): the PC is on the phone's Wi-Fi hotspot, or the app is pinned to another adapter. Null = nothing to offer.
     /// </summary>
     public ConnectionOffer Offer { get; init; }
+    /// <summary>Why the last download of the phone tool failed (null = it didn't fail): the row offers Try again.</summary>
+    public string AdbFailed { get; init; }
+    /// <summary>The PC is on the phone's mobile data: the phone tool waits for Install instead of downloading by itself.</summary>
+    public bool AdbWaits { get; init; }
 }
 
 /// <summary>
@@ -338,19 +342,23 @@ public static class PhoneSetup
         var paths = PathsFor(samsung ? "Samsung" : s.Usb.Vendor);
         var list = new List<SetupItem>
         {
-            !s.AdbTool ? new(PhoneStep.NoAdbTool, "Phone tool (ADB)", StepState.Todo, "Free, from Google, about 7 MB. Change IP and these checks need it.", "Install")
+            // 10 Nov: Phone setup downloads it by itself (one new user left here twice); it waits for Install only on mobile data
+            !s.AdbTool && s.AdbFailed != null ? new(PhoneStep.NoAdbTool, Texts.AdbTitle, StepState.Todo, Texts.AdbFailed(s.AdbFailed), Texts.AdbTryAgain)
+            : !s.AdbTool && s.AdbWaits ? new(PhoneStep.NoAdbTool, Texts.AdbTitle, StepState.Todo, Texts.AdbOnMobileData, Texts.AdbInstall)
+            : !s.AdbTool ? new(PhoneStep.NoAdbTool, Texts.AdbTitle, StepState.Todo, Texts.AdbStarting, null)
             : s.AdbState == null ? new(PhoneStep.AdbFailed, "Phone tool (ADB)", StepState.Todo, Advice(PhoneStep.AdbFailed), "Try again")
             : new(PhoneStep.NoAdbTool, "Phone tool (ADB)", StepState.Ok, "Installed", null),
 
             s.Usb.Problem is int code ? new(PhoneStep.UsbDriverError, "USB cable", StepState.Todo, Advice(PhoneStep.UsbDriverError, code, samsung), null)
             : plugged ? new(PhoneStep.NoUsb, "USB cable", StepState.Ok, model != null && adb ? $"{model} plugged in" : "Phone plugged in", null)
             : s.Hotspot ? new(PhoneStep.NoUsb, "USB cable", StepState.Waiting, "You use the hotspot: the cable is only needed for Change IP.", null)
-            : new(PhoneStep.NoUsb, "USB cable", StepState.Todo, Advice(PhoneStep.NoUsb), null),
+            : new(PhoneStep.NoUsb, "USB cable", StepState.Todo, Texts.CableTodo, null),
 
             inAdb ? new(PhoneStep.NoUsbDebugging, "USB debugging", StepState.Ok, "On", null)
             : !plugged || s.AdbState == null || !s.AdbTool ? new(PhoneStep.NoUsbDebugging, "USB debugging", StepState.Waiting, "Checked once the phone is plugged in.", null)
-            : new(PhoneStep.NoUsbDebugging, "USB debugging", StepState.Todo, UsbDebuggingWhy + "\n" + UsbDebuggingFor(paths)
-                + (samsung ? "\nStill not found? Install \"Samsung USB Driver for Mobile Phones\" from Samsung's website." : "") + "\n" + UsbDebuggingSafe, null),
+            // 10 Nov: the steps themselves are drawn under the list, per brand (Texts.Guides); the row keeps why and what happens
+            : new(PhoneStep.NoUsbDebugging, "USB debugging", StepState.Todo, Texts.DebugTodo
+                + (samsung ? "\nStill not found? Install \"Samsung USB Driver for Mobile Phones\" from Samsung's website." : ""), null),
 
             adb ? new(PhoneStep.Unauthorized, "Allowed on this PC", StepState.Ok, "Allowed", null)
             : s.AdbState == "unauthorized" ? new(PhoneStep.Unauthorized, "Allowed on this PC", StepState.Todo, Advice(PhoneStep.Unauthorized), null)
@@ -437,6 +445,44 @@ public static class PhoneSetup
         if (current == null) return item.Detail;
         return item == current ? item.Detail : null;
     }
+
+    /// <summary>
+    /// The guide to draw for the phone on USB (10 Nov): Samsung by its vendor or its model (SM-…), Xiaomi (Redmi and POCO share its
+    /// vendor ID), Google for a Pixel; anything else gets the generic steps. <paramref name="picked"/>: the brand pressed in the guide.
+    /// </summary>
+    public static Texts.UsbGuide GuideFor(string vendor, string model, string picked = null)
+    {
+        var key = picked
+            ?? (string.Equals(vendor, "Samsung", StringComparison.OrdinalIgnoreCase) || model?.StartsWith("SM-", StringComparison.OrdinalIgnoreCase) == true ? "samsung"
+            : string.Equals(vendor, "Xiaomi", StringComparison.OrdinalIgnoreCase) ? "xiaomi"
+            : string.Equals(vendor, "Google", StringComparison.OrdinalIgnoreCase) ? "google"
+            : "other");
+        return Texts.Guides.FirstOrDefault(g => g.Brand == key) ?? Texts.Guides.Last();
+    }
+
+    /// <summary>The brand the PC itself recognised (null = not one with its own guide), for the "seen on USB" mark.</summary>
+    public static string SeenBrand(string vendor, string model) => GuideFor(vendor, model) is { Brand: not "other" } g ? g.Brand : null;
+
+    /// <summary>
+    /// What the step to do now says while it lasts (10 Nov, the cable and the Allow question, where the new users stopped): the
+    /// cable step says what the app is looking at every 2 s and, after a while, what to try next, including the hotspot when there
+    /// is no data cable; USB debugging and Allow add what to do when the phone doesn't answer.
+    /// </summary>
+    public static string LiveDetail(SetupItem item, int seconds)
+    {
+        if (item?.State != StepState.Todo) return item?.Detail;
+        return item.Step switch
+        {
+            PhoneStep.NoUsb when item.Detail == Texts.CableTodo =>
+                item.Detail + "\n" + Texts.CableLive(seconds) + (seconds >= Texts.CableHelpAfterSeconds ? "\n" + Texts.CableStillNothing : ""),
+            PhoneStep.NoUsbDebugging when seconds >= 45 => item.Detail + "\n" + Texts.DebugStillRed,
+            PhoneStep.Unauthorized when seconds >= Texts.AllowHelpAfterSeconds => item.Detail + "\n" + Texts.AllowNoQuestion,
+            _ => item.Detail,
+        };
+    }
+
+    /// <summary>USB debugging was just seen on (the phone now asks Allow, or is allowed): said once, the person is looking at the phone.</summary>
+    public static bool DebugJustOn(string before, string now) => before == "nousbdebugging" && now is "unauthorized" or "offline" or "tetheroff" or "wifion" or "pconphone" or "done";
 
     /// <summary>The step to do now: the first red one (null = all done or waiting on nothing).</summary>
     public static SetupItem Current(IReadOnlyList<SetupItem> steps) => steps.FirstOrDefault(i => i.State == StepState.Todo);

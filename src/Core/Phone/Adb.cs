@@ -298,19 +298,46 @@ public static class Adb
     }
 
     /// <summary>Downloads Google's official platform-tools into the app folder (~7 MB).</summary>
-    public static async Task<string> Download(IProgress<string> progress)
+    public static async Task<string> Download(IProgress<string> progress, IProgress<double> percent = null)
     {
         var zip = Paths.NoLink(Path.Combine(Paths.Data, "platform-tools.zip"));
         using (var http = new HttpClient { Timeout = TimeSpan.FromMinutes(3) })
         {
-            progress?.Report("Downloading ADB from Google…");
-            var bytes = await http.GetByteArrayAsync(PlatformToolsUrl);
-            await File.WriteAllBytesAsync(zip, bytes);
+            // Read as it arrives, so Phone setup shows how far it is (10 Nov: one new user left Phone setup at this step twice)
+            progress?.Report(SRT.Texts.AdbDownloading(0, null));
+            using var res = await http.GetAsync(PlatformToolsUrl, HttpCompletionOption.ResponseHeadersRead);
+            res.EnsureSuccessStatusCode();
+            var total = res.Content.Headers.ContentLength;
+            await using var from = await res.Content.ReadAsStreamAsync();
+            await using (var to = new FileStream(zip, FileMode.Create, FileAccess.Write, FileShare.None))
+                await CopyWithProgress(from, to, total, progress, percent);
         }
-        progress?.Report("Extracting…");
+        progress?.Report(SRT.Texts.AdbUnpacking);
         await Task.Run(() => Extract(zip, Paths.Data));
         try { File.Delete(Paths.NoLink(zip)); } catch { }
-        return Find();
+        progress?.Report(SRT.Texts.AdbChecking);
+        return await Task.Run(Find);
+    }
+
+    /// <summary>Copies the download, telling how far it is at most every 250 ms (and once at the end).</summary>
+    public static async Task CopyWithProgress(Stream from, Stream to, long? total, IProgress<string> progress, IProgress<double> percent = null)
+    {
+        var buf = new byte[81920];
+        long got = 0;
+        var last = System.Diagnostics.Stopwatch.StartNew();
+        int n;
+        void Tell()
+        {
+            progress?.Report(SRT.Texts.AdbDownloading(got, total));
+            if (total is long t && t > 0) percent?.Report(Math.Clamp(got * 100.0 / t, 0, 100));
+        }
+        while ((n = await from.ReadAsync(buf)) > 0)
+        {
+            await to.WriteAsync(buf.AsMemory(0, n));
+            got += n;
+            if (last.ElapsedMilliseconds >= 250) { Tell(); last.Restart(); }
+        }
+        Tell();
     }
 
     /// <summary>

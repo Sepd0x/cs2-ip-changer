@@ -214,7 +214,9 @@ public partial class MainWindow : Window
             _ = CheckForUpdates();
             _ = ShowAutostart();
             ShowData();
+            StartTourWhenFree();   // the first-run tour (10 Nov), once, before any phone
         }
+        SizeChanged += (_, _) => PlaceTour();
         _secondTimer.Start();
         AfterStartupDev();
     }

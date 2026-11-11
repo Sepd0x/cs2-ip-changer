@@ -168,6 +168,7 @@ const UI = {
         { id: 'LaunchOpts', label: 'Add to CS2\'s launch options now', r: [726,672,207,28] },
         { id: 'AccOpt', label: 'Hide usernames (Privacy)', r: [682,751,525,32], note: 'beta.12: saiu da barra de Accounts' },
         { id: 'TestVersions', label: 'Get test versions (App)', r: [682,1087,525,32], note: 'beta.12: canal de teste' },
+        { id: 'TourAgain', label: 'Show the tour again (App)', r: [682,1131,139,28], note: 'beta.13: a visita guiada outra vez' },
         { id: 'AutoStreamer', label: 'AutoStreamer' },
         { id: 'CheckUpdates', label: 'CheckUpdates' },
         { id: 'DeleteStats', label: 'Delete my stats' },

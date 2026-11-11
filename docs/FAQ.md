@@ -69,6 +69,12 @@ No. You share a public IP with other customers and servers see that shared one. 
 **My connection stays weak. What can I do?**<br>
 Change IP can put you on another cell, and Game only keeps the rest of the PC off the phone (the app does this on its own while the connection is weak, unless you turn off Fall back to Game only on a weak connection). On the phone you can also check Settings > Connections > Mobile networks > Network mode is set to include 5G. Forcing 5G only helps where the 5G signal is good, and some phones show 5G as 4G (LTE) because 5G there runs on top of 4G.
 
+**I plugged the phone in and the app sees nothing. Why?**<br>
+Most often the cable only charges: use a data cable, ideally the one that came with the phone. Unlock the phone, try another USB port (one on the back of the PC), and keep Phone setup open: it checks every 2 seconds and turns the step green as soon as Windows sees the phone. No data cable at hand? Use the phone's Wi-Fi hotspot (next question) and plug in a cable later for Change IP.
+
+**Do I have to download ADB myself?**<br>
+No. Phone setup downloads Google's platform-tools (about 7 MB) by itself when you open it, with a progress bar. On the phone's mobile data it waits for you to press Install. If it keeps failing, download "SDK Platform-Tools for Windows" from developer.android.com and unzip it into the app's data folder (Settings > Maintenance > Open data folder).
+
 **Can I use the phone's Wi-Fi hotspot instead of a cable?**<br>
 Yes. Connect the PC to the hotspot and pick it under Connection > How the PC connects to the phone. The app remembers the network name, and if Windows jumps back to your home router it blocks everything. Change IP works on the hotspot too if the phone is also plugged in by USB with USB debugging on (the cable is only for ADB, tethering can stay off).
 
