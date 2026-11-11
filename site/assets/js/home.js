@@ -6,6 +6,9 @@
 (function () {
   'use strict';
   var d = document, root = d.documentElement, W = window;
+  // the words this script shows: T(text) reads the page's own table (window.__i18n, put there by tools/site-i18n.mjs
+  // on the translated pages); ROOT is the way from the page to the site's folder ('../' under /pt-br/, /es/ and /ru/)
+  var T = function (s) { var t = W.__i18n; return t && t[s] || s; }, ROOT = W.__root || '';
   var FX = root.classList.contains('fx');
   var MOBILE = matchMedia('(max-width:759px),(max-width:999px) and (max-height:540px) and (orientation:landscape)');
   var mobileTour = null;
@@ -35,7 +38,7 @@
   // each beat holds the camera while its text is read: an anchor (or, for the ban, a stretch) in scroll px
   var A = [], ctaAt = 0, ctaH = 0, storyEnd = 0, H = innerHeight;
   // the note under the ban's IP keeps the height of its longest text, so its three texts never push the log (7 Nov.)
-  var BAN_NOTES = ['IP servers see. Example, banned on this server', 'Mobile data off, then on: getting a new IP', 'New IP, new /16 range. Example IP'];
+  var BAN_NOTES = [T('IP servers see. Example, banned on this server'), T('Mobile data off, then on: getting a new IP'), T('New IP, new /16 range. Example IP')];
   function noteHeight() {
     if (!banNote) return;
     var keep = banNote.textContent, mh = 0;
@@ -139,7 +142,7 @@
 
   function start() {
     if (api || !W.WorldScene) return;
-    try { api = W.WorldScene.mount(cv, { still: still, frame: frame, avoid: avoid, lit: true }); } catch (x) { api = null; }
+    try { api = W.WorldScene.mount(cv, { still: still, frame: frame, avoid: avoid, lit: true, screen: ROOT ? ROOT + 'img/connection.webp' : undefined }); } catch (x) { api = null; }
     if (!api) { root.classList.add('no-gl'); return; }
     W.__world = api;
     cv.addEventListener('worldready', function () { stage.classList.add('ready'); root.classList.add('gl'); update(); }, { once: true });
@@ -356,7 +359,7 @@
     });
   } else if (pauseBtn && W.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches && (function () { try { localStorage.getItem('cs2-fx'); return true; } catch (x) { return false; } })()) {
     pauseBtn.hidden = false; pauseBtn.removeAttribute('aria-pressed'); pauseBtn.classList.add('play');
-    pauseBtn.textContent = pauseBtn.title = 'Play motion';
+    pauseBtn.textContent = pauseBtn.title = T('Play motion');
     pauseBtn.addEventListener('click', function () {
       try { localStorage.setItem('cs2-fx', 'on'); localStorage.setItem('cs2-motion', ''); } catch (x) { return; }
       location.reload();
@@ -376,7 +379,7 @@
        go straight to one, and each of a page's three things gets a cut of the real window at full size, ring and all */
     var CAR = matchMedia('(max-width:759px) and (orientation:portrait)'), car = CAR.matches, pagesBox = $('#pages'), nav = null, tabs = [];
     if (pagesBox) {
-      nav = d.createElement('div'); nav.className = 'pg-nav'; nav.hidden = !car; nav.setAttribute('aria-label', 'The six pages');
+      nav = d.createElement('div'); nav.className = 'pg-nav'; nav.hidden = !car; nav.setAttribute('aria-label', T('The six pages'));
       pages.forEach(function (li, i) {
         var pg = li.getAttribute('data-pg'), bt = d.createElement('button'), name = ($('h3', li).textContent || '').replace(/^\s*\d+\s*/, '');
         bt.type = 'button'; bt.textContent = ('0' + (i + 1)); bt.setAttribute('aria-label', name); bt.setAttribute('aria-controls', 'pages');
@@ -440,7 +443,7 @@
       if (seen) seen.pg = pageNow(scrollY); // the scroll's own update ran before this page was picked
       pics.forEach(function (pc) {
         var on = pc.getAttribute('data-pg') === pg; pc.classList.toggle('on', on);
-        if (on) { pc.removeAttribute('aria-hidden'); var im = $('img', pc); if (im.loading === 'lazy') im.loading = 'eager'; zl.href = 'img/' + pg + '.png'; }
+        if (on) { pc.removeAttribute('aria-hidden'); var im = $('img', pc); if (im.loading === 'lazy') im.loading = 'eager'; zl.href = ROOT + 'img/' + pg + '.png'; }
         else pc.setAttribute('aria-hidden', 'true');
       });
       pages.forEach(function (li, i) { var on = li.getAttribute('data-pg') === pg; li.classList.toggle('on', on); if (tabs[i]) { if (on) tabs[i].setAttribute('aria-current', 'true'); else tabs[i].removeAttribute('aria-current'); } });
@@ -551,11 +554,12 @@
 (function () {
   'use strict';
   var d = document, duo = d.querySelector('.duo'); if (!duo || !window.matchMedia) return;
+  var T = function (s) { var t = window.__i18n; return t && t[s] || s; };
   var cards = [].slice.call(duo.children); if (cards.length !== 2) return;
   var Q = matchMedia('(max-width:759px),(max-height:540px) and (orientation:landscape)');
   var ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   var names = ['Android', 'iPhone'], on = ios ? 1 : 0, tabs = [];
-  var list = d.createElement('div'); list.className = 'ph-tabs'; list.setAttribute('role', 'tablist'); list.setAttribute('aria-label', 'Your phone');
+  var list = d.createElement('div'); list.className = 'ph-tabs'; list.setAttribute('role', 'tablist'); list.setAttribute('aria-label', T('Your phone'));
   names.forEach(function (n, i) {
     var b = d.createElement('button'); b.type = 'button'; b.textContent = n; b.id = 'ph-tab-' + i; b.setAttribute('role', 'tab'); b.setAttribute('aria-controls', 'ph-card-' + i);
     b.addEventListener('click', function () { pick(i); });

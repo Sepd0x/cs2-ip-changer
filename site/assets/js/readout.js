@@ -5,6 +5,9 @@
 (function () {
   'use strict';
   var d = document, root = d.documentElement, W = window;
+  // the words this script shows: T(text) reads the page's own table (window.__i18n, put there by tools/site-i18n.mjs
+  // on the translated pages); ROOT is the way from the page to the site's folder ('../' under /pt-br/, /es/ and /ru/)
+  var T = function (s) { var t = W.__i18n; return t && t[s] || s; }, ROOT = W.__root || '';
   var FX = root.classList.contains('fx');
   var G = W.gsap, ST = W.ScrollTrigger, HAS = FX && !!(G && ST);
   var $ = function (s, el) { return (el || d).querySelector(s); };
@@ -185,11 +188,11 @@
     var refit = fit(digitsEl, '198.51.100.23', innerHeight < 780 ? .13 : .21);
     var phone = $('#ro-phone'), live = $('#ro-live'), text = $('#ro-text'), btn = $('#ro-demo'), rule = $('.ro-rule', ro);
     var status = function (cls, t, short) { led.className = 'led ' + cls; state.textContent = narrow() && short ? short : t; };
-    var tellAll = function (ip) { ipNow = ip; text.textContent = 'Example: IP servers see ' + ip; listeners.forEach(function (f) { f(ip); }); };
+    var tellAll = function (ip) { ipNow = ip; text.textContent = T('Example: IP servers see ') + ip; listeners.forEach(function (f) { f(ip); }); };
     if (HAS) {
       // the intro: the home IP, masked and grey, then protection comes on and the carrier's IP rolls in
       var introT = [], introDone = false;
-      R.cur = HOME; R.render(HOME); digitsEl.classList.add('home'); label.textContent = 'Your home IP'; status('idle', 'Protection off');
+      R.cur = HOME; R.render(HOME); digitsEl.classList.add('home'); label.textContent = T('Your home IP'); status('idle', T('Protection off'));
       root.classList.remove('intro');
       btn.setAttribute('aria-disabled', 'true');
       rule.style.setProperty('--fill', 0);
@@ -204,7 +207,7 @@
         (d.fonts ? d.fonts.ready : Promise.resolve()).then(function () {
           if (introDone) return;
           introT.push(setTimeout(function () {
-            status('on', 'Turning on protection'); rule.style.setProperty('--fill', .45);
+            status('on', T('Turning on protection')); rule.style.setProperty('--fill', .45);
             introT.push(setTimeout(finishIntro, 450));
           }, 300));
         });
@@ -215,7 +218,7 @@
         enterIntro();
         if (introDone) return; introDone = true; btn.removeAttribute('aria-disabled');
         introT.forEach(clearTimeout);
-        label.textContent = 'IP servers see'; digitsEl.classList.remove('home'); rule.style.setProperty('--fill', 1);
+        label.textContent = T('IP servers see'); digitsEl.classList.remove('home'); rule.style.setProperty('--fill', 1);
         R.set(ipNow, { now: R.cur === HOME && scrollY > 24 }).then(function () { status('', 'Protected'); W.dispatchEvent(new Event('cs2protected')); });
       };
       addEventListener('scroll', function f() { if (scrollY > 24) { removeEventListener('scroll', f); finishIntro(); } }, { passive: true });
@@ -228,28 +231,28 @@
       var next = EX[k++ % EX.length], was = R.cur;
       if (next === was) next = EX[k++ % EX.length];
       if (HAS) {
-        status('off', 'Android: mobile data off', 'Mobile data off'); data(false); label.textContent = 'No connection'; phone.classList.add('down'); digitsEl.classList.add('home'); rule.style.setProperty('--fill', 0);
+        status('off', T('Android: mobile data off'), T('Mobile data off')); data(false); label.textContent = T('No connection'); phone.classList.add('down'); digitsEl.classList.add('home'); rule.style.setProperty('--fill', 0);
         await wait(skip ? 0 : 600);
-        status('on', 'Android: mobile data on', 'Mobile data on'); data(true); label.textContent = 'Getting a new IP'; phone.classList.remove('down'); rule.style.setProperty('--fill', .5);
+        status('on', T('Android: mobile data on'), T('Mobile data on')); data(true); label.textContent = T('Getting a new IP'); phone.classList.remove('down'); rule.style.setProperty('--fill', .5);
         await wait(skip ? 0 : 350);
         if (!skip) dust(ro, digitsEl);
         await wait(skip ? 0 : 300);
-        digitsEl.classList.remove('home'); label.textContent = 'IP servers see';
+        digitsEl.classList.remove('home'); label.textContent = T('IP servers see');
         digitsEl.style.opacity = '';
         rule.style.setProperty('--fill', 1);
         await R.set(next, { blank: true, now: skip });
-        status('new', 'New IP, checked: new /16 range', 'New IP, new /16');
+        status('new', T('New IP, checked: new /16 range'), T('New IP, new /16'));
         setTimeout(function () { if (!busy) status('', 'Protected'); }, 1800);
       } else {
         // reduced motion: the same steps as cuts, so the scene still shows mobile data off, then on, then the new IP
-        status('off', 'Android: mobile data off', 'Mobile data off'); data(false); label.textContent = 'No connection'; phone.classList.add('down');
+        status('off', T('Android: mobile data off'), T('Mobile data off')); data(false); label.textContent = T('No connection'); phone.classList.add('down');
         await wait(skip ? 0 : 900);
-        status('on', 'Android: mobile data on', 'Mobile data on'); data(true); phone.classList.remove('down');
+        status('on', T('Android: mobile data on'), T('Mobile data on')); data(true); phone.classList.remove('down');
         await wait(skip ? 0 : 500);
-        label.textContent = 'IP servers see'; R.set(next); status('new', 'New IP, checked: new /16 range', 'New IP, new /16');
+        label.textContent = T('IP servers see'); R.set(next); status('new', T('New IP, checked: new /16 range'), T('New IP, new /16'));
         setTimeout(function () { if (!busy) status('', 'Protected'); }, 1800);
       }
-      live.textContent = 'Example: IP servers see ' + next + ', a new range. Was ' + (was === HOME ? 'your masked home IP' : was) + '.';
+      live.textContent = T('Example: IP servers see ') + next + T(', a new range. Was ') + (was === HOME ? T('your masked home IP') : was) + '.';
       tellAll(next);
       busy = false;
     });
@@ -341,7 +344,7 @@
       if (pg === cur) return; cur = pg;
       pics.forEach(function (p) {
         var on = p.getAttribute('data-pg') === pg; p.classList.toggle('on', on); if (on) p.removeAttribute('aria-hidden'); else p.setAttribute('aria-hidden', 'true');
-        if (on) { var im = $('img', p); if (im.loading === 'lazy') im.loading = 'eager'; zl.href = 'img/' + pg + '.png';  }
+        if (on) { var im = $('img', p); if (im.loading === 'lazy') im.loading = 'eager'; zl.href = ROOT + 'img/' + pg + '.png';  }
       });
       win.classList.toggle('pg-other', pg !== 'connection');
       win.setAttribute('data-pg', pg);
@@ -610,7 +613,7 @@
       s += '<path class="cg-line" pathLength="1" style="--d:' + (n++) + '" d="M' + (px + 4) + ' ' + py + 'C' + (px + 90) + ' ' + py + ' ' + (hx - 80) + ' ' + hy + ' ' + (hx - 14) + ' ' + hy + '"/>';
       s += '<rect class="cg-dot" x="' + (px - 4) + '" y="' + (py - 6) + '" width="8" height="12" rx="2"/>';
     }
-    s += '<circle class="cg-hub" cx="' + hx + '" cy="' + hy + '" r="12"/><text class="cg-ip" x="' + (hx + 22) + '" y="' + (hy - 2) + '">198.51.100.23</text><text class="cg-lbl" x="' + (hx + 22) + '" y="' + (hy + 18) + '">one IP, example</text><text class="cg-lbl" x="8" y="' + (18 + 5 * 26 + 30) + '">many phones on one carrier</text>';
+    s += '<circle class="cg-hub" cx="' + hx + '" cy="' + hy + '" r="12"/><text class="cg-ip" x="' + (hx + 22) + '" y="' + (hy - 2) + '">198.51.100.23</text><text class="cg-lbl" x="' + (hx + 22) + '" y="' + (hy + 18) + '">' + T('one IP, example') + '</text><text class="cg-lbl" x="8" y="' + (18 + 5 * 26 + 30) + '">' + T('many phones on one carrier') + '</text>';
     cg.innerHTML = s;
   }
   var dc = $('#dclist');
@@ -618,9 +621,9 @@
     var rows = ['203.0.113.4', '203.0.113.9', '203.0.113.17', '203.0.113.23', '203.0.113.42', '203.0.113.58'], s3 = '';
     rows.forEach(function (ip, i) {
       var y = 4 + i * 25, hit = i === 3;
-      s3 += '<rect class="dc-bar' + (hit ? ' hit' : '') + '" x="0" y="' + y + '" width="420" height="21" rx="2"/><text class="dc-row' + (hit ? ' hit' : '') + '" x="12" y="' + (y + 15) + '">' + ip + '</text><text class="dc-row' + (hit ? ' hit' : '') + '" x="408" y="' + (y + 15) + '" text-anchor="end">' + (hit ? 'VPN, on the list: ban' : 'datacenter') + '</text>';
+      s3 += '<rect class="dc-bar' + (hit ? ' hit' : '') + '" x="0" y="' + y + '" width="420" height="21" rx="2"/><text class="dc-row' + (hit ? ' hit' : '') + '" x="12" y="' + (y + 15) + '">' + ip + '</text><text class="dc-row' + (hit ? ' hit' : '') + '" x="408" y="' + (y + 15) + '" text-anchor="end">' + (hit ? T('VPN, on the list: ban') : T('datacenter')) + '</text>';
     });
-    s3 += '<text class="cg-lbl" x="0" y="' + (4 + 6 * 25 + 26) + '">a VPN provider\'s addresses, example</text>';
+    s3 += '<text class="cg-lbl" x="0" y="' + (4 + 6 * 25 + 26) + '">' + T('a VPN provider\'s addresses, example') + '</text>';
     dc.innerHTML = s3;
   }
 

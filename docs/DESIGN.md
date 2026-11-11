@@ -274,6 +274,30 @@ Rules, checked by `node --test tools/site-touch.test.mjs` with taps and flicks (
   sections scroll freely;
 - a step picked on the rail or the chip rests on that step's shot (`A[i].s` in `home.js`), not where its anchor would go.
 
+## The site in other languages
+
+English is the site (x-default). `site/pt-br/`, `site/es/` and `site/ru/` (Brazilian Portuguese, Spanish for Latin
+America, Russian; chosen 10 Nov 2026 from where the real users came from) are made by `node tools/site-i18n.mjs` from the
+English pages and `tools/i18n/<lang>.json`; never edit them by hand. `node tools/site-pages.mjs` runs it after the guides.
+Same design, same `assets/`, same 3D script; only the words change.
+
+- A text is looked up by its English words. Change the English, and that text has no translation until
+  `tools/i18n/<lang>.json` has one: `node tools/site-i18n.mjs --todo <folder>` lists what is missing,
+  `--merge <folder>` takes the answers in, `--check` (and `node --test tools/site-i18n.test.mjs`) fails until then.
+- Inline tags in a text are placeholders (`<a1>…</a1>`, `<code2/>`): a translation keeps every one. Version, size, dates
+  and the VirusTotal count are `{version}`, `{size}`, `{date}`, `{vt}`, filled at build time in the language's format.
+- A text a page's script shows is marked `/*t*/'…'` in the page; the shared scripts call `T('…')` and read
+  `window.__i18n`, and reach the site's files through `window.__root` (`../` in a language folder).
+- What stays English: the app's name and everything the app shows (pages, buttons, options: the app is in English);
+  code and commands; the 3D scene's own words; the addresses (the same slugs in every language). Windows, Android and
+  iPhone menus keep their English name, with the phone's own name in that language in brackets the first time.
+- The picker: a globe and the language's code in the header, before the GitHub button, as quiet as the nav links; on a
+  phone (the same breakpoint as the phone layout) it moves into the menu; the four names, each in its own language, sit
+  in the footer's last line. No redirect by IP or by browser: an English page offers the browser's language once, in a
+  pill at the bottom that can be closed, and a picked or closed choice is remembered (`cs2-lang`).
+- The 404: GitHub Pages serves the English one everywhere, so under a language folder it opens that language's 404 and
+  puts the address that was asked for back in the address bar.
+
 ## Checks
 
 - `CI=true dotnet run --project tests` (`tests/DesignSyncTests.cs`): fails if a file's tokens are behind `Theme.xaml`, a

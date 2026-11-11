@@ -30,10 +30,12 @@ export const MAX_COUNT = 5000, MAX_HEAT = 1000;
 // Nov. 2026: the website's visit counter (POST /v1/site) has its own small budget, outside the day's, so a flood of made-up
 // visits can't take anything from the app's reports
 export const SITE_ROWS = 3000;
-// The website: the only origin that may send visits, and its pages (site/ and tools/site-pages.mjs; a test checks the list)
+// The website: the only origin that may send visits, and its pages (site/ and tools/site-pages.mjs; a test checks the list),
+// in English and, since Nov. 2026, under /pt-br/, /es/ and /ru/ (tools/site-i18n.mjs): the same pages, one folder down
 export const SITE_ORIGIN = 'https://sepd0x.github.io';
-export const SITE_PAGES = ['/', '/change-ip-with-phone/', '/copy-cs2-config/', '/cs2-ip-ban/', '/cs2-iphone-hotspot/', '/cs2-region-picker/', '/hide-ip-cs2/', '/is-it-safe/',
+const SITE_EN = ['/', '/change-ip-with-phone/', '/copy-cs2-config/', '/cs2-ip-ban/', '/cs2-iphone-hotspot/', '/cs2-region-picker/', '/hide-ip-cs2/', '/is-it-safe/',
   '/steam-account-switcher/', '/steam-profile-editor/'];
+export const SITE_PAGES = ['', '/pt-br', '/es', '/ru'].flatMap((l) => SITE_EN.map((p) => l + p));
 const SITE_TABLE = 'CREATE TABLE IF NOT EXISTS site (day TEXT NOT NULL, page TEXT NOT NULL, ref TEXT NOT NULL, country TEXT NOT NULL, event TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (day, page, ref, country, event))';
 const HOSTNAME = /^(?=.{3,80}$)[a-z0-9-]+(\.[a-z0-9-]+)+$/;
 const REF_TAG = /^ref:[a-z0-9-]{1,20}$/;   // ?ref=<name> on a link to the site (Nov. 2026)

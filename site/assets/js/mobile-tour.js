@@ -2,29 +2,31 @@
    the existing six pages; the desktop presentation remains the source. */
 (function () {
   'use strict';
+  // the words it shows: T(text) reads the page's table (tools/site-i18n.mjs); ROOT leads from a translated page to the site
+  var T = function (s) { var t = window.__i18n; return t && t[s] || s; }, ROOT = window.__root || '';
   window.CS2MobileTour = function (options) {
     var d = document, pages = options.pages, current = 0;
     var detailsAt = [0, 0, 2, 0, 2, 1];
     var summaries = [
-      'See the IP servers see. Change it and rejoin from one place.',
-      'Find your server, check its players and ping, then join.',
-      'Switch saved Steam accounts. Keep bans and cooldowns in view.',
-      'Choose where CS2 can match you, with ping through your phone.',
-      'Take your settings to another account. Keep a backup to undo.',
-      'One template for your Steam profiles. Preview before applying.'
+      T('See the IP servers see. Change it and rejoin from one place.'),
+      T('Find your server, check its players and ping, then join.'),
+      T('Switch saved Steam accounts. Keep bans and cooldowns in view.'),
+      T('Choose where CS2 can match you, with ping through your phone.'),
+      T('Take your settings to another account. Keep a backup to undo.'),
+      T('One template for your Steam profiles. Preview before applying.')
     ];
     var section = d.createElement('div');
     section.className = 'mobile-tour';
-    section.innerHTML = '<div class="tour-tabs" role="tablist" aria-label="Explore the Windows app"></div>' +
+    section.innerHTML = '<div class="tour-tabs" role="tablist" aria-label="' + T('Explore the Windows app') + '"></div>' +
       '<div class="tour-panel" role="tabpanel" id="mobile-app-panel" tabindex="0">' +
       '<div class="tour-heading"><h3></h3><span class="tour-index" aria-hidden="true"></span></div>' +
       '<p class="tour-intro"></p><figure class="tour-detail"><div class="tour-crop"></div>' +
-      '<figcaption><button type="button" class="tour-prev" aria-label="Previous detail">←</button>' +
-      '<span class="tour-caption" aria-live="polite"></span><button type="button" class="tour-next" aria-label="Next detail">→</button></figcaption></figure>' +
-      '<div class="tour-actions"><a class="zoom tour-full" href="img/connection.png">Full screenshot <span aria-hidden="true">↗</span></a>' +
-      '<button type="button" class="tour-more" aria-expanded="false" aria-controls="mobile-app-more">More details <span aria-hidden="true">+</span></button></div>' +
+      '<figcaption><button type="button" class="tour-prev" aria-label="' + T('Previous detail') + '">←</button>' +
+      '<span class="tour-caption" aria-live="polite"></span><button type="button" class="tour-next" aria-label="' + T('Next detail') + '">→</button></figcaption></figure>' +
+      '<div class="tour-actions"><a class="zoom tour-full" href="' + ROOT + 'img/connection.png">' + T('Full screenshot') + ' <span aria-hidden="true">↗</span></a>' +
+      '<button type="button" class="tour-more" aria-expanded="false" aria-controls="mobile-app-more">' + T('More details') + ' <span aria-hidden="true">+</span></button></div>' +
       '<div id="mobile-app-more" class="tour-more-content" hidden></div>' +
-      '<p class="tour-note">Windows app · Example IPs and names</p></div>';
+      '<p class="tour-note">' + T('Windows app · Example IPs and names') + '</p></div>';
     var find = function (s) { return section.querySelector(s); };
     var tabs = pages.map(function (li, i) {
       var b = d.createElement('button');
@@ -49,7 +51,7 @@
       var wide = width > crop.clientWidth + 24;
       crop.tabIndex = wide ? 0 : -1;
       crop.setAttribute('role', 'region');
-      crop.setAttribute('aria-label', wide ? 'Screenshot detail. Scroll horizontally to see the full row.' : 'Screenshot detail');
+      crop.setAttribute('aria-label', wide ? T('Screenshot detail. Scroll horizontally to see the full row.') : T('Screenshot detail'));
       find('.tour-pan').hidden = !wide;
     }
     function detail() {
@@ -71,7 +73,7 @@
         im.loading = 'eager'; crop.appendChild(copy);
       }
       find('.tour-caption').textContent = (k + 1) + ' / ' + keys.length + ' · ' + key.querySelector(':scope > span').textContent;
-      var hint = d.createElement('small'); hint.className = 'tour-pan'; hint.textContent = 'Scroll image sideways ↔'; hint.hidden = true;
+      var hint = d.createElement('small'); hint.className = 'tour-pan'; hint.textContent = T('Scroll image sideways') + ' ↔'; hint.hidden = true;
       find('.tour-caption').appendChild(hint);
       fitDetail(); crop.scrollLeft = 0;
     }
@@ -82,7 +84,7 @@
       var open = find('.tour-more-content').hidden;
       find('.tour-more-content').hidden = !open;
       find('.tour-more').setAttribute('aria-expanded', open);
-      find('.tour-more').innerHTML = (open ? 'Less detail' : 'More details') + ' <span aria-hidden="true">' + (open ? '−' : '+') + '</span>';
+      find('.tour-more').innerHTML = (open ? T('Less detail') : T('More details')) + ' <span aria-hidden="true">' + (open ? '−' : '+') + '</span>';
       options.onMeasure();
     });
     function select(pg) {
@@ -94,7 +96,7 @@
       find('.tour-index').textContent = '0' + (current + 1) + ' / 06';
       find('.tour-intro').textContent = summaries[current];
       find('.tour-full').href = 'img/' + pg + '.png';
-      find('.tour-full').setAttribute('aria-label', 'Full screenshot: ' + tabs[current].textContent);
+      find('.tour-full').setAttribute('aria-label', T('Full screenshot') + ': ' + tabs[current].textContent);
       var more = find('.tour-more-content'); more.replaceChildren(); more.hidden = true;
       Array.from(pages[current].children).forEach(function (el) {
         if (el.tagName === 'H3') return;
@@ -102,7 +104,7 @@
         more.appendChild(copy);
       });
       find('.tour-more').setAttribute('aria-expanded', 'false');
-      find('.tour-more').innerHTML = 'More details <span aria-hidden="true">+</span>';
+      find('.tour-more').innerHTML = T('More details') + ' <span aria-hidden="true">+</span>';
       detail();
     }
     options.fig.parentNode.appendChild(section);
