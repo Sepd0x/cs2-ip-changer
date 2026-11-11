@@ -18,8 +18,8 @@ public sealed record PhoneInfo(string Serial, string State, string Model, string
     {
         "device" => string.Join(" · ", new[] { Model, Carrier, NetType, Battery is int b ? $"{b}%" : null }
                         .Where(s => !string.IsNullOrWhiteSpace(s))),
-        "unauthorized" => "Accept the \"Allow USB debugging\" prompt on your phone screen",
-        "offline" => "Phone offline in ADB: unplug and reconnect the cable",
+        "unauthorized" => Loc.T("Accept the \"Allow USB debugging\" prompt on your phone screen"),
+        "offline" => Loc.T("Phone offline in ADB: unplug and reconnect the cable"),
         _ => State,
     };
 }
@@ -312,10 +312,10 @@ public static class Adb
             await using (var to = new FileStream(zip, FileMode.Create, FileAccess.Write, FileShare.None))
                 await CopyWithProgress(from, to, total, progress, percent);
         }
-        progress?.Report(SRT.Texts.AdbUnpacking);
+        progress?.Report(Loc.T(SRT.Texts.AdbUnpacking));
         await Task.Run(() => Extract(zip, Paths.Data));
         try { File.Delete(Paths.NoLink(zip)); } catch { }
-        progress?.Report(SRT.Texts.AdbChecking);
+        progress?.Report(Loc.T(SRT.Texts.AdbChecking));
         return await Task.Run(Find);
     }
 

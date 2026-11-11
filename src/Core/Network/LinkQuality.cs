@@ -9,8 +9,8 @@ public sealed record LinkQuality(int Sent, int Lost, int AvgMs, int JitterMs, st
 {
     public int LossPct => Sent == 0 ? 100 : Lost * 100 / Sent;
     public QualityLevel Level => Quality.Rate(this);
-    public string Text => Lost == Sent ? $"no answer · {NetType ?? "?"}"
-        : $"{AvgMs} ms · jitter {JitterMs} ms · {LossPct}% loss" + (NetType != null ? $" · {NetType}" : "");
+    public string Text => Lost == Sent ? Loc.F("no answer · {0}", NetType ?? "?")
+        : Loc.F("{0} ms · jitter {1} ms · {2}% loss", AvgMs, JitterMs, LossPct) + (NetType != null ? " · " + NetType : "");
 }
 
 public static class Quality

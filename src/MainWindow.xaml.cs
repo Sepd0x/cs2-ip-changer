@@ -64,6 +64,7 @@ public partial class MainWindow : Window
     public MainWindow(string[] args, App.StatsConsent stats)
     {
         InitializeComponent();
+        Loc.Apply(this);
         Rec.Install(this, PersonalWords);
         MarkPublicLists();
         ClampToWorkArea();   // before ParseDevArgs: a demo --size still wins
@@ -117,17 +118,17 @@ public partial class MainWindow : Window
         foreach (var h in _s.IpHistory.OrderByDescending(h => h.Time).Take(30)) _history.Add(h);
 
         // The three rows that decide whether you are protected come first.
-        _checks.Add(_cEgress = new CheckItem { Title = "Phone connection", Help = "The phone over a USB cable, which is how the servers are reached." });
-        _checks.Add(_cRoutes = new CheckItem { Title = "Servers through the phone", Help = "Windows confirms that every server in your list goes through the phone." });
-        _checks.Add(_cCs2 = new CheckItem { Title = "CS2 only through the phone", Help = "Firewall rule: cs2.exe's game traffic (UDP) only goes out through the phone. Servers not in the list (game browser, invites) never see your home IP either. Web content that CS2 loads uses the normal connection." });
-        _checks.Add(_cKill = new CheckItem { Title = "Block if the phone drops", Help = "The kill switch: a Firewall rule that blocks the listed servers on every adapter except the phone, so a dropped phone never falls back to your home IP." });
-        _checks.Add(_cFirewall = new CheckItem { Title = "Windows Firewall", Help = "Must be on: it enforces the block." });
-        _checks.Add(_cDiff = new CheckItem { Title = "Phone IP is not your home IP", Help = "If the phone is sharing your home Wi-Fi instead of mobile data, the IP would be the same." });
-        _checks.Add(_cPhoneData = new CheckItem { Title = "Mobile data", Help = "With the phone's Wi-Fi on, tethering may carry your home network instead of mobile data. Read through ADB; without ADB, check it yourself." });
-        _checks.Add(_cQuality = new CheckItem { Title = "Connection quality", Help = "Ping, jitter and loss through the phone, measured every 30 s. Weak means lag in game: the app warns, and can drop Whole PC to Game only while it lasts (Settings > Mobile data)." });
-        _checks.Add(_cSteam = new CheckItem { Title = "Steam through the phone", Help = "steam.exe talks to Valve through the phone, like CS2. If Steam is on another network or reconnects mid-game, the server kicks you with \"No Steam logon\"." });
-        _checks.Add(_cPc = new CheckItem { Title = "Other apps", Help = "Where the rest of the PC's traffic goes out (browser, Discord, downloads)." });
-        _checks.Add(_cRegions = new CheckItem { Title = "Matchmaking regions", Chosen = true, Help = "Regions you turned off on the Regions page stay blocked for CS2 matchmaking until you allow them again (Regions > Allow all (block off)). Turning protection off, closing the app and No phone mode don't change them." });
+        _checks.Add(_cEgress = new CheckItem { Title = Loc.T("Phone connection"), Help = Loc.T("The phone over a USB cable, which is how the servers are reached.") });
+        _checks.Add(_cRoutes = new CheckItem { Title = Loc.T("Servers through the phone"), Help = Loc.T("Windows confirms that every server in your list goes through the phone.") });
+        _checks.Add(_cCs2 = new CheckItem { Title = Loc.T("CS2 only through the phone"), Help = Loc.T("Firewall rule: cs2.exe's game traffic (UDP) only goes out through the phone. Servers not in the list (game browser, invites) never see your home IP either. Web content that CS2 loads uses the normal connection.") });
+        _checks.Add(_cKill = new CheckItem { Title = Loc.T("Block if the phone drops"), Help = Loc.T("The kill switch: a Firewall rule that blocks the listed servers on every adapter except the phone, so a dropped phone never falls back to your home IP.") });
+        _checks.Add(_cFirewall = new CheckItem { Title = Loc.T("Windows Firewall"), Help = Loc.T("Must be on: it enforces the block.") });
+        _checks.Add(_cDiff = new CheckItem { Title = Loc.T("Phone IP is not your home IP"), Help = Loc.T("If the phone is sharing your home Wi-Fi instead of mobile data, the IP would be the same.") });
+        _checks.Add(_cPhoneData = new CheckItem { Title = Loc.T("Mobile data"), Help = Loc.T("With the phone's Wi-Fi on, tethering may carry your home network instead of mobile data. Read through ADB; without ADB, check it yourself.") });
+        _checks.Add(_cQuality = new CheckItem { Title = Loc.T("Connection quality"), Help = Loc.T("Ping, jitter and loss through the phone, measured every 30 s. Weak means lag in game: the app warns, and can drop Whole PC to Game only while it lasts (Settings > Mobile data).") });
+        _checks.Add(_cSteam = new CheckItem { Title = Loc.T("Steam through the phone"), Help = Loc.T("steam.exe talks to Valve through the phone, like CS2. If Steam is on another network or reconnects mid-game, the server kicks you with \"No Steam logon\".") });
+        _checks.Add(_cPc = new CheckItem { Title = Loc.T("Other apps"), Help = Loc.T("Where the rest of the PC's traffic goes out (browser, Discord, downloads).") });
+        _checks.Add(_cRegions = new CheckItem { Title = Loc.T("Matchmaking regions"), Chosen = true, Help = Loc.T("Regions you turned off on the Regions page stay blocked for CS2 matchmaking until you allow them again (Regions > Allow all (block off)). Turning protection off, closing the app and No phone mode don't change them.") });
         UpdateRegionsCheck();
         HookChecksView();
 
@@ -263,7 +264,7 @@ public partial class MainWindow : Window
                 a.Meta.CooldownUntil = null;
                 a.RefreshAll();
                 SaveAccounts();
-                Toast($"The cooldown for {a.Name} has ended.", true);
+                Toast(Loc.F("The cooldown for {0} has ended.", a.Name), true);
                 UpdateQuickInfo();   // it is back in the rotation: New IP + next account may name it now
             }
         }

@@ -115,7 +115,7 @@ public partial class MainWindow
     // ------------------------------------------------------------ Turn on, turn off (Guard.OnAtStart has the rules)
 
     // A command (4 nov.): the top bar says what it is doing while it connects the phone, and Cancel stops the wait for tethering
-    async void TurnOn_Click(object sender, RoutedEventArgs e) => await RunCommand("Turn on protection", "turning on…", () => TurnProtectionOn(ask: true));
+    async void TurnOn_Click(object sender, RoutedEventArgs e) => await RunCommand(Loc.T("Turn on protection"), Loc.T("turning on…"), () => TurnProtectionOn(ask: true));
 
     /// <summary>
     /// Protection on: the kill switch, the routes and the CS2 lock (and Whole PC, by the mode). With no phone, your servers and CS2
@@ -124,10 +124,10 @@ public partial class MainWindow
     async Task<bool> TurnProtectionOn(bool ask)
     {
         if (_protOn) return true;
-        if (_turningOff) { Toast("Protection is still being turned off. Try again in a moment.", false); return false; }
-        if (_s.NoPhone) { Toast("No phone mode is on: pick Game only or Whole PC under What goes through the phone first.", false); return false; }
+        if (_turningOff) { Toast(Loc.T("Protection is still being turned off. Try again in a moment."), false); return false; }
+        if (_s.NoPhone) { Toast(Loc.T("No phone mode is on: pick Game only or Whole PC under What goes through the phone first."), false); return false; }
         // CS2 open on the home network: the CS2 lock (or Whole PC) moves it to the phone, or blocks it with no phone. A match drops.
-        if (ask && !_demo && Steam.Cs2Running && !await Ask("CS2 is open", TurnOnCs2Open(_s.LockCs2 && PhoneKnown), "Turn on protection"))
+        if (ask && !_demo && Steam.Cs2Running && !await Ask(Loc.T("CS2 is open"), TurnOnCs2Open(_s.LockCs2 && PhoneKnown), Loc.T("Turn on protection")))
             return false;
         _protOn = true;
         Log.Ok("Protection turned on.");
@@ -143,7 +143,8 @@ public partial class MainWindow
     /// option on and a phone checked once on this PC (Guard), or CS2 keeps going out from home.
     /// </summary>
     public static string TurnOnCs2Open(bool cs2Blocks) =>
-        "Turning protection on moves CS2 to the phone" + (cs2Blocks ? ", or blocks it until the phone is connected" : "") + ". If you are in a match, you will drop.";
+        cs2Blocks ? Loc.T("Turning protection on moves CS2 to the phone, or blocks it until the phone is connected. If you are in a match, you will drop.")
+            : Loc.T("Turning protection on moves CS2 to the phone. If you are in a match, you will drop.");
 
     public enum TurnOnStep { None, Tether, WifiThenTether, Setup }
 
@@ -168,22 +169,22 @@ public partial class MainWindow
             if (next == TurnOnStep.None) return;
             if (next is TurnOnStep.Tether or TurnOnStep.WifiThenTether)
             {
-                Toast("Protection is on. Connecting the phone: turning on USB tethering…", Tone.Info);
-                ShowProgress("Connecting the phone: turning on USB tethering…");
-                Step("turning on USB tethering on the phone…");
+                Toast(Loc.T("Protection is on. Connecting the phone: turning on USB tethering…"), Tone.Info);
+                ShowProgress(Loc.T("Connecting the phone: turning on USB tethering…"));
+                Step(Loc.T("turning on USB tethering on the phone…"));
                 using var wait = _command != null ? CommandWait() : null;
                 try
                 {
                     if (next == TurnOnStep.WifiThenTether) { await TurnPhoneWifiOff(); await Task.Delay(2000); }
                     var (adapter, why) = await TurnOnTethering(t => ProgressText.Text = t);
                     if (CommandCancelled) return;   // Cancel at the top: protection stays on, the phone part stops here
-                    if (adapter != null) { Toast($"Phone connected ({adapter.Name}). The app checks its IP, then servers see it.", true); return; }
+                    if (adapter != null) { Toast(Loc.F("Phone connected ({0}). The app checks its IP, then servers see it.", adapter.Name), true); return; }
                     Log.Warn("Turn on protection: the phone didn't connect by itself. " + why);
                 }
                 finally { HideProgress(); }
             }
             // Protection is on and blocks servers until the phone is there: say it, and show the steps instead of leaving it silent.
-            Toast($"Protection is on, but the phone isn't connected yet: {Blocked(_last, lower: true)} stay blocked. Phone setup shows what's missing.", false);
+            Toast(Loc.F("Protection is on, but the phone isn't connected yet: {0} stay blocked. Phone setup shows what's missing.", Blocked(_last, lower: true)), false);
             if (openSetup && SetupPane.Visibility != Visibility.Visible) await RunPhoneSetup();
         }
         catch (Exception ex) { Log.Warn("Connecting the phone after Turn on protection: " + ex.Message); }
@@ -215,7 +216,7 @@ public partial class MainWindow
 
     void ApplyReport(GuardReport rep)
     {
-        if (rep.Error != null && rep.Adapters.Count == 0) { SetHero("bad", "Error applying protection", rep.Error); return; }
+        if (rep.Error != null && rep.Adapters.Count == 0) { SetHero("bad", Loc.T("Error applying protection"), rep.Error); return; }
         var egressKey = Guard.KeyOf(rep.Egress);
         var egressChanged = egressKey != _lastEgressKey;
         var home = rep.Unprotected;   // No phone, or protection off: nothing is blocked, so a drop is no drop
@@ -247,7 +248,7 @@ public partial class MainWindow
             Toast(DropToast(rep.EgressProblem, safe, Cs2Locked(rep)), safe ? Tone.Warn : Tone.Error);
         }
         else if (!_wasProtected && protectedNow && _lastEgressKey != null && _everProtected)
-            Toast("Protection is back.", true);
+            Toast(Loc.T("Protection is back."), true);
         if (protectedNow) _everProtected = true;
         if (!quiet) _wasProtected = protectedNow;
 
@@ -255,10 +256,10 @@ public partial class MainWindow
 
         foreach (var srv in _servers)
         {
-            if (home) { srv.Protected = null; srv.RouteText = rep.EffectiveMode == "off" ? "Protection off" : "Home IP"; continue; }
+            if (home) { srv.Protected = null; srv.RouteText = rep.EffectiveMode == "off" ? Loc.T("Protection off") : Loc.T("Home IP"); continue; }
             var ok = rep.RouteOk.TryGetValue(srv.Ip, out var r) && r && rep.KillSwitchOk;
             srv.Protected = rep.Egress == null ? (rep.KillSwitchOk ? null : false) : ok;
-            srv.RouteText = rep.Egress == null ? (rep.KillSwitchOk ? "Blocked" : "Unprotected") : ok ? "Protected" : !rep.KillSwitchOk ? "No kill switch" : "Route failed";
+            srv.RouteText = Loc.T(rep.Egress == null ? (rep.KillSwitchOk ? "Blocked" : "Unprotected") : ok ? "Protected" : !rep.KillSwitchOk ? "No kill switch" : "Route failed");
         }
 
         TrackSteam(rep);
@@ -281,7 +282,7 @@ public partial class MainWindow
             else if (path == "home")
             {
                 Log.Warn($"Steam is connected to Valve through another network ({string.Join(", ", link.LocalIps)}), not the phone connection. Restart Steam before playing.");
-                if (_s.SteamOnEgress) Toast("Steam is on another network: restart it (or switch account) before playing, or you'll get kicked with \"No Steam logon\".", false);
+                if (_s.SteamOnEgress) Toast(Loc.T("Steam is on another network: restart it (or switch account) before playing, or you'll get kicked with \"No Steam logon\"."), false);
             }
         }
         _steamPath = path;
@@ -297,54 +298,54 @@ public partial class MainWindow
         if (rep.Unprotected) { HomeStatusUi(rep, n); return; }
 
         _cFirewall.Ok = rep.FirewallProblem == null;
-        _cFirewall.Detail = rep.FirewallProblem ?? "On";
+        _cFirewall.Detail = rep.FirewallProblem ?? Loc.T("On");
         _cKill.Ok = n == 0 ? null : rep.KillSwitchOk;
-        _cKill.Detail = n == 0 ? "No servers added yet" : rep.KillSwitchOk ? (n == 1 ? "1 IP blocked on the home network" : $"{n} IPs blocked on the home network") : "Rule not confirmed";
+        _cKill.Detail = n == 0 ? Loc.T("No servers added yet") : rep.KillSwitchOk ? (n == 1 ? Loc.T("1 IP blocked on the home network") : Loc.F("{0} IPs blocked on the home network", n)) : Loc.T("Rule not confirmed");
         var waiting = rep.Egress == null && rep.KillSwitchOk && rep.FirewallProblem == null;
         _cEgress.Ok = rep.Egress != null ? true : waiting || n == 0 ? null : false;
         _cEgress.Waiting = waiting;
         _cEgress.Detail = rep.Egress != null
             ? $"{(rep.Egress.IsPhone || rep.Egress.IsUsbNet || rep.Egress.IsWifi ? rep.Egress.Kind : rep.Egress.Name)} · {rep.Egress.LocalIp}" + (rep.Egress.IsWifi && rep.Egress.Ssid != null ? $" · {rep.Egress.Ssid}" : "")
-            : rep.Distrust == Distrust.Unchecked ? $"{rep.Candidate?.Name ?? "Phone"}: checking its public IP…"
-            : rep.Distrust == Distrust.PhoneWifi ? "Blocked while the phone's Wi-Fi is on"
-            : rep.Distrust == Distrust.SameIp ? "Blocked: same IP as your home IP"
-            : rep.Distrust == Distrust.NoHome ? "Blocked: your home IP hasn't been measured yet"
-            : rep.EgressProblem ?? "Waiting for the phone";
+            : rep.Distrust == Distrust.Unchecked ? Loc.F("{0}: checking its public IP…", rep.Candidate?.Name ?? Loc.T("Phone"))
+            : rep.Distrust == Distrust.PhoneWifi ? Loc.T("Blocked while the phone's Wi-Fi is on")
+            : rep.Distrust == Distrust.SameIp ? Loc.T("Blocked: same IP as your home IP")
+            : rep.Distrust == Distrust.NoHome ? Loc.T("Blocked: your home IP hasn't been measured yet")
+            : rep.EgressProblem ?? Loc.T("Waiting for the phone");
         // The square comes from the same branch as the text: never green next to "Not locked yet". Amber, not red: on a first run
         // that is the normal state, and red would fail the leak test before the phone was ever connected.
         var notLockedYet = _s.LockCs2 && !PhoneKnown && rep.Egress == null;
         _cCs2.Ok = !_s.LockCs2 || notLockedYet ? null : rep.Cs2LockOk;
         _cCs2.Waiting = notLockedYet;
-        _cCs2.Detail = !_s.LockCs2 ? "Turned off in Settings"
-            : notLockedYet ? Cs2NotLockedYet
-            : rep.Cs2LockOk == null ? "Couldn't find cs2.exe (open CS2 once)"
-            : rep.Cs2LockOk == true ? (rep.Egress != null ? "CS2 only goes out through the phone" : "CS2 blocked until you connect the phone") : "Rule not confirmed";
+        _cCs2.Detail = !_s.LockCs2 ? Loc.T("Turned off in Settings")
+            : notLockedYet ? Loc.T(Cs2NotLockedYet)
+            : rep.Cs2LockOk == null ? Loc.T("Couldn't find cs2.exe (open CS2 once)")
+            : rep.Cs2LockOk == true ? (rep.Egress != null ? Loc.T("CS2 only goes out through the phone") : Loc.T("CS2 blocked until you connect the phone")) : Loc.T("Rule not confirmed");
         _cRoutes.Ok = n == 0 || waiting ? null : rep.Egress != null && routesOk == n;
         _cRoutes.Waiting = n > 0 && waiting;
-        _cRoutes.Detail = n == 0 ? "No servers added yet" : waiting ? "Waiting for the phone (safe)" : $"{routesOk} of {n}";
+        _cRoutes.Detail = n == 0 ? Loc.T("No servers added yet") : waiting ? Loc.T("Waiting for the phone (safe)") : Loc.F("{0} of {1}", routesOk, n);
         var same = _egressPublic != null && _homePublic != null && _egressPublic == _homePublic;
         _cDiff.Ok = _egressPublic == null || _homePublic == null ? null : !same;
-        _cDiff.Detail = _egressPublic == null ? "Waiting for the phone's IP" : _homePublic == null ? "No home network to compare" : same ? "Same IP: the phone is sharing your Wi-Fi" : "Yes";
+        _cDiff.Detail = _egressPublic == null ? Loc.T("Waiting for the phone's IP") : _homePublic == null ? Loc.T("No home network to compare") : same ? Loc.T("Same IP: the phone is sharing your Wi-Fi") : Loc.T("Yes");
         _cSteam.Ok = Steam.IsRunning && _steamLog.Online == false ? false
             : !SteamReady ? null
             : !_s.SteamOnEgress || rep.Egress == null ? null
             // Over UDP the TCP table doesn't show the connection: the Steam log plus the Valve routes count instead.
             : !rep.Steam.Connected && Steam.IsRunning && _steamLog.Online == true ? rep.SteamRoutesOk
             : rep.SteamOnEgress;
-        _cSteam.Detail = Steam.IsRunning && _steamLog.Online == false ? $"No Valve session since {_steamLog.LastDrop:HH:mm:ss}: joining now gets you kicked"
-            : !SteamReady ? "Reconnecting after the IP change"
-            : !_s.SteamOnEgress ? "Turned off in Settings"
-            : rep.Egress == null ? "Waiting for the phone"
-            : !rep.Steam.Connected && Steam.IsRunning && _steamLog.Online == true ? "Connected over UDP (the Valve route goes through the phone)"
-            : !rep.Steam.Connected ? (Steam.IsRunning ? "Steam not connected to Valve" : "Steam closed")
-            : rep.SteamOnEgress == true ? (rep.SteamRoutesOk == false ? "Connected through the phone (Valve routes not confirmed yet)" : "Connected through the phone, like CS2")
-            : "Connected through the home network: restart Steam (or switch account) before playing";
+        _cSteam.Detail = Steam.IsRunning && _steamLog.Online == false ? Loc.F("No Valve session since {0}: joining now gets you kicked", $"{_steamLog.LastDrop:HH:mm:ss}")
+            : !SteamReady ? Loc.T("Reconnecting after the IP change")
+            : !_s.SteamOnEgress ? Loc.T("Turned off in Settings")
+            : rep.Egress == null ? Loc.T("Waiting for the phone")
+            : !rep.Steam.Connected && Steam.IsRunning && _steamLog.Online == true ? Loc.T("Connected over UDP (the Valve route goes through the phone)")
+            : !rep.Steam.Connected ? (Steam.IsRunning ? Loc.T("Steam not connected to Valve") : Loc.T("Steam closed"))
+            : rep.SteamOnEgress == true ? (rep.SteamRoutesOk == false ? Loc.T("Connected through the phone (Valve routes not confirmed yet)") : Loc.T("Connected through the phone, like CS2"))
+            : Loc.T("Connected through the home network: restart Steam (or switch account) before playing");
 
         if (rep.EffectiveMode == "all")
         {
             _cPc.Ok = rep.Egress == null ? null : rep.FullModeOk;
-            _cPc.Detail = rep.FullModeOk ? (_s.Mode == "all" ? "Whole PC, DNS and IPv6 through the phone (IPv6 blocked)" : "CS2 open: whole PC, DNS and IPv6 through the phone (IPv6 blocked)")
-                : rep.Egress == null ? "Waiting for the phone" : FullModeProblem(rep);
+            _cPc.Detail = rep.FullModeOk ? (_s.Mode == "all" ? Loc.T("Whole PC, DNS and IPv6 through the phone (IPv6 blocked)") : Loc.T("CS2 open: whole PC, DNS and IPv6 through the phone (IPv6 blocked)"))
+                : rep.Egress == null ? Loc.T("Waiting for the phone") : FullModeProblem(rep);
         }
         else (_cPc.Ok, _cPc.Detail) = RestOfPc(rep);
 
@@ -352,66 +353,66 @@ public partial class MainWindow
         // A specific adapter problem, and the note that explains why a hotspot lock blocks other networks.
         var egressNote = rep.Egress == null && rep.Candidate == null ? rep.EgressProblem : null;
         var wifiLock = !string.IsNullOrEmpty(_s.EgressSsid)
-            ? $"{(egressNote == null ? "Only" : "only")} valid on the hotspot \"{_s.EgressSsid}\""
+            ? (egressNote == null ? Loc.F("Only valid on the hotspot \"{0}\"", _s.EgressSsid) : Loc.F("only valid on the hotspot \"{0}\"", _s.EgressSsid))
             : null;
         var egressLine = string.Join(" · ", new[] { egressNote, wifiLock }.Where(s => !string.IsNullOrEmpty(s)));
         EgressDetail.Text = egressLine;
         EgressDetail.Visibility = egressLine.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
         PcRouteText.Text = rep.EffectiveMode == "all"
-            ? (_s.Mode == "all" ? "Everything, including Steam, goes out through the phone." : "While CS2 is open, the whole PC goes out through the phone.")
+            ? (_s.Mode == "all" ? Loc.T("Everything, including Steam, goes out through the phone.") : Loc.T("While CS2 is open, the whole PC goes out through the phone."))
             : RestOfPc(rep).Detail;
 
         // Hero
         var held = n == 0 || rep.KillSwitchOk ? "warn" : "bad";
         var cs2Off = _s.LockCs2 && rep.Cs2LockOk == false;
         if (rep.FirewallProblem != null)
-            SetHero("bad", "Windows Firewall is off", rep.FirewallProblem + ". " + FirewallHint("there is no kill switch"));
+            SetHero("bad", Loc.T("Windows Firewall is off"), rep.FirewallProblem + ". " + FirewallHint(Loc.T("there is no kill switch")));
         else if (rep.Distrust == Distrust.Unchecked)
         {
             var (title, sub) = UncheckedHero(NoAnswerTooLong(_noAnswerSince, DateTime.Now), Blocked(rep));
             SetHero(held, title, sub);
         }
         else if (rep.Distrust == Distrust.NoHome)
-            SetHero(held, "Home IP not known yet", NoHomeSub(Blocked(rep), VpnIsDefault(rep)));
+            SetHero(held, Loc.T("Home IP not known yet"), NoHomeSub(Blocked(rep), VpnIsDefault(rep)));
         else if (rep.Distrust == Distrust.PhoneWifi && !same)
-            SetHero(held, "Phone Wi-Fi is on",
-                $"{Blocked(rep)} are blocked. With Wi-Fi on, the phone may share your home network instead of mobile data: turn it off under Phone.");
+            SetHero(held, Loc.T("Phone Wi-Fi is on"),
+                Loc.F("{0} are blocked. With Wi-Fi on, the phone may share your home network instead of mobile data: turn it off under Phone.", Blocked(rep)));
         else if (rep.Distrusted || same)
-            SetHero(held, "Your IP is the same as your home IP",
-                $"{Blocked(rep)} are blocked until the IP is different. The phone is sharing your home Wi-Fi, or the PC went back to the router. Turn off the phone's Wi-Fi under Phone.");
+            SetHero(held, Loc.T("Your IP is the same as your home IP"),
+                Loc.F("{0} are blocked until the IP is different. The phone is sharing your home Wi-Fi, or the PC went back to the router. Turn off the phone's Wi-Fi under Phone.", Blocked(rep)));
         else if (rep.Egress == null && !PhoneKnown)
             // With protection on, the title says what it waits for (beside Turn off protection, "Not protected yet" read as a contradiction)
-            SetHero("warn", _protOn ? "Waiting for the phone" : "Not protected yet", WaitingSub(_protOn, _s.LockCs2));
+            SetHero("warn", _protOn ? Loc.T("Waiting for the phone") : Loc.T("Not protected yet"), WaitingSub(_protOn, _s.LockCs2));
         else if (rep.Egress == null && rep.EgressProblem != null)
-            SetHero(held, "You left the phone's network", rep.EgressProblem + $" {Blocked(rep)} are blocked until you are back on the hotspot.");
+            SetHero(held, Loc.T("You left the phone's network"), rep.EgressProblem + " " + Loc.F("{0} are blocked until you are back on the hotspot.", Blocked(rep)));
         else if (rep.Egress == null)
-            SetHero(n == 0 ? "idle" : held, "Phone disconnected",
+            SetHero(n == 0 ? "idle" : held, Loc.T("Phone disconnected"),
                 n == 0 ? (string.IsNullOrEmpty(_s.EgressSsid)
-                    ? "Plug in your phone with USB and turn on USB tethering. First time? Press Phone setup."
-                    : "Connect the phone to its Wi-Fi hotspot.")
+                    ? Loc.T("Plug in your phone with USB and turn on USB tethering. First time? Press Phone setup.")
+                    : Loc.T("Connect the phone to its Wi-Fi hotspot."))
                 : rep.KillSwitchOk ? DisconnectedSafe(Cs2Locked(rep))
-                    + (rep.EffectiveMode == "servers" ? " The rest of the PC works as usual." : "")
-                : "The block on your servers isn't confirmed, so they could see your home IP. Don't join until Checks are green.");
+                    + (rep.EffectiveMode == "servers" ? " " + Loc.T("The rest of the PC works as usual.") : "")
+                : Loc.T("The block on your servers isn't confirmed, so they could see your home IP. Don't join until Checks are green."));
         else if (rep.EffectiveMode == "all" && rep.FullModeOk && (n == 0 || rep.KillSwitchOk) && !cs2Off)
-            SetHero("good", _s.Mode == "all" ? "Protected · whole PC" : "Protected · whole PC (CS2 open)", "The PC's traffic and DNS go out through the phone, and IPv6 is blocked. CS2 and your servers only see the phone's IP.");
+            SetHero("good", _s.Mode == "all" ? Loc.T("Protected · whole PC") : Loc.T("Protected · whole PC (CS2 open)"), Loc.T("The PC's traffic and DNS go out through the phone, and IPv6 is blocked. CS2 and your servers only see the phone's IP."));
         else if (rep.EffectiveMode == "all" && !rep.FullModeOk)
-            SetHero(held, "Whole PC hasn't switched over", FullModeProblem(rep) + "." + (n > 0 && rep.KillSwitchOk ? " Servers on your Servers page are still protected." : "") + " Check the Log.");
+            SetHero(held, Loc.T("Whole PC hasn't switched over"), FullModeProblem(rep) + "." + (n > 0 && rep.KillSwitchOk ? " " + Loc.T("Servers on your Servers page are still protected.") : "") + " " + Loc.T("Check the Log."));
         else if (n == 0)
-            SetHero("idle", "Ready", _s.GameMode
-                ? "The phone is connected. While CS2 is open, the whole PC goes through the phone and every server sees its IP."
-                : "The phone is connected. Add servers on the Servers page, or pick \"Whole PC\" under What goes through the phone.");
+            SetHero("idle", Loc.T("Ready"), _s.GameMode
+                ? Loc.T("The phone is connected. While CS2 is open, the whole PC goes through the phone and every server sees its IP.")
+                : Loc.T("The phone is connected. Add servers on the Servers page, or pick \"Whole PC\" under What goes through the phone."));
         else if (rep.KillSwitchOk && routesOk == n && !cs2Off)
-            SetHero("good", "Protected", ProtectedText(rep));
+            SetHero("good", Loc.T("Protected"), ProtectedText(rep));
         else if (!rep.KillSwitchOk)
-            SetHero("bad", "Protection incomplete", "The firewall block was not confirmed, so servers on your Servers page could see your home IP. Check the Log.");
+            SetHero("bad", Loc.T("Protection incomplete"), Loc.T("The firewall block was not confirmed, so servers on your Servers page could see your home IP. Check the Log."));
         else
-            SetHero("warn", "Protection incomplete", cs2Off ? "Your servers are protected, but the CS2 rule was not confirmed. Check the Log." : $"Only {routesOk} of {n} routes confirmed. Another VPN may be interfering.");
+            SetHero("warn", Loc.T("Protection incomplete"), cs2Off ? Loc.T("Your servers are protected, but the CS2 rule was not confirmed. Check the Log.") : Loc.F("Only {0} of {1} routes confirmed. Another VPN may be interfering.", routesOk, n));
 
         ShowIps();
         UpdatePhoneCheck();
         PhoneNotInUse();
         UpdateProtectionButtons();
-        ServerCount.Text = _servers.Count == 0 ? "" : $"{_servers.Count} {(_servers.Count == 1 ? "server" : "servers")} on {n} {(n == 1 ? "IP" : "IPs")}";
+        ServerCount.Text = _servers.Count == 0 ? "" : Loc.F("{0} on {1}", Fmt.Count(_servers.Count, "server"), Fmt.Count(n, "IP"));
         ServersEmpty.Visibility = _servers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         QueryBtn.IsEnabled = CopyBtn.IsEnabled = ServerSearch.IsEnabled = _servers.Count > 0;
         ServerHeader.Visibility = _servers.Count == 0 ? Visibility.Hidden : Visibility.Visible;
@@ -427,7 +428,7 @@ public partial class MainWindow
     /// <summary>No phone mode with the phone plugged in: the Phone box says it isn't used instead of "Ready to change IP".</summary>
     void PhoneNotInUse()
     {
-        if (_s.NoPhone && _phone?.Ready == true) SetPhone(Ui.Faint, "Phone not in use", _phone.Summary + " · No phone mode is on");
+        if (_s.NoPhone && _phone?.Ready == true) SetPhone(Ui.Faint, Loc.T("Phone not in use"), _phone.Summary + " · " + Loc.T("No phone mode is on"));
     }
 
     /// <summary>
@@ -437,10 +438,10 @@ public partial class MainWindow
     public static (bool? Ok, string Detail) RestOfPc(GuardReport rep)
     {
         var pc = rep.Adapters.FirstOrDefault(a => a.Index == rep.PcDefaultIndex);
-        if (pc == null && rep.PcDefaultName is null or "—") return (null, "No internet connection right now");
+        if (pc == null && rep.PcDefaultName is null or "—") return (null, Loc.T("No internet connection right now"));
         var name = pc?.Name ?? rep.PcDefaultName;
-        if (PcOnPhone(rep)) return (rep.Unprotected ? null : false, $"The whole PC is using the phone ({name}): mobile data");
-        return (rep.Unprotected || rep.Egress == null ? null : true, $"Home network: {name}");
+        if (PcOnPhone(rep)) return (rep.Unprotected ? null : false, Loc.F("The whole PC is using the phone ({0}): mobile data", name));
+        return (rep.Unprotected || rep.Egress == null ? null : true, Loc.F("Home network: {0}", name));
     }
 
     /// <summary>
@@ -451,29 +452,29 @@ public partial class MainWindow
         !(rep.PcDefaultName is null or "—" && !rep.Adapters.Any(a => a.Index == rep.PcDefaultIndex)) && HomeIsPhone(rep);
 
     /// <summary>Protection off or No phone: whether anything is blocked. The Regions block stays in every state.</summary>
-    public static string NothingBlocked(int blockedRegions) => blockedRegions > 0 ? "only the regions you turned off are blocked" : "nothing is blocked";
+    public static string NothingBlocked(int blockedRegions) => blockedRegions > 0 ? Loc.T("only the regions you turned off are blocked") : Loc.T("nothing is blocked");
 
     /// <summary>
     /// Protection off or No phone: what servers see. Usually the home IP; with the whole PC on the phone (no other connection, or
     /// Windows picked it) they see the phone's, but nothing holds the home IP back if it drops.
     /// </summary>
     public static string OffSeen(bool pcOnPhone, int blockedRegions) => pcOnPhone
-        ? $"The whole PC is using the phone, so CS2 and every server see its IP, but if the phone drops they see your home IP: {NothingBlocked(blockedRegions)}."
-        : $"CS2 and every server see your home IP, and {NothingBlocked(blockedRegions)}.";
+        ? Loc.F("The whole PC is using the phone, so CS2 and every server see its IP, but if the phone drops they see your home IP: {0}.", NothingBlocked(blockedRegions))
+        : Loc.F("CS2 and every server see your home IP, and {0}.", NothingBlocked(blockedRegions));
 
     /// <summary>
     /// The Phone connection row with protection off (always grey): not in use, and whether the phone is ready for when it is on.
     /// <paramref name="kind"/> null = no phone connection.
     /// </summary>
     public static string OffPhoneRow(string kind, string localIp, bool ready, Distrust distrust) =>
-        kind == null ? "Not in use: protection is off"
-        : ready ? $"Ready ({kind} · {localIp}): not in use while protection is off"
-        : distrust == Distrust.Unchecked ? $"{kind} · {localIp} · checking its IP…"
-        : distrust != Distrust.None ? $"Not in use: protection is off. {DistrustText.Of(distrust)}"
-        : $"{kind} · {localIp} · not in use: protection is off";
+        kind == null ? Loc.T("Not in use: protection is off")
+        : ready ? Loc.F("Ready ({0} · {1}): not in use while protection is off", kind, localIp)
+        : distrust == Distrust.Unchecked ? Loc.F("{0} · {1} · checking its IP…", kind, localIp)
+        : distrust != Distrust.None ? Loc.F("Not in use: protection is off. {0}", DistrustText.Of(distrust))
+        : Loc.F("{0} · {1} · not in use: protection is off", kind, localIp);
 
     /// <summary>The Routes row with protection off: servers, not IPs (two servers can share one IP).</summary>
-    public static string RoutesOffText(int servers) => servers == 1 ? "Off: 1 server sees your home IP" : $"Off: {servers} servers see your home IP";
+    public static string RoutesOffText(int servers) => servers == 1 ? Loc.T("Off: 1 server sees your home IP") : Loc.F("Off: {0} servers see your home IP", servers);
 
     /// <summary>
     /// Protection off, or No phone mode: nothing is protected, and the page says so plainly. With protection off the phone is still
@@ -482,9 +483,9 @@ public partial class MainWindow
     void HomeStatusUi(GuardReport rep, int n)
     {
         var off = rep.EffectiveMode == "off";
-        var Off = off ? "Off: protection is off" : "Off: no phone mode";
+        var Off = off ? Loc.T("Off: protection is off") : Loc.T("Off: no phone mode");
         _cFirewall.Ok = rep.FirewallProblem == null;
-        _cFirewall.Detail = rep.FirewallProblem ?? "On (it enforces the Regions block)";
+        _cFirewall.Detail = rep.FirewallProblem ?? Loc.T("On (it enforces the Regions block)");
         foreach (var c in new[] { _cKill, _cEgress, _cRoutes, _cDiff, _cQuality, _cCs2, _cSteam })
         {
             c.Ok = null;
@@ -502,32 +503,32 @@ public partial class MainWindow
             _cEgress.Detail = OffPhoneRow(rep.Candidate?.Kind, rep.Candidate?.LocalIp, phoneReady, rep.Distrust);
             var same = _egressPublic != null && _homePublic != null && _egressPublic == _homePublic;
             _cDiff.Ok = _egressPublic == null || _homePublic == null || same ? null : true;
-            _cDiff.Detail = _egressPublic == null ? "Waiting for the phone's IP" : _homePublic == null ? "No home network to compare" : same ? "Same IP: the phone is sharing your Wi-Fi" : "Yes";
+            _cDiff.Detail = _egressPublic == null ? Loc.T("Waiting for the phone's IP") : _homePublic == null ? Loc.T("No home network to compare") : same ? Loc.T("Same IP: the phone is sharing your Wi-Fi") : Loc.T("Yes");
         }
         _cPc.Ok = null;
         _cPc.Detail = RestOfPc(rep).Detail;
         EgressDetail.Text = "";
         EgressDetail.Visibility = Visibility.Collapsed;
         var onPhone = PcOnPhone(rep);
-        PcRouteText.Text = onPhone ? RestOfPc(rep).Detail : $"Everything stays on: {rep.PcDefaultName}";
+        PcRouteText.Text = onPhone ? RestOfPc(rep).Detail : Loc.F("Everything stays on: {0}", rep.PcDefaultName);
         var regions = _s.BlockedRegions?.Count ?? 0;
         if (rep.FirewallProblem != null)
-            SetHero("bad", "Windows Firewall is off", rep.FirewallProblem + ". " + FirewallHint("the Regions block does nothing"));
+            SetHero("bad", Loc.T("Windows Firewall is off"), rep.FirewallProblem + ". " + FirewallHint(Loc.T("the Regions block does nothing")));
         else if (off)
             SetHero(OffHeroKind(_s.UseWithProtectionOff), OffHeroTitle(_s.UseWithProtectionOff),
-                (_s.UseWithProtectionOff ? "Use the app with protection off is on: Servers, Join and Log in use your home connection. " : "")
-                + OffSeen(onPhone, regions) + " Accounts, Configs, Profiles and Regions work as usual. "
-                + (phoneReady ? $"The phone is ready ({_egressPublic}): turn protection on to play through it."
-                    : rep.Candidate != null ? "The phone is connected: its IP is being checked."
-                    : "To play through the phone, connect it, then turn protection on."));
+                (_s.UseWithProtectionOff ? Loc.T("Use the app with protection off is on: Servers, Join and Log in use your home connection.") + " " : "")
+                + OffSeen(onPhone, regions) + " " + Loc.T("Accounts, Configs, Profiles and Regions work as usual.") + " "
+                + (phoneReady ? Loc.F("The phone is ready ({0}): turn protection on to play through it.", _egressPublic)
+                    : rep.Candidate != null ? Loc.T("The phone is connected: its IP is being checked.")
+                    : Loc.T("To play through the phone, connect it, then turn protection on.")));
         else
-            SetHero("warn", "Not protected · no phone",
-                "You picked No phone. " + OffSeen(onPhone, regions) + " Accounts, Configs, Profiles and Regions work as usual. To protect again, pick another option under What goes through the phone, then turn protection on.");
+            SetHero("warn", Loc.T("Not protected · no phone"),
+                Loc.T("You picked No phone.") + " " + OffSeen(onPhone, regions) + " " + Loc.T("Accounts, Configs, Profiles and Regions work as usual.") + " " + Loc.T("To protect again, pick another option under What goes through the phone, then turn protection on."));
         ShowIps();
         UpdatePhoneCheck();
         PhoneNotInUse();
         UpdateProtectionButtons();
-        ServerCount.Text = _servers.Count == 0 ? "" : $"{_servers.Count} {(_servers.Count == 1 ? "server" : "servers")} on {n} {(n == 1 ? "IP" : "IPs")}";
+        ServerCount.Text = _servers.Count == 0 ? "" : Loc.F("{0} on {1}", Fmt.Count(_servers.Count, "server"), Fmt.Count(n, "IP"));
         ServersEmpty.Visibility = _servers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         QueryBtn.IsEnabled = CopyBtn.IsEnabled = ServerSearch.IsEnabled = _servers.Count > 0;
         ServerHeader.Visibility = _servers.Count == 0 ? Visibility.Hidden : Visibility.Visible;
@@ -538,16 +539,16 @@ public partial class MainWindow
     /// the Status box say it in red and keep saying it: every server sees the home IP. Without it, a quiet grey "Protection off".
     /// </summary>
     public static string OffHeroKind(bool useWithOff) => useWithOff ? "bad" : "idle";
-    public static string OffHeroTitle(bool useWithOff) => useWithOff ? "Home IP: servers see it" : "Protection off";
+    public static string OffHeroTitle(bool useWithOff) => useWithOff ? Loc.T("Home IP: servers see it") : Loc.T("Protection off");
 
     /// <summary>Whole PC mode: what isn't confirmed yet (routes, DNS or IPv6).</summary>
     static string FullModeProblem(GuardReport rep)
     {
         var left = new List<string>();
-        if (!rep.FullRoutesOk) left.Add($"the rest of the PC is still on {rep.PcDefaultName}");
-        if (rep.DnsOk != true) left.Add("DNS isn't confirmed through the phone");
-        if (rep.Ipv6Ok != true) left.Add("the IPv6 block isn't confirmed");
-        var text = left.Count == 0 ? "Not confirmed yet" : string.Join(", ", left);
+        if (!rep.FullRoutesOk) left.Add(Loc.F("the rest of the PC is still on {0}", rep.PcDefaultName));
+        if (rep.DnsOk != true) left.Add(Loc.T("DNS isn't confirmed through the phone"));
+        if (rep.Ipv6Ok != true) left.Add(Loc.T("the IPv6 block isn't confirmed"));
+        var text = left.Count == 0 ? Loc.T("Not confirmed yet") : string.Join(", ", left);
         return char.ToUpperInvariant(text[0]) + text[1..];
     }
 
@@ -564,11 +565,11 @@ public partial class MainWindow
     {
         var cs2Later = _s.LockCs2 && rep.Cs2LockOk == null;
         if (_s.GameMode)
-            return "While CS2 is open, every server sees the phone's IP, not only your list. "
-                + (cs2Later ? "CS2 itself gets locked once you open it." : $"If the phone drops, {Blocked(rep, lower: true)} are blocked.");
+            return Loc.T("While CS2 is open, every server sees the phone's IP, not only your list.") + " "
+                + (cs2Later ? Loc.T("CS2 itself gets locked once you open it.") : Loc.F("If the phone drops, {0} are blocked.", Blocked(rep, lower: true)));
         return cs2Later
-            ? "Servers on your Servers page only see the phone's IP. CS2 itself gets locked once you open it."
-            : "Servers on your Servers page only see the phone's IP. If the phone disconnects, they are blocked.";
+            ? Loc.T("Servers on your Servers page only see the phone's IP. CS2 itself gets locked once you open it.")
+            : Loc.T("Servers on your Servers page only see the phone's IP. If the phone disconnects, they are blocked.");
     }
 
     /// <summary>What the kill switch holds back right now: CS2 is only named when its own rule is on.</summary>
@@ -577,36 +578,36 @@ public partial class MainWindow
     /// <summary>The CS2 lock is on and confirmed: CS2 can't go out from home.</summary>
     bool Cs2Locked(GuardReport rep) => _s.LockCs2 && rep?.Cs2LockOk == true;
 
-    public static string BlockedText(bool cs2Locked, bool lower = false) => cs2Locked ? (lower ? "servers" : "Servers") + " and CS2" : lower ? "your servers" : "Your servers";
+    public static string BlockedText(bool cs2Locked, bool lower = false) => cs2Locked ? (lower ? Loc.T("servers and CS2") : Loc.T("Servers and CS2")) : lower ? Loc.T("your servers") : Loc.T("Your servers");
 
     /// <summary>
     /// The Status line while no phone was ever checked on this PC. Until then the CS2 lock isn't armed (Guard), so with protection on
     /// only your servers wait for the phone: CS2 itself still reaches any other server from home.
     /// </summary>
     public static string WaitingSub(bool protOn, bool lockCs2) => protOn
-        ? "Your servers wait for the phone, so your home IP can't reach them." + (lockCs2 ? " CS2 isn't locked until the app has checked a phone once: don't open it yet." : "") + " Press Phone setup to walk through it."
-        : "If you open CS2 now, servers see your home IP. Set up the phone first: press Phone setup to walk through it.";
+        ? Loc.T("Your servers wait for the phone, so your home IP can't reach them.") + (lockCs2 ? " " + Loc.T("CS2 isn't locked until the app has checked a phone once: don't open it yet.") : "") + " " + Loc.T("Press Phone setup to walk through it.")
+        : Loc.T("If you open CS2 now, servers see your home IP. Set up the phone first: press Phone setup to walk through it.");
 
     /// <summary>The CS2 lock row of Checks before a phone was ever checked (amber: nothing is wrong, it just isn't armed yet).</summary>
     public const string Cs2NotLockedYet = "Not locked until a phone is checked once";
 
     /// <summary>The phone dropped with the block confirmed. "Your IP can't leak" only when CS2 is locked too: without it CS2 goes out from home.</summary>
     public static string DropToast(string problem, bool safe, bool cs2Locked) =>
-        (problem ?? "The phone connection dropped.")
-        + (!safe ? " The block isn't confirmed: don't join a server, check the Log."
-            : $" {BlockedText(cs2Locked)} are now blocked" + (cs2Locked ? ": your IP can't leak." : "."));
+        (problem ?? Loc.T("The phone connection dropped.")) + " "
+        + (!safe ? Loc.T("The block isn't confirmed: don't join a server, check the Log.")
+            : cs2Locked ? Loc.F("{0} are now blocked: your IP can't leak.", BlockedText(cs2Locked)) : Loc.F("{0} are now blocked.", BlockedText(cs2Locked)));
 
     /// <summary>Status with the phone gone and the block confirmed: "You're safe" only when CS2 is locked too.</summary>
     public static string DisconnectedSafe(bool cs2Locked) =>
-        (cs2Locked ? "You're safe: " + BlockedText(true, lower: true) : BlockedText(false)) + " wait for the phone (USB cable or Wi-Fi hotspot).";
+        cs2Locked ? Loc.F("You're safe: {0} wait for the phone (USB cable or Wi-Fi hotspot).", BlockedText(true, lower: true)) : Loc.F("{0} wait for the phone (USB cable or Wi-Fi hotspot).", BlockedText(false));
 
     /// <summary>The leak test passed. With no phone it names only what is really blocked, and says when CS2 isn't locked yet.</summary>
     public static string LeakOkText(string phoneIp, string blockedLower, bool cs2NotLockedYet) =>
-        phoneIp != null ? $"No leaks. Servers see {phoneIp}."
-        : $"No leaks: {blockedLower} are blocked until you connect the phone." + (cs2NotLockedYet ? " CS2 isn't locked until the app has checked a phone once." : "");
+        phoneIp != null ? Loc.F("No leaks. Servers see {0}.", phoneIp)
+        : Loc.F("No leaks: {0} are blocked until you connect the phone.", blockedLower) + (cs2NotLockedYet ? " " + Loc.T("CS2 isn't locked until the app has checked a phone once.") : "");
 
     /// <summary>The Status box as the protection state wants it; an IP change in progress is drawn over it (ShowProgress).</summary>
-    (string Kind, string Title, string Sub) _heroWanted = ("idle", "Checking the connection…", "One moment.");
+    (string Kind, string Title, string Sub) _heroWanted = ("idle", Loc.T("Checking the connection…"), Loc.T("One moment."));
     string _changingTitle;
 
     /// <summary>
@@ -618,8 +619,8 @@ public partial class MainWindow
     bool IpChangeDrops => ChangeDrops(_protOn && _last?.Unprotected != true, _last != null && PcOnPhone(_last));
 
     /// <summary>The Status line while the IP changes.</summary>
-    public static string ChangingSub(bool drops) => "Mobile data goes off and on until the carrier gives a new IP. "
-        + (drops ? "If you are on a server, you will drop." : "Servers see it once protection is on.");
+    public static string ChangingSub(bool drops) => Loc.T("Mobile data goes off and on until the carrier gives a new IP.") + " "
+        + (drops ? Loc.T("If you are on a server, you will drop.") : Loc.T("Servers see it once protection is on."));
 
     void SetHero(string kind, string title, string sub)
     {
@@ -629,10 +630,10 @@ public partial class MainWindow
             (kind, title, sub) = ("warn", _changingTitle, ChangingSub(IpChangeDrops));
         var (fg, bg, glyph, side) = kind switch
         {
-            "good" => (Ui.Good, Ui.GoodSoft, "", "Protected"),
-            "bad" => (Ui.Bad, Ui.BadSoft, "", "Attention"),
-            "warn" => (Ui.Warn, Ui.WarnSoft, "", "Phone disconnected"),
-            _ => (Ui.Muted, (Brush)FindResource("Surface3"), "", "Ready"),
+            "good" => (Ui.Good, Ui.GoodSoft, "", Loc.T("Protected")),
+            "bad" => (Ui.Bad, Ui.BadSoft, "", Loc.T("Attention")),
+            "warn" => (Ui.Warn, Ui.WarnSoft, "", Loc.T("Phone disconnected")),
+            _ => (Ui.Muted, (Brush)FindResource("Surface3"), "", Loc.T("Ready")),
         };
         HeroBadge.Background = bg;
         HeroIcon.Foreground = fg;
@@ -655,22 +656,22 @@ public partial class MainWindow
         {
             EgressCombo.Tag = sig;
             EgressCombo.Items.Clear();
-            EgressCombo.Items.Add(new ComboBoxItem { Content = "USB cable (automatic)", Tag = null });
+            EgressCombo.Items.Add(new ComboBoxItem { Content = Loc.T("USB cable (automatic)"), Tag = null });
             foreach (var a in usable.OrderByDescending(a => a.IsPhone).ThenByDescending(a => a.IsWifi))
             {
                 var label = a.IsWifi
-                    ? $"Wi-Fi hotspot · {(a.Id == _s.EgressAdapterId && _s.EgressSsid != null ? _s.EgressSsid : a.Ssid ?? a.Name)}"
+                    ? Loc.F("Wi-Fi hotspot · {0}", a.Id == _s.EgressAdapterId && _s.EgressSsid != null ? _s.EgressSsid : a.Ssid ?? a.Name)
                     : $"{a.Kind} · {a.Name}";
                 EgressCombo.Items.Add(new ComboBoxItem
                 {
                     Content = label, Tag = a.Id,
                     ToolTip = a.IsWifi
-                        ? $"{a.Description}\nConnected now to: {a.Ssid ?? "no network"}.\nWhen you pick it, the app remembers this network: if the PC jumps to another one (e.g. the home router), your servers and CS2 are blocked while protection is on."
+                        ? Loc.F("{0}\nConnected now to: {1}.\nWhen you pick it, the app remembers this network: if the PC jumps to another one (e.g. the home router), your servers and CS2 are blocked while protection is on.", a.Description, a.Ssid ?? Loc.T("no network"))
                         : a.Description,
                 });
             }
             if (_s.EgressAdapterId != null && !usable.Any(a => a.Id == _s.EgressAdapterId))
-                EgressCombo.Items.Add(new ComboBoxItem { Content = _s.EgressSsid != null ? $"Hotspot · {_s.EgressSsid} (disconnected)" : "Chosen adapter (disconnected)", Tag = _s.EgressAdapterId });
+                EgressCombo.Items.Add(new ComboBoxItem { Content = _s.EgressSsid != null ? Loc.F("Hotspot · {0} (disconnected)", _s.EgressSsid) : Loc.T("Chosen adapter (disconnected)"), Tag = _s.EgressAdapterId });
             EgressCombo.SelectedItem = EgressCombo.Items.Cast<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == _s.EgressAdapterId) ?? EgressCombo.Items[0];
         }
         finally { _uiLock = false; }
@@ -686,14 +687,14 @@ public partial class MainWindow
         {
             if (a.Ssid == null)
             {
-                Toast(a.SsidUnknown ? Net.SsidLocationText : "First connect the PC's Wi-Fi to the phone's hotspot, then pick it again.", false);
+                Toast(a.SsidUnknown ? Loc.T(Net.SsidLocationText) : Loc.T("First connect the PC's Wi-Fi to the phone's hotspot, then pick it again."), false);
                 FillEgressCombo(_last.Adapters);
                 return;
             }
-            if (!await Ask("Phone hotspot",
-                    $"The PC's Wi-Fi is connected to \"{a.Ssid}\". Confirm this is the phone's network (hotspot).\n\n" +
-                    "The app remembers this name: if the PC's Wi-Fi changes to another network, like the home router, servers and CS2 get blocked while protection is on.",
-                    "It's the phone"))
+            if (!await Ask(Loc.T("Phone hotspot"),
+                    Loc.F("The PC's Wi-Fi is connected to \"{0}\". Confirm this is the phone's network (hotspot).", a.Ssid) + "\n\n" +
+                    Loc.T("The app remembers this name: if the PC's Wi-Fi changes to another network, like the home router, servers and CS2 get blocked while protection is on."),
+                    Loc.T("It's the phone")))
             {
                 FillEgressCombo(_last.Adapters);
                 return;
@@ -705,7 +706,7 @@ public partial class MainWindow
         _distrust = false;
         SaveSettings();
         EgressCombo.Tag = null;
-        Log.Info(id == null ? "Phone connection: phone over USB (automatic)." : a?.IsWifi == true ? $"Phone connection: hotspot \"{_s.EgressSsid}\" on {a.Name}." : $"Phone connection pinned: {it.Content}.");
+        Log.Info(id == null ? "Phone connection: phone over USB (automatic)." : a?.IsWifi == true ? $"Phone connection: hotspot \"{_s.EgressSsid}\" on {a.Name}." : $"Phone connection pinned: {Loc.En(it.Content?.ToString())}.");
         await SyncNow(force: true);
         _ = RefreshPublicIps();
     }
@@ -716,7 +717,7 @@ public partial class MainWindow
         var mode = ModeAll.IsChecked == true ? "all" : ModeHome.IsChecked == true ? "home" : "servers";
         var game = ModeGame.IsChecked == true;
         if (mode == _s.Mode && (mode != "servers" || game == _s.GameMode)) return;
-        if (mode == "home" && !_demo && !await Ask("No phone", NoPhoneAsk(Steam.Cs2Running && _protOn), "Use my home connection"))
+        if (mode == "home" && !_demo && !await Ask(Loc.T("No phone"), NoPhoneAsk(Steam.Cs2Running && _protOn), Loc.T("Use my home connection")))
         {
             ApplySettingsToUi();
             return;
@@ -744,22 +745,22 @@ public partial class MainWindow
         // Turn on protection asks, since a match drops)
         if (wasHome && !_s.NoPhone && !_protOn && !_demo)
         {
-            if (await Ask("Turn on protection now?", LeaveNoPhoneAsk(Steam.Cs2Running, _s.LockCs2 && PhoneKnown), "Turn on", "Not now"))
-                await RunCommand("Turn on protection", "turning on…", () => TurnProtectionOn(ask: false));
+            if (await Ask(Loc.T("Turn on protection now?"), LeaveNoPhoneAsk(Steam.Cs2Running, _s.LockCs2 && PhoneKnown), Loc.T("Turn on"), Loc.T("Not now")))
+                await RunCommand(Loc.T("Turn on protection"), Loc.T("turning on…"), () => TurnProtectionOn(ask: false));
             else Log.Info("Protection is off. Turn it on in Status when you want to play through the phone.");
         }
     }
 
     /// <summary>The question before No phone. Protection goes off with it, and coming back doesn't turn it on by itself.</summary>
     public static string NoPhoneAsk(bool cs2OnPhoneNow) =>
-        "CS2 and every server will see your home IP: no kill switch, no CS2 lock and no Change IP. Accounts, Configs, Profiles and Regions keep working.\n\n"
+        Loc.T("CS2 and every server will see your home IP: no kill switch, no CS2 lock and no Change IP. Accounts, Configs, Profiles and Regions keep working.") + "\n\n"
         + (cs2OnPhoneNow ? Cs2OpenHomeNow + "\n\n" : "")
-        + "Protection turns off. To protect again, pick another option here, then turn protection on.";
+        + Loc.T("Protection turns off. To protect again, pick another option here, then turn protection on.");
 
     /// <summary>Leaving No phone: protection is off. With CS2 open the question is the one of Turn on protection (a match drops).</summary>
     public static string LeaveNoPhoneAsk(bool cs2Open, bool cs2Blocks) => cs2Open
         ? TurnOnCs2Open(cs2Blocks)
-        : "Protection is off, so servers still see your home IP. Turn it on to play through the phone.";
+        : Loc.T("Protection is off, so servers still see your home IP. Turn it on to play through the phone.");
 
     /// <summary>Protection after a mode is picked: No phone turns it off; any other mode leaves it as it is.</summary>
     public static bool ProtOnAfterMode(bool protOn, string mode) => mode != "home" && protOn;
@@ -784,8 +785,8 @@ public partial class MainWindow
 
     /// <summary>The Status while the phone's IP isn't checked yet: after 30 s with no answer it says why it may be.</summary>
     public static (string Title, string Sub) UncheckedHero(bool noAnswer, string blocked) => noAnswer
-        ? ("The phone has no internet", $"{blocked} stay blocked. The phone's IP doesn't answer: check that mobile data is on on the phone. The app keeps checking.")
-        : ("Checking the phone's IP…", $"{blocked} stay blocked until the app confirms the phone's public IP is not your home IP.");
+        ? (Loc.T("The phone has no internet"), Loc.F("{0} stay blocked. The phone's IP doesn't answer: check that mobile data is on on the phone. The app keeps checking.", blocked))
+        : (Loc.T("Checking the phone's IP…"), Loc.F("{0} stay blocked until the app confirms the phone's public IP is not your home IP.", blocked));
 
     /// <summary>No answer through the phone: mobile data may be off (the app turns it on), then the IP is checked again.</summary>
     async Task PhoneDataOnWhenNoAnswer()
@@ -838,8 +839,8 @@ public partial class MainWindow
 
     /// <summary>Status while the home IP isn't known. Through a VPN it can't be read until the VPN is off for a moment.</summary>
     public static string NoHomeSub(string blocked, bool vpnDefault) => vpnDefault
-        ? $"{blocked} stay blocked. Your PC goes out through a VPN app, so the app can't read your home IP: turn the VPN off for a moment so it can compare it with the phone's."
-        : $"{blocked} stay blocked. Close CS2 (or pick Game only) for a moment so the app can read your home IP and compare it with the phone's.";
+        ? Loc.F("{0} stay blocked. Your PC goes out through a VPN app, so the app can't read your home IP: turn the VPN off for a moment so it can compare it with the phone's.", blocked)
+        : Loc.F("{0} stay blocked. Close CS2 (or pick Game only) for a moment so the app can read your home IP and compare it with the phone's.", blocked);
 
     async Task RefreshPublicIpsCore()
     {
@@ -896,7 +897,7 @@ public partial class MainWindow
                     Log.Error(SameIpText(e, unprotected: false));
                     if (Steam.Cs2Running) System.Media.SystemSounds.Hand.Play();
                     _guard.Problems.SameIpWritten();   // the Guard's own "Servers blocked." line would say it again
-                    Toast("The phone's IP is the same as your home IP. Servers and CS2 are now blocked.", false);
+                    Toast(Loc.T("The phone's IP is the same as your home IP. Servers and CS2 are now blocked."), false);
                 }
                 else Log.Ok("The phone connection IP is different from your home IP again.");
             }
@@ -1012,20 +1013,20 @@ public partial class MainWindow
         EgressIp.Text = _egressPublic == null ? "—" : isHome && !_reveal ? Fmt.MaskIp(_egressPublic) : _egressPublic;
         // Mid-change the IP shown is the old one (faint); a new one is green for two seconds, next to the toast that announces it.
         EgressIp.Foreground = !inUse || _changingTitle != null || _egressFailSince != null ? Ui.Faint : DateTime.Now < _ipFlashUntil ? Ui.Good : Ui.Text;
-        EgressIsp.Text = _egressPublic == null ? (_last?.Candidate != null ? "Checking the IP through the phone…" : "No phone connection")
-            : !inUse ? "Not in use: servers are blocked"
-            : _egressFailSince != null ? (_egressFails < 2 ? "Checking again through the phone…" : $"Not confirmed since {_egressFailSince:HH:mm}: weak connection?")
+        EgressIsp.Text = _egressPublic == null ? (_last?.Candidate != null ? Loc.T("Checking the IP through the phone…") : Loc.T("No phone connection"))
+            : !inUse ? Loc.T("Not in use: servers are blocked")
+            : _egressFailSince != null ? (_egressFails < 2 ? Loc.T("Checking again through the phone…") : Loc.F("Not confirmed since {0}: weak connection?", $"{_egressFailSince:HH:mm}"))
             : _egressInfo?.Short ?? "";
         HomeIp.Text = _homePublic == null ? "—" : _reveal ? _homePublic : Fmt.MaskIp(_homePublic);
-        HomeIsp.Text = _homePublic == null ? "No home network detected"
-            : (_homeInfo?.Short ?? "") + (_homeCached ? "  ·  last confirmed" : "");
+        HomeIsp.Text = _homePublic == null ? Loc.T("No home network detected")
+            : (_homeInfo?.Short ?? "") + (_homeCached ? "  ·  " + Loc.T("last confirmed") : "");
         SideIp.Text = inUse && _changingTitle == null ? _egressPublic ?? "" : "";
         if (_s.NoPhone && _last?.EffectiveMode == "home")
         {
             // No phone: servers see the home IP, so that is what the first box shows (hidden like the home box).
             EgressIp.Text = _homePublic == null ? "—" : _reveal ? _homePublic : Fmt.MaskIp(_homePublic);
             EgressIp.Foreground = Ui.Warn;
-            EgressIsp.Text = "No phone: your home connection";
+            EgressIsp.Text = Loc.T("No phone: your home connection");
         }
         else if (_last?.EffectiveMode == "off")
         {
@@ -1035,7 +1036,7 @@ public partial class MainWindow
             var onPhone = _last != null && PcOnPhone(_last) && _egressPublic != null && _egressPublic != _homePublic;
             EgressIp.Text = onPhone ? _egressPublic : _homePublic == null ? "—" : _reveal ? _homePublic : Fmt.MaskIp(_homePublic);
             EgressIp.Foreground = Ui.Warn;
-            EgressIsp.Text = onPhone ? "Protection off · the whole PC is using the phone" : OffEgressLine(_egressPublic, PhoneReadyOff(_last));
+            EgressIsp.Text = onPhone ? Loc.T("Protection off · the whole PC is using the phone") : OffEgressLine(_egressPublic, PhoneReadyOff(_last));
         }
         CopyIpBtn.Visibility = _egressPublic == null || !inUse ? Visibility.Collapsed : Visibility.Visible;
         RevealBtn.Visibility = _homePublic == null ? Visibility.Collapsed : Visibility.Visible;
@@ -1043,7 +1044,7 @@ public partial class MainWindow
 
     /// <summary>The line under the IP box with protection off: "phone ready" and its IP only once that IP is checked (never the home IP).</summary>
     public static string OffEgressLine(string phoneIp, bool ready) =>
-        ready && phoneIp != null ? $"Protection off · phone ready: {phoneIp}" : "Protection off: your home connection";
+        ready && phoneIp != null ? Loc.F("Protection off · phone ready: {0}", phoneIp) : Loc.T("Protection off: your home connection");
 
     /// <summary>Protection off and the phone checked: Turn on protection trusts it at once.</summary>
     bool PhoneReadyOff(GuardReport rep) => rep?.EffectiveMode == "off" && rep.Candidate != null && rep.CandidateKey == _verifiedKey && _egressPublic != null;
@@ -1102,7 +1103,7 @@ public partial class MainWindow
 
     async void ClearHistory_Click(object sender, RoutedEventArgs e)
     {
-        if (!await Ask("Clear previous IPs", "The app uses them to tell you when a new IP is in the same range as an earlier one. Clear them?", "Clear")) return;
+        if (!await Ask(Loc.T("Clear previous IPs"), Loc.T("The app uses them to tell you when a new IP is in the same range as an earlier one. Clear them?"), Loc.T("Clear"))) return;
         _history.Clear();
         _s.IpHistory = new();
         SaveSettings();
@@ -1120,17 +1121,17 @@ public partial class MainWindow
     {
         if (_egressPublic == null) return;
         Clipboard.SetText(_egressPublic);
-        Toast("IP copied.", true);
+        Toast(Loc.T("IP copied."), true);
     }
 
-    async void LeakTest_Click(object sender, RoutedEventArgs e) => await RunCommand("Leak test", "testing…", LeakTest);
+    async void LeakTest_Click(object sender, RoutedEventArgs e) => await RunCommand(Loc.T("Leak test"), Loc.T("testing…"), LeakTest);
 
     async Task<bool> LeakTest()
     {
-        if (_demo) { Toast("Test finished: everything protected.", true); return true; }
-        if (!_protOn) { Toast("Protection is off: turn it on first, then test it.", false); return false; }
+        if (_demo) { Toast(Loc.T("Test finished: everything protected."), true); return true; }
+        if (!_protOn) { Toast(Loc.T("Protection is off: turn it on first, then test it."), false); return false; }
         LeakBtn.IsEnabled = false;
-        ShowProgress("Testing: Firewall, kill switch, routes and public IP…");
+        ShowProgress(Loc.T("Testing: Firewall, kill switch, routes and public IP…"));
         try
         {
             await SyncNow(force: true);
@@ -1138,14 +1139,14 @@ public partial class MainWindow
             await RefreshPublicIps();
             if (_s.NoPhone)
             {
-                Toast("No phone mode: there is no protection to test. CS2 and servers see your home IP.", false);
+                Toast(Loc.T("No phone mode: there is no protection to test. CS2 and servers see your home IP."), false);
                 return false;
             }
             var bad = LeakFailures(_checks, _last?.EffectiveMode == "all");
             var (ok, text) = LeakResult(bad, _s.LockCs2, _cQuality.Ok == false, LeakOkText(_egressPublic, Blocked(_last, lower: true), _s.LockCs2 && !PhoneKnown));
             Telemetry.LeakTest(ok);
             if (ok) Log.Ok("Leak test: everything confirmed.");
-            else Log.Warn(bad.Count > 0 ? "Leak test failed on: " + string.Join(", ", bad) : "Leak test: CS2 only through the phone is off, so servers not in the list can see the home IP.");
+            else Log.Warn(bad.Count > 0 ? "Leak test failed on: " + string.Join(", ", bad.Select(Loc.En)) : "Leak test: CS2 only through the phone is off, so servers not in the list can see the home IP.");
             Toast(text, ok);
             return ok;
         }
@@ -1157,12 +1158,12 @@ public partial class MainWindow
     /// only is in Whole PC (in Game only red there means the whole PC is on mobile data, which costs data but leaks nothing).
     /// </summary>
     public static List<string> LeakFailures(IEnumerable<CheckItem> checks, bool wholePc) =>
-        checks.Where(c => c.Ok == false && c.Title is not ("Connection quality" or "Matchmaking regions") && (wholePc || c.Title != "Other apps"))
+        checks.Where(c => c.Ok == false && Loc.En(c.Title) is not ("Connection quality" or "Matchmaking regions") && (wholePc || Loc.En(c.Title) != "Other apps"))
             .Select(c => c.Title).ToList();
 
     /// <summary>The leak test's toast: what failed, or with CS2 not locked a warning instead of "No leaks", or the OK text (a weak link said apart).</summary>
     public static (bool Ok, string Text) LeakResult(IReadOnlyList<string> bad, bool lockCs2, bool weak, string okText) =>
-        bad.Count > 0 ? (false, "Warning: " + string.Join(", ", bad) + ". See Checks.")
-        : !lockCs2 ? (false, "Your servers are protected, but CS2 only through the phone is off: servers not in your list can see your home IP.")
-        : (true, okText + (weak ? " The connection is weak: see Checks." : ""));
+        bad.Count > 0 ? (false, Loc.F("Warning: {0}. See Checks.", string.Join(", ", bad)))
+        : !lockCs2 ? (false, Loc.T("Your servers are protected, but CS2 only through the phone is off: servers not in your list can see your home IP."))
+        : (true, okText + (weak ? " " + Loc.T("The connection is weak: see Checks.") : ""));
 }

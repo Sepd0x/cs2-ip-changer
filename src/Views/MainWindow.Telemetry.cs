@@ -57,7 +57,7 @@ public partial class MainWindow
                 _cableHinted = true;
                 Telemetry.Count("cable_hint");
                 Log.Warn("The phone's USB connection dropped 3 times in 10 minutes. That is usually the cable or the USB port.");
-                Toast("The phone's USB connection keeps dropping (3 times in 10 minutes). Try another cable (one made for data, not only charging) or a USB port at the back of the PC.", Tone.Warn);
+                Toast(Loc.T("The phone's USB connection keeps dropping (3 times in 10 minutes). Try another cable (one made for data, not only charging) or a USB port at the back of the PC."), Tone.Warn);
             }
         }
         if (up) _egressUsb = rep.Egress.IsPhone && !rep.Egress.IsWifi;
@@ -76,10 +76,10 @@ public partial class MainWindow
     /// <summary>Settings > Delete my stats: the server deletes what it keeps under this install's ID, and the app takes a new one.</summary>
     async void DeleteStats_Click(object sender, RoutedEventArgs e)
     {
-        if (_demo) { Toast("Demo: delete my stats.", true); return; }
-        if (!await Ask("Delete my stats", "Delete everything the stats server keeps under this install's ID? The app then starts over with a new ID. The stats stay on (they are required in the beta).", "Delete")) return;
-        if (await Telemetry.Forget()) { Log.Ok("Usage stats deleted on the server. New stats ID made."); Toast("Your stats were deleted. The app has a new stats ID.", true); }
-        else Toast("Couldn't reach the stats server. Nothing was deleted; try again later.", Tone.Error);
+        if (_demo) { Toast(Loc.T("Demo: delete my stats."), true); return; }
+        if (!await Ask(Loc.T("Delete my stats"), Loc.T("Delete everything the stats server keeps under this install's ID? The app then starts over with a new ID. The stats stay on (they are required in the beta)."), Loc.T("Delete"))) return;
+        if (await Telemetry.Forget()) { Log.Ok("Usage stats deleted on the server. New stats ID made."); Toast(Loc.T("Your stats were deleted. The app has a new stats ID."), true); }
+        else Toast(Loc.T("Couldn't reach the stats server. Nothing was deleted; try again later."), Tone.Error);
     }
 
     /// <summary>After Telemetry.Start: the screen open now, and the tray (no screen) when the window hides.</summary>
@@ -91,7 +91,7 @@ public partial class MainWindow
         Telemetry.Started(_startHidden);
         Telemetry.SettingsFrom(() => Telemetry.Changed(_s, new Settings()));
         Telemetry.RegionsFrom(() => Telemetry.RegionCodes(_regionInfos, _s?.BlockedRegions));
-        Telemetry.ChecksFrom(() => _checks.Where(c => c.Ok == false).Select(c => c.Title).ToList());
+        Telemetry.ChecksFrom(() => _checks.Where(c => c.Ok == false).Select(c => Loc.En(c.Title)).ToList());
         Telemetry.AtExit(CountSetupClosed);   // beta.11: the app closed with Phone setup open (its step there is where they stopped)
         Telemetry.WindowFrom(() => (ActualWidth, System.Windows.Media.VisualTreeHelper.GetDpi(this).DpiScaleX));
         // beta.13: the heat map counts only this window, and not the clicks on Phone setup or a question over the page

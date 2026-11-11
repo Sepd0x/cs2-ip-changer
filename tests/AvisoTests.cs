@@ -38,11 +38,11 @@ static class AvisoTests
         check("Aviso: a lista inteira tem os 7 pontos", lista.Length == 7 && lista.All(l => l.StartsWith("•  ")), lista.Length.ToString());
         check("Aviso: cada ponto da lista está no texto de antes", lista.All(Telemetry.NoticeText.Contains), "");
         var app = Src("App.xaml.cs");
-        check("Aviso: a janela leva a lista inteira em See the full list", app.Contains("\"Accept\", \"Quit\", more: Telemetry.NoticeList"), "");
+        check("Aviso: a janela leva a lista inteira em See the full list", app.Contains("Loc.T(\"Accept\"), Loc.T(\"Quit\"), more: Telemetry.NoticeList"), "");
         var xaml = Src("Views", "NoticeWindow.xaml");
         var cs = Src("Views", "NoticeWindow.xaml.cs");
         check("Aviso: o botão See the full list mostra e esconde a lista", xaml.Contains("Content=\"See the full list\"") && xaml.Contains("x:Name=\"MoreText\"")
-            && cs.Contains("MoreText.Text = more") && cs.Contains("\"Hide the full list\""), "");
+            && cs.Contains("MoreText.Text = Loc.T(more") && cs.Contains("\"Hide the full list\""), "");
         check("Aviso: Accept e Quit como antes (Enter aceita, Escape sai)", xaml.Contains("x:Name=\"OkBtn\"") && xaml.Contains("IsDefault=\"True\"")
             && xaml.Contains("x:Name=\"OtherBtn\"") && xaml.Contains("IsCancel=\"True\"") && cs.Contains("void Other_Click(object sender, RoutedEventArgs e) { Accepted = false; Close(); }"), "");
 

@@ -98,7 +98,7 @@ static class Beta11QualidadeTests
         check("Checks: botão", ChecksView.Toggle(false) == "Show all" && ChecksView.Toggle(true) == "Show less", "");
         check("Checks: vermelho e amarelo pedem atenção, cinzento não", new CheckItem { Ok = false }.Attention && new CheckItem { Waiting = true }.Attention && !new CheckItem { Ok = null }.Attention && !new CheckItem { Ok = true }.Attention, "");
         check("Checks: regiões que tu desligaste não contam como problema", !new CheckItem { Waiting = true, Chosen = true }.Attention
-            && Src("MainWindow.xaml.cs").Contains("Title = \"Matchmaking regions\", Chosen = true"), "");
+            && Src("MainWindow.xaml.cs").Contains("Title = Loc.T(\"Matchmaking regions\"), Chosen = true"), "");
         check("Checks: Show all lembrado nas definições", new Settings().ChecksShowAll == false && Src("Views", "MainWindow.Checks.cs").Contains("_s.ChecksShowAll = !_s.ChecksShowAll;\n        SaveSettings();"), "");
         check("Checks: XAML esconde as linhas", Src("MainWindow.xaml").Contains("Visibility=\"{Binding Shown, Converter={StaticResource Vis}}\""), "");
 
@@ -135,7 +135,7 @@ static class Beta11QualidadeTests
         var addText = MainWindow.AddJoinedText("1.2.3.4:27015");
         check("Servidor novo: não diz que entraste protegido", !addText.Contains("protected", StringComparison.OrdinalIgnoreCase) && addText.Contains("isn't in your servers"), addText);
         var kick = Src("Views", "MainWindow.Kick.cs");
-        check("Servidor novo: o toast tem o botão Add", kick.Contains("Toast(AddJoinedText(server, OnHome), Tone.Info, \"Add\", () => AddFromText(server));"), "");
+        check("Servidor novo: o toast tem o botão Add", kick.Contains("Toast(AddJoinedText(server, OnHome), Tone.Info, Loc.T(\"Add\"), () => AddFromText(server));"), "");
         var xamlSrv = Src("MainWindow.xaml");
         check("Servers vazio: quem só sabe o nome entra pelo CS2 e a app oferece juntá-lo (com a proteção desligada: em Game only os de fora da lista não ligam)",
             xamlSrv.Contains("Only know its name? Join it once in CS2 with protection off (that join uses your home IP): the app offers to add it."), "");
@@ -158,7 +158,7 @@ static class Beta11QualidadeTests
         var changes2 = AppChanges.Text(new[] { new Firewall.RuleInfo(Firewall.RuleName, "1.1.1.1") }, Array.Empty<string>(), -1, _ => null, "x.exe",
             new[] { "Start with Windows: the scheduled task \"CS2 IP Changer\"." });
         check("Mudanças: diz porque os nomes das regras são os antigos", changes2.Contains("same since the first version"), "");
-        check("Mudanças: também a tarefa e a pasta da app", changes2.Contains("• Start with Windows: the scheduled task") && Src("Views", "MainWindow.Checks.cs").Contains("App folder: {Uninstall.Root}"), "");
+        check("Mudanças: também a tarefa e a pasta da app", changes2.Contains("• Start with Windows: the scheduled task") && Src("Views", "MainWindow.Checks.cs").Contains("App folder: {0} (the phone tool"), "");
         check("Telemóvel: Turn on USB tethering só quando ainda não está ligado", MainWindow.ShowTetherButton(false, true, false) && !MainWindow.ShowTetherButton(false, true, true)
             && !MainWindow.ShowTetherButton(true, true, false) && !MainWindow.ShowTetherButton(false, false, false), "");
         check("Mudanças: sem nada", AppChanges.Text(Array.Empty<Firewall.RuleInfo>(), Array.Empty<string>(), -1, _ => null, "x.exe").Contains("no rules from the app"), "");
@@ -212,7 +212,7 @@ static class Beta11QualidadeTests
         finally { try { Directory.Delete(tmp, true); } catch { } }
         check("Install: o texto diz Reciclagem e que dá para recuperar", Installer.OldCopyText(@"C:\Users\x\Downloads").Contains("Recycle Bin") && Installer.OldCopyText("x").Contains("get it back"), "");
         var prog = Src("Program.cs");
-        check("Install: só com o sim (Send to Recycle Bin / Keep it)", prog.Contains("NoticeWindow.Ask(\"The old copy\", Installer.OldCopyText(from), \"Send to Recycle Bin\", \"Keep it\")"), "");
+        check("Install: só com o sim (Send to Recycle Bin / Keep it)", prog.Contains("NoticeWindow.Ask(Loc.T(\"The old copy\"), Installer.OldCopyText(from), Loc.T(\"Send to Recycle Bin\"), Loc.T(\"Keep it\"))"), "");
         check("Install: nunca apaga para sempre (ALLOWUNDO)", Src("Core", "Installer.cs").Contains("Flags = 0x40 |"), "");
         var withBlock = SRT.Program.InstallText(@"C:\Users\x\Downloads", @"C:\Program Files\CS2 IP Changer", false, null, "0.1.0-beta.11", blockLeft: true);
         check("Install: avisa a proteção antiga que ficou e o --restore", withBlock.Contains("Protection from the old copy is still on") && withBlock.Contains("\"C:\\Users\\x\\Downloads\\CS2IPChanger.exe\" --restore"), "");

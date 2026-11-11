@@ -50,13 +50,13 @@ public static class Hotkey
     /// <summary>Why this combination can't be a hotkey (null = it can).</summary>
     public static string Problem(ModifierKeys mods, Key key)
     {
-        if (key == Key.None || IsModifier(key)) return "Press a key together with Ctrl, Alt, Shift or Win.";
-        if (mods.HasFlag(ModifierKeys.Control) && mods.HasFlag(ModifierKeys.Alt)) return "Ctrl+Alt is AltGr on many keyboards (it types @ and €). Pick another combination.";
+        if (key == Key.None || IsModifier(key)) return Loc.T("Press a key together with Ctrl, Alt, Shift or Win.");
+        if (mods.HasFlag(ModifierKeys.Control) && mods.HasFlag(ModifierKeys.Alt)) return Loc.T("Ctrl+Alt is AltGr on many keyboards (it types @ and €). Pick another combination.");
         var fKey = key >= Key.F1 && key <= Key.F24;
-        if (mods == ModifierKeys.None) return "A key on its own would fire while you type or play. Add Ctrl, Alt, Shift or Win.";
-        if (mods == ModifierKeys.Shift && !fKey) return "Shift with a letter or number types it. Use Shift only with F1 to F24.";
+        if (mods == ModifierKeys.None) return Loc.T("A key on its own would fire while you type or play. Add Ctrl, Alt, Shift or Win.");
+        if (mods == ModifierKeys.Shift && !fKey) return Loc.T("Shift with a letter or number types it. Use Shift only with F1 to F24.");
         // Taken as a hotkey, these would stop working in every window: Alt+F4 would no longer close one
-        if (mods == ModifierKeys.Alt && key is Key.F4 or Key.Space or Key.Tab or Key.Escape) return $"Windows uses {Format(mods, key)} itself. Pick another combination.";
+        if (mods == ModifierKeys.Alt && key is Key.F4 or Key.Space or Key.Tab or Key.Escape) return Loc.F("Windows uses {0} itself. Pick another combination.", Format(mods, key));
         return null;
     }
 

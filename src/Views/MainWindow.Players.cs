@@ -81,7 +81,7 @@ public partial class MainWindow
         f.Label = "Staff";
         f.Color = PlayerFlag.StaffColor;
         SaveFlags();
-        Toast($"{p.Name} flagged as Staff. Anyone with this name matches: add the Steam profile in Edit flag to be sure.", true);
+        Toast(Loc.F("{0} flagged as Staff. Anyone with this name matches: add the Steam profile in Edit flag to be sure.", p.Name), true);
     }
 
     async void PlayerFlag_Click(object sender, RoutedEventArgs e)
@@ -106,7 +106,7 @@ public partial class MainWindow
     void PlayerCopy_Click(object sender, RoutedEventArgs e)
     {
         if (Pl(sender) is not PlayerRow p) return;
-        try { Clipboard.SetText(p.Name); Toast("Name copied.", true); } catch { Toast("Couldn't copy. Try again.", false); }
+        try { Clipboard.SetText(p.Name); Toast(Loc.T("Name copied."), true); } catch { Toast(Loc.T("Couldn't copy. Try again."), false); }
     }
 
     void PlayerUnflag_Click(object sender, RoutedEventArgs e) { if (Pl(sender)?.Flag is PlayerFlag f) RemoveFlag(f); }
@@ -123,8 +123,8 @@ public partial class MainWindow
         f.Follow = on;
         f.SeenOn = null;
         SaveFlags();
-        Toast(on ? $"Following {f.Shown}. You get a notice when they show up on another server in your list."
-                 : $"You no longer follow {f.Shown}.", true);
+        Toast(on ? Loc.F("Following {0}. You get a notice when they show up on another server in your list.", f.Shown)
+                 : Loc.F("You no longer follow {0}.", f.Shown), true);
         if (on) _ = CheckFollowed();
     }
 
@@ -133,19 +133,19 @@ public partial class MainWindow
         _flags.Remove(f);
         if (_followServer != null && f.SeenOn == _followServer.Key) HideFollowBar();
         SaveFlags();
-        Toast($"Flag removed from {f.Shown}.", true);
+        Toast(Loc.F("Flag removed from {0}.", f.Shown), true);
     }
 
     /// <summary>Flag name, color and (optionally) the Steam profile. existing == null adds a new flag for that name.</summary>
     async Task EditFlag(PlayerFlag existing, string name)
     {
         DialogInput.Text = existing?.Label ?? "";
-        DialogInput.Tag = "E.g. Staff, Cheater, Friend";
+        DialogInput.Tag = Loc.T("E.g. Staff, Cheater, Friend");
         DialogInput2.Text = existing?.SteamId ?? "";
-        DialogInput2.Tag = "steamcommunity.com/id/… or SteamID64";
+        DialogInput2.Tag = Loc.T("steamcommunity.com/id/… or SteamID64");
         var who = existing?.Shown ?? name;
-        if (!await Ask($"Flag {who}", "Stays on this PC only. Without a Steam profile, anyone with this name matches.", "Save", "Cancel",
-                inputs: 2, label1: "Flag", label2: "Steam profile (optional)", color: existing?.Color ?? PlayerFlag.StaffColor)) return;
+        if (!await Ask(Loc.F("Flag {0}", who), Loc.T("Stays on this PC only. Without a Steam profile, anyone with this name matches."), Loc.T("Save"), Loc.T("Cancel"),
+                inputs: 2, label1: Loc.T("Flag"), label2: Loc.T("Steam profile (optional)"), color: existing?.Color ?? PlayerFlag.StaffColor)) return;
         var label = string.IsNullOrWhiteSpace(DialogInput.Text) ? "Staff" : DialogInput.Text.Trim();
         var color = _dialogColor;
         var profile = DialogInput2.Text.Trim();
@@ -153,7 +153,7 @@ public partial class MainWindow
         if (profile.Length > 0)
         {
             id = await ResolveProfile(profile);
-            if (id == null) { Toast("Couldn't read that profile. Use a steamcommunity.com link or a SteamID64.", false); return; }
+            if (id == null) { Toast(Loc.T("Couldn't read that profile. Use a steamcommunity.com link or a SteamID64."), false); return; }
         }
         var f = existing ?? (id != null ? _flags.FirstOrDefault(x => x.SteamId == id) : null) ?? NewFlag(name);
         f.Label = label;
@@ -161,7 +161,7 @@ public partial class MainWindow
         if (f.SteamId != id) { f.SteamId = id; f.Persona = null; }
         SaveFlags();
         if (id != null) await RefreshProfiles(new[] { f });
-        Toast($"{f.Shown}: {f.Label}." + (id == null ? " Matched by name." : ""), true);
+        Toast(Loc.F("{0}: {1}.", f.Shown, f.Label) + (id == null ? Loc.T(" Matched by name.") : ""), true);
     }
 
     async Task<string> ResolveProfile(string input)
@@ -207,13 +207,13 @@ public partial class MainWindow
     async void FlagAdd_Click(object sender, RoutedEventArgs e)
     {
         DialogInput.Text = "";
-        DialogInput.Tag = "steamcommunity.com/id/… or SteamID64";
+        DialogInput.Tag = Loc.T("steamcommunity.com/id/… or SteamID64");
         DialogInput2.Text = "";
-        DialogInput2.Tag = "E.g. Staff, Cheater, Friend";
-        if (!await Ask("Add a flag by profile", "The name comes from the Steam profile and follows name changes. Stays on this PC only.", "Add", "Cancel",
-                inputs: 2, label1: "Steam profile", label2: "Flag", color: PlayerFlag.StaffColor)) return;
+        DialogInput2.Tag = Loc.T("E.g. Staff, Cheater, Friend");
+        if (!await Ask(Loc.T("Add a flag by profile"), Loc.T("The name comes from the Steam profile and follows name changes. Stays on this PC only."), Loc.T("Add"), Loc.T("Cancel"),
+                inputs: 2, label1: Loc.T("Steam profile"), label2: Loc.T("Flag"), color: PlayerFlag.StaffColor)) return;
         var id = await ResolveProfile(DialogInput.Text);
-        if (id == null) { Toast("Couldn't read that profile. Use a steamcommunity.com link or a SteamID64.", false); return; }
+        if (id == null) { Toast(Loc.T("Couldn't read that profile. Use a steamcommunity.com link or a SteamID64."), false); return; }
         var label = string.IsNullOrWhiteSpace(DialogInput2.Text) ? "Staff" : DialogInput2.Text.Trim();
         var f = _flags.FirstOrDefault(x => x.SteamId == id);
         if (f == null)
@@ -224,7 +224,7 @@ public partial class MainWindow
                 try { (await Steam.FetchSummaries(new[] { id }, _s.SteamApiKey)).TryGetValue(id, out var x); persona = x?.Persona; }
                 catch (Exception ex) { Log.Warn("Steam profile: " + ex.Message); }
             }
-            if (string.IsNullOrWhiteSpace(persona)) { Toast("Couldn't read the name on that profile. Try again in a minute.", false); return; }
+            if (string.IsNullOrWhiteSpace(persona)) { Toast(Loc.T("Couldn't read the name on that profile. Try again in a minute."), false); return; }
             f = NewFlag(persona);
             f.SteamId = id;
             f.Persona = persona;
@@ -232,7 +232,7 @@ public partial class MainWindow
         f.Label = label;
         if (_dialogColor != null) f.Color = _dialogColor;
         SaveFlags();
-        Toast($"{f.Shown}: {f.Label}.", true);
+        Toast(Loc.F("{0}: {1}.", f.Shown, f.Label), true);
     }
 
     // ------------------------------------------------------------ Following
@@ -293,20 +293,20 @@ public partial class MainWindow
     void OnFollowedFound(PlayerFlag f, ServerItem at, bool byProfile, bool moved)
     {
         _followServer = at;
-        var how = byProfile ? "" : f.SteamId == null ? " (matched by name)" : " (by name)";
-        FollowText.Text = $"{f.Shown} ({f.Label}) is on {at.Title}{how}.";
+        var how = byProfile ? "" : f.SteamId == null ? Loc.T(" (matched by name)") : Loc.T(" (by name)");
+        FollowText.Text = Loc.F("{0} ({1}) is on {2}{3}.", f.Shown, f.Label, at.Title, how);
         FollowBar.Visibility = Visibility.Visible;
         System.Media.SystemSounds.Asterisk.Play();
         Log.Info($"Followed player {f.Shown} is on {at.Key} ({at.Title})" + (byProfile ? ", from the Steam profile." : ", by name."));
         if (FollowAutoJoins(_s.AutoJoinFollowed, moved, _demo || Steam.Cs2Running)) _ = AutoJoinFollowed(f, at);
-        else if (!PageServers.IsVisible) Toast($"{f.Shown} is on {at.Title}. Join from Servers.", Tone.Info);   // on Servers the bar says it
+        else if (!PageServers.IsVisible) Toast(Loc.F("{0} is on {1}. Join from Servers.", f.Shown, at.Title), Tone.Info);   // on Servers the bar says it
     }
 
     async Task AutoJoinFollowed(PlayerFlag f, ServerItem at)
     {
         if (_rejoining || _changingIp || _switching || Dialog.Visibility == Visibility.Visible) return;
         // With CS2 open the app can't be sure you're not mid-match, so it always asks.
-        if (!_demo && !await Ask("Join the player you follow?", $"{f.Shown} is on {at.Title}. CS2 is open: if you're on a server, joining leaves it.", "Join", "Stay")) return;
+        if (!_demo && !await Ask(Loc.T("Join the player you follow?"), Loc.F("{0} is on {1}. CS2 is open: if you're on a server, joining leaves it.", f.Shown, at.Title), Loc.T("Join"), Loc.T("Stay"))) return;
         Log.Info($"Auto-join: following {f.Shown} to {at.Key}.");
         HideFollowBar();
         await Join(at);

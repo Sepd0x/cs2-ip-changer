@@ -220,7 +220,7 @@ programs) and the buttons are not named here.
 | Player flags | `AutoJoinBox` |
 | Steam | `ApiKeyPwd`, `ApiKeyBox`, `LaunchOptsBox` |
 | Privacy | `OptStreamer`, `AutoStreamerBox` |
-| App | `StartWithWindowsBox`, `CloseToTrayBox`, `CheckUpdatesBox`, `TestVersionsBox` |
+| App | `LanguageBox`, `StartWithWindowsBox`, `CloseToTrayBox`, `CheckUpdatesBox`, `TestVersionsBox` |
 | Maintenance | |
 | Remove the app | |
 
@@ -315,3 +315,17 @@ Any visual change to the app (a color, a text, a layout, anything in a `.xaml`) 
    tools/site-loading.test.mjs tools/world-3d.test.mjs`.
 
 At every release the version changes, so the captures (the sidebar shows it) are taken again before the release commit.
+
+### Languages (11 Nov 2026)
+
+- The app is in English (the source and the fallback), pt-BR, es (neutral, Latin America) and ru. The language follows Windows the
+  first time; Settings > App > Language changes it (it applies the next time the app opens).
+- One mechanism, `src/Loc.cs`: the English text is the key, `src/Lang/<code>.json` hold the translations, and a text with no entry
+  shows in English. XAML needs no marker: `Loc.Apply` swaps the text of each window once, when it opens. Texts the code builds go
+  through `Loc.T("text")` and `Loc.F("text {0}", value)`. The Log, the telemetry and internal names stay in English
+  (`Loc.En` gives the English back).
+- Spanish and Russian run about 40% longer: size a box for the longest language, never for English. `SRT_PSEUDO=1` stretches every
+  text 40% to check the layout.
+- Menu names of Windows and Android that a text quotes are the ones the user sees on screen in that language.
+- `tools/loc-keys.mjs` lists the keys, `tools/loc-merge.mjs` folds translations in, `tests/LocTests.cs` fails when a key is missing
+  in a language or a Toast carries a raw literal.

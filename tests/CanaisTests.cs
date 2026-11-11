@@ -61,7 +61,7 @@ static class CanaisTests
         check("Canais: o nome e a linha cinzenta", app.Contains("Text=\"Get test versions\"") && app.Contains("Text=\"New versions before they are fully tested. Off: only stable versions.\""), "");
         check("Canais: o grupo App tem no máximo 7 coisas", System.Text.RegularExpressions.Regex.Matches(app, "<(CheckBox|Button|TextBox|ComboBox|PasswordBox)\\b").Count <= 7, "");
         check("Canais: o Settings mostra o valor guardado", Src("Views", "MainWindow.Settings.cs").Contains("TestVersionsBox.IsChecked = _s.TestVersions;"), "");
-        check("Canais: o DESIGN tem a opção no grupo App", File.ReadAllText(Path.Combine(repo, "docs", "DESIGN.md")).Contains("| App | `StartWithWindowsBox`, `CloseToTrayBox`, `CheckUpdatesBox`, `TestVersionsBox` |"), "");
+        check("Canais: o DESIGN tem a opção no grupo App", File.ReadAllText(Path.Combine(repo, "docs", "DESIGN.md")).Contains("| App | `LanguageBox`, `StartWithWindowsBox`, `CloseToTrayBox`, `CheckUpdatesBox`, `TestVersionsBox` |"), "");
 
         // Telemetria: conta a opção quando sai do default, como UseWithProtectionOff
         check("Canais: a telemetria conta Get test versions ligada", Telemetry.SettingNames.Contains("TestVersions")

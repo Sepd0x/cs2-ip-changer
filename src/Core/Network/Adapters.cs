@@ -28,7 +28,7 @@ public sealed class Adapter
     public string Ssid { get; set; }
     /// <summary>Windows didn't let the app read the Wi-Fi name (Windows 11 24H2 asks for Location): null Ssid means "not known", not "not connected".</summary>
     public bool SsidUnknown { get; set; }
-    public string Kind => IsPhone ? "Phone (USB)" : IsUsbNet ? "USB network" : IsWifi ? "Wi-Fi" : IsVpn ? "VPN" : "Network";
+    public string Kind => IsPhone ? Loc.T("Phone (USB)") : IsUsbNet ? Loc.T("USB network") : IsWifi ? "Wi-Fi" : IsVpn ? "VPN" : Loc.T("Network");
     public string Display => $"{Name}  ·  {Description}";
     public override string ToString() => Display;
 }
@@ -196,10 +196,10 @@ public static partial class Net
             var a = all.FirstOrDefault(x => x.Id == fixedId && x.Up && x.LocalIp != null);
             if (a != null && a.IsWifi && !string.IsNullOrEmpty(fixedSsid) && a.Ssid != fixedSsid)
             {
-                problem = a.Ssid == null && a.SsidUnknown ? SsidLocationText
+                problem = a.Ssid == null && a.SsidUnknown ? Loc.T(SsidLocationText)
                     : a.Ssid == null
-                    ? $"The PC's Wi-Fi is not connected to the hotspot \"{fixedSsid}\"."
-                    : $"The PC's Wi-Fi is connected to \"{a.Ssid}\", not to the hotspot \"{fixedSsid}\".";
+                    ? Loc.F("The PC's Wi-Fi is not connected to the hotspot \"{0}\".", fixedSsid)
+                    : Loc.F("The PC's Wi-Fi is connected to \"{0}\", not to the hotspot \"{1}\".", a.Ssid, fixedSsid);
                 return null;
             }
             return a;

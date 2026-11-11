@@ -132,17 +132,20 @@ public static class Cs2Config
     /// <summary>What can be copied, in the order shown.</summary>
     public static readonly string[] Categories = Map.Select(m => m.Category).ToArray();
 
-    public static string CategoryName(string c) => c switch
+    /// <param name="en">The English, for the Log (the Log stays in English).</param>
+    public static string CategoryName(string c, bool en = false) => c switch
     {
-        "binds" => "binds", "crosshair" => "crosshair", "game" => "game settings", "video" => "video", "hud" => "HUD, radar and audio", _ => c,
+        "binds" => Tr("binds", en), "crosshair" => Tr("crosshair", en), "game" => Tr("game settings", en), "video" => Tr("video", en), "hud" => Tr("HUD, radar and audio", en), _ => c,
     };
 
-    public static string CategoryList(IEnumerable<string> cats)
+    static string Tr(string s, bool en) => en ? s : Loc.T(s);
+
+    public static string CategoryList(IEnumerable<string> cats, bool en = false)
     {
         // In a sentence with others, "HUD, radar and audio" would read as three more items.
         var c = cats.ToList();
-        var l = c.Select(x => x == "hud" && c.Count > 1 ? "HUD/radar/audio" : CategoryName(x)).ToList();
-        return l.Count switch { 0 => "nothing", 1 => l[0], _ => string.Join(", ", l.Take(l.Count - 1)) + " and " + l[^1] };
+        var l = c.Select(x => x == "hud" && c.Count > 1 ? Tr("HUD/radar/audio", en) : CategoryName(x, en)).ToList();
+        return l.Count switch { 0 => Tr("nothing", en), 1 => l[0], _ => string.Join(", ", l.Take(l.Count - 1)) + (en ? " and " : " " + Loc.T("and") + " ") + l[^1] };
     }
 
     /// <summary>Steam's userdata folder id (SteamID64 minus the base), or null.</summary>
@@ -471,8 +474,9 @@ public static class Cs2Config
         var c = ReadCrosshair(s);
         if (c == null) return null;
         string N(double? v) => v?.ToString("0.##", CultureInfo.InvariantCulture) ?? "?";
-        var color = c.Color >= 0 && c.Color < ColorNames.Length - 1 ? ColorNames[c.Color] : $"#{c.R:X2}{c.G:X2}{c.B:X2}";
-        return $"{(c.Pixels ? "length" : "size")} {N(c.Size)} · gap {N(c.Gap)} · thick {N(c.Thickness)} · {color}" + (c.Dot == true ? " · dot" : "") + (c.Outline == true ? c.OutlineMode == 2 ? " · half outline" : " · outline" : "");
+        var color = c.Color >= 0 && c.Color < ColorNames.Length - 1 ? Loc.T(ColorNames[c.Color]) : $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+        return Loc.F("{0} {1} · gap {2} · thick {3} · {4}", c.Pixels ? Loc.T("length") : Loc.T("size"), N(c.Size), N(c.Gap), N(c.Thickness), color)
+            + (c.Dot == true ? " · " + Loc.T("dot") : "") + (c.Outline == true ? c.OutlineMode == 2 ? " · " + Loc.T("half outline") : " · " + Loc.T("outline") : "");
     }
 }
 
@@ -644,6 +648,9 @@ public sealed class Cs2ConfigStore
         _ => ex.GetType().Name,
     };
 
+    /// <summary><see cref="Why"/> for a toast or a label: the plain reasons in the app's language (the Log keeps the English).</summary>
+    public static string WhyText(Exception ex) => ex.Message.Contains('\\') ? Loc.T(Why(ex)) : Loc.T(ex.Message);
+
     static string FinalPath(SafeFileHandle h) => SafeFile.FinalPath(h);
     static bool SamePath(string a, string b) => SafeFile.Same(a, b);
     static SafeFileHandle OpenDir(string path) => SafeFile.OpenDir(path, "can't open the Steam folder");
@@ -722,8 +729,8 @@ public sealed class Cs2ConfigStore
         if (src.Empty) return new CfgResult(CfgOutcome.Skipped, job.Target, cats, "the source has no CS2 config yet");
         // A part the source doesn't have (a snapshot with some files only, an account that never saved its video) isn't "the same".
         var missing = cats.Where(c => Cs2Config.PartsOf(c).All(p => src.Get(p) == null)).ToList();
-        if (missing.Count > 0 && missing.Count == cats.Count) return new CfgResult(CfgOutcome.Skipped, job.Target, cats, $"the source has no {Cs2Config.CategoryList(missing)}");
-        if (missing.Count > 0) Log.Info($"Config: the source has no {Cs2Config.CategoryList(missing)}, so that part was left out.");
+        if (missing.Count > 0 && missing.Count == cats.Count) return new CfgResult(CfgOutcome.Skipped, job.Target, cats, $"the source has no {Cs2Config.CategoryList(missing, en: true)}");
+        if (missing.Count > 0) Log.Info($"Config: the source has no {Cs2Config.CategoryList(missing, en: true)}, so that part was left out.");
 
         // What each file becomes (path under 730 -> text)
         var plan = new Dictionary<string, string>();
@@ -883,7 +890,7 @@ public sealed class Cs2ConfigStore
     public bool Restore(CfgBackup b, string syncId)
     {
         if (Cs2Running()) return false;
-        var dir = Dir(b.SteamId) ?? throw new IOException("no Steam userdata folder");
+        var dir = Dir(b.SteamId) ?? throw new IOException(Loc.T("no Steam userdata folder"));
         if (Redirected(dir)) throw new IOException(Linked);
         // Read first: the backup made just below can push this one out of the kept ones.
         // A saved file that is there but can't be read stops it here, before anything is written (it was left out, and the restore said it went fine).
@@ -891,7 +898,7 @@ public sealed class Cs2ConfigStore
         var rels = b.Files.Concat(b.Created).Where(Safe).ToList();
         // Before anything is written: a read-only file would stop the restore half-way (one the copy created too: it can't be deleted).
         if (saved.Select(x => x.rel).Concat(b.Created.Where(Safe)).FirstOrDefault(r => ReadOnly(Path.Combine(dir, r))) is string ro)
-            throw new IOException($"{Path.GetFileName(ro)} is read-only: clear that in its Properties first");
+            throw new IOException(Loc.F("{0} is read-only: clear that in its Properties first", Path.GetFileName(ro)));
         var held = new List<SafeFileHandle>();
         var left = new List<string>();
         try
@@ -918,7 +925,7 @@ public sealed class Cs2ConfigStore
         State.LastSyncAt = AppClock.Now;
         SaveState();
         // The caller logs and shows it (Restore and Undo last sync), like the other reasons a restore stops.
-        if (left.Count > 0) throw new IOException($"{Path.GetFileName(left[0])} couldn't be removed: close what has it open and restore again");
+        if (left.Count > 0) throw new IOException(Loc.F("{0} couldn't be removed: close what has it open and restore again", Path.GetFileName(left[0])));
         return true;
     }
 
@@ -998,8 +1005,8 @@ public sealed class Cs2ConfigStore
 
     public CfgSnapshot SaveSnapshot(string name, CfgSet set, string from)
     {
-        if (SafeName(name) == null) throw new ArgumentException("Give the snapshot a name.");
-        if (set == null || set.Empty) throw new InvalidOperationException("That account has no CS2 config yet: open CS2 on it once.");
+        if (SafeName(name) == null) throw new ArgumentException(Loc.T("Give the snapshot a name."));
+        if (set == null || set.Empty) throw new InvalidOperationException(Loc.T("That account has no CS2 config yet: open CS2 on it once."));
         var dir = SnapshotDir(name);
         Directory.CreateDirectory(dir);
         var s = new CfgSnapshot { Name = name.Trim(), Created = AppClock.Now, From = from, Dir = dir };
@@ -1033,7 +1040,7 @@ public sealed class Cs2ConfigStore
     /// <summary>A .zip to share: the config files and the name. The account it came from stays on this PC.</summary>
     public void ExportSnapshot(string name, string zipPath)
     {
-        var s = FindSnapshot(name) ?? throw new FileNotFoundException("No snapshot called " + name);
+        var s = FindSnapshot(name) ?? throw new FileNotFoundException(Loc.F("No snapshot called {0}", name));
         // Built in memory and written by handle (SafeFile): the folder you pick (Desktop, Downloads) is one other programs can change.
         using var ms = new MemoryStream();
         using (var zip = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
@@ -1057,20 +1064,20 @@ public sealed class Cs2ConfigStore
         string name = null;
         using (var zip = ZipFile.OpenRead(zipPath))
         {
-            if (zip.Entries.Count > 64) throw new InvalidDataException("The .zip has too many files for a snapshot.");
+            if (zip.Entries.Count > 64) throw new InvalidDataException(Loc.T("The .zip has too many files for a snapshot."));
             var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (var e in zip.Entries)
             {
                 var isMeta = e.FullName == "snapshot.json";
                 var part = isMeta ? null : Enum.GetValues<CfgPart>().Cast<CfgPart?>().FirstOrDefault(p => Cs2Config.SnapshotFile(p.Value) == e.FullName);
                 if (!isMeta && part == null) continue;   // anything else in the zip is ignored, unopened
-                if (!seen.Add(e.FullName)) throw new InvalidDataException($"{e.FullName} is in the .zip twice.");
-                if (e.Length > MaxFile) throw new InvalidDataException($"{e.FullName} is too big for a config file.");
+                if (!seen.Add(e.FullName)) throw new InvalidDataException(Loc.F("{0} is in the .zip twice.", e.FullName));
+                if (e.Length > MaxFile) throw new InvalidDataException(Loc.F("{0} is too big for a config file.", e.FullName));
                 using var r = new StreamReader(e.Open(), Encoding.UTF8);
                 // Read no more than the limit, whatever the zip says the size is.
                 var buf = new char[MaxFile + 1];
                 var n = r.ReadBlock(buf, 0, buf.Length);
-                if (n > MaxFile) throw new InvalidDataException($"{e.FullName} is too big for a config file.");
+                if (n > MaxFile) throw new InvalidDataException(Loc.F("{0} is too big for a config file.", e.FullName));
                 var text = new string(buf, 0, n);
                 if (isMeta)
                 {
@@ -1078,18 +1085,18 @@ public sealed class Cs2ConfigStore
                     continue;
                 }
                 var node = Vcfg.Parse(text);   // throws on a file nested too deep
-                if (node.Items.Count == 0) throw new InvalidDataException($"{e.FullName} is not a CS2 config file.");
+                if (node.Items.Count == 0) throw new InvalidDataException(Loc.F("{0} is not a CS2 config file.", e.FullName));
                 set.Files[part.Value] = text;
             }
         }
-        if (set.Empty) throw new InvalidDataException("The .zip has no CS2 config files.");
+        if (set.Empty) throw new InvalidDataException(Loc.T("The .zip has no CS2 config files."));
         name = SafeName(name) ?? SafeName(Path.GetFileNameWithoutExtension(zipPath)) ?? "Imported";
         var taken = Snapshots().Select(s => s.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var final = name;
         // SaveSnapshot finds a free folder itself; the suffix goes on a cut name so it always changes the name (names stop at 40).
         for (var i = 2; taken.Contains(final); i++)
         {
-            if (i > 999) throw new InvalidDataException("Too many snapshots with that name: delete or rename some first.");
+            if (i > 999) throw new InvalidDataException(Loc.T("Too many snapshots with that name: delete or rename some first."));
             var suffix = $" ({i})";
             final = (name.Length + suffix.Length > 40 ? name[..(40 - suffix.Length)].TrimEnd(' ', '.') : name) + suffix;
         }

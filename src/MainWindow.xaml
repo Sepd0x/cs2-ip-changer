@@ -2320,6 +2320,11 @@
 
                                 <HeaderedContentControl Grid.Row="4" Style="{StaticResource Group}" Header="App">
                                     <StackPanel>
+                                        <TextBlock Text="Language"/>
+                                        <TextBlock Text="Changing it applies the next time you open the app." Style="{StaticResource OptSub}"/>
+                                        <ComboBox x:Name="LanguageBox" SelectionChanged="LanguageBox_Changed" MinWidth="220" HorizontalAlignment="Left" Margin="0,6,0,12">
+                                            <ComboBoxItem Content="Automatic (Windows)"/>
+                                        </ComboBox>
                                         <CheckBox x:Name="StartWithWindowsBox" Style="{StaticResource Switch}" Click="StartWithWindows_Click" Margin="0,0,0,12" ToolTipService.ShowOnDisabled="True"
                                                   ToolTip="A scheduled task named 'CS2 IP Changer' opens the app in the notification area when you sign in, with its admin rights and without the UAC prompt each time. Protection starts off, unless Settings > Protection > Turn on protection when the app starts is on. Only for the copy installed in C:\Program Files\CS2 IP Changer. Turning this off, Settings > Remove the app and --restore delete the task.">
                                             <StackPanel>

@@ -659,6 +659,8 @@ Xao9NovTests.Run(Check);
 Dashboard10NovTests.Run(Check);
 // 10 nov. (onboarding): ADB pelo Phone setup, cabo, depuração por marca, visita guiada, nota em Regions (OnboardingTests.cs)
 OnboardingTests.Run(Check);
+// 11 nov.: idiomas da app (LocTests.cs)
+LocTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

@@ -70,45 +70,45 @@ public partial class MainWindow
     /// <summary>"3 of 4 accounts have it" under the button.</summary>
     void ShowLaunchOptions()
     {
-        if (_demo) { LaunchOptsText.Text = "4 of 4 accounts have it."; return; }
+        if (_demo) { LaunchOptsText.Text = Loc.F("{0} of {1} accounts have it.", 4, 4); return; }
         var c = Cs2LaunchOptions.Count(SteamUserData);
-        LaunchOptsText.Text = c is not (int with, int total) ? "" : total == 0 ? "No account has opened Steam on this PC yet."
-            : with == total ? $"All {total} account{(total == 1 ? "" : "s")} have it." : $"{with} of {total} accounts have it.";
+        LaunchOptsText.Text = c is not (int with, int total) ? "" : total == 0 ? Loc.T("No account has opened Steam on this PC yet.")
+            : with == total ? Loc.F("All {0} have it.", Fmt.Count(total, "account")) : Loc.F("{0} of {1} accounts have it.", with, total);
     }
 
     async void LaunchOpts_Click(object sender, RoutedEventArgs e)
     {
-        if (_demo) { Toast("Demo: launch options added.", true); return; }
-        if (SteamUserData == null) { Toast("Steam wasn't found on this PC.", false); return; }
+        if (_demo) { Toast(Loc.T("Demo: launch options added."), true); return; }
+        if (SteamUserData == null) { Toast(Loc.T("Steam wasn't found on this PC."), false); return; }
         var reopen = false;
         if (!Steam.Closed)
         {
-            if (!await Ask("Close Steam to add them?",
-                    "Steam keeps CS2's launch options in memory and writes them back when it closes, so they can only be added while Steam is closed.\n\n"
-                    + "The app closes Steam, adds -condebug -conclearlog to CS2 on every account on this PC (what you have there stays, and a backup is kept), then opens Steam again."
-                    + (Steam.Cs2Running ? "\n\nCS2 is open: it closes too. If you are in a match, you will drop." : ""),
-                    "Close Steam and add", "Not now"))
+            if (!await Ask(Loc.T("Close Steam to add them?"),
+                    Loc.T("Steam keeps CS2's launch options in memory and writes them back when it closes, so they can only be added while Steam is closed.") + "\n\n"
+                    + Loc.T("The app closes Steam, adds -condebug -conclearlog to CS2 on every account on this PC (what you have there stays, and a backup is kept), then opens Steam again.")
+                    + (Steam.Cs2Running ? "\n\n" + Loc.T("CS2 is open: it closes too. If you are in a match, you will drop.") : ""),
+                    Loc.T("Close Steam and add"), Loc.T("Not now")))
                 return;
             reopen = true;
         }
         LaunchOptsBtn.IsEnabled = false;
         _launchOptsManual = true;
-        ShowProgress("Adding -condebug -conclearlog to CS2's launch options…");
+        ShowProgress(Loc.T("Adding -condebug -conclearlog to CS2's launch options…"));
         try
         {
             if (reopen)
             {
                 _cs2.Closing("the launch options change");   // Steam takes CS2 along: not a crash
-                if (!await Steam.Close()) { Toast("Steam didn't close, so nothing was changed.", false); return; }
+                if (!await Steam.Close()) { Toast(Loc.T("Steam didn't close, so nothing was changed."), false); return; }
             }
             var r = await Task.Run(ApplyLaunchOptions);
             LogLaunchOptions(r, quiet: false);
             var added = r.Count(x => x.Changed);
             var left = r.Count(x => x.Left);
-            Toast(added > 0 ? $"Added on {added} account{(added == 1 ? "" : "s")}. CS2 now writes its console log however it is opened." + (left > 0 ? $" {left} left as they were (see Log)." : "")
-                : left > 0 ? "Nothing was added: see the Log for why." : "Every account already has them.", left == 0);
+            Toast(added > 0 ? Loc.F("Added on {0}. CS2 now writes its console log however it is opened.", Fmt.Count(added, "account")) + (left > 0 ? " " + Loc.F("{0} left as they were (see Log).", left) : "")
+                : left > 0 ? Loc.T("Nothing was added: see the Log for why.") : Loc.T("Every account already has them."), left == 0);
         }
-        catch (Exception ex) { Log.Error("CS2 launch options: " + ex.Message); Toast("Couldn't add the launch options: " + ex.Message, Tone.Error); }
+        catch (Exception ex) { Log.Error("CS2 launch options: " + Loc.En(ex.Message)); Toast(Loc.T("Couldn't add the launch options: ") + ex.Message, Tone.Error); }
         finally
         {
             _launchOptsManual = false;

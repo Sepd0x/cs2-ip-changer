@@ -61,8 +61,8 @@ public partial class MainWindow
     {
         var kind = CancelNow;
         ActivityCancel.Visibility = kind == CancelKind.None ? Visibility.Collapsed : Visibility.Visible;
-        ActivityCancel.ToolTip = kind == CancelKind.AfterStep ? "Stops after the step that is running: the IP change or the login finishes first, then nothing else starts."
-            : "Stops what the app is waiting for. Nothing that already happened is undone.";
+        ActivityCancel.ToolTip = kind == CancelKind.AfterStep ? Loc.T("Stops after the step that is running: the IP change or the login finishes first, then nothing else starts.")
+            : Loc.T("Stops what the app is waiting for. Nothing that already happened is undone.");
     }
 
     void ActivityCancel_Click(object sender, MouseButtonEventArgs e)
@@ -71,20 +71,20 @@ public partial class MainWindow
         var kind = CancelNow;
         if (kind == CancelKind.AfterStep)
         {
-            Log.Info($"{_command}: Cancel pressed while {_commandStep ?? "running"}; it stops after this step.");
+            Log.Info($"{Loc.En(_command)}: Cancel pressed while {Loc.En(_commandStep) ?? "running"}; it stops after this step.");
             _stopAfterStep = true;
             _commandDeclined = true;   // ends quietly
             ShowCancel();
-            Toast("Stopping after this step: the IP change or login that is running finishes first.", Tone.Info);
+            Toast(Loc.T("Stopping after this step: the IP change or login that is running finishes first."), Tone.Info);
             return;
         }
         if (kind != CancelKind.Now) return;
-        Log.Info($"{_command} cancelled while {_commandStep ?? "waiting"}.");
+        Log.Info($"{Loc.En(_command)} cancelled while {Loc.En(_commandStep) ?? "waiting"}.");
         _commandDeclined = true;   // ends quietly, like a "no" in a dialog
         _commandCts?.Cancel();
         if (Dialog.Visibility == Visibility.Visible) { Dialog.Visibility = Visibility.Collapsed; _dialogTcs?.TrySetResult(false); }
         ShowCancel();
-        Toast("Cancelled. Nothing else was started.", Tone.Info);
+        Toast(Loc.T("Cancelled. Nothing else was started."), Tone.Info);
     }
 
     sealed class Scope(Action end) : IDisposable { public void Dispose() => end(); }
@@ -96,7 +96,7 @@ public partial class MainWindow
     async Task TakeOver(string name)
     {
         if (_command == null || _commandWaiting <= 0 || _changingIp || _switching) return;
-        Log.Info($"{_command} stopped while {_commandStep ?? "waiting"}: {name} takes over.");
+        Log.Info($"{Loc.En(_command)} stopped while {Loc.En(_commandStep) ?? "waiting"}: {Loc.En(name)} takes over.");
         _commandCts?.Cancel();
         if (Dialog.Visibility == Visibility.Visible) { Dialog.Visibility = Visibility.Collapsed; _dialogTcs?.TrySetResult(false); }
         for (var i = 0; i < 50 && (_command != null || _rejoining); i++) await Task.Delay(100);
@@ -108,9 +108,10 @@ public partial class MainWindow
         if (_command != null || _changingIp || _switching || _rejoining)
         {
             Sound(Tones.Kind.Busy);
-            var what = _command ?? (_changingIp ? "Change IP" : "the account switch");
-            Toast($"Still busy with {what}" + (_commandStep != null ? $" ({_commandStep.TrimEnd('…', '.')})" : "") + $". {name} didn't start.", Tone.Warn);
-            Log.Info($"{name} ignored: still busy with {what}.");
+            var what = _command ?? (_changingIp ? Loc.T("Change IP") : Loc.T("the account switch"));
+            Toast(_commandStep != null ? Loc.F("Still busy with {0} ({1}). {2} didn't start.", what, _commandStep.TrimEnd('…', '.'), name)
+                : Loc.F("Still busy with {0}. {1} didn't start.", what, name), Tone.Warn);
+            Log.Info($"{Loc.En(name)} ignored: still busy with {Loc.En(what)}.");
             return false;
         }
         // A question from before (rejoin offer after a kick, follow) answered by this command instead: close it,
@@ -162,7 +163,7 @@ public partial class MainWindow
         Sound(ok ? Tones.Kind.Done : Tones.Kind.Failed);
         ActivityIcon.Text = ok ? "" : "";
         ActivityIcon.Foreground = ok ? Ui.Good : Ui.Bad;
-        ActivityText.Text = ok ? $"{name} · done" : $"{name} · didn't finish (see Log)";
+        ActivityText.Text = ok ? Loc.F("{0} · done", name) : Loc.F("{0} · didn't finish (see Log)", name);
         ActivityText.Foreground = ok ? Ui.Good : Ui.Bad;
         ActivityPill.Visibility = Visibility.Visible;
         Taskbar().ProgressState = ok ? TaskbarItemProgressState.None : TaskbarItemProgressState.Error;

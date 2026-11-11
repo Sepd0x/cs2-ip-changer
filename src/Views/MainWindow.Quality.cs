@@ -44,11 +44,11 @@ public partial class MainWindow
     {
         _cQuality.Waiting = _qualityLevel == QualityLevel.Fair;
         _cQuality.Ok = _qualityLevel switch { QualityLevel.Good => true, QualityLevel.Bad => false, _ => null };
-        _cQuality.Detail = q == null ? "Measuring…" : _qualityLevel switch
+        _cQuality.Detail = q == null ? Loc.T("Measuring…") : _qualityLevel switch
         {
-            QualityLevel.Good => "Good · " + q.Text,
-            QualityLevel.Fair => "Fair · " + q.Text,
-            QualityLevel.Bad => "Weak · " + q.Text,
+            QualityLevel.Good => Loc.F("Good · {0}", q.Text),
+            QualityLevel.Fair => Loc.F("Fair · {0}", q.Text),
+            QualityLevel.Bad => Loc.F("Weak · {0}", q.Text),
             _ => q.Text,
         };
     }
@@ -59,15 +59,16 @@ public partial class MainWindow
     {
         if (_qualityLevel == QualityLevel.Bad)
         {
-            Log.Warn($"The phone connection is weak ({q.Text}). Expect lag in game. Change IP can land on another cell; moving the phone (near a window, off the PC case) also helps.");
+            Log.Warn($"The phone connection is weak ({Loc.En(q.Text)}). Expect lag in game. Change IP can land on another cell; moving the phone (near a window, off the PC case) also helps.");
             if (_s.AutoModeByQuality && WholePcOn && TryDropWholePc(q)) return;
-            Toast($"Weak mobile connection: {q.Text}. Expect lag." + (WholePcOn ? " Game only would leave more of it for CS2." : ""), Tone.Error);
+            Toast(WholePcOn ? Loc.F("Weak mobile connection: {0}. Expect lag. Game only would leave more of it for CS2.", q.Text)
+                : Loc.F("Weak mobile connection: {0}. Expect lag.", q.Text), Tone.Error);
         }
         else if (before == QualityLevel.Bad)
         {
-            Log.Ok($"The phone connection is fine again ({q.Text}).");
+            Log.Ok($"The phone connection is fine again ({Loc.En(q.Text)}).");
             if (_s.WholePcBeforeWeak != null) RestoreWholePc();
-            else Toast($"Mobile connection is fine again: {q.Text}.", true);
+            else Toast(Loc.F("Mobile connection is fine again: {0}.", q.Text), true);
         }
     }
 
@@ -80,7 +81,7 @@ public partial class MainWindow
     {
         if (Steam.Cs2Running && _consoleServer != null && !_servers.Any(x => x.Key == _consoleServer))
         {
-            Toast($"Weak mobile connection: {q.Text}. CS2 is on a server outside your list, so Whole PC stays on.", Tone.Error);
+            Toast(Loc.F("Weak mobile connection: {0}. CS2 is on a server outside your list, so Whole PC stays on.", q.Text), Tone.Error);
             return true;
         }
         _s.WholePcBeforeWeak = _s.Mode == "all" ? "all" : "game";
@@ -89,7 +90,7 @@ public partial class MainWindow
         SaveSettings();
         ApplySettingsToUi();
         Log.Warn("Weak connection: switched to Game only, so CS2 doesn't share the phone with the rest of the PC. The app goes back to Whole PC when it's fine again (with CS2 closed). Turn this off in Settings > Mobile data.");
-        Toast($"Weak mobile connection ({q.Text}): switched to Game only for now. The rest of the PC is back on your home network.", false);
+        Toast(Loc.F("Weak mobile connection ({0}): switched to Game only for now. The rest of the PC is back on your home network.", q.Text), false);
         _ = SyncNow(force: true);
         return true;
     }
@@ -97,14 +98,14 @@ public partial class MainWindow
     /// <summary>Back to the Whole PC mode you had, only with CS2 closed: moving the PC's routes mid-match cuts connections.</summary>
     void RestoreWholePc()
     {
-        if (Steam.Cs2Running) { Toast("Mobile connection is fine again. Whole PC comes back when you close CS2.", true); return; }
+        if (Steam.Cs2Running) { Toast(Loc.T("Mobile connection is fine again. Whole PC comes back when you close CS2."), true); return; }
         var back = _s.WholePcBeforeWeak;
         _s.WholePcBeforeWeak = null;
         if (back == "all") _s.Mode = "all"; else _s.GameMode = true;
         SaveSettings();
         ApplySettingsToUi();
         Log.Info(back == "all" ? "Connection fine again: back to Whole PC, always." : "Connection fine again: back to Whole PC while CS2 is open.");
-        Toast("Mobile connection is fine again: Whole PC is back on.", true);
+        Toast(Loc.T("Mobile connection is fine again: Whole PC is back on."), true);
         _ = SyncNow(force: true);
     }
 

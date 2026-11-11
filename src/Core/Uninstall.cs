@@ -187,20 +187,19 @@ public static class Uninstall
 
     // ------------------------------------------------------------ What the question and the result say
 
-    public const string Title = "Remove CS2 IP Changer?";
+    public static string Title => Loc.T("Remove CS2 IP Changer?");
 
     /// <summary>What goes either way, above the two choices.</summary>
     public static string Text() =>
-        "Removes the Firewall rules and routes the app made (Regions too), the Start with Windows task, the app's files in " +
-        $"{Root} and the app itself, and stops the phone tool. Steam and CS2 keep their own files.";
+        Loc.F("Removes the Firewall rules and routes the app made (Regions too), the Start with Windows task, the app's files in {0} and the app itself, and stops the phone tool. Steam and CS2 keep their own files.", Root);
 
     /// <summary>The two choices: Keep (first, picked at the start) and Everything.</summary>
     public static string[] Choices(string dataDir, bool installed) =>
     [
-        "Keep my settings and accounts\n" + (installed
-            ? $"{dataDir} stays, so installing the app again brings everything back."
-            : $"{dataDir} stays, next to where the app was."),
-        "Delete everything\nSRT_Dados goes too: settings, servers, accounts list, saved Steam sign-ins, config backups and logs.",
+        Loc.T("Keep my settings and accounts") + "\n" + (installed
+            ? Loc.F("{0} stays, so installing the app again brings everything back.", dataDir)
+            : Loc.F("{0} stays, next to where the app was.", dataDir)),
+        Loc.T("Delete everything") + "\n" + Loc.T("SRT_Dados goes too: settings, servers, accounts list, saved Steam sign-ins, config backups and logs."),
     ];
 
     /// <summary>The window after Remove. Problem = something was left that needs you.</summary>
@@ -210,18 +209,18 @@ public static class Uninstall
         var problem = network != null || task != null || o.Registry != null || files.ProgramDataRefused || files.DataRefused || files.AppRefused;
         var lines = new List<string>
         {
-            network == null ? (task == null ? "The Firewall rules, the routes and the Start with Windows task are gone." : "The Firewall rules and routes are gone.") : "Couldn't remove: " + network + ". Restart the PC to clear routes. Rules are in Windows Firewall > Outbound Rules (names start with ServerRouteTool).",
+            network == null ? (task == null ? Loc.T("The Firewall rules, the routes and the Start with Windows task are gone.") : Loc.T("The Firewall rules and routes are gone.")) : Loc.F("Couldn't remove: {0}.", network) + " " + Loc.T("Restart the PC to clear routes. Rules are in Windows Firewall > Outbound Rules (names start with ServerRouteTool)."),
         };
         if (task != null) lines.Add(task);
-        if (o.Registry != null) lines.Add("The entry in Windows Settings > Installed apps couldn't be removed: " + o.Registry);
-        if (files.ProgramDataRefused) lines.Add($"{Root} was left alone: programs without admin rights can change it.");
-        if (files.DataRefused || files.AppRefused) lines.Add("The app's folder was left alone: programs without admin rights can change it.");
+        if (o.Registry != null) lines.Add(Loc.F("The entry in Windows Settings > Installed apps couldn't be removed: {0}", o.Registry));
+        if (files.ProgramDataRefused) lines.Add(Loc.F("{0} was left alone: programs without admin rights can change it.", Root));
+        if (files.DataRefused || files.AppRefused) lines.Add(Loc.T("The app's folder was left alone: programs without admin rights can change it."));
         if (files.Left.Count > 0)
-            lines.Add(helper ? "The last files go a few seconds after the app closes. If Windows still holds one, it goes at the next restart."
-                : "Some files are in use by this copy: Windows deletes them at the next restart.");
-        if (KeepsApp(network)) lines.Add($"The app and its files stayed, so you can try again: open the app and Remove again, or run {AppIds.ExeName} {AppIds.Args.Restore}.");
-        else if (!everything) lines.Add($"Kept: {dataDir}. Delete that folder if you won't install the app again.");
-        return (problem ? "Not everything was removed" : "CS2 IP Changer was removed", string.Join("\n\n", lines), problem);
+            lines.Add(helper ? Loc.T("The last files go a few seconds after the app closes. If Windows still holds one, it goes at the next restart.")
+                : Loc.T("Some files are in use by this copy: Windows deletes them at the next restart."));
+        if (KeepsApp(network)) lines.Add(Loc.F("The app and its files stayed, so you can try again: open the app and Remove again, or run {0} {1}.", AppIds.ExeName, AppIds.Args.Restore));
+        else if (!everything) lines.Add(Loc.F("Kept: {0}. Delete that folder if you won't install the app again.", dataDir));
+        return (problem ? Loc.T("Not everything was removed") : Loc.T("CS2 IP Changer was removed"), string.Join("\n\n", lines), problem);
     }
 
     const uint DelayUntilReboot = 4;

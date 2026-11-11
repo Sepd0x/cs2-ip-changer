@@ -63,7 +63,7 @@ public partial class MainWindow
     {
         WatchSteamLog();
         if (SteamReady) return true;
-        ShowProgress("Waiting for Steam to get a Valve session again…");
+        ShowProgress(Loc.T("Waiting for Steam to get a Valve session again…"));
         using var wait = CommandWait();
         var linked = 0;
         try
@@ -82,7 +82,7 @@ public partial class MainWindow
                     Log.Ok("Steam is connected to Valve through the phone (its log didn't show the new login, so the connection counts): you can join.");
                     return true;
                 }
-                ShowProgress($"Waiting for Steam to get a Valve session again… {i} s");
+                ShowProgress(Loc.F("Waiting for Steam to get a Valve session again… {0} s", i));
             }
             return false;
         }
@@ -154,9 +154,9 @@ public partial class MainWindow
                 _cs2CrashServer = _s.LastServer;
                 var until = _cs2CrashAt.Value + AfterCrashWait;
                 Log.Warn($"CS2 crashed. Do not rejoin {_cs2CrashServer} before {until:HH:mm}: the server still has the old session and kicks with \"No Steam logon\". Another server is fine right away.");
-                Toast($"CS2 crashed. Rejoin the same server only after {until:HH:mm} (another one is fine right away).", false);
+                Toast(Loc.F("CS2 crashed. Rejoin the same server only after {0} (another one is fine right away).", until.ToString("HH:mm")), false);
             }
-            else Toast($"CS2 closed with error {hex}. Details are in the Log.", false);
+            else Toast(Loc.F("CS2 closed with error {0}. Details are in the Log.", hex), false);
         }
     }
 
@@ -166,21 +166,21 @@ public partial class MainWindow
         if (_cs2CrashAt == null || s.Key != _cs2CrashServer) return true;
         var until = _cs2CrashAt.Value + AfterCrashWait;
         if (DateTime.Now >= until) return true;
-        var wait = await Ask("CS2 crashed on this server recently",
-            $"CS2 crashed at {_cs2CrashAt:HH:mm} on {s.Title}. The server still remembers your old session. If you rejoin now, it kicks you a few minutes later (\"No Steam logon\").\n\n" +
-            $"Wait until {until:HH:mm:ss} and join automatically? Another server is fine right away.", "Wait and join", "Join now");
+        var wait = await Ask(Loc.T("CS2 crashed on this server recently"),
+            Loc.F("CS2 crashed at {0} on {1}. The server still remembers your old session. If you rejoin now, it kicks you a few minutes later (\"No Steam logon\").", _cs2CrashAt.Value.ToString("HH:mm"), s.Title) + "\n\n" +
+            Loc.F("Wait until {0} and join automatically? Another server is fine right away.", until.ToString("HH:mm:ss")), Loc.T("Wait and join"), Loc.T("Join now"));
         Diag.Write("wait-after-crash", new { server = s.Key, seconds = (int)(until - DateTime.Now).TotalSeconds, waited = wait });
         if (CommandCancelled) return false;
         if (!wait && !_dialogCancelClicked) return false;   // X or Escape: neither, so no join (joining now is what this question avoids)
         if (!wait) return true;
-        ShowProgress("Waiting for the server to drop the old session…");
+        ShowProgress(Loc.T("Waiting for the server to drop the old session…"));
         using var waiting = CommandWait();
         try
         {
             while (DateTime.Now < until)
             {
                 if (CommandCancelled) return false;
-                ShowProgress($"Waiting for the server to drop the old session… {Fmt.Left(until - DateTime.Now)}");
+                ShowProgress(Loc.F("Waiting for the server to drop the old session… {0}", Fmt.Left(until - DateTime.Now)));
                 await Task.Delay(1000);
             }
         }

@@ -43,14 +43,14 @@ static class RevisaoHTests
         check("Revisão H9: com uma fuga diz qual", !red.Ok && red.Text == "Warning: Windows Firewall. See Checks.", red.Text);
         var cs = Src("MainWindow.xaml.cs");
         check("Revisão H9: os títulos que o Leak test deixa de fora são os de Checks",
-            cs.Contains("Title = \"Connection quality\"") && cs.Contains("Title = \"Other apps\"") && cs.Contains("Title = \"Matchmaking regions\""), "");
+            cs.Contains("Title = Loc.T(\"Connection quality\")") && cs.Contains("Title = Loc.T(\"Other apps\")") && cs.Contains("Title = Loc.T(\"Matchmaking regions\")"), "");
         var prot = Src("Views", "MainWindow.Protection.cs");
         check("Revisão H9: o Leak test usa as duas regras", prot.Contains("LeakFailures(_checks, _last?.EffectiveMode == \"all\")") && prot.Contains("LeakResult(bad, _s.LockCs2,")
             && !prot.Contains("var bad = _checks.Where(c => c.Ok == false)"), "");
 
         // H2. O tooltip das estatísticas vem do aviso
         check("Revisão H2: o tooltip das estatísticas não é uma lista à parte do aviso", !xaml.Contains("Sent: the app and Windows versions, your country as two letters, the mode") && xaml.Contains("x:Name=\"StatsLine\""), "");
-        check("Revisão H2: o tooltip vem do aviso", Src("Views", "MainWindow.Settings.cs").Contains("StatsLine.ToolTip = Telemetry.NoticeSent + \" Details in the README, under Telemetry.\";"), "");
+        check("Revisão H2: o tooltip vem do aviso", Src("Views", "MainWindow.Settings.cs").Contains("StatsLine.ToolTip = Loc.T(Telemetry.NoticeSent) + \" \" + Loc.T(\"Details in the README, under Telemetry.\");"), "");
         check("Revisão H2: o aviso continua igual, com a mesma frase Sent", Telemetry.NoticeShort.Contains(".\n\n" + Telemetry.NoticeSent + "\nNever sent:") && Telemetry.NoticeSent.StartsWith("Sent: a random ID"), "");
     }
 

@@ -52,7 +52,9 @@ public partial class MainWindow
             UseOffBox.IsChecked = _s.UseWithProtectionOff;
             CloseToTrayBox.IsChecked = _s.CloseToTray;
             AutoStreamerBox.IsChecked = _s.AutoStreamer;
-            StatsLine.ToolTip = Telemetry.NoticeSent + " Details in the README, under Telemetry.";
+            StatsLine.ToolTip = Loc.T(Telemetry.NoticeSent) + " " + Loc.T("Details in the README, under Telemetry.");
+            if (LanguageBox.Items.Count == 1) foreach (var n in Loc.Names) LanguageBox.Items.Add(new ComboBoxItem { Content = n });
+            LanguageBox.SelectedIndex = _s.Language is null or "auto" ? 0 : Math.Max(0, Array.FindIndex(Loc.Codes, c => string.Equals(c, _s.Language, StringComparison.OrdinalIgnoreCase)) + 1);
             LaunchOptsBox.IsChecked = _s.Cs2LaunchOptions;
             DataWarnBox.Text = _s.DataWarnGb > 0 ? _s.DataWarnGb.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) : "0";
             ApiKeyBox.Text = _s.SteamApiKey ?? "";
@@ -106,17 +108,17 @@ public partial class MainWindow
         UpdateQuickInfo();
     }
 
-    public const string UseOffWarning =
+    public static string UseOffWarning => Loc.T(
         "While protection is off, Servers, Join and Log in with CS2 use your home connection and the app blocks nothing but the regions you turned off.\n\n" +
         "Every server you join sees your home IP. A ban there can reach that IP, and changing the phone's IP won't help with it.\n\n" +
-        "Turn on protection (Status or the tray icon) whenever you want to play through the phone. You can turn this off again here.";
+        "Turn on protection (Status or the tray icon) whenever you want to play through the phone. You can turn this off again here.");
 
     /// <summary>Settings > Use the app with protection off: a warning before it turns on; turning it off needs none.</summary>
     async void UseOff_Click(object sender, RoutedEventArgs e)
     {
         if (_uiLock || !IsLoaded) return;
         var on = UseOffBox.IsChecked == true;
-        if (on && !_s.UseWithProtectionOff && !await Ask("Use the app with protection off?", UseOffWarning, "Use without protection", danger: true))
+        if (on && !_s.UseWithProtectionOff && !await Ask(Loc.T("Use the app with protection off?"), UseOffWarning, Loc.T("Use without protection"), danger: true))
         {
             UseOffBox.IsChecked = false;
             return;
@@ -154,7 +156,7 @@ public partial class MainWindow
         }
         if (string.Equals(text, rejoin ? _s.HotkeySwitch : _s.HotkeyRejoin, StringComparison.OrdinalIgnoreCase))
         {
-            Toast($"{text} is already the {(rejoin ? "New IP + next account" : "rejoin")} hotkey.", false);
+            Toast(rejoin ? Loc.F("{0} is already the New IP + next account hotkey.", text) : Loc.F("{0} is already the rejoin hotkey.", text), false);
             return;
         }
         box.Text = text;
@@ -176,15 +178,15 @@ public partial class MainWindow
         if (show) ApiKeyBox.Text = ApiKeyPwd.Password; else ApiKeyPwd.Password = ApiKeyBox.Text;
         ApiKeyBox.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         ApiKeyPwd.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
-        ApiKeyShowBtn.Content = show ? "Hide" : "Show";
+        ApiKeyShowBtn.Content = show ? Loc.T("Hide") : Loc.T("Show");
         ApiKeyShowBtn.IsEnabled = !HideLogins;
         ApiKeyShowBtn.ToolTip = ApiKeyShowTip(HideLogins, _s.StreamerMode || Rec.On, show);
     }
 
     /// <summary>The Show button of the key: while usernames are hidden it says why, and where that is set (Settings > Privacy).</summary>
     public static string ApiKeyShowTip(bool hide, bool optOn, bool show) =>
-        hide ? (optOn ? "Hide usernames is on (Settings > Privacy): the key stays hidden." : "OBS or Streamlabs is open (Settings > Privacy): the key stays hidden.")
-        : show ? "Hides the key" : "Shows the key";
+        hide ? (optOn ? Loc.T("Hide usernames is on (Settings > Privacy): the key stays hidden.") : Loc.T("OBS or Streamlabs is open (Settings > Privacy): the key stays hidden."))
+        : show ? Loc.T("Hides the key") : Loc.T("Shows the key");
 
     void SwitchSteps_Click(object sender, RoutedEventArgs e)
     {
@@ -192,11 +194,22 @@ public partial class MainWindow
         Dispatcher.BeginInvoke(() => SwitchGroup.BringIntoView(), DispatcherPriority.Loaded);
     }
 
+    /// <summary>Settings > App > Language: saved as "auto" or a code of Loc.Codes; it applies the next time the window opens.</summary>
+    void LanguageBox_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (_uiLock || !IsLoaded || LanguageBox.SelectedIndex < 0) return;
+        var chosen = LanguageBox.SelectedIndex == 0 ? "auto" : Loc.Codes[LanguageBox.SelectedIndex - 1];
+        if (chosen == (_s.Language ?? "auto")) return;
+        _s.Language = chosen;
+        SaveSettings();
+        Toast(Loc.T("Language changed. Close and open the app to apply it."), true);
+    }
+
     void SaveSettings() { if (!_demo) Store.Save(Paths.File(AppIds.Files.Settings), _s); }
 
     async void Restore_Click(object sender, RoutedEventArgs e)
     {
-        if (!_protOn || _turningOff || !await Ask("Turn off protection?", TurnOffAsk(!_demo && Steam.Cs2Running), "Turn off protection", danger: true)) return;
+        if (!_protOn || _turningOff || !await Ask(Loc.T("Turn off protection?"), TurnOffAsk(!_demo && Steam.Cs2Running), Loc.T("Turn off protection"), danger: true)) return;
         _protOn = false;
         if (_demo) { DemoProtection(false); return; }
         // Everything of protection goes and is read back (the Regions rule stays: regions don't depend on protection); then the
@@ -214,27 +227,27 @@ public partial class MainWindow
         _bannedIpSig = "?";
         ApplyBannedIpBlock();
         ShowRegionsStatus();
-        if (left == null) Toast("Protection is off and checked. Turn on protection (Status or the tray icon) brings it back.", true);
-        else Toast("Couldn't remove: " + left + ". Restart the PC to clear the routes, or run the app with --restore.", Tone.Error);
+        if (left == null) Toast(Loc.T("Protection is off and checked. Turn on protection (Status or the tray icon) brings it back."), true);
+        else Toast(Loc.F("Couldn't remove: {0}. Restart the PC to clear the routes, or run the app with --restore.", left), Tone.Error);
     }
 
-    const string TurnOffText = "Turns off the kill switch, the routes and the CS2 lock. Until you click Turn on protection (in Status, or the tray icon), servers see your home IP. " +
-        "Your servers stay saved, and the regions you turned off stay off (Regions > Allow all (block off) lifts them).";
+    static string TurnOffText => Loc.T("Turns off the kill switch, the routes and the CS2 lock. Until you click Turn on protection (in Status, or the tray icon), servers see your home IP. " +
+        "Your servers stay saved, and the regions you turned off stay off (Regions > Allow all (block off) lifts them).");
 
     /// <summary>The Turn off question. With CS2 open, the server you are on sees the home IP at once: said in the same question.</summary>
     public static string TurnOffAsk(bool cs2Open) => TurnOffText + (cs2Open ? "\n\n" + Cs2OpenHomeNow : "");
 
-    public const string Cs2OpenHomeNow = "CS2 is open: if you are on a server, it sees your home IP from now on.";
+    public static string Cs2OpenHomeNow => Loc.T("CS2 is open: if you are on a server, it sees your home IP from now on.");
 
     void OpenFirewall_Click(object sender, RoutedEventArgs e)
     {
         try { Process.Start(FirewallConsole()); }
-        catch (Exception ex) { Toast("Couldn't open the Firewall: " + ex.Message, Tone.Error); return; }
+        catch (Exception ex) { Toast(Loc.F("Couldn't open the Firewall: {0}", ex.Message), Tone.Error); return; }
         Toast(FirewallRulesHint, true);
     }
 
     /// <summary>Every rule of the app starts with this (the kill switch rule is only there with protection on).</summary>
-    public static readonly string FirewallRulesHint =$"In Outbound Rules, the app's rules start with '{AppIds.RulePrefix}'.";
+    public static string FirewallRulesHint => Loc.F("In Outbound Rules, the app's rules start with '{0}'.", AppIds.RulePrefix);
 
     /// <summary>
     /// mmc.exe from System32 with wf.msc, never "open wf.msc" through the shell: as admin, the shell looks up what opens a .msc

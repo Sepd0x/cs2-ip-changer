@@ -60,9 +60,9 @@ public sealed class ProfileRow : Observable
         expired || (signedIn && daysLeft < SoonDays) ? "warn" : signedIn ? "ok" : "none";
     public string SessionLevelNow => SessionLevel(SignedIn, DaysLeft, !SignedIn && Expired);
     public Brush SessionBrush => SessionLevelNow switch { "warn" => Ui.Warn, "ok" => Ui.Muted, _ => Ui.Faint };
-    public string SignInText => SignedIn ? "Sign out" : "Sign in";
+    public string SignInText => SignedIn ? Loc.T("Sign out") : Loc.T("Sign in");
     /// <summary>The button stands where the sign-in line was, so it keeps that line in its tooltip.</summary>
-    public string SignInTip => (SignedIn ? Session + ". Sign out deletes" : "Sign in: the app keeps") + " Steam's sign-in token for this account" + (SignedIn ? "." : ", encrypted for your Windows user.");
+    public string SignInTip => SignedIn ? Session + ". " + Loc.T("Sign out deletes Steam's sign-in token for this account.") : Loc.T("Sign in: the app keeps Steam's sign-in token for this account, encrypted for your Windows user.");
 
     public string After { get => _after; set { if (Set(ref _after, value)) Raise(nameof(AfterInitial)); } }
     public string AfterDetail { get => _afterDetail; set => Set(ref _afterDetail, value); }
@@ -94,7 +94,7 @@ public sealed class TemplateItem : Observable
 {
     public ProfileTemplate T { get; }
     public TemplateItem(ProfileTemplate t) { T = t; }
-    public string Title => string.IsNullOrWhiteSpace(T.Title) ? "Untitled" : T.Title;
+    public string Title => string.IsNullOrWhiteSpace(T.Title) ? Loc.T("Untitled") : T.Title;
     public void RefreshTitle() => Raise(nameof(Title));
 
     /// <summary>For the recording build's screen filter: the template's own text, its name and URL split around the tags.</summary>

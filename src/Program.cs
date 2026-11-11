@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using SRT.Core;
@@ -17,6 +17,7 @@ public static class Program
     [STAThread]
     static int Main(string[] args)
     {
+        Loc.Hook();
         // The app's own P/Invokes (kernel32, iphlpapi, wintrust, winmm...) only load from System32, never a copy planted next to the exe.
         // First thing, so LockDllSearch's own call goes through it too. .NET's CoreLib doesn't use this resolver and looks in the exe's
         // folder first (by full path) before and after Main: that is why the folder check below exists.
@@ -63,7 +64,7 @@ public static class Program
             {
                 var what = moveNet ? "unpack its files to a folder only admins can change" : "start without the runtime variables " + string.Join(", ", runtimeVars);
                 if (folderWhy == null) Log.Error($"The app couldn't {what}. It didn't start.");
-                MessageBoxW(IntPtr.Zero, $"CS2 IP Changer couldn't {what}, so it didn't start. Restart the PC and try again.", "CS2 IP Changer", 0x10);
+                MessageBoxW(IntPtr.Zero, Loc.F("CS2 IP Changer couldn't {0}, so it didn't start. Restart the PC and try again.", moveNet ? Loc.T("unpack its files to a folder only admins can change") : Loc.F("start without the runtime variables {0}", string.Join(", ", runtimeVars))), "CS2 IP Changer", 0x10);
                 return 1;
             }
             try
@@ -88,7 +89,7 @@ public static class Program
             catch (Exception ex)
             {
                 if (folderWhy == null) Log.Error("The app couldn't restart from a safe folder: " + ex.Message);
-                MessageBoxW(IntPtr.Zero, "CS2 IP Changer couldn't restart from a folder only admins can change: " + ex.Message, "CS2 IP Changer", 0x10);
+                MessageBoxW(IntPtr.Zero, Loc.F("CS2 IP Changer couldn't restart from a folder only admins can change: {0}", ex.Message), "CS2 IP Changer", 0x10);
                 return 1;
             }
         }
@@ -121,8 +122,8 @@ public static class Program
         }
         catch (Exception ex)
         {
-            MessageBoxW(IntPtr.Zero, Installer.StageBusy() ? "The Install window of CS2 IP Changer is already open. Look for it in the taskbar."
-                : why + "\n\n(The Install window couldn't open: " + ex.Message + ")", "CS2 IP Changer", 0x10);
+            MessageBoxW(IntPtr.Zero, Installer.StageBusy() ? Loc.T("The Install window of CS2 IP Changer is already open. Look for it in the taskbar.")
+                : why + "\n\n" + Loc.F("(The Install window couldn't open: {0})", ex.Message), "CS2 IP Changer", 0x10);
             return 1;
         }
     }
@@ -140,6 +141,7 @@ public static class Program
     [MethodImpl(MethodImplOptions.NoInlining)]
     static void Styles()
     {
+        Loc.Init(null);   // the Install and folder windows: the language of Windows (no settings read from this folder)
         var app = new System.Windows.Application { ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown };
         app.Resources.MergedDictionaries.Add(new System.Windows.ResourceDictionary
             { Source = new Uri($"pack://application:,,,/{typeof(Program).Assembly.GetName().Name};component/Theme.xaml") });
@@ -150,7 +152,7 @@ public static class Program
     static int RunFolderProblem(string why)
     {
         Styles();
-        NoticeWindow.Ask("CS2 IP Changer can't start here", why, "Close", problem: true);
+        NoticeWindow.Ask(Loc.T("CS2 IP Changer can't start here"), why, Loc.T("Close"), problem: true);
         return 1;
     }
 
@@ -164,7 +166,7 @@ public static class Program
 
     /// <summary>Install: the exe is in place but SRT_Dados isn't. The reason is an exception's message, with or without its full stop.</summary>
     public static string DataNotCopiedText(string dataError, string exe) =>
-        $"{AppIds.ExeName} is installed, but SRT_Dados wasn't copied: {(dataError ?? "").TrimEnd().TrimEnd('.')}. Then start {exe}.";
+        Loc.F("{0} is installed, but SRT_Dados wasn't copied: {1}. Then start {2}.", AppIds.ExeName, (dataError ?? "").TrimEnd().TrimEnd('.'), exe);
 
     internal static NoticeWindow InstallWindow(string from, string target)
     {
@@ -172,17 +174,17 @@ public static class Program
         // beta.11 (audit P5): an older copy updated itself and left its protection on, which stays until the installed app starts
         // A Firewall that couldn't be read says nothing here: the note is only shown for a block that was seen
         var blockLeft = Firewall.BlockLeft(Firewall.Remaining(), unreadableCounts: false);
-        return new NoticeWindow("Install CS2 IP Changer", InstallText(from, target, keep, Installer.InstalledVersion(target), AppInfo.Version, blockLeft), "Install", "Close", action: async w =>
+        return new NoticeWindow(Loc.T("Install CS2 IP Changer"), InstallText(from, target, keep, Installer.InstalledVersion(target), AppInfo.Version, blockLeft), Loc.T("Install"), Loc.T("Close"), action: async w =>
         {
             w.Working = true;
-            w.Say($"Copying to {target}…");
+            w.Say(Loc.F("Copying to {0}…", target));
             Installer.Result r;
             try { r = await Task.Run(() => Installer.Install(from, target, AppInfo.Version)); }
             catch (Exception ex)
             {
                 w.Working = false;
                 w.Accepted = false;
-                w.Say("Couldn't install: " + ex.Message, bad: true);
+                w.Say(Loc.F("Couldn't install: {0}", ex.Message), bad: true);
                 return;
             }
             if (r.DataError != null)
@@ -193,25 +195,25 @@ public static class Program
                 w.Say(DataNotCopiedText(r.DataError, r.Exe), bad: true);
                 return;
             }
-            var note = (r.ExeKept != null ? $"Version {r.ExeKept} was already there and stays. " : "")
-                + (r.DataKept ? "The SRT_Dados already there was kept. " : "")
-                + (r.Skipped > 0 ? $"Left out {Fmt.Count(r.Skipped, "file")} from SRT_Dados (links, files kept online by OneDrive, or in use). " : "");
+            var note = (r.ExeKept != null ? Loc.F("Version {0} was already there and stays.", r.ExeKept) + " " : "")
+                + (r.DataKept ? Loc.T("The SRT_Dados already there was kept.") + " " : "")
+                + (r.Skipped > 0 ? Loc.F("Left out {0} from SRT_Dados (links, files kept online by OneDrive, or in use).", Fmt.Count(r.Skipped, "file")) + " " : "");
             // beta.11 (audit P4): the old SRT_Dados keeps the Steam sign-ins. Only to the Recycle Bin, and only if you say so
             var old = Installer.OldCopy(from, r);
-            if (old.Count > 0 && NoticeWindow.Ask("The old copy", Installer.OldCopyText(from), "Send to Recycle Bin", "Keep it"))
+            if (old.Count > 0 && NoticeWindow.Ask(Loc.T("The old copy"), Installer.OldCopyText(from), Loc.T("Send to Recycle Bin"), Loc.T("Keep it")))
             {
                 var left = old.Where(p => !Installer.Recycle(p)).ToList();
-                note += left.Count == 0 ? "The old SRT_Dados is in the Recycle Bin. " : $"Couldn't move {string.Join(", ", left)} to the Recycle Bin: delete it yourself. ";
+                note += (left.Count == 0 ? Loc.T("The old SRT_Dados is in the Recycle Bin.") : Loc.F("Couldn't move {0} to the Recycle Bin: delete it yourself.", string.Join(", ", left))) + " ";
             }
             try { Installer.Start(r.Exe); }
             catch (Exception ex)
             {
                 w.Working = false;
                 w.Finish();
-                w.Say($"{note}Installed, but couldn't start it ({ex.Message}). Start {r.Exe} yourself.", bad: true);
+                w.Say(note + Loc.F("Installed, but couldn't start it ({0}). Start {1} yourself.", ex.Message, r.Exe), bad: true);
                 return;
             }
-            w.Say(note + "Starting the app from there…");
+            w.Say(note + Loc.T("Starting the app from there…"));
             await Task.Delay(note.Length > 0 ? 3000 : 800);
             w.Working = false;
             w.Close();
@@ -223,19 +225,19 @@ public static class Program
     {
         var keepExe = Installer.KeepExe(installed, version);
         if (blockLeft) return InstallText(from, target, keepData, installed, version) + "\n\n" + BlockLeftText(from);
-        return $"CS2 IP Changer runs as admin, and programs without admin rights can change the folder it was started from:\n{from}\n\n"
-            + "A file put next to the app there could run with admin rights, so the app doesn't run from it.\n\n"
-            + (installed == null ? $"Install copies {AppIds.ExeName} to {target}, where only admins can change files, "
-                : keepExe ? $"Version {installed} is already in {target}, the same or newer than this one, so Install keeps it, "
-                : $"Install replaces version {installed} in {target} (only admins can change files there) with this one, ")
-            + (keepData ? "keeps the SRT_Dados that is already there (the one in that folder isn't copied), " : "copies your SRT_Dados folder too if there is one there, ")
-            + "and starts the app from there. Nothing in that folder is moved or deleted, so you can delete that copy afterwards.";
+        return Loc.F("CS2 IP Changer runs as admin, and programs without admin rights can change the folder it was started from:\n{0}", from) + "\n\n"
+            + Loc.T("A file put next to the app there could run with admin rights, so the app doesn't run from it.") + "\n\n"
+            + (installed == null ? Loc.F("Install copies {0} to {1}, where only admins can change files,", AppIds.ExeName, target)
+                : keepExe ? Loc.F("Version {0} is already in {1}, the same or newer than this one, so Install keeps it,", installed, target)
+                : Loc.F("Install replaces version {0} in {1} (only admins can change files there) with this one,", installed, target))
+            + " " + (keepData ? Loc.T("keeps the SRT_Dados that is already there (the one in that folder isn't copied),") : Loc.T("copies your SRT_Dados folder too if there is one there,"))
+            + " " + Loc.T("and starts the app from there. Nothing in that folder is moved or deleted, so you can delete that copy afterwards.");
     }
 
     /// <summary>The old copy's protection is still in the Firewall: what that means, and how to lift it without installing.</summary>
     public static string BlockLeftText(string from) =>
-        "Protection from the old copy is still on: CS2 and your servers stay blocked outside the phone. Install, and the app takes it over. "
-        + "To turn it off without installing, run as admin:\n" + AppChanges.RestoreCommand(Path.Combine(from, AppIds.ExeName));
+        Loc.T("Protection from the old copy is still on: CS2 and your servers stay blocked outside the phone. Install, and the app takes it over.")
+        + " " + Loc.T("To turn it off without installing, run as admin:") + "\n" + AppChanges.RestoreCommand(Path.Combine(from, AppIds.ExeName));
 
     /// <summary>The DLL from System32, or nothing (then .NET's own search runs, for a name System32 doesn't have).</summary>
     public static IntPtr SystemDll(string name)
@@ -266,8 +268,8 @@ public static class Program
     /// </summary>
     public static string DllSearchProblem(bool locked, bool elevated, IEnumerable<string> args) =>
         locked || !elevated || AppIds.Args.IsRestore(args) ? null
-            : "Windows wouldn't limit where CS2 IP Changer loads its DLLs from, so a file next to the app could run with admin rights. "
-              + $"The app didn't start.\n\nRestart the PC and try again. To undo the app's network changes, run {AppIds.ExeName} {AppIds.Args.Restore}.";
+            : Loc.T("Windows wouldn't limit where CS2 IP Changer loads its DLLs from, so a file next to the app could run with admin rights.")
+              + " " + Loc.T("The app didn't start.") + "\n\n" + Loc.F("Restart the PC and try again. To undo the app's network changes, run {0} {1}.", AppIds.ExeName, AppIds.Args.Restore);
 
     /// <summary>
     /// The variables of the .NET runtime (CORECLR_, COR_, COMPlus_, DOTNET_): a profiler DLL, a diagnostics port, another GC or JIT.
@@ -285,11 +287,11 @@ public static class Program
     public static string FolderProblem(string appDir, string dataDir)
     {
         appDir = Path.TrimEndingDirectorySeparator(Path.GetFullPath(appDir));
-        var fix = $"Close this, create the folder {AppIds.InstallDir}, copy {AppIds.ExeName} into it (and your SRT_Dados folder, if you have one: copy it, don't move it) and start the app from there.";
+        var fix = Loc.F("Close this, create the folder {0}, copy {1} into it (and your SRT_Dados folder, if you have one: copy it, don't move it) and start the app from there.", AppIds.InstallDir, AppIds.ExeName);
         if (Adb.UsersCanWrite(appDir))
-            return $"CS2 IP Changer runs as admin, and this folder can be changed by programs without admin rights:\n{appDir}\n\nA file put next to the app there would run with admin rights, so the app doesn't start from it.\n\n{fix}";
+            return Loc.F("CS2 IP Changer runs as admin, and this folder can be changed by programs without admin rights:\n{0}", appDir) + "\n\n" + Loc.T("A file put next to the app there would run with admin rights, so the app doesn't start from it.") + "\n\n" + fix;
         if ((Directory.Exists(dataDir) || File.Exists(dataDir)) && Adb.UsersCanWrite(dataDir))
-            return $"CS2 IP Changer runs as admin, and its data folder can be changed by programs without admin rights:\n{dataDir}\n\nThis happens when SRT_Dados is moved instead of copied. Close this, copy SRT_Dados to another place, delete the one here and copy it back, then start the app again.";
+            return Loc.F("CS2 IP Changer runs as admin, and its data folder can be changed by programs without admin rights:\n{0}", dataDir) + "\n\n" + Loc.T("This happens when SRT_Dados is moved instead of copied. Close this, copy SRT_Dados to another place, delete the one here and copy it back, then start the app again.");
         return null;
     }
 

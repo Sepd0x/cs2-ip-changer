@@ -46,7 +46,7 @@ static class Ronda2Tests
         check("Ronda 2: na largura mínima os filtros de Accounts passam a duas linhas (o Refresh e o Show hidden ficavam fora)",
             Src("MainWindow.xaml").Contains("<WrapPanel Grid.Column=\"1\" Orientation=\"Horizontal\" Margin=\"12,0,0,0\" VerticalAlignment=\"Top\">\n                                        <RadioButton x:Name=\"FAll\"")
             && Src("MainWindow.xaml").Contains("<TextBlock x:Name=\"AccCount\" Foreground=\"{StaticResource Faint}\" VerticalAlignment=\"Center\" Margin=\"12,0,12,0\"/>\n                                    </WrapPanel>"), "");
-        check("Ronda 2: as escondidas à vista não contam no \"7 of 7\"", acc.Contains("$\"{_accShown.Count(a => !a.Meta.Hidden)} of {_accounts.Count}\""), "");
+        check("Ronda 2: as escondidas à vista não contam no \"7 of 7\"", acc.Contains("Loc.F(\"{0} of {1}\", _accShown.Count(a => !a.Meta.Hidden), _accounts.Count)"), "");
         var xaml = Src("MainWindow.xaml");
         check("Ronda 2: o menu e o cartão seguem a conta escondida", xaml.Contains("Header=\"{Binding HideMenuText}\"") && xaml.Contains("Opacity=\"{Binding ListOpacity}\""), "");
 

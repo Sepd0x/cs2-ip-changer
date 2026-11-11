@@ -11,10 +11,10 @@ public static class DistrustText
     /// <summary>The words for the Log, the toast and Status (null for None). The only place they are written.</summary>
     public static string Of(Distrust d) => d switch
     {
-        Distrust.Unchecked => "The phone connection's public IP hasn't been checked yet.",
-        Distrust.SameIp => "The public IP of the connection is the same as your home IP.",
-        Distrust.PhoneWifi => "The phone's Wi-Fi is on, so it may be sharing your home network instead of mobile data.",
-        Distrust.NoHome => "The home IP hasn't been measured yet.",
+        Distrust.Unchecked => Loc.T("The phone connection's public IP hasn't been checked yet."),
+        Distrust.SameIp => Loc.T("The public IP of the connection is the same as your home IP."),
+        Distrust.PhoneWifi => Loc.T("The phone's Wi-Fi is on, so it may be sharing your home network instead of mobile data."),
+        Distrust.NoHome => Loc.T("The home IP hasn't been measured yet."),
         _ => null,
     };
 }
@@ -49,7 +49,7 @@ public sealed class ProblemLog
             if (_uncheckedAt is DateTime at && t - at < UncheckedQuiet) return null;
             _uncheckedAt = t;
         }
-        return problem + " Servers blocked.";
+        return Loc.En(problem) + " Servers blocked.";   // a Log line: always English
     }
 
     DateTime? _uncheckedAt;
@@ -340,7 +340,7 @@ public sealed class Guard
         {
             await _gate.WaitAsync();
             // Closing (Keep) or Windows signing out: a sync that was already on its way doesn't put back what the close took off
-            if (_released) { _gate.Release(); return new GuardReport { Error = "The app is closing." }; }
+            if (_released) { _gate.Release(); return new GuardReport { Error = Loc.T("The app is closing.") }; }
             try { return await SyncCore(s, r.Ips.Distinct().ToList(), r.Force, r.Distrust, r.Cs2Running, r.VerifiedKey, r.On); }
             catch (Exception ex)
             {

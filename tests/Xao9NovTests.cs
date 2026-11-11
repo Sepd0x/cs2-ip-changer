@@ -86,7 +86,7 @@ static class Xao9NovTests
         var phone = Src("Views", "MainWindow.Phone.cs");
         check("xao 9 nov.: o Use it do setup muda a ligação; o Turn on só corre sem nada a oferecer",
             phone.Contains("case PhoneStep.TetherOff when _setupState?.Offer is { CanUse: true } offer:")
-            && phone.IndexOf("case PhoneStep.TetherOff when") < phone.IndexOf("Busy(\"Turning on USB tethering…\")"), "");
+            && phone.IndexOf("case PhoneStep.TetherOff when") < phone.IndexOf("Busy(Loc.T(\"Turning on USB tethering…\"))"), "");
     }
 
     // "alertar se estiver a entrar de novo com um ip que ja fui ban e cortar mesmo com proteção off e on"
@@ -156,6 +156,6 @@ static class Xao9NovTests
             Cs2Console.IsCooldown(line) && Cs2Console.Classify(line) == KickKind.Steam && !Cs2Console.IsCooldown("NETWORK_DISCONNECT_KICKED_VACBANNED"), "");
         check("xao 9 nov.: o aviso do cooldown diz que o CS2 não diz o tempo e oferece Set time",
             MainWindow.CooldownToast("conta1").Contains("Set time") && MainWindow.CooldownToast("conta1").Contains("doesn't say")
-            && Src("Views", "MainWindow.Kick.cs").Contains("\"Set time\", () => AskCooldown(acc)"), "");
+            && Src("Views", "MainWindow.Kick.cs").Contains("Loc.T(\"Set time\"), () => AskCooldown(acc)"), "");
     }
 }

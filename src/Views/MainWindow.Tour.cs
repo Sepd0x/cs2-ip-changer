@@ -60,13 +60,13 @@ public partial class MainWindow
         var last = i == Texts.Tour.Length - 1;
         // The stops on Connection need it open; the sidebar ones point at the sidebar from wherever you are
         if (FindName(stop.Target) is FrameworkElement t && !IsNav(t)) NavNet.IsChecked = true;
-        TourTitle.Text = stop.Title;
-        TourText.Text = stop.Text;
+        TourTitle.Text = Loc.T(stop.Title);
+        TourText.Text = Loc.T(stop.Text);
         TourHint.Visibility = last ? Visibility.Visible : Visibility.Collapsed;
         TourCount.Text = Texts.TourCount(i + 1, Texts.Tour.Length);
         TourBackBtn.Visibility = i == 0 ? Visibility.Collapsed : Visibility.Visible;
-        TourSkipBtn.Content = last ? Texts.TourLater : Texts.TourSkip;
-        TourNextBtn.Content = last ? Texts.TourOpenSetup : Texts.TourNext;
+        TourSkipBtn.Content = Loc.T(last ? Texts.TourLater : Texts.TourSkip);
+        TourNextBtn.Content = Loc.T(last ? Texts.TourOpenSetup : Texts.TourNext);
         // After the layout (the page may have just switched), so the hole lands on the control
         Dispatcher.BeginInvoke(PlaceTour, DispatcherPriority.Loaded);
     }

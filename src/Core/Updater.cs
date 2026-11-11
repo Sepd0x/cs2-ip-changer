@@ -229,19 +229,19 @@ public static partial class Updater
     public static async Task<string> Download(Release r, IProgress<string> progress, CancellationToken ct = default)
     {
         using var http = Http(600);
-        if (r.SigUrl == null) throw new InvalidDataException("the release isn't signed, so nothing was installed");
+        if (r.SigUrl == null) throw new InvalidDataException(Loc.T("the release isn't signed, so nothing was installed"));
         var shaFile = await http.GetByteArrayAsync(r.ShaUrl, ct);
         if (!SignedByProject(r.Version, shaFile, await http.GetStringAsync(r.SigUrl, ct)))
-            throw new InvalidDataException("the release isn't signed with the project's key, so nothing was installed");
+            throw new InvalidDataException(Loc.T("the release isn't signed with the project's key, so nothing was installed"));
         var want = ParseSha256(Encoding.UTF8.GetString(shaFile))
-            ?? throw new InvalidDataException("the release's .sha256 file has no hash for " + ExeName);
+            ?? throw new InvalidDataException(Loc.F("the release's .sha256 file has no hash for {0}", ExeName));
         var part = NewExe + ".part";
         using (var resp = await http.GetAsync(r.ExeUrl, HttpCompletionOption.ResponseHeadersRead, ct))
         {
             resp.EnsureSuccessStatusCode();
-            if (resp.RequestMessage?.RequestUri?.Scheme != Uri.UriSchemeHttps) throw new InvalidDataException("the download left HTTPS");
+            if (resp.RequestMessage?.RequestUri?.Scheme != Uri.UriSchemeHttps) throw new InvalidDataException(Loc.T("the download left HTTPS"));
             var total = resp.Content.Headers.ContentLength;
-            if (total > 400_000_000) throw new InvalidDataException("the file is too big");
+            if (total > 400_000_000) throw new InvalidDataException(Loc.T("the file is too big"));
             using var src = await resp.Content.ReadAsStreamAsync(ct);
             using var fs = File.Create(part);
             var buf = new byte[81920];
@@ -251,20 +251,20 @@ public static partial class Updater
             {
                 await fs.WriteAsync(buf.AsMemory(0, n), ct);
                 got += n;
-                if (got > 400_000_000) throw new InvalidDataException("the file is too big");
+                if (got > 400_000_000) throw new InvalidDataException(Loc.T("the file is too big"));
                 if (got - shown >= 1_000_000)
                 {
                     shown = got;
-                    progress?.Report(total > 0 ? $"Downloading the update… {got * 100 / total} %" : $"Downloading the update… {got / 1_000_000} MB");
+                    progress?.Report(total > 0 ? Loc.F("Downloading the update… {0} %", got * 100 / total) : Loc.F("Downloading the update… {0} MB", got / 1_000_000));
                 }
             }
         }
-        progress?.Report("Checking the SHA-256…");
+        progress?.Report(Loc.T("Checking the SHA-256…"));
         var have = Sha256Of(part);
         if (have != want)
         {
             try { File.Delete(part); } catch { }
-            throw new InvalidDataException("the SHA-256 doesn't match the release, so nothing was installed");
+            throw new InvalidDataException(Loc.T("the SHA-256 doesn't match the release, so nothing was installed"));
         }
         File.Move(part, NewExe, true);
         return have;
@@ -278,7 +278,7 @@ public static partial class Updater
     public static void Install(string sha, Action beforeStart, string state = null)
     {
         var exe = Environment.ProcessPath!;
-        if (Sha256Of(NewExe) != sha) throw new InvalidDataException("the downloaded file changed after the check");
+        if (Sha256Of(NewExe) != sha) throw new InvalidDataException(Loc.T("the downloaded file changed after the check"));
         if (File.Exists(OldExe)) File.Delete(OldExe);
         File.Move(exe, OldExe);   // Windows lets a running exe be renamed, not overwritten
         try { File.Move(NewExe, exe); }
@@ -290,7 +290,7 @@ public static partial class Updater
             // nothing can swap it between the check and the start (that copy runs as admin without a UAC prompt).
             hold = new FileStream(exe, FileMode.Open, FileAccess.Read, FileShare.Read);
             if (Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(hold)).ToLowerInvariant() != sha.ToLowerInvariant())
-                throw new InvalidDataException("the downloaded file changed after the check");
+                throw new InvalidDataException(Loc.T("the downloaded file changed after the check"));
             beforeStart?.Invoke();
             Process.Start(new ProcessStartInfo(exe, AppIds.Args.ForUpdate(state)) { UseShellExecute = false, WorkingDirectory = Dir });
         }

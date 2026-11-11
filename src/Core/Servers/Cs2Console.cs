@@ -22,10 +22,10 @@ public static class KickReasons
     /// <summary>The words for a reason the app acts on (null for Other: its words come from the code or the server).</summary>
     public static string Text(KickReason r) => r switch
     {
-        KickReason.Banned => "banned",
-        KickReason.NeverAnswered => "the server never answered",
-        KickReason.ReservedSlot => "kicked to make room for a reserved slot",
-        KickReason.RefusedJoin => "the server refused the join without saying why",
+        KickReason.Banned => Loc.T("banned"),
+        KickReason.NeverAnswered => Loc.T("the server never answered"),
+        KickReason.ReservedSlot => Loc.T("kicked to make room for a reserved slot"),
+        KickReason.RefusedJoin => Loc.T("the server refused the join without saying why"),
         _ => null,
     };
 }
@@ -41,18 +41,31 @@ public sealed record Disconnect(KickKind Kind, string Line, string Server, strin
     public string Reason { get; init; } = Reason ?? KickReasons.Text(Why);
 
     /// <summary>" (kicked by a vote)" after "You were kicked from the server", or empty: a plain "banned" adds nothing.</summary>
-    public string ReasonInBrackets => Reason != null && Why != KickReason.Banned ? $" ({Reason})" : "";
+    public string ReasonInBrackets => Reason != null && Why != KickReason.Banned ? Loc.F(" ({0})", Reason) : "";
+
+    /// <summary>The same in English, for the Log.</summary>
+    public string ReasonInBracketsEn => Reason != null && Why != KickReason.Banned ? $" ({Loc.En(Reason)})" : "";
 
     /// <summary>"for 30 minutes", "permanently" or empty.</summary>
-    public string For => Minutes switch
+    public string For => ForIn(false);
+
+    /// <summary>The same in English, for the Log.</summary>
+    public string ForEn => ForIn(true);
+
+    string ForIn(bool en)
     {
-        null => "",
-        0 => " permanently",
-        < 60 => $" for {Fmt.Count(Minutes.Value, "minute")}",
-        < 60 * 24 when Minutes % 60 == 0 => $" for {Fmt.Count(Minutes.Value / 60, "hour")}",
-        _ when Minutes % (60 * 24) == 0 => $" for {Fmt.Count(Minutes.Value / (60 * 24), "day")}",
-        _ => $" for {Fmt.Count(Minutes.Value, "minute")}",
-    };
+        string C(int n, string one) => en ? (n == 1 ? "1 " + one : $"{n} {one}s") : Fmt.Count(n, one);
+        string Pre(string count) => en ? " for " + count : Loc.F(" for {0}", count);
+        return Minutes switch
+        {
+            null => "",
+            0 => en ? " permanently" : Loc.T(" permanently"),
+            < 60 => Pre(C(Minutes.Value, "minute")),
+            < 60 * 24 when Minutes % 60 == 0 => Pre(C(Minutes.Value / 60, "hour")),
+            _ when Minutes % (60 * 24) == 0 => Pre(C(Minutes.Value / (60 * 24), "day")),
+            _ => Pre(C(Minutes.Value, "minute")),
+        };
+    }
 
     /// <summary>Only a ban or a VPN block brings New IP + next account; a kick only a rejoin.</summary>
     public bool WantsSwitch => Kind is KickKind.Ban or KickKind.Vpn;
@@ -243,18 +256,18 @@ public static class Cs2Console
         if (WhyOf(line) is var why and not KickReason.Other) return KickReasons.Text(why);
         return CodeOf(line) switch
         {
-            "NETWORK_DISCONNECT_KICKED_VOTEDOFF" => "kicked by a vote",
-            "NETWORK_DISCONNECT_KICKED_IDLE" => "kicked for being AFK",
-            "NETWORK_DISCONNECT_KICKED_TEAMKILLING" or "NETWORK_DISCONNECT_KICKED_TK_START" => "kicked for team kills",
-            "NETWORK_DISCONNECT_KICKED_TEAMHURTING" => "kicked for team damage",
-            "NETWORK_DISCONNECT_KICKED_HOSTAGEKILLING" => "kicked for killing hostages",
-            "NETWORK_DISCONNECT_KICKED_SUICIDE" => "kicked for suicides",
-            "NETWORK_DISCONNECT_REJECTED_BY_GAME" => "the server refused the join",
-            "NETWORK_DISCONNECT_DISCONNECT_BY_SERVER" => "the server dropped you",
-            "NETWORK_DISCONNECT_REJECT_BANNED" => "the server refused you: banned",
-            "NETWORK_DISCONNECT_STEAM_BANNED" => "on the server's ban list",
-            "NETWORK_DISCONNECT_REJECT_RESERVED_FOR_LOBBY" => "reserved for a lobby",
-            "NETWORK_DISCONNECT_SERVER_SHUTDOWN" => "the server shut down or restarted",
+            "NETWORK_DISCONNECT_KICKED_VOTEDOFF" => Loc.T("kicked by a vote"),
+            "NETWORK_DISCONNECT_KICKED_IDLE" => Loc.T("kicked for being AFK"),
+            "NETWORK_DISCONNECT_KICKED_TEAMKILLING" or "NETWORK_DISCONNECT_KICKED_TK_START" => Loc.T("kicked for team kills"),
+            "NETWORK_DISCONNECT_KICKED_TEAMHURTING" => Loc.T("kicked for team damage"),
+            "NETWORK_DISCONNECT_KICKED_HOSTAGEKILLING" => Loc.T("kicked for killing hostages"),
+            "NETWORK_DISCONNECT_KICKED_SUICIDE" => Loc.T("kicked for suicides"),
+            "NETWORK_DISCONNECT_REJECTED_BY_GAME" => Loc.T("the server refused the join"),
+            "NETWORK_DISCONNECT_DISCONNECT_BY_SERVER" => Loc.T("the server dropped you"),
+            "NETWORK_DISCONNECT_REJECT_BANNED" => Loc.T("the server refused you: banned"),
+            "NETWORK_DISCONNECT_STEAM_BANNED" => Loc.T("on the server's ban list"),
+            "NETWORK_DISCONNECT_REJECT_RESERVED_FOR_LOBBY" => Loc.T("reserved for a lobby"),
+            "NETWORK_DISCONNECT_SERVER_SHUTDOWN" => Loc.T("the server shut down or restarted"),
             _ => null,
         };
     }
@@ -288,11 +301,11 @@ public static class Cs2Console
         if (string.IsNullOrWhiteSpace(line) || Ignore.Take(3).Any(r => r.IsMatch(line)) || ThirdPerson.IsMatch(line)) return null;
         var you = You.IsMatch(line);
         if (VpnText.IsMatch(line) && (you || VpnFirst.IsMatch(Lead.Replace(line, ""))))
-            return new Hint(Vpn: true, Ban: YouBanned.IsMatch(line), Minutes: MinutesIn(line), Reason: "VPN or proxy blocked");
+            return new Hint(Vpn: true, Ban: YouBanned.IsMatch(line), Minutes: MinutesIn(line), Reason: Loc.T("VPN or proxy blocked"));
         if (YouBanned.IsMatch(line)) return new Hint(false, true, MinutesIn(line), null);
         var k = YouKicked.Match(line);
-        if (k.Success) return new Hint(false, false, null, k.Groups["why"].Success ? "kicked for " + k.Groups["why"].Value.Trim().TrimEnd('!', '.') : null);
-        if (Afk.IsMatch(line)) return new Hint(false, false, null, "kicked for being AFK");
+        if (k.Success) return new Hint(false, false, null, k.Groups["why"].Success ? Loc.F("kicked for {0}", k.Groups["why"].Value.Trim().TrimEnd('!', '.')) : null);
+        if (Afk.IsMatch(line)) return new Hint(false, false, null, Loc.T("kicked for being AFK"));
         if (you && Reserved.IsMatch(line) && KickWeak.IsMatch(line)) return new Hint(false, false, null, null, Full: true, Why: KickReason.ReservedSlot);
         return null;
     }
@@ -393,7 +406,7 @@ public sealed class DisconnectTracker
         if (kind == KickKind.Full && reason == null)
         {
             if (_signOn == 6) why = KickReason.ReservedSlot;
-            else reason = "the server is full";
+            else reason = Loc.T("the server is full");
         }
         if (kind == KickKind.Ban && reason == null && _banCode) why = KickReason.Banned;
         var d = new Disconnect(kind, _line, _server, reason, kind is KickKind.Ban or KickKind.Vpn ? minutes : null, _banCode, _signOn, why);
@@ -449,10 +462,17 @@ public sealed class NetReport
     /// What usually helps on mobile data, for a laggy match and at the end of Phone setup. Only things on the phone and the cable:
     /// no CS2 console commands (the CS:GO ones people pass around, like cl_interp, don't exist in CS2).
     /// </summary>
-    public static string Tips(bool hotspot) =>
-        (hotspot ? "Use the USB cable instead of the hotspot (Wi-Fi adds its own jitter). " : "")
-        + "Turn off the phone's battery saver, use 5G if your plan and the area have it, and keep the phone a little away from the PC case "
-        + "(near a window helps the signal).";
+    public static string Tips(bool hotspot) => Tips(hotspot, false);
+
+    /// <summary>The same in English, for the Log.</summary>
+    public static string TipsEn(bool hotspot) => Tips(hotspot, true);
+
+    static string Tips(bool hotspot, bool english)
+    {
+        var usb = Loc.T("Use the USB cable instead of the hotspot (Wi-Fi adds its own jitter). ");
+        var rest = Loc.T("Turn off the phone's battery saver, use 5G if your plan and the area have it, and keep the phone a little away from the PC case (near a window helps the signal).");
+        return english ? (hotspot ? Loc.En(usb) : "") + Loc.En(rest) : (hotspot ? usb : "") + rest;
+    }
 
     static string N(int? v) => v?.ToString() ?? "?";
     static string P(double? v) => v is double d ? d.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "%" : "?";

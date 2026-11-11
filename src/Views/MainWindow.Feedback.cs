@@ -22,10 +22,11 @@ public partial class MainWindow
 
     void Toast(string text, Tone tone)
     {
-        // What the notification said stays in the Log after it fades
-        Log.Notice(tone switch { Tone.Ok => LogLevel.Ok, Tone.Error => LogLevel.Error, Tone.Info => LogLevel.Info, _ => LogLevel.Warn }, text);
+        text = Loc.T(text);   // a text the caller already translated stays as it is
+        // What the notification said stays in the Log after it fades (in English)
+        Log.Notice(tone switch { Tone.Ok => LogLevel.Ok, Tone.Error => LogLevel.Error, Tone.Info => LogLevel.Info, _ => LogLevel.Warn }, Loc.En(text));
         // The window is in the notification area: what a tray command or the tick has to say comes as a Windows notification.
-        if (!IsVisible && tone != Tone.Info) _tray?.Balloon(tone == Tone.Error ? "CS2 IP Changer: problem" : "CS2 IP Changer", text);
+        if (!IsVisible && tone != Tone.Info) _tray?.Balloon(tone == Tone.Error ? Loc.T("CS2 IP Changer: problem") : "CS2 IP Changer", text);
         ToastText.Text = text;
         _toastAction = null;
         ToastActionBtn.Visibility = Visibility.Collapsed;
@@ -47,7 +48,7 @@ public partial class MainWindow
     {
         Toast(text, tone);
         _toastAction = run;
-        ToastActionBtn.Content = action;
+        ToastActionBtn.Content = Loc.T(action);
         ToastActionBtn.Visibility = Visibility.Visible;
         _toastTimer.Stop();
         _toastTimer.Interval = TimeSpan.FromSeconds(12);
@@ -79,11 +80,11 @@ public partial class MainWindow
         var m = AttemptLine.Match(text ?? "");
         if (m.Success)
         {
-            var title = $"Changing IP… attempt {m.Groups[1].Value}/{m.Groups[2].Value}";
+            var title = Loc.F("Changing IP… attempt {0}/{1}", m.Groups[1].Value, m.Groups[2].Value);
             var rest = m.Groups[3].Value;
-            ProgressText.Text = char.ToUpperInvariant(rest[0]) + rest[1..];
+            ProgressText.Text = Loc.T(char.ToUpperInvariant(rest[0]) + rest[1..]);
             // The Mobile data check follows the change: off for N s, then coming back.
-            _changingData = rest.Contains(" off ", StringComparison.OrdinalIgnoreCase) ? $"Off for {_s.OffSeconds} s" : "Coming back on…";
+            _changingData = rest.Contains(" off ", StringComparison.OrdinalIgnoreCase) ? Loc.F("Off for {0} s", _s.OffSeconds) : Loc.T("Coming back on…");
             if (title != _changingTitle)
             {
                 _changingTitle = title;
@@ -92,7 +93,7 @@ public partial class MainWindow
             }
             UpdateDataCheck();
         }
-        else ProgressText.Text = text;
+        else ProgressText.Text = Loc.T(text);
         ProgressPanel.Visibility = Visibility.Visible;
         ActionRow.Visibility = Visibility.Hidden;
         Step(text);
@@ -131,16 +132,16 @@ public partial class MainWindow
         _dialogTcs = new TaskCompletionSource<bool>();
         _dialogCancelClicked = false;
         if (ToastBox.Visibility == Visibility.Visible) HideToast();   // the dialog says it already
-        if (_command != null) { Sound(Tones.Kind.Ask); Step("waiting for your answer in the app"); }   // in game only the sound gets through
-        DialogTitle.Text = title;
-        DialogText.Text = text;
-        DialogOk.Content = ok;
+        if (_command != null) { Sound(Tones.Kind.Ask); Step(Loc.T("waiting for your answer in the app")); }   // in game only the sound gets through
+        DialogTitle.Text = Loc.T(title);
+        DialogText.Text = Loc.T(text);
+        DialogOk.Content = Loc.T(ok);
         DialogOk.Style = (Style)FindResource(danger ? "DangerStrong" : "Primary");
-        DialogLabel1.Text = label1;
-        DialogLabel2.Text = label2;
+        DialogLabel1.Text = Loc.T(label1);
+        DialogLabel2.Text = Loc.T(label2);
         DialogLabel1.Visibility = inputs >= 1 && label1 != null ? Visibility.Visible : Visibility.Collapsed;
         DialogLabel2.Visibility = inputs >= 2 && label2 != null ? Visibility.Visible : Visibility.Collapsed;
-        DialogCancel.Content = cancel ?? "";
+        DialogCancel.Content = Loc.T(cancel ?? "");
         DialogCancel.Visibility = cancel == null ? Visibility.Collapsed : Visibility.Visible;
         DialogInput.Visibility = inputs >= 1 ? Visibility.Visible : Visibility.Collapsed;
         DialogInput2.Visibility = inputs >= 2 ? Visibility.Visible : Visibility.Collapsed;
@@ -175,8 +176,8 @@ public partial class MainWindow
         {
             var parts = choices[i].Split('\n', 2);
             var content = new StackPanel();
-            content.Children.Add(new TextBlock { Text = parts[0], Foreground = (Brush)FindResource("Text") });
-            if (parts.Length > 1) content.Children.Add(new TextBlock { Text = parts[1], Style = (Style)FindResource("OptSub") });
+            content.Children.Add(new TextBlock { Text = Loc.T(parts[0]), Foreground = (Brush)FindResource("Text") });
+            if (parts.Length > 1) content.Children.Add(new TextBlock { Text = Loc.T(parts[1]), Style = (Style)FindResource("OptSub") });
             var n = i;
             var rb = new RadioButton { Style = (Style)FindResource("Choice"), GroupName = "dialogchoice", Content = content, IsChecked = i == 0 };
             rb.Checked += (_, _) => _dialogChoice = n;

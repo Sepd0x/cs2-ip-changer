@@ -31,13 +31,14 @@ public partial class SteamLoginWindow : Window
     public SteamLoginWindow(SteamWeb web, string shownName, string login, bool hideLogin)
     {
         InitializeComponent();
+        Loc.Apply(this);
         _auth = new SteamAuth(web);
         _login = login;
         CancelBtn.IsCancel = true;
-        Title_.Text = "Sign in to " + shownName;
-        Intro.Text = "Needed to change this account's profile (name, picture, privacy and more). The app keeps only a sign-in key from Steam on this PC, locked to your Windows account, so you don't have to type your password every time. "
-                     + "To remove it later: Steam > Settings > Security > Authorized devices (\"" + SteamAuth.DeviceName + "\").";
-        LoginText.Text = hideLogin ? "Hidden (Hide usernames is on)" : login;
+        Title_.Text = Loc.F("Sign in to {0}", shownName);
+        Intro.Text = Loc.T("Needed to change this account's profile (name, picture, privacy and more). The app keeps only a sign-in key from Steam on this PC, locked to your Windows account, so you don't have to type your password every time.")
+                     + " " + Loc.F("To remove it later: Steam > Settings > Security > Authorized devices (\"{0}\").", SteamAuth.DeviceName);
+        LoginText.Text = hideLogin ? Loc.T("Hidden (Hide usernames is on)") : login;
         if (hideLogin) LoginText.ClearValue(System.Windows.Controls.TextBlock.FontFamilyProperty);
         if (string.IsNullOrEmpty(login)) { ModePwd.IsEnabled = false; ModeQr.IsChecked = true; }
         Loaded += (_, _) => { if (ModePwd.IsChecked == true) Pwd.Focus(); };
@@ -53,7 +54,7 @@ public partial class SteamLoginWindow : Window
     void Failed(string reason)
     {
         Bad(reason);
-        Log.Warn(FailedLine(reason, _login));
+        Log.Warn(FailedLine(Loc.En(reason), _login));
     }
 
     /// <summary>The Log line for a failed sign-in. The reason is Steam's or the app's own text; a username in it is hidden anyway.</summary>
@@ -84,7 +85,7 @@ public partial class SteamLoginWindow : Window
         PwdPanel.Visibility = qr ? Visibility.Collapsed : Visibility.Visible;
         CodePanel.Visibility = Visibility.Collapsed;
         QrPanel.Visibility = qr ? Visibility.Visible : Visibility.Collapsed;
-        GoBtn.Content = qr ? "New code" : "Sign in";
+        GoBtn.Content = qr ? Loc.T("New code") : Loc.T("Sign in");
         Say("");
         NewAttempt();
         Working(false);
@@ -121,9 +122,9 @@ public partial class SteamLoginWindow : Window
     {
         // Every read of SecurePassword is a new copy: one is taken, and disposed (zeroed) when this ends.
         using var sp = Pwd.SecurePassword;
-        if (sp.Length == 0) { Bad("Type the password."); Pwd.Focus(); return; }
+        if (sp.Length == 0) { Bad(Loc.T("Type the password.")); Pwd.Focus(); return; }
         var ct = NewAttempt();
-        Working(true, "Signing in…");
+        Working(true, Loc.T("Signing in…"));
         byte[] pw = null;
         try
         {
@@ -145,24 +146,24 @@ public partial class SteamLoginWindow : Window
     async Task Guards(CancellationToken ct)
     {
         var g = _start.Guards;
-        if (g.Contains(GuardType.None)) { Say("Signed in, finishing…"); StartPolling(ct); return; }
+        if (g.Contains(GuardType.None)) { Say(Loc.T("Signed in, finishing…")); StartPolling(ct); return; }
         if (g.Contains(GuardType.DeviceCode))
         {
-            AskCode(GuardType.DeviceCode, "Code from the Steam app (Steam Guard)");
-            if (g.Contains(GuardType.DeviceConfirmation)) { Say("Type the code from the Steam app, or approve the sign-in there."); StartPolling(ct); }
-            else Say("Type the code from the Steam app.");
+            AskCode(GuardType.DeviceCode, Loc.T("Code from the Steam app (Steam Guard)"));
+            if (g.Contains(GuardType.DeviceConfirmation)) { Say(Loc.T("Type the code from the Steam app, or approve the sign-in there.")); StartPolling(ct); }
+            else Say(Loc.T("Type the code from the Steam app."));
             return;
         }
         if (g.Contains(GuardType.EmailCode))
         {
             if (g.Contains(GuardType.MachineToken)) await _auth.SendEmailCode(_start, ct);
-            AskCode(GuardType.EmailCode, "Code from Steam's email");
-            Say("Steam emailed a code to this account's address.");
+            AskCode(GuardType.EmailCode, Loc.T("Code from Steam's email"));
+            Say(Loc.T("Steam emailed a code to this account's address."));
             return;
         }
-        if (g.Contains(GuardType.DeviceConfirmation)) { Working(true, "Approve the sign-in in the Steam app on your phone."); StartPolling(ct); return; }
-        if (g.Contains(GuardType.EmailConfirmation)) { Working(true, "Approve the sign-in from the email Steam sent."); StartPolling(ct); return; }
-        Failed("Steam asked for a check the app doesn't know. Try the QR code.");
+        if (g.Contains(GuardType.DeviceConfirmation)) { Working(true, Loc.T("Approve the sign-in in the Steam app on your phone.")); StartPolling(ct); return; }
+        if (g.Contains(GuardType.EmailConfirmation)) { Working(true, Loc.T("Approve the sign-in from the email Steam sent.")); StartPolling(ct); return; }
+        Failed(Loc.T("Steam asked for a check the app doesn't know. Try the QR code."));
         Working(false);
     }
 
@@ -172,7 +173,7 @@ public partial class SteamLoginWindow : Window
         PwdPanel.Visibility = Visibility.Collapsed;
         CodePanel.Visibility = Visibility.Visible;
         CodeLabel.Text = label;
-        GoBtn.Content = "Confirm";
+        GoBtn.Content = Loc.T("Confirm");
         Working(false);
         Code.Focus();
     }
@@ -183,7 +184,7 @@ public partial class SteamLoginWindow : Window
         if (ModeQr.IsChecked == true || CodePanel.Visibility != Visibility.Visible) { Working(false); return; }
         CodePanel.Visibility = Visibility.Collapsed;
         PwdPanel.Visibility = Visibility.Visible;
-        GoBtn.Content = "Sign in";
+        GoBtn.Content = Loc.T("Sign in");
         Code.Clear();
         NewAttempt();
         Working(false);
@@ -194,16 +195,16 @@ public partial class SteamLoginWindow : Window
     void Unexpected(Exception ex)
     {
         Log.Warn(FailedLine("unexpected answer (" + ex.GetType().Name + ")", _login));
-        Bad("Steam's answer was not what the app expects. Try again.");
+        Bad(Loc.T("Steam's answer was not what the app expects. Try again."));
         Working(false);
     }
 
     async Task SubmitCode()
     {
         var code = Code.Text.Trim();
-        if (code.Length < 4) { Bad("Type the code."); return; }
+        if (code.Length < 4) { Bad(Loc.T("Type the code.")); return; }
         var ct = _attempt?.Token ?? NewAttempt();
-        Working(true, "Checking the code…");
+        Working(true, Loc.T("Checking the code…"));
         try
         {
             await _auth.SubmitCode(_start, code, _codeType, ct);
@@ -219,12 +220,12 @@ public partial class SteamLoginWindow : Window
     async Task StartQr()
     {
         var ct = NewAttempt();
-        Working(true, "Asking Steam for a code…");
+        Working(true, Loc.T("Asking Steam for a code…"));
         try
         {
             _start = await _auth.BeginWithQr(ct);
             if (!ShowQr()) return;
-            Working(false, "Waiting for the scan…");
+            Working(false, Loc.T("Waiting for the scan…"));
             GoBtn.IsEnabled = true;
             StartPolling(ct);
         }
@@ -238,7 +239,7 @@ public partial class SteamLoginWindow : Window
     {
         if (!Uri.TryCreate(_start?.ChallengeUrl, UriKind.Absolute, out var u) || u.Scheme != Uri.UriSchemeHttps || u.Host != "s.team")
         {
-            Failed("Steam's answer was not what the app expects.");
+            Failed(Loc.T("Steam's answer was not what the app expects."));
             Working(false);
             return false;
         }
@@ -263,9 +264,9 @@ public partial class SteamLoginWindow : Window
                 await Task.Delay(TimeSpan.FromSeconds(Math.Clamp(_start.Interval, 1, 10)), ct);
                 var p = await _auth.Poll(_start, ct);
                 if (p.NewChallengeUrl != null && ModeQr.IsChecked == true) { _start.ChallengeUrl = p.NewChallengeUrl; ShowQr(); }
-                if (p.HadRemoteInteraction && ModeQr.IsChecked == true) Working(true, "Scanned. Approve the sign-in in the Steam app.");
+                if (p.HadRemoteInteraction && ModeQr.IsChecked == true) Working(true, Loc.T("Scanned. Approve the sign-in in the Steam app."));
                 if (p.RefreshToken != null) { Finish(p.RefreshToken); return; }
-                if (DateTime.Now > until) { Failed("That took too long. Start again."); BackToPassword(); return; }
+                if (DateTime.Now > until) { Failed(Loc.T("That took too long. Start again.")); BackToPassword(); return; }
             }
         }
         catch (SteamWebException ex) { Failed(ex.Message); if (ex.SignInTimedOut) BackToPassword(); else Working(false); }
@@ -277,7 +278,7 @@ public partial class SteamLoginWindow : Window
     void Finish(string token)
     {
         var t = SteamToken.Read(token);
-        if (t == null || !t.IsWebRefresh) { Failed("Steam's answer was not a web sign-in. Try again."); Working(false); return; }
+        if (t == null || !t.IsWebRefresh) { Failed(Loc.T("Steam's answer was not a web sign-in. Try again.")); Working(false); return; }
         Token = token;
         TokenSteamId = t.SteamId;
         DialogResult = true;

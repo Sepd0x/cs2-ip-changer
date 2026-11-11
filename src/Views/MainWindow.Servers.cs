@@ -63,7 +63,7 @@ public partial class MainWindow
 
     /// <summary>With a search, none marked asks only the servers shown (review C19: it said "Refresh all").</summary>
     public static string RefreshLabel(int selected, bool filtered) =>
-        selected <= 0 ? (filtered ? "Refresh shown" : "Refresh all") : selected == 1 ? "Refresh 1" : $"Refresh {selected}";
+        selected <= 0 ? (filtered ? Loc.T("Refresh shown") : Loc.T("Refresh all")) : selected == 1 ? Loc.T("Refresh 1") : Loc.F("Refresh {0}", selected);
 
     /// <summary>
     /// Unmarking a server (3 nov.: there was no way back to none marked): a click on the only marked row, a click on the empty
@@ -162,13 +162,13 @@ public partial class MainWindow
 
     /// <summary>Nothing new in the text: already in the list, not a public IP:port, or no IPv4 at all (a name or an IPv6).</summary>
     public static string NothingAdded(int dupes, int ignored) =>
-        ignored > 0 ? "No valid IP:port." + (dupes > 0 ? $" {dupes} already in the list." : "")
-        : dupes > 0 ? "Those servers are already in the list."
-        : "No IPv4 address found. The app needs the server's IP:port, e.g. 1.2.3.4:27015 (names and IPv6 aren't supported).";
+        ignored > 0 ? Loc.T("No valid IP:port.") + (dupes > 0 ? Loc.F(" {0} already in the list.", dupes) : "")
+        : dupes > 0 ? Loc.T("Those servers are already in the list.")
+        : Loc.T("No IPv4 address found. The app needs the server's IP:port, e.g. 1.2.3.4:27015 (names and IPv6 aren't supported).");
 
     async Task AddFromText(string text)
     {
-        if (string.IsNullOrWhiteSpace(text)) { Toast("Nothing to add.", false); return; }
+        if (string.IsNullOrWhiteSpace(text)) { Toast(Loc.T("Nothing to add."), false); return; }
         var n = ParseInto(text, out var ignored, out var dupes);
         SaveServers();
         ShowLastServer();
@@ -193,11 +193,11 @@ public partial class MainWindow
     public static string AddedText(int added, int ignored, bool protOn, bool noPhone, bool egress)
     {
         var one = added == 1;
-        var now = noPhone ? (one ? "No phone mode: it sees your home IP." : "No phone mode: they see your home IP.")
-            : !protOn ? (one ? "Protection is off: it sees your home IP until you turn it on." : "Protection is off: they see your home IP until you turn it on.")
-            : egress ? (one ? "It goes through the phone." : "They go through the phone.")
-            : one ? "It stays blocked until the phone is connected and checked." : "They stay blocked until the phone is connected and checked.";
-        return $"{Fmt.Count(added, "server")} added. {now}" + (ignored > 0 ? $" {ignored} ignored." : "");
+        var now = noPhone ? (one ? Loc.T("No phone mode: it sees your home IP.") : Loc.T("No phone mode: they see your home IP."))
+            : !protOn ? (one ? Loc.T("Protection is off: it sees your home IP until you turn it on.") : Loc.T("Protection is off: they see your home IP until you turn it on."))
+            : egress ? (one ? Loc.T("It goes through the phone.") : Loc.T("They go through the phone."))
+            : one ? Loc.T("It stays blocked until the phone is connected and checked.") : Loc.T("They stay blocked until the phone is connected and checked.");
+        return Loc.F("{0} added. {1}", Fmt.Count(added, "server"), now) + (ignored > 0 ? Loc.F(" {0} ignored.", ignored) : "");
     }
 
     async void AddServers_Click(object sender, RoutedEventArgs e) { var t = BulkInput.Text; BulkInput.Clear(); await AddFromText(t); }
@@ -211,7 +211,7 @@ public partial class MainWindow
 
     async void ImportServers_Click(object sender, RoutedEventArgs e)
     {
-        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = "Lists (*.txt;*.csv;*.cfg;*.log)|*.txt;*.csv;*.cfg;*.log|All (*.*)|*.*", Title = "Choose a server list" };
+        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = Loc.T("Lists (*.txt;*.csv;*.cfg;*.log)") + "|*.txt;*.csv;*.cfg;*.log|" + Loc.T("All (*.*)") + "|*.*", Title = Loc.T("Choose a server list") };
         if (dlg.ShowDialog(this) == true) await AddFromText(await File.ReadAllTextAsync(dlg.FileName));
     }
 
@@ -255,18 +255,18 @@ public partial class MainWindow
     /// Why there is no protected connection, in the Guard's words (review C2: with the phone plugged in but its IP still being
     /// checked, or its Wi-Fi on, the app said "Phone disconnected"). The Guard only leaves it empty when there is no phone at all.
     /// </summary>
-    public static string NoLinkWhy(GuardReport rep) => rep?.EgressProblem ?? "The phone isn't connected.";
+    public static string NoLinkWhy(GuardReport rep) => rep?.EgressProblem ?? Loc.T("The phone isn't connected.");
 
     /// <summary>Join stopped with protection on: the connection's reason, or this server's route when the connection is there.</summary>
     public static string JoinBlockedText(string title, GuardReport rep, string routeText) => rep?.Egress == null
-        ? $"Not joining {title}. {NoLinkWhy(rep)}"
-        : $"Not joining {title}: its route through the phone isn't confirmed ({routeText}).";
+        ? Loc.F("Not joining {0}. {1}", title, NoLinkWhy(rep))
+        : Loc.F("Not joining {0}: its route through the phone isn't confirmed ({1}).", title, routeText);
 
     /// <summary>The slot wait can't ask the server now: no connection, protection turned off since, or the phone's reason.</summary>
     public static string SlotNoLinkText(string title, bool onHome, bool protOn, GuardReport rep) =>
-        onHome ? $"Waiting for a slot on {title}: no connection."
-        : !protOn ? $"Waiting for a slot on {title}: protection is off."
-        : $"Waiting for a slot on {title}. {NoLinkWhy(rep)}";
+        onHome ? Loc.F("Waiting for a slot on {0}: no connection.", title)
+        : !protOn ? Loc.F("Waiting for a slot on {0}: protection is off.", title)
+        : Loc.F("Waiting for a slot on {0}. {1}", title, NoLinkWhy(rep));
 
     async void QueryServers_Click(object sender, RoutedEventArgs e) => await QueryServers(false);
 
@@ -279,7 +279,7 @@ public partial class MainWindow
         if (_querying)
         {
             if (!quiet || queue) _queryAgain = true;
-            if (!quiet) Toast("Already asking the servers: one moment.", Tone.Info);
+            if (!quiet) Toast(Loc.T("Already asking the servers: one moment."), Tone.Info);
             return;
         }
         // No phone mode: the game uses the home connection, so the servers are asked from there too.
@@ -287,9 +287,9 @@ public partial class MainWindow
         var egress = OnHome && _last?.Unprotected == true ? HomeAdapter : _last?.Egress;
         if (egress?.LocalIp == null)
         {
-            if (!quiet) Toast(OnHome ? "No connection to ask the servers through."
-                : !_protOn ? "Protection is off: the servers aren't asked over your home network. Turn it on to see players and ping (or Settings > Use the app with protection off)."
-                : NoLinkWhy(_last) + " Servers aren't asked over your home network.", false);
+            if (!quiet) Toast(OnHome ? Loc.T("No connection to ask the servers through.")
+                : !_protOn ? Loc.T("Protection is off: the servers aren't asked over your home network. Turn it on to see players and ping (or Settings > Use the app with protection off).")
+                : NoLinkWhy(_last) + Loc.T(" Servers aren't asked over your home network."), false);
             // Nothing is asked now: the last answers would read as live (review C6)
             foreach (var srv in _servers) ClearLive(srv);
             return;
@@ -327,9 +327,9 @@ public partial class MainWindow
             srv.PlayerCount = info.Players;
             srv.Bots = info.Bots;
             srv.MaxPlayers = info.MaxPlayers;
-            srv.PlayersText = info.Bots > 0 ? $"{info.Players}/{info.MaxPlayers} ({info.Bots} bots)" : $"{info.Players}/{info.MaxPlayers}";
+            srv.PlayersText = info.Bots > 0 ? Loc.F("{0}/{1} ({2} bots)", info.Players, info.MaxPlayers, info.Bots) : $"{info.Players}/{info.MaxPlayers}";
             srv.PingMs = info.PingMs;
-            srv.PingText = $"{info.PingMs} ms";
+            srv.PingText = Loc.F("{0} ms", info.PingMs);
             // Some servers answer the player list only now and then: keep the last one for 2 min instead of flipping to "hidden".
             if (info.PlayerList != null) { srv.Players = ToRows(srv, info.PlayerList); srv.PlayersAt = DateTime.Now; }
             else if (info.Players == 0 || DateTime.Now - srv.PlayersAt > TimeSpan.FromMinutes(2)) srv.Players = null;
@@ -376,7 +376,7 @@ public partial class MainWindow
 
     /// <summary>The Refresh toast: servers not asked (no route through the phone yet) aren't counted as not answering.</summary>
     public static string RespondedText(int ok, int total, int notAsked) =>
-        $"{ok} of {Fmt.Count(total, "server")} responded" + (notAsked > 0 ? $" ({notAsked} not asked: not routed through the phone yet)." : ".");
+        Loc.F("{0} of {1} responded", ok, Fmt.Count(total, "server")) + (notAsked > 0 ? Loc.F(" ({0} not asked: not routed through the phone yet).", notAsked) : ".");
 
     void AutoQuery_Click(object sender, RoutedEventArgs e) { _s.AutoQuery = AutoQueryBox.IsChecked == true; SaveSettings(); }
 
@@ -385,13 +385,13 @@ public partial class MainWindow
         var list = SelectedOrAll();
         if (list.Count == 0) return;
         Clipboard.SetText(string.Join("\r\n", list.Select(s => s.Key)));
-        Toast($"{Fmt.Count(list.Count, "server")} copied.", true);
+        Toast(Loc.F("{0} copied.", Fmt.Count(list.Count, "server")), true);
     }
 
     async void RemoveServers_Click(object sender, RoutedEventArgs e)
     {
         var sel = ServerList.SelectedItems.Cast<ServerItem>().ToList();
-        if (sel.Count == 0) { Toast("Select the servers to remove first.", false); return; }
+        if (sel.Count == 0) { Toast(Loc.T("Select the servers to remove first."), false); return; }
         foreach (var s in sel) _servers.Remove(s);
         SaveServers();
         var still = _servers.Select(s => s.Ip).ToHashSet();
@@ -407,7 +407,7 @@ public partial class MainWindow
     void SrvCopyConnect_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is not ServerItem s) return;
-        try { Clipboard.SetText("connect " + s.Key); Toast($"Copied: connect {s.Key}", true); } catch { Toast("Couldn't copy. Try again.", false); }
+        try { Clipboard.SetText("connect " + s.Key); Toast(Loc.F("Copied: connect {0}", s.Key), true); } catch { Toast(Loc.T("Couldn't copy. Try again."), false); }
     }
 
     void SrvFav_Click(object sender, RoutedEventArgs e)
@@ -432,12 +432,12 @@ public partial class MainWindow
     }
 
     /// <summary>Join from a button, the list, a notice or a free slot: with the command feedback.</summary>
-    Task Join(ServerItem s, bool fromSlotWait = false) => RunCommand("Join", $"joining {s.Title}…", () => Connect(s, fromSlotWait));
+    Task Join(ServerItem s, bool fromSlotWait = false) => RunCommand(Loc.T("Join"), Loc.F("joining {0}…", s.Title), () => Connect(s, fromSlotWait));
 
     /// <summary>Joins through the phone after all the checks. True when CS2 was sent to the server (or a slot wait started).</summary>
     async Task<bool> Connect(ServerItem s, bool fromSlotWait = false, bool openWith = true)
     {
-        Step($"joining {s.Title}…");
+        Step(Loc.F("joining {0}…", s.Title));
         if (!_demo)
         {
             // No phone mode: you chose the home connection, so there is no protection to wait for.
@@ -445,11 +445,11 @@ public partial class MainWindow
             // With "Use the app with protection off" on, you chose that: the join goes ahead on the home connection.
             if (!_protOn && !OnHome)
             {
-                if (!await Ask("Protection is off", $"{s.Title} would see your home IP. Turn protection on and join through the phone?", "Turn on and join")) return false;
+                if (!await Ask(Loc.T("Protection is off"), Loc.F("{0} would see your home IP. Turn protection on and join through the phone?", s.Title), Loc.T("Turn on and join"))) return false;
                 if (!await TurnProtectionOn(ask: false)) return false;
             }
             await SyncNow(force: true);
-            if (!OnHome && (_distrust || _cDiff.Ok == false)) { Toast("Not joining: the phone IP is the same as your home IP.", false); return false; }
+            if (!OnHome && (_distrust || _cDiff.Ok == false)) { Toast(Loc.T("Not joining: the phone IP is the same as your home IP."), false); return false; }
             var fullOk = _last?.Egress != null && _last.EffectiveMode == "all" && _last.FullModeOk;
             if (!OnHome && s.Protected != true && !fullOk)
             {
@@ -457,40 +457,40 @@ public partial class MainWindow
                 return false;
             }
             // The two known causes of the "No Steam logon" kick: Steam in offline mode, or Steam on a different network than CS2.
-            if (Steam.WantsOffline(Steam.InUseSteamId()) && !await Ask("Steam is in offline mode",
-                    "In offline mode Steam does not confirm your account, and the server kicks you with \"No Steam logon\" after a few minutes.\n\n" +
-                    "Turn off \"Offline mode\" in Accounts and log in to the account again.", "Join anyway"))
+            if (Steam.WantsOffline(Steam.InUseSteamId()) && !await Ask(Loc.T("Steam is in offline mode"),
+                    Loc.T("In offline mode Steam does not confirm your account, and the server kicks you with \"No Steam logon\" after a few minutes.") + "\n\n" +
+                    Loc.T("Turn off \"Offline mode\" in Accounts and log in to the account again."), Loc.T("Join anyway")))
                 return false;
-            if (ActiveAccount() is AccountItem acc && acc.BanFor(s.Key, s.ServerName, s.Network) is { } ban && !await Ask($"{acc.Name} was banned here",
-                    (ban.Key == s.Key ? $"{s.Title} banned {acc.Name}" : $"{ban.Value?.Name ?? ban.Key}, in the same community as {s.Title}, banned {acc.Name}")
-                    + $" on {Fmt.When(ban.Value?.At)}. Communities usually share their ban list, and if the ban is on the account, a new IP won't help.\n\n" + BanJoinTip(_s.HotkeySwitch, OnHome),
-                    "Join anyway"))
+            if (ActiveAccount() is AccountItem acc && acc.BanFor(s.Key, s.ServerName, s.Network) is { } ban && !await Ask(Loc.F("{0} was banned here", acc.Name),
+                    (ban.Key == s.Key ? Loc.F("{0} banned {1}", s.Title, acc.Name) : Loc.F("{0}, in the same community as {1}, banned {2}", ban.Value?.Name ?? ban.Key, s.Title, acc.Name))
+                    + Loc.F(" on {0}. Communities usually share their ban list, and if the ban is on the account, a new IP won't help.", Fmt.When(ban.Value?.At)) + "\n\n" + BanJoinTip(_s.HotkeySwitch, OnHome),
+                    Loc.T("Join anyway")))
                 return false;
             // beta.13: the IP the server would see was banned there (any account): never joined with it, protection on or off
             if (IpBanOn(s) is { } ib && !await LeaveBannedIp(s, ib)) return false;
             if (!await WaitAfterCrash(s)) return false;
             if (!fromSlotWait && (OnHome ? HomeAdapter : _last?.Egress) is Adapter eg && await QueryOne(s, eg) && IsFull(s.PlayerCount, s.Bots, s.MaxPlayers))
             {
-                if (await Ask("Server is full", FullText(s.Title, s.PlayersText), "Wait for a slot", "Join anyway")) { StartSlotWait(s); return true; }
+                if (await Ask(Loc.T("Server is full"), FullText(s.Title, s.PlayersText), Loc.T("Wait for a slot"), Loc.T("Join anyway"))) { StartSlotWait(s); return true; }
                 if (!_dialogCancelClicked) return false;   // Escape: neither
-                Log.Info($"{s.Key} shows full ({s.PlayersText}): joining anyway, as asked.");
+                Log.Info($"{s.Key} shows full ({Loc.En(s.PlayersText)}): joining anyway, as asked.");
             }
-            if (!SteamReady && !await WaitSteamReady(60) && !await Ask("Steam has no session yet",
-                    "Steam has not reconnected to Valve yet (for example, after you changed the IP). If you join now, the server kicks you with \"No Steam logon\" after a few minutes.",
-                    "Join anyway"))
+            if (!SteamReady && !await WaitSteamReady(60) && !await Ask(Loc.T("Steam has no session yet"),
+                    Loc.T("Steam has not reconnected to Valve yet (for example, after you changed the IP). If you join now, the server kicks you with \"No Steam logon\" after a few minutes."),
+                    Loc.T("Join anyway")))
                 return false;
             if (_s.SteamOnEgress && _last?.SteamOnEgress == false)
             {
-                if (await Ask("Steam is on another network",
-                        "CS2 goes through the phone, but Steam is connected through your home network. When Steam reconnects, the server kicks you with \"No Steam logon\".\n\n" +
-                        $"Restart Steam through the phone and join {s.Title}?" + (Steam.Cs2Running ? " CS2 closes and opens again." : ""),
-                        "Restart and join", "Join anyway"))
+                if (await Ask(Loc.T("Steam is on another network"),
+                        Loc.T("CS2 goes through the phone, but Steam is connected through your home network. When Steam reconnects, the server kicks you with \"No Steam logon\".") + "\n\n" +
+                        Loc.F("Restart Steam through the phone and join {0}?", s.Title) + (Steam.Cs2Running ? Loc.T(" CS2 closes and opens again.") : ""),
+                        Loc.T("Restart and join"), Loc.T("Join anyway")))
                     return await RestartSteamAndConnect(s, openWith);
                 if (!_dialogCancelClicked) return false;   // X or Escape: neither, so no join
             }
             if (CommandCancelled) return false;
         }
-        if (_demo) { Toast($"Demo: joining {s.Title}.", true); MarkLast(s); return true; }
+        if (_demo) { Toast(Loc.F("Demo: joining {0}.", s.Title), true); MarkLast(s); return true; }
         try
         {
             if (!Steam.Cs2Running && Steam.Exe is string steam && File.Exists(steam))
@@ -509,7 +509,7 @@ public partial class MainWindow
             JoinStarted(s);
             return true;
         }
-        catch (Exception ex) { Toast("Couldn't open Steam: " + ex.Message, Tone.Error); return false; }
+        catch (Exception ex) { Toast(Loc.F("Couldn't open Steam: {0}", ex.Message), Tone.Error); return false; }
     }
 
     /// <summary>
@@ -523,17 +523,17 @@ public partial class MainWindow
         if (_s.NoPhone) { Toast(text, Tone.Error); return false; }
         if (PingedOnHome)
         {
-            if (!await Ask("This IP was banned here", text, "Turn on protection", "Cancel")) return false;
+            if (!await Ask(Loc.T("This IP was banned here"), text, Loc.T("Turn on protection"), Loc.T("Cancel"))) return false;
             if (!await TurnProtectionOn(ask: false)) return false;
             await RefreshPublicIps();
         }
         else
         {
             if (!SwitchChangesIp && !IphoneByHand) { Toast(text, Tone.Error); return false; }
-            if (!await Ask("This IP was banned here", text, "Change IP", "Cancel")) return false;
+            if (!await Ask(Loc.T("This IP was banned here"), text, Loc.T("Change IP"), Loc.T("Cancel"))) return false;
             if (!await ChangeIp(confirm: false)) return false;
         }
-        if (IpBanOn(s) is not null) { Toast($"The IP is still one {s.Title} banned. Not joining.", Tone.Error); return false; }
+        if (IpBanOn(s) is not null) { Toast(Loc.F("The IP is still one {0} banned. Not joining.", s.Title), Tone.Error); return false; }
         return true;
     }
 
@@ -541,7 +541,7 @@ public partial class MainWindow
     {
         Diag.Write("join", new { server = s.Key, name = s.Title, isProtected = s.Protected, mode = _last?.EffectiveMode, steamOnEgress = _last?.SteamOnEgress, steamIps = _last?.Steam.LocalIps });
         Log.Ok(JoinLogText(s.Key, _s.NoPhone, OnHome, _last != null && HomeIsPhone(_last)));
-        Toast($"Opening {s.Title} in Steam…", true);
+        Toast(Loc.F("Opening {0} in Steam…", s.Title), true);
         MarkLast(s);
     }
 
@@ -561,7 +561,7 @@ public partial class MainWindow
     /// <summary>After opening CS2: waits for its main menu (the console shows the menu's "loopback" map), then joins. Up to 2 min.</summary>
     async Task<bool> ConnectWhenMenuReady(ServerItem s, string log, ConsoleTail menu)
     {
-        ShowProgress($"Opening CS2. It joins {s.Title} when the main menu is ready. Cancel at the top stops the join…");
+        ShowProgress(Loc.F("Opening CS2. It joins {0} when the main menu is ready. Cancel at the top stops the join…", s.Title));
         using var wait = CommandWait();
         try
         {
@@ -576,8 +576,8 @@ public partial class MainWindow
                 if (log == null) continue;
                 ready = menu.ReadNew(log).Any(Cs2Console.IsMenu);   // a new console.log (-conclearlog) is read from its start
             }
-            if (!Steam.Cs2Running) { Log.Warn($"CS2 didn't open, so {s.Key} wasn't joined."); Toast($"CS2 didn't open, so {s.Title} wasn't joined.", false); return false; }
-            if (!OnHome && (!_protOn || _distrust)) { Log.Warn($"Not joining {s.Key}: protection changed while CS2 was opening."); Toast($"Not joining {s.Title}: protection changed while CS2 was opening.", false); return false; }
+            if (!Steam.Cs2Running) { Log.Warn($"CS2 didn't open, so {s.Key} wasn't joined."); Toast(Loc.F("CS2 didn't open, so {0} wasn't joined.", s.Title), false); return false; }
+            if (!OnHome && (!_protOn || _distrust)) { Log.Warn($"Not joining {s.Key}: protection changed while CS2 was opening."); Toast(Loc.F("Not joining {0}: protection changed while CS2 was opening.", s.Title), false); return false; }
             if (ready) await Task.Delay(2000);
             Steam.OpenUrl($"steam://connect/{s.Key}");
             Log.Info($"CS2 menu {(ready ? "ready" : "not seen after 2 min")}: joining {s.Key}.");
@@ -598,9 +598,9 @@ public partial class MainWindow
         _slotServer = s;
         SlotAutoBox.IsChecked = true;
         SlotJoinBtn.Visibility = Visibility.Collapsed;
-        SlotText.Text = $"Waiting for a slot on {s.Title} ({s.PlayersText}).";
+        SlotText.Text = Loc.F("Waiting for a slot on {0} ({1}).", s.Title, s.PlayersText);
         SlotBar.Visibility = Visibility.Visible;
-        Log.Info($"Waiting for a free slot on {s.Key} ({s.PlayersText}).");
+        Log.Info($"Waiting for a free slot on {s.Key} ({Loc.En(s.PlayersText)}).");
         _slotTimer.Tick -= SlotTick;
         _slotTimer.Tick += SlotTick;
         _slotTimer.Start();
@@ -612,9 +612,8 @@ public partial class MainWindow
     /// tries again every 15 s (RetryFull). CS2 has no command to ask for a spectator slot: with the teams full the server puts you there.
     /// </summary>
     public static string FullText(string title, string players) =>
-        $"{title} shows as full ({players}). Many servers keep spectator or reserved slots the list doesn't count: Join anyway asks the server "
-        + "itself, and if the teams are full you come in as a spectator (pick a team when a slot frees up).\n\n"
-        + "Or wait for a slot: the app checks every 5 s and joins (or tells you) when one opens.";
+        Loc.F("{0} shows as full ({1}). Many servers keep spectator or reserved slots the list doesn't count: Join anyway asks the server itself, and if the teams are full you come in as a spectator (pick a team when a slot frees up).", title, players)
+        + "\n\n" + Loc.T("Or wait for a slot: the app checks every 5 s and joins (or tells you) when one opens.");
 
     /// <summary>
     /// A free slot (or the retry on a full server) only joins by itself when nothing else runs and no question is open (review C10:
@@ -643,21 +642,21 @@ public partial class MainWindow
         try
         {
             if (!await QueryOne(s, eg) || s.MaxPlayers == 0) return;
-            if (IsFull(s.PlayerCount, s.Bots, s.MaxPlayers)) { SlotText.Text = $"Waiting for a slot on {s.Title} ({s.PlayersText})."; return; }
+            if (IsFull(s.PlayerCount, s.Bots, s.MaxPlayers)) { SlotText.Text = Loc.F("Waiting for a slot on {0} ({1}).", s.Title, s.PlayersText); return; }
             System.Media.SystemSounds.Asterisk.Play();
             var auto = SlotAutoBox.IsChecked == true;
             if (SlotAutoJoins(auto, CommandBusy, Dialog.Visibility == Visibility.Visible))
             {
                 StopSlotWait();
-                Log.Ok($"A slot opened on {s.Key} ({s.PlayersText}): joining.");
+                Log.Ok($"A slot opened on {s.Key} ({Loc.En(s.PlayersText)}): joining.");
                 await Join(s, fromSlotWait: true);
                 return;
             }
             _slotTimer.Stop();
-            SlotText.Text = $"A slot is free on {s.Title} ({s.PlayersText}).";
+            SlotText.Text = Loc.F("A slot is free on {0} ({1}).", s.Title, s.PlayersText);
             SlotJoinBtn.Visibility = Visibility.Visible;
-            Log.Ok($"A slot opened on {s.Key} ({s.PlayersText})." + (auto ? " Not joined by itself: another command or a question was open." : ""));
-            Toast(auto ? $"A slot is free on {s.Title}. The app was busy, so it didn't join by itself: join from Servers." : $"A slot is free on {s.Title}. Join from Servers.", Tone.Info);
+            Log.Ok($"A slot opened on {s.Key} ({Loc.En(s.PlayersText)})." + (auto ? " Not joined by itself: another command or a question was open." : ""));
+            Toast(auto ? Loc.F("A slot is free on {0}. The app was busy, so it didn't join by itself: join from Servers.", s.Title) : Loc.F("A slot is free on {0}. Join from Servers.", s.Title), Tone.Info);
         }
         finally { _slotChecking = false; }
     }
@@ -677,7 +676,7 @@ public partial class MainWindow
 
     async Task<bool> RestartSteamAndConnect(ServerItem s, bool openWith = true)
     {
-        ShowProgress("Restarting Steam through the phone…");
+        ShowProgress(Loc.T("Restarting Steam through the phone…"));
         try
         {
             await _cs2.Close("the Steam restart");
@@ -690,7 +689,7 @@ public partial class MainWindow
             if (openWith) OpenWithCs2();
             Diag.Write("steam-restarted", new { server = s.Key });
             Log.Ok($"Steam restarted through the phone; CS2 opens and joins {s.Key}.");
-            Toast($"Steam is restarting. CS2 opens and joins {s.Title}.", true);
+            Toast(Loc.F("Steam is restarting. CS2 opens and joins {0}.", s.Title), true);
             MarkLast(s);
             HideProgress();
             return await ConnectWhenMenuReady(s, log, menu);

@@ -25,14 +25,14 @@ public static class Texts
     {
         static string Mb(long b) => (b / 1048576.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
         return total is long t && t > 0
-            ? $"Downloading from Google: {Mb(got)} of {Mb(t)} MB ({Math.Clamp((int)(got * 100 / t), 0, 100)}%)"
-            : $"Downloading from Google: {Mb(got)} MB";
+            ? Loc.F("Downloading from Google: {0} of {1} MB ({2}%)", Mb(got), Mb(t), Math.Clamp((int)(got * 100 / t), 0, 100))
+            : Loc.F("Downloading from Google: {0} MB", Mb(got));
     }
 
     /// <summary>The download failed: why, what to try, and the way that always works.</summary>
     public static string AdbFailed(string why) =>
-        $"The download didn't work ({why}). Check that the PC has internet and press Try again.\n"
-        + "Still failing? Download \"SDK Platform-Tools for Windows\" from developer.android.com and unzip it into the app's data folder (Settings > Maintenance > Open data folder).";
+        Loc.F("The download didn't work ({0}). Check that the PC has internet and press Try again.", why) + "\n"
+        + Loc.T("Still failing? Download \"SDK Platform-Tools for Windows\" from developer.android.com and unzip it into the app's data folder (Settings > Maintenance > Open data folder).");
 
     // ------------------------------------------------------------ Phone setup: the USB cable
 
@@ -42,7 +42,7 @@ public static class Texts
     public const string CableTodo = "Plug the phone into the PC with a USB data cable. The one that came with the phone is best: many cheap cables only charge, and then the PC sees nothing.";
 
     /// <summary>The live line under the cable step: what the app sees right now, so it never looks stuck.</summary>
-    public static string CableLive(int seconds) => $"Looking for the phone on USB every 2 s: nothing yet ({seconds} s).";
+    public static string CableLive(int seconds) => Loc.F("Looking for the phone on USB every 2 s: nothing yet ({0} s).", seconds);
 
     /// <summary>After this long with nothing on USB, the cable step adds what to try next.</summary>
     public const int CableHelpAfterSeconds = 20;
@@ -142,7 +142,7 @@ public static class Texts
     public const string TourAgainTip = "The short tour of the app from the first start: Status, Change IP, Regions, Accounts and Phone setup.";
     public const string TourAgainHint = "Again in Settings > App > Show the tour again.";
 
-    public static string TourCount(int step, int of) => $"{step} of {of}";
+    public static string TourCount(int step, int of) => Loc.F("{0} of {1}", step, of);
 
     /// <summary>One stop of the tour: the control it points at (an x:Name in MainWindow.xaml), its title and its text.</summary>
     public sealed record TourStop(string Target, string Title, string Text);

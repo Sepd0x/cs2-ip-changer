@@ -516,24 +516,24 @@ public static class Fmt
     /// <summary>Older than <paramref name="age"/>, or in the future (the clock was ahead when it was saved): due again.</summary>
     public static bool Stale(DateTime at, TimeSpan age) { var d = AppClock.Now - at; return d >= age || d < TimeSpan.Zero; }
 
-    public static string Count(int n, string one, string many = null) => n == 1 ? "1 " + one : $"{n} {many ?? one + "s"}";
+    public static string Count(int n, string one, string many = null) => Loc.Lang != "en" && Loc.Plural(n, one) is string p ? p : n == 1 ? "1 " + one : $"{n} {many ?? one + "s"}";
 
     public static string Ago(DateTime? t)
     {
-        if (t == null) return "never";
+        if (t == null) return Loc.T("never");
         var d = AppClock.Now - t.Value;
-        if (d.TotalSeconds < 60) return "just now";
-        if (d.TotalMinutes < 60) return $"{(int)d.TotalMinutes} min ago";
-        if (d.TotalHours < 24) return $"{(int)d.TotalHours} h ago";
-        return $"{(int)d.TotalDays} d ago";
+        if (d.TotalSeconds < 60) return Loc.T("just now");
+        if (d.TotalMinutes < 60) return Loc.F("{0} min ago", (int)d.TotalMinutes);
+        if (d.TotalHours < 24) return Loc.F("{0} h ago", (int)d.TotalHours);
+        return Loc.F("{0} d ago", (int)d.TotalDays);
     }
 
     public static string Left(TimeSpan d)
     {
-        if (d.TotalSeconds <= 0) return "ended";
-        if (d.TotalDays >= 1) return $"{(int)d.TotalDays} d {d.Hours} h";
-        if (d.TotalHours >= 1) return $"{(int)d.TotalHours} h {d.Minutes:00} min";
-        return $"{d.Minutes} min {d.Seconds:00} s";
+        if (d.TotalSeconds <= 0) return Loc.T("ended");
+        if (d.TotalDays >= 1) return Loc.F("{0} d {1} h", (int)d.TotalDays, d.Hours);
+        if (d.TotalHours >= 1) return Loc.F("{0} h {1} min", (int)d.TotalHours, d.Minutes.ToString("00"));
+        return Loc.F("{0} min {1} s", d.Minutes, d.Seconds.ToString("00"));
     }
 
     public static string MaskIp(string ip)

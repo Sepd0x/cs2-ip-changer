@@ -54,6 +54,8 @@
     <Resource Include="app.ico" />
     <!-- Command sounds: Kenney "Interface Sounds" (CC0), see Assets/Sounds/LICENSE-kenney.txt -->
     <EmbeddedResource Include="Assets\Sounds\*.wav" LogicalName="Sounds.%(Filename).wav" />
+    <!-- App languages (Loc.cs): English text -> translation, one file per language -->
+    <EmbeddedResource Include="Lang\*.json" LogicalName="Lang.%(Filename).json" />
   </ItemGroup>
 
   <!-- Profiles page: DPAPI for the saved Steam sign-ins (Microsoft, part of .NET) -->

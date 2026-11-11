@@ -49,10 +49,10 @@ public partial class MainWindow
         IdentSource.ItemsSource = _profRows;
         IdentSource.DisplayMemberPath = nameof(ProfileRow.Name);
 
-        TplCountry.Items.Add(new ComboBoxItem { Content = "None shown", Tag = "" });
+        TplCountry.Items.Add(new ComboBoxItem { Content = Loc.T("None shown"), Tag = "" });
         foreach (var (code, name) in Countries.All) TplCountry.Items.Add(new ComboBoxItem { Content = name, Tag = code });
         foreach (var c in new[] { PrivProfile, PrivGames, PrivInventory, PrivFriends, PrivComments })
-            foreach (var (text, level) in new (string, int?)[] { ("Keep as it is", null), ("Public", PrivacyPreset.Public), ("Friends only", PrivacyPreset.Friends), ("Private", PrivacyPreset.Private) })
+            foreach (var (text, level) in new (string, int?)[] { (Loc.T("Keep as it is"), null), (Loc.T("Public"), PrivacyPreset.Public), (Loc.T("Friends only"), PrivacyPreset.Friends), (Loc.T("Private"), PrivacyPreset.Private) })
                 c.Items.Add(new ComboBoxItem { Content = text, Tag = level });
 
         _tplSave.Tick += (_, _) => { _tplSave.Stop(); SaveTemplates(); };
@@ -117,7 +117,7 @@ public partial class MainWindow
             r.SignedIn = _demoSigned.Contains(r.SteamId);
             r.DaysLeft = r.SignedIn ? (r.Name == "drift" ? 9 : 187) : null;   // one about to run out, to see the amber
             r.Expired = false;
-            r.Session = r.SignedIn ? $"Signed in · {r.DaysLeft} d left" : "Not signed in";
+            r.Session = r.SignedIn ? Loc.F("Signed in · {0} d left", r.DaysLeft) : Loc.T("Not signed in");
             return;
         }
         var info = _sessions?.Info(r.SteamId);
@@ -125,18 +125,18 @@ public partial class MainWindow
         r.SignedIn = info?.Valid == true && !dead;
         r.DaysLeft = r.SignedIn ? (int)Math.Ceiling((info.Expires - DateTime.Now).TotalDays) : null;
         r.Expired = info != null && (!info.Valid || dead);
-        r.Session = info == null ? "Not signed in" : r.Expired ? "Sign-in expired" : $"Signed in · {r.DaysLeft} d left";
+        r.Session = info == null ? Loc.T("Not signed in") : r.Expired ? Loc.T("Sign-in expired") : Loc.F("Signed in · {0} d left", r.DaysLeft);
     }
 
     // ------------------------------------------------------------ Templates
 
     static List<ProfileTemplate> StarterTemplates() => new()
     {
-        new ProfileTemplate { Title = "Main look", Name = "{name}", Fields = ProfileFields.Name | ProfileFields.Avatar },
-        new ProfileTemplate { Title = "Clean (no details)", Name = "{name}", Fields = ProfileFields.RealName | ProfileFields.Summary | ProfileFields.Country },
+        new ProfileTemplate { Title = Loc.T("Main look"), Name = "{name}", Fields = ProfileFields.Name | ProfileFields.Avatar },
+        new ProfileTemplate { Title = Loc.T("Clean (no details)"), Name = "{name}", Fields = ProfileFields.RealName | ProfileFields.Summary | ProfileFields.Country },
         new ProfileTemplate
         {
-            Title = "Anonymous", Name = "player {n}",
+            Title = Loc.T("Anonymous"), Name = Loc.T("player {n}"),
             Privacy = new PrivacyPreset { Profile = PrivacyPreset.Public, GameDetails = PrivacyPreset.Private, Inventory = PrivacyPreset.Private, FriendsList = PrivacyPreset.Private, Comments = PrivacyPreset.Private },
             Fields = ProfileFields.Name | ProfileFields.RealName | ProfileFields.Summary | ProfileFields.Country | ProfileFields.Privacy,
         },
@@ -234,7 +234,7 @@ public partial class MainWindow
 
     void TplNew_Click(object sender, RoutedEventArgs e)
     {
-        var t = new ProfileTemplate { Title = "New template " + (_templates.Count + 1) };
+        var t = new ProfileTemplate { Title = Loc.F("New template {0}", _templates.Count + 1) };
         _templates.Add(new TemplateItem(t));
         TplCombo.SelectedIndex = _templates.Count - 1;
         SaveTemplates();
@@ -245,7 +245,7 @@ public partial class MainWindow
     async void TplDelete_Click(object sender, RoutedEventArgs e)
     {
         if (TplCombo.SelectedItem is not TemplateItem it) return;
-        if (!await Ask("Delete template", $"Delete \"{it.Title}\"? Profiles already changed with it stay as they are.", "Delete", danger: true)) return;
+        if (!await Ask(Loc.T("Delete template"), Loc.F("Delete \"{0}\"? Profiles already changed with it stay as they are.", it.Title), Loc.T("Delete"), danger: true)) return;
         DeleteTemplateAvatar(it.T, it.T.Avatar);
         _templates.Remove(it);
         if (_s.ProfileAutoTemplateId == it.T.Id) { _s.ProfileAutoTemplateId = null; SaveSettings(); }
@@ -259,14 +259,14 @@ public partial class MainWindow
         var menu = new ContextMenu { PlacementTarget = TplCopyBtn };
         foreach (var r in _profRows)
         {
-            var mi = new MenuItem { Header = r.Name + (r.SignedIn ? "" : "  (public profile)"), Tag = "" };
-            mi.Click += async (_, _) => { if (CurTemplate is ProfileTemplate t && await CopyLookInto(t, r)) { ShowTemplate(t); SaveTemplates(); Toast($"Copied {r.Name}'s look into \"{t.Title}\".", true); } };
+            var mi = new MenuItem { Header = r.Name + (r.SignedIn ? "" : "  " + Loc.T("(public profile)")), Tag = "" };
+            mi.Click += async (_, _) => { if (CurTemplate is ProfileTemplate t && await CopyLookInto(t, r)) { ShowTemplate(t); SaveTemplates(); Toast(Loc.F("Copied {0}'s look into \"{1}\".", r.Name, t.Title), true); } };
             menu.Items.Add(mi);
         }
         // Any profile, also one that isn't saved on this PC.
         if (menu.Items.Count > 0) menu.Items.Add(new Separator());
-        var link = new MenuItem { Header = "From a Steam profile link…", Tag = "" };
-        link.Click += async (_, _) => { if (CurTemplate is ProfileTemplate t && await CopyLookFromLink(t)) { ShowTemplate(t); SaveTemplates(); Toast($"Copied the profile's look into \"{t.Title}\".", true); } };
+        var link = new MenuItem { Header = Loc.T("From a Steam profile link…"), Tag = "" };
+        link.Click += async (_, _) => { if (CurTemplate is ProfileTemplate t && await CopyLookFromLink(t)) { ShowTemplate(t); SaveTemplates(); Toast(Loc.F("Copied the profile's look into \"{0}\".", t.Title), true); } };
         menu.Items.Add(link);
         menu.IsOpen = true;
     }
@@ -276,13 +276,13 @@ public partial class MainWindow
     async void TplPickAvatar_Click(object sender, RoutedEventArgs e)
     {
         if (CurTemplate is not ProfileTemplate t) return;
-        if (Rec.On) { Toast("Off in the recording build: Windows' file window isn't filtered. Use the normal app to pick a picture.", false); return; }
-        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = "Pictures|*.jpg;*.jpeg;*.png;*.gif;*.bmp", Title = "Picture for the template" };
+        if (Rec.On) { Toast(Loc.T("Off in the recording build: Windows' file window isn't filtered. Use the normal app to pick a picture."), false); return; }
+        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = Loc.T("Pictures") + "|*.jpg;*.jpeg;*.png;*.gif;*.bmp", Title = Loc.T("Picture for the template") };
         if (dlg.ShowDialog(this) != true) return;
         try
         {
             var fi = new FileInfo(dlg.FileName);
-            if (fi.Length > AvatarImage.MaxInput) { Toast("That picture is over 20 MB.", false); return; }
+            if (fi.Length > AvatarImage.MaxInput) { Toast(Loc.T("That picture is over 20 MB."), false); return; }
             var raw = await File.ReadAllBytesAsync(fi.FullName);
             var jpg = AvatarImage.Prepare(raw, out var problem);
             if (jpg == null) { Toast(problem, false); return; }
@@ -291,7 +291,7 @@ public partial class MainWindow
             ShowTemplate(t);
             SaveTemplates();
         }
-        catch (Exception ex) { Toast("Couldn't use that picture: " + ex.Message, false); }
+        catch (Exception ex) { Toast(Loc.T("Couldn't use that picture: ") + ex.Message, false); }
     }
 
     void TplClearAvatar_Click(object sender, RoutedEventArgs e)
@@ -389,7 +389,7 @@ public partial class MainWindow
         IdentSource.IsEnabled = ProfIdentBtn.IsEnabled = ProfRestoreBtn.IsEnabled = any;
         if (!_profBusy) ProfApplyBtn.IsEnabled = any;   // while a run goes the button is Stop and is handled by its own click
         var picked = _profRows.Where(r => r.Selected).ToList();
-        ProfCount.Text = _profRows.Count == 0 ? "" : $"{picked.Count} of {_profRows.Count} picked";
+        ProfCount.Text = _profRows.Count == 0 ? "" : Loc.F("{0} of {1} picked", picked.Count, _profRows.Count);
         var t = CurTemplate;
         var jobs = t == null ? new() : Plan(t, picked).ToDictionary(j => j.SteamId);
         foreach (var r in _profRows)
@@ -404,7 +404,7 @@ public partial class MainWindow
             r.After = j.PersonaName ?? r.Name;
             r.AfterAvatar = j.Avatar != null ? _tplAvatarImg : r.Avatar;
             r.AfterDetail = Describe(j);
-            r.Problem = j.Problem ?? (r.SignedIn ? null : "Sign in first.");
+            r.Problem = j.Problem ?? (r.SignedIn ? null : Loc.T("Sign in first."));
         }
     }
 
@@ -412,14 +412,14 @@ public partial class MainWindow
     {
         var parts = new List<string>();
         if (j.Problem != null) return "";
-        if (j.Fields.HasFlag(ProfileFields.Country)) parts.Add(string.IsNullOrEmpty(j.Country) ? "no country" : Countries.NameOf(j.Country));
-        if (j.Fields.HasFlag(ProfileFields.RealName)) parts.Add(string.IsNullOrEmpty(j.RealName) ? "no real name" : "real name");
-        if (j.Fields.HasFlag(ProfileFields.Summary)) parts.Add(string.IsNullOrEmpty(j.Summary) ? "no bio" : "bio");
+        if (j.Fields.HasFlag(ProfileFields.Country)) parts.Add(string.IsNullOrEmpty(j.Country) ? Loc.T("no country") : Countries.NameOf(j.Country));
+        if (j.Fields.HasFlag(ProfileFields.RealName)) parts.Add(string.IsNullOrEmpty(j.RealName) ? Loc.T("no real name") : Loc.T("real name"));
+        if (j.Fields.HasFlag(ProfileFields.Summary)) parts.Add(string.IsNullOrEmpty(j.Summary) ? Loc.T("no bio") : Loc.T("bio"));
         // Empty = the custom URL is removed. Recording build: the URL leads to the profile, so it isn't shown.
-        if (j.Fields.HasFlag(ProfileFields.CustomUrl)) parts.Add(string.IsNullOrEmpty(j.CustomUrl) ? "no custom URL" : Rec.On ? "custom URL" : "/id/" + j.CustomUrl);
-        if (j.Fields.HasFlag(ProfileFields.Privacy)) parts.Add("privacy");
-        if (j.ClearAliases) parts.Add("old names cleared");
-        return parts.Count == 0 ? (j.Fields.HasFlag(ProfileFields.Avatar) ? "new picture" : "same details") : string.Join(" · ", parts);
+        if (j.Fields.HasFlag(ProfileFields.CustomUrl)) parts.Add(string.IsNullOrEmpty(j.CustomUrl) ? Loc.T("no custom URL") : Rec.On ? Loc.T("custom URL") : "/id/" + j.CustomUrl);
+        if (j.Fields.HasFlag(ProfileFields.Privacy)) parts.Add(Loc.T("privacy"));
+        if (j.ClearAliases) parts.Add(Loc.T("old names cleared"));
+        return parts.Count == 0 ? (j.Fields.HasFlag(ProfileFields.Avatar) ? Loc.T("new picture") : Loc.T("same details")) : string.Join(" · ", parts);
     }
 
     void ProfRowCheck_Click(object sender, RoutedEventArgs e) => UpdatePreview();
@@ -439,8 +439,8 @@ public partial class MainWindow
     /// <summary>Opens the sign-in window; the token goes straight to the encrypted file and is dropped.</summary>
     async Task<bool> SignIn(ProfileRow r)
     {
-        if (Rec.On) { Toast("Signing in is off in the recording build: use the normal app.", false); return false; }
-        if (_demo) { Toast("Demo: the sign-in window would open here.", true); return false; }
+        if (Rec.On) { Toast(Loc.T("Signing in is off in the recording build: use the normal app."), false); return false; }
+        if (_demo) { Toast(Loc.T("Demo: the sign-in window would open here."), true); return false; }
         await Task.Yield();
         var w = new SteamLoginWindow(_steamWeb, r.Name, r.Account.Login, HideLogins) { Owner = this };
         var ok = w.ShowDialog() == true;
@@ -454,21 +454,21 @@ public partial class MainWindow
             if (target == null)
             {
                 Log.Warn("Profiles: a sign-in for an account that isn't saved in Steam on this PC was not kept.");
-                Toast("That sign-in is for an account that isn't saved in Steam on this PC, so the app didn't keep it.", false);
+                Toast(Loc.T("That sign-in is for an account that isn't saved in Steam on this PC, so the app didn't keep it."), false);
                 return false;
             }
             _sessions.Save(id, token);
             _profExpired.Remove(id);
             RefreshSession(target);
             Log.Ok($"Profiles: signed in to {target.Name}.");
-            Toast(target == r ? $"Signed in to {r.Name}." : $"That sign-in was {target.Name}, not {r.Name}: it was kept for {target.Name}.", target == r);
+            Toast(target == r ? Loc.F("Signed in to {0}.", r.Name) : Loc.F("That sign-in was {0}, not {1}: it was kept for {0}.", target.Name, r.Name), target == r);
             UpdatePreview();
             return target == r;
         }
         catch (Exception ex)
         {
             Log.Error("Profiles: couldn't save the sign-in: " + Secrets.Clean(ex.Message));
-            Toast("Couldn't save the sign-in: " + Secrets.Clean(ex.Message), Tone.Error);
+            Toast(Loc.T("Couldn't save the sign-in: ") + Secrets.Clean(ex.Message), Tone.Error);
             return false;
         }
         finally { token = null; }
@@ -476,7 +476,7 @@ public partial class MainWindow
 
     async Task ForgetSession(ProfileRow r)
     {
-        if (!await Ask($"Sign out of {r.Name}", $"Delete the saved sign-in for {r.Name}? The app can't change this profile again until you sign in.\n\nTo end it on Steam's side too: Steam > Settings > Security > Authorized devices (named {SteamAuth.DeviceName}).", "Sign out")) return;
+        if (!await Ask(Loc.F("Sign out of {0}", r.Name), Loc.F("Delete the saved sign-in for {0}? The app can't change this profile again until you sign in.", r.Name) + "\n\n" + Loc.F("To end it on Steam's side too: Steam > Settings > Security > Authorized devices (named {0}).", SteamAuth.DeviceName), Loc.T("Sign out"))) return;
         if (!_demo) _sessions.Forget(r.SteamId); else _demoSigned.Remove(r.SteamId);
         _profExpired.Remove(r.SteamId);
         RefreshSession(r);
@@ -486,13 +486,13 @@ public partial class MainWindow
 
     async void ProfForgetAll_Click(object sender, RoutedEventArgs e)
     {
-        if (!await Ask("Sign out of all", $"Delete every sign-in the app saved for the Profiles page?\n\nTo end them on Steam's side too: Steam > Settings > Security > Authorized devices (named {SteamAuth.DeviceName}).", "Sign out of all", danger: true)) return;
+        if (!await Ask(Loc.T("Sign out of all"), Loc.T("Delete every sign-in the app saved for the Profiles page?") + "\n\n" + Loc.F("To end them on Steam's side too: Steam > Settings > Security > Authorized devices (named {0}).", SteamAuth.DeviceName), Loc.T("Sign out of all"), danger: true)) return;
         var n = _demo ? _demoSigned.Count : _sessions.ForgetAll();
         _demoSigned.Clear();
         _profExpired.Clear();
         foreach (var r in _profRows) RefreshSession(r);
         Log.Info($"Profiles: signed out, {Fmt.Count(n, "sign-in")} deleted.");
-        Toast($"Signed out: {Fmt.Count(n, "sign-in")} deleted.", true);
+        Toast(Loc.F("Signed out: {0} deleted.", Fmt.Count(n, "sign-in")), true);
         UpdatePreview();
     }
 
@@ -504,16 +504,16 @@ public partial class MainWindow
         if (_profBusy) { _profCts?.Cancel(); ProfApplyBtn.IsEnabled = false; return; }
         if (CurTemplate is not ProfileTemplate t) return;
         var picked = _profRows.Where(r => r.Selected).ToList();
-        if (picked.Count == 0) { Toast("Pick at least one account.", false); return; }
-        if (Rec.On) { Toast("Off in the recording build: use the normal app to change profiles.", false); return; }
+        if (picked.Count == 0) { Toast(Loc.T("Pick at least one account."), false); return; }
+        if (Rec.On) { Toast(Loc.T("Off in the recording build: use the normal app to change profiles."), false); return; }
         var jobs = Plan(t, picked);
         var ready = jobs.Count(j => j.Problem == null && SignedIn(j.SteamId));
-        if (ready == 0) { Toast("Nothing can be changed yet: the reason is next to each account.", false); return; }
+        if (ready == 0) { Toast(Loc.T("Nothing can be changed yet: the reason is next to each account."), false); return; }
         var clear = ProfClearNames.IsChecked == true;
-        var text = $"Change {Fmt.Count(ready, "Steam profile")} with \"{t.Title}\"? They go one after another, about 10 s each.\n\nA copy of each profile is kept first: right-click an account > Restore original puts it back."
-                   + (ready < picked.Count ? $"\n{Fmt.Count(picked.Count - ready, "picked account")} {(picked.Count - ready == 1 ? "is" : "are")} skipped (the reason is in the list)." : "")
-                   + (clear ? "\n\nName history will be cleared on each one. That can't be undone, not even by Restore." : "");
-        if (!await Ask("Change profiles", text, "Apply", danger: clear)) return;
+        var text = Loc.F("Change {0} with \"{1}\"? They go one after another, about 10 s each.", Fmt.Count(ready, "Steam profile"), t.Title) + "\n\n" + Loc.T("A copy of each profile is kept first: right-click an account > Restore original puts it back.")
+                   + (ready < picked.Count ? "\n" + (picked.Count - ready == 1 ? Loc.F("{0} is skipped (the reason is in the list).", Fmt.Count(picked.Count - ready, "picked account")) : Loc.F("{0} are skipped (the reason is in the list).", Fmt.Count(picked.Count - ready, "picked account"))) : "")
+                   + (clear ? "\n\n" + Loc.T("Name history will be cleared on each one. That can't be undone, not even by Restore.") : "");
+        if (!await Ask(Loc.T("Change profiles"), text, Loc.T("Apply"), danger: clear)) return;
         try { await RunProfileJobs(jobs, picked); }
         finally
         {
@@ -527,7 +527,7 @@ public partial class MainWindow
     async Task RunProfileJobs(List<ProfileJob> jobs, List<ProfileRow> rows)
     {
         _profBusy = true;
-        ProfApplyBtn.Content = "Stop";
+        ProfApplyBtn.Content = Loc.T("Stop");
         _profCts = new CancellationTokenSource();
         foreach (var r in rows) { r.Result = null; r.Ok = null; r.Step = null; }
         ProfileRow Of(string id) => _profRows.FirstOrDefault(r => r.SteamId == id);
@@ -549,8 +549,8 @@ public partial class MainWindow
                 foreach (var j in jobs)
                 {
                     var res = j.Problem != null ? new ProfileResult { SteamId = j.SteamId, Shown = j.Shown, Skipped = true, Message = j.Problem }
-                        : !SignedIn(j.SteamId) ? new ProfileResult { SteamId = j.SteamId, Shown = j.Shown, Skipped = true, Message = "Not signed in: sign in to this account first." }
-                        : new ProfileResult { SteamId = j.SteamId, Shown = j.Shown, Ok = true, Message = "Changed: name, picture." };
+                        : !SignedIn(j.SteamId) ? new ProfileResult { SteamId = j.SteamId, Shown = j.Shown, Skipped = true, Message = Loc.T("Not signed in: sign in to this account first.") }
+                        : new ProfileResult { SteamId = j.SteamId, Shown = j.Shown, Ok = true, Message = Loc.T("Changed: ") + Loc.T("name") + ", " + Loc.T("picture") + "." };
                     results.Add(res); Done(res);
                 }
             }
@@ -569,12 +569,12 @@ public partial class MainWindow
                 await RefreshAccounts(changed);
                 foreach (var r in _profRows) r.RefreshAccount();
             }
-            Toast(failed == 0 && ok == results.Count ? $"{Fmt.Count(ok, "profile")} changed." : $"{ok} changed, {results.Count - ok} not: the reason is next to each account.", failed == 0 && ok > 0);
+            Toast(failed == 0 && ok == results.Count ? Loc.F("{0} changed.", Fmt.Count(ok, "profile")) : Loc.F("{0} changed, {1} not: the reason is next to each account.", ok, results.Count - ok), failed == 0 && ok > 0);
         }
         finally
         {
             _profBusy = false;
-            ProfApplyBtn.Content = "Apply";
+            ProfApplyBtn.Content = Loc.T("Apply");
             ProfApplyBtn.IsEnabled = _profRows.Count > 0;
             _profCts.Dispose();
             _profCts = null;
@@ -589,18 +589,19 @@ public partial class MainWindow
     async Task Restore(List<ProfileRow> rows, bool original)
     {
         if (_profBusy) return;
-        if (rows.Count == 0) { Toast("Pick the accounts to restore first.", false); return; }
-        if (Rec.On) { Toast("Off in the recording build: use the normal app to change profiles.", false); return; }
+        if (rows.Count == 0) { Toast(Loc.T("Pick the accounts to restore first."), false); return; }
+        if (Rec.On) { Toast(Loc.T("Off in the recording build: use the normal app to change profiles."), false); return; }
         var jobs = rows.Select(r =>
         {
             var s = _demo ? null : original ? _snaps.Original(r.SteamId) : _snaps.Latest(r.SteamId);
-            return s == null ? new ProfileJob { SteamId = r.SteamId, Shown = r.Name, Problem = "No copy saved: the app never changed this account." } : _snaps.RestoreJob(s, r.Name);
+            return s == null ? new ProfileJob { SteamId = r.SteamId, Shown = r.Name, Problem = Loc.T("No copy saved: the app never changed this account.") } : _snaps.RestoreJob(s, r.Name);
         }).ToList();
         var have = jobs.Count(j => j.Problem == null);
-        if (have == 0) { Toast(rows.Count == 1 ? "There's no copy of this profile: the app never changed it." : "There's no copy of these profiles: the app never changed them.", false); return; }
-        var (was, them) = have == 1 ? ("it was", "it") : ("they were", "them");
-        var what = original ? $"how {was} before the app first changed {them}" : $"how {was} before the last change";
-        if (!await Ask("Restore profiles", $"Put {Fmt.Count(have, "profile")} back to {what}? Name, picture, details and privacy. Old names cleared before can't come back.", "Restore")) return;
+        if (have == 0) { Toast(rows.Count == 1 ? Loc.T("There's no copy of this profile: the app never changed it.") : Loc.T("There's no copy of these profiles: the app never changed them."), false); return; }
+        var what = have == 1
+            ? original ? Loc.T("how it was before the app first changed it") : Loc.T("how it was before the last change")
+            : original ? Loc.T("how they were before the app first changed them") : Loc.T("how they were before the last change");
+        if (!await Ask(Loc.T("Restore profiles"), Loc.F("Put {0} back to {1}? Name, picture, details and privacy. Old names cleared before can't come back.", Fmt.Count(have, "profile"), what), Loc.T("Restore"))) return;
         await RunProfileJobs(jobs, rows);
     }
 
@@ -615,9 +616,9 @@ public partial class MainWindow
             t.Fields = ProfileFields.Look; t.Avatar ??= "demo.jpg"; _tplAvatarFor = null;
             return true;
         }
-        if (Rec.On) { Toast("Off in the recording build.", false); return false; }
+        if (Rec.On) { Toast(Loc.T("Off in the recording build."), false); return false; }
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-        Toast($"Reading {src.Name}'s profile…", Tone.Info);
+        Toast(Loc.F("Reading {0}'s profile…", src.Name), Tone.Info);
         try
         {
             LookCopy copy = null;
@@ -644,9 +645,9 @@ public partial class MainWindow
                      + (copy.Unknown != 0 ? " The public profile doesn't show everything; the rest stays as it is on each account." : ""));
             return true;
         }
-        catch (SteamWebException ex) { Toast($"Couldn't read {src.Name}'s profile: {ex.Message}", false); return false; }
-        catch (OperationCanceledException) { Toast("Steam took too long to answer.", false); return false; }
-        catch (Exception ex) { Log.Error("Profiles: copy look: " + Secrets.Clean(ex.GetBaseException().Message)); Toast($"Couldn't read {src.Name}'s profile.", false); return false; }
+        catch (SteamWebException ex) { Toast(Loc.F("Couldn't read {0}'s profile: {1}", src.Name, ex.Message), false); return false; }
+        catch (OperationCanceledException) { Toast(Loc.T("Steam took too long to answer."), false); return false; }
+        catch (Exception ex) { Log.Error("Profiles: copy look: " + Secrets.Clean(ex.GetBaseException().Message)); Toast(Loc.F("Couldn't read {0}'s profile.", src.Name), false); return false; }
     }
 
     /// <summary>The picture first (through the same checks as a picture you pick), then the rest: if the file can't be written, the template stays as it was.</summary>
@@ -666,21 +667,21 @@ public partial class MainWindow
     async Task<bool> CopyLookFromLink(ProfileTemplate t)
     {
         DialogInput.Text = "";
-        DialogInput.Tag = "steamcommunity.com/id/… or SteamID64";
-        if (!await Ask("Copy look from a profile link",
-                "Paste a Steam profile link (steamcommunity.com/id/… or /profiles/…) or a SteamID64. The app reads its public profile: name, picture, real name, bio and country. " +
-                "What the profile keeps private stays as it is on each account.", "Copy", "Cancel", inputs: 1, label1: "Steam profile")) return false;
+        DialogInput.Tag = Loc.T("steamcommunity.com/id/… or SteamID64");
+        if (!await Ask(Loc.T("Copy look from a profile link"),
+                Loc.T("Paste a Steam profile link (steamcommunity.com/id/… or /profiles/…) or a SteamID64. The app reads its public profile: name, picture, real name, bio and country.") + " " +
+                Loc.T("What the profile keeps private stays as it is on each account."), Loc.T("Copy"), Loc.T("Cancel"), inputs: 1, label1: Loc.T("Steam profile"))) return false;
         var path = ProfileLink.Path(DialogInput.Text);
-        if (path == null) { Toast("That isn't a Steam profile link. Use steamcommunity.com/id/…, steamcommunity.com/profiles/… or a SteamID64.", false); return false; }
+        if (path == null) { Toast(Loc.T("That isn't a Steam profile link. Use steamcommunity.com/id/…, steamcommunity.com/profiles/… or a SteamID64."), false); return false; }
         if (_demo)
         {
             t.Name = "ghost.pt"; t.RealName = ""; t.Summary = "Entry fragger. Mid or nothing."; t.Country = "PT";
             t.Fields = ProfileFields.Look & ~ProfileFields.RealName; t.Avatar ??= "demo.jpg"; _tplAvatarFor = null;
             return true;
         }
-        if (Rec.On) { Toast("Off in the recording build.", false); return false; }
+        if (Rec.On) { Toast(Loc.T("Off in the recording build."), false); return false; }
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-        Toast("Reading the profile…", Tone.Info);
+        Toast(Loc.T("Reading the profile…"), Tone.Info);
         try
         {
             var look = await CommunitySession.ReadPublicLookAt(_steamWeb, path, cts.Token);
@@ -690,9 +691,9 @@ public partial class MainWindow
                      + (copy.Unknown != 0 ? " It doesn't show everything; the rest stays as it is on each account." : ""));
             return true;
         }
-        catch (SteamWebException ex) { Toast("Couldn't read that profile: " + ex.Message, false); return false; }
-        catch (OperationCanceledException) { Toast("Steam took too long to answer.", false); return false; }
-        catch (Exception ex) { Log.Error("Profiles: copy look from a link: " + Secrets.Clean(ex.GetBaseException().Message)); Toast("Couldn't read that profile.", false); return false; }
+        catch (SteamWebException ex) { Toast(Loc.T("Couldn't read that profile: ") + ex.Message, false); return false; }
+        catch (OperationCanceledException) { Toast(Loc.T("Steam took too long to answer."), false); return false; }
+        catch (Exception ex) { Log.Error("Profiles: copy look from a link: " + Secrets.Clean(ex.GetBaseException().Message)); Toast(Loc.T("Couldn't read that profile."), false); return false; }
     }
 
     async void ProfCopyInto_Click(object sender, RoutedEventArgs e)
@@ -700,7 +701,7 @@ public partial class MainWindow
         if (PRow(sender) is ProfileRow r && CurTemplate is ProfileTemplate t && await CopyLookInto(t, r))
         {
             ShowTemplate(t); SaveTemplates();
-            Toast($"Copied {r.Name}'s look into \"{t.Title}\".", true);
+            Toast(Loc.F("Copied {0}'s look into \"{1}\".", r.Name, t.Title), true);
         }
     }
 
@@ -709,13 +710,13 @@ public partial class MainWindow
     async void ProfIdentical_Click(object sender, RoutedEventArgs e)
     {
         if (IdentSource.SelectedItem is ProfileRow src) await MakeIdentical(src);
-        else Toast("Pick the account to copy first.", false);
+        else Toast(Loc.T("Pick the account to copy first."), false);
     }
 
     /// <summary>One click: the source's look into a new template, every other account picked, the preview shown. Apply does the rest.</summary>
     async Task MakeIdentical(ProfileRow src)
     {
-        var t = new ProfileTemplate { Title = "Look of " + src.Name, Name = NamePattern.Escape(src.Name) };
+        var t = new ProfileTemplate { Title = Loc.F("Look of {0}", src.Name), Name = NamePattern.Escape(src.Name) };
         if (!await CopyLookInto(t, src)) return;
         var it = new TemplateItem(t);
         _templates.Add(it);
@@ -724,12 +725,12 @@ public partial class MainWindow
         foreach (var r in _profRows) r.Selected = r != src;
         SaveTemplates();
         UpdatePreview();
-        Toast($"Preview ready: the picked accounts get {src.Name}'s look. Check it, then click Apply.", Tone.Info);
+        Toast(Loc.F("Preview ready: the picked accounts get {0}'s look. Check it, then click Apply.", src.Name), Tone.Info);
     }
 
     void ProfOpenEdit_Click(object sender, RoutedEventArgs e)
     {
-        if (Rec.On) { Toast("Off in the recording build: use the normal app to open Steam's edit page.", false); return; }
+        if (Rec.On) { Toast(Loc.T("Off in the recording build: use the normal app to open Steam's edit page."), false); return; }
         if (PRow(sender) is not ProfileRow r || _demo) return;
         try { Steam.OpenUrl($"https://steamcommunity.com/profiles/{r.SteamId}/edit/info"); }
         catch (Exception ex) { Toast(ex.Message, false); }
@@ -761,7 +762,7 @@ public partial class MainWindow
         if (CurTemplate is not ProfileTemplate t) return;
         _s.ProfileAutoTemplateId = ProfAuto.IsChecked == true ? t.Id : null;
         SaveSettings();
-        Toast(ProfAuto.IsChecked == true ? $"New accounts will get \"{t.Title}\" (the app asks you to sign in to each once)." : "New accounts keep their own look.", true);
+        Toast(ProfAuto.IsChecked == true ? Loc.F("New accounts will get \"{0}\" (the app asks you to sign in to each once).", t.Title) : Loc.T("New accounts keep their own look."), true);
     }
 
     /// <summary>Every 10 s: an account that appears in Steam after the first run is offered the auto template, once.</summary>
@@ -785,7 +786,7 @@ public partial class MainWindow
             if (_profRows.FirstOrDefault(r => r.SteamId == a.SteamId) is not ProfileRow r) continue;
             if (!r.SignedIn)
             {
-                if (!await Ask("New account", $"{a.Name} is new on this PC. Give it the \"{t.Title}\" look? The app needs to sign in to it once.", "Sign in", "Not now")) { Log.Info($"Profiles: {a.Name} is new; the auto template was skipped."); continue; }
+                if (!await Ask(Loc.T("New account"), Loc.F("{0} is new on this PC. Give it the \"{1}\" look? The app needs to sign in to it once.", a.Name, t.Title), Loc.T("Sign in"), Loc.T("Not now"))) { Log.Info($"Profiles: {a.Name} is new; the auto template was skipped."); continue; }
                 if (!await SignIn(r)) continue;
             }
             // Automatic runs never clear old names (no warning on this path), and {n} is one no other account uses.

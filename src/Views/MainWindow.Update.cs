@@ -53,15 +53,16 @@ public partial class MainWindow
 
     /// <summary>The toast when the check finds a newer version; a test version (pre-release) says so.</summary>
     public static string UpdateToast(string v, bool test) => test
-        ? $"Test version {v} is out. Click Update under the version number."
-        : $"CS2 IP Changer {v} is available. Click Update under the version number.";
+        ? Loc.F("Test version {0} is out. Click Update under the version number.", v)
+        : Loc.F("CS2 IP Changer {0} is available. Click Update under the version number.", v);
 
     /// <summary>The Update button's tooltip.</summary>
     public static string UpdateTip(string v, bool test) =>
-        $"{(test ? "Test version" : "Version")} {v} is available. Downloads it from GitHub, checks its SHA-256 and restarts the app.";
+        test ? Loc.F("Test version {0} is available. Downloads it from GitHub, checks its SHA-256 and restarts the app.", v)
+        : Loc.F("Version {0} is available. Downloads it from GitHub, checks its SHA-256 and restarts the app.", v);
 
     /// <summary>The version in the Update question: "test version 0.1.0-beta.12" or "version 0.1.0-beta.12".</summary>
-    public static string UpdateWhat(string v, bool test) => (test ? "test version " : "version ") + v;
+    public static string UpdateWhat(string v, bool test) => test ? Loc.F("test version {0}", v) : Loc.F("version {0}", v);
 
     void ShowUpdateNotice()
     {
@@ -74,12 +75,12 @@ public partial class MainWindow
     async void Update_Click(object sender, RoutedEventArgs e)
     {
         if (_updating) return;
-        if (_demo) { Toast("Demo: update.", true); return; }
+        if (_demo) { Toast(Loc.T("Demo: update."), true); return; }
         _updating = true;
         UpdateBtn.IsEnabled = false;
         try
         {
-            ShowProgress("Checking GitHub for the latest version…");
+            ShowProgress(Loc.T("Checking GitHub for the latest version…"));
             using (var cts = new CancellationTokenSource(20000)) _update = await Updater.Latest(_s.TestVersions, cts.Token) ?? _update;
             var r = _update;
             if (r == null || !Updater.IsNewer(r.Version, AppInfo.Version))
@@ -88,25 +89,25 @@ public partial class MainWindow
                 _s.UpdateLatestTest = r?.Test == true;
                 SaveSettings();
                 ShowUpdateNotice();
-                Toast("You already have the latest version.", true);
+                Toast(Loc.T("You already have the latest version."), true);
                 return;
             }
             // Never installs without the release's own hash; the dev build (DLLs next to the exe) can't replace itself either.
             if (NoInstallReason(r, Updater.CanSelfUpdate) is string why)
             {
                 OpenUrl(r.PageUrl);
-                Log.Warn($"Update {r.Version}: {why}");
+                Log.Warn($"Update {r.Version}: {Loc.En(why)}");
                 Toast(why, false);
                 return;
             }
             HideProgress();
-            var size = r.Size > 0 ? $" (about {Math.Max(1, (r.Size + 500_000) / 1_000_000)} MB)" : "";
-            if (!await Ask("Update CS2 IP Changer", $"Download {UpdateWhat(r.Version, r.Test)}{size} from GitHub, check its SHA-256 and restart the app?{MobileDataNote()}\n\n" + (!_protOn ? "Protection stays off, as now." : "Protection stays on while it restarts. If you are on a server, you will be disconnected for a few seconds while the new version checks the phone's IP."), "Update")) { Telemetry.Count("upd_declined"); return; }
+            var size = r.Size > 0 ? Loc.F(" (about {0} MB)", Math.Max(1, (r.Size + 500_000) / 1_000_000)) : "";
+            if (!await Ask(Loc.T("Update CS2 IP Changer"), Loc.F("Download {0}{1} from GitHub, check its SHA-256 and restart the app?{2}", UpdateWhat(r.Version, r.Test), size, MobileDataNote()) + "\n\n" + (!_protOn ? Loc.T("Protection stays off, as now.") : Loc.T("Protection stays on while it restarts. If you are on a server, you will be disconnected for a few seconds while the new version checks the phone's IP.")), Loc.T("Update"))) { Telemetry.Count("upd_declined"); return; }
             Telemetry.Count("upd_accepted");
-            ShowProgress("Downloading the update…");
+            ShowProgress(Loc.T("Downloading the update…"));
             var sha = await Updater.Download(r, new Progress<string>(t => ProgressText.Text = t));
             Log.Ok($"Update {r.Version} downloaded, SHA-256 matches ({sha[..12]}…). Restarting.");
-            ProgressText.Text = "Restarting…";
+            ProgressText.Text = Loc.T("Restarting…");
             Telemetry.BeforeRestart();   // beta.13: the stats go and are saved before the new copy reads them (they arrived twice)
             Updater.Install(sha, PrepareExitForUpdate, AppIds.Args.UpdateState(_protOn));
             Application.Current.Shutdown();
@@ -116,7 +117,7 @@ public partial class MainWindow
             Telemetry.AfterFailedRestart();   // beta.13: the install failed after BeforeRestart, so this copy counts again
             Log.Error("Update: " + ex.Message);
             Telemetry.Count("upd_failed");
-            Toast("Update failed: " + ex.Message, Tone.Error);
+            Toast(Loc.F("Update failed: {0}", ex.Message), Tone.Error);
             if (_closingDone) { _closingDone = false; RegisterHotkeys(); App.ReacquireSingleInstance(); }
         }
         finally { HideProgress(); _updating = false; UpdateBtn.IsEnabled = true; }
@@ -124,14 +125,14 @@ public partial class MainWindow
 
     /// <summary>Why Update opens the release page instead of installing (null: it installs). Each case its own reason.</summary>
     public static string NoInstallReason(Updater.Release r, bool canSelfUpdate) =>
-        r.ExeUrl == null ? $"This release has no {AppIds.ExeName}. Opened the release page."
-        : r.ShaUrl == null ? "This release has no .sha256 file, so the app won't install it. Opened the release page."
-        : r.SigUrl == null ? "This release isn't signed with the project's key, so the app won't install it. Opened the release page."
-        : !canSelfUpdate ? "This copy of the app can't replace itself (a development or recording build). Opened the release page."
+        r.ExeUrl == null ? Loc.F("This release has no {0}. Opened the release page.", AppIds.ExeName)
+        : r.ShaUrl == null ? Loc.T("This release has no .sha256 file, so the app won't install it. Opened the release page.")
+        : r.SigUrl == null ? Loc.T("This release isn't signed with the project's key, so the app won't install it. Opened the release page.")
+        : !canSelfUpdate ? Loc.T("This copy of the app can't replace itself (a development or recording build). Opened the release page.")
         : null;
 
     /// <summary>For a download question: a warning when the rest of the PC goes out through the phone right now.</summary>
-    string MobileDataNote() => _last?.PcDefaultIsEgress == true ? "\n\nThis download goes through the phone's mobile data." : "";
+    string MobileDataNote() => _last?.PcDefaultIsEgress == true ? "\n\n" + Loc.T("This download goes through the phone's mobile data.") : "";
 
     /// <summary>Frees the hotkeys and the single-instance lock for the new copy. The rules stay: protection doesn't drop.</summary>
     void PrepareExitForUpdate()
@@ -147,7 +148,7 @@ public partial class MainWindow
         if (!_justUpdated) return;
         Telemetry.Count("upd_done");
         Log.Ok($"Updated to {AppInfo.Version}.");
-        Toast($"Updated to {AppInfo.Version}.", true);
+        Toast(Loc.F("Updated to {0}.", AppInfo.Version), true);
     }
 
     /// <summary>Opens a web page in the browser as the signed-in user (a browser started by the app would have admin rights).</summary>

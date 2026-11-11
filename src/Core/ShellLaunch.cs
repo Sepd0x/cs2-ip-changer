@@ -52,16 +52,16 @@ public static class ShellLaunch
     /// </summary>
     public static string OpenAsUser(string fileOrUrl, string args, string workDir, string verb = "open")
     {
-        if (string.IsNullOrWhiteSpace(fileOrUrl)) return "nothing to open";
+        if (string.IsNullOrWhiteSpace(fileOrUrl)) return Loc.T("nothing to open");
         try
         {
             dynamic windows = Activator.CreateInstance(Type.GetTypeFromCLSID(ShellWindowsClsid, true)!);
             object loc = 0, root = null;   // CSIDL_DESKTOP
             object desktop = windows.FindWindowSW(ref loc, ref root, SWC_DESKTOP, out int _, SWFO_NEEDDISPATCH);
             if (desktop is not IServiceProvider sp || sp.QueryService(ref TopLevelBrowser, ref ShellBrowserIid, out var b) != 0 || b is not IShellBrowser browser)
-                return "Explorer's desktop isn't running";
+                return Loc.T("Explorer's desktop isn't running");
             if (browser.QueryActiveShellView(out var view) != 0 || view.GetItemObject(SVGIO_BACKGROUND, ref DispatchIid, out var bg) != 0)
-                return "Explorer's desktop isn't ready";
+                return Loc.T("Explorer's desktop isn't ready");
             dynamic app = ((dynamic)bg).Application;
             app.ShellExecute(fileOrUrl, args ?? "", workDir ?? "", verb, 1);
             return null;
@@ -73,11 +73,11 @@ public static class ShellLaunch
     public static bool IsLaunchable(string exe, out string why)
     {
         why = null;
-        if (string.IsNullOrWhiteSpace(exe) || !Path.IsPathFullyQualified(exe)) why = "not a full path";
-        else if (!string.Equals(Path.GetExtension(exe), ".exe", StringComparison.OrdinalIgnoreCase)) why = "not an .exe file";
-        else if (!File.Exists(exe)) why = "the file no longer exists";
+        if (string.IsNullOrWhiteSpace(exe) || !Path.IsPathFullyQualified(exe)) why = Loc.T("not a full path");
+        else if (!string.Equals(Path.GetExtension(exe), ".exe", StringComparison.OrdinalIgnoreCase)) why = Loc.T("not an .exe file");
+        else if (!File.Exists(exe)) why = Loc.T("the file no longer exists");
         else if (new[] { "cs2", "steam", "steamwebhelper", Path.GetFileNameWithoutExtension(Environment.ProcessPath ?? "") }
-                 .Contains(Path.GetFileNameWithoutExtension(exe), StringComparer.OrdinalIgnoreCase)) why = "the app already opens it";
+                 .Contains(Path.GetFileNameWithoutExtension(exe), StringComparer.OrdinalIgnoreCase)) why = Loc.T("the app already opens it");
         return why == null;
     }
 

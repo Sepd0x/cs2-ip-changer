@@ -18,7 +18,7 @@ static class RevisaoATests
         // A1: sem telemóvel visto o CS2 não está trancado (o Guard só arma a regra depois), por isso nada promete o CS2 bloqueado
         check("Revisão A1: à espera do primeiro telemóvel, o Status não diz que o CS2 espera", !MainWindow.WaitingSub(true, lockCs2: true).Contains("CS2 wait")
               && MainWindow.WaitingSub(true, lockCs2: true).Contains("CS2 isn't locked") && !MainWindow.WaitingSub(true, lockCs2: false).Contains("CS2 isn't locked"), "");
-        check("Revisão A1: o toast do Turn on sem telemóvel só nomeia o que está bloqueado", !prot.Contains("servers and CS2 stay blocked. Phone setup") && prot.Contains("{Blocked(_last, lower: true)} stay blocked. Phone setup"), "");
+        check("Revisão A1: o toast do Turn on sem telemóvel só nomeia o que está bloqueado", !prot.Contains("servers and CS2 stay blocked. Phone setup") && prot.Contains("{0} stay blocked. Phone setup") && prot.Contains("Blocked(_last, lower: true)), false);"), "");
         check("Revisão A1: o Check do CS2 por armar diz que não está trancado (âmbar)", MainWindow.Cs2NotLockedYet.StartsWith("Not locked") && !prot.Contains("\"Waits for the phone\""), "");
         check("Revisão A1: a pergunta do Turn on com o CS2 aberto só diz 'or blocks it' com o lock armado",
               MainWindow.TurnOnCs2Open(true).Contains("or blocks it") && !MainWindow.TurnOnCs2Open(false).Contains("blocks") && prot.Contains("TurnOnCs2Open(_s.LockCs2 && PhoneKnown)"), "");
@@ -109,8 +109,8 @@ static class RevisaoATests
         // A25: com a proteção desligada (e o CS2 por casa) trocar o IP não deita ninguém abaixo
         check("Revisão A25: trocar o IP só derruba com a proteção ligada ou o PC pelo telemóvel", MainWindow.ChangeDrops(true, false) && MainWindow.ChangeDrops(false, true) && !MainWindow.ChangeDrops(false, false), "");
         check("Revisão A25: sem derrubar, o Status da troca não diz 'you will drop'", !MainWindow.ChangingSub(false).Contains("drop") && MainWindow.ChangingSub(true).Contains("you will drop"), "");
-        check("Revisão A25: a pergunta 'CS2 is open' do Change IP só quando derruba", phone.Contains("if (confirm && Steam.Cs2Running && IpChangeDrops && !await Ask(\"CS2 is open\",")
-              && phone.Contains("var drop = IpChangeDrops ?") && iphoneSrc.Contains("(IpChangeDrops ? \"If you are on a server, you will drop.\""), "");
+        check("Revisão A25: a pergunta 'CS2 is open' do Change IP só quando derruba", phone.Contains("if (confirm && Steam.Cs2Running && IpChangeDrops && !await Ask(Loc.T(\"CS2 is open\"),")
+              && phone.Contains("var drop = IpChangeDrops ?") && iphoneSrc.Contains("(IpChangeDrops ? Loc.T(\"If you are on a server, you will drop.\")"), "");
 
         // A5: cada Change IP com a proteção ligada dizia "dropped", tocava o alarme e depois "Protection is back"
         check("Revisão A5: uma troca de IP não dá o alarme de queda", !MainWindow.DropAlarm(true, false, changingIp: true) && MainWindow.DropAlarm(true, false, changingIp: false) && !MainWindow.DropAlarm(true, true, false), "");
@@ -150,7 +150,7 @@ static class RevisaoATests
               && !prot.Contains("Pick another option here to protect again.") && !prot.Contains("under What goes through the phone to protect again."), "");
         check("Revisão A7: No phone com o CS2 pelo telemóvel diz que o servidor passa a ver o IP de casa (A3)", MainWindow.NoPhoneAsk(true).Contains(MainWindow.Cs2OpenHomeNow) && !MainWindow.NoPhoneAsk(false).Contains("CS2 is open"), "");
         check("Revisão A7: sair de No phone pergunta Turn on / Not now, e com o CS2 aberto é a pergunta do Turn on",
-              prot.Contains("await Ask(\"Turn on protection now?\", LeaveNoPhoneAsk(Steam.Cs2Running, _s.LockCs2 && PhoneKnown), \"Turn on\", \"Not now\")")
+              prot.Contains("await Ask(Loc.T(\"Turn on protection now?\"), LeaveNoPhoneAsk(Steam.Cs2Running, _s.LockCs2 && PhoneKnown), Loc.T(\"Turn on\"), Loc.T(\"Not now\"))")
               && MainWindow.LeaveNoPhoneAsk(true, true) == MainWindow.TurnOnCs2Open(true) && MainWindow.LeaveNoPhoneAsk(false, true).Contains("Protection is off"), "");
         check("Revisão A7: fechar em No phone com o CS2 aberto não pergunta pelo tráfego que já vai por casa",
               Src("Views", "MainWindow.Window.cs").Contains("if (Steam.Cs2Running && !_restored && _protOn && _last?.Unprotected != true)"), "");
@@ -183,8 +183,8 @@ static class RevisaoATests
               && kick.Contains("QuickSteps(SwitchChoice, _s.NoPhone, IphoneByHand && (_demo || ChangeIpReady), _demo || _adb != null && _phone?.Ready == true)"), "");
 
         // A10: No phone com iPhone
-        check("Revisão A10: No phone com iPhone diz que não está em uso", phone.IndexOf("if (_s.NoPhone) SetPhone(Ui.Faint, \"iPhone not in use\", \"No phone mode is on\");") is var p10 && p10 > 0
-              && p10 < phone.IndexOf("else if (tethered) SetPhone(Ui.Good, \"iPhone connected\""), "");
+        check("Revisão A10: No phone com iPhone diz que não está em uso", phone.IndexOf("if (_s.NoPhone) SetPhone(Ui.Faint, Loc.T(\"iPhone not in use\"), Loc.T(\"No phone mode is on\"));") is var p10 && p10 > 0
+              && p10 < phone.IndexOf("else if (tethered) SetPhone(Ui.Good, Loc.T(\"iPhone connected\")"), "");
 
         // A16: no hotspot o botão Turn off phone Wi-Fi não aparece
         check("Revisão A16: o Turn off phone Wi-Fi segue a regra do bloqueio (escondido no hotspot)", phone.Contains("WifiOffBtn.Visibility = info?.Ready == true && PhoneWifiOn ?") && !phone.Contains("WifiOffBtn.Visibility = info?.Ready == true && info.WifiOn"), "");

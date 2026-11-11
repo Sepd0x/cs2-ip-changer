@@ -206,10 +206,10 @@ public sealed record ConnectionOffer(string AdapterId, string Ssid, string Detai
             : adapters.FirstOrDefault(a => a.IsWifi && a.Up && a.Gateway != null && phoneIps.Any(p => p.Wifi && p.Ip == a.Gateway));
         if (wifi != null)
             return wifi.Ssid != null
-                ? new(wifi.Id, wifi.Ssid, $"The PC is on the phone's hotspot ({wifi.Ssid}), but the app isn't set to use it.", true)
-                : new(wifi.Id, null, "The PC is on the phone's hotspot. " + Net.SsidLocationText, false);
+                ? new(wifi.Id, wifi.Ssid, Loc.F("The PC is on the phone's hotspot ({0}), but the app isn't set to use it.", wifi.Ssid), true)
+                : new(wifi.Id, null, Loc.T("The PC is on the phone's hotspot.") + " " + Loc.T(Net.SsidLocationText), false);
         if (pinnedId != null && adapters.Any(a => a.IsPhone && !a.IsWifi && a.Up && a.LocalIp != null && a.Gateway != null))
-            return new(null, null, "On, but the app is set to another connection. Use it switches to USB cable (automatic).", true);
+            return new(null, null, Loc.T("On, but the app is set to another connection. Use it switches to USB cable (automatic)."), true);
         return null;
     }
 }
@@ -298,8 +298,8 @@ public static class PhoneSetup
 
     /// <summary>The USB debugging steps for one brand (short lines, beta.11).</summary>
     public static string UsbDebuggingFor(MenuPaths p) =>
-        $"1. {p.BuildNumber}\n2. {p.DevOptions}\n3. Unplug the cable and plug it back in. On the phone, tap Allow."
-        + (p.Brand == null ? "\n" + SearchHint : "");
+        "1. " + Loc.T(p.BuildNumber) + "\n2. " + Loc.T(p.DevOptions) + "\n3. " + Loc.T("Unplug the cable and plug it back in. On the phone, tap Allow.")
+        + (p.Brand == null ? "\n" + Loc.T(SearchHint) : "");
 
     /// <summary>Why the step is worth it, and what the app does with it (4 nov.: the simulated users quit here, scared or lost).</summary>
     public const string UsbDebuggingWhy = "Needed for Change IP. After this, the app does the rest.";
@@ -308,19 +308,21 @@ public static class PhoneSetup
     /// <summary>What you have to do when the app can't do the step itself. <paramref name="samsung"/>: the phone is a Samsung.</summary>
     public static string Advice(PhoneStep step, int? problem = null, bool samsung = false) => step switch
     {
-        PhoneStep.NoAdbTool => "Install the phone tool (ADB): press Install phone tool (ADB) under Phone. It's free, from Google, about 7 MB.",
-        PhoneStep.AdbFailed => "The phone tool (ADB) didn't start. Close other Android tools (Android Studio, scrcpy) and try again, or reinstall it.",
-        PhoneStep.NoUsb => "Plug the phone into the PC with a USB cable. If it's already plugged in, try another cable: some only charge.",
-        PhoneStep.UsbDriverError => "Windows sees the phone but its USB driver failed" + (problem is int c ? $" (code {c})" : "") + ". Unplug it, use another USB port or cable, or restart the phone."
-            + (problem == 28 && samsung ? " If it keeps failing, install \"Samsung USB Driver for Mobile Phones\" from Samsung's website." : ""),
-        PhoneStep.NoUsbDebugging => "Turn on USB debugging. Without it everything works except Change IP.\n\n" + UsbDebuggingSteps
-            + (samsung ? "\n\nStill not found? Install \"Samsung USB Driver for Mobile Phones\" from Samsung's website." : ""),
-        PhoneStep.Unauthorized => "On the phone, tick \"Always allow from this computer\", then tap Allow.",
-        PhoneStep.Offline => "The phone is offline in ADB. Unplug the cable and plug it back in.",
-        PhoneStep.TetherOff => "Turn on USB tethering by hand: Settings > Network & internet > Hotspot & tethering (Samsung: Settings > Connections > Mobile Hotspot and Tethering), then USB tethering.",
-        PhoneStep.WifiOn => "Turn off the phone's Wi-Fi: with it on, the PC may get your home network instead of mobile data.",
-        PhoneStep.PcOnPhone => "The rest of the PC is going through the phone. Turn on Settings > Mobile data > Save mobile data, or plug the PC into your home network.",
-        _ => "The phone is ready.",
+        PhoneStep.NoAdbTool => Loc.T("Install the phone tool (ADB): press Install phone tool (ADB) under Phone. It's free, from Google, about 7 MB."),
+        PhoneStep.AdbFailed => Loc.T("The phone tool (ADB) didn't start. Close other Android tools (Android Studio, scrcpy) and try again, or reinstall it."),
+        PhoneStep.NoUsb => Loc.T("Plug the phone into the PC with a USB cable. If it's already plugged in, try another cable: some only charge."),
+        PhoneStep.UsbDriverError => (problem is int c
+                ? Loc.F("Windows sees the phone but its USB driver failed (code {0}). Unplug it, use another USB port or cable, or restart the phone.", c)
+                : Loc.T("Windows sees the phone but its USB driver failed. Unplug it, use another USB port or cable, or restart the phone."))
+            + (problem == 28 && samsung ? " " + Loc.T("If it keeps failing, install \"Samsung USB Driver for Mobile Phones\" from Samsung's website.") : ""),
+        PhoneStep.NoUsbDebugging => Loc.T("Turn on USB debugging. Without it everything works except Change IP.") + "\n\n" + Loc.T(UsbDebuggingSteps)
+            + (samsung ? "\n\n" + Loc.T("Still not found? Install \"Samsung USB Driver for Mobile Phones\" from Samsung's website.") : ""),
+        PhoneStep.Unauthorized => Loc.T("On the phone, tick \"Always allow from this computer\", then tap Allow."),
+        PhoneStep.Offline => Loc.T("The phone is offline in ADB. Unplug the cable and plug it back in."),
+        PhoneStep.TetherOff => Loc.T("Turn on USB tethering by hand: Settings > Network & internet > Hotspot & tethering (Samsung: Settings > Connections > Mobile Hotspot and Tethering), then USB tethering."),
+        PhoneStep.WifiOn => Loc.T("Turn off the phone's Wi-Fi: with it on, the PC may get your home network instead of mobile data."),
+        PhoneStep.PcOnPhone => Loc.T("The rest of the PC is going through the phone. Turn on Settings > Mobile data > Save mobile data, or plug the PC into your home network."),
+        _ => Loc.T("The phone is ready."),
     };
 
     public enum StepState { Ok, Todo, Waiting }
@@ -343,41 +345,41 @@ public static class PhoneSetup
         var list = new List<SetupItem>
         {
             // 10 Nov: Phone setup downloads it by itself (one new user left here twice); it waits for Install only on mobile data
-            !s.AdbTool && s.AdbFailed != null ? new(PhoneStep.NoAdbTool, Texts.AdbTitle, StepState.Todo, Texts.AdbFailed(s.AdbFailed), Texts.AdbTryAgain)
-            : !s.AdbTool && s.AdbWaits ? new(PhoneStep.NoAdbTool, Texts.AdbTitle, StepState.Todo, Texts.AdbOnMobileData, Texts.AdbInstall)
-            : !s.AdbTool ? new(PhoneStep.NoAdbTool, Texts.AdbTitle, StepState.Todo, Texts.AdbStarting, null)
-            : s.AdbState == null ? new(PhoneStep.AdbFailed, "Phone tool (ADB)", StepState.Todo, Advice(PhoneStep.AdbFailed), "Try again")
-            : new(PhoneStep.NoAdbTool, "Phone tool (ADB)", StepState.Ok, "Installed", null),
+            !s.AdbTool && s.AdbFailed != null ? new(PhoneStep.NoAdbTool, Loc.T(Texts.AdbTitle), StepState.Todo, Texts.AdbFailed(s.AdbFailed), Loc.T(Texts.AdbTryAgain))
+            : !s.AdbTool && s.AdbWaits ? new(PhoneStep.NoAdbTool, Loc.T(Texts.AdbTitle), StepState.Todo, Loc.T(Texts.AdbOnMobileData), Loc.T(Texts.AdbInstall))
+            : !s.AdbTool ? new(PhoneStep.NoAdbTool, Loc.T(Texts.AdbTitle), StepState.Todo, Loc.T(Texts.AdbStarting), null)
+            : s.AdbState == null ? new(PhoneStep.AdbFailed, Loc.T("Phone tool (ADB)"), StepState.Todo, Advice(PhoneStep.AdbFailed), Loc.T("Try again"))
+            : new(PhoneStep.NoAdbTool, Loc.T("Phone tool (ADB)"), StepState.Ok, Loc.T("Installed"), null),
 
-            s.Usb.Problem is int code ? new(PhoneStep.UsbDriverError, "USB cable", StepState.Todo, Advice(PhoneStep.UsbDriverError, code, samsung), null)
-            : plugged ? new(PhoneStep.NoUsb, "USB cable", StepState.Ok, model != null && adb ? $"{model} plugged in" : "Phone plugged in", null)
-            : s.Hotspot ? new(PhoneStep.NoUsb, "USB cable", StepState.Waiting, "You use the hotspot: the cable is only needed for Change IP.", null)
-            : new(PhoneStep.NoUsb, "USB cable", StepState.Todo, Texts.CableTodo, null),
+            s.Usb.Problem is int code ? new(PhoneStep.UsbDriverError, Loc.T("USB cable"), StepState.Todo, Advice(PhoneStep.UsbDriverError, code, samsung), null)
+            : plugged ? new(PhoneStep.NoUsb, Loc.T("USB cable"), StepState.Ok, model != null && adb ? Loc.F("{0} plugged in", model) : Loc.T("Phone plugged in"), null)
+            : s.Hotspot ? new(PhoneStep.NoUsb, Loc.T("USB cable"), StepState.Waiting, Loc.T("You use the hotspot: the cable is only needed for Change IP."), null)
+            : new(PhoneStep.NoUsb, Loc.T("USB cable"), StepState.Todo, Loc.T(Texts.CableTodo), null),
 
-            inAdb ? new(PhoneStep.NoUsbDebugging, "USB debugging", StepState.Ok, "On", null)
-            : !plugged || s.AdbState == null || !s.AdbTool ? new(PhoneStep.NoUsbDebugging, "USB debugging", StepState.Waiting, "Checked once the phone is plugged in.", null)
+            inAdb ? new(PhoneStep.NoUsbDebugging, Loc.T("USB debugging"), StepState.Ok, Loc.T("On"), null)
+            : !plugged || s.AdbState == null || !s.AdbTool ? new(PhoneStep.NoUsbDebugging, Loc.T("USB debugging"), StepState.Waiting, Loc.T("Checked once the phone is plugged in."), null)
             // 10 Nov: the steps themselves are drawn under the list, per brand (Texts.Guides); the row keeps why and what happens
-            : new(PhoneStep.NoUsbDebugging, "USB debugging", StepState.Todo, Texts.DebugTodo
-                + (samsung ? "\nStill not found? Install \"Samsung USB Driver for Mobile Phones\" from Samsung's website." : ""), null),
+            : new(PhoneStep.NoUsbDebugging, Loc.T("USB debugging"), StepState.Todo, Loc.T(Texts.DebugTodo)
+                + (samsung ? "\n" + Loc.T("Still not found? Install \"Samsung USB Driver for Mobile Phones\" from Samsung's website.") : ""), null),
 
-            adb ? new(PhoneStep.Unauthorized, "Allowed on this PC", StepState.Ok, "Allowed", null)
-            : s.AdbState == "unauthorized" ? new(PhoneStep.Unauthorized, "Allowed on this PC", StepState.Todo, Advice(PhoneStep.Unauthorized), null)
-            : s.AdbState == "offline" ? new(PhoneStep.Offline, "Allowed on this PC", StepState.Todo, Advice(PhoneStep.Offline), null)
-            : new(PhoneStep.Unauthorized, "Allowed on this PC", StepState.Waiting, "Your phone will ask \"Allow USB debugging?\". Tap Allow.", null),
+            adb ? new(PhoneStep.Unauthorized, Loc.T("Allowed on this PC"), StepState.Ok, Loc.T("Allowed"), null)
+            : s.AdbState == "unauthorized" ? new(PhoneStep.Unauthorized, Loc.T("Allowed on this PC"), StepState.Todo, Advice(PhoneStep.Unauthorized), null)
+            : s.AdbState == "offline" ? new(PhoneStep.Offline, Loc.T("Allowed on this PC"), StepState.Todo, Advice(PhoneStep.Offline), null)
+            : new(PhoneStep.Unauthorized, Loc.T("Allowed on this PC"), StepState.Waiting, Loc.T("Your phone will ask \"Allow USB debugging?\". Tap Allow."), null),
 
-            s.Hotspot ? new(PhoneStep.TetherOff, "Connection", StepState.Ok, ssid != null ? $"The phone's hotspot ({ssid})" : "The phone's hotspot", null)
-            : s.Tethered ? new(PhoneStep.TetherOff, "USB tethering", StepState.Ok, "On", null)
-            : s.Offer is { } offer ? new(PhoneStep.TetherOff, offer.Ssid != null || !offer.CanUse ? "Connection" : "USB tethering", StepState.Todo, offer.Detail, offer.CanUse ? "Use it" : null)
-            : adb ? new(PhoneStep.TetherOff, "USB tethering", StepState.Todo, "Off. The app can turn it on (on some phones you do it by hand).", "Turn on")
-            : plugged ? new(PhoneStep.TetherOff, "USB tethering", StepState.Todo, paths.Tethering + (paths.Brand == null ? "\n" + SearchHint : ""), null)
-            : new(PhoneStep.TetherOff, "USB tethering", StepState.Waiting, "Once the phone is plugged in.", null),
+            s.Hotspot ? new(PhoneStep.TetherOff, Loc.T("Connection"), StepState.Ok, ssid != null ? Loc.F("The phone's hotspot ({0})", ssid) : Loc.T("The phone's hotspot"), null)
+            : s.Tethered ? new(PhoneStep.TetherOff, Loc.T("USB tethering"), StepState.Ok, Loc.T("On"), null)
+            : s.Offer is { } offer ? new(PhoneStep.TetherOff, Loc.T(offer.Ssid != null || !offer.CanUse ? "Connection" : "USB tethering"), StepState.Todo, offer.Detail, offer.CanUse ? Loc.T("Use it") : null)
+            : adb ? new(PhoneStep.TetherOff, Loc.T("USB tethering"), StepState.Todo, Loc.T("Off. The app can turn it on (on some phones you do it by hand)."), Loc.T("Turn on"))
+            : plugged ? new(PhoneStep.TetherOff, Loc.T("USB tethering"), StepState.Todo, Loc.T(paths.Tethering) + (paths.Brand == null ? "\n" + Loc.T(SearchHint) : ""), null)
+            : new(PhoneStep.TetherOff, Loc.T("USB tethering"), StepState.Waiting, Loc.T("Once the phone is plugged in."), null),
 
-            s.Hotspot || s.Offer?.Ssid != null || s.Offer is { CanUse: false } ? new(PhoneStep.WifiOn, "Phone Wi-Fi", StepState.Ok, "Stays on for the hotspot", null)
-            : !adb ? new(PhoneStep.WifiOn, "Phone Wi-Fi off", StepState.Waiting, "Turn off Wi-Fi on the phone. Keep mobile data on.", null)
-            : s.WifiOn ? new(PhoneStep.WifiOn, "Phone Wi-Fi off", StepState.Todo, "On: tethering may share your home Wi-Fi instead of mobile data.", "Turn off")
-            : new(PhoneStep.WifiOn, "Phone Wi-Fi off", StepState.Ok, "Off: mobile data", null),
+            s.Hotspot || s.Offer?.Ssid != null || s.Offer is { CanUse: false } ? new(PhoneStep.WifiOn, Loc.T("Phone Wi-Fi"), StepState.Ok, Loc.T("Stays on for the hotspot"), null)
+            : !adb ? new(PhoneStep.WifiOn, Loc.T("Phone Wi-Fi off"), StepState.Waiting, Loc.T("Turn off Wi-Fi on the phone. Keep mobile data on."), null)
+            : s.WifiOn ? new(PhoneStep.WifiOn, Loc.T("Phone Wi-Fi off"), StepState.Todo, Loc.T("On: tethering may share your home Wi-Fi instead of mobile data."), Loc.T("Turn off"))
+            : new(PhoneStep.WifiOn, Loc.T("Phone Wi-Fi off"), StepState.Ok, Loc.T("Off: mobile data"), null),
         };
-        if (s.PcOnPhone) list.Add(new(PhoneStep.PcOnPhone, "Rest of the PC", StepState.Todo, "Going through the phone (uses mobile data).", "Keep it home"));
+        if (s.PcOnPhone) list.Add(new(PhoneStep.PcOnPhone, Loc.T("Rest of the PC"), StepState.Todo, Loc.T("Going through the phone (uses mobile data)."), Loc.T("Keep it home")));
         return list;
     }
 
@@ -408,28 +410,28 @@ public static class PhoneSetup
         var noDriver = plugged && !s.Tethered && !s.Hotspot && !s.AppleDriver;
         return new List<SetupItem>
         {
-            s.Usb.Problem is int code ? new(PhoneStep.UsbDriverError, "Apple driver", StepState.Todo, IphoneDriver + $" (Windows says code {code}.)", "Install")
-            : s.Tethered ? new(PhoneStep.UsbDriverError, "Apple driver", StepState.Ok, "Installed", null)
-            : noDriver ? new(PhoneStep.UsbDriverError, "Apple driver", StepState.Todo, IphoneDriverMissing, "Install")
-            : s.AppleDriver && plugged ? new(PhoneStep.UsbDriverError, "Apple driver", StepState.Ok, "Installed", null)
-            : new(PhoneStep.UsbDriverError, "Apple driver", StepState.Waiting, "If the steps below stay red: " + IphoneDriver, null),
+            s.Usb.Problem is int code ? new(PhoneStep.UsbDriverError, Loc.T("Apple driver"), StepState.Todo, Loc.T(IphoneDriver) + " " + Loc.F("(Windows says code {0}.)", code), Loc.T("Install"))
+            : s.Tethered ? new(PhoneStep.UsbDriverError, Loc.T("Apple driver"), StepState.Ok, Loc.T("Installed"), null)
+            : noDriver ? new(PhoneStep.UsbDriverError, Loc.T("Apple driver"), StepState.Todo, Loc.T(IphoneDriverMissing), Loc.T("Install"))
+            : s.AppleDriver && plugged ? new(PhoneStep.UsbDriverError, Loc.T("Apple driver"), StepState.Ok, Loc.T("Installed"), null)
+            : new(PhoneStep.UsbDriverError, Loc.T("Apple driver"), StepState.Waiting, Loc.T("If the steps below stay red:") + " " + Loc.T(IphoneDriver), null),
 
-            plugged ? new(PhoneStep.NoUsb, "USB cable", StepState.Ok, "iPhone plugged in", null)
-            : s.Hotspot ? new(PhoneStep.NoUsb, "USB cable", StepState.Waiting, "You use the hotspot over Wi-Fi: the cable is optional.", null)
-            : new(PhoneStep.NoUsb, "USB cable", StepState.Todo, Advice(PhoneStep.NoUsb), null),
+            plugged ? new(PhoneStep.NoUsb, Loc.T("USB cable"), StepState.Ok, Loc.T("iPhone plugged in"), null)
+            : s.Hotspot ? new(PhoneStep.NoUsb, Loc.T("USB cable"), StepState.Waiting, Loc.T("You use the hotspot over Wi-Fi: the cable is optional."), null)
+            : new(PhoneStep.NoUsb, Loc.T("USB cable"), StepState.Todo, Advice(PhoneStep.NoUsb), null),
 
-            s.Tethered || s.Hotspot ? new(PhoneStep.Unauthorized, "Trust this computer", StepState.Ok, "Trusted", null)
-            : noDriver ? new(PhoneStep.Unauthorized, "Trust this computer", StepState.Waiting, "Once Apple's driver is installed.", null)
-            : plugged ? new(PhoneStep.Unauthorized, "Trust this computer", StepState.Todo, "Unlock the iPhone. If it asks \"Trust This Computer?\", tap Trust and enter your passcode.\nNo question? " + IphoneBringBack, null)
-            : new(PhoneStep.Unauthorized, "Trust this computer", StepState.Waiting, "The iPhone asks once it is plugged in.", null),
+            s.Tethered || s.Hotspot ? new(PhoneStep.Unauthorized, Loc.T("Trust this computer"), StepState.Ok, Loc.T("Trusted"), null)
+            : noDriver ? new(PhoneStep.Unauthorized, Loc.T("Trust this computer"), StepState.Waiting, Loc.T("Once Apple's driver is installed."), null)
+            : plugged ? new(PhoneStep.Unauthorized, Loc.T("Trust this computer"), StepState.Todo, Loc.T("Unlock the iPhone. If it asks \"Trust This Computer?\", tap Trust and enter your passcode.") + "\n" + Loc.T("No question?") + " " + Loc.T(IphoneBringBack), null)
+            : new(PhoneStep.Unauthorized, Loc.T("Trust this computer"), StepState.Waiting, Loc.T("The iPhone asks once it is plugged in."), null),
 
-            s.Hotspot ? new(PhoneStep.TetherOff, "Connection", StepState.Ok, ssid != null ? $"The iPhone's hotspot ({ssid})" : "The iPhone's hotspot", null)
-            : s.Tethered ? new(PhoneStep.TetherOff, "Personal Hotspot", StepState.Ok, "On, through the cable (mobile data)", null)
-            : noDriver ? new(PhoneStep.TetherOff, "Personal Hotspot", StepState.Waiting, "Once Apple's driver is installed.", null)
-            : plugged ? new(PhoneStep.TetherOff, "Personal Hotspot", StepState.Todo, IphoneHotspot + "\nStill red? " + IphoneBringBack, null)
-            : new(PhoneStep.TetherOff, "Personal Hotspot", StepState.Waiting, "Once the iPhone is plugged in.", null),
+            s.Hotspot ? new(PhoneStep.TetherOff, Loc.T("Connection"), StepState.Ok, ssid != null ? Loc.F("The iPhone's hotspot ({0})", ssid) : Loc.T("The iPhone's hotspot"), null)
+            : s.Tethered ? new(PhoneStep.TetherOff, Loc.T("Personal Hotspot"), StepState.Ok, Loc.T("On, through the cable (mobile data)"), null)
+            : noDriver ? new(PhoneStep.TetherOff, Loc.T("Personal Hotspot"), StepState.Waiting, Loc.T("Once Apple's driver is installed."), null)
+            : plugged ? new(PhoneStep.TetherOff, Loc.T("Personal Hotspot"), StepState.Todo, Loc.T(IphoneHotspot) + "\n" + Loc.T("Still red?") + " " + Loc.T(IphoneBringBack), null)
+            : new(PhoneStep.TetherOff, Loc.T("Personal Hotspot"), StepState.Waiting, Loc.T("Once the iPhone is plugged in."), null),
 
-            new(PhoneStep.Done, "Change IP", s.Tethered || s.Hotspot ? StepState.Ok : StepState.Waiting, IphoneChangeIp, null),
+            new(PhoneStep.Done, Loc.T("Change IP"), s.Tethered || s.Hotspot ? StepState.Ok : StepState.Waiting, Loc.T(IphoneChangeIp), null),
         };
     }
 
@@ -441,7 +443,7 @@ public static class PhoneSetup
     public static string Shown(SetupItem item, SetupItem current)
     {
         if (item.Step == PhoneStep.Done) return current == null ? item.Detail : null;
-        if (item.State == StepState.Ok) return "Done";
+        if (item.State == StepState.Ok) return Loc.T("Done");
         if (current == null) return item.Detail;
         return item == current ? item.Detail : null;
     }
@@ -473,10 +475,10 @@ public static class PhoneSetup
         if (item?.State != StepState.Todo) return item?.Detail;
         return item.Step switch
         {
-            PhoneStep.NoUsb when item.Detail == Texts.CableTodo =>
-                item.Detail + "\n" + Texts.CableLive(seconds) + (seconds >= Texts.CableHelpAfterSeconds ? "\n" + Texts.CableStillNothing : ""),
-            PhoneStep.NoUsbDebugging when seconds >= 45 => item.Detail + "\n" + Texts.DebugStillRed,
-            PhoneStep.Unauthorized when seconds >= Texts.AllowHelpAfterSeconds => item.Detail + "\n" + Texts.AllowNoQuestion,
+            PhoneStep.NoUsb when item.Detail == Loc.T(Texts.CableTodo) =>
+                item.Detail + "\n" + Texts.CableLive(seconds) + (seconds >= Texts.CableHelpAfterSeconds ? "\n" + Loc.T(Texts.CableStillNothing) : ""),
+            PhoneStep.NoUsbDebugging when seconds >= 45 => item.Detail + "\n" + Loc.T(Texts.DebugStillRed),
+            PhoneStep.Unauthorized when seconds >= Texts.AllowHelpAfterSeconds => item.Detail + "\n" + Loc.T(Texts.AllowNoQuestion),
             _ => item.Detail,
         };
     }

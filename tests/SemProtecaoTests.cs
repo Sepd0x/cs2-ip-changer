@@ -29,7 +29,7 @@ static class SemProtecaoTests
         check("Sem proteção: o Log in abre o CS2", Src("Views", "MainWindow.Accounts.cs").Contains("if (cs2 && !OpensCs2OnLogin(_protOn, _s.LockCs2, OnHome,") && MainWindow.OpensCs2OnLogin(false, true, true, false, false), "");
 
         var settings = Src("Views", "MainWindow.Settings.cs");
-        check("Sem proteção: ligar a opção pergunta primeiro, com o aviso", settings.Contains("!await Ask(\"Use the app with protection off?\", UseOffWarning"), "");
+        check("Sem proteção: ligar a opção pergunta primeiro, com o aviso", settings.Contains("!await Ask(Loc.T(\"Use the app with protection off?\"), UseOffWarning"), "");
         check("Sem proteção: recusar o aviso deixa a opção desligada", settings.Contains("UseOffBox.IsChecked = false;"), "");
         check("Sem proteção: o aviso diz que os servidores veem o IP de casa", MainWindow.UseOffWarning.Contains("sees your home IP"), "");
         // New IP + next account com a proteção desligada: não diz que troca o IP quando não troca
@@ -52,7 +52,7 @@ static class SemProtecaoTests
         check("Lógica: sem proteção, um timeout do servidor conta (não é a ligação a mudar)", kick.Contains("_last?.Egress == null && _last?.Unprotected != true"), "");
         check("Lógica: o relatório de rede em casa não fala do telemóvel", kick.Contains("var via = home ? \"home connection\""), "");
         check("Lógica: rede que não volta não diz que a operadora deu o mesmo IP", Src("Views", "MainWindow.Phone.cs").Contains("else if (got != null && got == first)"), "");
-        check("Lógica: a troca de conta não escreve com o Steam ainda aberto", Src("Core", "Steam", "SteamAccounts.cs").Contains("if (!SteamClosedNow()) throw new InvalidOperationException(\"Steam didn't close"), "");
+        check("Lógica: a troca de conta não escreve com o Steam ainda aberto", Src("Core", "Steam", "SteamAccounts.cs").Contains("if (!SteamClosedNow()) throw new InvalidOperationException(Loc.T(\"Steam didn't close"), "");
         check("Switch: o nome do botão tira o New IP quando o IP não muda", Src("Views", "MainWindow.Accounts.cs").Contains("IpStep(_protOn, _s.UseWithProtectionOff) == IpWhenOff.Skip)) c = c with { Ip = false }"), "");
         check("Switch: o botão atualiza quando a proteção muda", Src("Views", "MainWindow.Protection.cs").Contains("UpdateQuickInfo();     // New IP + next account"), "");
 

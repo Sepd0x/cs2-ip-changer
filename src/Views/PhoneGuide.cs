@@ -43,17 +43,17 @@ public static class PhoneSketch
     {
         var root = new StackPanel();
         var brands = new WrapPanel { Margin = new Thickness(0, 0, 0, 10) };
-        brands.Children.Add(new TextBlock { Text = Texts.GuideYourPhone, Foreground = Ui.Muted, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 6) });
+        brands.Children.Add(new TextBlock { Text = Loc.T(Texts.GuideYourPhone), Foreground = Ui.Muted, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 6) });
         foreach (var g in Texts.Guides)
         {
             var b = new Button
             {
-                Content = g.Brand == seen ? $"{g.Name} · {Texts.GuideSeen}" : g.Name,
+                Content = g.Brand == seen ? Loc.T(g.Name) + " · " + Loc.T(Texts.GuideSeen) : Loc.T(g.Name),
                 Style = (Style)Application.Current.FindResource(g.Brand == guide.Brand ? "Primary" : "Btn"),
                 Margin = new Thickness(0, 0, 6, 6), Tag = g.Brand,
             };
             b.Click += (_, _) => pick(g.Brand);
-            System.Windows.Automation.AutomationProperties.SetName(b, g.Name);
+            System.Windows.Automation.AutomationProperties.SetName(b, Loc.T(g.Name));
             brands.Children.Add(b);
         }
         root.Children.Add(brands);
@@ -66,13 +66,13 @@ public static class PhoneSketch
             col.Children.Add(Screen(s.Screen));
             var text = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = Ui.Text, Margin = new Thickness(0, 8, 0, 0) };
             text.Inlines.Add(new System.Windows.Documents.Run($"{i + 1}. ") { Foreground = Ui.Accent, FontWeight = FontWeights.SemiBold });
-            text.Inlines.Add(new System.Windows.Documents.Run(s.Text));
+            text.Inlines.Add(new System.Windows.Documents.Run(Loc.T(s.Text)));
             col.Children.Add(text);
             steps.Children.Add(col);
         }
         root.Children.Add(steps);
 
-        var foot = (guide.Checked ? "" : Texts.GuideNotChecked + "\n") + Texts.DebugSafe;
+        var foot = (guide.Checked ? "" : Loc.T(Texts.GuideNotChecked) + "\n") + Loc.T(Texts.DebugSafe);
         root.Children.Add(new TextBlock { Text = foot, TextWrapping = TextWrapping.Wrap, FontSize = 11, Foreground = Ui.Faint, Margin = new Thickness(0, 10, 0, 0) });
         return root;
     }
@@ -86,7 +86,7 @@ public static class PhoneSketch
         if (s.Prompt) body.Children.Add(Prompt(s));
         else
         {
-            body.Children.Add(new TextBlock { Text = s.Title, FontSize = 10.5, FontWeight = FontWeights.SemiBold, Foreground = Ui.Text, Margin = new Thickness(8, 0, 8, 8), TextTrimming = TextTrimming.CharacterEllipsis });
+            body.Children.Add(new TextBlock { Text = Loc.T(s.Title), FontSize = 10.5, FontWeight = FontWeights.SemiBold, Foreground = Ui.Text, Margin = new Thickness(8, 0, 8, 8), TextTrimming = TextTrimming.CharacterEllipsis });
             body.Children.Add(Bar(0.72));
             body.Children.Add(Bar(0.55));
             body.Children.Add(Bar(0.64));
@@ -114,14 +114,14 @@ public static class PhoneSketch
         var g = new Grid();
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         g.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        g.Children.Add(new TextBlock { Text = s.Row, FontSize = 10, Foreground = Ui.Text, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis });
+        g.Children.Add(new TextBlock { Text = Loc.T(s.Row), FontSize = 10, Foreground = Ui.Text, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis });
         FrameworkElement mark = s.Switch
             ? new Border
             {
-                Width = 18, Height = 10, Background = Ui.Accent, VerticalAlignment = VerticalAlignment.Center, ToolTip = s.Mark,
+                Width = 18, Height = 10, Background = Ui.Accent, VerticalAlignment = VerticalAlignment.Center, ToolTip = Loc.T(s.Mark),
                 Child = new Rectangle { Width = 6, Height = 6, Fill = Ui.Text, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 0, 2, 0) },
             }
-            : new TextBlock { Text = s.Mark, FontSize = 9.5, Foreground = Ui.Accent, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 0, 0) };
+            : new TextBlock { Text = Loc.T(s.Mark), FontSize = 9.5, Foreground = Ui.Accent, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(4, 0, 0, 0) };
         Grid.SetColumn(mark, 1);
         g.Children.Add(mark);
         return new Border
@@ -135,19 +135,19 @@ public static class PhoneSketch
     static FrameworkElement Prompt(Texts.GuideScreen s)
     {
         var p = new StackPanel { Margin = new Thickness(8, 14, 8, 0) };
-        p.Children.Add(new TextBlock { Text = s.Title, FontSize = 10, FontWeight = FontWeights.SemiBold, Foreground = Ui.Text, TextWrapping = TextWrapping.Wrap });
+        p.Children.Add(new TextBlock { Text = Loc.T(s.Title), FontSize = 10, FontWeight = FontWeights.SemiBold, Foreground = Ui.Text, TextWrapping = TextWrapping.Wrap });
         var tick = new DockPanel { Margin = new Thickness(0, 8, 0, 10) };
         var box = new Border { Width = 9, Height = 9, Background = Ui.Accent, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 2, 6, 0) };
         DockPanel.SetDock(box, Dock.Left);
         tick.Children.Add(box);
-        tick.Children.Add(new TextBlock { Text = s.Row, FontSize = 9.5, Foreground = Ui.Text, TextWrapping = TextWrapping.Wrap });
+        tick.Children.Add(new TextBlock { Text = Loc.T(s.Row), FontSize = 9.5, Foreground = Ui.Text, TextWrapping = TextWrapping.Wrap });
         p.Children.Add(tick);
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-        buttons.Children.Add(new TextBlock { Text = Texts.PhoneCancelButton, FontSize = 9.5, Foreground = Ui.Faint, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 0) });
+        buttons.Children.Add(new TextBlock { Text = Loc.T(Texts.PhoneCancelButton), FontSize = 9.5, Foreground = Ui.Faint, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 0) });
         buttons.Children.Add(new Border
         {
             BorderBrush = Ui.Accent, BorderThickness = new Thickness(1), Background = (Brush)Application.Current.FindResource("AccentSoft"), Padding = new Thickness(6, 2, 6, 2),
-            Child = new TextBlock { Text = Texts.PhoneAllowButton, FontSize = 9.5, FontWeight = FontWeights.SemiBold, Foreground = Ui.Accent },
+            Child = new TextBlock { Text = Loc.T(Texts.PhoneAllowButton), FontSize = 9.5, FontWeight = FontWeights.SemiBold, Foreground = Ui.Accent },
         });
         p.Children.Add(buttons);
         return new Border { Background = (Brush)Application.Current.FindResource("Surface2"), Margin = new Thickness(6, 10, 6, 0), Padding = new Thickness(0, 0, 0, 8), Child = p };
