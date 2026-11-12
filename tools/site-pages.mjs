@@ -107,7 +107,8 @@ const vtLinks = (s) => s.replace(/https:\/\/www\.virustotal\.com\/gui\/file\/[0-
 const home = readFileSync(join(site, 'index.html'), 'utf8');
 const themeColor = home.match(/<meta name="theme-color" content="([^"]+)">/)[1];   // from src/Theme.xaml (tools/design-tokens.mjs)
 // The home page's own blocks (hero map, viewer, sections) are left out; its media queries stay, they hold the table rules too.
-const style = home.match(/<style>[\s\S]*?<\/style>/)[0].replace(/\/\* home: [\s\S]*?(?=@media \(max-width:1000px\))/, '').replace(/url\((fonts|assets)\//g, 'url(../$1/').replace('</style>', `/* guides */
+// The home has more than one <style> (the language picker's comes first): the look is the one with the tokens.
+const style = [...home.matchAll(/<style>[\s\S]*?<\/style>/g)].map((m) => m[0]).find((x) => x.includes('tokens: tools/design-tokens')).replace(/\/\* home: [\s\S]*?(?=@media \(max-width:1000px\))/, '').replace(/url\((fonts|assets)\//g, 'url(../$1/').replace('</style>', `/* guides */
 /* a fallback with Funnel Display's width, so the H1 breaks in the same place before the font arrives (no shift) */
 @font-face{font-family:"Funnel Display fb";src:local("Segoe UI Variable Display"),local("Segoe UI"),local("Arial");size-adjust:105.5%}
 @font-face{font-family:"Funnel Sans fb";src:local("Segoe UI Variable Text"),local("Segoe UI"),local("Arial");size-adjust:101.4%}
