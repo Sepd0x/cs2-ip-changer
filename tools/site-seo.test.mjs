@@ -85,6 +85,8 @@ test('SEO: the questions people search have their answer on the right page', () 
   has('cs2-ip-ban', 'Does CS2 IP ban?', 'Can you get IP banned in CS2?', 'Is a VAC ban an IP ban?', 'How do I know if I am IP banned on a CS2 server?');
   has('copy-cs2-config', 'Copy CS2 settings to another account', 'Where is the CS2 config file?', 'How do I save or export my CS2 settings?');
   has('hide-ip-cs2', 'Why is my VPN blocked on CS2 community servers?', 'What is a VPN alternative for CS2?');
+  has('cs2-ping-test', 'How do I test my ping to CS2 servers?', 'What is a good ping in CS2?', 'Why is my CS2 ping high when my internet is fast?');
+  has('cs2-config-file-location', 'Where do I find my CS2 cfg folder on Windows?', 'Where does autoexec.cfg go in CS2?', 'How do I find my Steam account ID?');
   has('cs2-mobile-data', 'Can you play CS2 on a mobile hotspot?', 'How much data does CS2 use per hour?', 'Is USB tethering better than a hotspot for gaming?');
   // the comparison is dated, so nobody reads an old row as today's
   assert.match(plain(read('cs2-region-picker/index.html')), /Checked on \d+ \w+ 20\d\d/);

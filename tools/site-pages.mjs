@@ -525,6 +525,72 @@ export const pages = [
     ],
   },
   {
+    // 12 Nov. 2026: a page for "cs2 ping test", "cs2 server locations", "cs2 ping spikes" (Google suggestions, CRESCIMENTO.md).
+    // The app's side comes from docs/FEATURES.md (Regions, Connection quality). The ranges of a good ping are players' rules of
+    // thumb, not Valve's, and the page says so. Nothing here claims how the app measures a region beyond what the docs say.
+    slug: 'cs2-ping-test',
+    title: 'CS2 ping test: your ping to every Valve region, free',
+    desc: 'Test your CS2 ping to each Valve matchmaking region before you queue, learn what a good ping is and what to do about spikes. Free for Windows.',
+    nav: 'CS2 ping test',
+    blurb: 'Your ping to every region, and what to do about spikes.',
+    eyebrow: 'CS2 ping test',
+    h1: 'CS2 ping test: see your ping to every Valve region',
+    lead: "CS2 puts you in the matchmaking region where your ping to Valve's relays is good, and the game never shows you that list. The Regions page of CS2 IP Changer does: every region by continent with its ping, measured the way the game will reach it, before you queue.",
+    crop: ['regions', 91, 44, 760, 466, "The Regions page: Valve's matchmaking regions by continent, each with its ping"],
+    related: ['cs2-region-picker', 'cs2-mobile-data', 'copy-cs2-config'],
+    sections: [
+      ['Test your ping before you queue', `<ol><li>Run <code>CS2IPChanger.exe</code> (it asks for admin) and open Regions. You don't need the phone or protection for this (<a href="../is-it-safe/">what the app changes on your PC</a>).</li><li>Press Refresh. The list comes from Valve's own relay list, grouped by continent and city, and the app pings each region.</li><li>Read the ping next to each region. With protection on, it is measured through the phone; with protection off, or in No phone mode, through your home connection.</li><li>If a region you don't want is the closest, turn it off, or use a shortcut such as Closest 3 or Ping under X ms (<a href="../cs2-region-picker/">how the CS2 region picker works</a>).</li></ol><p>A ping test is a snapshot: press Refresh again at the time of day you play, because the number moves.</p>`],
+      ['Read the numbers', `<p>These are players' rules of thumb, not numbers from Valve:</p><div class="tbl"><table><thead><tr><th scope="col">Ping</th><th scope="col">How it plays</th></tr></thead><tbody>
+<tr><td>Under about 30 ms</td><td>Close to instant. Usually a region in your own country.</td></tr>
+<tr><td>30 to 60 ms</td><td>Fine for any mode, competitive included.</td></tr>
+<tr><td>60 to 100 ms</td><td>Playable. You start to notice it in peeks and spray fights.</td></tr>
+<tr><td>Over 100 ms</td><td>Hard to play well: shots and peeks land late.</td></tr>
+</tbody></table></div><p>Ping is only one of three numbers. Jitter is how much the ping moves from one packet to the next, and packet loss is the packets that never arrive. A steady 60 ms plays better than a ping that swings between 20 and 120. On the phone, Connection quality in Checks pings every 30 seconds and shows ping, jitter and loss. It calls the connection Weak at a ping of 150 ms or more, jitter of 40 ms or more, or 2 of 8 pings lost, twice in a row.</p>`],
+      ['In the game, and by hand', `<p>In a match, the Ping column of the scoreboard (the Tab key) shows your ping to that server. Matchmaking has a ceiling of its own: Max Acceptable Matchmaking Ping in Settings &gt; Game only sets the highest ping you accept, and it doesn't choose a region.</p><p>You can also ping Valve's relays yourself. Open <code>https://api.steampowered.com/ISteamApps/GetSDRConfig/v1/?appid=730</code>: each site (a "pop", like <code>fra</code> for Frankfurt) lists the IPs of its relays, and <code>ping</code> in Windows Terminal shows the time to one of them. It is a rough guide: <code>ping</code> measures ICMP, and the game sends UDP through Valve's relay network, so the app's numbers are closer to what the game gets. Doing it for every region is dozens of IPs, and Valve changes the list from time to time.</p>`],
+      ['Ping spikes with good internet', `<p>When the average is fine but the game stutters, the cause is usually one of these:</p><ul><li><b>Wi-Fi.</b> Radio interference and a weak signal come and go. A cable removes the biggest cause.</li><li><b>Something else using the line.</b> Downloads, game updates, a stream or video on another device in the house.</li><li><b>A region that is far away.</b> If matchmaking keeps putting you on a distant region, turn it off on the Regions page and queue again.</li><li><b>Your provider's route.</b> Some routes to a region are worse than others at some hours. A ping test at the same hour as the match shows it.</li></ul><p>To compare, test through another connection. The app measures through your phone's mobile data when protection is on, so you see both numbers (<a href="../cs2-mobile-data/">CS2 on mobile data: what ping to expect</a>).</p>`],
+    ],
+    faq: [
+      ['How do I test my ping to CS2 servers?', "Open Regions in CS2 IP Changer and press Refresh: it lists Valve's matchmaking regions by continent, with the ping of each one. In a match, the scoreboard shows your ping to that server. It is free, for Windows 10 and 11, and needs no phone."],
+      ['What is a good ping in CS2?', "As a rule of thumb, under 30 ms is excellent, 30 to 60 ms is fine for competitive, 60 to 100 ms is playable and over 100 ms is hard. Steady matters as much as low: a ping that swings by 100 ms plays worse than a steady 60. These are players' rules of thumb, not Valve's numbers."],
+      ['Why is my CS2 ping high when my internet is fast?', "Speed and ping are different things. A fast line can still have a long route to the region, a weak Wi-Fi signal or something else using it. Test each region on the Regions page and turn off the far ones, and use a cable if you play on Wi-Fi."],
+      ['Where can I see the CS2 server locations?', "Valve publishes its relay list (Steam Datagram Relay) for the game, with one site per city. The Regions page reads that list and shows each region by continent and city, with its ping, so you see where you can play and how far each one is."],
+      ['Does the ping test change my ping?', "No. It only measures. To get a lower ping you keep matchmaking away from the far regions: turn them off on the Regions page and CS2 only looks for a match in the ones you left on."],
+    ],
+  },
+  {
+    // 12 Nov. 2026: a page for "cs2 config file location", "cs2 config folder", "cfg cs2" (Search Console and Google suggestions).
+    // The paths and file names are the ones already on the copy-cs2-config page and docs/FEATURES.md (CS2 config manager); the
+    // autoexec.cfg folder is the one CS2 shares with CS:GO. Whether CS2 runs it by itself is said with care: the launch option is the safe way.
+    slug: 'cs2-config-file-location',
+    title: 'CS2 config file location: where your settings are saved',
+    desc: 'Where CS2 saves your config on Windows: the cfg folder per Steam account, what each file holds, autoexec.cfg, and how to back it up or move it.',
+    nav: 'CS2 config file location',
+    blurb: 'Where the cfg folder is, and what each file holds.',
+    eyebrow: 'CS2 config manager',
+    h1: 'Where is the CS2 config file? The cfg folder, file by file',
+    lead: 'CS2 keeps your binds, crosshair, video and other settings in a cfg folder inside your Steam folder, one folder for each Steam account. Here is how to open it, what each file holds, where autoexec.cfg goes and how to back it all up.',
+    crop: ['configs', 657, 370, 566, 290, 'The Configs page: two accounts compared setting by setting, with a crosshair preview'],
+    related: ['copy-cs2-config', 'steam-account-switcher', 'cs2-region-picker'],
+    sections: [
+      ['Open the cfg folder', `<p>CS2 saves your settings per Steam account, in:</p><p><code>Steam\\userdata\\&lt;account ID&gt;\\730\\local\\cfg</code></p><ol><li>Open your Steam folder. On most PCs it is <code>C:\\Program Files (x86)\\Steam</code>; if you installed it somewhere else, right-click the Steam shortcut and pick Open file location.</li><li>Open <code>userdata</code>. It has one folder for each account that has signed in on this PC, named with the account ID (a number).</li><li>Open the folder of your account, then <code>730</code> (CS2's app number), then <code>local</code>, then <code>cfg</code>.</li></ol><p>If you can't tell which number is yours, the folder that changed last is the account you played most recently. The Steam account switcher shows each account saved on your PC (<a href="../steam-account-switcher/">Steam account switcher</a>).</p>`],
+      ['What each file holds', `<div class="tbl"><table><thead><tr><th scope="col">File</th><th scope="col">What it holds</th></tr></thead><tbody>
+<tr><td><code>cs2_user_keys_0_slot0.vcfg</code></td><td>Your binds</td></tr>
+<tr><td><code>cs2_user_convars_0_slot0.vcfg</code></td><td>The crosshair and the other game settings, like sensitivity and viewmodel</td></tr>
+<tr><td><code>cs2_video.txt</code></td><td>Video settings</td></tr>
+<tr><td><code>cs2_machine_convars.vcfg</code></td><td>HUD, radar and audio</td></tr>
+</tbody></table></div><p>They are plain text, but CS2 writes them again when it closes, so a change made while the game is open is lost. Edit them only with CS2 closed, and keep a copy first.</p>`],
+      ['autoexec.cfg is a different folder', `<p><code>autoexec.cfg</code> isn't one of those files: you write it yourself, as plain text with one console command per line, and it lives in the game's own folder, <code>Steam\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\cfg</code>. If CS2 doesn't run it on start, add <code>+exec autoexec</code> to the launch options (Steam &gt; CS2 &gt; Properties &gt; General). Unlike the files above, it is the same for every account on this PC.</p>`],
+      ['Back it up, export it, move it', `<ul><li><b>By hand.</b> Close CS2, then copy the <code>cfg</code> folder somewhere safe. To restore, close CS2 and copy the files back.</li><li><b>Steam Cloud can undo it.</b> CS2 settings are also kept in Steam Cloud. If an account was played on another PC since, Steam may bring that version back or ask which one to keep.</li><li><b>With the app.</b> The Configs page of CS2 IP Changer does all of this for you: it saves a snapshot under a name, exports it as a .zip for another PC (only the config files and the name, never the account), compares two accounts setting by setting, and keeps a backup of everything it changes (<a href="../copy-cs2-config/">copy your CS2 settings to another account</a>).</li></ul>`],
+    ],
+    faq: [
+      ['Where do I find my CS2 cfg folder on Windows?', 'In your Steam folder: Steam\\userdata\\(account ID)\\730\\local\\cfg. On most PCs Steam is in C:\\Program Files (x86)\\Steam. The account ID is the number of the folder under userdata.'],
+      ['Where does autoexec.cfg go in CS2?', 'In Steam\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\cfg. You create the file yourself. If CS2 does not run it, add +exec autoexec to the launch options in the game\'s properties on Steam.'],
+      ['How do I find my Steam account ID?', 'Open Steam\\userdata. Each folder there is one account that has signed in on this PC, named with its account ID. The one that changed last is the account you played most recently.'],
+      ['Why do my CS2 settings keep coming back or resetting?', 'Two common reasons: you edited a file while CS2 was open, so it wrote its own copy over yours when it closed, or Steam Cloud brought back a newer version from another PC. Close CS2 before you edit, and check Steam Cloud for CS2 in the game\'s properties.'],
+      ['Is the CS2 config the same on every account?', 'No. Each account has its own cfg folder, so a new account starts with defaults. The Configs page of CS2 IP Changer copies your binds, crosshair, video and the rest to the other accounts, one part at a time or all of it.'],
+    ],
+  },
+  {
     // Facts only from README.md (Quick start, the FAQ "Does it work with an iPhone?" and the VPN table). The iPhone steps of
     // Phone setup come with beta.11, so this page doesn't mention them until that release is out.
     slug: 'cs2-iphone-hotspot',
@@ -662,6 +728,8 @@ const SIG = {
   'steam-account-switcher': ['8/8', 'Accounts', 'Example', 'From the Accounts page of the app, with example names.'],
   'copy-cs2-config': ['7', 'Settings that differ between two accounts', 'Example', 'From Compare on the Configs page of the app.'],
   'cs2-region-picker': ['8/30', 'Regions CS2 can play in', 'Example', 'From the Regions page of the app.'],
+  'cs2-ping-test': ['38 ms', 'Ping to the closest region', 'Example', 'From the Regions page of the app. Example values only.'],
+  'cs2-config-file-location': ['4', 'Config files CS2 keeps per account', 'The ones the app copies', 'From the Configs page of the app.'],
   'steam-profile-editor': ['6/8', 'Accounts picked for one template', 'Example', 'From the Profiles page of the app, with example names.'],
 };
 
@@ -677,6 +745,8 @@ const WORLD = {
   'steam-account-switcher': ['accounts', "Example: the account banned on that server is skipped and the next one logs in, with no password typed.", 'Play it again'],
   'copy-cs2-config': ['configs', "Example: binds, crosshair, settings, video and HUD go to another account, with a backup of each change.", 'Play it again'],
   'cs2-region-picker': ['regions', "Example: the regions you turn off go dark, blocked for cs2.exe only; CS2 matches in the ones left on.", 'Play it again'],
+  'cs2-ping-test': ['regions', "Example: each region with its ping; the far ones go dark when you turn them off.", 'Play it again'],
+  'cs2-config-file-location': ['configs', "Example: binds, crosshair, settings, video and HUD go to another account, with a backup of each change.", 'Play it again'],
   'steam-profile-editor': ['profiles', "Example: one template goes onto the accounts you pick, one after another, after a preview.", 'Play it again'],
 };
 

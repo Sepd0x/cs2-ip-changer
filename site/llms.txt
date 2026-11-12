@@ -70,6 +70,8 @@ Status: beta. Latest release 0.1.0-beta.13 (2026-11-12). Free, no account. Not a
 - [Copy CS2 settings](https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/): crosshair, binds and video on every account.
 - [CS2 server picker and region picker](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/): how to change your region in CS2 (CS2 has no region setting), step by step, the CS2 server pickers compared (Server Picker X, CS2 Server Picker, CS2 Region Picker, CS2 MM Server Picker), how to do the same block by hand with Windows Firewall, and why a server picker sometimes blocks nothing.
 - [Steam profile editor](https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/): name, avatar and privacy on many accounts.
+- [CS2 ping test](https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/): how to test your ping to every Valve matchmaking region before you queue, what a good ping is (a rule of thumb) and what to do about spikes.
+- [CS2 config file location](https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/): where CS2 saves your config on Windows (Steam\userdata\<account ID>\730\local\cfg), what each file holds, where autoexec.cfg goes and how to back it up.
 
 ## Safety and privacy
 
