@@ -36,7 +36,7 @@ function routeLike(c, curve, extra) {
   // a leg of the route in the route's own material (a copy, so it can be lit on its own)
   const m = c.mArc.clone();
   for (const k in extra) m.uniforms[k].value = extra[k];
-  const mesh = new Mesh(new TubeGeometry(curve, 160, 0.05, 10), m); c.scene.add(mesh);
+  const mesh = new Mesh(new TubeGeometry(curve, 160, 0.07, 10), m); c.scene.add(mesh);
   return { m, mesh, curve };
 }
 function only(LAB, keep) { for (const k in LAB) if (!keep.includes(k)) LAB[k].beats = []; }
@@ -336,17 +336,22 @@ const PAGES = {
     small: ['end'],
     p: 0, end: 2.8,
     shots: {
-      wide: { pos: [-6, 8, 17], tgt: [13, 5.5, -11], fov: 36 },
+      wide: { pos: [-10, 4.5, 13.5], tgt: [8, 4.6, -8], fov: 40 },
       tall: { pos: [-11, 5, 30], tgt: [5, 4.2, -5], fov: 46 },
     },
-    keys: (c, K, X) => [K(V3(-8.2, 0, 1.9), 0, 0, 12), K(c.mastTop, 96, 40, 0, 10), K(c.mastBase, 0, 0, 10), K(X.lost.curve.getPoint(0.3), 8), K(X.lost.curve.getPointAt(0.5), 96, 10, 0, 190), K(c.PORT, 0, 0, 10)],
+    // 10 Nov. (3D-007): on a wide page the picture has a short strip above the Guides card, and the room kept above the mast and
+    // the route for two labels left the world a third of it, seen from far and above. There the camera comes down and nearer, and
+    // the page's label goes to the right of the route's end, a little further along it (the strip has width to spare, not height)
+    keys: (c, K, X, layout) => layout === 'wide'
+      ? [K(V3(-8.2, 0, 1.9), 0, 0, 12), K(c.mastTop, 112, 40, 0, 96), K(c.mastBase, 0, 0, 10), K(X.lost.curve.getPoint(0.3), 14), K(X.lost.curve.getPointAt(0.56), 112, 226, 0, 16), K(c.PORT, 0, 0, 10)]
+      : [K(V3(-8.2, 0, 1.9), 0, 0, 12), K(c.mastTop, 96, 40, 0, 10), K(c.mastBase, 0, 0, 10), K(X.lost.curve.getPoint(0.3), 8), K(X.lost.curve.getPointAt(0.5), 96, 10, 0, 190), K(c.PORT, 0, 0, 10)],
     build(c, X) {
       only(c.LAB, ['phone', 'mast']);
       c.LAB.mast.tall = true;
       const P = findParts(c); P.server.visible = false; P.arcMesh.visible = false; P.shadows.forEach(o => (o.visible = false)); c.leds.visible = false;
       const end = V3(46, 7, -32);
       X.lost = routeLike(c, new CubicBezierCurve3(c.mastTop.clone(), V3(12, 15, -8.5), V3(28, 13, -20), end), { uS: 0.58, uE: 1 });
-      c.LAB.end = lab(X.lost.curve.getPointAt(0.5), T('This page', 'not found, no server here'), { beats: [0], r: 1, hot: 1 });
+      c.LAB.end = lab(X.lost.curve.getPointAt(0.56), T('This page', 'not found, no server here'), { beats: [0], r: 1, hot: 1, atTall: X.lost.curve.getPointAt(0.5), side: { wide: [0, 0], tall: [1, 0] } });
       // placed first, so the point of the page always gets its room
       for (const k of ['mast', 'phone']) { const L = c.LAB[k]; delete c.LAB[k]; c.LAB[k] = L; }
     },
@@ -390,7 +395,7 @@ function mount(canvas, opts = {}) {
           const sh = G.shots[layout], S = c.SHOTS[layout][G.p];
           if (sh) Object.assign(S, { pos: V3(...sh.pos), tgt: V3(...sh.tgt), fov: sh.fov });
           base[layout] = S.keys.map(q => ({ ...q }));
-          if (G.keys) base[layout] = G.keys(c, c.K, X);
+          if (G.keys) base[layout] = G.keys(c, c.K, X, layout);
         }
         X.pad = (w, h) => {
           const k = Math.min(w < 420 ? 0.3 : w < 761 ? 0.55 : 1, h && h < 300 ? 0.4 : 1); // a phone, or a phone on its side

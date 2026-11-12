@@ -16,7 +16,7 @@ import {
   MeshStandardMaterial, MeshPhysicalMaterial, MeshBasicMaterial, MeshLambertMaterial, ShaderMaterial, Material,
   CanvasTexture, HemisphereLight, DirectionalLight, PointLight, RectAreaLight, FogExp2, PMREMGenerator, VSMShadowMap,
   SRGBColorSpace, AdditiveBlending, DoubleSide, BackSide, ColorManagement, SRGBTransfer, RepeatWrapping, LinearFilter,
-  ShaderChunk, Shape, ShapeGeometry, Path, ExtrudeGeometry, Matrix4, Quaternion, Euler, Vector4, LinearMipmapLinearFilter,
+  ShaderChunk, Shape, ShapeGeometry, Path, ExtrudeGeometry, Matrix4, Matrix3, Quaternion, Euler, Vector4, LinearMipmapLinearFilter,
 } from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -53,8 +53,8 @@ const CSS = `
 .wd-lab.wd-r>div{transform:translateX(calc(-100% + 20px))}
 .wd-lab::before{transform-origin:0 0}
 .wd-lab.wd-dn::before{transform:translateY(calc(var(--stem,44px) + 16px)) scaleY(.5);background:linear-gradient(180deg,color-mix(in srgb,var(--t-text) 55%,transparent),transparent)}
-.wd-lab.wd-dn>div{transform:translateY(calc(100% + var(--stem,44px) + 44px))}
-.wd-lab.wd-r.wd-dn>div{transform:translate(calc(-100% + 20px),calc(100% + var(--stem,44px) + 44px))}
+.wd-lab.wd-dn>div{transform:translateY(calc(100% + var(--stem,44px)*1.5 + 22px))}
+.wd-lab.wd-r.wd-dn>div{transform:translate(calc(-100% + 20px),calc(100% + var(--stem,44px)*1.5 + 22px))}
 .wd-lab.wd-hot i{background:var(--t-bad);box-shadow:0 0 0 4px color-mix(in srgb,var(--t-bad) 22%,transparent)}
 .wd-lab[data-lab=server]>div{min-height:4.3rem}
 .wd-tall .wd-lab[data-lab=server]>div{min-height:5.4rem}
@@ -92,10 +92,14 @@ function* build(canvas, opts = {}) {
   // 6b: the sky's own band, much brighter than the haze on things (in the haze it turned the whole floor magenta).
   // 6c: a narrow glow just over the skyline, as in the generated pictures, and night black above it
   float hzSky(vec3 d){ return (exp(-abs(d.y)*42.)*.065 + exp(-abs(d.y)*14.)*.005) * (.3 + .7*smoothstep(.3, -.9, d.z)); }`;
-  ShaderChunk.fog_pars_vertex = `#ifdef USE_FOG\nvarying float vFogDepth; varying vec3 vFogV;\n#endif`;
-  ShaderChunk.fog_vertex = `#ifdef USE_FOG\nvFogDepth = - mvPosition.z; vFogV = mvPosition.xyz;\n#endif`;
+  // 10 Nov. (3D-008): in the floor's mirror (its camera is under the floor) a thing fades out with its height, between 4.6 and
+  // 9.5 m: what stands on the floor is mirrored where it touches it, and nothing high up (the arc, the mast's head) comes back
+  // as a loose stain far from its object
+  const MIRROR_FADE = 'smoothstep(4.6, 9.5, ';
+  ShaderChunk.fog_pars_vertex = `#ifdef USE_FOG\nvarying float vFogDepth; varying vec3 vFogV; varying float vFogY;\n#endif`;
+  ShaderChunk.fog_vertex = `#ifdef USE_FOG\nvFogDepth = - mvPosition.z; vFogV = mvPosition.xyz;\n{ vec4 fgW = vec4(transformed, 1.);\n#ifdef USE_INSTANCING\nfgW = instanceMatrix*fgW;\n#endif\nvFogY = (modelMatrix*fgW).y; }\n#endif`;
   ShaderChunk.fog_pars_fragment = `#ifdef USE_FOG
-  uniform vec3 fogColor; varying float vFogDepth; varying vec3 vFogV;
+  uniform vec3 fogColor; varying float vFogDepth; varying vec3 vFogV; varying float vFogY;
   #ifdef FOG_EXP2
   uniform float fogDensity;
   #else
@@ -112,6 +116,7 @@ function* build(canvas, opts = {}) {
   #endif
   vec3 fgN = fgD / max(fgL, 1e-4);
   gl_FragColor.rgb = mix(gl_FragColor.rgb, fogColor + hzTint(fgN)*hzGlow(fgN), fogFactor);
+  if (cameraPosition.y < 0.) gl_FragColor.rgb = mix(gl_FragColor.rgb, fogColor, ${MIRROR_FADE}vFogY));
   #endif`;
 
   // ---------- renderer: MSAA into a half float buffer, so edges are clean and the bloom has room ----------
@@ -131,6 +136,10 @@ function* build(canvas, opts = {}) {
   // 9 Nov. (session 6b): thinner air. At 0.018 the racks, 53 m from the cover's camera, were 60% haze and read as grey blocks
   scene.fog = new FogExp2(mul(C.bg, 0.45), 0.0105); // 6c: a darker air (OLED): at the floor's far end it was a grey plain under the town
   const camera = new PerspectiveCamera(30, 1, 0.1, 320);
+  // 10 Nov. (3D-008): the floor's mirror shows every object now. What it must not draw (the sky and the far town, the floor's own
+  // layers, the flat shadows) lives on a layer of its own that only the picture's camera sees
+  const FARL = 2, noMirror = o => { o.layers.set(FARL); return o; };
+  camera.layers.enable(FARL);
 
   yield;
   // ---------- a studio for reflections, from the tokens: a dark room, the key's soft box, two tall strips for rims, the route's
@@ -153,8 +162,14 @@ function* build(canvas, opts = {}) {
   yield;
   // ---------- light: a dim world; each part of the route lights what is near it, the screen lights the desk ----------
   const hemi = new HemisphereLight(C.surface3, C.bg, 0.42); scene.add(hemi); // 6b: more fill from above (0.24), metals read in the shade
-  const key = new DirectionalLight(mul(C.muted, 1), 2.3); // 6b: brighter key and rim, the metals read as metal key.position.set(-14, 26, 16); key.target.position.set(2, 0, -3);
-  key.castShadow = true; key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -0.0015; key.shadow.normalBias = 0.05; key.shadow.radius = 12; key.shadow.blurSamples = 16;
+  // 6b: brighter key and rim, the metals read as metal. 10 Nov.: from 6b to here the key's position sat inside that comment, so
+  // the key shone straight down from (0, 1, 0): only the tops were lit, every side was in the dark and nothing cast a shadow
+  // (its shadow camera starts 4 m below the light, under the floor). Back where it was: high, from the front left
+  const key = new DirectionalLight(mul(C.muted, 1), 2.3); key.position.set(-14, 26, 16); key.target.position.set(2, 0, -3);
+  // 11 Nov.: no shadow map. With the key back in place its shadows drew again, and on a slow phone the world's first frame
+  // came 1.8 s later (4.5 to 6.3 s with the CPU 6x slower: the shadow pass and its programs), for shadows that fall on a
+  // near-black floor and a dark mat; the scene has had none since 6b, and the contact shadows are baked (bakeContact)
+  key.castShadow = false; key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -0.0015; key.shadow.normalBias = 0.05; key.shadow.radius = 12; key.shadow.blurSamples = 16;
   Object.assign(key.shadow.camera, { left: -22, right: 24, top: 18, bottom: -16, near: 4, far: 70 });
   scene.add(key, key.target);
   const rim = new DirectionalLight(mul(C.text, 1), 1.9); rim.position.set(8, 1.6, -22); scene.add(rim); // separates the silhouettes from the dark
@@ -176,7 +191,7 @@ function* build(canvas, opts = {}) {
     // sine hash, which mobile GPUs turn into a grid, and in the darkest sky it lit and unlit single pixels)
     void main(){ vec3 d = normalize(vP); vec3 c = uBg*(.62 - .5*smoothstep(.04, .5, d.y)) + uNight*.022*smoothstep(-.04, .05, d.y)*(1. - smoothstep(.06, .3, d.y)) + mix(hzTint(d), ${v3(C.top2)}, .45)*hzSky(d);
       gl_FragColor = vec4(c, 1.); }`,
-  })); scene.add(sky);
+  })); scene.add(noMirror(sky));
   yield;
   // the far town: 130 m out, where the floor ends, all round; taller blocks towards the servers. 6c (3D-012): it stands on the
   // floor's edge, in front of the ridge (the ridge used to hide it and a dark ring of low hills lay between the floor and the sky,
@@ -211,7 +226,7 @@ function* build(canvas, opts = {}) {
       bldC += uWin*win*(.025 + .03*hs2(wi))*(1. - smoothstep(-.9, .9, -town*2. + 1.)*.5);
       gl_FragColor = vec4(mix(ridgeC, bldC, inB), cov); }`,
   }));
-  skyline.position.y = 11; scene.add(skyline);
+  skyline.position.y = 11; scene.add(noMirror(skyline));
   yield;
   // other carriers' masts among the far roofs, as dark silhouettes (no lights: red means blocked here). 6c: they stood on a ring
   // of low hills, which left an unlit band between the floor and the horizon (3D-012); the floor now runs out to the town
@@ -226,7 +241,7 @@ function* build(canvas, opts = {}) {
       const x = Math.cos(az) * r, z = Math.sin(az) * r;
       o.position.set(x, 0, z); o.scale.setScalar(h); o.rotation.y = az; o.updateMatrix(); im.setMatrixAt(i, o.matrix);
     });
-    scene.add(im); return im;
+    scene.add(noMirror(im)); return im;
   })();
 
   yield;
@@ -286,6 +301,48 @@ function* build(canvas, opts = {}) {
   // many small parts in one draw: [x, y, z, rx, ry, rz, sx, sy, sz]
   const inst = (geo, mat, list) => { const m = new InstancedMesh(geo, mat, list.length), o = new Object3D(); list.forEach(([x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1], i) => { o.position.set(x, y, z); o.rotation.set(rx, ry, rz); o.scale.set(sx, sy, sz); o.updateMatrix(); m.setMatrixAt(i, o.matrix); }); return m; };
   const unitBox = new BoxGeometry(1, 1, 1);
+  // 10 Nov. (3D-008): the parts of one thing that share a material become one mesh, so a frame is about half the draw calls.
+  // On a phone the frame's time is mostly draw calls (three passes: the picture, the bloom's, the floor's mirror), and this is
+  // what pays for the mirror showing every object instead of only what glows. Only still, opaque parts (plus the materials
+  // named in `also`); instanced parts, anything marked noBake and the parts in `keep` stay as they are
+  function fuse(group, keep = [], also = []) {
+    group.updateMatrixWorld(true);
+    const inv = group.matrixWorld.clone().invert(), sets = new Map(), rel = new Matrix4();
+    group.traverse(o => {
+      if (!o.isMesh || o.isInstancedMesh || keep.includes(o) || Array.isArray(o.material) || (o.material.transparent && !also.includes(o.material))) return;
+      for (let q = o; q && q !== group; q = q.parent) if (!q.visible || q.userData.noBake) return;
+      const k = o.material.uuid + '|' + (o.castShadow ? 1 : 0) + (o.receiveShadow ? 1 : 0) + '|' + o.layers.mask;
+      if (!sets.has(k)) sets.set(k, []); sets.get(k).push(o);
+    });
+    // written straight into one set of arrays, each part's points and normals moved into the group's space on the way (cloning
+    // each geometry, moving it and merging the clones took three passes and about 50 ms a group on a slow phone)
+    for (const list of sets.values()) {
+      if (list.length < 2 || list.some(o => { const a = o.geometry.attributes; return !a.normal || !a.uv || a.position.isInterleavedBufferAttribute; })) continue;
+      let nv = 0, ni = 0;
+      for (const o of list) { const g = o.geometry; nv += g.attributes.position.count; ni += g.index ? g.index.count : g.attributes.position.count; }
+      const P = new Float32Array(nv * 3), N = new Float32Array(nv * 3), U = new Float32Array(nv * 2), I = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
+      let v0 = 0, i0 = 0;
+      for (const o of list) {
+        const g = o.geometry, p = g.attributes.position.array, n = g.attributes.normal.array, uv = g.attributes.uv.array, c = g.attributes.position.count;
+        const e = rel.multiplyMatrices(inv, o.matrixWorld).elements, ne = nrm.getNormalMatrix(rel).elements;
+        for (let k = 0, j = v0 * 3; k < c * 3; k += 3, j += 3) {
+          const x = p[k], y = p[k + 1], z = p[k + 2], a = n[k], b = n[k + 1], d = n[k + 2];
+          P[j] = e[0] * x + e[4] * y + e[8] * z + e[12]; P[j + 1] = e[1] * x + e[5] * y + e[9] * z + e[13]; P[j + 2] = e[2] * x + e[6] * y + e[10] * z + e[14];
+          const nx = ne[0] * a + ne[3] * b + ne[6] * d, ny = ne[1] * a + ne[4] * b + ne[7] * d, nz = ne[2] * a + ne[5] * b + ne[8] * d, l = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+          N[j] = nx / l; N[j + 1] = ny / l; N[j + 2] = nz / l;
+        }
+        U.set(uv.subarray(0, c * 2), v0 * 2);
+        if (g.index) { const ix = g.index.array; for (let k = 0; k < ix.length; k++) I[i0 + k] = ix[k] + v0; i0 += ix.length; }
+        else { for (let k = 0; k < c; k++) I[i0 + k] = v0 + k; i0 += c; }
+        v0 += c;
+      }
+      const merged = new BufferGeometry();
+      merged.setAttribute('position', new BufferAttribute(P, 3)); merged.setAttribute('normal', new BufferAttribute(N, 3)); merged.setAttribute('uv', new BufferAttribute(U, 2)); merged.setIndex(new BufferAttribute(I, 1));
+      const m = new Mesh(merged, list[0].material); m.castShadow = list[0].castShadow; m.receiveShadow = list[0].receiveShadow; m.layers.mask = list[0].layers.mask;
+      list.forEach(o => o.removeFromParent()); group.add(m);
+    }
+  }
+  const nrm = new Matrix3();
   const rrect = (p, x, y, w, h, r) => { p.moveTo(x + r, y); p.lineTo(x + w - r, y); p.quadraticCurveTo(x + w, y, x + w, y + r); p.lineTo(x + w, y + h - r); p.quadraticCurveTo(x + w, y + h, x + w - r, y + h); p.lineTo(x + r, y + h); p.quadraticCurveTo(x, y + h, x, y + h - r); p.lineTo(x, y + r); p.quadraticCurveTo(x, y, x + r, y); return p; };
 
   // small canvas textures, drawn with the app's tokens
@@ -299,7 +356,7 @@ function* build(canvas, opts = {}) {
   // 6b: no specular of its own (at a grazing angle the key and the studio made the far floor a grey sheet); its shine is the
   // mirror below and the sky's band in the dots' shader
   const floor = new Mesh(new PlaneGeometry(260, 260), new MeshLambertMaterial({ color: mul(C.bg, 0.3) }));
-  floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+  floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(noMirror(floor));
   // 6c (3D-011): no dot lattice any more (a 1 m grid of grey dots: on an OLED the floor read as a pattern of points, and far off
   // the dots fell under a pixel and shimmered); the name stays. Slow wear like a poured floor, and the light the route's radio leg and arc throw on the ground under them
   // (18 small lamps along them, filled in once the route is built; they go out with the line)
@@ -335,40 +392,46 @@ function* build(canvas, opts = {}) {
       gl_FragColor = vec4(c + min(lt*uK, vec3(.008)), 1.);
     }`,
   }));
-  dots.rotation.x = -Math.PI / 2; dots.position.y = 0.003; scene.add(dots);
+  dots.rotation.x = -Math.PI / 2; dots.position.y = 0.003; scene.add(noMirror(dots));
   // the mirror: only what glows (layer REFL) is drawn into it, at half size, blurred through its mips by the floor's roughness
   const REFL = 1;
   const mirror = new Reflector(new PlaneGeometry(260, 260), { textureWidth: 512, textureHeight: 512, multisample: 0, clipBias: 0.003, color: C.text, shader: {
     name: 'RouteMirror',
-    uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null }, tRough: { value: null }, uK: { value: 7 }, uBg: { value: C.bg } },
+    uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null }, tRough: { value: null }, uK: { value: 7 }, uSolid: { value: 1 }, uTexel: { value: 1 / 512 }, uBg: { value: C.bg } },
     vertexShader: `uniform mat4 textureMatrix; varying vec4 vUv; varying vec3 vW;
       void main(){ vUv = textureMatrix*vec4(position,1.); vec4 w = modelMatrix*vec4(position,1.); vW = w.xyz; gl_Position = projectionMatrix*viewMatrix*w; }`,
-    fragmentShader: `uniform sampler2D tDiffuse,tRough; uniform float uK; uniform vec3 uBg; varying vec4 vUv; varying vec3 vW;
+    fragmentShader: `uniform sampler2D tDiffuse,tRough; uniform float uK,uSolid,uTexel; uniform vec3 uBg; varying vec4 vUv; varying vec3 vW;
       void main(){
         float r = texture2D(tRough, vW.xz*.1).r*.6 + texture2D(tRough, vW.xz*.023).r*.4;
         vec2 uv = vUv.xy/vUv.w;
         vec3 v = cameraPosition - vW; float dist = length(v);
         // 6b: a wet look, everywhere but the cloth: the reflection is pulled down the screen (taps along the reflection's
         // vertical), as polished stone smears a light into a streak. Until 6b it showed only round the mast and the racks
-        float lod = 1.3 + r*.9 + dist*.008, sy = .0034 + .002*r; // 6c: the taps overlap (3D-011: further apart than their blur, a light came back as a column of dots)
+        // 10 Nov. (3D-008): a sharper mirror, of every object. Five taps, closer together and less blurred (it was seven at a blur
+        // that turned the racks' lights into a green mist under them); they still overlap (3D-011: further apart than their blur,
+        // a light came back as a column of dots)
+        float lod = .55 + r*.9 + dist*.006, sy = uTexel*(1.1 + .9*r);
         vec3 c = vec3(0.);
-        for (int j = -3; j <= 3; j++) { float fj = float(j); c += max(textureLod(tDiffuse, uv + vec2(0., fj*sy), lod + abs(fj)*.2).rgb - uBg, 0.)*exp(-fj*fj/5.); }
-        c /= 3.9;
+        for (int j = -2; j <= 2; j++) { float fj = float(j); c += max(textureLod(tDiffuse, uv + vec2(0., fj*sy), lod + abs(fj)*.3).rgb - uBg, 0.)*exp(-fj*fj/3.); }
+        c /= 2.96;
         // the texture's edges are clamped: fade there, or the last row smears into a bar (6b)
         c *= smoothstep(0., .05, uv.x)*smoothstep(1., .95, uv.x)*smoothstep(0., .05, uv.y)*smoothstep(1., .95, uv.y);
         float f = .04 + .96*pow(1. - clamp(normalize(v).y,0.,1.), 5.);
         vec2 dq = abs(vW.xz - vec2(-4.1, 1.75)) - vec2(5.8, 3.4); float desk = smoothstep(.2, 1.2, max(dq.x, dq.y));
-        gl_FragColor = vec4(c*uK*(.35+.65*f)*(1.15-.5*r)*exp(-dist*.016)*desk, 1.);
+        // what glows comes back as strong as it did (uK); what is only lit comes back as polished stone gives it: next to nothing
+        // seen from above, more the lower the eye
+        float mx = max(c.r, max(c.g, c.b)), hot = smoothstep(.16, .8, mx);
+        gl_FragColor = vec4(c*mix(uSolid*(.1 + 3.6*f), uK*(.35+.65*f), hot)*(1.15-.5*r)*exp(-dist*.016)*desk, 1.);
       }`,
   } });
-  mirror.getReflectionCamera(camera).layers.set(REFL);
+  mirror.getReflectionCamera(camera).layers.set(0); // every object (10 Nov.); until then only layer REFL, what glows
   { const t = mirror.getRenderTarget().texture; t.generateMipmaps = true; t.minFilter = LinearMipmapLinearFilter; }
   Object.assign(mirror.material, { transparent: true, depthWrite: false, blending: AdditiveBlending });
   mirror.material.uniforms.tRough.value = R.concrete;
-  mirror.rotation.x = -Math.PI / 2; mirror.position.y = 0.002; scene.add(mirror);
+  mirror.rotation.x = -Math.PI / 2; mirror.position.y = 0.002; scene.add(noMirror(mirror));
   const mirrorDraw = mirror.onBeforeRender; let mirrorAt = -1, frameNo = 0, inBloom = false;
   // once a frame, in the real render (6b): drawn in the bloom's render it had the screens black and no key light
-  mirror.onBeforeRender = function (...a) { if (inBloom || mirrorAt === frameNo) return; mirrorAt = frameNo; const lk = leds.uniforms.uK.value; leds.uniforms.uK.value = lk * 0.35; mirrorDraw.apply(this, a); leds.uniforms.uK.value = lk; }; // 6c: the racks' lights softer in the wet floor (it was three solid green columns) // once a frame, not once per render
+  mirror.onBeforeRender = function (...a) { if (inBloom || mirrorAt === frameNo) return; mirrorAt = frameNo; const lk = leds.uniforms.uK.value; leds.uniforms.uK.value = lk * 0.6; mirrorDraw.apply(this, a); leds.uniforms.uK.value = lk; }; // 6c: the racks' lights softer in the wet floor (it was three solid green columns) // once a frame, not once per render
   const glows = o => { o.layers.enable(REFL); return o; };
   // contact shadows, baked once from the real shapes: everything that casts a shadow is drawn from below in an orthographic
   // view, darker the nearer the ground, then blurred; dark pools on the floor, the desk mat, the mast's pad and the raised
@@ -376,10 +439,10 @@ function* build(canvas, opts = {}) {
   // A part that moves or hides (the phone, the plug, the firewall, a guide's prop) is marked userData.noBake
   const blobTex = cvTex(128, 128, (g) => { const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, 'rgba(0,0,0,.85)'); r.addColorStop(.55, 'rgba(0,0,0,.35)'); r.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = r; g.fillRect(0, 0, 128, 128); }, false);
   const blobMat = new MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false, opacity: 1 });
-  function blobAt(x, y, z, w, d, ry = 0) { const m = new Mesh(new PlaneGeometry(w, d), blobMat); m.rotation.set(-Math.PI / 2, 0, ry); m.position.set(x, y, z); scene.add(m); return m; }
+  function blobAt(x, y, z, w, d, ry = 0) { const m = new Mesh(new PlaneGeometry(w, d), blobMat); m.rotation.set(-Math.PI / 2, 0, ry); m.position.set(x, y, z); scene.add(noMirror(m)); return m; }
   function blob() {}
   const AO = { x0: -14, x1: 21, z0: -12.5, z1: 6.5 }, AO_H = 1.2, aoA = new WebGLRenderTarget(1024, 512), aoB = new WebGLRenderTarget(1024, 512);
-  const aoCam = new OrthographicCamera(AO.x0, AO.x1, AO.z1, AO.z0, 0, AO_H); aoCam.up.set(0, 0, 1); aoCam.lookAt(0, 1, 0); aoCam.updateMatrixWorld();
+  const aoCam = new OrthographicCamera(AO.x0, AO.x1, AO.z1, AO.z0, 0, AO_H); aoCam.up.set(0, 0, 1); aoCam.lookAt(0, 1, 0); aoCam.updateMatrixWorld(); aoCam.layers.enableAll();
   const aoMat = new ShaderMaterial({
     side: DoubleSide, uniforms: { uH: { value: AO_H } },
     vertexShader: `varying float vH; void main(){
@@ -400,7 +463,7 @@ function* build(canvas, opts = {}) {
         gl_FragColor = vec4(0.,0.,0.,texture2D(tAO,uv).a*uK); }`,
   });
   const aoRecv = []; // the mat, the pad, the raised floor: they take the shadows, they are not baked into them
-  function aoPlane(w, d, x, y, z) { const m = new Mesh(new PlaneGeometry(w, d), aoShow); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); scene.add(m); return m; }
+  function aoPlane(w, d, x, y, z) { const m = new Mesh(new PlaneGeometry(w, d), aoShow); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); scene.add(noMirror(m)); return m; }
   aoPlane(AO.x1 - AO.x0, AO.z1 - AO.z0, (AO.x0 + AO.x1) / 2, 0.006, (AO.z0 + AO.z1) / 2);
   function bakeContact() {
     const hid = [];
@@ -428,13 +491,13 @@ function* build(canvas, opts = {}) {
     // edge, a woven top and a stitched border a little in from the edge, as gaming mats have. Its top stays at 0.05 (MAT_Y)
     const MW = 11.6, MD = 6.8, MR = 0.42, BT = 0.012;
     const matGeo = new ExtrudeGeometry(rrect(new Shape(), -MW / 2 + BT, -MD / 2 + BT, MW - 2 * BT, MD - 2 * BT, MR), { depth: 0.05 - BT, bevelEnabled: true, bevelThickness: BT, bevelSize: BT, bevelSegments: 3, curveSegments: 10 }).rotateX(-Math.PI / 2);
-    const deskMat = new Mesh(matGeo, M.mat); deskMat.position.set(-4.1, 0, 1.75); deskMat.receiveShadow = true; scene.add(deskMat); aoRecv.push(deskMat);
+    const deskMat = new Mesh(matGeo, M.mat); deskMat.position.set(-4.1, 0, 1.75); deskMat.receiveShadow = true; scene.add(noMirror(deskMat)); aoRecv.push(deskMat);
     aoPlane(MW - 0.06, MD - 0.06, -4.1, 0.052, 1.75);
     // the stitching: a thin band 0.1 in from the edge, its corners following the mat's
     const sIn = 0.1, sW = 0.022, band = rrect(new Shape(), -MW / 2 + sIn, -MD / 2 + sIn, MW - 2 * sIn, MD - 2 * sIn, MR - sIn);
     band.holes.push(rrect(new Path(), -MW / 2 + sIn + sW, -MD / 2 + sIn + sW, MW - 2 * (sIn + sW), MD - 2 * (sIn + sW), MR - sIn - sW));
     const stitch = new Mesh(new ShapeGeometry(band, 10), new MeshStandardMaterial({ color: mul(C.muted, 0.5), roughness: 0.9, metalness: 0 })); stitchRef = stitch; // 6b: a thread you can see
-    stitch.rotation.x = -Math.PI / 2; stitch.position.set(-4.1, 0.0512, 1.75); stitch.receiveShadow = true; scene.add(stitch);
+    stitch.rotation.x = -Math.PI / 2; stitch.position.set(-4.1, 0.0512, 1.75); stitch.receiveShadow = true; scene.add(noMirror(stitch));
   }
 
   yield;
@@ -512,6 +575,7 @@ function* build(canvas, opts = {}) {
     ].map(p => new TubeGeometry(new CatmullRomCurve3(p), 20, 0.028, 6))), M.plastic));
     const glow = new PointLight(C.top1, 4.5, 2.4, 2); glow.position.set(-0.25, 1.6, 0.2); t.add(glow); // the parts read through the glass (6c: 9 lit the top of the case white-hot behind the glass)
     shadowy(t); glass.castShadow = false; front.castShadow = false;
+    fuse(t);
     blob(TX, TZ, 2.2, 3.4);
   }
   // the ports the two cables leave from
@@ -535,7 +599,7 @@ function* build(canvas, opts = {}) {
     neck.position.set(0, (ny0 + ny1) / 2, (nz0 + nz1) / 2); neck.rotation.x = Math.atan2(nz1 - nz0, ny1 - ny0); mon.add(neck);
     const foot = rbox(1.36, 0.035, 0.78, 0.017, M.matteDark); foot.position.set(0, 0.0175, -0.25); mon.add(foot);
     const footBoss = rbox(0.44, 0.05, 0.24, 0.02, M.matteDark); footBoss.position.set(0, 0.04, -0.4); mon.add(footBoss);
-    shadowy(mon);
+    shadowy(mon); fuse(mon);
     blob(-4.5, 0, 2.2, 1.6, 0.28);
   }
   // the screen: the real Connection page, with the IP the server sees patched in as the story changes it
@@ -715,7 +779,7 @@ function* build(canvas, opts = {}) {
       const len = Math.hypot(bx - ax, bz - az), r = new Mesh(new CylinderGeometry(0.015, 0.015, len, 5), M.galv);
       r.rotation.z = Math.PI / 2; r.rotation.y = -Math.atan2(bz - az, bx - ax); r.position.set((ax + bx) / 2, y, (az + bz) / 2); s.add(r);
     }
-    shadowy(s);
+    shadowy(s); fuse(s, [pad]);
     blob(mastBase.x + 0.6, mastBase.z + 0.2, 5, 4.4);
   }
   // the aviation light: real masts carry one; it blinks slowly, as theirs do
@@ -752,8 +816,9 @@ function* build(canvas, opts = {}) {
     for (let y = 8; y < h - 8; y += 6) for (let x = 8 + ((y / 6) % 2) * 3; x < w - 8; x += 6) { g.beginPath(); g.arc(x, y, 1.9, 0, 7); g.fill(); }
   }, false);
   const ledPts = [];
+  let serverGroup = null;
   {
-    const s = new Group(); scene.add(s);
+    const s = new Group(); scene.add(s); serverGroup = s;
     // a raised floor on pedestals (the void shows at its edge), perforated tiles in the cold aisle, a cable ladder overhead
     const slab = rbox(7.2, 0.045, 3.2, 0.015, M.powder); slab.position.set(SX, 0.1575, SZ); s.add(slab);
     aoPlane(7.1, 3.1, SX, 0.186, SZ);
@@ -771,12 +836,15 @@ function* build(canvas, opts = {}) {
     s.add(new Mesh(mergeGeometries([[V3(SX - 2.9, TY + 0.05, TZc), V3(SX + 2.9, TY + 0.05, TZc)], ...[SX - 2.05, SX, SX + 2.05].map(x => [V3(x + 0.4, TY + 0.05, TZc), V3(x + 0.4, TY + 0.04, TZc - 0.3), V3(x + 0.4, TY - 0.15, SZ - 0.62), V3(x + 0.4, 4.84, SZ - 0.6)])].map(p => new TubeGeometry(new CatmullRomCurve3(p), 16, 0.05, 6))), M.rubber));
     const doorFrameGeo = (() => { const w = RW - 0.08, h = RH - 0.12, b = 0.07, sh = rrect(new Shape(), -w / 2, -h / 2, w, h, 0.02); sh.holes.push(rrect(new Path(), -w / 2 + b, -h / 2 + b, w - 2 * b, h - 2 * b, 0.01)); return new ExtrudeGeometry(sh, { depth: 0.03, bevelEnabled: true, bevelThickness: 0.006, bevelSize: 0.006, bevelSegments: 1 }); })();
     const hinges = [];
+    // one material for the three cabinets' machines and one for their doors (each cabinet made its own): they fuse into one mesh each
+    const unitMat = new MeshStandardMaterial({ map: unitTex, roughness: 0.5, metalness: 0.6 });
+    const doorMat = new MeshStandardMaterial({ color: C.surface3, metalness: 0, roughness: 0.6, alphaMap: doorTex, transparent: true, side: DoubleSide });
     for (const [i, x] of [[0, SX - 2.05], [1, SX], [2, SX + 2.05]]) {
       const r = new Group(); r.position.set(x, 0.18, SZ); s.add(r);
       const frame = rbox(RW, RH, RD, 0.04, M.powder); frame.position.y = RH / 2; r.add(frame);
-      const units = new Mesh(new PlaneGeometry(RW - 0.2, RH - 0.3), new MeshStandardMaterial({ map: unitTex, roughness: 0.5, metalness: 0.6 }));
+      const units = new Mesh(new PlaneGeometry(RW - 0.2, RH - 0.3), unitMat);
       units.position.set(0, RH / 2, RD / 2 + 0.005); r.add(units);
-      const door = new Mesh(new PlaneGeometry(RW - 0.12, RH - 0.16), new MeshStandardMaterial({ color: C.surface3, metalness: 0, roughness: 0.6, alphaMap: doorTex, transparent: true, side: DoubleSide }));
+      const door = new Mesh(new PlaneGeometry(RW - 0.12, RH - 0.16), doorMat);
       door.position.set(0, RH / 2, RD / 2 + 0.05); r.add(door);
       const handle = rbox(0.04, 0.5, 0.05, 0.015, M.chrome); handle.position.set(RW / 2 - 0.16, RH / 2, RD / 2 + 0.09); r.add(handle);
       const df = new Mesh(doorFrameGeo, M.metalDark); df.position.set(0, RH / 2, RD / 2 + 0.035); r.add(df);
@@ -788,31 +856,49 @@ function* build(canvas, opts = {}) {
       for (let u = 0; u < 30; u++) {
         if (u % 7 === 6) continue;
         const y = 0.18 + 0.15 + RH - 0.3 - (u + 0.5) * U;
-        ledPts.push([x - RW / 2 + 0.24, y, SZ + RD / 2 + 0.085, i === 1 ? 1 : 0, Math.random()]);
-        // 6b: a light on two drive bays too, so each cabinet is rows of green, not one dotted line
-        if (u % 2 === 0) for (const b of [2, 6]) ledPts.push([x - (RW - 0.2) / 2 + (135 + b * 34) * (RW - 0.2) / 512, y - U * 0.28, SZ + RD / 2 + 0.085, i === 1 ? 1 : 0, Math.random()]);
+        // 10 Nov. (3D-008): every unit has its power light and a row of drive lights, so a cabinet reads as ordered rows of green
+        // from across the room, as in the reference pictures (it was one light a unit and two more on every other unit: scattered
+        // specks that only the bloom joined up, as a green mist). aK: 1 the game server (its lights follow the traffic), aRow: 1 a
+        // power light (steady), 0 a drive light (it flickers a little)
+        ledPts.push([x - RW / 2 + 0.24, y, SZ + RD / 2 + 0.085, i === 1 ? 1 : 0, Math.random(), 1]);
+        for (const b of [1, 3, 5, 7]) ledPts.push([x - (RW - 0.2) / 2 + (135 + b * 34) * (RW - 0.2) / 512, y, SZ + RD / 2 + 0.085, i === 1 ? 1 : 0, Math.random(), 0]);
       }
       shadowy(r); door.castShadow = false;
     }
     s.add(inst(new CylinderGeometry(0.025, 0.025, 0.16, 10), M.galv, hinges));
     // where the route comes down into the server: a cable entry on the middle cabinet's roof
     const entry = new Mesh(new CylinderGeometry(0.16, 0.2, 0.18, 20), M.metal); entry.position.set(SX, 0.18 + RH + 0.12, SZ); s.add(entry);
+    entry.castShadow = entry.receiveShadow = true;
+    fuse(s, [slab], [doorMat]); // the slab stays the group's first child: the guides find the server by it
     blob(SX, SZ, 8.4, 4.2);
   }
   const leds = (() => {
-    const n = ledPts.length, pos = new Float32Array(n * 3), kind = new Float32Array(n), seed = new Float32Array(n);
-    ledPts.forEach(([x, y, z, k, s], i) => { pos.set([x, y, z], i * 3); kind[i] = k; seed[i] = s; });
-    const g = new BufferGeometry(); g.setAttribute('position', new BufferAttribute(pos, 3)); g.setAttribute('aK', new BufferAttribute(kind, 1)); g.setAttribute('aSeed', new BufferAttribute(seed, 1));
+    const n = ledPts.length, pos = new Float32Array(n * 3), kind = new Float32Array(n), seed = new Float32Array(n), rowK = new Float32Array(n);
+    ledPts.forEach(([x, y, z, k, s, pw], i) => { pos.set([x, y, z], i * 3); kind[i] = k; seed[i] = s; rowK[i] = pw; });
+    const g = new BufferGeometry(); g.setAttribute('position', new BufferAttribute(pos, 3)); g.setAttribute('aK', new BufferAttribute(kind, 1)); g.setAttribute('aSeed', new BufferAttribute(seed, 1)); g.setAttribute('aRow', new BufferAttribute(rowK, 1));
     const m = new ShaderMaterial({
       transparent: true, depthWrite: false, blending: AdditiveBlending,
-      uniforms: { uTime: { value: 0 }, uG: { value: C.good }, uB: { value: C.bad }, uK: { value: 1 }, uPx: { value: 1 }, uVH: { value: 900 }, uAct: { value: 1 }, uBan: { value: 0 } },
-      vertexShader: `attribute float aK,aSeed; uniform float uTime,uPx,uVH,uAct,uBan; varying float vA; varying float vBan;
+      uniforms: { uTime: { value: 0 }, uG: { value: C.good }, uB: { value: C.bad }, uK: { value: 1 }, uHalo: { value: 1 }, uPx: { value: 1 }, uVH: { value: 900 }, uAct: { value: 1 }, uBan: { value: 0 } },
+      // the hash has no sine (3D-011): a slow tick per light, so the drive lights flicker like disks at work
+      vertexShader: `attribute float aK,aSeed,aRow; uniform float uTime,uPx,uVH,uAct,uBan; varying float vA; varying float vBan; varying float vS;
+      float lh(float n){ n = fract(n*.1031); n *= n + 33.33; n *= n + n; return fract(n); }
       void main(){ vec4 mv = modelViewMatrix*vec4(position,1.);
-        float tick = floor(uTime*14. + aSeed*31.); float r = fract(sin(aSeed*91.7 + tick*1.37)*43758.5);
-        float act = aK > .5 ? step(1.-uAct*.6, r)*.75 + .25*uAct : .45;   // the game server's lights follow the traffic
-        vA = max(act, aK*uBan); vBan = aK*uBan; gl_PointSize = clamp(.03*projectionMatrix[1][1]*uVH*.5/-mv.z, 1.6*uPx, 8.*uPx)*(1. + .6*aK*uBan); /* 3 cm, seen through the real lens (zoom included), never under 1.6 px; 6c: up to 8 px, so close up a light is a dash, not a speck */ gl_Position = projectionMatrix*mv; }`,
-      // 6b: a short horizontal dash, as a server's status light reads from across the room (a 1 px dot was only bloom)
-      fragmentShader: `uniform vec3 uG,uB; uniform float uK; varying float vA; varying float vBan; void main(){ vec2 q = abs(gl_PointCoord - .5); float a = (1. - smoothstep(.36, .5, q.x))*(1. - smoothstep(.1, .24, q.y)); gl_FragColor = vec4(mix(uG,uB,vBan)*a*vA*1.8*uK, 1.); }`,
+        float tick = floor(uTime*(aK > .5 ? 14. : 3.) + aSeed*31.); float r = lh(aSeed*91.7 + tick*1.37);
+        float busy = aK > .5 ? step(1.-uAct*.6, r)*.75 + .25*uAct : .55 + .45*step(.3, r);   // the game server's lights follow the traffic
+        float act = mix(busy, aK > .5 ? .35 + .65*uAct : 1., aRow);
+        vA = max(act, aK*uBan); vBan = aK*uBan;
+        // 4.5 cm wide, seen through the real lens (zoom included), never under 1.6 px and up to 9 px; the sprite is twice that,
+        // so each light carries its own small halo (the bloom's wide one made the racks three blocks of green mist)
+        float nat = .045*projectionMatrix[1][1]*uVH*.5/-mv.z, core = clamp(nat, 1.6*uPx, 9.*uPx)*(1. + .6*aK*uBan);
+        // far off (the cover on a phone, a guide's small picture) a light is drawn bigger than it is, and the rows run into
+        // each other: it dims by as much as it grew, so a far cabinet stays rows of small lights, not a block of green
+        vA *= mix(clamp(pow(nat/(1.6*uPx), 1.4), .16, 1.), 1., .5*aK*uBan);
+        vS = core; gl_PointSize = core*2.; gl_Position = projectionMatrix*mv; }`,
+      // a short horizontal dash with a hard core, as a server's status light reads from across the room, and a tight glow of its own
+      fragmentShader: `uniform vec3 uG,uB; uniform float uK,uHalo; varying float vA; varying float vBan; varying float vS; void main(){ vec2 q = abs(gl_PointCoord - .5)*2.;
+        float e = .6/max(vS, 1.), a =(1. - smoothstep(.42 - e, .42 + e, q.x))*(1. - smoothstep(.16 - e, .16 + e, q.y));
+        float halo = exp(-dot(q*vec2(1.6, 2.6), q*vec2(1.6, 2.6))*2.2)*.22*uHalo;
+        gl_FragColor = vec4(mix(uG,uB,vBan)*(a + halo)*vA*2.1*uK, 1.); }`,
     });
     scene.add(glows(new Points(g, m))); return m;
   })();
@@ -826,7 +912,8 @@ function* build(canvas, opts = {}) {
     const body = rbox(1.9, 0.26, 1.2, 0.1, M.plastic); body.position.y = 0.17; r.add(body);
     const lid = rbox(1.74, 0.08, 1.04, 0.04, M.plastic); lid.position.y = 0.32; r.add(lid);
     const face = new Mesh(new PlaneGeometry(1.5, 0.05), new MeshBasicMaterial({ color: C.surface3 })); face.position.set(0, 0.2, 0.602); r.add(face);
-    for (let i = 0; i < 4; i++) { const led = new Mesh(new CircleGeometry(0.025, 12), new MeshBasicMaterial({ color: mul(C.text, 0.5) })); led.position.set(-0.55 + i * 0.16, 0.26, 0.604); r.add(led); }
+    const rLed = new MeshBasicMaterial({ color: mul(C.text, 0.5) });
+    for (let i = 0; i < 4; i++) { const led = new Mesh(new CircleGeometry(0.025, 12), rLed); led.position.set(-0.55 + i * 0.16, 0.26, 0.604); r.add(led); }
     r.add(inst(unitBox, M.rubber, Array.from({ length: 11 }, (_, i) => [-0.6 + i * 0.12, 0.361, -0.05, 0, 0, 0, 0.04, 0.006, 0.62]).concat([0, 1, 2, 3].map(i => [-0.45 + i * 0.2, 0.15, -0.602, 0, 0, 0, 0.13, 0.09, 0.01]))));
     r.add(inst(new CylinderGeometry(0.07, 0.08, 0.04, 12), M.rubber, [[-0.75, 0.02, -0.45], [0.75, 0.02, -0.45], [-0.75, 0.02, 0.45], [0.75, 0.02, 0.45]]));
     const knGeo = new CylinderGeometry(0.055, 0.055, 0.1, 16);
@@ -835,7 +922,7 @@ function* build(canvas, opts = {}) {
       const kn = new Mesh(knGeo, M.plastic); kn.rotation.z = Math.PI / 2; kn.position.y = 0.06; a.add(kn);
       const pad = rbox(0.14, 0.95, 0.04, 0.035, M.plastic); pad.position.y = 0.56; a.add(pad);
     }
-    shadowy(r); blob(routerPos.x, routerPos.z, 2.6, 1.8, -0.35);
+    shadowy(r); fuse(r); blob(routerPos.x, routerPos.z, 2.6, 1.8, -0.35);
   }
   const homeCable = new CatmullRomCurve3([LAN_PC, V3(-7.9, 0.04, -1.6), V3(-8.9, 0.04, -2.9), V3(-10.0, 0.04, -3.9), V3(-10.55, 0.2, -4.35)]);
   const homeOut = new CatmullRomCurve3([V3(-11.7, 0.2, -5.3), V3(-14, 0.04, -9), V3(-17, 0.04, -15), V3(-19, 0.04, -26)]);
@@ -843,8 +930,8 @@ function* build(canvas, opts = {}) {
   void main(){ float core = pow(abs(dot(normalize(vN),normalize(vV))),1.2);
     float k = fract(vUv.x*3. - uTime*.12); float pulse = exp(-pow((k-.5)*10.,2.))*uLive;
     gl_FragColor = vec4(uC*(.55+.45*core) + uHi*pulse*core*.5, 1.); }`;
-  const routeVS = `varying vec2 vUv; varying vec3 vN; varying vec3 vV;
-  void main(){ vUv = uv; vec4 mv = modelViewMatrix*vec4(position,1.); vN = normalize(normalMatrix*normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix*mv; }`;
+  const routeVS = `varying vec2 vUv; varying vec3 vN; varying vec3 vV; varying float vWY;
+  void main(){ vUv = uv; vWY = (modelMatrix*vec4(position,1.)).y; vec4 mv = modelViewMatrix*vec4(position,1.); vN = normalize(normalMatrix*normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix*mv; }`;
   const homeMat = new ShaderMaterial({ uniforms: { uC: { value: mul(C.lineStrong, 1.7) }, uHi: { value: C.muted }, uTime: { value: 0 }, uLive: { value: 0 } }, vertexShader: routeVS, fragmentShader: homeFS });
   scene.add(glows(new Mesh(new TubeGeometry(homeCable, 80, 0.04, 8), homeMat)));
   scene.add(glows(new Mesh(new TubeGeometry(homeOut, 90, 0.035, 6), homeMat)));
@@ -927,7 +1014,7 @@ function* build(canvas, opts = {}) {
   const arc = new CubicBezierCurve3(mastTop.clone(), V3(9, 13, -7.5), V3(15.5, 11, -9.5), serverTop.clone().add(V3(0, 0.25, 0)));
   const SEG = [{ c: cable, a: 0, b: 0.3 }, { c: air, a: 0.3, b: 0.58 }, { c: arc, a: 0.58, b: 1 }];
   const routeFS = `uniform vec3 c1,c2,c3,uDead; uniform float uS,uE,uTime,uOn,uDash,uGain,uDraw,uReveal;
-  varying vec2 vUv; varying vec3 vN; varying vec3 vV;
+  varying vec2 vUv; varying vec3 vN; varying vec3 vV; varying float vWY;
   void main(){
     float u = clamp(mix(uS,uE,vUv.x),0.,1.);   // a guide may stretch a leg past the ends (6 Nov.): the colours stop there
     vec3 col = u < .5 ? mix(c1,c2,u*2.) : mix(c2,c3,u*2.-1.);
@@ -937,6 +1024,7 @@ function* build(canvas, opts = {}) {
     float on = uOn * step(vUv.x, uDraw) * step(u, uReveal);
     float I = (.5 + 1.9*pulse) * (.3 + .7*core) * on * uGain;
     gl_FragColor = vec4(max(col*I, uDead*(.5+.5*core)), 1.);
+    if (cameraPosition.y < 0.) gl_FragColor.rgb *= 1. - ${MIRROR_FADE}vWY);   // in the floor's mirror: only where the route comes down
   }`;
   function routeMat(a, b, extra = {}) {
     return new ShaderMaterial({
@@ -947,8 +1035,8 @@ function* build(canvas, opts = {}) {
   const mCable = routeMat(0, 0.3 * fJ), mTail = routeMat(0.3 * fJ, 0.3), mAir = routeMat(0.3, 0.58, { uDash: { value: 46 } }), mArc = routeMat(0.58, 1);
   scene.add(glows(new Mesh(tube(cableMain, 210, mainR), mCable)));
   const tailMesh = glows(new Mesh(tube(tailCur, 40, tailR(tailCur.getLength())), mTail)); tailMesh.userData.noBake = true; scene.add(tailMesh);
-  const airTube = glows(new Mesh(new TubeGeometry(air, 200, 0.022, 6), mAir)); scene.add(airTube);
-  const arcTube = glows(new Mesh(new TubeGeometry(arc, 220, 0.05, 10), mArc)); scene.add(arcTube);
+  const airTube = glows(new Mesh(new TubeGeometry(air, 200, 0.028, 6), mAir)); scene.add(airTube);
+  const arcTube = glows(new Mesh(new TubeGeometry(arc, 220, 0.07, 10), mArc)); scene.add(arcTube); // 10 Nov.: a thicker arc and radio leg (0.05 and 0.022), nearer the neon tube of the reference pictures; the gain and the bloom are the same
   { const a = dots.material.uniforms.uRL.value; let n = 0; // the ground's lamps: 6 on the radio leg, 12 on the arc
     for (let j = 0; j < 6; j++) { const t = (j + 0.5) / 6, q = air.getPointAt(t); a[n++].set(q.x, q.y, q.z, lerp(0.3, 0.58, t)); }
     for (let j = 0; j < 12; j++) { const t = (j + 0.5) / 12, q = arc.getPointAt(t); a[n++].set(q.x, q.y, q.z, lerp(0.58, 1, t)); } }
@@ -991,7 +1079,7 @@ function* build(canvas, opts = {}) {
   const pMat = new ShaderMaterial({
     transparent: true, depthWrite: false, blending: AdditiveBlending,
     uniforms: { c1: { value: C.top1 }, c2: { value: C.top2 }, c3: { value: C.top3 }, uPx: { value: 1 } },
-    vertexShader: `attribute float aU,aA; uniform float uPx; varying float vU,vA; void main(){ vU = aU; vA = aA; vec4 mv = modelViewMatrix*vec4(position,1.); gl_PointSize = uPx*44./-mv.z; gl_Position = projectionMatrix*mv; }`,
+    vertexShader: `attribute float aU,aA; uniform float uPx; varying float vU,vA; void main(){ vU = aU; vA = aA*(cameraPosition.y < 0. ? 1. - ${MIRROR_FADE}position.y) : 1.); vec4 mv = modelViewMatrix*vec4(position,1.); gl_PointSize = uPx*44./-mv.z; gl_Position = projectionMatrix*mv; }`,
     fragmentShader: `uniform vec3 c1,c2,c3; varying float vU,vA; void main(){ float d = length(gl_PointCoord-.5); float a = smoothstep(.5,0.,d); a = a*a*(1.+2.*smoothstep(.18,0.,d)); vec3 col = vU < .5 ? mix(c1,c2,vU*2.) : mix(c2,c3,vU*2.-1.); gl_FragColor = vec4(col*a*vA*1.5, 1.); }`,
   });
   const packets = new Points(pGeo, pMat); packets.frustumCulled = false; scene.add(glows(packets));
@@ -1014,6 +1102,10 @@ function* build(canvas, opts = {}) {
 
   yield;
   // ---------- shots: one per beat. Positions are proposal A's where A had them ----------
+  // what stands on the desk mat is not drawn into the floor's mirror (11 Nov.): the mirror shows nothing within a metre of
+  // the mat, so the PC, the screen, the phone and the plugs were about 55 draw calls a frame that nobody saw, more than the
+  // fused parts saved. What glows on the desk (the screens, the tower's line and fans) is mirrored as before
+  for (const g of [pc, phone, plugPC.g, plugPhone.g]) g.traverse(o => { if ((o.isMesh || o.isPoints) && !o.layers.isEnabled(REFL)) o.layers.set(FARL); });
   scene.updateMatrixWorld(true);
   let apex = arc.getPoint(0); for (let t = 0; t <= 1; t += 0.02) { const p = arc.getPoint(t); if (p.y > apex.y) apex = p; }
   const monW = (x, y) => mon.localToWorld(V3(x, y, 0.04));
@@ -1030,14 +1122,17 @@ function* build(canvas, opts = {}) {
     wide: [
       { pos: V3(-21, 10.5, 26), tgt: V3(3.5, 3.4, -4), fov: 30, keys: [K(apex, 10), K(mastTop, 130, 60, 0, 180), K(serverTop, 110, 10, 0, 170), ...rackPts.map(p => K(p, 0, 70, 10, 6)), K(PORT, 100, 120, 14), K(cable.getPointAt(0.35), 0, 0, 16, 0), ...towerPts.map(p => K(p, 0, 0, 10, 10))] },
       { pos: V3(-12, 6.5, 13), tgt: V3(-4.5, 0.8, 0.8), fov: 34, keys: [K(mastTop, 96, 40, 0, 10), K(V3(SX + 2.95, RH + 0.2, SZ - 0.75), 20, 60), K(V3(SX + 2.95, 0, SZ + 0.75), 0, 40, 10), K(V3(SX + 2.95, RH, SZ + 0.75), 0, 40), K(apex, 30), ...towerPts.map(p => K(p, 0, 0, 10, 10)), K(monW(0, SY + 1.15), 100, 0, 0, 0), K(PORT, 100, 140, 14, 0), K(PHONE_TOP, 0, 20), K(routerPos.clone().add(V3(0, 1.4, 0)), 110, 40, 0, 20), K(cable.getPointAt(0.5), 0, 0, 40, 0)] },
-      { pos: V3(-1, 2.4, 11), tgt: V3(10, 6, -8), fov: 36, keys: [K(mastTop, 130, 40, 0, 180), K(mastBase, 0, 0, 10), K(apex, 10), K(serverTop, 110, 10, 0, 170), K(V3(SX + 2.95, 0, SZ + 0.75), 0, 8, 8)] },
+      { pos: V3(-1, 2.4, 11), tgt: V3(10, 6, -8), fov: 36, keys: [K(mastTop, 130, 40, 0, 180), K(mastBase, 0, 0, 10), K(apex, 10), K(serverTop, 110, 222, 0, 40), K(V3(SX + 2.95, 0, SZ + 0.75), 0, 8, 8)] }, // 10 Nov. (3D-005): the server's label has room on the right of its point here; on the left the arc comes down through it, and below it are the racks
       { pos: V3(-13.5, 9.5, 15), tgt: V3(-6.2, 0.6, -0.6), fov: 34, keys: [...towerPts.map(p => K(p, 0, 0, 10, 10)), K(gatePos.clone().add(V3(0, 1.7, 0)), 110, 60, 0, 30), K(routerPos.clone().add(V3(0, 1.4, 0)), 0, 20, 0, 20), K(PORT, 90, 120, 20), K(monW(1.75, SY + 1.15))] },
-      { pos: V3(-1, 4, 10), tgt: V3(12, 5.5, -8), fov: 38, keys: [K(mastTop, 130, 40, 0, 180), K(mastBase, 0, 0, 10), K(apex, 10), K(serverTop, 120, 20, 0, 190), ...rackPts.map(p => K(p, 0, 10, 10, 6))] },
+      { pos: V3(-1, 4, 10), tgt: V3(12, 5.5, -8), fov: 38, keys: [K(mastTop, 130, 40, 0, 180), K(mastBase, 0, 0, 10), K(apex, 10), K(serverTop, 120, 222, 0, 40), ...rackPts.map(p => K(p, 0, 10, 10, 6))] },
       { pos: scrC.clone().add(scrN.clone().multiplyScalar(9)), tgt: scrC.clone(), fov: 26, keys: [K(monW(-SW / 2, SY - SH / 2)), K(monW(SW / 2, SY + SH / 2)), K(monW(-SW / 2, SY + SH / 2)), K(monW(SW / 2, SY - SH / 2))] },
       { pos: V3(-8, 24, 26), tgt: V3(4, 1, -4), fov: 28, keys: [K(V3(SX + 2.95, RH + 0.2, SZ - 0.75), 20, 60), K(apex, 30), ...towerPts.map(p => K(p)), K(routerPos), ...rackPts.map(p => K(p, 0, 40)), K(V3(SX + 2.95, RH, SZ - 0.75), 0, 40), K(apex, 20), K(mastTop), K(PORT)] },
     ],
     tall: [
-      { pos: V3(-15, 5.2, 17.5), tgt: V3(3, 3, -5), fov: 40, keys: [K(apex, 6), K(mastTop, 8), K(serverTop, 6), K(PORT, 0, 0, 10), ...towerPts.map(p => K(p, 0, 0, 6, 6)), K(V3(SX + 2.95, RH, SZ + 0.75), 0, 4)] },
+      // 11 Nov. (the owner chose proposal A): the phone's cover from lower down, (-15, 5.2, 17.5) looking at (3, 3, -5) before.
+      // Seen from above the picture was as tall as the desk is deep and the 3D filled 29 % of the screen with a small PC; from
+      // 2.6 m its height is the arc's, so the same points fit with the desk and the racks bigger. Everything still in the frame
+      { pos: V3(-13, 2.6, 19), tgt: V3(5, 4.6, -5), fov: 40, keys: [K(apex, 6), K(mastTop, 8), K(serverTop, 6), K(PORT, 0, 0, 10), ...towerPts.map(p => K(p, 0, 0, 6, 6)), K(V3(SX + 2.95, RH, SZ + 0.75), 0, 4)] },
       { pos: V3(-4, 7.5, 15.5), tgt: V3(-4.8, 0.8, 0.6), fov: 46, keys: [...towerPts.map(p => K(p, 0, 0, 6, 6)), K(PORT, 0, 10, 10), K(PHONE_TOP, 70, 10), K(monW(0, SY + 1.15), 0)] },
       { pos: V3(-3, 2, 13), tgt: V3(8, 6, -7), fov: 50, keys: [K(PHONE_TOP, 0, 10, 10), K(mastTop, 70, 20), K(apex, 6), K(serverTop, 70, 10), K(V3(SX + 2.95, 0, SZ + 0.75))] },
       { pos: V3(-10.5, 17, 16), tgt: V3(-6.4, 0.3, -0.6), fov: 46, keys: [...towerPts.map(p => K(p, 0, 0, 6, 6)), K(gatePos.clone().add(V3(0, 1.7, 0)), 70, 20, 0, 20), K(PORT, 0, 10, 10), K(tw(PW / 2, PH, 0), 0, 8), K(routerPos, 0, 6, 6, 6)] },
@@ -1058,7 +1153,7 @@ function* build(canvas, opts = {}) {
     const fr = (opts.frame && opts.frame(W, H, i, layout)) || { box: [W * 0.04, H * 0.06, W * 0.96, H * 0.94] };
     camera.position.copy(S.pos); camera.lookAt(S.tgt); camera.fov = S.fov; camera.zoom = 1; camera.clearViewOffset();
     camera.aspect = W / H; camera.updateProjectionMatrix(); camera.updateMatrixWorld();
-    if (!S.keys.length) { fits[i] = { zoom: 1, dx: 0, dy: 0, box: fr.box }; return; }
+    if (!S.keys.length) { fits[i] = { zoom: 1, dx: 0, dy: 0, box: fr.box }; restCam(i, S); return; }
     const pts = S.keys.map(q => { pv.copy(q.p).project(camera); return { x: pv.x * W / 2, y: -pv.y * H / 2, q }; });
     const [L, T, R, B] = fr.box;
     // the room labels need round their points shrinks when the box is too small for it, so the picture never becomes a dot
@@ -1078,6 +1173,15 @@ function* build(canvas, opts = {}) {
     const r = range(lo) || [0, 0, 0, 0];
     const bx = fr.bias ? fr.bias[0] : 0.5, by = fr.bias ? fr.bias[1] : 0.5;
     fits[i] = { zoom: lo, dx: lerp(r[0], r[1], bx), dy: lerp(r[2], r[3], by), box: fr.box };
+    restCam(i, S);
+  }
+  // the shot as it rests, fitted: the labels choose their places with it (3D-005)
+  const restCams = []; let fitGen = 0;
+  function restCam(i, S) {
+    const rc = restCams[i] || (restCams[i] = new PerspectiveCamera()), f = fits[i];
+    rc.position.copy(S.pos); rc.lookAt(S.tgt); rc.fov = S.fov; rc.zoom = f.zoom; rc.aspect = W / H; rc.near = camera.near; rc.far = camera.far;
+    rc.setViewOffset(W, H, -f.dx, -f.dy, W, H); rc.updateProjectionMatrix(); rc.updateMatrixWorld();
+    fitGen++;
   }
 
   yield;
@@ -1121,54 +1225,121 @@ function* build(canvas, opts = {}) {
   for (const y of [0.1, PH / 4, PH / 2, PH * 3 / 4, PH]) for (const x of [-PW / 2, 0, PW / 2]) LINE_PTS.push(tw(x, y, 0));
   // the monitor's face: a label over the app's screen hides what the beat is about
   for (const fy of [-0.5, -0.25, 0, 0.25, 0.5]) for (const fx of [-0.5, -0.25, 0, 0.25, 0.5]) LINE_PTS.push(monW(fx * SW, SY + fy * SH));
-  let lineScr = [];
+  // 10 Nov. (3D-005): a label's box stays off the objects, not only off sample points along their edges (the router's box sat on
+  // the tower, the server's on the racks, the PC's on the monitor). Each thing is a few points round it; on screen their convex
+  // outline is what a box may not touch. A label may also take a longer stem to clear one.
+  const boxPts = (x0, x1, y0, y1, z0, z1) => [x0, x1].flatMap(x => [y0, y1].flatMap(y => [z0, z1].map(z => V3(x, y, z))));
+  const OBJ = [
+    { k: 'tower', pts: boxPts(TX - TW / 2, TX + TW / 2, 0.05, TH + 0.06, TZ - TD / 2, TZ + TD / 2) },
+    { k: 'screen', pts: [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => monW(a * SW / 2, SY + b * SH / 2)) },
+    { k: 'phone', pts: [[-1, 0], [1, 0], [1, 1], [-1, 1]].map(([a, b]) => tw(a * PW / 2, b * PH, 0)), on: () => phone.visible },
+    { k: 'mast', pts: [...boxPts(mastBase.x - 0.35, mastBase.x + 0.35, 0, mastH - 2.2, mastBase.z - 0.35, mastBase.z + 0.35), ...boxPts(mastBase.x - 0.8, mastBase.x + 0.8, mastH - 2.2, mastH + 0.15, mastBase.z - 0.8, mastBase.z + 0.8)] },
+    { k: 'site', pts: boxPts(mastBase.x - 1.5, mastBase.x + 2.7, 0, 1.6, mastBase.z - 1.6, mastBase.z + 2.0) },
+    { k: 'racks', pts: boxPts(SX - 2.95, SX + 2.95, 0.1, RH + 0.3, SZ - 0.75, SZ + 0.75), on: () => serverGroup.visible },
+    { k: 'router', pts: boxPts(routerPos.x - 1.05, routerPos.x + 1.05, 0, 1.3, routerPos.z - 0.8, routerPos.z + 0.8) },
+  ];
+  const toScr = (q, cam) => { proj.copy(q).project(cam); return [(proj.x * 0.5 + 0.5) * W, (-proj.y * 0.5 + 0.5) * H, proj.z]; };
+  const hullOf = pts => { // the convex outline of screen points (monotone chain)
+    const p = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]), n = p.length, h = [];
+    const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    for (let i = 0; i < n; i++) { while (h.length >= 2 && cr(h[h.length - 2], h[h.length - 1], p[i]) <= 0) h.pop(); h.push(p[i]); }
+    const t = h.length + 1;
+    for (let i = n - 2; i >= 0; i--) { while (h.length >= t && cr(h[h.length - 2], h[h.length - 1], p[i]) <= 0) h.pop(); h.push(p[i]); }
+    h.pop(); return h;
+  };
+  const hullsFor = cam => {
+    const out = [];
+    for (const ob of OBJ) {
+      if (ob.on && !ob.on()) continue;
+      const sp = ob.pts.map(q => toScr(q, cam));
+      if (sp.some(q => !(q[2] > -1 && q[2] < 1))) continue; // partly behind the camera: no outline to trust
+      out.push(hullOf(sp));
+    }
+    return out;
+  };
+  // does the box q (shrunk by m) touch the convex outline h? Separating axes: the box's own, then each edge of the outline
+  const hitHull = (q, h, m) => {
+    const x0 = q[0] + m, y0 = q[1] + m, x1 = q[2] - m, y1 = q[3] - m;
+    let hx0 = 1e9, hy0 = 1e9, hx1 = -1e9, hy1 = -1e9;
+    for (const v of h) { if (v[0] < hx0) hx0 = v[0]; if (v[0] > hx1) hx1 = v[0]; if (v[1] < hy0) hy0 = v[1]; if (v[1] > hy1) hy1 = v[1]; }
+    if (hx1 < x0 || hx0 > x1 || hy1 < y0 || hy0 > y1) return false;
+    for (let i = 0; i < h.length; i++) {
+      const a = h[i], b = h[(i + 1) % h.length], nx = b[1] - a[1], ny = a[0] - b[0];
+      const d = (x, y) => (x - a[0]) * nx + (y - a[1]) * ny;
+      if (d(x0, y0) > 0 && d(x1, y0) > 0 && d(x0, y1) > 0 && d(x1, y1) > 0) return false;
+    }
+    return true;
+  };
+  // a label picks its place for the shot AT REST (the fitted camera of its beat), not for wherever the camera is on its way in:
+  // it used to choose at about nine tenths of the move and keep that, so the same label could end on its object or off it
+  const restCache = {};
+  function restOf(i) {
+    const key = fitGen + '|' + phone.visible + '|' + serverGroup.visible;
+    let c = restCache[i];
+    if (!c || c.key !== key) { const cam = restCams[i]; c = restCache[i] = { key, cam, lines: LINE_PTS.map(q => toScr(q, cam)), hulls: hullsFor(cam) }; }
+    return c;
+  }
+  const placedR = [];
   function placeLabels(p, box) {
-    placed.length = 0;
+    placed.length = 0; placedR.length = 0;
     const [L, T, R, B] = box;
     const av = opts.avoid ? opts.avoid() : [];
-    lineScr = LINE_PTS.map(q => { proj.copy(q).project(camera); return [(proj.x * 0.5 + 0.5) * W, (-proj.y * 0.5 + 0.5) * H]; });
-    // nearest shots first, so the beat on screen keeps its labels
     // the labels that carry a beat go first (the hot ones, then those of fewer beats), so they get the room
     const order = Object.keys(LAB).sort((a, b) => (LAB[b].hot ? 1 : 0) - (LAB[a].hot ? 1 : 0) || LAB[a].beats.length - LAB[b].beats.length);
+    const stem0 = layout === 'tall' ? 30 : 44, stems = [stem0, stem0 + 32, stem0 + 68, stem0 + 106];
+    const meet = (q, o2) => q[0] < o2[2] + 10 && o2[0] < q[2] + 10 && q[1] < o2[3] + 8 && o2[1] < q[3] + 8;
     for (const k of order) {
       const lb = LAB[k], el = lb.el, s = lb.s;
       // full while its beat holds, gone a third of the way to the next: the box is never left half see-through (6 Nov.)
       let o = 0; for (const b of lb.beats) o = Math.max(o, 1.6 * (1 - Math.max(Math.abs(p - b), Math.abs(st.p - b)) * 3.2));
       if (layout === 'tall' && !lb.tall && (!(k === 'phone' || k === 'server' || k === 'gate' || k === 'mast') || B - T < 180 || p < 0.5)) o = 0;
       o = clamp(o);
-      let x = 0, y = 0, r = !!lb.r, dn = !!lb.dn;
+      let x = 0, y = 0, r = !!lb.r, dn = !!lb.dn, stem = stem0;
       if (o > 0.01) {
-        proj.copy(layout === 'tall' && lb.atTall ? lb.atTall : lb.at).project(camera);
+        const at = layout === 'tall' && lb.atTall ? lb.atTall : lb.at;
+        proj.copy(at).project(camera);
         x = (proj.x * 0.5 + 0.5) * W; y = (-proj.y * 0.5 + 0.5) * H;
         const box2 = el.lastElementChild;
         if (s.gen !== labGen) { s.w = box2.offsetWidth || 170; s.h = box2.offsetHeight || 50; s.gen = labGen; }
-        const w = s.w, h = s.h, stem = layout === 'tall' ? 30 : 44;
-        const rect = (rr, dd) => { const y0 = dd ? y + 32 : y - stem - 12 - h, x0 = rr ? x + 10 - w : x - 10; return [x0, y0, x0 + w, y0 + h]; };
-        const ok = q => q[0] >= L - 4 && q[2] <= Math.min(W - 8, R + 8) && q[1] >= T - 4 && q[3] <= B + 6 && !placed.some(o2 => q[0] < o2[2] + 10 && o2[0] < q[2] + 10 && q[1] < o2[3] + 8 && o2[1] < q[3] + 8) && !lineScr.some(([lx, ly]) => lx > q[0] - 4 && lx < q[2] + 4 && ly > q[1] - 4 && ly < q[3] + 4) && !av.some(a => q[0] < a[2] && a[0] < q[2] && q[1] < a[3] && a[1] < q[3]);
+        const w = s.w, h = s.h;
+        const rect = (px, py, rr, dd, sm) => { const y0 = dd ? py + 10 + sm / 2 : py - sm - 12 - h, x0 = rr ? px + 10 - w : px - 10; return [x0, y0, x0 + w, y0 + h]; };
         // each label has its own place for each layout (side: { wide: [r, dn], tall: [r, dn] }), tried first; another side only
         // when it comes in, never while it is on screen (6 Nov.: the carrier's and the firewall's jumped). one: that place only
         const pref = lb.side && lb.side[layout]; if (pref) { r = !!pref[0]; dn = !!pref[1]; }
-        const tries = lb.one ? [[r, dn]] : [[r, dn], [!r, dn], [r, !dn], [!r, !dn]];
-        const loose = q => q[0] >= L - 4 && q[2] <= Math.min(W - 8, R + 8) && q[1] >= T - 4 && q[3] <= B + 6 && !placed.some(o2 => q[0] < o2[2] + 10 && o2[0] < q[2] + 10 && q[1] < o2[3] + 8 && o2[1] < q[3] + 8) && !av.some(a => q[0] < a[2] && a[0] < q[2] && q[1] < a[3] && a[1] < q[3]);
+        const sides = lb.one ? [[r, dn]] : [[r, dn], [!r, dn], [r, !dn], [!r, !dn]];
         const inBox = proj.z < 1 && x > L - 6 && x < R + 6 && y > T && y < B + 4;
         // a label keeps the side it came in with for as long as its beat lasts: choosing again each frame made the carrier's
         // and the firewall's boxes jump from below to above and back (6 Nov.). Its text may grow (the ban changes it): it
         // stays. If a label that goes first now takes its place, it fades out there and comes back there; it never moves
+        // a place belongs to the beat it was chosen for: after a cut to another beat (the chapter rail, reduced motion) a label
+        // that both beats share chooses again (it kept the first beat's side, and sat wherever that fell in the new shot)
+        const bi = clamp(Math.round(st.p), 0, NS - 1);
+        if (s.side && s.bi !== bi) s.side = null;
         const keep = s.side || null;
-        const hit = q => placed.some(o2 => q[0] < o2[2] + 10 && o2[0] < q[2] + 10 && q[1] < o2[3] + 8 && o2[1] < q[3] + 8);
         if (!inBox) { o = 0; s.side = null; s.hitT = 0; }
         else if (keep) {
-          [r, dn] = keep;
+          [r, dn, stem] = keep;
           // taken: it fades out; once it is gone (the fade is .25 s) it may come back somewhere else, never while it shows
           // the same when its kept place now runs out of the picture's box (6 Nov.: on the guides the phone's was cut by the
           // edge, and the profiles' template label, placed while the page was still loading, sat on the text column)
-          const q = rect(r, dn);
-          if (hit(q) || q[0] < Math.max(2, L - 12) || q[2] > Math.min(W - 2, R + 16) || q[1] < Math.max(2, T - 12) || q[3] > Math.min(H - 2, B + 14)) { o = 0; if (!s.hitT) s.hitT = time; else if (time - s.hitT > 0.35) { s.side = null; s.hitT = 0; } }
-          else { s.hitT = 0; placed.push(rect(r, dn)); }
+          const q = rect(x, y, r, dn, stem);
+          if (placed.some(o2 => meet(q, o2)) || q[0] < Math.max(2, L - 12) || q[2] > Math.min(W - 2, R + 16) || q[1] < Math.max(2, T - 12) || q[3] > Math.min(H - 2, B + 14)) { o = 0; if (!s.hitT) s.hitT = time; else if (time - s.hitT > 0.35) { s.side = null; s.hitT = 0; } }
+          else { s.hitT = 0; placed.push(q); placedR.push(s.rq || q); }
         }
         else {
-          const t = tries.find(([a, b]) => ok(rect(a, b))) || tries.find(([a, b]) => loose(rect(a, b)));
-          if (t) { [r, dn] = t; placed.push(rect(r, dn)); s.side = t; } else o = 0;
+          // its place at rest: inside the picture's box, off the other labels and the page's own things; then off the objects
+          // and the route's lines, with the shortest stem that does it. If no place clears both, it is as it was before: off the
+          // lines with the short stem, then anywhere that fits (a longer stem that clears an object only to cover the arc is worse)
+          const R0 = restOf(bi), bx = fits[bi].box, pr = toScr(at, R0.cam);
+          const fitsIn = q => q[0] >= bx[0] - 4 && q[2] <= Math.min(W - 8, bx[2] + 8) && q[1] >= bx[1] - 4 && q[3] <= bx[3] + 6 && !placedR.some(o2 => meet(q, o2)) && !av.some(a => q[0] < a[2] && a[0] < q[2] && q[1] < a[3] && a[1] < q[3]);
+          const offLines = q => !R0.lines.some(([lx, ly]) => lx > q[0] - 4 && lx < q[2] + 4 && ly > q[1] - 4 && ly < q[3] + 4);
+          const offObjs = q => !R0.hulls.some(hl => hitHull(q, hl, 2));
+          const cand = []; for (const sm of stems) for (const [a, b] of sides) cand.push([a, b, sm]);
+          const near = cand.slice(0, sides.length), at0 = c => rect(pr[0], pr[1], c[0], c[1], c[2]);
+          const t = cand.find(c => { const q = at0(c); return fitsIn(q) && offObjs(q) && offLines(q); })
+            || near.find(c => { const q = at0(c); return fitsIn(q) && offLines(q); })
+            || near.find(c => fitsIn(at0(c)));
+          if (t) { [r, dn, stem] = t; s.side = t; s.bi = bi; s.rq = at0(t); placed.push(rect(x, y, r, dn, stem)); placedR.push(s.rq); } else o = 0;
         }
       } else s.side = null; // out of its beats: the next time it comes in, it may take another place
       if (s.o !== o) { el.style.setProperty('--o', o.toFixed(3)); s.o = o; }
@@ -1178,6 +1349,7 @@ function* build(canvas, opts = {}) {
         if (s.y !== ys) { el.style.setProperty('--y', ys); s.y = ys; }
         if (s.r !== r) { el.classList.toggle('wd-r', r); s.r = r; }
         if (s.dn !== dn) { el.classList.toggle('wd-dn', dn); s.dn = dn; }
+        if (s.st !== stem) { el.style.setProperty('--stem', stem + 'px'); s.st = stem; }
       }
     }
   }
@@ -1231,7 +1403,8 @@ function* build(canvas, opts = {}) {
     const sm = screen.material, pm = phScreen.material, ki = key.intensity, ri = rim.intensity, hi = hemi.intensity;
     screen.material = black; phScreen.material = black;
     // 6c: the racks' lights glow less (OLED: three green blocks of halo); in the real render they stay sharp and bright
-    leds.uniforms.uK.value = 0.45 + 0.55 * leds.uniforms.uBan.value;
+    // 10 Nov. (3D-008): less still, now that each light has its own tight halo; the ban's red keeps its full bloom
+    leds.uniforms.uK.value = 0.16 + 0.84 * leds.uniforms.uBan.value;
     // the bloom sees only what glows: no studio reflections, no white key or rim highlights on the metals
     scene.environmentIntensity = 0; key.intensity = rim.intensity = hemi.intensity = 0;
     const hv = noBloom.map(o => o.visible); noBloom.forEach(o => (o.visible = false)); // the far world never reaches the threshold
@@ -1251,7 +1424,7 @@ function* build(canvas, opts = {}) {
     wrap.classList.toggle('wd-tall', layout === 'tall');
     renderer.setPixelRatio(dpr()); renderer.setSize(W, H, false);
     composer.setPixelRatio(renderer.getPixelRatio()); composer.setSize(W, H);
-    const pr = renderer.getPixelRatio(); mirror.getRenderTarget().setSize(Math.round(W * pr / 2), Math.round(H * pr / 2)); bloomIn.setSize(Math.round(W * pr / 2), Math.round(H * pr / 2)); bloom.setSize(Math.round(W * pr), Math.round(H * pr));
+    const pr = renderer.getPixelRatio(); mirror.getRenderTarget().setSize(Math.round(W * pr / 2), Math.round(H * pr / 2)); mirror.material.uniforms.uTexel.value = 2 / Math.max(1, H * pr); bloomIn.setSize(Math.round(W * pr / 2), Math.round(H * pr / 2)); bloom.setSize(Math.round(W * pr), Math.round(H * pr));
     leds.uniforms.uPx.value = pr; leds.uniforms.uVH.value = H * pr; // the rack lights: their size in the frame's own pixels
     for (let i = 0; i < NS; i++) fitShot(i);
     labGen++;

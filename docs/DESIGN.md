@@ -80,7 +80,11 @@ On the site (6 Nov 2026): where the line is drawn in SVG (the footer's name, its
 are `color-mix(in oklch, top1, top2)` and `color-mix(in oklch, top2, top3)`, because SVG blends in sRGB and the plain
 three stops go muddy; CSS gradients of the line use `in oklch` for the same reason. The marks on the app window (Features)
 are 1.5 px `--t-accent` rings with a numbered `--t-accent` dot, and the same numbers in the page's text. The 3D scene's
-labels sit on a solid `--t-bg` (no blur behind them). The loading screen (home, guides, 404) is `--t-bg` with the top line, the name and a 2 px `--t-top` bar on a `--t-line` track.
+labels sit on a solid `--t-bg` (no blur behind them). A label's box stays off the objects (the tower, the screen, the phone,
+the mast and its site, the racks, the router) and off the route's line: it picks its side for the shot at rest and may take a
+longer stem (44, 76, 112 or 150 px; 30, 62, 98 or 136 on a phone) to clear them (10 Nov 2026, `tools/world-3d.test.mjs`).
+The floor mirrors every object that stands on it, sharper near the camera's eye line and never above 9.5 m (the arc is
+mirrored only where it comes down); the racks' lights are rows of short dashes with a halo of their own, not the bloom's. The loading screen (home, guides, 404) is `--t-bg` with the top line, the name and a 2 px `--t-top` bar on a `--t-line` track.
 
 ### Where they differ, and what was aligned (5 Nov 2026)
 
