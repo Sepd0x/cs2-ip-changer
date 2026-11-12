@@ -4,7 +4,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
-## [0.1.0-beta.13] - 2026-11-07
+## [0.1.0-beta.13] - 2026-11-12
 
 ### Added
 - Languages: the app is now also in Portuguese (Brazil), Spanish (Latin America) and Russian. It follows the language of Windows the first time; change it in Settings > App > Language. The Log and the usage stats stay in English.

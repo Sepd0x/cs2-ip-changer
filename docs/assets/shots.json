@@ -1,7 +1,7 @@
 {
  "note": "Made by tools/shots.mjs. Do not edit: tests/DesignSyncTests.cs checks it against the app and the files.",
  "app": "0.1.0-beta.13",
- "ui": "4869b8fd1f32d06148d199129c3213f74dba593a02346281293d8ae58aa50aea",
+ "ui": "fe0e9d10551a1e466f47cc52ee821034dd59f54b0c0c5c8aedac40281b1914fd",
  "uiFiles": [
   "src/App.xaml",
   "src/MainWindow.xaml",
@@ -9,7 +9,7 @@
   "src/Views/NoticeWindow.xaml",
   "src/Views/SteamLoginWindow.xaml"
  ],
- "made": "2026-11-10",
+ "made": "2026-11-12",
  "scale": 2,
  "base": [
   1240,
@@ -18,7 +18,7 @@
  "files": [
   {
    "file": "docs/screenshots/connection.png",
-   "sha256": "9e04455c3c65608bf2064b207c94abb0b685cfd2c193a53f7bf3e349067a89a9",
+   "sha256": "de51c7b83d597b72f06bda3207d6a60af3c34884d3f90da617a9f13aa9bcbb93",
    "size": [
     2480,
     1600
@@ -90,7 +90,7 @@
   },
   {
    "file": "docs/assets/shots/connection.png",
-   "sha256": "59de3bcffbc5c490f328c5e93704d23cabee4b19910eaea082da2efbfb91b808",
+   "sha256": "40e8ab507b6576e116fe68c3e6ac18adc4ba3a565193b9ddc6d4868a19d8a9f1",
    "size": [
     2572,
     1692
@@ -98,7 +98,7 @@
   },
   {
    "file": "docs/assets/shots/connection.webp",
-   "sha256": "fbbaac1beb45f4befc6814545fe472e5f2a0d66e336d708030102db8e3b1afb9"
+   "sha256": "416d4b896678a51561a681d8c8d0f4659299d48f0df5ac210476eb44f61673de"
   },
   {
    "file": "docs/assets/shots/crop-accounts-mobile.png",
@@ -234,7 +234,7 @@
   },
   {
    "file": "worker/stats/dashboard/ui/connection.png",
-   "sha256": "01afe5ed9ebff2ca8cd044a9c0cf95c3685493eaacff0aad39ecb72cb9fa3c85",
+   "sha256": "403740edfdb9c99e567bd6cedea97550971a14a1cf794a99bbf864e5dfd5bb31",
    "size": [
     1240,
     800
@@ -290,10 +290,10 @@
   },
   {
    "file": "worker/stats/dashboard/ui/settings.png",
-   "sha256": "5a7c2b3815f2b8991eb2c0d788f4a16f661e0f821d198ff90be8d3341494d4da",
+   "sha256": "b54b11eb2361272a15601f5247dcb26e830364ea7e7cf7dcc54eabd74c2ca48a",
    "size": [
     1240,
-    1389
+    1467
    ]
   },
   {
@@ -314,39 +314,39 @@
   }
  ],
  "renders": {
-  "from": "9e04455c3c65608bf2064b207c94abb0b685cfd2c193a53f7bf3e349067a89a9",
+  "from": "de51c7b83d597b72f06bda3207d6a60af3c34884d3f90da617a9f13aa9bcbb93",
   "files": [
    {
     "file": "site/img/poster-1280.webp",
-    "sha256": "e5f73fe3f350433e0c60def5804d7b2976a4b28e5349d64930e152cc1ca173f4"
+    "sha256": "bd6cbb3e7e9ead3a991a26023bfd464d37afdd00d064536eb0b59b061bf6afba"
    },
    {
     "file": "site/img/poster-1366.webp",
-    "sha256": "5cfa61e724501ad1a08a3b05298967ee74b96b606f0c8f7f12441abfbea81c47"
+    "sha256": "d481e6602e8b02299e81f92705ba6915c3bb756ab1333e666f0d300d2b3ae1e7"
    },
    {
     "file": "site/img/poster-1440.webp",
-    "sha256": "4c812e653f3f92a1c7db5238bd8037bf8c516cc82db11da98bd127462748f29b"
+    "sha256": "b9c8ceb595cf7cc5bdb82330714f00e2acee9d375b72106e1d589d55ebc7e105"
    },
    {
     "file": "site/img/poster-1536.webp",
-    "sha256": "7d9210f5807091dd197a4821cb2680bce344bfaee3fb5b8596d2e0b63f6f9392"
+    "sha256": "23ce20b33916253ede6bfea86600582a3c0961e3a983d98c31d06bde80864f06"
    },
    {
     "file": "site/img/poster-1920.webp",
-    "sha256": "e837b7f9e300b3cbb4ee9e05c6a4cef70aebbbeddcfa504c1781d011dba497fe"
+    "sha256": "a2675638cee3d57dafb29715177b57f623f3e8f53857ee902095b36723431ca3"
    },
    {
     "file": "site/img/poster-390.webp",
-    "sha256": "e7bee522e39e63e70688cead150547e4fdffee6ed076b653a9bf92afcd38c788"
+    "sha256": "25f38ce4c13ec0b8f867b3e82ea40e8e7710a0e5140f891872033bc88e678ece"
    },
    {
     "file": "site/img/world-tower.webp",
-    "sha256": "10d96c3f0d9ec0d17e7369d90232b7a9fb371081785241a06f5fee051909760c"
+    "sha256": "0df6e8d7b7d10f42203cd027080d5dd9cb1d78c84a6e4913af0b3aa1efe82b93"
    },
    {
     "file": "site/img/world-plug.webp",
-    "sha256": "531076301c047e7f2c6a8e398c76a0462327caad6de5fe50d30cf92650a9b752"
+    "sha256": "a9f0ed4a14888a61300564e109ea62a5f4bf743f548dc8af8f59d54424248369"
    }
   ]
  },
