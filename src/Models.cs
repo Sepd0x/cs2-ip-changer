@@ -18,6 +18,12 @@ public sealed partial class Settings
     /// <summary>A phone connection was checked at least once. Until then cs2.exe isn't locked, so trying the app without a phone
     /// (and closing it) never leaves CS2 unable to connect at home.</summary>
     public bool PhoneSeen { get; set; }
+    /// <summary>The first-run tour was shown (10 Nov 2026). It opens by itself once, only before a phone is seen; Settings > App opens it again.</summary>
+    public bool TourSeen { get; set; }
+    /// <summary>App language: null or "auto" follows Windows, else en, pt-BR, es or ru (Settings > App, Loc.cs).</summary>
+    public string Language { get; set; }
+    /// <summary>Regions said once what the phone adds (10 Nov 2026: every new user used Regions, none plugged in a phone).</summary>
+    public bool RegionsPitchSeen { get; set; }
     /// <summary>The phone was last seen as an iPhone (beta.12): a hotspot over Wi-Fi alone can't tell, so this decides there.</summary>
     public bool PhoneIsIphone { get; set; }
     // CS2 open = whole PC through the phone connection. Off for new installs since beta.10: only CS2 (and Steam) use the phone,
@@ -162,7 +168,7 @@ public sealed class IpHistoryEntry
     public string Isp { get; set; }
     public string Reason { get; set; }
     [JsonIgnore] public string TimeText => Time.ToString(Time.Date == AppClock.Today ? "HH:mm" : "d MMM", System.Globalization.CultureInfo.InvariantCulture);
-    [JsonIgnore] public string ReasonText => Reason switch { "trocado" => "changed", "detetado" => "detected", _ => Reason };   // 9 nov.: not only at startup (also when the phone comes back)
+    [JsonIgnore] public string ReasonText => Reason switch { "trocado" => Loc.T("changed"), "detetado" => Loc.T("detected"), _ => Reason };   // 9 nov.: not only at startup (also when the phone comes back)
     /// <summary>"ISP · City · Country" without the country, so the city still fits at the smallest window (the tooltip has it all).</summary>
     [JsonIgnore] public string IspShort => Isp?.Split(" · ") is { Length: >= 3 } p ? string.Join(" · ", p[..^1]) : Isp;
 }
@@ -198,13 +204,13 @@ public static class ChecksView
     public static bool Shows(bool attention, bool showAll) => showAll || attention;
 
     public static string Summary(int total, int ok, int attention, bool protOn = true) =>
-        attention == 1 ? "1 check needs you." : attention > 1 ? $"{attention} checks need you."
-        : !protOn ? "Protection is off, so there is little to check yet."
-        : ok == total ? $"All {total} checks OK." : "All good: nothing needs you.";
+        attention == 1 ? Loc.T("1 check needs you.") : attention > 1 ? Loc.F("{0} checks need you.", attention)
+        : !protOn ? Loc.T("Protection is off, so there is little to check yet.")
+        : ok == total ? Loc.F("All {0} checks OK.", total) : Loc.T("All good: nothing needs you.");
 
-    public static string Toggle(bool showAll) => showAll ? "Show less" : "Show all";
+    public static string Toggle(bool showAll) => showAll ? Loc.T("Show less") : Loc.T("Show all");
     /// <summary>The toggle's tooltip, which changes with its name.</summary>
-    public static string ToggleTip(bool showAll) => showAll ? "Only the checks that need you" : "Every check, also the ones that are fine";
+    public static string ToggleTip(bool showAll) => showAll ? Loc.T("Only the checks that need you") : Loc.T("Every check, also the ones that are fine");
 
     /// <summary>
     /// The VPN that carries the PC's traffic now (the adapter Windows picks for the internet, <paramref name="pcDefaultIndex"/>), or
@@ -217,12 +223,12 @@ public static class ChecksView
     /// The row says why (2nd round of simulated users: "Turn it off before you play" with no reason made Diogo stop). Nothing
     /// stronger until it is tested with a VPN's kill switch: the app's routes and rules still send your servers and CS2 through the phone.
     /// </summary>
-    public static string VpnDetail(string name) => $"On ({name}). Not tested with the app yet: if CS2 or your servers don't connect, turn it off while you play.";
+    public static string VpnDetail(string name) => Loc.F("On ({0}). Not tested with the app yet: if CS2 or your servers don't connect, turn it off while you play.", name);
 
-    public const string VpnHelp = "A VPN carries your PC's traffic. Your servers and CS2 still go through the phone (its IP is what they see), but the app wasn't tested with every VPN app and its kill switch.";
+    public static string VpnHelp => Loc.T("A VPN carries your PC's traffic. Your servers and CS2 still go through the phone (its IP is what they see), but the app wasn't tested with every VPN app and its kill switch.");
 
     /// <summary>Protection off or No phone: nothing goes through the phone, so servers and CS2 see the VPN's IP.</summary>
-    public const string VpnHelpOff = "A VPN carries your PC's traffic. Protection isn't on, so servers and CS2 see the VPN's IP, not the phone's. The app wasn't tested with every VPN app and its kill switch.";
+    public static string VpnHelpOff => Loc.T("A VPN carries your PC's traffic. Protection isn't on, so servers and CS2 see the VPN's IP, not the phone's. The app wasn't tested with every VPN app and its kill switch.");
 
     public static string VpnHelpFor(bool unprotected) => unprotected ? VpnHelpOff : VpnHelp;
 }
@@ -250,7 +256,7 @@ public sealed class ServerItem : Observable
     /// <summary>The last server you joined through the app (gets a different color in the list).</summary>
     [JsonIgnore] public bool IsLast { get => _isLast; set { if (Set(ref _isLast, value)) Raise(nameof(LastText)); } }
     [JsonIgnore] public DateTime? LastAt { get => _lastAt; set { if (Set(ref _lastAt, value)) Raise(nameof(LastText)); } }
-    [JsonIgnore] public string LastText => !IsLast ? null : LastAt == null ? "Last server you joined" : "You played here " + Fmt.Ago(LastAt);
+    [JsonIgnore] public string LastText => !IsLast ? null : LastAt == null ? Loc.T("Last server you joined") : Loc.F("You played here {0}", Fmt.Ago(LastAt));
 
     [JsonIgnore] public string Key => $"{Ip}:{Port}";
     [JsonIgnore] public string StarGlyph => Favorite ? "" : "";
@@ -259,7 +265,7 @@ public sealed class ServerItem : Observable
     [JsonIgnore] public string Title => !string.IsNullOrWhiteSpace(Label) ? Label : !string.IsNullOrWhiteSpace(ServerName) ? ServerName : Key;
     /// <summary>The list's first line (the IP:port is on the second): without a name, whether it was asked and didn't answer.</summary>
     [JsonIgnore] public string RowTitle => !string.IsNullOrWhiteSpace(Label) ? Label : !string.IsNullOrWhiteSpace(ServerName) ? ServerName
-        : Answered == false ? "Not responding" : "No name yet";
+        : Answered == false ? Loc.T("Not responding") : Loc.T("No name yet");
     bool? _answered;
     /// <summary>The last time it was asked: true it answered, false it didn't, null not asked (yet, or since the connection changed).</summary>
     [JsonIgnore] public bool? Answered { get => _answered; set { if (Set(ref _answered, value)) Raise(nameof(RowTitle)); } }
@@ -291,8 +297,8 @@ public sealed class ServerItem : Observable
     /// <summary>The server gives the player count but not the list (a server setting).</summary>
     [JsonIgnore] public bool PlayersHidden { get => _hidden; set { if (Set(ref _hidden, value)) Raise(nameof(PlayersTip)); } }
     [JsonIgnore] public string PlayersTip => PlayersHidden
-        ? "This server hides its player list (it only gives the count). Flags by name can't match here; a flag with a Steam profile still can."
-        : "Show who is on the server";
+        ? Loc.T("This server hides its player list (it only gives the count). Flags by name can't match here; a flag with a Steam profile still can.")
+        : Loc.T("Show who is on the server");
     string _bannedText;
     /// <summary>"Banned: orbit": your accounts this server banned.</summary>
     [JsonIgnore] public string BannedText { get => _bannedText; set { if (Set(ref _bannedText, value)) Raise(nameof(HasBans)); } }
@@ -317,9 +323,9 @@ public sealed class ServerItem : Observable
     {
         get
         {
-            var head = $"{Key}" + (Network != null ? $" · community {Network}" : "") + "\nDouble-click to join through Steam.";
+            var head = $"{Key}" + (Network != null ? " · " + Loc.F("community {0}", Network) : "") + "\n" + Loc.T("Double-click to join through Steam.");
             if (Players is not { Count: > 0 }) return head;
-            return head + "\nClick the player count to see who is on.\n\nPlayers now:\n" + string.Join("\n", Players.Take(24).Select(p => p.Name)) + (Players.Count > 24 ? "\n…" : "");
+            return head + "\n" + Loc.T("Click the player count to see who is on.") + "\n\n" + Loc.T("Players now:") + "\n" + string.Join("\n", Players.Take(24).Select(p => p.Name)) + (Players.Count > 24 ? "\n…" : "");
         }
     }
 }
@@ -345,7 +351,7 @@ public sealed class PlayerFlag : Observable
 
     [JsonIgnore] public string Shown => Persona ?? Name;
     [JsonIgnore] public string Title => $"{Shown} · {Label}";
-    [JsonIgnore] public string Detail => SteamId == null ? "Matched by name only" : Persona != null && !PlayerMatch.SameName(Persona, Name) ? $"SteamID {SteamId} · was {Name}" : $"SteamID {SteamId}";
+    [JsonIgnore] public string Detail => SteamId == null ? Loc.T("Matched by name only") : Persona != null && !PlayerMatch.SameName(Persona, Name) ? Loc.F("SteamID {0} · was {1}", SteamId, Name) : $"SteamID {SteamId}";
     [JsonIgnore] public Brush Brush => ToBrush(Color);
     [JsonIgnore] public Brush SoftBrush
     {
@@ -388,17 +394,17 @@ public sealed class PlayerRow : Observable
     /// </summary>
     public static string ShortTime(TimeSpan t) => t.TotalMinutes < 1 ? "<1m" : t.TotalHours < 1 ? $"{(int)t.TotalMinutes}m" : t.TotalHours >= 100 ? "99h+" : $"{(int)t.TotalHours}h {t.Minutes:00}m";
     /// <summary>Time on the server in the tooltip, in words like the rest of the app: "38 min", "1 h 05 min".</summary>
-    public static string LongTime(TimeSpan t) => t.TotalMinutes < 1 ? "under 1 min" : t.TotalHours < 1 ? $"{(int)t.TotalMinutes} min"
-        : t.Minutes == 0 ? $"{(int)t.TotalHours} h" : $"{(int)t.TotalHours} h {t.Minutes:00} min";
-    public string FlagMenuText => Flag == null ? "Custom flag…" : "Edit flag…";
-    public string FollowMenuText => Flag?.Follow == true ? "Stop following" : "Follow this player";
+    public static string LongTime(TimeSpan t) => t.TotalMinutes < 1 ? Loc.T("under 1 min") : t.TotalHours < 1 ? Loc.F("{0} min", (int)t.TotalMinutes)
+        : t.Minutes == 0 ? Loc.F("{0} h", (int)t.TotalHours) : Loc.F("{0} h {1} min", (int)t.TotalHours, t.Minutes.ToString("00"));
+    public string FlagMenuText => Flag == null ? Loc.T("Custom flag…") : Loc.T("Edit flag…");
+    public string FollowMenuText => Flag?.Follow == true ? Loc.T("Stop following") : Loc.T("Follow this player");
     public void RaiseFlag()
     {
         foreach (var n in new[] { nameof(Flag), nameof(HasFlag), nameof(FlagBrush), nameof(FlagSoftBrush), nameof(FlagLabel), nameof(Tip), nameof(FlagMenuText), nameof(FollowMenuText) }) Raise(n);
     }
     public string Tip => Flag == null
-        ? $"{Name}\n{Score} pts · {LongTime(Time)} on the server\nRight-click to flag this player."
-        : $"{Name}\nFlagged: {Flag.Label}" + (Flag.SteamId == null ? " (by name: anyone with this name matches)" : $" · SteamID {Flag.SteamId}") + (Flag.Follow ? "\nYou follow this player." : "");
+        ? Name + "\n" + Loc.F("{0} pts · {1} on the server", Score, LongTime(Time)) + "\n" + Loc.T("Right-click to flag this player.")
+        : Name + "\n" + Loc.F("Flagged: {0}", Flag.Label) + (Flag.SteamId == null ? " " + Loc.T("(by name: anyone with this name matches)") : $" · SteamID {Flag.SteamId}") + (Flag.Follow ? "\n" + Loc.T("You follow this player.") : "");
 }
 
 // ------------------------------------------------------------ Steam accounts
@@ -534,10 +540,10 @@ public sealed class AccountItem : Observable
     public bool Private => P?.Private == true;
     public bool Clean => Checked && !HasVac && !HasGameBan && !HasTradeBan && !HasCommunityBan;
     public string VacText => P == null ? null : P.VacBans > 1 ? $"{P.VacBans} VAC" : "VAC";
-    public string GameBanText => P == null ? null : P.GameBans > 1 ? $"{P.GameBans} game bans" : "game ban";
-    public string BanAgeText => P?.DaysSinceLastBan is int d ? $"last {d} d ago" : null;
-    public string LevelText => P?.Level is int l ? $"Level {l}" : null;
-    public string HoursText => P?.Cs2Hours is double h ? $"{h:0} h CS2" : null;
+    public string GameBanText => P == null ? null : P.GameBans > 1 ? Loc.F("{0} game bans", P.GameBans) : Loc.T("game ban");
+    public string BanAgeText => P?.DaysSinceLastBan is int d ? Loc.F("last {0} d ago", d) : null;
+    public string LevelText => P?.Level is int l ? Loc.F("Level {0}", l) : null;
+    public string HoursText => P?.Cs2Hours is double h ? Loc.F("{0} h CS2", h.ToString("0")) : null;
     public bool HasLevel => P?.Level != null;
     public bool HasHours => P?.Cs2Hours != null;
 
@@ -547,22 +553,22 @@ public sealed class AccountItem : Observable
     public Brush QuickBrush => Excluded ? Ui.LineStrong : Ui.Muted;
     /// <summary>New IP + next account can pick this account (the "In rotation" box on the card).</summary>
     public bool InRotation => !Excluded && !Meta.Hidden;   // a hidden account is never picked, even while Show hidden has it on the list
-    public string QuickTip => Meta.Hidden ? "Hidden: New IP + next account never picks a hidden account. Right-click > Show in list to bring it back."
+    public string QuickTip => Meta.Hidden ? Loc.T("Hidden: New IP + next account never picks a hidden account. Right-click > Show in list to bring it back.")
         : Excluded
-        ? "Not in rotation: New IP + next account never picks this account. Tick to put it back."
-        : "In rotation: New IP + next account can pick this account. Untick to leave it out.";
-    public string QuickMenuText => Excluded ? "Put back in rotation" : "Take out of rotation";
+        ? Loc.T("Not in rotation: New IP + next account never picks this account. Tick to put it back.")
+        : Loc.T("In rotation: New IP + next account can pick this account. Untick to leave it out.");
+    public string QuickMenuText => Excluded ? Loc.T("Put back in rotation") : Loc.T("Take out of rotation");
     /// <summary>Hidden from the list, on it only while Show hidden is on: dimmed, and its menu brings it back for good.</summary>
     public double ListOpacity => Meta.Hidden ? 0.5 : 1;
-    public string HideMenuText => Meta.Hidden ? "Show in list" : "Hide from list";
+    public string HideMenuText => Meta.Hidden ? Loc.T("Show in list") : Loc.T("Hide from list");
     public bool HasLastServer => Meta.LastServer != null;
     public string LastServerText => Meta.LastServer == null ? null
-        : $"Last: {(string.IsNullOrWhiteSpace(Meta.LastServerName) ? Meta.LastServer : Meta.LastServerName)} · {Fmt.Ago(Meta.LastServerAt)}";
+        : Loc.F("Last: {0} · {1}", string.IsNullOrWhiteSpace(Meta.LastServerName) ? Meta.LastServer : Meta.LastServerName, Fmt.Ago(Meta.LastServerAt));
     /// <summary>Eligible for Switch: not skipped, no cooldown, no VAC/game ban.</summary>
     public bool Usable => InRotation && !InCooldown && !HasVac && !HasGameBan;
-    public string CooldownText => InCooldown ? "Cooldown " + Fmt.Left(Meta.CooldownUntil.Value - AppClock.Now) : null;
+    public string CooldownText => InCooldown ? Loc.F("Cooldown {0}", Fmt.Left(Meta.CooldownUntil.Value - AppClock.Now)) : null;
     public bool HasServerBans => Meta.ServerBans is { Count: > 0 };
-    public string ServerBansText => !HasServerBans ? null : Meta.ServerBans.Count == 1 ? "banned on 1 server" : $"banned on {Meta.ServerBans.Count} servers";
+    public string ServerBansText => !HasServerBans ? null : Meta.ServerBans.Count == 1 ? Loc.T("banned on 1 server") : Loc.F("banned on {0} servers", Meta.ServerBans.Count);
     /// <summary>The ban that covers this server: on it, or on another server of the same network (see <see cref="ServerNetwork.Same"/>). Null if none.</summary>
     /// <summary>Drops timed bans that have ended. True when one went.</summary>
     public bool DropEndedBans()
@@ -584,8 +590,8 @@ public sealed class AccountItem : Observable
         return null;
     }
     public string ServerBansTip => !HasServerBans ? null
-        : "Banned by these servers (not a Steam ban):\n" + string.Join("\n", Meta.ServerBans.OrderByDescending(b => b.Value?.At).Select(b => $"• {b.Value?.Name ?? b.Key} ({b.Key}), {Fmt.When(b.Value?.At)}" + (b.Value?.Until is DateTime u ? $", until {u:g}" : "")))
-          + "\nIt also counts on servers of the same community (same name tag, or the community name you set on Servers). New IP + next account skips this account there. Right-click > Clear server bans to undo.";
+        : Loc.T("Banned by these servers (not a Steam ban):") + "\n" + string.Join("\n", Meta.ServerBans.OrderByDescending(b => b.Value?.At).Select(b => $"• {b.Value?.Name ?? b.Key} ({b.Key}), {Fmt.When(b.Value?.At)}" + (b.Value?.Until is DateTime u ? ", " + Loc.F("until {0}", u.ToString("g")) : "")))
+          + "\n" + Loc.T("It also counts on servers of the same community (same name tag, or the community name you set on Servers). New IP + next account skips this account there. Right-click > Clear server bans to undo.");
 
     public Brush CardBorder => Active ? Ui.Accent : Ui.Line;
 
@@ -593,27 +599,27 @@ public sealed class AccountItem : Observable
     {
         get
         {
-            var lines = new List<string> { Name, $"Username: {LoginShown}", $"SteamID64: {SteamId}" };
+            var lines = new List<string> { Name, Loc.F("Username: {0}", LoginShown), $"SteamID64: {SteamId}" };
             if (P != null)
             {
                 lines.Add("");
-                lines.Add(Clean ? "No Steam bans on record on the public profile." : "Bans on record:");
+                lines.Add(Clean ? Loc.T("No Steam bans on record on the public profile.") : Loc.T("Bans on record:"));
                 if (HasVac) lines.Add($"• {Fmt.Count(P.VacBans, "VAC ban")}" + (BanAgeText != null ? $", {BanAgeText}" : ""));
                 if (HasGameBan) lines.Add($"• {Fmt.Count(P.GameBans, "game ban")}");
-                if (HasTradeBan) lines.Add($"• Trade ban: {P.TradeBan}");
-                if (HasCommunityBan) lines.Add("• Steam Community ban");
-                if (Limited) lines.Add("• Limited account (no 5 USD spent)");
-                if (Private) lines.Add("• Private profile: hours and level may not show");
-                if (P.MemberSince != null) lines.Add($"Member since {P.MemberSince}");
-                lines.Add($"Checked {Fmt.Ago(P.Checked)}");
+                if (HasTradeBan) lines.Add(Loc.F("• Trade ban: {0}", P.TradeBan));
+                if (HasCommunityBan) lines.Add(Loc.T("• Steam Community ban"));
+                if (Limited) lines.Add(Loc.T("• Limited account (no 5 USD spent)"));
+                if (Private) lines.Add(Loc.T("• Private profile: hours and level may not show"));
+                if (P.MemberSince != null) lines.Add(Loc.F("Member since {0}", P.MemberSince));
+                lines.Add(Loc.F("Checked {0}", Fmt.Ago(P.Checked)));
             }
-            else lines.Add("\nNo status yet: click \"Refresh\".");
-            if (InCooldown) lines.Add($"\nCooldown set by you until {Fmt.When(Meta.CooldownUntil)}");
-            if (Excluded) lines.Add("Not in rotation: New IP + next account never picks it.");
-            if (HasServerBans) lines.Add($"Banned on {Fmt.Count(Meta.ServerBans.Count, "server")} in your list: " + string.Join(", ", Meta.ServerBans.Keys));
-            if (Meta.LastServer != null) lines.Add($"Last server: {Meta.LastServerName ?? Meta.LastServer} ({Meta.LastServer}), {Fmt.When(Meta.LastServerAt)}");
-            if (HasNote) lines.Add("\nNote: " + Note);
-            lines.Add("\nClick Log in to switch. Right-click for more options.");
+            else lines.Add("\n" + Loc.T("No status yet: click \"Refresh\"."));
+            if (InCooldown) lines.Add("\n" + Loc.F("Cooldown set by you until {0}", Fmt.When(Meta.CooldownUntil)));
+            if (Excluded) lines.Add(Loc.T("Not in rotation: New IP + next account never picks it."));
+            if (HasServerBans) lines.Add(Loc.F("Banned on {0} in your list: {1}", Fmt.Count(Meta.ServerBans.Count, "server"), string.Join(", ", Meta.ServerBans.Keys)));
+            if (Meta.LastServer != null) lines.Add(Loc.F("Last server: {0} ({1}), {2}", Meta.LastServerName ?? Meta.LastServer, Meta.LastServer, Fmt.When(Meta.LastServerAt)));
+            if (HasNote) lines.Add("\n" + Loc.F("Note: {0}", Note));
+            lines.Add("\n" + Loc.T("Click Log in to switch. Right-click for more options."));
             return string.Join("\n", lines);
         }
     }

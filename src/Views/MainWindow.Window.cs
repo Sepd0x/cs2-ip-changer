@@ -27,7 +27,7 @@ public partial class MainWindow
         foreach (var (nav, page, title) in map)
         {
             page.Visibility = nav.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
-            if (nav.IsChecked == true) PageTitle.Text = title;
+            if (nav.IsChecked == true) PageTitle.Text = Loc.T(title);
         }
         if (IsVisible) Telemetry.Screen(TelemetryScreen());
         if (NavAccounts.IsChecked == true && !_demo)
@@ -38,13 +38,14 @@ public partial class MainWindow
         if (NavLog.IsChecked == true) UpdateDiagInfo();
         if (NavConfigs.IsChecked == true) ShowConfigs();
         if (NavSettings.IsChecked == true) ShowLaunchOptions();
+        if (NavRegions.IsChecked == true) ShowRegionsPitch();
     }
 
     void LogCopy_Click(object sender, RoutedEventArgs e)
     {
         var text = string.Join(Environment.NewLine, _log.Reverse().Select(l => $"{l.TimeText}  {l.Text}"));
         if (Rec.On) text = Rec.Scrub(text, PersonalWords().ToList());   // recording build: what you paste is as clean as the screen
-        try { Clipboard.SetText(text); Toast("Log copied.", true); } catch { Toast("Couldn't copy. Try again.", false); }
+        try { Clipboard.SetText(text); Toast(Loc.T("Log copied."), true); } catch { Toast(Loc.T("Couldn't copy. Try again."), false); }
     }
 
     void LogClear_Click(object sender, RoutedEventArgs e) => _log.Clear();
@@ -65,7 +66,7 @@ public partial class MainWindow
         var kind = LogErr.IsChecked == true ? "error" : LogWarn.IsChecked == true ? "warn" : "all";
         var q = LogSearch.Text;
         _logView.Filter = kind == "all" && string.IsNullOrWhiteSpace(q) ? null : o => o is LogEntry l && LogShows(l, kind, q);
-        LogCount.Text = _logView.Filter == null ? "" : $"{_logView.Cast<object>().Count()} of {_log.Count} lines";
+        LogCount.Text = _logView.Filter == null ? "" : Loc.F("{0} of {1} lines", _logView.Cast<object>().Count(), _log.Count);
     }
 
     // ------------------------------------------------------------ Hide logins also covers the Log on screen (the file keeps everything)
@@ -161,9 +162,9 @@ public partial class MainWindow
 
     /// <summary>The first close with protection on. How the next start goes follows Turn on protection when the app starts (Guard.OnAtStart).</summary>
     public static string CloseKeepText(string blocked, bool protectOnStart) =>
-        $"{blocked} stay blocked outside the phone after you close the app. Without the phone they can't connect until you open the app again "
-        + (protectOnStart ? "(it starts with protection on: Settings > Protection)." : "(it starts with protection off, unless CS2 is still open).")
-        + "\n\nThe app remembers your answer. To change it: Settings > Protection > Turn off protection when closing the app.";
+        Loc.F("{0} stay blocked outside the phone after you close the app. Without the phone they can't connect until you open the app again {1}", blocked,
+            protectOnStart ? Loc.T("(it starts with protection on: Settings > Protection).") : Loc.T("(it starts with protection off, unless CS2 is still open)."))
+        + "\n\n" + Loc.T("The app remembers your answer. To change it: Settings > Protection > Turn off protection when closing the app.");
 
     /// <summary>Windows is shutting down or signing out: closing goes through without questions.</summary>
     bool _sessionEnding, _closeAsking;
@@ -248,7 +249,7 @@ public partial class MainWindow
         {
             e.Cancel = true;
             await AfterCancelledClose();
-            if (!await Ask("Profiles are still changing", "Stop after the current account and close?", "Stop and close")) { _quitting = false; return; }
+            if (!await Ask(Loc.T("Profiles are still changing"), Loc.T("Stop after the current account and close?"), Loc.T("Stop and close"))) { _quitting = false; return; }
             _profCts?.Cancel();
             while (_profBusy) await Task.Delay(200);
             Close();
@@ -266,7 +267,7 @@ public partial class MainWindow
             try
             {
                 await AfterCancelledClose();
-                keep = await Ask("Close the app", CloseKeepText(Blocked(_last), _s.ProtectOnStart), "Keep and close", "Turn off and close");
+                keep = await Ask(Loc.T("Close the app"), CloseKeepText(Blocked(_last), _s.ProtectOnStart), Loc.T("Keep and close"), Loc.T("Turn off and close"));
             }
             finally { _closeAsking = false; }
             if (!keep && !_dialogCancelClicked) { _quitting = false; return; }   // Escape, or another question came up: the app stays open
@@ -296,7 +297,7 @@ public partial class MainWindow
             if (!_sessionEnding)
             {
                 await AfterCancelledClose();
-                if (!await Ask("CS2 is still open", "Turning protection off now would send CS2's traffic through your home connection. Close CS2 first, or close the app and keep protection on this time.", "Keep protection and close")) { _quitting = false; return; }
+                if (!await Ask(Loc.T("CS2 is still open"), Loc.T("Turning protection off now would send CS2's traffic through your home connection. Close CS2 first, or close the app and keep protection on this time."), Loc.T("Keep protection and close"))) { _quitting = false; return; }
             }
             await KeepAndClose();
             return;
@@ -306,7 +307,7 @@ public partial class MainWindow
         // Same as Restore network: no tick may put the rules back while RestoreAll runs or while the process exits.
         _restored = true;
         _tick.Stop();
-        ShowProgress("Undoing the routes and the kill switch…");
+        ShowProgress(Loc.T("Undoing the routes and the kill switch…"));
 
         // A Regions write still running finishes first (10 s at most), so the app doesn't close halfway through it. The Regions rule
         // itself stays: regions don't depend on protection.

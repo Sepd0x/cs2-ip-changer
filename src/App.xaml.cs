@@ -11,6 +11,7 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        Loc.Init(Store.Peek<Settings>(Paths.File(AppIds.Files.Settings))?.Language);   // before any window
         var args = e.Args.Where(a => a != AppIds.Args.NetMoved).ToArray();   // Program.Main's own marker, not an option
         // Before the single-instance lock: it's the way out when a stuck copy holds the lock and its window won't open.
         if (AppIds.Args.IsRestore(args)) { Paths.Ensure(); RestoreAndExit(); return; }
@@ -158,16 +159,16 @@ public partial class App : Application
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
         if (Steam.Cs2Running)
         {
-            new NoticeWindow("Close CS2 first", "Removing the app's block now would send CS2's traffic through your home connection. Close CS2, then click Uninstall again.", "Close", problem: true).ShowAndWait();
+            new NoticeWindow(Loc.T("Close CS2 first"), Loc.T("Removing the app's block now would send CS2's traffic through your home connection. Close CS2, then click Uninstall again."), Loc.T("Close"), problem: true).ShowAndWait();
             Shutdown();
             return;
         }
         Uninstall.Outcome o = null;
-        var ask = new NoticeWindow(Uninstall.Title, Uninstall.Text(), "Remove", "Cancel", choices: Uninstall.Choices(Paths.Data, Autostart.Allowed(Environment.ProcessPath)), danger: true,
+        var ask = new NoticeWindow(Uninstall.Title, Uninstall.Text(), Loc.T("Remove"), Loc.T("Cancel"), choices: Uninstall.Choices(Paths.Data, Autostart.Allowed(Environment.ProcessPath)), danger: true,
             action: async w =>
             {
                 w.Working = true;
-                w.Say("Removing the rules, routes, task and the app's files…");
+                w.Say(Loc.T("Removing the rules, routes, task and the app's files…"));
                 try
                 {
                     var servers = Store.Load<List<ServerItem>>(Paths.File(AppIds.Files.Servers), () => new());
@@ -179,7 +180,7 @@ public partial class App : Application
                     Log.Error("Remove stopped: " + ex.Message);
                     w.Working = false;
                     w.Finish();
-                    w.Say("Remove stopped: " + ex.Message + $" Run {AppIds.ExeName} {AppIds.Args.Restore} to undo the network changes.", bad: true);
+                    w.Say(Loc.F("Remove stopped: {0}", ex.Message) + " " + Loc.F("Run {0} {1} to undo the network changes.", AppIds.ExeName, AppIds.Args.Restore), bad: true);
                     return;
                 }
                 Log.Info(Uninstall.LogLine(o));
@@ -242,7 +243,7 @@ public partial class App : Application
     /// <param name="leftOn">Started by an update that left protection on (<see cref="ProtectionLeftOn"/>): the notice says Quit turns it off.</param>
     /// <param name="had">The notice accepted before (<see cref="StatsNoticeIn"/>): above 0, what changed since then is added.</param>
     internal static NoticeWindow StatsNoticeWindow(bool leftOn = false, int had = 0) =>
-        new(Telemetry.NoticeTitle, StatsNoticeBody(leftOn, had), "Accept", "Quit", more: Telemetry.NoticeList);
+        new(Loc.T(Telemetry.NoticeTitle), StatsNoticeBody(leftOn, had), Loc.T("Accept"), Loc.T("Quit"), more: Telemetry.NoticeList);
 
     /// <summary>The notice's visible text (<see cref="StatsNoticeWindow"/>), without the full list.</summary>
     public static string StatsNoticeBody(bool leftOn, int had)
@@ -277,15 +278,15 @@ public partial class App : Application
 
     // The app's own windows for these two messages (NoticeWindow), not Windows' message box. The demo screenshots use them too.
     internal static NoticeWindow AlreadyRunningWindow(bool otherSession = false) =>
-        new("CS2 IP Changer is already running", RunningText(otherSession), "Close");
+        new(Loc.T("CS2 IP Changer is already running"), RunningText(otherSession), Loc.T("Close"));
 
     /// <summary>
     /// Why this start stops. The lock is for the whole PC (the rules are), but the window can only be brought back in this Windows
     /// session: a copy open in another user's session has nothing in this taskbar.
     /// </summary>
     public static string RunningText(bool otherSession) => otherSession
-        ? "CS2 IP Changer is open in another Windows user's session. It changes the Firewall for the whole PC, so only one copy can run: close it in that session first."
-        : "Close the copy that is open first (look in the taskbar), then start the app again.";
+        ? Loc.T("CS2 IP Changer is open in another Windows user's session. It changes the Firewall for the whole PC, so only one copy can run: close it in that session first.")
+        : Loc.T("Close the copy that is open first (look in the taskbar), then start the app again.");
 
     /// <summary>Another copy of the app runs in another Windows session (fast user switching). Read as admin; false when it can't be told.</summary>
     static bool OpenInOtherSession()
@@ -303,17 +304,17 @@ public partial class App : Application
     internal static NoticeWindow RestoredWindow(string left, bool running, string task = null)
     {
         var (title, text) = RestoredText(left, running, task);
-        return new(title, text, "Close", problem: left != null || running || task != null);
+        return new(title, text, Loc.T("Close"), problem: left != null || running || task != null);
     }
 
     /// <summary>--restore's result: what is left of the network (null = all clean), whether another copy still runs, and why the Start with Windows task stayed (null = gone).</summary>
     public static (string Title, string Text) RestoredText(string left, bool running, string task = null) =>
-        (left == null && !running ? "Network restored" : "Network not fully restored",
+        (left == null && !running ? Loc.T("Network restored") : Loc.T("Network not fully restored"),
             (left == null
-                ? "The Firewall rules and routes from CS2 IP Changer are gone."
-                : "Couldn't remove: " + left + ".\n\nRestart the PC to clear routes. Rules can be removed in Windows Firewall > Outbound Rules (names start with " + AppIds.RulePrefix + ").")
-            + (task != null ? "\n\nThe Start with Windows task wasn't removed: " + task.TrimEnd().TrimEnd('.') + ". Open the app and turn off Settings > App > Start with Windows, or delete the task \"CS2 IP Changer\" in Task Scheduler." : "")
-            + (running ? "\n\nAnother copy of the app is still running: close it, or it puts the rules back." : ""));
+                ? Loc.T("The Firewall rules and routes from CS2 IP Changer are gone.")
+                : Loc.F("Couldn't remove: {0}.", left) + "\n\n" + Loc.F("Restart the PC to clear routes. Rules can be removed in Windows Firewall > Outbound Rules (names start with {0}).", AppIds.RulePrefix))
+            + (task != null ? "\n\n" + Loc.F("The Start with Windows task wasn't removed: {0}. Open the app and turn off Settings > App > Start with Windows, or delete the task \"CS2 IP Changer\" in Task Scheduler.", task.TrimEnd().TrimEnd('.')) : "")
+            + (running ? "\n\n" + Loc.T("Another copy of the app is still running: close it, or it puts the rules back.") : ""));
 
     static void OnUiError(object sender, DispatcherUnhandledExceptionEventArgs e)
     {

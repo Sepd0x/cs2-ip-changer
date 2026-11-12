@@ -23,8 +23,8 @@ public sealed class RegionItem : Observable
     public string Country => Info.Area != null ? $"{Info.Country} · {Info.Area}" : Info.Country;
     public string Continent => Info.Continent;
     public int ContinentRank => Regions.ContinentRank(Info.Continent);
-    public string RelayText => Info.RelayIps.Count == 1 ? "1 relay" : $"{Info.RelayIps.Count} relays";
-    public string Tip => $"Valve code: {string.Join(", ", Info.Codes)} · {RelayText}";
+    public string RelayText => Fmt.Count(Info.RelayIps.Count, "relay", "relays");
+    public string Tip => Loc.F("Valve code: {0} · {1}", string.Join(", ", Info.Codes), RelayText);
 
     /// <summary>On = CS2 can reach this region. Off = its relays are blocked for cs2.exe.</summary>
     public bool Allowed { get => _allowed; set => Set(ref _allowed, value); }
@@ -35,7 +35,7 @@ public sealed class RegionItem : Observable
         set { if (Set(ref _pingMs, value)) { Raise(nameof(PingText)); Raise(nameof(PingBrush)); Raise(nameof(SortPing)); } }
     }
     public int SortPing => PingMs < 0 ? int.MaxValue : PingMs;
-    public string PingText => PingMs switch { -2 => "—", -1 => "no answer", _ => $"{PingMs} ms" };
+    public string PingText => PingMs switch { -2 => "—", -1 => Loc.T("no answer"), _ => Loc.F("{0} ms", PingMs) };
     // The same colors as the Servers page.
     public Brush PingBrush => PingMs < 0 ? Ui.Faint : PingMs < 60 ? Ui.Good : PingMs < 120 ? Ui.Warn : Ui.Bad;
 }

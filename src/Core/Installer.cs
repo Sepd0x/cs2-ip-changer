@@ -47,7 +47,7 @@ public static class Installer
         var dir = stageDir ?? StageDir;
         Adb.SafeDir(Path.GetDirectoryName(dir)!);
         Adb.SafeDir(dir);
-        if (!Adb.AdminOnly(dir)) throw new IOException(dir + " can be changed by programs without admin rights");
+        if (!Adb.AdminOnly(dir)) throw new IOException(Loc.F("{0} can be changed by programs without admin rights", dir));
         var exe = Path.Combine(dir, AppIds.ExeName);
         CopyExe(self, exe);
         return exe;
@@ -70,10 +70,10 @@ public static class Installer
     {
         var dir = Path.TrimEndingDirectorySeparator(Path.GetFullPath(target));
         if (Directory.Exists(dir))
-            return Paths.IsLink(dir) || Adb.UsersCanWrite(dir) ? $"{dir} can be changed by programs without admin rights, so nothing was copied there." : null;
+            return Paths.IsLink(dir) || Adb.UsersCanWrite(dir) ? Loc.F("{0} can be changed by programs without admin rights, so nothing was copied there.", dir) : null;
         var parent = Path.GetDirectoryName(dir);
         return parent == null || !Directory.Exists(parent) || Paths.IsLink(parent) || Adb.UsersCanWrite(parent)
-            ? $"{parent} can be changed by programs without admin rights, so nothing was copied there." : null;
+            ? Loc.F("{0} can be changed by programs without admin rights, so nothing was copied there.", parent) : null;
     }
 
     /// <summary>The version of the app already installed there (null = none), from its file's product version.</summary>
@@ -142,15 +142,15 @@ public static class Installer
         {
             // Moved there instead of copied, it keeps permissions that let other programs change it, and the app won't start with it
             if (Paths.IsLink(toData) || Adb.UsersCanWrite(toData))
-                throw new IOException($"{toData} can be changed by programs without admin rights (it was moved there instead of copied). Copy it to another place, delete it there and copy it back.");
+                throw new IOException(Loc.F("{0} can be changed by programs without admin rights (it was moved there instead of copied). Copy it to another place, delete it there and copy it back.", toData));
             return (0, 0, Directory.Exists(data));
         }
         if (!Directory.Exists(data)) return (0, 0, false);
         var partial = toData + ".partial";
-        if (Directory.Exists(partial) && !SRT.Program.DeleteTree(partial)) throw new IOException(partial + " is left from an earlier try and can't be removed");
+        if (Directory.Exists(partial) && !SRT.Program.DeleteTree(partial)) throw new IOException(Loc.F("{0} is left from an earlier try and can't be removed", partial));
         var (files, skipped) = CopyData(data, partial);
         if (files < 0)
-            throw new IOException($"{data} goes through a link, or where it really is couldn't be confirmed (a folder synced by OneDrive does this), so it wasn't copied. Copy it to {toData} yourself.");
+            throw new IOException(Loc.F("{0} goes through a link, or where it really is couldn't be confirmed (a folder synced by OneDrive does this), so it wasn't copied. Copy it to {1} yourself.", data, toData));
         Directory.Move(partial, toData);
         return (files, skipped, false);
     }
@@ -219,14 +219,14 @@ public static class Installer
     /// </summary>
     public static FileStream OpenSelf()
     {
-        var path = Environment.ProcessPath ?? throw new IOException("the app's own path is unknown");
+        var path = Environment.ProcessPath ?? throw new IOException(Loc.T("the app's own path is unknown"));
         var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
         try
         {
             var held = FinalPath(fs.SafeFileHandle, NtVolume);
             var image = MappedName(GetModuleHandleW(null));
             if (held == null || image == null || !held.Equals(image, StringComparison.OrdinalIgnoreCase))
-                throw new IOException(path + " is not the file that is running, so it wasn't copied");
+                throw new IOException(Loc.F("{0} is not the file that is running, so it wasn't copied", path));
             return fs;
         }
         catch { fs.Dispose(); throw; }
@@ -249,9 +249,9 @@ public static class Installer
             want = sha.GetHashAndReset();
         }
         using (var check = File.OpenRead(tmp))
-            if (!SHA256.HashData(check).AsSpan().SequenceEqual(want)) { File.Delete(tmp); throw new IOException("the copy doesn't match the app"); }
+            if (!SHA256.HashData(check).AsSpan().SequenceEqual(want)) { File.Delete(tmp); throw new IOException(Loc.T("the copy doesn't match the app")); }
         try { File.Move(tmp, dest, true); }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { File.Delete(tmp); throw new IOException($"{dest} is in use. If CS2 IP Changer is open from there, close it and try again."); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { File.Delete(tmp); throw new IOException(Loc.F("{0} is in use. If CS2 IP Changer is open from there, close it and try again.", dest)); }
     }
 
     /// <summary>Files never copied: owned.json (the routes the app added, read only from an admin-only folder: one planted in the old
@@ -286,8 +286,8 @@ public static class Installer
     }
 
     public static string OldCopyText(string fromDir) =>
-        $"The app is installed and has your settings. The old copy in {fromDir} still has its SRT_Dados folder, with your saved Steam sign-ins.\n\n"
-        + "Send it to the Recycle Bin? You can get it back from there.";
+        Loc.F("The app is installed and has your settings. The old copy in {0} still has its SRT_Dados folder, with your saved Steam sign-ins.", fromDir)
+        + "\n\n" + Loc.T("Send it to the Recycle Bin? You can get it back from there.");
 
     /// <summary>To the Recycle Bin, never deleted for good: moved (a rename on the same disk), so a link inside is moved as a link.</summary>
     public static bool Recycle(string path)

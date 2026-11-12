@@ -97,9 +97,9 @@ public static class Autostart
     /// <summary>Makes (or remakes) the task for this exe and checks it is there. Null = done, else what went wrong.</summary>
     public static async Task<string> TurnOn(string exe)
     {
-        if (!Allowed(exe)) return "Only the copy installed in " + Installer.Target + " can start with Windows.";
+        if (!Allowed(exe)) return Loc.F("Only the copy installed in {0} can start with Windows.", Installer.Target);
         var sid = WindowsIdentity.GetCurrent().User?.Value;
-        if (sid == null) return "Couldn't read your Windows user.";
+        if (sid == null) return Loc.T("Couldn't read your Windows user.");
         // The XML goes through an admin-only folder: schtasks reads it from a file, and nobody else may change it in between.
         var root = AppIds.ProgramDataDir;
         var dir = Path.Combine(root, "task");
@@ -110,11 +110,11 @@ public static class Autostart
             Adb.SafeDir(dir);
             File.WriteAllText(file, TaskXml(exe, sid), Encoding.Unicode);
             var r = await Proc.Run("schtasks", $"/Create /TN \"{TaskName}\" /XML \"{file}\" /F", 15000);
-            if (r.Code != 0) return "Windows didn't make the task: " + Short(r.Output);
+            if (r.Code != 0) return Loc.F("Windows didn't make the task: {0}", Short(r.Output));
         }
         catch (Exception ex) { return ex.Message; }
         finally { try { File.Delete(file); } catch { } }
-        return await IsOn(exe) == true ? null : "The task was made but Windows doesn't show it starting this app.";
+        return await IsOn(exe) == true ? null : Loc.T("The task was made but Windows doesn't show it starting this app.");
     }
 
     /// <summary>Deletes the task if it's there. Null = gone (or never was), else what went wrong.</summary>
@@ -123,7 +123,7 @@ public static class Autostart
         var q = await Proc.Run("schtasks", $"/Query /TN \"{TaskName}\"", 10000);
         if (q.Code == 1) return null;   // not there
         var r = await Proc.Run("schtasks", $"/Delete /TN \"{TaskName}\" /F", 10000);
-        return r.Code == 0 ? null : "Windows didn't delete the task \"" + TaskName + "\": " + Short(r.Output);
+        return r.Code == 0 ? null : Loc.F("Windows didn't delete the task \"{0}\": {1}", TaskName, Short(r.Output));
     }
 
     static string Short(string s) => (s ?? "").Trim().Split('\n')[0].Trim();

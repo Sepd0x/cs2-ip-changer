@@ -657,6 +657,10 @@ Xao9NovTests.Run(Check);
 // 10 nov.: a contagem da dashboard com os dados reais: join só num servidor, o iPhone conta como o Android, partidas em casa,
 // minutos do sinal ao vivo e o PC do dono (Dashboard10NovTests.cs)
 Dashboard10NovTests.Run(Check);
+// 10 nov. (onboarding): ADB pelo Phone setup, cabo, depuração por marca, visita guiada, nota em Regions (OnboardingTests.cs)
+OnboardingTests.Run(Check);
+// 11 nov.: idiomas da app (LocTests.cs)
+LocTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

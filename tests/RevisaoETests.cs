@@ -129,7 +129,7 @@ static class RevisaoETests
         var wifi = new Adapter { Index = 12, Id = "{" + guid + "}", IsWifi = true, Up = true, LocalIp = "172.20.10.2", Gateway = "172.20.10.1", SsidUnknown = true };
         Net.PickEgress(new List<Adapter> { wifi }, wifi.Id, "Ana's phone", out var why);
         check("Revisão E12: o Status manda ligar a localização em vez de dizer que o PC não está no hotspot", why == Net.SsidLocationText && why.Contains("Location"), why ?? "");
-        check("Revisão E12: e escolher o hotspot diz o mesmo", Src("Views", "MainWindow.Protection.cs").Contains("Toast(a.SsidUnknown ? Net.SsidLocationText : \"First connect the PC's Wi-Fi"), "");
+        check("Revisão E12: e escolher o hotspot diz o mesmo", Src("Views", "MainWindow.Protection.cs").Contains("Toast(a.SsidUnknown ? Loc.T(Net.SsidLocationText) : Loc.T(\"First connect the PC's Wi-Fi"), "");
     }
 
     static string Body(string src, string start)

@@ -96,34 +96,34 @@ public static class Telemetry
     /// full list (<see cref="NoticeList"/>) under See the full list. The "Kept by" line says who, why, the legal basis, where, how long
     /// and how to ask or complain (GDPR art. 13), like README > Telemetry and docs/PRIVACY-AND-SECURITY.md.
     /// </summary>
-    public const string NoticeShort =
-        "This beta sends usage stats when it opens and closes and every 30 minutes while it's open, so bugs get found and fixed. They are required while it is in beta.\n\n"
+    public static string NoticeShort =>
+        Loc.T("This beta sends usage stats when it opens and closes and every 30 minutes while it's open, so bugs get found and fixed. They are required while it is in beta.") + "\n\n"
         + NoticeSent + "\n"
-        + "Never sent: IPs, servers, accounts, Steam names or IDs, your carrier, anything you type.\n"
-        + "Kept by the author (Sepd0x on GitHub) on Cloudflare, only to fix bugs and improve the app, because you accept this notice, for 12 months. "
-        + "Delete them any time: Settings > Delete my stats. Questions: GitHub issues. You can also complain to your data protection authority.\n\n"
-        + "Quit closes the app. Nothing on your PC changes.";
+        + Loc.T("Never sent: IPs, servers, accounts, Steam names or IDs, your carrier, anything you type.") + "\n"
+        + Loc.T("Kept by the author (Sepd0x on GitHub) on Cloudflare, only to fix bugs and improve the app, because you accept this notice, for 12 months. "
+        + "Delete them any time: Settings > Delete my stats. Questions: GitHub issues. You can also complain to your data protection authority.") + "\n\n"
+        + Loc.T("Quit closes the app. Nothing on your PC changes.");
 
     /// <summary>The "Sent:" line of the notice, also the tooltip of the stats line in Settings > Privacy (one text, never a shorter copy).</summary>
-    public const string NoticeSent =
-        "Sent: a random ID made for this install, app and Windows versions, country, which screens, buttons and settings you use, ping and lag in rough bands, errors, and your phone's brand and Android version.";
+    public static string NoticeSent =>
+        Loc.T("Sent: a random ID made for this install, app and Windows versions, country, which screens, buttons and settings you use, ping and lag in rough bands, errors, and your phone's brand and Android version.");
 
     /// <summary>The full list (the notice until beta.10), shown under See the full list. README > Telemetry has the same list.</summary>
-    public const string NoticeText =
-        "While CS2 IP Changer is in beta, using it means it sends usage stats when it opens and closes (and every 30 minutes while it's open), so bugs get found and fixed:\n\n"
+    public static string NoticeText =>
+        Loc.T("While CS2 IP Changer is in beta, using it means it sends usage stats when it opens and closes (and every 30 minutes while it's open), so bugs get found and fixed:") + "\n\n"
         + NoticeList + "\n\n"
-        + "Never IPs, servers, accounts, Steam names or IDs, your carrier or anything you type.\n\n"
-        + "Quit closes the app without changing anything on your PC.";
+        + Loc.T("Never IPs, servers, accounts, Steam names or IDs, your carrier or anything you type.") + "\n\n"
+        + Loc.T("Quit closes the app without changing anything on your PC.");
 
     /// <summary>The 7 items of the full list, unchanged since beta.10.</summary>
-    public const string NoticeList =
-        "•  a random ID made for this install, with no name, never from your PC or from you (Settings > Delete my stats deletes everything kept under it), and how long ago the app was set up, only in rough bands (this week, 2 to 4 weeks…)\n"
-        + "•  the app and Windows versions, and your country as two letters\n"
-        + "•  the mode, how the phone is connected, minutes the app was open and on each screen, and every few minutes while it's open what is on (screen, CS2 open, protection on)\n"
-        + "•  how often each button and hotkey is used, where on each screen you click (a coarse grid, added up with everyone's, anonymous), a few counters (IP changes, kicks seen, leak tests passed or failed, which Checks rows are red) and how long your lists are, in rough bands\n"
-        + "•  in rough bands: each CS2 match's ping, jitter and lag (Valve or community, never the server), how long sessions last and the start takes, how far you scroll, and which on/off settings you changed\n"
-        + "•  errors and crashes, as their type and place in the app's code\n"
-        + "•  in a separate anonymous daily report with no ID or country: Windows language and build, window size and scale, the phone's brand (never the model), Android version and 4G or 5G";
+    public static string NoticeList =>
+        Loc.T("•  a random ID made for this install, with no name, never from your PC or from you (Settings > Delete my stats deletes everything kept under it), and how long ago the app was set up, only in rough bands (this week, 2 to 4 weeks…)") + "\n"
+        + Loc.T("•  the app and Windows versions, and your country as two letters") + "\n"
+        + Loc.T("•  the mode, how the phone is connected, minutes the app was open and on each screen, and every few minutes while it's open what is on (screen, CS2 open, protection on)") + "\n"
+        + Loc.T("•  how often each button and hotkey is used, where on each screen you click (a coarse grid, added up with everyone's, anonymous), a few counters (IP changes, kicks seen, leak tests passed or failed, which Checks rows are red) and how long your lists are, in rough bands") + "\n"
+        + Loc.T("•  in rough bands: each CS2 match's ping, jitter and lag (Valve or community, never the server), how long sessions last and the start takes, how far you scroll, and which on/off settings you changed") + "\n"
+        + Loc.T("•  errors and crashes, as their type and place in the app's code") + "\n"
+        + Loc.T("•  in a separate anonymous daily report with no ID or country: Windows language and build, window size and scale, the phone's brand (never the model), Android version and 4G or 5G");
 
     /// <summary>
     /// The notice's version (Settings.StatsNotice). 2 since beta.9: the ID is kept for the install. 3 since beta.10: the stats also go
@@ -142,18 +142,18 @@ public static class Telemetry
     public static string NoticeChangedFor(int had)
     {
         if (had <= 0 || had >= NoticeVersion) return "";
-        var s = "Changed since you last accepted: this notice is shorter, with every item still under See the full list, and it now says "
-            + "who keeps the stats, for how long and how to ask about them or complain.";
-        if (had < 3) s += " The stats now also go out every 30 minutes while the app is open (and before the PC sleeps), not only when it opens and closes.";
-        if (had < 2) s += " The ID is now kept for this install instead of new every day, so the stats can tell people who come back from new installs. "
-            + "It is still random and has no name.";
+        var s = Loc.T("Changed since you last accepted: this notice is shorter, with every item still under See the full list, and it now says "
+            + "who keeps the stats, for how long and how to ask about them or complain.");
+        if (had < 3) s += " " + Loc.T("The stats now also go out every 30 minutes while the app is open (and before the PC sleeps), not only when it opens and closes.");
+        if (had < 2) s += " " + Loc.T("The ID is now kept for this install instead of new every day, so the stats can tell people who come back from new installs. "
+            + "It is still random and has no name.");
         return s;
     }
 
     /// <summary>Added to the notice when it shows right after an update (--updated): Quit undoes what the version before left on.</summary>
-    public const string NoticeAfterUpdate =
-        "You just updated: the version before left its protection on. Quit also turns it off, like Turn off protection, so your servers "
-        + "aren't left blocked outside the phone without the app (not while CS2 is open).";
+    public static string NoticeAfterUpdate =>
+        Loc.T("You just updated: the version before left its protection on. Quit also turns it off, like Turn off protection, so your servers "
+        + "aren't left blocked outside the phone without the app (not while CS2 is open).");
 
     /// <summary>Stats are on (the notice was accepted, and this isn't the demo or the recording build).</summary>
     public static bool Running => _on;

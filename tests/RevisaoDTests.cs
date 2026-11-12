@@ -37,12 +37,12 @@ static class RevisaoDTests
             && MainWindow.NoInstallReason(full, false) is string e3 && e3.Contains("can't replace itself"), "");
         check("Revisão D15: uma release completa instala", MainWindow.NoInstallReason(full, true) == null, "");
         var upd = Src("Views", "MainWindow.Update.cs");
-        check("Revisão D15: o Update diz a razão no toast e no Log", upd.Contains("if (NoInstallReason(r, Updater.CanSelfUpdate) is string why)") && upd.Contains("Log.Warn($\"Update {r.Version}: {why}\");") && !upd.Contains("\"Opened the release page on GitHub.\""), "");
+        check("Revisão D15: o Update diz a razão no toast e no Log", upd.Contains("if (NoInstallReason(r, Updater.CanSelfUpdate) is string why)") && upd.Contains("Log.Warn($\"Update {r.Version}: {Loc.En(why)}\");") && !upd.Contains("\"Opened the release page on GitHub.\""), "");
 
         // D17. Uninstall pelo Windows: uma exceção a meio diz o que fazer em vez de fechar calada
         var un = app[app.IndexOf("void UninstallAndExit()")..];
         un = un[..un.IndexOf("\n    }")];
-        check("Revisão D17: o Remove do Windows apanha a exceção e manda correr --restore", un.Contains("catch (Exception ex)") && un.Contains("{AppIds.Args.Restore}") && un.Contains("w.Finish();"), "");
+        check("Revisão D17: o Remove do Windows apanha a exceção e manda correr --restore", un.Contains("catch (Exception ex)") && un.Contains("AppIds.Args.Restore)") && un.Contains("w.Finish();"), "");
 
         // D20. Frases que não batiam
         check("Revisão D20: a razão do SRT_Dados acaba em ponto antes de \"Then start\"",
@@ -62,7 +62,7 @@ static class RevisaoDTests
 
         // D8. O aviso ao fechar para a área de notificação não promete proteção
         check("Revisão D8: o aviso do X não diz que a proteção continua", !MainWindow.TrayHintText.Contains("carries on") && !MainWindow.TrayHintText.Contains("Protection") && !MainWindow.TrayHintText.Contains("New IP"), MainWindow.TrayHintText);
-        check("Revisão D8: o aviso usa esse texto", Src("Views", "MainWindow.Tray.cs").Contains("_tray?.Balloon(\"CS2 IP Changer is still running\", TrayHintText);"), "");
+        check("Revisão D8: o aviso usa esse texto", Src("Views", "MainWindow.Tray.cs").Contains("_tray?.Balloon(Loc.T(\"CS2 IP Changer is still running\"), TrayHintText);"), "");
         check("Revisão D8: o tooltip de Close to the notification area não diz que protege", !xaml.Contains("keeps protecting") && xaml.Contains("ToolTip=\"The X hides the window and the app keeps running in the notification area (next to the clock)."), "");
 
         // D10. Start with Windows não diz "with protection off"
@@ -73,7 +73,7 @@ static class RevisaoDTests
         var settings = Src("Views", "MainWindow.Settings.cs");
         var fw = settings[settings.IndexOf("void OpenFirewall_Click")..];
         fw = fw[..fw.IndexOf("\n    }")];
-        check("Revisão D11: uma falha a abrir a Firewall para ali", fw.Contains("catch (Exception ex) { Toast(\"Couldn't open the Firewall: \" + ex.Message, Tone.Error); return; }"), "");
+        check("Revisão D11: uma falha a abrir a Firewall para ali", fw.Contains("catch (Exception ex) { Toast(Loc.F(\"Couldn't open the Firewall: {0}\", ex.Message), Tone.Error); return; }"), "");
         check("Revisão D11: o toast dá o começo de todos os nomes, não só o do kill switch",
             MainWindow.FirewallRulesHint == $"In Outbound Rules, the app's rules start with '{AppIds.RulePrefix}'." && fw.Contains("Toast(FirewallRulesHint, true);") && !fw.Contains("Firewall.RuleName"), "");
 
@@ -153,7 +153,7 @@ static class RevisaoDTests
                 shown.OfType<CfgGroupRow>().SingleOrDefault() is CfgGroupRow g && g.Rows.Count == 3 && g.Rows.All(r => !r.Linked) && shown.OfType<CfgAccountRow>().Count(r => r.Linked) == 3, "");
             check("Revisão D1: o texto do link fala da pasta do Steam ou do CS2", SafeFile.SteamLinked.StartsWith("a Steam or CS2 config folder goes through a link or junction"), SafeFile.SteamLinked);
             check("Revisão D1: guardar um snapshot de uma conta num link diz porquê, não \"open CS2 on it once\"",
-                cfgSrc.Contains("if (Cfg.IsLinked(from.SteamId)) { Toast(\"That account's CS2 folder is a link or junction, so the app doesn't read it.\", false); return; }"), "");
+                cfgSrc.Contains("if (Cfg.IsLinked(from.SteamId)) { Toast(Loc.T(\"That account's CS2 folder is a link or junction, so the app doesn't read it.\"), false); return; }"), "");
 
             // D2. Undo last sync não é um interruptor: um segundo Undo não refaz a sync
             store.Push(new CfgJob { SourceId = A, Target = B, Categories = new() { "crosshair" }, Reason = CfgTrigger.Manual }, "s1");
@@ -191,7 +191,7 @@ static class RevisaoDTests
 
         // D4. Nada em What to copy: o Sync now e a linha da Sync dizem isso
         var syncNow = cfgSrc[cfgSrc.IndexOf("void CfgSyncNow_Click")..cfgSrc.IndexOf("CfgPlan(CfgTrigger.Manual")];
-        check("Revisão D4: Sync now sem nada marcado manda marcar em Copy > What to copy", syncNow.Contains("if (_s.ConfigCategories.Count == 0) { Toast(\"Tick something in Copy > What to copy first: the sync copies what is ticked there.\", false); return; }"), "");
+        check("Revisão D4: Sync now sem nada marcado manda marcar em Copy > What to copy", syncNow.Contains("if (_s.ConfigCategories.Count == 0) { Toast(Loc.T(\"Tick something in Copy > What to copy first: the sync copies what is ticked there.\"), false); return; }"), "");
         check("Revisão D4: a linha da Sync diz que nada está marcado", MainWindow.CfgSyncLine(CfgMode.Main, false, "6 Nov 10:00 · Sync now: 1 copied.") == "Sync is on, but nothing is ticked in Copy > What to copy.", "");
         check("Revisão D4: com algo marcado, a linha da Sync fica como era",
             MainWindow.CfgSyncLine(CfgMode.Main, true, null) == "No sync yet." && MainWindow.CfgSyncLine(CfgMode.Off, false, null) == "Sync is off. To copy once, use Copy." && MainWindow.CfgSyncLine(CfgMode.Latest, true, "x") == "x", "");
@@ -222,6 +222,6 @@ static class RevisaoDTests
         check("Revisão D20: com outras partes, o HUD não parece três itens", Snap("Keys", "Machine").What == "binds, HUD/radar/audio", Snap("Keys", "Machine").What);
 
         // N1. O Copy manda para o grupo certo
-        check("Revisão N1: Copy sem nada marcado manda para Copy > What to copy", !cfgSrc.Contains("Sync > What to copy") && cfgSrc.Contains("Toast(\"Tick something in Copy > What to copy.\", false)"), "");
+        check("Revisão N1: Copy sem nada marcado manda para Copy > What to copy", !cfgSrc.Contains("Sync > What to copy") && cfgSrc.Contains("Toast(Loc.T(\"Tick something in Copy > What to copy.\"), false)"), "");
     }
 }

@@ -119,12 +119,15 @@ static class Beta10Tests
 
         // ---------------- 5. Phone setup: passos que se verificam sozinhos, verde ou vermelho, com o botão quando a app consegue
         var nada = PhoneSetup.Steps(new PhoneSetupState { AdbTool = false, AdbState = "none" });
-        check("Setup: sem a ferramenta, o 1.º passo é instalá-la (com botão)", PhoneSetup.Current(nada) is { Step: PhoneStep.NoAdbTool, Action: "Install" }, "");
+        // 10 nov. (onboarding): o Phone setup descarrega-a sozinho; o botão Install fica para os dados móveis (OnboardingTests)
+        check("Setup: sem a ferramenta, o 1.º passo é instalá-la (com botão)", PhoneSetup.Current(nada) is { Step: PhoneStep.NoAdbTool, Action: null }
+            && PhoneSetup.Current(PhoneSetup.Steps(new PhoneSetupState { AdbTool = false, AdbState = "none", AdbWaits = true })) is { Step: PhoneStep.NoAdbTool, Action: "Install" }, "");
         var cabo = PhoneSetup.Steps(new PhoneSetupState { AdbTool = true, AdbState = "none" });
         check("Setup: sem cabo, o cabo a vermelho e a depuração à espera (cinzenta)",
             PhoneSetup.Current(cabo)?.Step == PhoneStep.NoUsb && cabo.First(i => i.Step == PhoneStep.NoUsbDebugging).State == PhoneSetup.StepState.Waiting, "");
         var dep = PhoneSetup.Steps(new PhoneSetupState { AdbTool = true, AdbState = "none", Usb = new PhoneUsbState(true, null, "Google") });
-        check("Setup: cabo ligado sem depuração USB, os passos dela", PhoneSetup.Current(dep) is { Step: PhoneStep.NoUsbDebugging, Action: null } c1 && c1.Detail.Contains("Build number"), "");
+        check("Setup: cabo ligado sem depuração USB, os passos dela", PhoneSetup.Current(dep) is { Step: PhoneStep.NoUsbDebugging, Action: null }
+            && PhoneSetup.GuideFor("Google", null).Steps[0].Text.Contains("Build number"), "");   // 10 nov.: os passos no guia por marca
         var aut = PhoneSetup.Steps(new PhoneSetupState { AdbTool = true, AdbState = "unauthorized", Usb = new PhoneUsbState(true, null, "Google") });
         check("Setup: à espera de Allow no telemóvel", PhoneSetup.Current(aut)?.Step == PhoneStep.Unauthorized, "");
         var teth = PhoneSetup.Steps(new PhoneSetupState { AdbTool = true, AdbState = "device" });

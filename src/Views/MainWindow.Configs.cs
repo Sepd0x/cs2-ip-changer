@@ -121,14 +121,14 @@ public partial class MainWindow
 
     static string NewSyncId() => DateTime.Now.ToString("yyyyMMddHHmmssfff");
 
-    string CfgName(string steamId) => _accounts.FirstOrDefault(a => a.SteamId == steamId)?.Name ?? "an account";
+    string CfgName(string steamId) => _accounts.FirstOrDefault(a => a.SteamId == steamId)?.Name ?? Loc.T("an account");
 
-    string CfgSourceLabel(CfgJob j) => j.Snapshot != null ? $"snapshot {j.Snapshot}" : CfgName(j.SourceId);
+    string CfgSourceLabel(CfgJob j) => j.Snapshot != null ? Loc.F("snapshot {0}", j.Snapshot) : CfgName(j.SourceId);
 
     internal static string CfgReasonText(string r) => r switch
     {
-        CfgTrigger.New => "new account", CfgTrigger.Login => "before login", CfgTrigger.Cs2 => "before CS2 opened", CfgTrigger.Closed => "CS2 closed",
-        CfgTrigger.Manual => "Sync now", CfgTrigger.Copy => "copy", CfgTrigger.Restore => "before a restore", CfgTrigger.Queued => "after CS2 closed", _ => r,
+        CfgTrigger.New => Loc.T("new account"), CfgTrigger.Login => Loc.T("before login"), CfgTrigger.Cs2 => Loc.T("before CS2 opened"), CfgTrigger.Closed => Loc.T("CS2 closed"),
+        CfgTrigger.Manual => Loc.T("Sync now"), CfgTrigger.Copy => Loc.T("copy"), CfgTrigger.Restore => Loc.T("before a restore"), CfgTrigger.Queued => Loc.T("after CS2 closed"), _ => r,
     };
 
     void RunCfgJobs(List<CfgJob> jobs, string why, bool manual)
@@ -172,8 +172,9 @@ public partial class MainWindow
     /// <summary>The Log lines of a copy (never the file contents), and the line under Sync now.</summary>
     void ReportCfg(List<CfgResult> results, string why, bool manual, List<CfgJob> jobs = null)
     {
-        string From(CfgResult r) => jobs?.FirstOrDefault(j => j.Target == r.Target) is CfgJob j ? " from " + CfgSourceLabel(j) : "";
+        string From(CfgResult r) => jobs?.FirstOrDefault(j => j.Target == r.Target) is CfgJob j ? " from " + CfgSourceLabel(j) : "";   // Log only
         var reason = CfgReasonText(why);
+        var logReason = Loc.En(reason);   // the Log stays in English
         foreach (var r in results)
         {
             var who = CfgName(r.Target);
@@ -181,26 +182,26 @@ public partial class MainWindow
             {
                 case CfgOutcome.Copied: break;   // one line per kind of copy, below (9 nov.: 31 "copied" lines for one Sync now)
                 case CfgOutcome.Queued: break;   // one line for all of them, below
-                case CfgOutcome.Same: if (manual) Log.Info($"Config ({reason}): {who} already has the same config."); break;
-                case CfgOutcome.Skipped: Log.Info($"Config ({reason}): {who} not changed: {r.Detail}."); break;
-                default: Log.Warn($"Config ({reason}): {who} not changed: {r.Detail}."); break;
+                case CfgOutcome.Same: if (manual) Log.Info($"Config ({logReason}): {who} already has the same config."); break;
+                case CfgOutcome.Skipped: Log.Info($"Config ({logReason}): {who} not changed: {r.Detail}."); break;
+                default: Log.Warn($"Config ({logReason}): {who} not changed: {r.Detail}."); break;
             }
         }
-        foreach (var line in CopiedLines(reason, results.Where(r => r.Outcome == CfgOutcome.Copied)
-                     .Select(r => (Cs2Config.CategoryList(r.Categories), From(r), CfgName(r.Target))).ToList()))
+        foreach (var line in CopiedLines(logReason, results.Where(r => r.Outcome == CfgOutcome.Copied)
+                     .Select(r => (Cs2Config.CategoryList(r.Categories, en: true), From(r), CfgName(r.Target))).ToList()))
             Log.Ok(line);
-        if (QueuedLine(reason, results.Where(r => r.Outcome == CfgOutcome.Queued).Select(r => CfgName(r.Target)).ToList()) is string waits) Log.Info(waits);
+        if (QueuedLine(logReason, results.Where(r => r.Outcome == CfgOutcome.Queued).Select(r => CfgName(r.Target)).ToList()) is string waits) Log.Info(waits);
         int copied = results.Count(r => r.Outcome == CfgOutcome.Copied), same = results.Count(r => r.Outcome == CfgOutcome.Same),
             queued = results.Count(r => r.Outcome == CfgOutcome.Queued), failed = results.Count(r => r.Outcome is CfgOutcome.Failed or CfgOutcome.Skipped);
         if (copied + queued + failed == 0 && !manual) return;   // an automatic check that found nothing to do stays quiet
         var parts = new List<string>();
-        if (copied > 0) parts.Add($"{copied} copied");
-        if (same > 0) parts.Add($"{same} already the same");
-        if (queued > 0) parts.Add($"{queued} waiting for CS2 to close");
-        if (failed > 0) parts.Add($"{failed} not changed (see Log)");
+        if (copied > 0) parts.Add(Loc.F("{0} copied", copied));
+        if (same > 0) parts.Add(Loc.F("{0} already the same", same));
+        if (queued > 0) parts.Add(Loc.F("{0} waiting for CS2 to close", queued));
+        if (failed > 0) parts.Add(Loc.F("{0} not changed (see Log)", failed));
         Cfg.State.LastResult = $"{Fmt.When(AppClock.Now)} · {char.ToUpper(reason[0]) + reason[1..]}: {string.Join(", ", parts)}.";
         Cfg.SaveState();
-        if (manual) Toast(failed > 0 ? "Some accounts weren't changed. Details are in the Log." : queued > 0 ? "CS2 is open: the copy goes in when it closes." : copied > 0 ? $"Config copied to {Fmt.Count(copied, "account")}. " + (copied == 1 ? "Backup saved." : "Backups saved.") : "Every account already has the same config.", failed == 0);
+        if (manual) Toast(failed > 0 ? Loc.T("Some accounts weren't changed. Details are in the Log.") : queued > 0 ? Loc.T("CS2 is open: the copy goes in when it closes.") : copied > 0 ? Loc.F("Config copied to {0}.", Fmt.Count(copied, "account")) + " " + (copied == 1 ? Loc.T("Backup saved.") : Loc.T("Backups saved.")) : Loc.T("Every account already has the same config."), failed == 0);
         if (PageConfigs.IsVisible) ShowConfigs();
     }
 
@@ -283,7 +284,7 @@ public partial class MainWindow
             // No accounts: nothing to copy to or save, so the buttons don't look like they'd do something.
             var any = _cfgRows.Count > 0;
             CfgCopyBtn.IsEnabled = CfgToAllBtn.IsEnabled = CfgToNoneBtn.IsEnabled = CfgSnapSaveBtn.IsEnabled = any;
-            CfgCopyHint.Text = any ? "Each account gets a backup first (Configs > Backups)." : "No accounts to copy to yet.";
+            CfgCopyHint.Text = any ? Loc.T("Each account gets a backup first (Configs > Backups).") : Loc.T("No accounts to copy to yet.");
 
             CfgSnapList.ItemsSource = snaps.Select(s => new CfgSnapshotRow(s)).ToList();
             CfgSnapEmpty.Visibility = snaps.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -305,27 +306,27 @@ public partial class MainWindow
     /// admin), so it isn't "no config yet" and the sync never reaches it.
     /// </summary>
     public static (string Crosshair, string Changed) CfgRowText(CfgSet set, bool linked, DateTime? changed) =>
-        linked ? ("CS2 folder is a link", "The app doesn't read or write it")
-        : set.Empty ? ("No CS2 config yet", "Opens with CS2's defaults (or gets the sync)")
-        : (Cs2Config.CrosshairSummary(set) ?? "Default crosshair", changed != null ? "Changed in game " + Fmt.Ago(changed) : "Not changed in game since the last copy");
+        linked ? (Loc.T("CS2 folder is a link"), Loc.T("The app doesn't read or write it"))
+        : set.Empty ? (Loc.T("No CS2 config yet"), Loc.T("Opens with CS2's defaults (or gets the sync)"))
+        : (Cs2Config.CrosshairSummary(set) ?? Loc.T("Default crosshair"), changed != null ? Loc.F("Changed in game {0}", Fmt.Ago(changed)) : Loc.T("Not changed in game since the last copy"));
 
     /// <summary>The line under Sync now: the last result, unless the sync is on with nothing ticked to copy.</summary>
     public static string CfgSyncLine(string mode, bool anyTicked, string last) =>
-        mode != CfgMode.Off && !anyTicked ? "Sync is on, but nothing is ticked in Copy > What to copy."
-        : last ?? (mode == CfgMode.Off ? "Sync is off. To copy once, use Copy." : "No sync yet.");
+        mode != CfgMode.Off && !anyTicked ? Loc.T("Sync is on, but nothing is ticked in Copy > What to copy.")
+        : last ?? (mode == CfgMode.Off ? Loc.T("Sync is off. To copy once, use Copy.") : Loc.T("No sync yet."));
 
     /// <summary>Undo last sync when some accounts stayed as they were.</summary>
     public static string UndoToast(int n, IReadOnlyList<string> names) => n == 0
-        ? $"Nothing was undone: {string.Join(", ", names)} stayed as they were. Restore them from Backups."
-        : $"Undone on {Fmt.Count(n, "account")}. {string.Join(", ", names)} stayed as they were: restore them from Backups.";
+        ? Loc.F("Nothing was undone: {0} stayed as they were. Restore them from Backups.", string.Join(", ", names))
+        : Loc.F("Undone on {0}. {1} stayed as they were: restore them from Backups.", Fmt.Count(n, "account"), string.Join(", ", names));
 
     /// <summary>Accounts > Use as main config: what reaches the others, from the When boxes that are on.</summary>
-    public static string MainConfigToast(string name, bool onNew, bool onLogin) => $"{name} is the main config now. " + (onNew, onLogin) switch
+    public static string MainConfigToast(string name, bool onNew, bool onLogin) => Loc.F("{0} is the main config now.", name) + " " + (onNew, onLogin) switch
     {
-        (true, true) => "New accounts and logins through the app get it (Configs page).",
-        (true, false) => "New accounts get it (Configs page).",
-        (false, true) => "Logins through the app get it (Configs page).",
-        _ => "Turn on Configs > Sync > When so the sync uses it.",
+        (true, true) => Loc.T("New accounts and logins through the app get it (Configs page)."),
+        (true, false) => Loc.T("New accounts get it (Configs page)."),
+        (false, true) => Loc.T("Logins through the app get it (Configs page)."),
+        _ => Loc.T("Turn on Configs > Sync > When so the sync uses it."),
     };
 
     static void Fill(ComboBox box, List<CfgSourceItem> items, string key)
@@ -381,16 +382,16 @@ public partial class MainWindow
         if (!r.Sync) _s.ConfigOptOut.Add(r.SteamId);
         SaveSettings();
         if (!r.Sync && Cfg.DropQueued(j => j.Target == r.SteamId) > 0 && PageConfigs.IsVisible) ShowConfigs();
-        Toast(r.Sync ? $"The sync copies to {r.Name} again." : $"The sync won't touch {r.Name}'s config.", true);
+        Toast(r.Sync ? Loc.F("The sync copies to {0} again.", r.Name) : Loc.F("The sync won't touch {0}'s config.", r.Name), true);
     }
 
     void CfgSyncNow_Click(object sender, RoutedEventArgs e)
     {
-        if (_s.ConfigMode == CfgMode.Off) { Toast("Pick a mode under Sync first, or use Copy.", false); return; }
-        if (_s.ConfigMode == CfgMode.Main && _s.ConfigMainId == null) { Toast("Pick the main account first.", false); return; }
-        if (_s.ConfigCategories.Count == 0) { Toast("Tick something in Copy > What to copy first: the sync copies what is ticked there.", false); return; }
+        if (_s.ConfigMode == CfgMode.Off) { Toast(Loc.T("Pick a mode under Sync first, or use Copy."), false); return; }
+        if (_s.ConfigMode == CfgMode.Main && _s.ConfigMainId == null) { Toast(Loc.T("Pick the main account first."), false); return; }
+        if (_s.ConfigCategories.Count == 0) { Toast(Loc.T("Tick something in Copy > What to copy first: the sync copies what is ticked there."), false); return; }
         var jobs = CfgPlan(CfgTrigger.Manual, null, _accounts.FirstOrDefault(a => a.Active)?.SteamId ?? PreviousAccount(null));
-        if (jobs.Count == 0) { Toast(_s.ConfigMode == CfgMode.Latest ? "No account has a config changed in game yet." : "No account to copy to: turn Sync on for some.", false); return; }
+        if (jobs.Count == 0) { Toast(_s.ConfigMode == CfgMode.Latest ? Loc.T("No account has a config changed in game yet.") : Loc.T("No account to copy to: turn Sync on for some."), false); return; }
         RunCfgJobs(jobs, CfgTrigger.Manual, true);
     }
 
@@ -400,8 +401,8 @@ public partial class MainWindow
         {
             var failed = new List<string>();
             var n = Cfg.UndoLast(NewSyncId(), failed);
-            if (n < 0) { Toast("Close CS2 first: it would save over the undo.", false); return; }
-            if (n == 0 && failed.Count == 0) { Toast("Nothing to undo yet.", false); return; }
+            if (n < 0) { Toast(Loc.T("Close CS2 first: it would save over the undo."), false); return; }
+            if (n == 0 && failed.Count == 0) { Toast(Loc.T("Nothing to undo yet."), false); return; }
             if (n > 0) Log.Ok($"Config: undid the last sync ({Fmt.Count(n, "account")} back as {(n == 1 ? "it was" : "they were")}).");
             if (failed.Count > 0)
             {
@@ -409,10 +410,10 @@ public partial class MainWindow
                 Log.Warn($"Config undo: {names} stayed as they were. Restore them from Backups.");
                 Toast(UndoToast(n, failed.Select(CfgName).ToList()), n == 0 ? Tone.Error : Tone.Warn);
             }
-            else Toast($"Undone: {Fmt.Count(n, "account")} back as {(n == 1 ? "it was" : "they were")} before the last sync.", true);
+            else Toast(n == 1 ? Loc.F("Undone: {0} back as it was before the last sync.", Fmt.Count(n, "account")) : Loc.F("Undone: {0} back as they were before the last sync.", Fmt.Count(n, "account")), true);
             ShowConfigs();
         }
-        catch (Exception ex) { Log.Error("Config undo: " + Cs2ConfigStore.Why(ex)); Toast("Couldn't undo: " + Cs2ConfigStore.Why(ex), Tone.Error); }
+        catch (Exception ex) { Log.Error("Config undo: " + Cs2ConfigStore.Why(ex)); Toast(Loc.T("Couldn't undo: ") + Cs2ConfigStore.WhyText(ex), Tone.Error); }
     }
 
     void CfgRestore_Click(object sender, RoutedEventArgs e)
@@ -420,12 +421,12 @@ public partial class MainWindow
         if ((sender as FrameworkElement)?.DataContext is not CfgBackupRow row) return;
         try
         {
-            if (!Cfg.Restore(row.Backup, NewSyncId())) { Toast("Close CS2 first: it would save over the restored files.", false); return; }
+            if (!Cfg.Restore(row.Backup, NewSyncId())) { Toast(Loc.T("Close CS2 first: it would save over the restored files."), false); return; }
             Log.Ok($"Config: restored the backup of {row.Account} from {row.When}.");
-            Toast($"{row.Account}: config back as it was on {row.When}. Undo last sync reverts it.", true);
+            Toast(Loc.F("{0}: config back as it was on {1}. Undo last sync reverts it.", row.Account, row.When), true);
             ShowConfigs();
         }
-        catch (Exception ex) { Log.Error("Config restore: " + Cs2ConfigStore.Why(ex)); Toast("Couldn't restore: " + Cs2ConfigStore.Why(ex), Tone.Error); }
+        catch (Exception ex) { Log.Error("Config restore: " + Cs2ConfigStore.Why(ex)); Toast(Loc.T("Couldn't restore: ") + Cs2ConfigStore.WhyText(ex), Tone.Error); }
     }
 
     // ------------------------------------------------------------ The Accounts list with many accounts (beta.10)
@@ -440,7 +441,7 @@ public partial class MainWindow
         foreach (var g in list.OfType<CfgGroupRow>()) g.Toggle = () => { if (!_cfgOpen.Remove(g.Key)) _cfgOpen.Add(g.Key); ShowCfgAccounts(); };
         CfgAccountsList.ItemsSource = list;
         CfgAccCount.Text = _cfgRows.Count < 2 ? "" : string.IsNullOrWhiteSpace(CfgAccSearch.Text) ? Fmt.Count(_cfgRows.Count, "account")
-            : $"{list.OfType<CfgAccountRow>().Count()} of {_cfgRows.Count}";
+            : Loc.F("{0} of {1}", list.OfType<CfgAccountRow>().Count(), _cfgRows.Count);
         CfgAccSearchHost.Visibility = _cfgRows.Count >= 8 ? Visibility.Visible : Visibility.Collapsed;
     }
 
@@ -472,11 +473,11 @@ public partial class MainWindow
             var group = new CfgGroupRow
             {
                 Key = g.Key, Rows = members, Open = open.Contains(g.Key), CrosshairImage = first.CrosshairImage,
-                Title = g.Key == CfgAccountRow.NoConfig ? $"{members.Count} accounts with no CS2 config yet"
-                    : g.Key == mainKey && mainName != null ? $"{members.Count} accounts with the same crosshair as {mainName}"
-                    : $"{members.Count} accounts with the same crosshair",
-                Detail = g.Key == CfgAccountRow.NoConfig ? "They open with CS2's defaults, or get the sync." : first.CrosshairText,
-                Names = string.Join(", ", members.Take(6).Select(r => r.Name)) + (members.Count > 6 ? $" and {members.Count - 6} more" : ""),
+                Title = g.Key == CfgAccountRow.NoConfig ? Loc.F("{0} accounts with no CS2 config yet", members.Count)
+                    : g.Key == mainKey && mainName != null ? Loc.F("{0} accounts with the same crosshair as {1}", members.Count, mainName)
+                    : Loc.F("{0} accounts with the same crosshair", members.Count),
+                Detail = g.Key == CfgAccountRow.NoConfig ? Loc.T("They open with CS2's defaults, or get the sync.") : first.CrosshairText,
+                Names = string.Join(", ", members.Take(6).Select(r => r.Name)) + (members.Count > 6 ? " " + Loc.F("and {0} more", members.Count - 6) : ""),
             };
             res.Add(group);
             if (group.Open) res.AddRange(members);
@@ -495,7 +496,7 @@ public partial class MainWindow
     {
         var from = (CfgFromBox.SelectedItem as CfgSourceItem)?.SteamId;
         var n = _cfgRows.Count(r => r.Selected && r.SteamId != from);
-        CfgToCount.Text = n == 0 ? "None ticked" : $"{n} of {Fmt.Count(_cfgRows.Count(r => r.SteamId != from), "account")} ticked";
+        CfgToCount.Text = n == 0 ? Loc.T("None ticked") : Loc.F("{0} of {1} ticked", n, Fmt.Count(_cfgRows.Count(r => r.SteamId != from), "account"));
     }
 
     // ------------------------------------------------------------ Copy
@@ -519,14 +520,14 @@ public partial class MainWindow
 
     void CfgCopy_Click(object sender, RoutedEventArgs e)
     {
-        if (CfgFromBox.SelectedItem is not CfgSourceItem from) { Toast("Pick where to copy from.", false); return; }
+        if (CfgFromBox.SelectedItem is not CfgSourceItem from) { Toast(Loc.T("Pick where to copy from."), false); return; }
         var targets = _cfgRows.Where(r => r.Selected && r.SteamId != from.SteamId).ToList();
         if (targets.Count == 0)
         {
-            Toast(_cfgRows.Any(r => r.Selected) ? "That is the account you copy from. Tick a different one under To." : "Tick at least one account under To.", false);
+            Toast(_cfgRows.Any(r => r.Selected) ? Loc.T("That is the account you copy from. Tick a different one under To.") : Loc.T("Tick at least one account under To."), false);
             return;
         }
-        if (_s.ConfigCategories.Count == 0) { Toast("Tick something in Copy > What to copy.", false); return; }
+        if (_s.ConfigCategories.Count == 0) { Toast(Loc.T("Tick something in Copy > What to copy."), false); return; }
         var jobs = targets.Select(t => new CfgJob { SourceId = from.SteamId, Snapshot = from.Snapshot, Target = t.SteamId, Categories = _s.ConfigCategories.ToList(), At = AppClock.Now }).ToList();
         RunCfgJobs(jobs, CfgTrigger.Copy, true);
     }
@@ -540,7 +541,7 @@ public partial class MainWindow
         ShowConfigs();
         CfgFromBox.SelectedItem = (CfgFromBox.ItemsSource as List<CfgSourceItem>)?.FirstOrDefault(i => i.SteamId == a.SteamId);
         Dispatcher.BeginInvoke(() => CfgCopyGroup.BringIntoView(), System.Windows.Threading.DispatcherPriority.Loaded);
-        Toast($"Copying from {a.Name}: tick the accounts under To, then Copy.", true);
+        Toast(Loc.F("Copying from {0}: tick the accounts under To, then Copy.", a.Name), true);
     }
 
     /// <summary>Account menu > Use as main config: the sync copies from this account from now on.</summary>
@@ -560,22 +561,22 @@ public partial class MainWindow
 
     async void CfgSnapSave_Click(object sender, RoutedEventArgs e)
     {
-        if (CfgSnapFrom.SelectedItem is not CfgSourceItem from || from.SteamId == null) { Toast("Pick the account to save.", false); return; }
-        if (Cfg.IsLinked(from.SteamId)) { Toast("That account's CS2 folder is a link or junction, so the app doesn't read it.", false); return; }
+        if (CfgSnapFrom.SelectedItem is not CfgSourceItem from || from.SteamId == null) { Toast(Loc.T("Pick the account to save."), false); return; }
+        if (Cfg.IsLinked(from.SteamId)) { Toast(Loc.T("That account's CS2 folder is a link or junction, so the app doesn't read it."), false); return; }
         DialogInput.Text = "";
-        DialogInput.Tag = "E.g. Main, Practice, Retakes";
-        if (!await Ask($"Snapshot of {from.Label}", "Saves this account's CS2 config under a name. You can copy it to other accounts later, or export it to another PC.", "Save", "Cancel", inputs: 1, label1: "Name")) return;
+        DialogInput.Tag = Loc.T("E.g. Main, Practice, Retakes");
+        if (!await Ask(Loc.F("Snapshot of {0}", from.Label), Loc.T("Saves this account's CS2 config under a name. You can copy it to other accounts later, or export it to another PC."), Loc.T("Save"), Loc.T("Cancel"), inputs: 1, label1: Loc.T("Name"))) return;
         var name = DialogInput.Text;   // the next dialog uses the same box
         if (Cfg.FindSnapshot(name) is CfgSnapshot old
-            && !await Ask($"Replace snapshot \"{old.Name}\"?", $"It was saved on {Fmt.When(old.Created)}. Saving replaces it.", "Replace", "Cancel", danger: true)) return;
+            && !await Ask(Loc.F("Replace snapshot \"{0}\"?", old.Name), Loc.F("It was saved on {0}. Saving replaces it.", Fmt.When(old.Created)), Loc.T("Replace"), Loc.T("Cancel"), danger: true)) return;
         try
         {
             var s = Cfg.SaveSnapshot(name, Cfg.Read(from.SteamId), from.Label);
             Log.Ok($"Config: saved snapshot \"{s.Name}\" from {from.Label}.");
-            Toast($"Snapshot \"{s.Name}\" saved.", true);
+            Toast(Loc.F("Snapshot \"{0}\" saved.", s.Name), true);
             ShowConfigs();
         }
-        catch (Exception ex) { Toast(Cs2ConfigStore.Why(ex), false); }
+        catch (Exception ex) { Toast(Cs2ConfigStore.WhyText(ex), false); }
     }
 
     void CfgSnapUse_Click(object sender, RoutedEventArgs e)
@@ -583,45 +584,45 @@ public partial class MainWindow
         if ((sender as FrameworkElement)?.DataContext is not CfgSnapshotRow s) return;
         CfgFromBox.SelectedItem = (CfgFromBox.ItemsSource as List<CfgSourceItem>)?.FirstOrDefault(i => i.Snapshot == s.Name);
         CfgCopyGroup.BringIntoView();
-        Toast($"Copying snapshot \"{s.Name}\": tick the accounts under To, then Copy.", true);
+        Toast(Loc.F("Copying snapshot \"{0}\": tick the accounts under To, then Copy.", s.Name), true);
     }
 
     void CfgSnapExport_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is not CfgSnapshotRow s) return;
-        if (Rec.On) { Toast("Off in the recording build: Windows' file window isn't filtered. Use the normal app to export.", false); return; }
-        var dlg = new Microsoft.Win32.SaveFileDialog { Filter = "Snapshot (*.zip)|*.zip", FileName = $"CS2 config - {s.Name}.zip", Title = "Export snapshot" };
+        if (Rec.On) { Toast(Loc.T("Off in the recording build: Windows' file window isn't filtered. Use the normal app to export."), false); return; }
+        var dlg = new Microsoft.Win32.SaveFileDialog { Filter = Loc.T("Snapshot") + " (*.zip)|*.zip", FileName = $"CS2 config - {s.Name}.zip", Title = Loc.T("Export snapshot") };
         if (dlg.ShowDialog(this) != true) return;
         try
         {
             Cfg.ExportSnapshot(s.Name, dlg.FileName);
             Log.Ok($"Config: exported snapshot \"{s.Name}\".");
-            Toast($"Exported to {dlg.FileName}. It has the config files only, no account names.", true);
+            Toast(Loc.F("Exported to {0}. It has the config files only, no account names.", dlg.FileName), true);
         }
-        catch (Exception ex) { Log.Error("Config export: " + Cs2ConfigStore.Why(ex)); Toast("Couldn't export: " + Cs2ConfigStore.Why(ex), Tone.Error); }
+        catch (Exception ex) { Log.Error("Config export: " + Cs2ConfigStore.Why(ex)); Toast(Loc.T("Couldn't export: ") + Cs2ConfigStore.WhyText(ex), Tone.Error); }
     }
 
     void CfgSnapImport_Click(object sender, RoutedEventArgs e)
     {
-        if (Rec.On) { Toast("Off in the recording build: Windows' file window isn't filtered. Use the normal app to import.", false); return; }
-        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = "Snapshot (*.zip)|*.zip", Title = "Import snapshot" };
+        if (Rec.On) { Toast(Loc.T("Off in the recording build: Windows' file window isn't filtered. Use the normal app to import."), false); return; }
+        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = Loc.T("Snapshot") + " (*.zip)|*.zip", Title = Loc.T("Import snapshot") };
         if (dlg.ShowDialog(this) != true) return;
         try
         {
             var name = Cfg.ImportSnapshot(dlg.FileName);
             Log.Ok($"Config: imported snapshot \"{name}\".");
-            Toast($"Snapshot \"{name}\" imported. Copy it to accounts from Copy.", true);
+            Toast(Loc.F("Snapshot \"{0}\" imported. Copy it to accounts from Copy.", name), true);
             ShowConfigs();
         }
-        catch (Exception ex) { Log.Warn("Config import: " + Cs2ConfigStore.Why(ex)); Toast("Couldn't import: " + Cs2ConfigStore.Why(ex), false); }
+        catch (Exception ex) { Log.Warn("Config import: " + Cs2ConfigStore.Why(ex)); Toast(Loc.T("Couldn't import: ") + Cs2ConfigStore.WhyText(ex), false); }
     }
 
     async void CfgSnapDelete_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is not CfgSnapshotRow s) return;
-        if (!await Ask("Delete snapshot", $"Delete \"{s.Name}\"? Your accounts keep their config; only the saved copy goes.", "Delete", danger: true)) return;
+        if (!await Ask(Loc.T("Delete snapshot"), Loc.F("Delete \"{0}\"? Your accounts keep their config; only the saved copy goes.", s.Name), Loc.T("Delete"), danger: true)) return;
         try { Cfg.DeleteSnapshot(s.Name); Log.Info($"Config: deleted snapshot \"{s.Name}\"."); ShowConfigs(); }
-        catch (Exception ex) { Toast("Couldn't delete: " + Cs2ConfigStore.Why(ex), false); }
+        catch (Exception ex) { Toast(Loc.T("Couldn't delete: ") + Cs2ConfigStore.WhyText(ex), false); }
     }
 
     // ------------------------------------------------------------ Compare
@@ -638,9 +639,9 @@ public partial class MainWindow
         var sb = CfgRead(b);
         CfgCmpImgA.Source = CrosshairImage(Cs2Config.ReadCrosshair(sa), 32);
         CfgCmpImgB.Source = CrosshairImage(Cs2Config.ReadCrosshair(sb), 32);
-        string None(CfgSourceItem it) => it?.SteamId is string id && Cfg.IsLinked(id) ? "CS2 folder is a link" : "No CS2 config";
-        CfgCmpXhA.Text = sa == null ? "" : sa.Empty ? None(a) : Cs2Config.CrosshairSummary(sa) ?? "Default crosshair";
-        CfgCmpXhB.Text = sb == null ? "" : sb.Empty ? None(b) : Cs2Config.CrosshairSummary(sb) ?? "Default crosshair";
+        string None(CfgSourceItem it) => it?.SteamId is string id && Cfg.IsLinked(id) ? Loc.T("CS2 folder is a link") : Loc.T("No CS2 config");
+        CfgCmpXhA.Text = sa == null ? "" : sa.Empty ? None(a) : Cs2Config.CrosshairSummary(sa) ?? Loc.T("Default crosshair");
+        CfgCmpXhB.Text = sb == null ? "" : sb.Empty ? None(b) : Cs2Config.CrosshairSummary(sb) ?? Loc.T("Default crosshair");
         // No empty preview boxes: a side without a crosshair shows only its text, and the row goes when nothing is picked.
         if (CfgCmpImgA.Parent is FrameworkElement boxA) boxA.Visibility = CfgCmpImgA.Source != null ? Visibility.Visible : Visibility.Collapsed;
         if (CfgCmpImgB.Parent is FrameworkElement boxB) boxB.Visibility = CfgCmpImgB.Source != null ? Visibility.Visible : Visibility.Collapsed;
@@ -649,19 +650,19 @@ public partial class MainWindow
         if (a == null || b == null || a.Key == b.Key)
         {
             var count = (CfgCmpA.ItemsSource as List<CfgSourceItem>)?.Count ?? 0;
-            CfgDiffCount.Text = count == 0 ? "No accounts or snapshots to compare yet."
-                : count == 1 ? "Only one account or snapshot so far: nothing to compare it with."
-                : "Pick two different accounts or snapshots.";
+            CfgDiffCount.Text = count == 0 ? Loc.T("No accounts or snapshots to compare yet.")
+                : count == 1 ? Loc.T("Only one account or snapshot so far: nothing to compare it with.")
+                : Loc.T("Pick two different accounts or snapshots.");
             CfgDiffList.ItemsSource = null;
             return;
         }
         try
         {
             var diffs = Cs2Config.Diff(sa, sb);
-            CfgDiffCount.Text = diffs.Count == 0 ? "Same settings." : diffs.Count == 1 ? "1 setting differs." : $"{diffs.Count} settings differ.";
+            CfgDiffCount.Text = diffs.Count == 0 ? Loc.T("Same settings.") : diffs.Count == 1 ? Loc.T("1 setting differs.") : Loc.F("{0} settings differ.", diffs.Count);
             CfgDiffList.ItemsSource = diffs.Select(d => new CfgDiffRow(d)).ToList();
         }
-        catch (Exception ex) { CfgDiffCount.Text = "Couldn't compare: " + Cs2ConfigStore.Why(ex); CfgDiffList.ItemsSource = null; }
+        catch (Exception ex) { CfgDiffCount.Text = Loc.T("Couldn't compare: ") + Cs2ConfigStore.WhyText(ex); CfgDiffList.ItemsSource = null; }
     }
 
     /// <summary>The crosshair as CS2 draws it at 1080p, on a <paramref name="box"/> px square (26 in the lists, 32 in Compare).</summary>
@@ -740,7 +741,7 @@ public sealed class CfgAccountRow : Observable
     public static string ShownName(string n)
     {
         var t = (n ?? "").Trim().Trim('\u3164', '\u115F', '\u1160', '\uFFA0', '\u2800', '\u200B', '\u200C', '\u200D', '\u2060', '\uFEFF').Trim();
-        return t.Length == 0 ? "this account" : t;
+        return t.Length == 0 ? Loc.T("this account") : t;
     }
     public string Initial => Acc.Initial;
     public ImageSource Avatar => Acc.Avatar;
@@ -777,8 +778,8 @@ public sealed class CfgGroupRow
     public bool IsEmptyGroup => Key == CfgAccountRow.NoConfig;
     public bool IsCrosshairGroup => !IsEmptyGroup;
     public bool Open { get; init; }
-    public string ToggleText => Open ? "Hide" : "Show";
-    public string ToggleTip => Open ? "Back to one line for this group" : "Show each account of this group (Sync on or off one by one)";
+    public string ToggleText => Open ? Loc.T("Hide") : Loc.T("Show");
+    public string ToggleTip => Open ? Loc.T("Back to one line for this group") : Loc.T("Show each account of this group (Sync on or off one by one)");
     public Action Toggle { get; set; }
 }
 
@@ -804,10 +805,10 @@ public sealed class CfgSnapshotRow
     public CfgSnapshotRow(CfgSnapshot s)
     {
         Name = s.Name;
-        var parts = s.Parts.Select(p => p switch { "Keys" => "binds", "Convars" => "game and crosshair", "Video" => "video",
-            "Machine" => s.Parts.Count > 1 ? "HUD/radar/audio" : Cs2Config.CategoryName("hud"), _ => p });   // in a list, as Cs2Config.CategoryList says it
+        var parts = s.Parts.Select(p => p switch { "Keys" => Loc.T("binds"), "Convars" => Loc.T("game and crosshair"), "Video" => Loc.T("video"),
+            "Machine" => s.Parts.Count > 1 ? Loc.T("HUD/radar/audio") : Cs2Config.CategoryName("hud"), _ => p });   // in a list, as Cs2Config.CategoryList says it
         When = Fmt.When(s.Created);
-        What = string.Join(", ", parts) + (s.From == "imported" ? " · imported" : "");
+        What = string.Join(", ", parts) + (s.From == "imported" ? " · " + Loc.T("imported") : "");
         Detail = $"{When} · {What}";
     }
     public string Name { get; }
@@ -824,9 +825,9 @@ public sealed class CfgBackupRow
         Backup = b;
         Account = account;
         When = Fmt.When(b.At);
-        Detail = (b.Original ? "Original · " : "") + MainWindow.CfgReasonText(b.Reason) + (b.From != null ? $" · from {b.From}" : "") + (b.Files.Count > 0 ? " · " + N(b.Files.Count, "file") : " · " + N(b.Created.Count, "new file"));
+        Detail = (b.Original ? Loc.T("Original") + " · " : "") + MainWindow.CfgReasonText(b.Reason) + (b.From != null ? " · " + Loc.F("from {0}", b.From) : "") + (b.Files.Count > 0 ? " · " + N(b.Files.Count, "file") : " · " + N(b.Created.Count, "new file"));
     }
-    static string N(int n, string what) => n == 1 ? $"1 {what}" : $"{n} {what}s";
+    static string N(int n, string what) => Fmt.Count(n, what);
     public CfgBackup Backup { get; }
     public string Account { get; }
     public string When { get; }
@@ -838,8 +839,8 @@ public sealed class CfgDiffRow
     public CfgDiffRow(CfgDiff d)
     {
         Key = d.Key; A = d.A; B = d.B;
-        Label = d.Label.StartsWith("Crosshair: ") ? char.ToUpper(d.Label[11]) + d.Label[12..] : d.Label;   // the category column already says crosshair
-        CategoryText = d.Category switch { "game" => "game", "hud" => "HUD, audio", _ => d.Category };
+        Label = Loc.T(d.Label.StartsWith("Crosshair: ") ? char.ToUpper(d.Label[11]) + d.Label[12..] : d.Label);   // the category column already says crosshair
+        CategoryText = d.Category switch { "game" => Loc.T("game"), "hud" => Loc.T("HUD, audio"), _ => Loc.T(d.Category) };
     }
     public string Key { get; }
     public string Label { get; }

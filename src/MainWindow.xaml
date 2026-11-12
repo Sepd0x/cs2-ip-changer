@@ -598,7 +598,7 @@
                                     </Grid>
                                 </HeaderedContentControl>
 
-                                <HeaderedContentControl Grid.Row="1" Style="{StaticResource Group}" Header="Phone">
+                                <HeaderedContentControl x:Name="PhoneGroup" Grid.Row="1" Style="{StaticResource Group}" Header="Phone">
                                     <StackPanel>
                                         <StackPanel Orientation="Horizontal">
                                             <!-- PhoneDot holds the colour the code sets; the marker draws it with its shape -->
@@ -967,6 +967,16 @@
                                     </DockPanel>
                                 </Border>
                                 <TextBlock x:Name="RegionsMaxPingHint" Style="{StaticResource Sub}" Margin="0,8,0,0" Visibility="Collapsed"/>
+                                <!-- 10 Nov: once, what the phone adds (every new user used Regions, none plugged in a phone) -->
+                                <Border x:Name="RegionsPitch" Margin="0,8,0,0" Padding="12,8" Background="{StaticResource Surface2}" BorderBrush="{StaticResource Accent}" BorderThickness="2,0,0,0" Visibility="Collapsed">
+                                    <DockPanel>
+                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                                            <Button Style="{StaticResource Primary}" Click="RegionsPitchSetup_Click" Content="{x:Static local:Texts.RegionsPitchSetup}"/>
+                                            <Button Margin="0" Click="RegionsPitchHide_Click" Content="{x:Static local:Texts.RegionsPitchHide}"/>
+                                        </StackPanel>
+                                        <TextBlock TextWrapping="Wrap" VerticalAlignment="Center" Text="{x:Static local:Texts.RegionsPitch}"/>
+                                    </DockPanel>
+                                </Border>
                             </StackPanel>
                         </HeaderedContentControl>
 
@@ -2310,6 +2320,11 @@
 
                                 <HeaderedContentControl Grid.Row="4" Style="{StaticResource Group}" Header="App">
                                     <StackPanel>
+                                        <TextBlock Text="Language"/>
+                                        <TextBlock Text="Changing it applies the next time you open the app." Style="{StaticResource OptSub}"/>
+                                        <ComboBox x:Name="LanguageBox" SelectionChanged="LanguageBox_Changed" MinWidth="220" HorizontalAlignment="Left" Margin="0,6,0,12">
+                                            <ComboBoxItem Content="Automatic (Windows)"/>
+                                        </ComboBox>
                                         <CheckBox x:Name="StartWithWindowsBox" Style="{StaticResource Switch}" Click="StartWithWindows_Click" Margin="0,0,0,12" ToolTipService.ShowOnDisabled="True"
                                                   ToolTip="A scheduled task named 'CS2 IP Changer' opens the app in the notification area when you sign in, with its admin rights and without the UAC prompt each time. Protection starts off, unless Settings > Protection > Turn on protection when the app starts is on. Only for the copy installed in C:\Program Files\CS2 IP Changer. Turning this off, Settings > Remove the app and --restore delete the task.">
                                             <StackPanel>
@@ -2339,6 +2354,8 @@
                                                 <TextBlock Text="New versions before they are fully tested. Off: only stable versions." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
+                                        <!-- 10 Nov: the first-run tour, again -->
+                                        <Button Click="TourAgain_Click" Margin="0,12,0,0" HorizontalAlignment="Left" Content="{x:Static local:Texts.TourAgain}" ToolTip="{x:Static local:Texts.TourAgainTip}"/>
                                     </StackPanel>
                                 </HeaderedContentControl>
 
@@ -2408,8 +2425,12 @@
                                                 <local:StatusMark Brush="{Binding Brush}" HorizontalAlignment="Left"/>
                                             </StackPanel>
                                             <TextBlock Grid.Column="1" Text="{Binding Title}" FontWeight="SemiBold" Foreground="{Binding TitleBrush}" VerticalAlignment="Top"/>
-                                            <TextBlock Grid.Column="2" Text="{Binding Detail}" Foreground="{Binding DetailBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,10,0" VerticalAlignment="Top"
-                                                       Visibility="{Binding DetailVisibility}"/>
+                                            <StackPanel Grid.Column="2" Margin="0,0,10,0" VerticalAlignment="Top">
+                                                <TextBlock Text="{Binding Detail}" Foreground="{Binding DetailBrush}" FontSize="12" TextWrapping="Wrap"
+                                                           Visibility="{Binding DetailVisibility}"/>
+                                                <!-- 10 Nov: the phone tool's download, in the row -->
+                                                <ProgressBar Margin="0,6,0,0" Height="2" Maximum="100" Value="{Binding PercentValue, Mode=OneWay}" Visibility="{Binding PercentVisibility}"/>
+                                            </StackPanel>
                                             <Button Grid.Column="3" Style="{StaticResource Primary}" Content="{Binding Action}" Click="SetupAction_Click" Margin="0" MinWidth="86" VerticalAlignment="Top"
                                                     Visibility="{Binding HasAction, Converter={StaticResource Vis}}" IsEnabled="{Binding Idle}"/>
                                         </Grid>
@@ -2417,6 +2438,8 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <!-- 10 Nov: USB debugging drawn step by step for the phone's brand (Texts.Guides, built in PhoneGuide.cs) -->
+                        <ContentControl x:Name="SetupGuide" Margin="0,12,0,0" Focusable="False" Visibility="Collapsed"/>
                         <Grid Margin="0,16,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -2454,6 +2477,34 @@
                 <Button x:Name="DialogClose" Style="{StaticResource Chrome}" Width="34" Height="30" FontSize="10" Content="&#xE8BB;" HorizontalAlignment="Right" VerticalAlignment="Top"
                         Margin="0,9,1,0" Click="DialogClose_Click" ToolTip="Close without choosing (Esc)" AutomationProperties.Name="Close"/>
                 </Grid>
+            </Grid>
+            <!-- 10 Nov: the first-run tour (MainWindow.Tour.cs, texts in Texts.Tour). The shade has a hole over the real control it points at -->
+            <Grid x:Name="TourPane" Grid.Row="1" Visibility="Collapsed" Background="Transparent">
+                <Path x:Name="TourShade" Fill="#B0000000"/>
+                <Rectangle x:Name="TourRing" Stroke="{StaticResource Accent}" StrokeThickness="1" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False"/>
+                <Canvas>
+                    <HeaderedContentControl x:Name="TourBox" Style="{StaticResource DialogGroup}" Width="360" Padding="16,18,16,14">
+                        <HeaderedContentControl.Header>
+                            <TextBlock x:Name="TourTitle"/>
+                        </HeaderedContentControl.Header>
+                        <StackPanel>
+                            <TextBlock x:Name="TourText" Style="{StaticResource Sub}" TextWrapping="Wrap" LineHeight="19"/>
+                            <TextBlock x:Name="TourHint" Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,8,0,0" Visibility="Collapsed" Text="{x:Static local:Texts.TourAgainHint}"/>
+                            <Grid Margin="0,16,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="TourCount" Foreground="{StaticResource Faint}" FontFamily="{StaticResource Mono}" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button x:Name="TourSkipBtn" Click="TourSkip_Click" Content="{x:Static local:Texts.TourSkip}"/>
+                                    <Button x:Name="TourBackBtn" Click="TourBack_Click" Content="{x:Static local:Texts.TourBack}"/>
+                                    <Button x:Name="TourNextBtn" Style="{StaticResource Primary}" Margin="0" Click="TourNext_Click" Content="{x:Static local:Texts.TourNext}"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </HeaderedContentControl>
+                </Canvas>
             </Grid>
         </Grid>
     </Border>

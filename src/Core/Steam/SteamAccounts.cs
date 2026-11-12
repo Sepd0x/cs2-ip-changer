@@ -305,14 +305,14 @@ public static partial class Steam
     public static void Launch(string args)
     {
         var err = ShellLaunch.OpenAsUser(Exe, args ?? "", InstallDir());
-        if (err != null) throw new InvalidOperationException($"Explorer could not start Steam ({err}). Open Steam yourself and try again.");
+        if (err != null) throw new InvalidOperationException(Loc.F("Explorer could not start Steam ({0}). Open Steam yourself and try again.", err));
     }
 
     /// <summary>A steam:// or https:// link, opened as the signed-in user. Never opened from this process (see <see cref="Launch"/>).</summary>
     public static void OpenUrl(string url)
     {
         var err = ShellLaunch.OpenAsUser(url, "", null);
-        if (err != null) throw new InvalidOperationException($"Explorer could not open {url} ({err}).");
+        if (err != null) throw new InvalidOperationException(Loc.F("Explorer could not open {0} ({1}).", url, err));
     }
 
     public static bool IsRunning => Process.GetProcessesByName("steam").Length > 0;
@@ -389,7 +389,7 @@ public static partial class Steam
         var edit = path != null && File.Exists(path) && steamId != null;
         await CloseSteam(whileClosed);
         // A Steam still running would get "-login" while on the old account and write that account back over the switch
-        if (!SteamClosedNow()) throw new InvalidOperationException("Steam didn't close, so the account wasn't changed. Close Steam (or wait a moment) and try again.");
+        if (!SteamClosedNow()) throw new InvalidOperationException(Loc.T("Steam didn't close, so the account wasn't changed. Close Steam (or wait a moment) and try again."));
 
         string previous = null;
         var changed = false;
@@ -406,7 +406,7 @@ public static partial class Steam
             {
                 using (var ms = new MemoryStream()) { file.CopyTo(ms); bytes = ms.ToArray(); }
                 using (var r = new StreamReader(new MemoryStream(bytes), Encoding.UTF8, true)) text = r.ReadToEnd();
-                if (!VdfNode.RoundTrips(text)) throw new InvalidOperationException(NotUnderstood);   // Steam goes back on the account it had
+                if (!VdfNode.RoundTrips(text)) throw new InvalidOperationException(Loc.T(NotUnderstood));   // Steam goes back on the account it had
             }
 
             using (var k = Registry.CurrentUser.CreateSubKey(@"Software\Valve\Steam"))
@@ -438,7 +438,7 @@ public static partial class Steam
                         Log.Warn("Something changed loginusers.vdf right after the switch wrote it; writing it again.");
                         string t2;
                         using (var r = new StreamReader(new MemoryStream(again), Encoding.UTF8, true)) t2 = r.ReadToEnd();
-                        if (!VdfNode.RoundTrips(t2)) throw new InvalidOperationException(NotUnderstood);
+                        if (!VdfNode.RoundTrips(t2)) throw new InvalidOperationException(Loc.T(NotUnderstood));
                         var doc2 = VdfNode.Parse(t2);
                         if (doc2.Child("users") is VdfNode u2) { MarkForLogin(u2, steamId, offline, now); WriteAll(file, new UTF8Encoding(false).GetBytes(doc2.Write())); }
                     }
@@ -586,10 +586,10 @@ public static partial class Steam
     /// <summary>Closes and reopens Steam on the same account (e.g. so it connects through the protected connection).</summary>
     public static async Task Restart(string args, Action whileClosed = null)
     {
-        if (Exe == null || !File.Exists(Exe)) throw new InvalidOperationException("Could not find Steam installed on this PC.");
+        if (Exe == null || !File.Exists(Exe)) throw new InvalidOperationException(Loc.T("Could not find Steam installed on this PC."));
         await CloseSteam(whileClosed);
         // A Steam still running would only get the arguments, on the network it was on (review F5)
-        if (!SteamClosedNow()) throw new InvalidOperationException("Steam didn't close, so it wasn't restarted. Close Steam yourself and try again.");
+        if (!SteamClosedNow()) throw new InvalidOperationException(Loc.T("Steam didn't close, so it wasn't restarted. Close Steam yourself and try again."));
         Launch(args);
     }
 
@@ -610,7 +610,7 @@ public static partial class Steam
     {
         await CloseSteam(whileClosed);
         // A Steam still running writes its own account back when it exits, and the login screen never opens (review F5)
-        if (!SteamClosedNow()) throw new InvalidOperationException("Steam didn't close, so the login screen can't open. Close Steam yourself and try again.");
+        if (!SteamClosedNow()) throw new InvalidOperationException(Loc.T("Steam didn't close, so the login screen can't open. Close Steam yourself and try again."));
         using (var k = Registry.CurrentUser.CreateSubKey(@"Software\Valve\Steam")) k.SetValue("AutoLoginUser", "", RegistryValueKind.String);
         Launch("");
     }

@@ -33,12 +33,13 @@ public partial class NoticeWindow : Window
         string[] choices = null, bool danger = false, string more = null)
     {
         InitializeComponent();
-        Title = Heading.Text = title;
-        Body.Text = text;
-        MoreText.Text = more ?? "";
+        Loc.Apply(this);
+        Title = Heading.Text = Loc.T(title);
+        Body.Text = Loc.T(text);
+        MoreText.Text = Loc.T(more ?? "");
         MoreBtn.Visibility = string.IsNullOrEmpty(more) ? Visibility.Collapsed : Visibility.Visible;
-        OkBtn.Content = ok;
-        OtherBtn.Content = other ?? "";
+        OkBtn.Content = Loc.T(ok);
+        OtherBtn.Content = Loc.T(other ?? "");
         OtherBtn.Visibility = other == null ? Visibility.Collapsed : Visibility.Visible;
         OkBtn.IsCancel = other == null;   // with one button, Escape closes too
         if (problem) Heading.Foreground = (Brush)FindResource("Bad");
@@ -46,7 +47,7 @@ public partial class NoticeWindow : Window
         _action = action;
         for (var i = 0; i < (choices?.Length ?? 0); i++)
         {
-            var parts = choices[i].Split('\n', 2);
+            var parts = Loc.T(choices[i]).Split('\n', 2);
             var content = new StackPanel();
             content.Children.Add(new TextBlock { Text = parts[0] });
             if (parts.Length > 1) content.Children.Add(new TextBlock { Text = parts[1], Style = (Style)FindResource("OptSub") });
@@ -110,7 +111,7 @@ public partial class NoticeWindow : Window
     {
         var open = MoreBox.Visibility != Visibility.Visible;
         MoreBox.Visibility = open ? Visibility.Visible : Visibility.Collapsed;
-        MoreBtn.Content = open ? "Hide the full list" : "See the full list";
+        MoreBtn.Content = open ? Loc.T("Hide the full list") : Loc.T("See the full list");
     }
 
     void Drag(object sender, MouseButtonEventArgs e) { if (e.ButtonState == MouseButtonState.Pressed) try { DragMove(); } catch { } }

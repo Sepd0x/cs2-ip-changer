@@ -68,14 +68,14 @@ public partial class MainWindow
         }
         var adapters = _last?.Adapters ?? new();
         // The rest of what stays on the PC (2nd round, Hugo: "no mention of the scheduled task or ProgramData")
-        var other = new List<string> { $"App folder: {Uninstall.Root} (the phone tool and the app's unpacked files, only admins can change it)." };
+        var other = new List<string> { Loc.F("App folder: {0} (the phone tool and the app's unpacked files, only admins can change it).", Uninstall.Root) };
         if (!_demo && Autostart.Allowed(Environment.ProcessPath ?? "") && await Autostart.IsOn(Environment.ProcessPath) == true)
-            other.Add($"Start with Windows: the scheduled task \"{Autostart.TaskName}\".");
-        var text = AppChanges.Text(rules, owned.Routes, owned.MetricIf, i => adapters.FirstOrDefault(a => a.Index == i)?.Name ?? (_demo && i == 21 ? "Phone (USB)" : null),
+            other.Add(Loc.F("Start with Windows: the scheduled task \"{0}\".", Autostart.TaskName));
+        var text = AppChanges.Text(rules, owned.Routes, owned.MetricIf, i => adapters.FirstOrDefault(a => a.Index == i)?.Name ?? (_demo && i == 21 ? Loc.T("Phone (USB)") : null),
             Environment.ProcessPath ?? AppIds.ExeName, other);
-        if (!await Ask("What the app changed", text, "Copy undo command", "Close")) return;
-        try { Clipboard.SetText(AppChanges.RestoreCommand(Environment.ProcessPath ?? AppIds.ExeName)); Toast("Undo command copied.", true); }
-        catch { Toast("Couldn't copy. Try again.", false); }
+        if (!await Ask(Loc.T("What the app changed"), text, Loc.T("Copy undo command"), Loc.T("Close"))) return;
+        try { Clipboard.SetText(AppChanges.RestoreCommand(Environment.ProcessPath ?? AppIds.ExeName)); Toast(Loc.T("Undo command copied."), true); }
+        catch { Toast(Loc.T("Couldn't copy. Try again."), false); }
     }
 
     /// <summary>
@@ -92,7 +92,7 @@ public partial class MainWindow
         }
         if (_cVpn == null)
         {
-            _cVpn = new CheckItem { Title = "VPN app", Waiting = true };
+            _cVpn = new CheckItem { Title = Loc.T("VPN app"), Waiting = true };
             _checks.Add(_cVpn);
             Log.Warn($"A VPN app is on ({name}). Turn it off while you play: the app wasn't tested with it.");
         }

@@ -10,17 +10,17 @@ public partial class MainWindow
 {
     async void DeleteLogs_Click(object sender, RoutedEventArgs e)
     {
-        if (!await Ask("Delete log files", "Deletes registo.log, its older copy and crash.txt from SRT_Dados. They hold your home IP, Steam names and servers. Save bug report won't have them afterwards.", "Delete")) return;
+        if (!await Ask(Loc.T("Delete log files"), Loc.T("Deletes registo.log, its older copy and crash.txt from SRT_Dados. They hold your home IP, Steam names and servers. Save bug report won't have them afterwards."), Loc.T("Delete"))) return;
         var n = Log.DeleteFiles();
         LogClear_Click(sender, e);
-        Toast(n > 0 ? "Log files deleted." : "There were no log files.", true);
+        Toast(n > 0 ? Loc.T("Log files deleted.") : Loc.T("There were no log files."), true);
     }
 
     async void ExportReport_Click(object sender, RoutedEventArgs e)
     {
-        if (_demo) { Toast("Demo: the .zip would go to the Desktop.", true); return; }
-        if (Rec.On) { Toast("Off in the recording build: use the normal app to save a bug report.", false); return; }
-        ShowProgress("Collecting info for the bug report…");
+        if (_demo) { Toast(Loc.T("Demo: the .zip would go to the Desktop."), true); return; }
+        if (Rec.On) { Toast(Loc.T("Off in the recording build: use the normal app to save a bug report."), false); return; }
+        ShowProgress(Loc.T("Collecting info for the bug report…"));
         try
         {
             var now = await BuildReportText();
@@ -34,10 +34,10 @@ public partial class MainWindow
             var personal = PersonalWords().Where(w => w != _homeInfo?.Country && w != _egressInfo?.Country).ToList();   // the country helps a bug report
             var path = await Task.Run(() => Report.Export(now, json, steamDir, console, hide, personal: personal));
             Log.Ok("Bug report saved: " + path);
-            Toast($"Bug report saved: {path}. Your home IP, API key, usernames, Steam names and IDs are left out; check the zip before you post it.", true);
+            Toast(Loc.F("Bug report saved: {0}. Your home IP, API key, usernames, Steam names and IDs are left out; check the zip before you post it.", path), true);
             ShellLaunch.OpenAsUser(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe"), $"/select,\"{path}\"", null);
         }
-        catch (Exception ex) { Log.Error("Save bug report: " + ex.Message); Toast("Couldn't save the bug report: " + ex.Message, Tone.Error); }
+        catch (Exception ex) { Log.Error("Save bug report: " + ex.Message); Toast(Loc.F("Couldn't save the bug report: {0}", ex.Message), Tone.Error); }
         finally { HideProgress(); }
     }
 
@@ -56,9 +56,9 @@ public partial class MainWindow
 
     async void ReportProblem_Click(object sender, RoutedEventArgs e)
     {
-        if (!await Ask("Report a problem", "Opens a new issue on GitHub in your browser, with the app and Windows versions filled in. Nothing is sent until you "
-                + "press Submit there (a GitHub account is needed).\n\nTo attach the log, use Save bug report first and check the .zip.", "Open GitHub")) return;
-        if (_demo) { Toast("Demo: GitHub would open.", true); return; }
+        if (!await Ask(Loc.T("Report a problem"), Loc.T("Opens a new issue on GitHub in your browser, with the app and Windows versions filled in. Nothing is sent until you "
+                + "press Submit there (a GitHub account is needed).") + "\n\n" + Loc.T("To attach the log, use Save bug report first and check the .zip."), Loc.T("Open GitHub"))) return;
+        if (_demo) { Toast(Loc.T("Demo: GitHub would open."), true); return; }
         OpenUrl(IssueUrl(AppInfo.Version.Split('+')[0], Environment.OSVersion.Version.ToString(), _s.Mode));
     }
 

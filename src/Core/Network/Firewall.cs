@@ -96,9 +96,9 @@ public static class Firewall
     {
         var others = (products ?? []).Where(p => !string.IsNullOrWhiteSpace(p) && !p.Contains("Windows", StringComparison.OrdinalIgnoreCase) && !p.Contains("Microsoft Defender", StringComparison.OrdinalIgnoreCase))
             .Select(p => p.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        if (others.Count == 0) return $"Without the Firewall {without}; turn it on in Windows Security > Firewall.";
-        var who = others.Count == 1 ? others[0] : string.Join(" and ", others);
-        return $"{who} turned it off and runs its own firewall. Without Windows Firewall {without}: in {others[0].Split(' ')[0]}, let Windows Firewall be on (or uninstall that firewall), then turn it on in Windows Security > Firewall.";
+        if (others.Count == 0) return Loc.F("Without the Firewall {0}; turn it on in Windows Security > Firewall.", without);
+        var who = others.Count == 1 ? others[0] : string.Join(Loc.T(" and "), others);
+        return Loc.F("{0} turned it off and runs its own firewall. Without Windows Firewall {1}: in {2}, let Windows Firewall be on (or uninstall that firewall), then turn it on in Windows Security > Firewall.", who, without, others[0].Split(' ')[0]);
     }
 
     static object Policy() => Activator.CreateInstance(Type.GetTypeFromCLSID(PolicyClsid, true)!);
@@ -122,9 +122,9 @@ public static class Firewall
             var off = new List<string>();
             foreach (var (bit, name) in new[] { (1, "Domain"), (2, "Private"), (4, "Public") })
                 if ((current & bit) != 0 && !(bool)Get(p, "FirewallEnabled", bit)) off.Add(name);
-            return off.Count == 0 ? null : "Windows Firewall is off for the profile: " + string.Join(", ", off);
+            return off.Count == 0 ? null : Loc.F("Windows Firewall is off for the profile: {0}", string.Join(", ", off));
         }
-        catch (Exception ex) { return "Could not read Windows Firewall: " + ex.Message; }
+        catch (Exception ex) { return Loc.F("Could not read Windows Firewall: {0}", ex.Message); }
     }
 
     /// <summary>Rule by name, or null if it does not exist. "Item" is a COM method (not a property).</summary>
@@ -431,14 +431,14 @@ public static class Firewall
     /// <summary>What one rule is for, in a few words (the rule names stay as they were since alpha.1, partly in Portuguese).</summary>
     public static string Meaning(string name) => name switch
     {
-        RuleName => "Kill switch: your servers only through the phone",
-        EchoRuleName => "The app's IP check only through the phone",
-        Cs2RuleName => "CS2 only through the phone",
-        DnsUdpRuleName or DnsTcpRuleName => "Whole PC: DNS only through the phone",
-        Ipv6RuleName => "Whole PC: IPv6 blocked",
-        RegionsRuleName => "Matchmaking regions you turned off",
-        BannedIpRuleName => "Servers that banned the IP you have now",
-        _ => "From an older version",
+        RuleName => Loc.T("Kill switch: your servers only through the phone"),
+        EchoRuleName => Loc.T("The app's IP check only through the phone"),
+        Cs2RuleName => Loc.T("CS2 only through the phone"),
+        DnsUdpRuleName or DnsTcpRuleName => Loc.T("Whole PC: DNS only through the phone"),
+        Ipv6RuleName => Loc.T("Whole PC: IPv6 blocked"),
+        RegionsRuleName => Loc.T("Matchmaking regions you turned off"),
+        BannedIpRuleName => Loc.T("Servers that banned the IP you have now"),
+        _ => Loc.T("From an older version"),
     };
 
     /// <summary>Removes the old v6/v7/v8 rules (one per IP and per adapter).</summary>

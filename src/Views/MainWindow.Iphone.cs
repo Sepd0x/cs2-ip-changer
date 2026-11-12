@@ -135,7 +135,7 @@ public partial class MainWindow
     async Task<bool> IphoneChangeIp()
     {
         // The iPhone's connection, protected or still being checked: with protection off there is never a protected one (Egress)
-        if (PhoneLink.Exit(_last) is not { } exit) { Toast("Connect the iPhone first: " + PhoneSetup.IphoneHotspot, false); return false; }
+        if (PhoneLink.Exit(_last) is not { } exit) { Toast(Loc.T("Connect the iPhone first:") + " " + Loc.T(PhoneSetup.IphoneHotspot), false); return false; }
         var first = _egressPublic;
         var since = DateTime.Now.AddSeconds(-1);   // the history line the IP check adds on the way back belongs to this change
         // Airplane Mode drops the iPhone on purpose: no alarm and no cable hint (9 nov.: the Log said "The phone connection dropped")
@@ -145,8 +145,8 @@ public partial class MainWindow
             // No question first (9 nov., the owner: a button to press before it waited was confusing): Change IP starts
             // waiting at once, the bar says what to do on the iPhone and has Cancel, and the toast says it once in full
             Log.Info("iPhone: Change IP started. Airplane Mode on, then off, on the iPhone.");
-            Toast("On the iPhone: Airplane Mode on, wait 3 seconds, then off. " + (exit.IsWifi ? "Keep Personal Hotspot on. " : "Keep the cable plugged in. ")
-                + "The app waits and shows the new IP. " + (IpChangeDrops ? "If you are on a server, you will drop." : ""), true);
+            Toast(Loc.T("On the iPhone: Airplane Mode on, wait 3 seconds, then off.") + " " + (exit.IsWifi ? Loc.T("Keep Personal Hotspot on.") : Loc.T("Keep the cable plugged in.")) + " "
+                + Loc.T("The app waits and shows the new IP.") + " " + (IpChangeDrops ? Loc.T("If you are on a server, you will drop.") : ""), true);
             using var wait = CommandWait();
             var sw = Stopwatch.StartNew();
             var sawDrop = PhoneLink.Exit(_last) == null;   // already off when Change IP was pressed
@@ -168,7 +168,7 @@ public partial class MainWindow
                 if (!connected && droppedAt is TimeSpan dr && IphoneRestartDue(sw.Elapsed - dr, sw.Elapsed - restartedAt, restarts))
                 {
                     restartedAt = sw.Elapsed;
-                    Step("reconnecting the iPhone over USB…");
+                    Step(Loc.T("reconnecting the iPhone over USB…"));
                     if (await ReconnectIphone() && restarts++ == 0) Log.Info("iPhone: not back yet, so the app reconnected it over USB (like the cable out and in).");
                 }
                 // Still not back after the app's own tries: say how by hand, once, and keep waiting
@@ -176,7 +176,7 @@ public partial class MainWindow
                 {
                     nudged = true;
                     Log.Info("iPhone: not back yet. " + PhoneSetup.IphoneBringBack);
-                    Toast("Airplane Mode off and the iPhone still isn't back? " + PhoneSetup.IphoneBringBack, false);
+                    Toast(Loc.T("Airplane Mode off and the iPhone still isn't back?") + " " + Loc.T(PhoneSetup.IphoneBringBack), false);
                 }
                 var step = IphoneChangeStep(sawDrop, connected, first, now, sw.Elapsed, IphoneLimit(sawDrop));
                 foreach (var n in IphoneChangeCounts(step, sawDrop, sw.Elapsed)) Telemetry.Count(n);
@@ -187,19 +187,19 @@ public partial class MainWindow
                         AddHistory(now, _egressInfo, "trocado", since);
                         ResetQuality();
                         Log.Ok($"iPhone: IP changed: {first ?? "?"} → {now}.");
-                        Toast($"New IP: {now}.", true);
+                        Toast(Loc.F("New IP: {0}.", now), true);
                         return true;
                     case IphoneChange.BackSame:
                         Log.Warn($"iPhone: back with the same IP ({now}).");
-                        Toast("The carrier gave the same IP. Try again and leave Airplane Mode on a bit longer (10 to 20 s).", false);
+                        Toast(Loc.T("The carrier gave the same IP. Try again and leave Airplane Mode on a bit longer (10 to 20 s)."), false);
                         return false;
                     case IphoneChange.TimedOut:
                         Log.Warn(sawDrop ? "iPhone: Change IP waited 5 minutes for the iPhone to come back." : "iPhone: Change IP waited 90 s without seeing Airplane Mode.");
-                        Toast(sawDrop ? "The iPhone hasn't come back. " + PhoneSetup.IphoneBringBack : "The iPhone's connection never dropped: turn Airplane Mode on, then off.", false);
+                        Toast(sawDrop ? Loc.T("The iPhone hasn't come back.") + " " + Loc.T(PhoneSetup.IphoneBringBack) : Loc.T("The iPhone's connection never dropped: turn Airplane Mode on, then off."), false);
                         return false;
                 }
-                Step(step == IphoneChange.Off ? (nudged ? "not back yet: open Personal Hotspot on the iPhone, or plug the cable in again…" : "Airplane Mode on: now turn it off on the iPhone…")
-                    : step == IphoneChange.Measuring ? "the iPhone is back: checking the new IP…" : "on the iPhone: Airplane Mode on, wait 3 s, then off…");
+                Step(Loc.T(step == IphoneChange.Off ? (nudged ? "not back yet: open Personal Hotspot on the iPhone, or plug the cable in again…" : "Airplane Mode on: now turn it off on the iPhone…")
+                    : step == IphoneChange.Measuring ? "the iPhone is back: checking the new IP…" : "on the iPhone: Airplane Mode on, wait 3 s, then off…"));
                 await Task.Delay(1500);
             }
         }

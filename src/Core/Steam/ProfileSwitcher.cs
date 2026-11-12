@@ -95,14 +95,15 @@ public static class NamePattern
     /// <summary>Null when the pattern is fine, else the reason in plain words.</summary>
     public static string Problem(string pattern, bool allowName = true)
     {
-        if (string.IsNullOrWhiteSpace(pattern)) return "The name is empty.";
+        if (string.IsNullOrWhiteSpace(pattern)) return Loc.T("The name is empty.");
         foreach (Match m in Tag.Matches(pattern))
         {
             if (!m.Groups[1].Success) continue;
             var t = m.Groups[1].Value.Trim().ToLowerInvariant();
             if (t == "n" || (t == "name" && allowName)) continue;
-            if (LoginWords.Contains(t)) return $"{{{m.Groups[1].Value}}} can't be used: it would put the account's username on its public profile, and that makes the account easier to steal.";
-            return allowName ? $"Unknown tag {{{m.Groups[1].Value}}}. Use {{name}} (the account's Steam name now) or {{n}} (1, 2, 3…)." : $"Unknown tag {{{m.Groups[1].Value}}}. Only {{n}} (1, 2, 3…) works here.";
+            var shown = "{" + m.Groups[1].Value + "}";
+            if (LoginWords.Contains(t)) return Loc.F("{0} can't be used: it would put the account's username on its public profile, and that makes the account easier to steal.", shown);
+            return allowName ? Loc.F("Unknown tag {0}. Use {{name}} (the account's Steam name now) or {{n}} (1, 2, 3…).", shown) : Loc.F("Unknown tag {0}. Only {{n}} (1, 2, 3…) works here.", shown);
         }
         return null;
     }
@@ -238,7 +239,7 @@ public static class ProfilePlan
         var nameProblem = fields.HasFlag(ProfileFields.Name) ? NamePattern.Problem(t.Name) : null;
         var urlProblem = fields.HasFlag(ProfileFields.CustomUrl) && !string.IsNullOrWhiteSpace(t.CustomUrl) ? NamePattern.Problem(t.CustomUrl, allowName: false) : null;
         if (urlProblem == null && fields.HasFlag(ProfileFields.CustomUrl) && (targets.Count > 1 || firstN > 1) && !string.IsNullOrWhiteSpace(t.CustomUrl) && !NamePattern.HasN(t.CustomUrl))
-            urlProblem = "Each account needs its own custom URL: add {n} to it.";
+            urlProblem = Loc.F("Each account needs its own custom URL: add {0} to it.", "{n}");
         if (fields.HasFlag(ProfileFields.Avatar) && avatar == null) fields &= ~ProfileFields.Avatar;
         if (fields.HasFlag(ProfileFields.Privacy) && t.Privacy?.Any != true) fields &= ~ProfileFields.Privacy;
 
@@ -250,21 +251,21 @@ public static class ProfilePlan
             if (fields.HasFlag(ProfileFields.Name) && problem == null)
             {
                 name = NamePattern.Render(t.Name, a.CurrentName, firstN + i);
-                if (string.IsNullOrEmpty(a.CurrentName) && NamePattern.HasName(t.Name)) problem = "This account's Steam name isn't known yet, so {name} can't be used.";
-                else if (name.Length == 0) problem = "The name would be empty.";
-                else if (name.Length > NamePattern.MaxName) problem = $"The name would be {name.Length} characters; Steam allows {NamePattern.MaxName}.";
+                if (string.IsNullOrEmpty(a.CurrentName) && NamePattern.HasName(t.Name)) problem = Loc.F("This account's Steam name isn't known yet, so {0} can't be used.", "{name}");
+                else if (name.Length == 0) problem = Loc.T("The name would be empty.");
+                else if (name.Length > NamePattern.MaxName) problem = Loc.F("The name would be {0} characters; Steam allows {1}.", name.Length, NamePattern.MaxName);
                 // Already public in the current name (Steam's default is the login): keeping it is not a new leak.
-                else if (Leaked(name, a.CurrentName) is string l) problem = l.Equals(a.Login, StringComparison.OrdinalIgnoreCase) ? "The new name would show this account's username." : "The new name would show the username of another account on this PC.";
+                else if (Leaked(name, a.CurrentName) is string l) problem = l.Equals(a.Login, StringComparison.OrdinalIgnoreCase) ? Loc.T("The new name would show this account's username.") : Loc.T("The new name would show the username of another account on this PC.");
             }
             if (fields.HasFlag(ProfileFields.CustomUrl) && problem == null)
             {
                 url = NamePattern.Render(t.CustomUrl, null, firstN + i);
-                if (url.Length > 0 && !Regex.IsMatch(url, "^[A-Za-z0-9_-]{3,32}$")) problem = "A custom URL is 3 to 32 letters, numbers, - or _.";
-                else if (Leaked(url, null) != null) problem = "The custom URL would show a username from this PC.";
+                if (url.Length > 0 && !Regex.IsMatch(url, "^[A-Za-z0-9_-]{3,32}$")) problem = Loc.T("A custom URL is 3 to 32 letters, numbers, - or _.");
+                else if (Leaked(url, null) != null) problem = Loc.T("The custom URL would show a username from this PC.");
             }
-            if (problem == null && fields.HasFlag(ProfileFields.RealName) && Leaked(t.RealName, null) != null) problem = "The real name would show a username from this PC.";
-            if (problem == null && fields.HasFlag(ProfileFields.Summary) && Leaked(t.Summary, null) != null) problem = "The bio would show a username from this PC.";
-            if (problem == null && fields == ProfileFields.None && !clearAliases) problem = "Nothing picked to change.";
+            if (problem == null && fields.HasFlag(ProfileFields.RealName) && Leaked(t.RealName, null) != null) problem = Loc.T("The real name would show a username from this PC.");
+            if (problem == null && fields.HasFlag(ProfileFields.Summary) && Leaked(t.Summary, null) != null) problem = Loc.T("The bio would show a username from this PC.");
+            if (problem == null && fields == ProfileFields.None && !clearAliases) problem = Loc.T("Nothing picked to change.");
 
             jobs.Add(new ProfileJob
             {
@@ -360,18 +361,18 @@ public static class AvatarImage
     public static byte[] Prepare(byte[] input, out string problem)
     {
         problem = null;
-        if (input == null || input.Length == 0) { problem = "The file is empty."; return null; }
-        if (input.Length > MaxInput) { problem = "The picture is over 20 MB."; return null; }
-        if (!Magic(input)) { problem = "Use a JPG, PNG, GIF or BMP picture."; return null; }
+        if (input == null || input.Length == 0) { problem = Loc.T("The file is empty."); return null; }
+        if (input.Length > MaxInput) { problem = Loc.T("The picture is over 20 MB."); return null; }
+        if (!Magic(input)) { problem = Loc.T("Use a JPG, PNG, GIF or BMP picture."); return null; }
         try
         {
             using var ms = new MemoryStream(input, false);
             var dec = BitmapDecoder.Create(ms, BitmapCreateOptions.IgnoreColorProfile | BitmapCreateOptions.IgnoreImageCache, BitmapCacheOption.OnLoad);
             var frame = dec.Frames.FirstOrDefault();
-            if (frame == null) { problem = "Couldn't read the picture."; return null; }
+            if (frame == null) { problem = Loc.T("Couldn't read the picture."); return null; }
             int w = frame.PixelWidth, h = frame.PixelHeight;
-            if (w > MaxSide || h > MaxSide) { problem = $"The picture is too big ({w}×{h}); use one under {MaxSide} px."; return null; }
-            if (w < MinSide || h < MinSide) { problem = $"The picture is {w}×{h}; Steam needs at least {MinSide}×{MinSide}."; return null; }
+            if (w > MaxSide || h > MaxSide) { problem = Loc.F("The picture is too big ({0}×{1}); use one under {2} px.", w, h, MaxSide); return null; }
+            if (w < MinSide || h < MinSide) { problem = Loc.F("The picture is {0}×{1}; Steam needs at least {2}×{2}.", w, h, MinSide); return null; }
             var side = Math.Min(w, h);
             BitmapSource src = new CroppedBitmap(frame, new System.Windows.Int32Rect((w - side) / 2, (h - side) / 2, side, side));
             var outSide = Math.Min(side, OutSide);
@@ -394,10 +395,10 @@ public static class AvatarImage
                 enc.Save(outMs);
                 if (outMs.Length <= MaxOutput) return outMs.ToArray();
             }
-            problem = "Couldn't make the picture small enough for Steam.";
+            problem = Loc.T("Couldn't make the picture small enough for Steam.");
             return null;
         }
-        catch (Exception) { problem = "Couldn't read the picture (damaged or not an image)."; return null; }
+        catch (Exception) { problem = Loc.T("Couldn't read the picture (damaged or not an image)."); return null; }
     }
 }
 
@@ -754,7 +755,7 @@ public sealed class ProfileApplier
         _web = web; _token = tokenFor; _snaps = snaps; _delay = delay ?? Task.Delay;
     }
 
-    sealed class StopRun(string why) : Exception(why);
+    sealed class StopRun(string why) : Exception(Loc.T(why));
 
     async Task<T> Retry<T>(Func<Task<T>> call, CancellationToken ct)
     {
@@ -778,17 +779,17 @@ public sealed class ProfileApplier
         foreach (var job in jobs)
         {
             ProfileResult r;
-            if (stopped != null) r = new ProfileResult { SteamId = job.SteamId, Shown = job.Shown, Skipped = true, Message = "Not tried: " + stopped };
+            if (stopped != null) r = new ProfileResult { SteamId = job.SteamId, Shown = job.Shown, Skipped = true, Message = Loc.F("Not tried: {0}", stopped) };
             else if (job.Problem != null) r = new ProfileResult { SteamId = job.SteamId, Shown = job.Shown, Skipped = true, Message = job.Problem };
-            else if (ct.IsCancellationRequested) r = new ProfileResult { SteamId = job.SteamId, Shown = job.Shown, Skipped = true, Message = "Not tried: stopped." };
+            else if (ct.IsCancellationRequested) r = new ProfileResult { SteamId = job.SteamId, Shown = job.Shown, Skipped = true, Message = Loc.T("Not tried: stopped.") };
             else
             {
                 var wait = !first;
                 first = false;
                 // What already went through on this account when a later step fails: the message says so, Undo puts it back.
                 var changed = new List<string>();
-                string Done(string msg) => changed.Count == 0 ? msg : (job.Restore ? "Restored: " : "Changed: ") + string.Join(", ", changed) + ". Then: " + msg
-                    + (job.Restore ? "" : " Right-click > Undo the last change puts it back.");
+                string Done(string msg) => changed.Count == 0 ? msg : (job.Restore ? Loc.T("Restored: ") : Loc.T("Changed: ")) + string.Join(", ", changed) + ". " + Loc.F("Then: {0}", msg)
+                    + (job.Restore ? "" : " " + Loc.T("Right-click > Undo the last change puts it back."));
                 try
                 {
                     if (wait) await _delay(AccountGap, ct);
@@ -796,8 +797,8 @@ public sealed class ProfileApplier
                 }
                 catch (StopRun ex) { stopped = ex.Message; r = new ProfileResult { SteamId = job.SteamId, Shown = job.Shown, Partial = changed.Count > 0, Message = Done(ex.Message) }; }
                 catch (SteamWebException ex) { r = new ProfileResult { SteamId = job.SteamId, Shown = job.Shown, Partial = changed.Count > 0, Expired = ex.Expired, Message = Done(Secrets.Clean(ex.Message)) }; }
-                catch (OperationCanceledException) { r = new ProfileResult { SteamId = job.SteamId, Shown = job.Shown, Partial = changed.Count > 0, Message = Done("Stopped.") }; stopped = "stopped."; }
-                catch (Exception ex) { r = new ProfileResult { SteamId = job.SteamId, Shown = job.Shown, Partial = changed.Count > 0, Message = Done("Something went wrong (" + ex.GetType().Name + ").") }; }
+                catch (OperationCanceledException) { r = new ProfileResult { SteamId = job.SteamId, Shown = job.Shown, Partial = changed.Count > 0, Message = Done(Loc.T("Stopped.")) }; stopped = Loc.T("stopped."); }
+                catch (Exception ex) { r = new ProfileResult { SteamId = job.SteamId, Shown = job.Shown, Partial = changed.Count > 0, Message = Done(Loc.F("Something went wrong ({0}).", ex.GetType().Name)) }; }
             }
             results.Add(r);
             done?.Invoke(r);
@@ -814,12 +815,12 @@ public sealed class ProfileApplier
     async Task<ProfileResult> One(ProfileJob job, List<string> changed, Action<string> step, CancellationToken ct)
     {
         var token = _token(job.SteamId);
-        if (token == null) return new ProfileResult { SteamId = job.SteamId, Shown = job.Shown, Skipped = true, Message = "Not signed in: sign in to this account first." };
-        step("signing in");
+        if (token == null) return new ProfileResult { SteamId = job.SteamId, Shown = job.Shown, Skipped = true, Message = Loc.T("Not signed in: sign in to this account first.") };
+        step(Loc.T("signing in"));
         var s = await Retry(() => CommunitySession.Open(_web, token, job.SteamId, ct), ct);
         token = null;
 
-        step("reading the profile");
+        step(Loc.T("reading the profile"));
         var info = await Retry(() => s.ReadInfo(ct), ct);
         var needPrivacy = job.Fields.HasFlag(ProfileFields.Privacy) || !job.Restore;
         PrivacyState privacy = null;
@@ -852,11 +853,11 @@ public sealed class ProfileApplier
         var form = ProfileForm.Changing(info, job);
         if (ProfileForm.NeedsForm(form))
         {
-            step("saving the profile");
+            step(Loc.T("saving the profile"));
             await _delay(StepGap, ct);
             await Retry(() => s.SaveInfo(ProfileForm.Build(info, job, s.SessionId), ct), ct);
-            if (form.HasFlag(ProfileFields.Name)) changed.Add("name");
-            if ((form & (ProfileFields.RealName | ProfileFields.Summary | ProfileFields.Country | ProfileFields.CustomUrl)) != 0) changed.Add("details");
+            if (form.HasFlag(ProfileFields.Name)) changed.Add(Loc.T("name"));
+            if ((form & (ProfileFields.RealName | ProfileFields.Summary | ProfileFields.Country | ProfileFields.CustomUrl)) != 0) changed.Add(Loc.T("details"));
         }
         var sendPicture = job.Fields.HasFlag(ProfileFields.Avatar) && job.Avatar != null && !SamePicture(avatarNow, job.Avatar);
         // Steam's default picture ("?") uploaded back would be a custom picture that only looks like it.
@@ -867,30 +868,30 @@ public sealed class ProfileApplier
         }
         if (sendPicture)
         {
-            step("uploading the picture");
+            step(Loc.T("uploading the picture"));
             await _delay(StepGap, ct);
             await Retry(() => s.UploadAvatar(job.Avatar, ct), ct);
-            changed.Add("picture");
+            changed.Add(Loc.T("picture"));
         }
         if (job.Fields.HasFlag(ProfileFields.Privacy) && job.Privacy?.Any == true && privacy != null && !SamePrivacy(job.Privacy.ApplyTo(privacy), privacy))
         {
-            step("setting privacy");
+            step(Loc.T("setting privacy"));
             await _delay(StepGap, ct);
             await Retry(() => s.SetPrivacy(job.Privacy.ApplyTo(privacy), ct), ct);
-            changed.Add("privacy");
+            changed.Add(Loc.T("privacy"));
         }
         if (job.ClearAliases)
         {
-            step("clearing old names");
+            step(Loc.T("clearing old names"));
             await _delay(StepGap, ct);
             await Retry(() => s.ClearAliases(ct), ct);
-            changed.Add("old names cleared");
+            changed.Add(Loc.T("old names cleared"));
         }
-        var msg = changed.Count == 0 ? "Nothing to change." : (job.Restore ? "Restored: " : "Changed: ") + string.Join(", ", changed) + ".";
+        var msg = changed.Count == 0 ? Loc.T("Nothing to change.") : (job.Restore ? Loc.T("Restored: ") : Loc.T("Changed: ")) + string.Join(", ", changed) + ".";
         return new ProfileResult { SteamId = job.SteamId, Shown = job.Shown, Ok = true, Message = note == null ? msg : msg + " " + note };
     }
 
-    public const string DefaultPictureNote = "Steam's default picture can't be set back by the app: pick it in Steam > Edit Profile > Avatar.";
+    public static string DefaultPictureNote => Loc.T("Steam's default picture can't be set back by the app: pick it in Steam > Edit Profile > Avatar.");
 
     byte[] _defaultPicture;
     bool _defaultRead;

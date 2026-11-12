@@ -25,7 +25,7 @@ public sealed class SteamWebException : Exception
     /// <summary>The saved sign-in no longer works (expired, revoked, logged out).</summary>
     public bool Expired { get; init; }
     public TimeSpan? RetryAfter { get; init; }
-    public SteamWebException(string message, int? status = null, int? eresult = null) : base(message) { Status = status; EResult = eresult; }
+    public SteamWebException(string message, int? status = null, int? eresult = null) : base(Loc.T(message)) { Status = status; EResult = eresult; }
 }
 
 /// <summary>
@@ -67,7 +67,7 @@ public sealed class SteamWeb : IDisposable
         req.Headers.TryAddWithoutValidation("User-Agent", UserAgent);
         req.Headers.AcceptLanguage.ParseAdd("en-US,en;q=0.8");
         try { return await _http.SendAsync(req, ct); }
-        catch (HttpRequestException ex) { throw new SteamWebException("Couldn't reach Steam (" + (ex.HttpRequestError == HttpRequestError.Unknown ? "network error" : ex.HttpRequestError.ToString()) + ")."); }
+        catch (HttpRequestException ex) { throw new SteamWebException(Loc.F("Couldn't reach Steam ({0}).", ex.HttpRequestError == HttpRequestError.Unknown ? "network error" : ex.HttpRequestError.ToString())); }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested) { throw new SteamWebException("Steam took too long to answer."); }
     }
 
@@ -77,7 +77,7 @@ public sealed class SteamWeb : IDisposable
         var code = (int)r.StatusCode;
         if (code == 429)
             throw new SteamWebException("Steam is limiting requests right now.", 429) { RetryAfter = r.Headers.RetryAfter?.Delta ?? (r.Headers.RetryAfter?.Date - DateTimeOffset.UtcNow) };
-        if (code >= 400) throw new SteamWebException($"Steam answered {code} to {what}.", code);
+        if (code >= 400) throw new SteamWebException(Loc.F("Steam answered {0} to {1}.", code, Loc.T(what)), code);
     }
 
     /// <summary>
@@ -216,7 +216,7 @@ public sealed class SteamAuth
         req.Headers.Referrer = new Uri("https://steamcommunity.com/");
         using var r = await _web.Send(req, ct);
         SteamWeb.Check(r, "the sign-in");
-        if ((int)r.StatusCode >= 300) throw new SteamWebException($"Steam answered {(int)r.StatusCode} to the sign-in.", (int)r.StatusCode);
+        if ((int)r.StatusCode >= 300) throw new SteamWebException(Loc.F("Steam answered {0} to the sign-in.", (int)r.StatusCode), (int)r.StatusCode);
         if (r.Headers.TryGetValues("x-eresult", out var er) && int.TryParse(er.FirstOrDefault(), out var e) && e != 1)
             throw new SteamWebException(EResultText(e), eresult: e);
         try { return ProtoMsg.Parse(await r.Content.ReadAsByteArrayAsync(ct)); }
@@ -226,14 +226,14 @@ public sealed class SteamAuth
     /// <summary>Plain words for the EResults the sign-in gives.</summary>
     public static string EResultText(int e) => e switch
     {
-        5 => "Wrong password.",
-        8 => "Steam didn't accept the request.",
-        9 or 27 => "The sign-in took too long. Start again.",
-        15 => "Steam refused the sign-in.",
-        20 => "Steam is busy. Try again in a minute.",
-        63 or 65 or 88 => "Wrong code. Check it and try again.",
-        84 => "Too many tries. Wait a few minutes and try again.",
-        _ => $"Steam refused it (code {e}).",
+        5 => Loc.T("Wrong password."),
+        8 => Loc.T("Steam didn't accept the request."),
+        9 or 27 => Loc.T("The sign-in took too long. Start again."),
+        15 => Loc.T("Steam refused the sign-in."),
+        20 => Loc.T("Steam is busy. Try again in a minute."),
+        63 or 65 or 88 => Loc.T("Wrong code. Check it and try again."),
+        84 => Loc.T("Too many tries. Wait a few minutes and try again."),
+        _ => Loc.F("Steam refused it (code {0}).", e),
     };
 
     /// <summary>Encrypts the password with Steam's key for this login. The plain bytes are wiped by the caller.</summary>
@@ -452,7 +452,7 @@ public sealed class CommunitySession
         if ((int)r.StatusCode is >= 300 and < 400)
         {
             var to = r.Headers.Location?.ToString() ?? "";
-            throw new SteamWebException(to.Contains("/login", StringComparison.OrdinalIgnoreCase) ? "The saved sign-in no longer works. Sign in again." : $"Steam sent the app somewhere else for {what}.") { Expired = to.Contains("/login", StringComparison.OrdinalIgnoreCase) };
+            throw new SteamWebException(to.Contains("/login", StringComparison.OrdinalIgnoreCase) ? "The saved sign-in no longer works. Sign in again." : Loc.F("Steam sent the app somewhere else for {0}.", Loc.T(what))) { Expired = to.Contains("/login", StringComparison.OrdinalIgnoreCase) };
         }
         return await r.Content.ReadAsStringAsync(ct);
     }
@@ -507,13 +507,13 @@ public sealed class CommunitySession
     static void Success(string json, string what)
     {
         JsonNode j;
-        try { j = JsonNode.Parse(json); } catch { throw new SteamWebException($"Steam's answer to {what} was not what the app expects."); }
+        try { j = JsonNode.Parse(json); } catch { throw new SteamWebException(Loc.F("Steam's answer to {0} was not what the app expects.", Loc.T(what))); }
         var ok = j?["success"] is JsonNode s && (s.GetValueKind() == JsonValueKind.True || (s.GetValueKind() == JsonValueKind.Number && (int)s == 1));
         if (ok) return;
         var msg = j?["errmsg"]?.ToString() ?? j?["message"]?.ToString();
         msg = string.IsNullOrWhiteSpace(msg) ? null : Regex.Replace(WebUtility.HtmlDecode(msg), "<[^>]+>", " ").Trim();
         var code = j?["success"] is JsonNode n && n.GetValueKind() == JsonValueKind.Number ? (int)n : (int?)null;
-        throw new SteamWebException(msg != null ? $"Steam said: {Shorten(msg, 160)}" : code == 84 ? "Steam is limiting requests right now." : $"Steam refused {what}.", eresult: code);
+        throw new SteamWebException(msg != null ? Loc.F("Steam said: {0}", Shorten(msg, 160)) : code == 84 ? "Steam is limiting requests right now." : Loc.F("Steam refused {0}.", Loc.T(what)), eresult: code);
     }
 
     static string Shorten(string s, int n) => s.Length <= n ? s : s[..n] + "…";

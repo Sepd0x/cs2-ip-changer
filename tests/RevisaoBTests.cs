@@ -63,11 +63,11 @@ static class RevisaoBTests
             && kick.Contains("async void Rejoin_Click(object sender, RoutedEventArgs e) => await ChangeIpAndRejoin(\"Button\");"), "");
 
         // B3. O nome do comando no topo e no Log é o do botão; o rejoin sem IP chama-se Rejoin
-        check("Revisão B3: o switch corre com o nome do botão", acc.Contains("return RunCommand(_quickName, \"starting…\"") && !acc.Contains("RunCommand(\"New IP + next account\""), "");
+        check("Revisão B3: o switch corre com o nome do botão", acc.Contains("return RunCommand(_quickName, Loc.T(\"starting…\")") && !acc.Contains("RunCommand(\"New IP + next account\""), "");
         check("Revisão B3: o nome inteiro, sem o corte do botão", acc.Contains("_quickName = head + (who ?? \"\") + tail;"), "");
         check("Revisão B3: rejoin pela ligação de casa chama-se Rejoin", MainWindow.RejoinName(noPhone: false, protOn: false, useWithOff: true) == "Rejoin", "");
         check("Revisão B3: com a proteção ligada é Change IP and rejoin", MainWindow.RejoinName(false, true, true) == "Change IP and rejoin" && MainWindow.RejoinName(false, false, false) == "Change IP and rejoin", "");
-        check("Revisão B3: o Change IP and rejoin usa esse nome", kick.Contains("RunCommand(RejoinName(_s.NoPhone, _protOn, _s.UseWithProtectionOff), \"starting…\"") && !kick.Contains("RunCommand(\"Change IP and rejoin\""), "");
+        check("Revisão B3: o Change IP and rejoin usa esse nome", kick.Contains("RunCommand(Loc.T(RejoinName(_s.NoPhone, _protOn, _s.UseWithProtectionOff)), Loc.T(\"starting…\")") && !kick.Contains("RunCommand(\"Change IP and rejoin\""), "");
         check("Revisão B3: com menos de 2 contas, o aviso não fala do New IP", acc.Contains("\"Switching account needs at least 2 saved accounts. Add one on Accounts.\"")
             && !acc.Contains("\"New IP + next account needs at least 2"), "");
 
@@ -93,7 +93,7 @@ static class RevisaoBTests
         check("Revisão B5: Change IP and rejoin procura o servidor antes de começar",
             cir.IndexOf("if (!_servers.Any(x => x.Key == _s.LastServer))") is var i5 && i5 > 0 && i5 < cir.IndexOf("RunCommand("), "");
         check("Revisão B5: o switch com o IP e sem servidor continua a trocar o IP", kick.Contains("if (!steps.Ip && !steps.Account) { Toast(why, false); return false; }"), "");
-        check("Revisão B5: o tooltip do switch só promete o rejoin com servidor", acc.Contains("if (rejoin) steps.Add($\"joins {_s.LastServer} again\");") && !acc.Contains("if (c.Rejoin) steps.Add("), "");
+        check("Revisão B5: o tooltip do switch só promete o rejoin com servidor", acc.Contains("if (rejoin) steps.Add(Loc.F(\"joins {0} again\", _s.LastServer));") && !acc.Contains("if (c.Rejoin) steps.Add("), "");
         check("Revisão B5: o porquê do rejoin que não há", MainWindow.NoRejoinWhy(null).StartsWith("No last server yet") && MainWindow.NoRejoinWhy("x:1") == "The last server (x:1) is no longer in your list.", "");
 
         // B6. Log in com o CS2: com a proteção desligada (sem a opção) não abre, esteja o CS2 lock ligado ou não
@@ -172,7 +172,7 @@ static class RevisaoBTests
 
         // B13. O nome do botão fica certo: a conta em uso vem do Steam, e o fim do cooldown atualiza
         check("Revisão B13: NextQuick usa a conta em uso do Steam", acc.Contains("var active = ActiveAccount()?.SteamId ?? _accounts.FirstOrDefault(a => a.Active)?.SteamId;"), "");
-        check("Revisão B13: o fim do cooldown atualiza o botão", Src("MainWindow.xaml.cs").Contains("Toast($\"The cooldown for {a.Name} has ended.\", true);\n                UpdateQuickInfo();"), "");
+        check("Revisão B13: o fim do cooldown atualiza o botão", Src("MainWindow.xaml.cs").Contains("Toast(Loc.F(\"The cooldown for {0} has ended.\", a.Name), true);\n                UpdateQuickInfo();"), "");
 
         // B14. Hotkeys que o Windows usa
         check("Revisão B14: Alt+F4 recusada", Hotkey.Problem(ModifierKeys.Alt, Key.F4) is string p14 && p14 == "Windows uses Alt+F4 itself. Pick another combination.", Hotkey.Problem(ModifierKeys.Alt, Key.F4) ?? "null");

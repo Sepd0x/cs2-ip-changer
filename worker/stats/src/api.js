@@ -102,7 +102,9 @@ const BANDS = {
 // summed by D1 (summary's sums 'sql')
 const INSTALL_NAMES = ['first_start', 'accounts', 'net_dc', 'app_start', 'crash', 'ip_changed', 'ip_same', 'ip_no_network', 'ip_home_back', 'min_prot', 'm_valve', 'm_comm',
   'm_valve_lag', 'm_comm_lag', 'unclean_exit', 'leak_ok', 'leak_bad', 'log_error', 'upd_failed', 'rep_exit', 'cable_hint', 'cs2_start', 'upd_done', 'join', 'm_home', ...SIZES];
-const INSTALL_GLOBS = ['tp_*', 'phone_*', 'chk_*', 'data_*', 'age_*'];
+// beta.13 (10 Nov, onboarding): the first-run tour (tour_shown, tour_skip_<stop>, tour_done, tour_setup), Phone setup's own ADB
+// download (adb_auto, adb_ok, adb_fail) and the Regions note (pitch_shown), per install for the funnel
+const INSTALL_GLOBS = ['tp_*', 'phone_*', 'chk_*', 'data_*', 'age_*', 'tour_*', 'adb_*', 'pitch_*'];
 // Phone setup steps (PhoneSetup.Key of PhoneStep, contract.setup), in the app's order, with the dashboard's label
 const SETUP_LABEL = { noadbtool: 'Sem ADB', adbfailed: 'ADB falhou', nousb: 'Sem cabo USB', usbdrivererror: 'Driver USB', nousbdebugging: 'Depuração USB desligada',
   unauthorized: 'Depuração por autorizar', offline: 'Telemóvel offline', tetheroff: 'Tethering desligado', wifion: 'Wi-Fi do telemóvel ligado', pconphone: 'PC no telemóvel', done: 'Pronto' };
@@ -234,7 +236,7 @@ export async function summary(db, { period, f, dev, now, exclude = [], sums = 's
     i.c[c.name] = SIZES.includes(c.name) ? Math.max(i.c[c.name] || 0, c.mx ?? c.n) : (i.c[c.name] || 0) + c.n;
   }
   // v4: the Phone setup buttons (Setup_<step>) and its Help link, kept per install-day for "Onde encalham"
-  for (const c of clicks) { const i = inst.get(key(c)); if (i) { i.clicks += c.n; if (/^(Setup_|PhoneHelp)/.test(c.name)) i.k[c.name] = (i.k[c.name] || 0) + c.n; } }
+  for (const c of clicks) { const i = inst.get(key(c)); if (i) { i.clicks += c.n; if (/^(Setup_|PhoneHelp|RegionsPitchSetup)/.test(c.name)) i.k[c.name] = (i.k[c.name] || 0) + c.n; } }
   const real = (i) => i.acc >= 1 || i.clicks > 0 || i.m >= 1;
   const match = (i) => (f.version === 'all' || i.app === f.version) && (f.country === 'all' || i.country === f.country)
     && (f.mode === 'all' || i.mode === f.mode) && (f.link === 'all' || i.link === f.link);
@@ -747,6 +749,8 @@ function v4Blocks({ now, today, since, prevSince, okAll, inWin, seen, errors, er
       ret: RET_WIN.map(([a, b]) => (addD(d0, b) < today ? ds.some((x) => x >= addD(d0, a) && x <= addD(d0, b)) : null)),
       seg: { link: d0i.link, country: d0i.country, version: d0i.app, mode: d0i.mode },
       open: names('phone_setup_'), left: names('phone_left_'), pressed,
+      tour: sum('tour_shown') > 0, tourDone: sum('tour_done') > 0, tourSetup: sum('tour_setup') > 0, tourSkip: names('tour_skip_'),
+      adbOk: sum('adb_ok') > 0, adbFail: sum('adb_fail') > 0 && !(sum('adb_ok') > 0), pitch: sum('pitch_shown') > 0, pitchSetup: win.some((i) => i.k.RegionsPitchSetup_Click),
       help: win.some((i) => i.k.PhoneHelp_Click), cs2: sum('cs2_start') > 0, joined: sum('join') > 0,   // beta.13: CS2 joined a server
       // 10 nov. (P1): only beta.13 and later send join; before, "no join" is not known, never 0
       joinKnown: win.some((i) => compareVersions(i.app, JOIN_FROM) >= 0),
@@ -822,6 +826,13 @@ function v4Blocks({ now, today, since, prevSince, okAll, inWin, seen, errors, er
     n: cur.length, prev_n: prv.length,
     buckets: STUCK.map((id, b) => ({ id, n: A.buckets[b], share: cur.length ? A.buckets[b] / cur.length : null, prev: P.buckets[b], prev_share: prv.length ? P.buckets[b] / prv.length : null })),
     setup, never_opened: never.filter((m) => !m.open.size && !m.help).length, left_measured: leftMeasured,
+    // beta.13: the first-run tour and the Regions note, among the new installs (null before any install sent them)
+    onboarding: cur.some((m) => m.tour || m.pitch || m.adbOk || m.adbFail) ? {
+      tour: cur.filter((m) => m.tour).length, tour_done: cur.filter((m) => m.tourDone).length, tour_setup: cur.filter((m) => m.tourSetup).length,
+      tour_skip: [1, 2, 3, 4, 5].map((n) => cur.filter((m) => m.tourSkip.has(String(n))).length),
+      adb_ok: cur.filter((m) => m.adbOk).length, adb_fail: cur.filter((m) => m.adbFail).length,
+      pitch: cur.filter((m) => m.pitch).length, pitch_setup: cur.filter((m) => m.pitchSetup).length,
+    } : null,
     phone_not_protected: { n: notProt.length, ip_new: notProt.filter((m) => m.ipNew).length, ip_same_only: notProt.filter((m) => !m.ipNew && m.ipSame).length, red: redTop(notProt) },
     protected_no_match: { n: A.buckets[2], cs2_opened: cur.filter((m) => m.bucket === 2 && m.cs2).length,
       joined: cur.some((m) => m.bucket === 2 && m.joinKnown) ? cur.filter((m) => m.bucket === 2 && m.joinKnown && m.joined).length : null },

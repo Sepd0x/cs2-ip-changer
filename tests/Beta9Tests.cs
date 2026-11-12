@@ -80,7 +80,7 @@ static class Beta9Tests
 
         // ---------------- 4 nov.: verificações a vermelho no relatório e o teste de fugas
         var titles = System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(Path.Combine(SecurityTests.Repo(), "src", "MainWindow.xaml.cs")),
-            @"_checks\.Add\(\w+ = new CheckItem \{ Title = ""([^""]+)""").Select(m => m.Groups[1].Value).ToList();
+            @"_checks\.Add\(\w+ = new CheckItem \{ Title = Loc\.T\(""([^""]+)""\)").Select(m => m.Groups[1].Value).ToList();
         check("Checks: cada linha do painel tem nome curto para o relatório", titles.Count >= 11 && titles.All(Telemetry.CheckKeys.ContainsKey),
             string.Join(", ", titles.Where(x => !Telemetry.CheckKeys.ContainsKey(x))));
         // Beta.12: o contrato (worker/stats/contract.json) é a lista que o Worker lê
@@ -103,7 +103,7 @@ static class Beta9Tests
         check("Cheio: oferece Join anyway e diz que entra como espectador", full.Contains("Join anyway") && full.Contains("spectator") && full.Contains("10/10"), "");
         var srvSrc = File.ReadAllText(Path.Combine(SecurityTests.Repo(), "src", "Views", "MainWindow.Servers.cs"));
         check("Cheio: Escape não entra; o 2.º botão entra na mesma",
-            srvSrc.Contains("\"Wait for a slot\", \"Join anyway\")) { StartSlotWait(s); return true; }") && srvSrc.Contains("if (!_dialogCancelClicked) return false;"), "");
+            srvSrc.Contains("Loc.T(\"Wait for a slot\"), Loc.T(\"Join anyway\"))) { StartSlotWait(s); return true; }") && srvSrc.Contains("if (!_dialogCancelClicked) return false;"), "");
         // ---------------- 4 nov. (o192): as caixas do Windows antes do WPF ficam só onde a janela da app não pode carregar
         var prog = File.ReadAllText(Path.Combine(SecurityTests.Repo(), "src", "Program.cs"));
         var boxes = System.Text.RegularExpressions.Regex.Matches(prog, @"MessageBoxW\(IntPtr\.Zero").Count;

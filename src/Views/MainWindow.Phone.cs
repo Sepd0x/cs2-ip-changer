@@ -34,16 +34,16 @@ public partial class MainWindow
         if (_phone?.Ready != true && await IphoneState() is (true, var tethered))
         {
             AdbInstallBtn.Visibility = Visibility.Collapsed;
-            if (_s.NoPhone) SetPhone(Ui.Faint, "iPhone not in use", "No phone mode is on");
-            else if (tethered) SetPhone(Ui.Good, "iPhone connected", "Change IP: the app tells you when to turn Airplane Mode on and off, then shows the new IP.");
-            else SetPhone(Ui.Warn, "iPhone found, no connection yet", PhoneSetup.IphoneHotspot);
+            if (_s.NoPhone) SetPhone(Ui.Faint, Loc.T("iPhone not in use"), Loc.T("No phone mode is on"));
+            else if (tethered) SetPhone(Ui.Good, Loc.T("iPhone connected"), Loc.T("Change IP: the app tells you when to turn Airplane Mode on and off, then shows the new IP."));
+            else SetPhone(Ui.Warn, Loc.T("iPhone found, no connection yet"), Loc.T(PhoneSetup.IphoneHotspot));
             UpdatePhoneCheck();
             return;
         }
         _iphone = false;
         if (_adb == null)
         {
-            SetPhone(Ui.Faint, "Phone tool not installed", "ADB, free from Google, about 7 MB. Phone setup installs it for you.");
+            SetPhone(Ui.Faint, Loc.T("Phone tool not installed"), Loc.T("ADB, free from Google, about 7 MB. Phone setup installs it for you."));
             AdbInstallBtn.Visibility = Visibility.Visible;
             return;
         }
@@ -55,25 +55,25 @@ public partial class MainWindow
         if (info?.Ready == true) NotePhoneKind(false);
         Telemetry.Phone(info);
         DiagPhone(info);
-        if (info == null) SetPhone(Ui.Bad, "ADB failed to start", "Try reinstalling ADB.");
+        if (info == null) SetPhone(Ui.Bad, Loc.T("ADB failed to start"), Loc.T("Try reinstalling ADB."));
         else if (info.State == "none")
         {
             // ADB sees nothing: Windows may still see the phone, with its USB driver failed (code 10 until a restart, on Samsung).
             var usb = await Task.Run(PhoneUsb.Scan);
             NoteUsb(usb);
-            if (usb.Problem is int code) SetPhone(Ui.Bad, "Phone driver failed", PhoneSetup.Advice(PhoneStep.UsbDriverError, code, usb.Vendor == "Samsung"));
+            if (usb.Problem is int code) SetPhone(Ui.Bad, Loc.T("Phone driver failed"), PhoneSetup.Advice(PhoneStep.UsbDriverError, code, usb.Vendor == "Samsung"));
             // No jargon before there is a reason for it (4 nov., simulated users): Phone setup explains USB debugging when it's the step
-            else SetPhone(Ui.Faint, "Phone not found", usb.Seen ? "Phone plugged in. Press Phone setup to finish." : "Plug in your phone with a USB cable, then press Phone setup.");
+            else SetPhone(Ui.Faint, Loc.T("Phone not found"), usb.Seen ? Loc.T("Phone plugged in. Press Phone setup to finish.") : Loc.T(Texts.PhoneBoxPlugIn));
         }
-        else if (!info.Ready) SetPhone(Ui.Warn, "Waiting for authorization", info.Summary);
+        else if (!info.Ready) SetPhone(Ui.Warn, Loc.T("Waiting for authorization"), info.Summary);
         else if (info.WifiOn && info.WifiConnected == false)
-            SetPhone(Ui.Good, "Ready to change IP", info.Summary + " · Wi-Fi on, not connected (still mobile data)");
+            SetPhone(Ui.Good, Loc.T("Ready to change IP"), info.Summary + " · " + Loc.T("Wi-Fi on, not connected (still mobile data)"));
         else if (info.WifiOn)
-            SetPhone(Ui.Warn, "Phone Wi-Fi is on",
-                (info.WifiSsid != null ? $"Connected to {info.WifiSsid}. " : "") + "With Wi-Fi on, the PC may get your home network instead of mobile data.");
+            SetPhone(Ui.Warn, Loc.T("Phone Wi-Fi is on"),
+                (info.WifiSsid != null ? Loc.F("Connected to {0}.", info.WifiSsid) + " " : "") + Loc.T("With Wi-Fi on, the PC may get your home network instead of mobile data."));
         else if (_last != null && _last.Egress == null && _last.Candidate == null)
-            SetPhone(Ui.Warn, "Phone found, no connection yet", info.Summary + ". Turn on USB tethering.");
-        else SetPhone(Ui.Good, "Ready to change IP", info.Summary);
+            SetPhone(Ui.Warn, Loc.T("Phone found, no connection yet"), info.Summary + ". " + Loc.T("Turn on USB tethering."));
+        else SetPhone(Ui.Good, Loc.T("Ready to change IP"), info.Summary);
         PhoneNotInUse();
         // The same rule as the block (PhoneWifiOn): on the hotspot the button stays hidden, since on some phones turning Wi-Fi off
         // also stops the hotspot (Change IP leaves it alone for that reason). The Phone box still warns when Wi-Fi is on.
@@ -101,7 +101,7 @@ public partial class MainWindow
             {
                 _tetherHinted = true;
                 Log.Warn("The phone has USB tethering on, but Windows doesn't see it. Unplug the cable and plug it back in, or turn tethering off and on.");
-                Toast("Windows doesn't see the phone's USB tethering. Unplug the cable and plug it back in.", false);
+                Toast(Loc.T("Windows doesn't see the phone's USB tethering. Unplug the cable and plug it back in."), false);
             }
         }
         else { _tetherHinted = false; _tetherMissingSince = null; }
@@ -142,10 +142,10 @@ public partial class MainWindow
         // Change IP only makes sense with the phone ready on ADB, or an iPhone connected (and not in the no phone mode).
         var iphone = _iphone && _phone?.Ready != true;
         ChangeIpBtn.IsEnabled = !_changingIp && ChangeIpReady;
-        var drop = IpChangeDrops ? " If you are on a server, you will drop." : "";
-        ChangeIpBtn.ToolTip = _s.NoPhone ? "Off in the no phone mode: pick another option under What goes through the phone."
-            : iphone ? "Tells you when to turn Airplane Mode on and off on the iPhone, then shows the new IP." + drop
-            : "Turns the phone's mobile data off and on until the carrier gives a new IP. Needs the phone set up over ADB." + drop;
+        var drop = IpChangeDrops ? " " + Loc.T("If you are on a server, you will drop.") : "";
+        ChangeIpBtn.ToolTip = _s.NoPhone ? Loc.T("Off in the no phone mode: pick another option under What goes through the phone.")
+            : iphone ? Loc.T("Tells you when to turn Airplane Mode on and off on the iPhone, then shows the new IP.") + drop
+            : Loc.T("Turns the phone's mobile data off and on until the carrier gives a new IP. Needs the phone set up over ADB.") + drop;
         UpdateRejoinBtn();
         UpdateDataCheck();
     }
@@ -177,25 +177,25 @@ public partial class MainWindow
         {
             _cPhoneData.Ok = null;
             _cPhoneData.Waiting = false;
-            _cPhoneData.Detail = "Off: no phone mode";
+            _cPhoneData.Detail = Loc.T("Off: no phone mode");
         }
         else if (egress != null && egress.IsWifi)
         {
             _cPhoneData.Ok = null;
             _cPhoneData.Waiting = false;
-            _cPhoneData.Detail = "Through the hotspot: the phone is already using its data";
+            _cPhoneData.Detail = Loc.T("Through the hotspot: the phone is already using its data");
         }
         else if (_phone?.Ready != true)
         {
             _cPhoneData.Ok = null;
             _cPhoneData.Waiting = false;
-            _cPhoneData.Detail = _adb == null ? "Needs Phone setup" : "Phone not found (check the USB cable)";
+            _cPhoneData.Detail = _adb == null ? Loc.T("Needs Phone setup") : Loc.T("Phone not found (check the USB cable)");
         }
         else
         {
             var wifi = PhoneLink.WifiOn(_phone, egress?.IsWifi);
             (_cPhoneData.Ok, _cPhoneData.Waiting) = DataRow(wifi, _last?.KillSwitchOk == true, _last?.Unprotected == true);
-            var detail = wifi ? $"Phone Wi-Fi is on{(_phone.WifiSsid != null ? $" ({_phone.WifiSsid})" : "")}" : $"{_phone.Carrier} · {_phone.NetType}".Trim(' ', '·');
+            var detail = wifi ? Loc.T("Phone Wi-Fi is on") + (_phone.WifiSsid != null ? $" ({_phone.WifiSsid})" : "") : $"{_phone.Carrier} · {_phone.NetType}".Trim(' ', '·');
             _cPhoneData.Detail = _last?.Unprotected == true ? DataDetailOff(detail) : detail;
         }
     }
@@ -209,7 +209,7 @@ public partial class MainWindow
         unprotected ? (null, false) : wifiOn && killSwitchOk ? (null, true) : (!wifiOn, false);
 
     /// <summary>The Mobile data row with protection off: what the phone says, and that it isn't in use.</summary>
-    public static string DataDetailOff(string detail) => (string.IsNullOrEmpty(detail) ? "" : detail + " · ") + "not in use: protection is off";
+    public static string DataDetailOff(string detail) => (string.IsNullOrEmpty(detail) ? "" : detail + " · ") + Loc.T("not in use: protection is off");
 
     async void WifiOff_Click(object sender, RoutedEventArgs e)
     {
@@ -226,8 +226,8 @@ public partial class MainWindow
         // Read before Wi-Fi goes off: a phone with mobile data off would be left with no internet (Adb.PhoneNetSteps)
         var dataOn = await Adb.MobileDataOn(_adb, serial);
         var r = await Adb.DisableWifi(_adb, serial);
-        if (r.Ok) { Log.Ok("Phone Wi-Fi turned off: tethering now uses mobile data."); Toast("Phone Wi-Fi turned off.", true); }
-        else { Log.Warn("Turning off the phone Wi-Fi: " + r.Output); Toast("The phone refused. Turn off Wi-Fi manually.", false); }
+        if (r.Ok) { Log.Ok("Phone Wi-Fi turned off: tethering now uses mobile data."); Toast(Loc.T("Phone Wi-Fi turned off."), true); }
+        else { Log.Warn("Turning off the phone Wi-Fi: " + r.Output); Toast(Loc.T("The phone refused. Turn off Wi-Fi manually."), false); }
         await TurnPhoneDataOn(serial, dataOn);
     }
 
@@ -237,7 +237,7 @@ public partial class MainWindow
         if (!Adb.PhoneNetSteps(false, dataOn, false).DataOn) return;
         if (dataOn == false) Log.Warn("Mobile data is off on the phone: turning it on.");
         var r = await Adb.EnableData(_adb, serial);
-        if (!r.Ok && dataOn == false) { Log.Warn("Turning on the phone's mobile data: " + r.Output); Toast("Turn on mobile data on the phone.", false); }
+        if (!r.Ok && dataOn == false) { Log.Warn("Turning on the phone's mobile data: " + r.Output); Toast(Loc.T("Turn on mobile data on the phone."), false); }
     }
 
     void SetPhone(Brush dot, string state, string detail)
@@ -288,8 +288,8 @@ public partial class MainWindow
     public static List<string> StartProblems(bool steam, bool cs2)
     {
         var p = new List<string>();
-        if (!steam) p.Add("Steam wasn't found on this PC. Accounts, Join and Rejoin need it: install Steam, log in, then open the app again.");
-        else if (!cs2) p.Add("CS2 wasn't found in your Steam libraries. Install it in Steam. If it's on a drive Steam doesn't list, open CS2 once while the app is open and the app finds it.");
+        if (!steam) p.Add(Loc.T("Steam wasn't found on this PC. Accounts, Join and Rejoin need it: install Steam, log in, then open the app again."));
+        else if (!cs2) p.Add(Loc.T("CS2 wasn't found in your Steam libraries. Install it in Steam. If it's on a drive Steam doesn't list, open CS2 once while the app is open and the app finds it."));
         return p;
     }
 
@@ -302,43 +302,88 @@ public partial class MainWindow
         var cs2 = found != null;
         var p = StartProblems(steam, cs2);
         if (p.Count == 0) { Log.Ok("First start: Steam and CS2 found."); return; }
-        Log.Warn("First start: " + string.Join(" ", p));
-        await Ask("Before you start", string.Join("\n\n", p) + "\n\nThe phone comes next: Phone setup on the Connection page walks you through it.", "OK", null);
+        Log.Warn("First start: " + string.Join(" ", p.Select(Loc.En)));
+        await Ask(Loc.T("Before you start"), string.Join("\n\n", p) + "\n\n" + Loc.T("The phone comes next: Phone setup on the Connection page walks you through it."), Loc.T("OK"), null);
     }
 
     async void AdbInstall_Click(object sender, RoutedEventArgs e)
     {
-        var ok = await Ask("Install phone tool (ADB)", "Download Google's official platform-tools (about 7 MB) from dl.google.com into the app's data folder? You only need to do this once." + MobileDataNote(), "Download");
+        var ok = await Ask(Loc.T("Install phone tool (ADB)"), Loc.T("Download Google's official platform-tools (about 7 MB) from dl.google.com into the app's data folder? You only need to do this once.") + MobileDataNote(), Loc.T("Download"));
         if (!ok) return;
         await InstallAdb(t => ProgressText.Text = t, showProgress: true);
     }
 
-    /// <summary>Downloads ADB (you said yes first). True when it's installed.</summary>
-    async Task<bool> InstallAdb(Action<string> report, bool showProgress)
+    /// <summary>Downloads ADB (you pressed Install, or opened Phone setup without it). True when it's installed.</summary>
+    async Task<bool> InstallAdb(Action<string> report, bool showProgress, Action<double> percent = null)
     {
         AdbInstallBtn.IsEnabled = false;
-        if (showProgress) ShowProgress("Downloading the phone tool (ADB) from Google…");
+        _adbError = null;
+        if (showProgress) ShowProgress(Loc.T("Downloading the phone tool (ADB) from Google…"));
         try
         {
-            _adb = await Adb.Download(new Progress<string>(report));
-            if (_adb != null) { Log.Ok("ADB installed at " + _adb); Toast("ADB installed.", true); }
-            else Toast("Downloaded, but adb.exe was not found.", Tone.Error);
+            _adb = await Adb.Download(new Progress<string>(report), percent == null ? null : new Progress<double>(percent));
+            if (_adb != null) { Log.Ok("ADB installed at " + _adb); Toast(Loc.T(showProgress ? "ADB installed." : Texts.AdbInstalledToast), true); }
+            else { _adbError = Loc.T("adb.exe was not found in it"); Toast(Loc.T("Downloaded, but adb.exe was not found."), Tone.Error); }
         }
-        catch (Exception ex) { Log.Error("ADB download: " + ex.Message); Toast("Couldn't download ADB: " + ex.Message, Tone.Error); }
+        catch (Exception ex)
+        {
+            _adbError = AdbErrorText(ex);
+            Log.Error("ADB download: " + ex.Message);
+            if (showProgress) Toast(Loc.T("Couldn't download ADB:") + " " + ex.Message, Tone.Error);
+        }
         finally { if (showProgress) HideProgress(); AdbInstallBtn.IsEnabled = true; await RefreshPhone(); }
         return _adb != null;
     }
 
+    /// <summary>Why the last ADB download failed, short (Phone setup shows it in the row with Try again).</summary>
+    string _adbError;
+
+    /// <summary>The download's failure in a few words: no internet, too slow, or what the server said.</summary>
+    public static string AdbErrorText(Exception ex) => ex switch
+    {
+        TaskCanceledException => Loc.T("it took too long"),
+        System.Net.Http.HttpRequestException { StatusCode: { } code } => Loc.F("Google answered {0}", (int)code),
+        System.Net.Http.HttpRequestException => Loc.T("no connection to dl.google.com"),
+        IOException => Loc.T("the file couldn't be saved"),
+        _ => ex.GetType().Name,
+    };
+
+    /// <summary>Phone setup's own download of ADB: in the row, with the MB and a bar (10 Nov: one new user left Phone setup here twice).</summary>
+    async Task SetupInstallAdb(bool auto)
+    {
+        if (_setupBusy != null || _adb != null) return;
+        _setupBusy = PhoneStep.NoAdbTool;
+        _setupPercent = 0;
+        // The dashboard's "pressed Install" (Setup_ clicks): since 10 Nov also when Phone setup starts the download by itself
+        Telemetry.Click("Setup_" + PhoneSetup.Key(PhoneStep.NoAdbTool));
+        if (auto) { Telemetry.Count("adb_auto"); Log.Info("Phone setup: downloading the phone tool (ADB) from Google."); }
+        void Busy(string text) { if (text != null) _setupBusyText = text; if (_setupState != null && SetupPane.Visibility == Visibility.Visible) ShowSetup(_setupState); }
+        bool ok;
+        try
+        {
+            Busy(Texts.AdbDownloading(0, null));
+            ok = await InstallAdb(Busy, showProgress: false, percent: p => { _setupPercent = p; Busy(null); });
+        }
+        finally { _setupBusy = null; _setupBusyText = null; _setupPercent = null; }
+        _adbFailed = ok ? null : _adbError ?? Loc.T("unknown error");
+        Telemetry.Count(ok ? "adb_ok" : "adb_fail");
+        await ReadSetupNow();
+    }
+
+    /// <summary>The last ADB download from Phone setup failed (the row says why and offers Try again); null after one that worked.</summary>
+    string _adbFailed;
+    double? _setupPercent;
+
     async void Tether_Click(object sender, RoutedEventArgs e)
     {
-        if (_phone?.Ready != true) { Toast("The phone has to be ready on ADB first.", false); return; }
-        if (_demo) { Toast("USB tethering is on: Windows sees the phone as Ethernet 2.", true); return; }
+        if (_phone?.Ready != true) { Toast(Loc.T("The phone has to be ready on ADB first."), false); return; }
+        if (_demo) { Toast(Loc.F("USB tethering is on: Windows sees the phone as {0}.", "Ethernet 2"), true); return; }
         TetherBtn.IsEnabled = false;
-        ShowProgress("Turning on USB tethering…");
+        ShowProgress(Loc.T("Turning on USB tethering…"));
         try
         {
             var (adapter, why) = await TurnOnTethering(t => ProgressText.Text = t);
-            if (adapter != null) Toast($"USB tethering is on: Windows sees the phone as {adapter.Name}.", true);
+            if (adapter != null) Toast(Loc.F("USB tethering is on: Windows sees the phone as {0}.", adapter.Name), true);
             else Toast(why, false);
         }
         finally { HideProgress(); TetherBtn.IsEnabled = true; }
@@ -366,8 +411,8 @@ public partial class MainWindow
         while (sw.Elapsed < TetherWait)
         {
             await Task.Delay(1000);
-            if (CommandCancelled) return (null, "Cancelled.");
-            report?.Invoke($"Turning on USB tethering: waiting for Windows to see the phone ({(int)sw.Elapsed.TotalSeconds} s)…");
+            if (CommandCancelled) return (null, Loc.T("Cancelled."));
+            report?.Invoke(Loc.F("Turning on USB tethering: waiting for Windows to see the phone ({0} s)…", (int)sw.Elapsed.TotalSeconds));
             var phone = Net.PickEgress(await Task.Run(Net.Scan), null, null);
             if (phone != null)
             {
@@ -379,7 +424,7 @@ public partial class MainWindow
         }
         Log.Warn($"USB tethering: the phone took the request, but Windows didn't add its adapter within {TetherWait.TotalSeconds:0} s.");
         await SyncNow(force: true);
-        return (null, $"Windows didn't see the phone's tethering within {TetherWait.TotalSeconds:0} s. " + PhoneSetup.Advice(PhoneStep.TetherOff));
+        return (null, Loc.F("Windows didn't see the phone's tethering within {0} s.", TetherWait.TotalSeconds.ToString("0")) + " " + PhoneSetup.Advice(PhoneStep.TetherOff));
     }
 
     /// <summary>Windows can take 20 s or more to add the phone's adapter after the USB mode changes.</summary>
@@ -420,13 +465,24 @@ public partial class MainWindow
         if (_demo) { DemoPhoneSetup(); return; }
         if (_setupTimer?.IsEnabled == true) return;
         Log.Info("Phone setup opened.");
-        _setupFirstTodo = _setupLeft = null;
+        _setupFirstTodo = _setupLeft = _setupStepKey = null;
         _setupTimer ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _setupTimer.Tick -= SetupTick;
         _setupTimer.Tick += SetupTick;
         _setupTimer.Start();
         await ReadSetupNow();
+        // No phone tool: the download starts with the panel (10 Nov), unless the PC is on mobile data (then the row waits for Install)
+        // or the last one failed (Try again). Opening Phone setup is the yes: it can't do anything without it.
+        if (AutoInstallAdb(_adb != null, _adbFailed != null, MobileDataNote().Length > 0, _setupState?.Iphone == true)) await SetupInstallAdb(auto: true);
     }
+
+    /// <summary>Phone setup downloads the phone tool by itself: missing, not failed already, not on mobile data, not for an iPhone (no ADB there).</summary>
+    public static bool AutoInstallAdb(bool adbThere, bool failedBefore, bool onMobileData, bool iphone) => !adbThere && !failedBefore && !onMobileData && !iphone;
+
+    string _setupStepKey;
+    DateTime _setupStepSince = DateTime.UtcNow;
+    /// <summary>Demo only: how long the step to do now has been on screen, to capture the hints that come after a while.</summary>
+    partial void DemoSetupSeconds(ref int seconds);
 
     async void SetupTick(object sender, EventArgs e) => await ReadSetupNow();
 
@@ -449,24 +505,37 @@ public partial class MainWindow
         // The usage counts: where it stood when you opened it, and where it is now (counted when you close it, beta.11)
         _setupFirstTodo ??= PhoneSetup.StepKey(steps);
         _setupLeft = PhoneSetup.StepKey(steps);
+        // How long the step to do now has been the one (the cable and Allow steps add what to try after a while), and USB debugging
+        // turning on is said out loud: the person is looking at the phone, not at the PC (10 Nov)
+        var key = PhoneSetup.StepKey(steps);
+        if (key != _setupStepKey)
+        {
+            if (!_demo && PhoneSetup.DebugJustOn(_setupStepKey, key)) { Log.Ok("USB debugging is on."); Toast(Texts.DebugSeenToast, true); }
+            _setupStepKey = key;
+            _setupStepSince = DateTime.UtcNow;
+        }
+        var seconds = (int)(DateTime.UtcNow - _setupStepSince).TotalSeconds;
+        DemoSetupSeconds(ref seconds);
         _setupRows.Clear();
         foreach (var i in steps)
-            _setupRows.Add(new SetupStepRow(i, now, _setupBusy == i.Step ? _setupBusyText : null, _setupBusy == null));
+            _setupRows.Add(new SetupStepRow(i, now, _setupBusy == i.Step ? _setupBusyText : null, _setupBusy == null,
+                i == now ? PhoneSetup.LiveDetail(i, seconds) : null, _setupBusy == i.Step ? _setupPercent : null));
+        ShowGuide(now?.Step == PhoneStep.NoUsbDebugging && _setupBusy == null ? st : null);
         var ok = steps.Count(i => i.State == PhoneSetup.StepState.Ok);
         SetupSummary.Text = now == null && steps.All(i => i.State == PhoneSetup.StepState.Ok)
             ? SetupReadyText(_protOn)
-            : now == null ? $"{ok} of {steps.Count} done." : $"{ok} of {steps.Count} done. Next: {now.Title}.";
-        SetupFoot.Text = _s.NoPhone ? "You picked No phone under What goes through the phone, so the app isn't using the phone right now."
-            : now == null ? "For less lag in game: " + NetReport.Tips(_last?.Egress?.IsWifi == true)
-            : "Updates by itself. Do the red step and it turns green.";
-        SetupCloseBtn.Content = now == null ? "Done" : "Close";
+            : now == null ? Loc.F("{0} of {1} done.", ok, steps.Count) : Loc.F("{0} of {1} done. Next: {2}.", ok, steps.Count, now.Title);
+        SetupFoot.Text = _s.NoPhone ? Loc.T("You picked No phone under What goes through the phone, so the app isn't using the phone right now.")
+            : now == null ? Loc.T("For less lag in game:") + " " + NetReport.Tips(_last?.Egress?.IsWifi == true)
+            : Loc.T("Updates by itself. Do the red step and it turns green.");
+        SetupCloseBtn.Content = Loc.T(now == null ? "Done" : "Close");
         SetupCloseBtn.Style = (Style)FindResource(now == null ? "Primary" : "Btn");
     }
 
     /// <summary>Phone setup with every step done. With protection off servers still see the home IP, so it says what is left.</summary>
     public static string SetupReadyText(bool protOn) => protOn
-        ? "The phone is ready. The app checks its IP, then servers see it instead of your home IP."
-        : "The phone is ready. Turn on protection so servers see its IP instead of your home IP.";
+        ? Loc.T("The phone is ready. The app checks its IP, then servers see it instead of your home IP.")
+        : Loc.T("The phone is ready. Turn on protection so servers see its IP instead of your home IP.");
 
     void SetupClose_Click(object sender, RoutedEventArgs e)
     {
@@ -495,8 +564,10 @@ public partial class MainWindow
     async void SetupAction_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is not SetupStepRow row || _setupBusy != null) return;
-        if (_demo) { Toast("Demo: " + row.Action + ".", true); return; }
+        if (_demo) { Toast("Demo: " + row.Action + ".", true); return; }   // demo only: stays in English
         var step = row.Item.Step;
+        // Install (on mobile data) and Try again: the download in the row, no second question (pressing it is the yes)
+        if (step == PhoneStep.NoAdbTool) { await SetupInstallAdb(auto: false); return; }
         Telemetry.Click("Setup_" + PhoneSetup.Key(step));
         string Busy(string text) { _setupBusyText = text; if (_setupState != null) ShowSetup(_setupState); return text; }
         _setupBusy = step;
@@ -505,46 +576,39 @@ public partial class MainWindow
         {
             switch (step)
             {
-                case PhoneStep.NoAdbTool:
-                    if (await Ask("Phone setup", "Download Google's official platform-tools (about 7 MB) from dl.google.com?" + MobileDataNote(), "Download", "Not now"))
-                    {
-                        Busy("Downloading from Google…");
-                        if (!await InstallAdb(t => Busy(t), showProgress: false)) why = "The phone tool (ADB) didn't install. See the Log.";
-                    }
-                    break;
                 case PhoneStep.UsbDriverError:
                     // Only the iPhone's rows have this button: Apple Devices brings its network driver (9 nov.)
-                    Busy("Opening Apple Devices in the Microsoft Store…");
+                    Busy(Loc.T("Opening Apple Devices in the Microsoft Store…"));
                     try
                     {
                         Process.Start(new ProcessStartInfo(PhoneSetup.AppleDevicesStoreUri) { UseShellExecute = true });
                         Log.Info("Phone setup opened Apple Devices in the Microsoft Store, for the iPhone's network driver.");
-                        Toast("In the Microsoft Store, press Get. When it's installed, unplug the iPhone and plug it in again.", true);
+                        Toast(Loc.T("In the Microsoft Store, press Get. When it's installed, unplug the iPhone and plug it in again."), true);
                     }
-                    catch (Exception ex) { Log.Warn("Couldn't open the Microsoft Store: " + ex.Message); why = "Couldn't open the Microsoft Store. Open it and install \"Apple Devices\" (by Apple)."; }
+                    catch (Exception ex) { Log.Warn("Couldn't open the Microsoft Store: " + ex.Message); why = Loc.T("Couldn't open the Microsoft Store. Open it and install \"Apple Devices\" (by Apple)."); }
                     break;
                 case PhoneStep.AdbFailed:
-                    Busy("Starting the phone tool again…");
+                    Busy(Loc.T("Starting the phone tool again…"));
                     _adb = Adb.Find();
                     break;
                 case PhoneStep.TetherOff when _setupState?.Offer is { CanUse: true } offer:
-                    Busy(offer.Ssid != null ? "Using the phone's hotspot…" : "Using the phone over USB…");
+                    Busy(Loc.T(offer.Ssid != null ? "Using the phone's hotspot…" : "Using the phone over USB…"));
                     await UseOffer(offer);
                     await Task.Delay(1500);
                     break;
                 case PhoneStep.TetherOff:
-                    Busy("Turning on USB tethering…");
+                    Busy(Loc.T("Turning on USB tethering…"));
                     var (adapter, w) = await TurnOnTethering(t => Busy(t));
                     if (adapter == null) why = w;
                     break;
                 case PhoneStep.WifiOn:
-                    Busy("Turning off the phone's Wi-Fi…");
+                    Busy(Loc.T("Turning off the phone's Wi-Fi…"));
                     await TurnPhoneWifiOff();
                     await Task.Delay(3000);
                     await RefreshPhone();
                     break;
                 case PhoneStep.PcOnPhone:
-                    Busy("Keeping the rest of the PC on your home network…");
+                    Busy(Loc.T("Keeping the rest of the PC on your home network…"));
                     if (!_s.KeepPcOffPhone)
                     {
                         _s.KeepPcOffPhone = true;
@@ -558,7 +622,7 @@ public partial class MainWindow
                     break;
             }
         }
-        catch (Exception ex) { Log.Error("Phone setup: " + ex.Message); why = "Something failed: " + ex.Message; }
+        catch (Exception ex) { Log.Error("Phone setup: " + ex.Message); why = Loc.T("Something failed:") + " " + ex.Message; }
         finally { _setupBusy = null; _setupBusyText = null; }
         if (why != null) Toast(why, false);
         await ReadSetupNow();
@@ -590,6 +654,8 @@ public partial class MainWindow
             Iphone = iphone,
             AppleDriver = !iphone || phone != null || await Task.Run(PhoneUsb.AppleNetDriver),
             Offer = iphone ? null : ConnectionOffer.Find(adapters, phoneIps, _s.EgressAdapterId, !string.IsNullOrEmpty(_s.EgressSsid), phone),
+            AdbFailed = _adb == null ? _adbFailed : null,
+            AdbWaits = _adb == null && MobileDataNote().Length > 0,
         };
     }
 
@@ -633,14 +699,14 @@ public partial class MainWindow
 
     /// <summary>The carrier kept the same IP. Airplane mode is suggested only where it would be new: not already the method, never on the hotspot.</summary>
     public static string SameIpToast(bool airplane, bool hotspot) =>
-        "The carrier kept giving the same IP. " + (airplane || hotspot ? "Wait a few minutes and try again." : "Try Airplane mode in Settings > Change IP > Method, or wait a few minutes.");
+        Loc.T("The carrier kept giving the same IP.") + " " + (airplane || hotspot ? Loc.T("Wait a few minutes and try again.") : Loc.T("Try Airplane mode in Settings > Change IP > Method, or wait a few minutes."));
 
     /// <summary>Cycles the phone's data until the carrier gives a new IP. True if the IP really changed (and isn't the home IP).</summary>
     async Task<bool> ChangeIp(bool confirm)
     {
         if (_changingIp) return false;
-        if (_demo) { Toast("Demo: IP changed.", true); return false; }
-        if (_s.NoPhone) { Toast("No phone mode: there is no IP to change. Pick another option under What goes through the phone.", false); return false; }
+        if (_demo) { Toast("Demo: IP changed.", true); return false; }   // demo only: stays in English
+        if (_s.NoPhone) { Toast(Loc.T("No phone mode: there is no IP to change. Pick another option under What goes through the phone."), false); return false; }
         // beta.11: an iPhone has no ADB: the change is guided (you toggle Airplane Mode, the app waits and measures)
         if (_iphone && _phone?.Ready != true) return await IphoneChangeIp();
         // USB tethering, or the phone's hotspot (saved by name) with the cable plugged in only for ADB.
@@ -648,16 +714,16 @@ public partial class MainWindow
         var hotspot = PhoneLink.IsHotspot(_s.EgressSsid, PhoneLink.Exit(_last)?.IsWifi);
         if (_last?.Egress != null && !_last.Egress.IsPhone && !hotspot)
         {
-            Toast("The chosen connection is not a phone: the Change IP button only works with a phone over ADB (USB tethering, or its hotspot with the cable plugged in).", false);
+            Toast(Loc.T("The chosen connection is not a phone: the Change IP button only works with a phone over ADB (USB tethering, or its hotspot with the cable plugged in)."), false);
             return false;
         }
         if (_adb == null || _phone?.Ready != true)
         {
-            Toast(_adb == null ? "Install the phone tool first (button under Phone)." : "The phone is not ready on ADB. See \"Phone setup\".", false);
+            Toast(_adb == null ? Loc.T("Install the phone tool first (button under Phone).") : Loc.T("The phone is not ready on ADB. See \"Phone setup\"."), false);
             return false;
         }
         // With protection off CS2 is on the home connection and doesn't drop, unless the whole PC is on the phone
-        if (confirm && Steam.Cs2Running && IpChangeDrops && !await Ask("CS2 is open", "If you are on a server, you will be disconnected when the IP changes. Continue?", "Change IP")) return false;
+        if (confirm && Steam.Cs2Running && IpChangeDrops && !await Ask(Loc.T("CS2 is open"), Loc.T("If you are on a server, you will be disconnected when the IP changes. Continue?"), Loc.T("Change IP"))) return false;
 
         _changingIp = true;
         _ipChangeQuiet = true;   // until the new IP is checked and synced (finally): the drop is on purpose
@@ -666,7 +732,7 @@ public partial class MainWindow
         await SyncNow(force: true);
         ChangeIpBtn.IsEnabled = false;
         RejoinBtn.IsEnabled = false;
-        ChangeIpBtn.Content = "Changing…";
+        ChangeIpBtn.Content = Loc.T("Changing…");
         var method = _s.ChangeMethod == "airplane" ? Adb.Method.Airplane : Adb.Method.MobileData;
         var first = _egressPublic;
         string got = null;
@@ -682,7 +748,7 @@ public partial class MainWindow
             // Not PhoneLink.WifiOn on purpose: Wi-Fi on with no network also goes off, or the phone may join the home Wi-Fi while its data is off.
             if (_phone.WifiOn && !hotspot)
             {
-                ShowProgress("The phone's Wi-Fi is on: turning it off to use mobile data…");
+                ShowProgress(Loc.T("The phone's Wi-Fi is on: turning it off to use mobile data…"));
                 await TurnPhoneWifiOff();
                 await Task.Delay(3000);
             }
@@ -695,8 +761,8 @@ public partial class MainWindow
                 tries = attempt;
                 var how = Quality.MethodFor(method, afterBadLink, hotspot);
                 afterBadLink = false;
-                ShowProgress(how != method ? $"Attempt {attempt}/{of}: airplane mode for {_s.OffSeconds} s, so the phone looks for another cell…"
-                    : $"Attempt {attempt}/{of}: phone data off for {_s.OffSeconds} s…");
+                ShowProgress(how != method ? Loc.F("Attempt {0}/{1}: airplane mode for {2} s, so the phone looks for another cell…", attempt, of, _s.OffSeconds)
+                    : Loc.F("Attempt {0}/{1}: phone data off for {2} s…", attempt, of, _s.OffSeconds));
                 // On the hotspot airplane mode is never used, not even as the fallback where "svc data" is missing: it drops the hotspot
                 var (err, used) = await Adb.Cycle(_adb, _phone.Serial, how, Math.Clamp(_s.OffSeconds, 1, 60), allowAirplane: !hotspot);
                 // A phone that refuses airplane mode was left as it was: the retry goes the usual way
@@ -707,9 +773,9 @@ public partial class MainWindow
                     (err, used) = await Adb.Cycle(_adb, _phone.Serial, how, Math.Clamp(_s.OffSeconds, 1, 60), allowAirplane: !hotspot);
                 }
                 how = used;   // the method the phone really went through (a fallback to airplane mode too), for the tethering check below
-                if (err != null) { Log.Error(err); Toast(err, Tone.Error); return false; }
+                if (err != null) { Log.Error(err); Toast(CycleErrorText(err), Tone.Error); return false; }
 
-                ShowProgress($"Attempt {attempt}/{of}: waiting for the mobile network…");
+                ShowProgress(Loc.F("Attempt {0}/{1}: waiting for the mobile network…", attempt, of));
                 got = await WaitForEgressIp(TimeSpan.FromSeconds(50));
                 // Some phones drop USB tethering in airplane mode: turned back on once (only asked when Windows no longer sees the phone).
                 if (got == null && how == Adb.Method.Airplane && !hotspot)
@@ -717,7 +783,7 @@ public partial class MainWindow
                     var (back, _) = await TurnOnTethering(ShowProgress);
                     if (back != null) got = await WaitForEgressIp(TimeSpan.FromSeconds(30));
                 }
-                if (got == null) { ShowProgress("The network hasn't come back yet…"); continue; }
+                if (got == null) { ShowProgress(Loc.T("The network hasn't come back yet…")); continue; }
                 if (got == first) { Log.Info($"The carrier gave back the same IP ({got})."); continue; }
                 // Many admins ban the whole range: optionally keep going until the /16 is new, against every earlier IP
                 // (the same list the range note after the change uses).
@@ -761,8 +827,8 @@ public partial class MainWindow
                 _egressInfo = await PhoneIpInfo(got);
                 AddHistory(got, _egressInfo, "trocado", _ipChangedAt);
                 ResetQuality();
-                Log.Ok($"Mobile data back on: {got} (the IP before wasn't known, so it can't be compared). {range}");
-                Toast($"New IP: {got}. {range}" + (_protOn ? "" : " Protection is off: turn it on so servers see this IP."), !sameRange);
+                Log.Ok($"Mobile data back on: {got} (the IP before wasn't known, so it can't be compared). {Loc.En(range)}");
+                Toast(Loc.F("New IP: {0}.", got) + " " + range + (_protOn ? "" : " " + Loc.T("Protection is off: turn it on so servers see this IP.")), !sameRange);
                 return true;
             }
             else if (got != null && got != first)
@@ -772,9 +838,9 @@ public partial class MainWindow
                 _egressInfo = await PhoneIpInfo(got);
                 AddHistory(got, _egressInfo, "trocado", _ipChangedAt);
                 ResetQuality();
-                if (sameRange) Log.Warn($"IP changed: {first} → {got}. {range}");
-                else Log.Ok($"IP changed: {first} → {got}. {range}");
-                Toast($"New IP: {got}. {range}" + (_protOn ? "" : " Protection is off: turn it on so servers see this IP."), !sameRange);
+                if (sameRange) Log.Warn($"IP changed: {first} → {got}. {Loc.En(range)}");
+                else Log.Ok($"IP changed: {first} → {got}. {Loc.En(range)}");
+                Toast(Loc.F("New IP: {0}.", got) + " " + range + (_protOn ? "" : " " + Loc.T("Protection is off: turn it on so servers see this IP.")), !sameRange);
                 return true;
             }
             else if (got != null && got == first)
@@ -785,14 +851,14 @@ public partial class MainWindow
             else
             {
                 Telemetry.Count("ip_no_network");
-                Toast("The mobile network didn't come back in time. Check the phone.", false);
+                Toast(Loc.T("The mobile network didn't come back in time. Check the phone."), false);
             }
             return false;
         }
         finally
         {
             _changingIp = false;
-            ChangeIpBtn.Content = "Change IP";
+            ChangeIpBtn.Content = Loc.T("Change IP");
             UpdatePhoneCheck();
             HideProgress();
             ShowIps();
@@ -807,10 +873,19 @@ public partial class MainWindow
         }
     }
 
+    /// <summary>The English error of Adb.Cycle, in the app's language for the toast (the Log keeps the English).</summary>
+    static string CycleErrorText(string err)
+    {
+        const string back = "Turned data off but could not turn it back on: ", hand = " (turn it on manually on the phone)";
+        if (err.StartsWith(Adb.Refused)) return Loc.T("The phone refused the command:") + " " + err[Adb.Refused.Length..];
+        if (err.StartsWith(back) && err.EndsWith(hand)) return Loc.F("Turned data off but could not turn it back on: {0} (turn it on manually on the phone)", err[back.Length..^hand.Length]);
+        return err;
+    }
+
     /// <summary>Change IP came back with the home IP: the phone shares the home Wi-Fi. Only protection on blocks your servers then.</summary>
     public static string HomeBackText(bool protOn) => protOn
-        ? "The phone came back with your home IP. Your servers stay blocked: turn off the phone's Wi-Fi."
-        : "The phone came back with your home IP: it is sharing your Wi-Fi. Turn off the phone's Wi-Fi.";
+        ? Loc.T("The phone came back with your home IP. Your servers stay blocked: turn off the phone's Wi-Fi.")
+        : Loc.T("The phone came back with your home IP: it is sharing your Wi-Fi. Turn off the phone's Wi-Fi.");
 
     /// <summary>
     /// "Keep changing until the connection is good": 10 pings to the IP test address, only through the phone. Null when the test
@@ -818,7 +893,7 @@ public partial class MainWindow
     /// </summary>
     async Task<LinkQuality> MeasureNewLink(string ip, int attempt, int of)
     {
-        ShowProgress($"Attempt {attempt}/{of}: checking the connection on {ip}…");
+        ShowProgress(Loc.F("Attempt {0}/{1}: checking the connection on {2}…", attempt, of, ip));
         await Task.Delay(3000);   // the first seconds after data comes back are always rough
         var egress = Net.PickEgress(await Task.Run(Net.Scan), _s.EgressAdapterId, _s.EgressSsid);
         if (egress != null && Net.BestInterface(Net.EchoIp) != egress.Index) await SyncNow(force: true);
@@ -838,8 +913,9 @@ public partial class MainWindow
         if (r == null) return "";
         var seen = IpRange.FirstSame16(ip, _history.Select(h => h.Ip));
         same = seen != null;
-        return !same ? $"New range ({r}.x.x)."
-            : $"Same range ({r}.x.x) as {seen}. If the server banned that range, change again" + (_s.RequireNew16 ? "." : " or turn on \"Keep changing until the IP is in a new range\" in Settings.");
+        return !same ? Loc.F("New range ({0}.x.x).", r)
+            : Loc.F("Same range ({0}.x.x) as {1}.", r, seen) + " " + (_s.RequireNew16 ? Loc.T("If the server banned that range, change again.")
+                : Loc.T("If the server banned that range, change again or turn on \"Keep changing until the IP is in a new range\" in Settings."));
     }
 
     /// <summary>The new IP's ISP and country, asked through the phone and never through home (see Net.Lookup).</summary>
@@ -879,13 +955,18 @@ public partial class MainWindow
 /// <summary>One line of the Phone setup panel: green done, red to do (the current one stands out), grey waiting for the one before.</summary>
 public sealed class SetupStepRow
 {
-    public SetupStepRow(PhoneSetup.SetupItem item, PhoneSetup.SetupItem now, string busy, bool idle)
+    /// <param name="live">The step to do now as it reads while it lasts (PhoneSetup.LiveDetail); null = its usual text.</param>
+    /// <param name="percent">The download's progress (0 to 100) while the row's step runs one; null = no bar.</param>
+    public SetupStepRow(PhoneSetup.SetupItem item, PhoneSetup.SetupItem now, string busy, bool idle, string live = null, double? percent = null)
     {
-        Item = item; Current = item == now; Busy = busy; Idle = idle;
+        Item = item; Current = item == now; Busy = busy; Idle = idle; Percent = percent;
         // beta.11: only the step to do now is open; the ones after it are only their title, in grey, until it is their turn
         _later = now != null && !Current && item.State != PhoneSetup.StepState.Ok;
-        _shown = PhoneSetup.Shown(item, now);
+        _shown = Current && live != null ? live : PhoneSetup.Shown(item, now);
     }
+    public double? Percent { get; }
+    public double PercentValue => Percent ?? 0;
+    public Visibility PercentVisibility => Percent == null ? Visibility.Collapsed : Visibility.Visible;
     readonly bool _later;
     readonly string _shown;
     /// <summary>After the step to do now: grey, title only, no button.</summary>

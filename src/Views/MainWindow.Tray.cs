@@ -33,13 +33,13 @@ public partial class MainWindow
     [
         (string.IsNullOrWhiteSpace(state) ? "CS2 IP Changer" : state, "state", false),
         (null, null, false),
-        ("Open", "open", true),
-        on ? ("Turn off protection", "off", true) : ("Turn on protection", "on", phone),
-        (string.IsNullOrWhiteSpace(quick) ? "New IP + next account" : quick, "switch", true),
-        ("Change IP", "changeip", phone),
-        ("Regions", "regions", true),
+        (Loc.T("Open"), "open", true),
+        on ? (Loc.T("Turn off protection"), "off", true) : (Loc.T("Turn on protection"), "on", phone),
+        (string.IsNullOrWhiteSpace(quick) ? Loc.T("New IP + next account") : Loc.T(quick), "switch", true),
+        (Loc.T("Change IP"), "changeip", phone),
+        (Loc.T("Regions"), "regions", true),
         (null, null, false),
-        ("Quit", "quit", true),
+        (Loc.T("Quit"), "quit", true),
     ];
 
     /// <summary>Built each time the menu opens, from the state of that moment. The state line has no command, so it is greyed.</summary>
@@ -89,11 +89,11 @@ public partial class MainWindow
         if (_s.TrayHinted) return;
         _s.TrayHinted = true;
         SaveSettings();
-        _tray?.Balloon("CS2 IP Changer is still running", TrayHintText);
+        _tray?.Balloon(Loc.T("CS2 IP Changer is still running"), TrayHintText);
     }
 
     /// <summary>The first X to the notification area, shown once: it says nothing about protection, which may be off or in No phone mode.</summary>
-    public const string TrayHintText = "Click the icon to open the app; right-click it for Regions or Quit.";
+    public static string TrayHintText => Loc.T("Click the icon to open the app; right-click it for Regions or Quit.");
 
     /// <summary>The X goes to the notification area: only with the option on and the icon there, never to quit, for an update or a Windows sign-out.</summary>
     public static bool GoesToTray(bool closeToTray, bool hasIcon, bool quitting, bool sessionEnding, bool closingDone, bool demo) =>
@@ -192,13 +192,13 @@ public partial class MainWindow
         StartWithWindowsBox.IsEnabled = true;
         if (problem != null)
         {
-            Toast((on ? "Start with Windows didn't turn on: " : "Start with Windows didn't turn off: ") + problem, Tone.Error);
+            Toast(on ? Loc.F("Start with Windows didn't turn on: {0}", problem) : Loc.F("Start with Windows didn't turn off: {0}", problem), Tone.Error);
             await ShowAutostart();
             return;
         }
         Log.Info(on ? $"Start with Windows on: the scheduled task \"{Autostart.TaskName}\" opens the app in the notification area when you sign in."
             : $"Start with Windows off: the scheduled task \"{Autostart.TaskName}\" was deleted.");
-        Toast(on ? "The app now opens in the notification area when you sign in to Windows." : "The app no longer starts with Windows.", true);
+        Toast(on ? Loc.T("The app now opens in the notification area when you sign in to Windows.") : Loc.T("The app no longer starts with Windows."), true);
     }
 
     // ------------------------------------------------------------ Mobile data counter
@@ -220,7 +220,7 @@ public partial class MainWindow
             {
                 _s.DataWarnedMonth = _s.DataMonth;
                 SaveSettings();
-                Toast($"{DataMeter.Text(_s.DataMonthBytes)} of mobile data used through the phone this month: your warning is at {_s.DataWarnGb:0.#} GB (Settings > Mobile data).", Tone.Warn);
+                Toast(Loc.F("{0} of mobile data used through the phone this month: your warning is at {1} GB (Settings > Mobile data).", DataMeter.Text(_s.DataMonthBytes), _s.DataWarnGb.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)), Tone.Warn);
             }
             if ((now - _dataSaved).TotalMinutes >= 2) { _dataSaved = now; SaveSettings(); }
         }
@@ -243,7 +243,7 @@ public partial class MainWindow
 
     /// <summary>"Mobile data: 85 MB since the app opened, 1.24 GB in November."</summary>
     public static string DataText(long session, long month, DateTime now) =>
-        $"Mobile data: {DataMeter.Text(session)} since the app opened, {DataMeter.Text(month)} in {now.ToString("MMMM", System.Globalization.CultureInfo.InvariantCulture)}.";
+        Loc.F("Mobile data: {0} since the app opened, {1} in {2}.", DataMeter.Text(session), DataMeter.Text(month), Loc.T(now.ToString("MMMM", System.Globalization.CultureInfo.InvariantCulture)));
 
     void DataWarn_Changed(object sender, RoutedEventArgs e)
     {
@@ -263,12 +263,12 @@ public partial class MainWindow
     {
         if (_demo || _removing) return;
         if (!IsVisible) ShowFromTray();
-        if (Steam.Cs2Running) { Toast("Close CS2 first: removing the block now would send CS2's traffic through your home connection.", Tone.Warn); return; }
-        if (!await Ask(Uninstall.Title, Uninstall.Text(), "Remove", danger: true, choices: Uninstall.Choices(Paths.Data, Autostart.Allowed(Environment.ProcessPath)))) return;
+        if (Steam.Cs2Running) { Toast(Loc.T("Close CS2 first: removing the block now would send CS2's traffic through your home connection."), Tone.Warn); return; }
+        if (!await Ask(Uninstall.Title, Uninstall.Text(), Loc.T("Remove"), danger: true, choices: Uninstall.Choices(Paths.Data, Autostart.Allowed(Environment.ProcessPath)))) return;
         var everything = _dialogChoice == 1;
         _removing = _closingDone = _restored = _closeBusy = true;   // a second X waits for the removal (CloseWaits)
         _tick.Stop();
-        ShowProgress("Removing the rules, routes, task and the app's files…");
+        ShowProgress(Loc.T("Removing the rules, routes, task and the app's files…"));
         var got = await _regionGate.WaitAsync(TimeSpan.FromSeconds(10));
         Uninstall.Outcome o;
         try { o = await Uninstall.Run(everything, () => _guard.RestoreAll(_servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: false)); }
@@ -277,7 +277,7 @@ public partial class MainWindow
             // Never left half-way with the window stuck: say it, and the app closes (opening it again puts its protection back)
             Log.Error("Remove stopped: " + ex.Message);
             HideProgress();
-            new NoticeWindow("Not everything was removed", "Remove stopped: " + ex.Message + $"\n\nOpen the app and try again, or run {AppIds.ExeName} {AppIds.Args.Restore}.", "Close", problem: true) { Owner = this }.ShowAndWait();
+            new NoticeWindow(Loc.T("Not everything was removed"), Loc.F("Remove stopped: {0}", ex.Message) + "\n\n" + Loc.F("Open the app and try again, or run {0} {1}.", AppIds.ExeName, AppIds.Args.Restore), Loc.T("Close"), problem: true) { Owner = this }.ShowAndWait();
             _closeBusy = false;
             Close();
             return;
@@ -286,7 +286,7 @@ public partial class MainWindow
         Log.Info(Uninstall.LogLine(o));
         HideProgress();
         var (title, text, problem) = Uninstall.Result(o, Paths.Data);
-        new NoticeWindow(title, text, "Close", problem: problem) { Owner = this }.ShowAndWait();
+        new NoticeWindow(title, text, Loc.T("Close"), problem: problem) { Owner = this }.ShowAndWait();
         _closeBusy = false;
         Close();
     }

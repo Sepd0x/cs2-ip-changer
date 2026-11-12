@@ -27,7 +27,7 @@ static class Beta11Tests
         check("Auto-join: mudou de servidor com o CS2 aberto, pergunta", SRT.MainWindow.FollowAutoJoins(true, true, true), "");
         var players = Src("Views", "MainWindow.Players.cs");
         check("Auto-join: uma verificação de cada vez (antes entravam duas)", players.Contains("if (_checkingFollowed) return;"), "");
-        check("Auto-join: pergunta sempre antes de entrar", players.Contains("if (!_demo && !await Ask(\"Join the player you follow?\""), "");
+        check("Auto-join: pergunta sempre antes de entrar", players.Contains("if (!_demo && !await Ask(Loc.T(\"Join the player you follow?\")"), "");
 
         // ---------------- c) Toda a pergunta tem saída
         var xaml = Src("MainWindow.xaml");

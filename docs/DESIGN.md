@@ -220,12 +220,28 @@ programs) and the buttons are not named here.
 | Player flags | `AutoJoinBox` |
 | Steam | `ApiKeyPwd`, `ApiKeyBox`, `LaunchOptsBox` |
 | Privacy | `OptStreamer`, `AutoStreamerBox` |
-| App | `StartWithWindowsBox`, `CloseToTrayBox`, `CheckUpdatesBox`, `TestVersionsBox` |
+| App | `LanguageBox`, `StartWithWindowsBox`, `CloseToTrayBox`, `CheckUpdatesBox`, `TestVersionsBox` |
 | Maintenance | |
 | Remove the app | |
 
 To move or add an option: change it here and in `MainWindow.xaml` in the same step, and the texts that point to it
 (the test lists them).
+
+### First run, notes and drawn phone screens (10 Nov 2026)
+
+- **Texts.** Every visible text added since then lives in `src/Texts.cs`, and the XAML reads it with
+  `{x:Static local:Texts.Name}`, so the app can be translated in one place. `tests/OrganizacaoTests.cs` reads them the same way.
+- **The tour** (`TourPane`, `src/Views/MainWindow.Tour.cs`): the window under a `#B0000000` shade (the same as the dialogs)
+  with a hole 6 px larger than the real control it points at, a 1 px `Accent` ring round the hole, and a `DialogGroup` box
+  360 px wide, 14 px from the control (right, else below, else above, else left) and at least 12 px inside the window.
+  4 to 6 stops; the buttons are Skip tour, Back and Next, the last stop's are Later and Open Phone setup. Nothing in it
+  is clickable but its box.
+- **A note inside a group** (the Regions note): `Surface2` with a 2 px left border, `Warn` for a warning, `Accent` for what
+  the app offers; buttons on its right. One note per group.
+- **Drawn phone screens** (Phone setup's USB debugging, `src/Views/PhoneGuide.cs`): square like the rest of the app,
+  132x150, `Bg` with a 1 px `LineStrong` border and a short `Line` bar for the earpiece. Only the line to tap has words
+  (`AccentSoft`, 2 px `Accent` left border, its mark in `Accent`: "tap 7×", a switch that is on, or Allow); the other
+  lines are `Surface3` bars, since they differ from model to model. Three screens in a row, the step's text under each.
 
 ## Captures
 
@@ -299,3 +315,17 @@ Any visual change to the app (a color, a text, a layout, anything in a `.xaml`) 
    tools/site-loading.test.mjs tools/world-3d.test.mjs`.
 
 At every release the version changes, so the captures (the sidebar shows it) are taken again before the release commit.
+
+### Languages (11 Nov 2026)
+
+- The app is in English (the source and the fallback), pt-BR, es (neutral, Latin America) and ru. The language follows Windows the
+  first time; Settings > App > Language changes it (it applies the next time the app opens).
+- One mechanism, `src/Loc.cs`: the English text is the key, `src/Lang/<code>.json` hold the translations, and a text with no entry
+  shows in English. XAML needs no marker: `Loc.Apply` swaps the text of each window once, when it opens. Texts the code builds go
+  through `Loc.T("text")` and `Loc.F("text {0}", value)`. The Log, the telemetry and internal names stay in English
+  (`Loc.En` gives the English back).
+- Spanish and Russian run about 40% longer: size a box for the longest language, never for English. `SRT_PSEUDO=1` stretches every
+  text 40% to check the layout.
+- Menu names of Windows and Android that a text quotes are the ones the user sees on screen in that language.
+- `tools/loc-keys.mjs` lists the keys, `tools/loc-merge.mjs` folds translations in, `tests/LocTests.cs` fails when a key is missing
+  in a language or a Toast carries a raw literal.
