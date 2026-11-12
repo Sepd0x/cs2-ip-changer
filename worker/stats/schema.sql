@@ -43,3 +43,6 @@ CREATE TRIGGER IF NOT EXISTS budget_new_update BEFORE UPDATE ON budget WHEN NEW.
 -- highest of each UTC hour kept (dev 0 everyone, dev 1 only the developer's PCs).
 CREATE TABLE IF NOT EXISTS gh_daily (day TEXT NOT NULL, kind TEXT NOT NULL, name TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (day, kind, name));
 CREATE TABLE IF NOT EXISTS live_hourly (hour INTEGER NOT NULL, dev INTEGER NOT NULL DEFAULT 0, n INTEGER NOT NULL, game INTEGER NOT NULL, prot INTEGER NOT NULL, PRIMARY KEY (hour, dev));
+-- 12 Nov. 2026, written by the dashboard Worker (src/memo.js): its added-up answers (the summary, the GitHub history, the live
+-- peaks), one row per question, so a page load reads one row instead of every report again. Never an install ID. Made by the Worker if missing.
+CREATE TABLE IF NOT EXISTS memo (k TEXT PRIMARY KEY, at INTEGER NOT NULL, stamp TEXT, v TEXT NOT NULL);

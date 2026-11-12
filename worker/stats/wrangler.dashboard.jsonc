@@ -1,4 +1,4 @@
-// The stats page (src/dashboard.js), a second Worker on the same database (it only writes from its cron). Only for the person who runs the project:
+// The stats page (src/dashboard.js), a second Worker on the same database (it writes from its cron, and since 12 Nov. 2026 its added-up answers to the memo table, src/memo.js). Only for the person who runs the project:
 // Cloudflare Access in front of all of it, and the Worker checks the Access token too. Steps: publish/dashboard-passos.md
 // (outside the repo). Deploy from this folder: npx wrangler deploy -c wrangler.dashboard.jsonc
 // Secrets (wrangler secret put NAME -c wrangler.dashboard.jsonc): TEAM_DOMAIN, POLICY_AUD, DASHBOARD_EMAIL, GITHUB_TOKEN,

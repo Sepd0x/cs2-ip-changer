@@ -172,7 +172,6 @@ export async function summary(db, { period, f, dev, now, exclude = [], sums = 's
   // install-days a day that is several times fewer rows for the Worker (its CPU, 10 ms on the free plan). 'js' is the old read,
   // kept so a test can show both give the same numbers.
   const SQL = sums !== 'js';
-  const Wc = who(dev, exclude, 'c.');
   const perInstall = SQL ? ` AND (name IN (${INSTALL_NAMES.map(() => '?').join(',')}) OR ${INSTALL_GLOBS.map(() => 'name GLOB ?').join(' OR ')})` : '';
   const perInstallArgs = SQL ? [...INSTALL_NAMES, ...INSTALL_GLOBS] : [];
   const [pings, counts, clicks, heat, errors, envRows, installDays, hours, last, lastAnyR, budgetR, recentR, errFirstR, siteR, firstR, sumsR] = await Promise.all([
@@ -210,18 +209,21 @@ export async function summary(db, { period, f, dev, now, exclude = [], sums = 's
     capped('firstSeen', `SELECT p.id, MIN(p.ts) AS t FROM pings p JOIN (${idsK}) k ON k.id = p.id WHERE ${Wp.sql}${ut('p.ts')} GROUP BY p.id`, ...W.args, ...Wp.args),
     // v4: every counter of the period added up by D1, per name, version and link, over the install-days that are real (an account,
     // a click or a minute, as real() below) and pass the filters (as match() below). One row per name, version and link.
-    SQL ? capped('sums', `WITH d AS (SELECT day, id, MIN(COALESCE(SUM(minutes), 0), 1440) AS m, SUBSTR(MAX(ts || '|' || app), 15) AS app, MAX(country) AS country,
+    // 12 Nov. 2026 (D1 over its free 5 M rows a day, 58,000 rows read here per load): counts is read once, added up per
+    // install-day and name (c), and the accounts come from that; every part is materialized so the joins are on the small
+    // added-up rows (an automatic index on day and id), never a walk of the day's counters for each install-day.
+    SQL ? capped('sums', `WITH c AS MATERIALIZED (SELECT day, id, name, SUM(n) AS n, MAX(n) AS mx FROM counts WHERE ${W.sql} AND day >= ?${ud()} GROUP BY day, id, name),
+         d AS MATERIALIZED (SELECT day, id, MIN(COALESCE(SUM(minutes), 0), 1440) AS m, SUBSTR(MAX(ts || '|' || app), 15) AS app, MAX(country) AS country,
            SUBSTR(MAX(ts || '|' || COALESCE(mode, '')), 15) AS mode, MAX(CASE link WHEN 'usb' THEN 3 WHEN 'hotspot' THEN 2 WHEN 'other' THEN 1 WHEN 'none' THEN 0 END) AS lk
            FROM pings WHERE ${W.sql} AND day >= ?${ud()} GROUP BY day, id),
-         a AS (SELECT day, id, MAX(n) AS a FROM counts WHERE ${W.sql} AND day >= ?${ud()} AND name = 'accounts' GROUP BY day, id),
-         k AS (SELECT day, id, SUM(n) AS k FROM clicks WHERE ${W.sql} AND day >= ?${ud()} GROUP BY day, id),
-         ok AS (SELECT d.day, d.id, d.app, CASE d.lk WHEN 3 THEN 'usb' WHEN 2 THEN 'hotspot' WHEN 1 THEN 'other' WHEN 0 THEN 'none' ELSE '?' END AS link
-           FROM d LEFT JOIN a ON a.day = d.day AND a.id = d.id LEFT JOIN k ON k.day = d.day AND k.id = d.id
-           WHERE (COALESCE(a.a, 0) >= 1 OR COALESCE(k.k, 0) > 0 OR d.m >= 1) AND (? = 'all' OR d.app = ?)
+         k AS MATERIALIZED (SELECT day, id, SUM(n) AS k FROM clicks WHERE ${W.sql} AND day >= ?${ud()} GROUP BY day, id),
+         ok AS MATERIALIZED (SELECT d.day, d.id, d.app, CASE d.lk WHEN 3 THEN 'usb' WHEN 2 THEN 'hotspot' WHEN 1 THEN 'other' WHEN 0 THEN 'none' ELSE '?' END AS link
+           FROM d LEFT JOIN c a ON a.day = d.day AND a.id = d.id AND a.name = 'accounts' LEFT JOIN k ON k.day = d.day AND k.id = d.id
+           WHERE (COALESCE(a.mx, 0) >= 1 OR COALESCE(k.k, 0) > 0 OR d.m >= 1) AND (? = 'all' OR d.app = ?)
              AND (? = 'all' OR COALESCE(NULLIF(d.country, ''), '?') = ?) AND (? = 'all' OR COALESCE(NULLIF(d.mode, ''), '?') = ?))
-         SELECT c.name, ok.app, ok.link, SUM(c.n) AS n, COUNT(DISTINCT c.day || '|' || c.id) AS days FROM counts c JOIN ok ON ok.day = c.day AND ok.id = c.id
-         WHERE ${Wc.sql} AND c.day >= ?${ud('c.day')} AND (? = 'all' OR ok.link = ?) GROUP BY c.name, ok.app, ok.link`,
-      ...W.args, since, ...W.args, since, ...W.args, since, f.version, f.version, f.country, f.country, f.mode, f.mode, ...Wc.args, since, f.link, f.link) : [],
+         SELECT c.name, ok.app, ok.link, SUM(c.n) AS n, COUNT(*) AS days FROM c JOIN ok ON ok.day = c.day AND ok.id = c.id
+         WHERE (? = 'all' OR ok.link = ?) GROUP BY c.name, ok.app, ok.link`,
+      ...W.args, since, ...W.args, since, ...W.args, since, f.version, f.version, f.country, f.country, f.mode, f.mode, f.link, f.link) : [],
   ]);
 
   // One entry per install-day, with what decides real or automated
@@ -643,11 +645,12 @@ export function liveReal(now, t = 'live') {
 }
 
 /** Who has the app open now: installs with a signal in the last 6 minutes, only as counts, and when the last signal came. */
-export async function live(db, { dev, now, exclude = [] }) {
+export async function live(db, { dev, now, exclude = [], peaks = livePeaks }) {
   const W = who(dev, exclude), R = liveReal(now);
   let rows = [], lastTs = null;
   // Nov. 2026 (performance review): the three reads at once, one D1 round trip instead of three in a row
-  const peaksP = livePeaks(db, { dev, now });
+  // 12 Nov. 2026: peaks can be the dashboard's kept copy (memo.js), so a poll every minute doesn't read 15 days of samples
+  const peaksP = peaks(db, { dev, now });
   peaksP.catch(() => {});
   try {
     const [r, last] = await Promise.all([

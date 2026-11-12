@@ -215,4 +215,9 @@ addEventListener('pointerdown', (e) => { if (!e.target.closest || !e.target.clos
 addEventListener('scroll', () => { const t = $('#tip'); if (t && !t.hidden) t.hidden = true; }, { passive: true });
 load();
 setInterval(liveTick, 60_000);
-setInterval(load, 300_000);
+// 12 Nov. 2026 (D1 over its free reads): a tab left open behind others no longer asks every 5 minutes; back in view, it asks
+// at once if its numbers are older than that
+let loadedAt = Date.now();
+const reload = () => { loadedAt = Date.now(); load(); };
+setInterval(() => { if (!document.hidden && Date.now() - loadedAt >= 290_000) reload(); }, 60_000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - loadedAt >= 300_000) reload(); });

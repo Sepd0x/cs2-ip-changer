@@ -1331,8 +1331,12 @@ test('performance: the summary, the live block and the GitHub history each wait 
   const res = await dashboard.fetch(get('/api/github', token), { ...env0(), DB: rt.db });
   assert.equal(res.status, 200);
   assert.ok(Array.isArray((await res.json()).history.days));
-  assert.equal(rt.depth(), 1);
-  assert.ok(Date.now() - t0 < 200, 'GitHub cold: two GitHub rounds, the D1 read inside them');
+  // 12 Nov. 2026 (memo.js): the first time three in a row (the kept copy, the history, keeping it), the next ones one
+  assert.equal(rt.depth(), 3);
+  assert.ok(Date.now() - t0 < 200, 'GitHub cold: two GitHub rounds, the D1 reads inside them');
+  const rt2 = roundTrips(DB);
+  assert.equal((await dashboard.fetch(get('/api/github', token), { ...env0(), DB: rt2.db })).status, 200);
+  assert.equal(rt2.depth(), 1, 'kept: one round trip');
 });
 
 test('performance: the v3 draws without waiting for GitHub (only Aquisição and Versões wait), and moving between pages reuses the live block', () => {

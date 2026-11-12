@@ -15,6 +15,9 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Website: search engines that use IndexNow (Bing, Yandex and others) are told about the pages each time the site is published.
 - README: the first lines now say the app is also a CS2 server picker, with links to the guides.
 
+### Fixed
+- Usage stats server: on 12 Nov. it went over its free daily database reads and turned away the app's reports and the website's visit counts until midnight UTC. The stats dashboard read every report of the last 60 days each time it was opened; it now keeps its added-up numbers for up to 30 minutes and adds them up with about half the reads, so opening it reads a few dozen rows instead of about 66,000. Nothing new is stored about you: only added-up numbers are kept, never an install ID.
+
 ## [0.1.0-beta.13] - 2026-11-12
 
 ### Added

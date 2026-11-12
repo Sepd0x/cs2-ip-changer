@@ -5,10 +5,12 @@
 // public API (stars and downloads, never the traffic). No scripts and no outside files on the /classic page.
 // Nov. 2026, the cron (scheduled below, triggers in wrangler.dashboard.jsonc): every 10 minutes the live signal is counted into
 // live_hourly; once a day a picture of GitHub's public numbers goes into gh_daily and rows with an install ID older than
-// RETAIN_DAYS are deleted (added-up counts with no ID stay). The cron is the only thing here that writes.
+// RETAIN_DAYS are deleted (added-up counts with no ID stay). The cron is the only thing here that writes report data; since
+// 12 Nov. 2026 the pages also keep their added-up answers in the memo table (memo.js), to stay inside D1's free reads.
 
 import { verifyAccess } from './access.js';
-import { params, summary, live, liveReal, who, compareVersions } from './api.js';
+import { params, summary, live, livePeaks, liveReal, who, compareVersions } from './api.js';
+import { memo, fnv, pruneMemo, forgetMemo } from './memo.js';
 import { ASSETS } from './assets.js';
 import { buildBrief, renderMd } from './brief.js';
 import { annotations } from './annotations.js';
@@ -52,9 +54,12 @@ export default {
       // Each on its own: a cleanup that fails never leaves the day without its GitHub picture (the run still ends as failed)
       let failed = null;
       try { await prune(env.DB, now); } catch (e) { failed = e; }
+      await pruneMemo(env.DB, now).catch(() => 0);
       await snapshotGithub(env.DB, env, fetch, now).catch(() => false);
       // beta.13: Google's search impressions and clicks (only with GSC_KEY and GSC_SITE)
       await snapshotSearch(env.DB, env, fetch, now).catch(() => false);
+      // 12 Nov. 2026: the kept GitHub history (memo.js) is read again with today's picture
+      await forgetMemo(env.DB, 'gh|').catch(() => {});
       if (failed) throw failed;
       return;
     }
@@ -64,7 +69,7 @@ export default {
       let have = null;
       // v4: the day's picture is its repo row (traffic rows are keyed by the day GitHub counted, today's too)
       try { have = await env.DB.prepare("SELECT 1 AS y FROM gh_daily WHERE day = ? AND kind = 'repo' LIMIT 1").bind(ymd(now)).first(); } catch (e) { if (!noTable(e)) throw e; }
-      if (!have) await snapshotGithub(env.DB, env, fetch, now).catch(() => false);
+      if (!have && await snapshotGithub(env.DB, env, fetch, now).catch(() => false)) await forgetMemo(env.DB, 'gh|').catch(() => {});
     }
   },
   async fetch(request, env) {
@@ -82,7 +87,8 @@ export default {
       try {
         // D2: the developer's own PCs (EXCLUDE_IDS) stay out of everyone's numbers here too, as on /classic; with ?dev=1 they are in
         const exclude = excludeIds(env.EXCLUDE_IDS);
-        const data = url.pathname === '/api/live' ? await live(env.DB, { dev: p.dev, now: now0, exclude }) : await summary(env.DB, { ...p, now: now0, exclude });
+        const data = url.pathname === '/api/live' ? await live(env.DB, { dev: p.dev, now: now0, exclude, peaks: cachedPeaks(now0) })
+          : await cachedSummary(env.DB, { ...p, now: now0, exclude }, now0);
         return json(data);
       } catch (e) { return json({ error: String(e?.message || e) }, 500); }
     }
@@ -103,9 +109,10 @@ export default {
       } catch (e) { return json({ error: String(e?.message || e) }, 500); }
     }
     if (url.pathname === '/api/github') {
-      // The daily pictures (gh_daily): downloads and stars per day. Read fresh, the cached part is GitHub's answer.
+      // The daily pictures (gh_daily): downloads and stars per day. GitHub's answer is cached in the isolate; since 12 Nov. 2026
+      // the pictures are kept in the memo table for an hour (forgotten when the cron takes a new one).
       // Nov. 2026 (performance review): the D1 read runs while GitHub answers, not after it
-      const [gh, history] = await Promise.all([github(env, fetch, now0), githubHistory(env.DB, now0).catch((e) => ({ days: [], error: String(e?.message || e) }))]);
+      const [gh, history] = await Promise.all([github(env, fetch, now0), cachedGithubHistory(env.DB, now0, now0).catch((e) => ({ days: [], error: String(e?.message || e) }))]);
       // v4: the markers of the time series (videos, posts, incidents; the releases come with GitHub's answer)
       return json({ ...gh, history, annotations: annotations() });
     }
@@ -211,13 +218,38 @@ export async function readBrief(env, { now, dev = false, date = null, fetchFn = 
   let at = now, historical = false;
   if (date && date < ymd(now) && date >= ymd(now - 89 * 864e5)) { at = Date.parse(date + 'T23:59:59Z'); historical = true; }
   const [S, L, G, GH, tables] = await Promise.all([
-    summary(env.DB, { period: 30, f: ALL, dev, now: at, exclude, until: historical ? date : null }),
-    historical ? null : live(env.DB, { dev, now: at, exclude }).catch(() => null),
+    cachedSummary(env.DB, { period: 30, f: ALL, dev, now: at, exclude, until: historical ? date : null }, now),
+    historical ? null : live(env.DB, { dev, now: at, exclude, peaks: cachedPeaks(now) }).catch(() => null),
     historical ? null : github(env, fetchFn, now).catch(() => null),
-    githubHistory(env.DB, at, 120, historical ? date : null).catch(() => ({ days: [] })),
+    cachedGithubHistory(env.DB, at, now, 120, historical ? date : null).catch(() => ({ days: [] })),
     tableNames(env.DB),
   ]);
   return buildBrief({ S, L, G, GH, tables, now: at, dev, excluded: exclude.length, historical, requested: date });
+}
+// 12 Nov. 2026 (D1 over its free reads, see memo.js): what a load reads, kept in the memo table. The summary is worked out again
+// when it is SUMMARY_MAX_AGE old and something was written since (the day's budget rows, the live share left out: it changes every
+// 5 minutes while anyone has the app open); a quiet night keeps one answer. Each key has the UTC day, so a new day starts fresh.
+// Working the 30-day summary out reads about 40,000 rows with the data of 12 Nov. (tools/rows-read.mjs): every 30 minutes is at
+// most 48 a day per page left open, about 2 M rows, inside the free 5 M with the app's own reads. "Agora" stays live (/api/live).
+export const SUMMARY_MAX_AGE = 30 * 60_000;
+export const PEAKS_MAX_AGE = 5 * 60_000;
+export const GH_MAX_AGE = 60 * 60_000;
+/** summary() through the memo. clock = the real time now (opt.now is the time the summary is for: a past day's end in a brief). */
+export function cachedSummary(db, opt, clock = opt.now) {
+  const f = opt.f || ALL, ex = opt.exclude || [];
+  const today = ymd(clock);
+  const key = ['sum', today, opt.period, opt.dev ? 1 : 0, opt.until || '', f.version, f.country, f.mode, f.link, ex.length ? fnv(ex.join(',')) : ''].join('|');
+  const stamp = opt.until ? null : db.prepare("SELECT GROUP_CONCAT(x, ',') AS s FROM (SELECT day || '=' || rows AS x FROM budget WHERE day >= ? AND day < ? AND day NOT LIKE '%:live' ORDER BY day)")
+    .bind(today, ymd(clock + 864e5)).first().then((r) => r?.s ?? '', () => null);
+  return memo(db, { key, now: clock, maxAge: opt.until ? 6 * 3600_000 : SUMMARY_MAX_AGE, stamp, compute: () => summary(db, opt) });
+}
+/** livePeaks() through the memo: the cron adds a sample every 10 minutes, the pages ask every minute. */
+export function cachedPeaks(clock) {
+  return (db, opt) => memo(db, { key: `peaks|${opt.dev ? 1 : 0}`, now: clock, maxAge: PEAKS_MAX_AGE, compute: () => livePeaks(db, opt) });
+}
+/** githubHistory() through the memo: gh_daily changes once a day (the cron forgets these keys after its picture). */
+export function cachedGithubHistory(db, now, clock, days = 120, until = null) {
+  return memo(db, { key: ['gh', ymd(now), days, until || ''].join('|'), now: clock, maxAge: GH_MAX_AGE, compute: () => githubHistory(db, now, days, until) });
 }
 // The brief kept 5 minutes per isolate (the Cache API does nothing on workers.dev): the page and the agent asking twice cost one read
 let briefMemo = new Map();
