@@ -102,4 +102,8 @@ test('SEO: the Pages workflow tells IndexNow with the key that is on the site, a
   assert.match(yml, /api\.indexnow\.org\/indexnow/);
   assert.match(yml, /continue-on-error: true/, 'a failed ping never fails the deploy');
   assert.match(read('robots.txt'), new RegExp(`Sitemap: ${BASE}sitemap\\.xml`));
+  // the plain-text sitemap (Search Console's "Couldn't fetch" on the XML, Nov. 2026) lists the same pages
+  assert.match(read('robots.txt'), new RegExp(`Sitemap: ${BASE}sitemap\\.txt`));
+  const xml = [...read('sitemap.xml').matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]).filter((u) => !u.includes('/img/'));
+  assert.deepEqual(read('sitemap.txt').trim().split(/\r?\n/), xml, 'sitemap.txt has the addresses of sitemap.xml');
 });

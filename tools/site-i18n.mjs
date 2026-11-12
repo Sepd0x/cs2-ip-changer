@@ -466,6 +466,9 @@ export function build({ site = SITE, dicts = loadDicts() } = {}) {
   // the English sitemap as tools/site-pages.mjs writes it is the list; written again with every language
   const enOnly = map.includes('xmlns:xhtml') ? map.replace(/<url>\s*<loc>https:\/\/sepd0x\.github\.io\/cs2-ip-changer\/(pt-br|es|ru)\/[\s\S]*?<\/url>\s*/g, '').replace(/\s*<xhtml:link[^>]*\/>/g, '') : map;
   files['sitemap.xml'] = sitemap(enOnly, all);
+  // the same addresses as plain text, one per line (12 Nov. 2026: Search Console kept saying "Couldn't fetch" for the XML
+  // of this github.io project site; a text sitemap is the simplest thing a crawler can read, and robots.txt names both)
+  files['sitemap.txt'] = [...files['sitemap.xml'].matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]).filter((u) => !u.includes('/img/')).join('\n') + '\n';
   return { files, report, all };
 }
 
