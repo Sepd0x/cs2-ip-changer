@@ -1,6 +1,6 @@
-## CS2 IP Changer 0.1.0-beta.13 (test version)
+## CS2 IP Changer 0.1.0-beta.13
 
-**This is a test version.** It fixes what came up while using beta.12, and every fix has its own test, but it hasn't had its test rounds on a real PC with a phone yet. Only copies with **Settings > App > Get test versions** on are offered it. To try it, download it here; once it is tested it becomes the stable version.
+The app and the website in Portuguese (Brazil), Spanish and Russian, an easier first start with the phone, and a block on joining a server again with an IP it banned.
 
 ### New
 - **Languages:** the app and the website are now also in Portuguese (Brazil), Spanish and Russian. The app follows the language of Windows the first time; change it in **Settings > App > Language**.
@@ -27,3 +27,5 @@ The coarse click map counts how far the page is scrolled and only clicks while t
 A more real 3D scene (materials, light, detailed PC, phone, mast and servers, depth and smoother camera moves), a cleaner light-up of the name at the end of each page, nothing jumps while you read, and the 404 page offers Play motion.
 
 The full list is in the [CHANGELOG](https://github.com/Sepd0x/cs2-ip-changer/blob/main/CHANGELOG.md).
+
+VirusTotal: [0 of 70 engines](https://www.virustotal.com/gui/file/cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b/detection) flag it.

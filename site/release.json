@@ -1,14 +1,14 @@
 {
  "note": "The latest published release. One source for the site, README.md and llms.txt: node tools/site-pages.mjs --release <tag> --vt <flagged>/<engines> fills it, then writes the pages.",
- "tag": "v0.1.0-beta.11",
- "version": "0.1.0-beta.11",
- "published": "2026-11-06",
+ "tag": "v0.1.0-beta.13",
+ "version": "0.1.0-beta.13",
+ "published": "2026-11-12",
  "firstRelease": "2026-10-27",
  "asset": "CS2IPChanger.exe",
- "size": 66537812,
- "sha256": "3159098476f179175d31c320c2b581ab45af1d9e0fb04a13760824394d321c22",
+ "size": 66823239,
+ "sha256": "cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b",
  "virustotal": {
   "flagged": 0,
-  "engines": 69
+  "engines": 70
  }
 }

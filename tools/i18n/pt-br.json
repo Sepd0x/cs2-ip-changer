@@ -646,7 +646,11 @@
   "CS2 config manager: copies binds, crosshair, game settings and video between accounts": "Gerenciador de configs do CS2: copia binds, crosshair, configurações do jogo e vídeo entre contas",
   "Steam profile editor with templates, preview and restore": "Editor de perfil Steam com modelos, prévia e restauração",
   "CS2 matchmaking region picker with ping per region": "Seletor de região de matchmaking do CS2 com ping por região",
-  "Phone setup that checks the cable, driver, USB debugging, tethering and the phone's Wi-Fi": "Phone setup que verifica o cabo, o driver, o USB debugging, o tethering e o Wi-Fi do celular"
+  "Phone setup that checks the cable, driver, USB debugging, tethering and the phone's Wi-Fi": "Phone setup que verifica o cabo, o driver, o USB debugging, o tethering e o Wi-Fi do celular",
+  "0 of 70": "0 de 70",
+  "<b1>VirusTotal: <c2/>0 of 70<c3/> flag it.</b1> The latest release, scanned when it comes out. <a4>See the report</a4>": "<b1>VirusTotal: <c2/>0 de 70<c3/> sinalizam o arquivo.</b1> A versão mais recente, analisada quando sai. <a4>Ver o relatório</a4>",
+  "built by <b1>GitHub Actions</b1> · source Sepd0x/cs2-ip-changer · sha256 <c2/>cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b": "feito pelo <b1>GitHub Actions</b1> · código Sepd0x/cs2-ip-changer · sha256 <c2/>cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b",
+  "<b1>Built in public.</b1> <span2><c3/>{version}<c4/>, sha256 <c5/>cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b<c6/>. </span2>GitHub Actions builds every release from the public source, with an attestation you can check.": "<b1>Feito em público.</b1> <span2><c3/>{version}<c4/>, sha256 <c5/>cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b<c6/>. </span2>O GitHub Actions compila cada release a partir do código público, com uma atestação que você pode conferir."
  },
  "is-it-safe": {
   "Is CS2 IP Changer safe? What it changes and how to check it": "CS2 IP Changer é seguro? O que ele muda e como conferir",
@@ -684,7 +688,9 @@
   "Is it open source?": "É open source?",
   "The source is public on GitHub so anyone can read and build it, but the license is All rights reserved during the beta: you can use the releases, not copy or redistribute the code.": "O código é público no GitHub para qualquer um ler e compilar, mas a licença é All rights reserved durante a beta: você pode usar as releases, não copiar nem redistribuir o código.",
   "Why does my antivirus complain?": "Por que meu antivírus reclama?",
-  "The exe is not code-signed and it changes firewall rules and runs ADB, which some antivirus engines flag on heuristics alone. Check the attestation and SHA-256 above; if a detection looks wrong, open an issue.": "O exe não tem assinatura de código, muda regras de firewall e roda o ADB, o que alguns engines de antivírus sinalizam só por heurística. Confira a atestação e o SHA-256 acima; se uma detecção parecer errada, abra uma issue."
+  "The exe is not code-signed and it changes firewall rules and runs ADB, which some antivirus engines flag on heuristics alone. Check the attestation and SHA-256 above; if a detection looks wrong, open an issue.": "O exe não tem assinatura de código, muda regras de firewall e roda o ADB, o que alguns engines de antivírus sinalizam só por heurística. Confira a atestação e o SHA-256 acima; se uma detecção parecer errada, abra uma issue.",
+  "VirusTotal engines that flag it: 0 of 70": "Engines do VirusTotal que sinalizam: 0 de 70",
+  "<b1>VirusTotal</b1> for each release: <a2>{vt} engines</a2> flag beta.13 (SHA-256 <code3/>, the same as its <code4/> file).": "<b1>VirusTotal</b1> para cada release: <a2>{vt} engines</a2> sinalizam a beta.13 (SHA-256 <code3/>, o mesmo do arquivo <code4/>)."
  },
  "steam-account-switcher": {
   "Steam account switcher for CS2, with ban marks per server": "Trocador de contas Steam para CS2, com ban por servidor",

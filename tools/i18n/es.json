@@ -646,7 +646,11 @@
   "CS2 config manager: copies binds, crosshair, game settings and video between accounts": "Gestor de configuración de CS2: copia binds, crosshair, ajustes del juego y video entre cuentas",
   "Steam profile editor with templates, preview and restore": "Editor de perfiles de Steam con plantillas, vista previa y restauración",
   "CS2 matchmaking region picker with ping per region": "Selector de regiones de matchmaking de CS2 con ping por región",
-  "Phone setup that checks the cable, driver, USB debugging, tethering and the phone's Wi-Fi": "Phone setup que verifica el cable, el driver, USB debugging, el tethering y el Wi-Fi del teléfono"
+  "Phone setup that checks the cable, driver, USB debugging, tethering and the phone's Wi-Fi": "Phone setup que verifica el cable, el driver, USB debugging, el tethering y el Wi-Fi del teléfono",
+  "0 of 70": "0 de 70",
+  "<b1>VirusTotal: <c2/>0 of 70<c3/> flag it.</b1> The latest release, scanned when it comes out. <a4>See the report</a4>": "<b1>VirusTotal: <c2/>0 de 70<c3/> lo marcan.</b1> La última versión, analizada cuando sale. <a4>Ver el informe</a4>",
+  "built by <b1>GitHub Actions</b1> · source Sepd0x/cs2-ip-changer · sha256 <c2/>cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b": "compilado por <b1>GitHub Actions</b1> · código Sepd0x/cs2-ip-changer · sha256 <c2/>cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b",
+  "<b1>Built in public.</b1> <span2><c3/>{version}<c4/>, sha256 <c5/>cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b<c6/>. </span2>GitHub Actions builds every release from the public source, with an attestation you can check.": "<b1>Hecho a la vista de todos.</b1> <span2><c3/>{version}<c4/>, sha256 <c5/>cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b<c6/>. </span2>GitHub Actions compila cada versión desde el código público, con una attestation que puedes verificar."
  },
  "is-it-safe": {
   "Is CS2 IP Changer safe? What it changes and how to check it": "¿CS2 IP Changer es seguro? Qué cambia y cómo verificarlo",
@@ -684,7 +688,9 @@
   "Why does my antivirus complain?": "¿Por qué se queja mi antivirus?",
   "The exe is not code-signed and it changes firewall rules and runs ADB, which some antivirus engines flag on heuristics alone. Check the attestation and SHA-256 above; if a detection looks wrong, open an issue.": "El exe no tiene firma de código, cambia reglas del firewall y ejecuta ADB, algo que algunos motores antivirus marcan solo por heurística. Revisa la attestation y el SHA-256 de arriba; si una detección te parece errónea, abre un issue.",
   "<b1>Never touches:</b1> the game process, its memory or its program files. It hides nothing from VAC or any anti-cheat.": "<b1>Nunca toca:</b1> el proceso del juego, su memoria ni sus archivos del programa. No oculta nada de VAC ni de ningún anticheat.",
-  "<b1>Why admin:</b1> routes and firewall rules are system settings, and Windows only lets admins change them. Steam, CS2, your browser and the programs it opens for you still run as you, not as admin.": "<b1>Por qué administrador:</b1> las rutas y las reglas del firewall son ajustes del sistema, y Windows solo deja que los administradores las cambien. Steam, CS2, tu navegador y los programas que abre por ti siguen corriendo como tú, no como administrador."
+  "<b1>Why admin:</b1> routes and firewall rules are system settings, and Windows only lets admins change them. Steam, CS2, your browser and the programs it opens for you still run as you, not as admin.": "<b1>Por qué administrador:</b1> las rutas y las reglas del firewall son ajustes del sistema, y Windows solo deja que los administradores las cambien. Steam, CS2, tu navegador y los programas que abre por ti siguen corriendo como tú, no como administrador.",
+  "VirusTotal engines that flag it: 0 of 70": "Motores de VirusTotal que lo marcan: 0 de 70",
+  "<b1>VirusTotal</b1> for each release: <a2>{vt} engines</a2> flag beta.13 (SHA-256 <code3/>, the same as its <code4/> file).": "<b1>VirusTotal</b1> por cada versión: <a2>{vt} motores</a2> marcan beta.13 (SHA-256 <code3/>, igual que su archivo <code4/>)."
  },
  "steam-account-switcher": {
   "Steam account switcher for CS2, with ban marks per server": "Cambiador de cuentas de Steam para CS2, con marcas de ban",

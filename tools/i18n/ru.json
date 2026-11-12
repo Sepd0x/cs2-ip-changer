@@ -646,7 +646,11 @@
   "CS2 config manager: copies binds, crosshair, game settings and video between accounts": "Менеджер конфигов CS2: копирует бинды, прицел, игровые настройки и видео между аккаунтами",
   "Steam profile editor with templates, preview and restore": "Редактор профилей Steam с шаблонами, предпросмотром и восстановлением",
   "CS2 matchmaking region picker with ping per region": "Выбор региона матчмейкинга CS2 с пингом по регионам",
-  "Phone setup that checks the cable, driver, USB debugging, tethering and the phone's Wi-Fi": "Phone setup проверяет кабель, драйвер, USB debugging, tethering и Wi-Fi телефона"
+  "Phone setup that checks the cable, driver, USB debugging, tethering and the phone's Wi-Fi": "Phone setup проверяет кабель, драйвер, USB debugging, tethering и Wi-Fi телефона",
+  "0 of 70": "0 из 70",
+  "<b1>VirusTotal: <c2/>0 of 70<c3/> flag it.</b1> The latest release, scanned when it comes out. <a4>See the report</a4>": "<b1>VirusTotal: <c2/>0 из 70<c3/> антивирусов помечают его.</b1> Последний релиз, проверенный при выходе. <a4>Открыть отчёт</a4>",
+  "built by <b1>GitHub Actions</b1> · source Sepd0x/cs2-ip-changer · sha256 <c2/>cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b": "собрано <b1>GitHub Actions</b1> · исходный код Sepd0x/cs2-ip-changer · sha256 <c2/>cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b",
+  "<b1>Built in public.</b1> <span2><c3/>{version}<c4/>, sha256 <c5/>cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b<c6/>. </span2>GitHub Actions builds every release from the public source, with an attestation you can check.": "<b1>Всё в открытую.</b1> <span2><c3/>{version}<c4/>, sha256 <c5/>cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b<c6/>. </span2>GitHub Actions собирает каждый релиз из открытого кода, с аттестацией, которую можно проверить."
  },
  "is-it-safe": {
   "Is CS2 IP Changer safe? What it changes and how to check it": "Безопасен ли CS2 IP Changer? Что меняет и как проверить",
@@ -684,7 +688,9 @@
   "Is it open source?": "Исходный код открыт?",
   "The source is public on GitHub so anyone can read and build it, but the license is All rights reserved during the beta: you can use the releases, not copy or redistribute the code.": "Исходный код публичен на GitHub, его может прочитать и собрать любой, но лицензия на время беты All rights reserved: релизами пользоваться можно, копировать и распространять код нельзя.",
   "Why does my antivirus complain?": "Почему антивирус ругается?",
-  "The exe is not code-signed and it changes firewall rules and runs ADB, which some antivirus engines flag on heuristics alone. Check the attestation and SHA-256 above; if a detection looks wrong, open an issue.": "У exe нет подписи кода, приложение меняет правила брандмауэра и запускает ADB, и некоторые антивирусы помечают такое только по эвристике. Проверьте аттестацию и SHA-256 выше; если срабатывание кажется ошибочным, откройте issue."
+  "The exe is not code-signed and it changes firewall rules and runs ADB, which some antivirus engines flag on heuristics alone. Check the attestation and SHA-256 above; if a detection looks wrong, open an issue.": "У exe нет подписи кода, приложение меняет правила брандмауэра и запускает ADB, и некоторые антивирусы помечают такое только по эвристике. Проверьте аттестацию и SHA-256 выше; если срабатывание кажется ошибочным, откройте issue.",
+  "VirusTotal engines that flag it: 0 of 70": "Антивирусы на VirusTotal, которые его помечают: 0 из 70",
+  "<b1>VirusTotal</b1> for each release: <a2>{vt} engines</a2> flag beta.13 (SHA-256 <code3/>, the same as its <code4/> file).": "<b1>VirusTotal</b1> для каждого релиза: beta.13 помечают <a2>{vt} антивирусов</a2> (SHA-256 <code3/>, тот же, что в файле <code4/>)."
  },
  "steam-account-switcher": {
   "Steam account switcher for CS2, with ban marks per server": "Переключатель аккаунтов Steam для CS2 с отметками банов",
