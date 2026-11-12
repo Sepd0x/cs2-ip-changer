@@ -8,6 +8,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { readTheme } from './design-tokens.mjs';
+import { stamp, pagesOf, LANGS, write as writeLanguages } from './site-i18n.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const site = join(root, 'site');
@@ -352,7 +353,7 @@ const crop = ([name, x, y, w, h, alt]) => `<a class="crop zoom" href="../img/${n
 export const pages = [
   {
     slug: 'cs2-region-picker',
-    title: 'CS2 region picker: change your matchmaking region',
+    title: 'CS2 server picker and region picker: change your region',
     desc: 'Pick your CS2 matchmaking region: block the ones you don\'t want and see the ping of each. Free Windows app, one firewall rule for cs2.exe on Valve relays.',
     nav: 'CS2 region picker',
     blurb: 'How to change your region in CS2.',
@@ -686,6 +687,7 @@ function render(p, modified) {
 <meta name="theme-color" content="${themeColor}">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="CS2 IP Changer">
+<meta property="og:locale" content="en_US">
 <meta property="og:title" content="${esc(p.title)}">
 <meta property="og:description" content="${esc(p.desc)}">
 <meta property="og:url" content="${url}">
@@ -866,10 +868,10 @@ __ldGet('../assets/guides/world.min.js',964648,function(){window.__gw&&window.__
     cv.addEventListener('worldready',function(){gw.classList.add('ready')},{once:true});
     if(held)api.pause();
     if(!api.still)pl.hidden=false;
-    pl.addEventListener('click',function(){api.play();if(held){held=false;api.resume();if(pz){pz.setAttribute('aria-pressed','false')}try{localStorage.setItem('cs2-motion','')}catch(x){}}live.textContent='';setTimeout(function(){live.textContent='Playing it again.'},60)});
+    pl.addEventListener('click',function(){api.play();if(held){held=false;api.resume();if(pz){pz.setAttribute('aria-pressed','false')}try{localStorage.setItem('cs2-motion','')}catch(x){}}live.textContent='';setTimeout(function(){live.textContent=/*t*/'Playing it again.'},60)});
     if(fx&&pz){pz.hidden=false;pz.setAttribute('aria-pressed',held);pz.addEventListener('click',function(){held=!held;pz.setAttribute('aria-pressed',held);try{localStorage.setItem('cs2-motion',held?'paused':'');if(opt)localStorage.setItem('cs2-fx',held?'':'on')}catch(x){}if(held)api.pause();else api.resume()})}
     // the system asks for less motion: the page starts still and the same button is Play motion (remembered in this browser, then a reload loads the motion)
-    else if(pz&&matchMedia('(prefers-reduced-motion: reduce)').matches&&(function(){try{localStorage.getItem('cs2-fx');return true}catch(x){return false}})()){pz.hidden=false;pz.removeAttribute('aria-pressed');pz.classList.add('play');pz.textContent=pz.title='Play motion';pz.addEventListener('click',function(){try{localStorage.setItem('cs2-fx','on');localStorage.setItem('cs2-motion','')}catch(x){return}location.reload()})}
+    else if(pz&&matchMedia('(prefers-reduced-motion: reduce)').matches&&(function(){try{localStorage.getItem('cs2-fx');return true}catch(x){return false}})()){pz.hidden=false;pz.removeAttribute('aria-pressed');pz.classList.add('play');pz.textContent=pz.title=/*t*/'Play motion';pz.addEventListener('click',function(){try{localStorage.setItem('cs2-fx','on');localStorage.setItem('cs2-motion','')}catch(x){return}location.reload()})}
   };
   if(window.GuideWorld)window.__gw();
 })();
@@ -887,9 +889,11 @@ for (const p of pages) {
   const old = existsSync(file) ? readFileSync(file, 'utf8') : '';
   const was = (old.match(/"dateModified": "(\d{4}-\d\d-\d\d)"/) || [])[1];
   // a new page (no file yet, or no date in it) is rendered with today's date
-  let html = was ? render(p, was) : null;
+  // with the hreflang links and the language picker of tools/site-i18n.mjs, so an unchanged page compares equal
+  const en = (h) => stamp(h, LANGS[0], { file: `${p.slug}/index.html`, dir: `${p.slug}/`, group: p.slug, url: `${p.slug}/` }, pagesOf(site));
+  let html = was ? en(render(p, was)) : null;
   p.modified = html === old ? was : today;
-  if (html !== old) html = render(p, today);
+  if (html !== old) html = en(render(p, today));
   writeFileSync(file, html);
 }
 
@@ -910,5 +914,8 @@ ${pages.map((p) => `  <url>
 </urlset>
 `;
 writeFileSync(join(site, 'sitemap.xml'), sitemap);
+// the same pages in the other languages, and the sitemap again with them (tools/site-i18n.mjs)
+const langs = writeLanguages();
+if (langs.report.missing.length) console.log(`site-i18n: ${new Set(langs.report.missing.map((m) => m.key)).size} texts have no translation yet (node tools/site-i18n.mjs --todo <folder>)`);
 const long = pages.filter((p) => p.title.length > 60 || p.desc.length > 155).map((p) => p.slug);
 console.log(`${pages.length} pages and sitemap.xml written (titles ${pages.map((p) => p.title.length).join(' ')}; descriptions ${pages.map((p) => p.desc.length).join(' ')})${long.length ? `; too long: ${long.join(', ')}` : ''}`);

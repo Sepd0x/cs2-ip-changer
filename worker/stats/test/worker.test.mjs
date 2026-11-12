@@ -1018,7 +1018,10 @@ test('medir: the site counter stops at its own budget and the app reports go on'
 
 test('medir: every page of the site is known to the Worker and sends the counter only without Do Not Track or GPC', () => {
   const root = new URL('../../../site/', import.meta.url);
-  const dirs = readdirSync(root, { withFileTypes: true }).filter((d) => d.isDirectory() && existsSync(new URL(`${d.name}/index.html`, root))).map((d) => `/${d.name}/`);
+  // the pages in English, and the same pages under each language folder (tools/site-i18n.mjs)
+  const langs = ['pt-br', 'es', 'ru'];
+  const dirsOf = (base) => readdirSync(new URL(base, root), { withFileTypes: true }).filter((d) => d.isDirectory() && !langs.includes(d.name) && existsSync(new URL(`${base}${d.name}/index.html`, root))).map((d) => `/${base}${d.name}/`);
+  const dirs = [...dirsOf(''), ...langs.flatMap((l) => [`/${l}/`, ...dirsOf(`${l}/`)])];
   assert.deepEqual([...SITE_PAGES].sort(), ['/', ...dirs].sort(), 'SITE_PAGES is the list of the site pages');
   for (const p of SITE_PAGES) {
     const html = readFileSync(new URL(p === '/' ? 'index.html' : `${p.slice(1)}index.html`, root), 'utf8');

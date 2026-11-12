@@ -54,3 +54,7 @@ jobs:
 
       - name: Check the design tokens
         run: node tools/design-tokens.mjs --check
+
+      # the site in pt-br, es and ru: every English text translated, no language page older than the English
+      - name: Check the site's languages
+        run: node tools/site-i18n.mjs --check
