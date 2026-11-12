@@ -4,6 +4,17 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Added
+- Website: a new guide, "CS2 on mobile data": what ping to expect on a phone hotspot or USB tethering, how much data a match uses, and how to keep the game steady. In English, Brazilian Portuguese, Spanish and Russian.
+- Website: the region picker guide now compares the CS2 server pickers (Server Picker X, CS2 Server Picker, CS2 Region Picker, CS2 MM Server Picker) and answers "What is a CS2 server picker?", "Is a CS2 server picker safe?" and "Does a server picker lower my ping?".
+- Website: the IP ban guide answers "Can you get IP banned in CS2?", "Is a VAC ban an IP ban?", "How do I know if I am IP banned?" and "How long does a CS2 IP ban last?". The hide-your-IP guide answers why VPNs get blocked on community servers. The config guide says where the CS2 config file is and how to save or export your settings.
+- Website: llms.txt has short answers and a list of what people use the app for, so AI assistants can describe it correctly.
+
+### Changed
+- Website: the config guide's title now says "Copy CS2 settings to another account", the words people search for.
+- Website: search engines that use IndexNow (Bing, Yandex and others) are told about the pages each time the site is published.
+- README: the first lines now say the app is also a CS2 server picker, with links to the guides.
+
 ## [0.1.0-beta.13] - 2026-11-12
 
 ### Added

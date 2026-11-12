@@ -53,3 +53,15 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+      # IndexNow (Bing, Yandex, Seznam, Naver): tell them which pages to read again, from the sitemap that just went live.
+      # The key is not a secret: it is the public file site/<key>.txt (and the same file at the root of sepd0x.github.io).
+      # A failure here never fails the deploy.
+      - name: Tell IndexNow about the pages
+        continue-on-error: true
+        run: |
+          key=963725f7892f193e231f4827652ff39d
+          urls=$(curl -fsS https://sepd0x.github.io/cs2-ip-changer/sitemap.xml | grep -o '<loc>[^<]*</loc>' | sed -e 's/<loc>//' -e 's/<\/loc>//' | grep -v '/img/' | sed 's/.*/"&"/' | paste -sd, -)
+          test -n "$urls"
+          curl -sS -o /dev/null -w 'IndexNow: %{http_code}\n' -X POST https://api.indexnow.org/indexnow \
+            -H 'Content-Type: application/json; charset=utf-8' \
+            --data "{\"host\":\"sepd0x.github.io\",\"key\":\"$key\",\"keyLocation\":\"https://sepd0x.github.io/$key.txt\",\"urlList\":[$urls]}"

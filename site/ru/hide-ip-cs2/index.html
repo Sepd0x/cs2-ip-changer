@@ -136,6 +136,22 @@ addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.docume
     },
     {
      "@type": "Question",
+     "name": "Почему мой VPN блокируют на комьюнити-серверах CS2?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "На многих комьюнити-серверах стоят анти-VPN плагины. Они сверяют IP каждого игрока со списками адресов VPN и дата-центров и кикают или банят тех, кто в них попал. Мобильного интернета телефона в этих списках нет: это обычное соединение от вашего оператора."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Чем заменить VPN в CS2?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Мобильным интернетом телефона. Сервер видит IP оператора, а не ваш домашний IP, без VPN-сервера посередине и без подписки. Можно играть через точку доступа телефона вручную, а можно доверить CS2 IP Changer: он пустит через телефон только CS2 и Steam, с kill switch и новым IP в один клик."
+     }
+    },
+    {
+     "@type": "Question",
      "name": "Что делает cl_hideserverip?",
      "acceptedAnswer": {
       "@type": "Answer",
@@ -753,6 +769,8 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
       <h2 id="faq">FAQ</h2>
       <details><summary>Показывает ли официальный матчмейкинг мой IP?</summary><p>Матчмейкинг Valve идёт через Steam Datagram Relay, поэтому другие игроки там не получают ваш IP. Его видят комьюнити-серверы, на которые вы заходите напрямую.</p></details>
       <details><summary>Видит ли админ комьюнити-сервера мой IP?</summary><p>Да. Серверу нужен ваш IP, чтобы слать игровые пакеты, поэтому админы и их плагины могут его видеть, логировать и банить. С мобильным интернетом телефона они получают IP вашего оператора.</p></details>
+      <details><summary>Почему мой VPN блокируют на комьюнити-серверах CS2?</summary><p>На многих комьюнити-серверах стоят анти-VPN плагины. Они сверяют IP каждого игрока со списками адресов VPN и дата-центров и кикают или банят тех, кто в них попал. Мобильного интернета телефона в этих списках нет: это обычное соединение от вашего оператора.</p></details>
+      <details><summary>Чем заменить VPN в CS2?</summary><p>Мобильным интернетом телефона. Сервер видит IP оператора, а не ваш домашний IP, без VPN-сервера посередине и без подписки. Можно играть через точку доступа телефона вручную, а можно доверить CS2 IP Changer: он пустит через телефон только CS2 и Steam, с kill switch и новым IP в один клик.</p></details>
       <details><summary>Что делает cl_hideserverip?</summary><p>Это консольная настройка для стримеров: с <code>cl_hideserverip 1</code> CS2 скрывает на вашем экране IP сервера, на котором вы играете (консоль и status), чтобы зрители его не видели. Ваш IP она не скрывает: сервер всё равно видит ваш домашний IP. Чтобы скрыть его, сервер должен видеть другое соединение, например <a href="../change-ip-with-phone/">мобильный интернет вашего телефона</a>.</p></details>
     </section>
     <nav class="gmore" aria-labelledby="more-h">
@@ -778,7 +796,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
       <span class="fstat"><i></i>Последняя: <!--rel:ver-->v0.1.0-beta.13<!--/rel--></span>
     </div>
     <nav aria-labelledby="f1"><h3 id="f1">Продукт</h3><ul><li><a href="../#features">Возможности</a></li><li><a href="../#how">Как это работает</a></li><li><a href="../#vpn">CS2 IP Changer или VPN?</a></li><li><a href="../#setup">Настройка</a></li><li><a href="../#faq">FAQ</a></li></ul></nav>
-    <nav aria-labelledby="f2"><h3 id="f2">Гайды</h3><ul><li><a href="../change-ip-with-phone/">Смена IP через телефон</a></li><li><a href="../cs2-iphone-hotspot/">CS2 с iPhone</a></li><li><a href="../cs2-ip-ban/">Бан по IP в CS2</a></li><li><a href="../hide-ip-cs2/">Скрыть IP без VPN</a></li><li><a href="../is-it-safe/">Это безопасно?</a></li><li><a href="../steam-account-switcher/">Переключатель аккаунтов Steam</a></li><li><a href="../copy-cs2-config/">Копирование настроек CS2</a></li><li><a href="../cs2-region-picker/">Выбор региона CS2</a></li><li><a href="../steam-profile-editor/">Редактор профилей Steam</a></li></ul></nav>
+    <nav aria-labelledby="f2"><h3 id="f2">Гайды</h3><ul><li><a href="../change-ip-with-phone/">Смена IP через телефон</a></li><li><a href="../cs2-iphone-hotspot/">CS2 с iPhone</a></li><li><a href="../cs2-mobile-data/">CS2 на мобильном интернете</a></li><li><a href="../cs2-ip-ban/">Бан по IP в CS2</a></li><li><a href="../hide-ip-cs2/">Скрыть IP без VPN</a></li><li><a href="../is-it-safe/">Это безопасно?</a></li><li><a href="../steam-account-switcher/">Переключатель аккаунтов Steam</a></li><li><a href="../copy-cs2-config/">Копирование настроек CS2</a></li><li><a href="../cs2-region-picker/">Выбор региона CS2</a></li><li><a href="../steam-profile-editor/">Редактор профилей Steam</a></li></ul></nav>
     <nav aria-labelledby="f3"><h3 id="f3">Проект</h3><ul><li><a href="https://github.com/Sepd0x/cs2-ip-changer">Исходный код на GitHub</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/releases">Релизы</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/blob/main/CHANGELOG.md">Changelog</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer#privacy">Конфиденциальность</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose">Сообщить об ошибке</a></li></ul></nav>
   </div>
   <div class="wordmark" aria-hidden="true"><svg viewBox="7 0 1433 252" focusable="false">

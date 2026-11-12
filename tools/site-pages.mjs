@@ -355,7 +355,7 @@ export const pages = [
   {
     slug: 'cs2-region-picker',
     title: 'CS2 server picker and region picker: change your region',
-    desc: 'Pick your CS2 matchmaking region: block the ones you don\'t want and see the ping of each. Free Windows app, one firewall rule for cs2.exe on Valve relays.',
+    desc: 'Free CS2 server picker for Windows: block the matchmaking regions you don\'t want and see each one\'s ping. One firewall rule for cs2.exe, easy to undo.',
     nav: 'CS2 region picker',
     blurb: 'How to change your region in CS2.',
     eyebrow: 'CS2 server picker',
@@ -366,6 +366,15 @@ export const pages = [
     sections: [
       ['How CS2 picks your region', `<p>When you queue, the game measures your ping to Valve's relays (Steam Datagram Relay) in each region and looks for a match where the ping is good. Max Acceptable Matchmaking Ping, in Settings &gt; Game, only sets the highest ping you accept; it doesn't choose a region.</p><p>So the only way to choose is to make the regions you don't want unreachable. If <code>cs2.exe</code> can't reach a region's relays, CS2 treats that region as unavailable and looks elsewhere. That's what a CS2 region picker or server picker does, and it's what the Regions page does, with one Windows Firewall rule.</p>`],
       ['What the Regions page does', `<ul><li><b>The real list from Valve.</b> The regions come from Valve's own relay list (<code>GetSDRConfig</code>, app 730), grouped by city and continent. A city with more than one relay site, like Stockholm, is one row, and turning it off blocks all of them. The last list is saved, so the page works offline.</li><li><b>Ping for each region</b>, measured the way the game will feel it: through the phone while protection is on, through your home connection when it's off or in No phone mode.</li><li><b>Shortcuts:</b> Only this region, Closest 3, your continent only (Europe only, North America only and so on), Ping under X ms, and Allow all (block off).</li><li><b>One firewall rule, for <code>cs2.exe</code> only.</b> Turned-off regions are blocked on Valve's relay IPs only. Steam, your friends list and community servers are not touched.</li><li><b>Kept up to date.</b> While regions are off, Valve's list is read again every hour, and when it changes the rule is rebuilt, so new relays in a region you turned off are blocked too. After a shortcut, a region Valve adds later stays off as well.</li><li><b>Checked every 30 seconds.</b> If something else removes or changes the rule, the app puts it back, with or without protection.</li></ul>`],
+      // 12 Nov. 2026 (Search Console: "cs2 server picker", "server picker x", "cs2 mm server picker"): the other pickers, from each
+      // project's own GitHub page on that day (platforms, licence, latest release). Check them again before changing a row.
+      ['CS2 server pickers compared', `<p>Every CS2 server picker works the same way underneath: Windows Firewall rules that stop the game from reaching Valve's relays (Steam Datagram Relay) in the regions you don't want. None of them changes the game. They differ in where they run, how they keep the relay list up to date and what else they do. Checked on 12 Nov 2026, on each project's own page:</p><div class="tbl"><table><thead><tr><td></td><th scope="col">Runs on</th><th scope="col">Latest release on 12 Nov 2026</th><th scope="col">What sets it apart</th></tr></thead><tbody>
+<tr><th scope="row">CS2 IP Changer (the Regions page)</th><td class="us">Windows 10 and 11</td><td class="us">12 Nov 2026</td><td class="us">One rule, for cs2.exe only. Ping for each region, measured the way you'll play. Shortcuts for the closest 3, one continent or a ping limit. Reads Valve's list again every hour.</td></tr>
+<tr><th scope="row"><a href="https://github.com/FN-FAL113/server-picker-x">Server Picker X</a></th><td>Windows and Linux</td><td>25 Aug 2026</td><td>Open source (GPL-3.0). Also for Deadlock and other Steam Datagram Relay games.</td></tr>
+<tr><th scope="row"><a href="https://github.com/FN-FAL113/cs2-server-picker">CS2 Server Picker</a>, by FN-FAL113</th><td>Windows</td><td>14 Mar 2026</td><td>Open source (GPL-3.0), and the one with the most stars on GitHub. Its author now marks it as legacy and points to Server Picker X.</td></tr>
+<tr><th scope="row"><a href="https://github.com/oqyh/cs2-Region-Picker">CS2 Region Picker</a>, by oqyh</th><td>Windows</td><td>9 Aug 2026</td><td>Open source (GPL-3.0). You pick the regions on a world map.</td></tr>
+<tr><th scope="row"><a href="https://github.com/Jyben/cs2-mm-server-picker">CS2 MM Server Picker</a>, by Jyben</th><td>Windows and Linux</td><td>3 Oct 2024</td><td>Source on GitHub, with builds for Windows and Linux.</td></tr>
+</tbody></table></div><p>If all you want is to pick regions, or you play on Linux, Server Picker X is a good choice. CS2 IP Changer makes sense when you also want what comes with it: a block that only touches cs2.exe, the ping of each region before you choose, and the rest of the app (the Steam account switcher, the config manager, and your phone's IP on community servers).</p>`],
       ['Do it by hand, without the app', `<p>You can build the same block yourself with Windows Firewall:</p><ol><li>Open Valve's relay list for CS2: <code>https://api.steampowered.com/ISteamApps/GetSDRConfig/v1/?appid=730</code>. Each site (a "pop", like <code>fra</code> for Frankfurt) lists the IPs of its relays.</li><li>Open Windows Defender Firewall with Advanced Security and add an Outbound rule: Program, the path to <code>cs2.exe</code> (in <code>steamapps\\common\\Counter-Strike Global Offensive\\game\\bin\\win64</code>), Block the connection.</li><li>In the rule's Scope, add the relay IPs of every region you don't want as remote IP addresses.</li></ol><p>It works, but it's dozens of IPs, some cities have more than one pop (Stockholm has two; Frankfurt, Vienna and London also have a partner's relays), and Valve changes the list from time to time, so a rule made by hand goes out of date. You also don't see the ping of each region. The app reads the list, groups the pops by city, shows the ping and rebuilds the rule when Valve changes it.</p>`],
       ['Things to know', `<ul><li>Changes apply at once, and CS2 measures the regions again on its next start. Don't change them during a match.</li><li>Blocking too much means long queues or no match at all, and Premier can take longer. Leave a few regions on; the app won't let you turn them all off.</li><li>CS2's Max Acceptable Matchmaking Ping still counts. If it's lower than the ping of your slowest region left on, CS2 never uses that region, and the page tells you which number to set.</li><li>Windows Firewall has to be on. If it's off, the page says the rule is in place but not enforced until the Firewall is back on.</li><li>It works with or without the phone. Regions don't depend on protection: they stay off until you click Allow all (block off).</li></ul>`],
     ],
@@ -389,19 +398,23 @@ export const pages = [
       ['My server picker doesn\'t block anything. Why?', 'Most of the time Windows Firewall is off, or another firewall has taken over (some antivirus suites do), so block rules do nothing. The Regions page checks Windows Firewall and tells you when the rule isn\'t enforced. Also start CS2 again after a change: it measures the regions when it starts.'],
       ['Can I choose which players I meet?', 'No. It picks the regions your matches are played in, not the players. Players from anywhere can queue into a region they can reach.'],
       ['Do I need the phone for Regions?', 'No. Regions works with or without the phone and doesn\'t depend on protection. The ping is measured through the phone while protection is on, and through your home connection when it\'s off.'],
-      ['Does forcing a region get me banned?', 'The Regions page doesn\'t touch the game, its files or its memory. It adds one outbound Windows Firewall rule that stops cs2.exe from reaching Valve\'s relays in the regions you turned off, so to the game it looks like a bad connection to those relays. We can\'t speak for Valve and can\'t promise anything about how they treat it.'],
+      // the words people search with (Search Console, Nov. 2026: "is cs2 server picker safe", "is cs2 server picker bannable")
+      ['What is a CS2 server picker?', 'A Windows tool that chooses which regions CS2 matchmaking can put you in. CS2 has no region setting, so a server picker blocks Valve\'s relays in the regions you don\'t want with Windows Firewall, and matchmaking only finds matches in the regions left on. In CS2 IP Changer it is the Regions page.'],
+      ['Is a CS2 server picker safe? Can it get you VAC banned?', 'A server picker doesn\'t touch the game, its files or its memory. The Regions page adds one outbound Windows Firewall rule that stops cs2.exe from reaching Valve\'s relays in the regions you turned off, so to the game it looks like a bad connection to those relays. Players have used firewall server pickers since CS:GO. We can\'t speak for Valve and can\'t promise anything about how they treat it.'],
+      ['Does a server picker lower my ping?', 'It doesn\'t make any server faster. It keeps matchmaking away from regions that are far from you, so you stop landing on high-ping servers. The Regions page shows the ping of each region, so you know what you are choosing.'],
       ['Does it change community servers or my friends list?', 'No. The rule only covers cs2.exe and only Valve\'s relay IPs. Community servers, Steam and friends work as before.'],
       ['How do I undo it?', 'Click Allow all (block off) on the Regions page. Running the app with --restore, or tools/restore.cmd, also removes every rule the app made. Turn off protection and No phone mode leave the region rule on.'],
     ],
   },
   {
     slug: 'copy-cs2-config',
-    title: 'Copy your CS2 settings and crosshair to your alt account',
-    desc: 'Copy CS2 binds, crosshair, sensitivity and video settings between your Steam accounts in one click, with backups and undo. Free Windows app.',
+    // 12 Nov. 2026: the title and the H1 say "another account", the words of the searches that reach this page (Search Console)
+    title: 'Copy CS2 settings to another account (config and crosshair)',
+    desc: 'How to copy your CS2 config to another account: binds, crosshair, sensitivity and video between Steam accounts in one click, with backups and undo.',
     nav: 'Copy CS2 settings',
     blurb: 'Crosshair, binds and video on every account.',
     eyebrow: 'CS2 config manager',
-    h1: 'Copy your CS2 settings and crosshair to your alt account',
+    h1: 'Copy your CS2 settings and crosshair to another account',
     lead: 'Got a new account and want your binds, crosshair and video settings on it? The Configs page of CS2 IP Changer copies your CS2 config between the accounts on your PC, one part at a time or all of it, and keeps a backup of everything it changes.',
     crop: ['configs', 657, 370, 566, 290,'The Configs page: two accounts compared setting by setting, with a crosshair preview'],
     related: ['steam-account-switcher', 'steam-profile-editor', 'cs2-region-picker'],
@@ -413,6 +426,9 @@ export const pages = [
       ['Can\'t I just use the crosshair share code?', 'The share code only moves the crosshair. Your binds, sensitivity, viewmodel, video, HUD, radar and audio stay behind, and you have to paste it on every account. The Configs page copies all of it, or only the parts you tick, to every account at once.'],
       ['My settings keep going back. Why?', 'Steam Cloud. If an account was played on another PC since, Steam may bring that version back or ask which one to keep. If it keeps happening, turn off Steam Cloud for CS2 (CS2 > Properties > General).'],
       ['Can I move my config to another PC?', 'Yes. Save a snapshot and export it as a .zip. The .zip only has the config files and the name, never the account.'],
+      // the words people search with (Search Console, Nov. 2026: "cfg cs2", "save config cs2", "how to export cs2 settings")
+      ['Where is the CS2 config file?', 'In your Steam folder, one folder per account: Steam\\userdata\\(account ID)\\730\\local\\cfg. Binds are in cs2_user_keys_0_slot0.vcfg, the crosshair and game settings in cs2_user_convars_0_slot0.vcfg, video in cs2_video.txt, and HUD, radar and audio in cs2_machine_convars.vcfg.'],
+      ['How do I save or export my CS2 settings?', 'Copy that cfg folder somewhere safe, or let the app do it: on the Configs page, save a snapshot under a name and export it as a .zip. You can bring it back on this PC or on another one.'],
     ],
   },
   {
@@ -482,6 +498,33 @@ export const pages = [
     ],
   },
   {
+    // 12 Nov. 2026: a page for the searches about playing on a hotspot ("can you play cs2 on a hotspot", "how much data does
+    // cs2 use"). Facts from docs/FAQ.md (the basics; Phone and connection) and docs/FEATURES.md (Connection quality, Mobile
+    // data warning). The data per hour has no official number: the range is what players measured, and the page says so.
+    slug: 'cs2-mobile-data',
+    title: 'CS2 on a phone hotspot or mobile data: ping and data use',
+    desc: "Can you play CS2 on your phone's hotspot or USB tethering? What ping to expect, how much mobile data a match uses, and how to keep the game steady.",
+    nav: 'CS2 on mobile data',
+    blurb: 'Ping, lag and how much data a match uses.',
+    eyebrow: 'Mobile data',
+    h1: 'Play CS2 on mobile data: ping, lag and how much data it uses',
+    lead: "Yes, you can play CS2 on your phone's mobile data, by USB tethering or its hotspot. The server then sees your carrier's IP, not your home IP. The price is a higher ping and a connection that changes with the signal. Here is what to expect and how to keep it steady.",
+    crop: ['connection', 91, 44, 569, 452,'The Connection page: protection status, the IP servers see next to your home IP, and the phone ready to change IP'],
+    related: ['change-ip-with-phone', 'cs2-iphone-hotspot', 'hide-ip-cs2'],
+    sections: [
+      ['What ping to expect', `<p>Usually a higher one than at home. Mobile data adds latency and jitter, and a busy cell can drop packets, so the game can feel less smooth even when the ping looks fine. Your carrier, the signal and the time of day count for more than the phone itself.</p><ul><li><b>A good 5G or 4G signal</b> helps a lot. Put the phone near a window and keep it charging.</li><li><b>A weak signal, 3G or a crowded cell</b> means spikes, and no setting on the PC fixes that.</li></ul><p>The app measures it for you. The ping column in Servers goes through the phone, so you see what you'll get before you join. Connection quality in Checks pings through the phone every 30 seconds and says Good, Fair or Weak. Weak means a ping of 150 ms or more, jitter of 40 ms or more, or 2 of 8 pings lost, twice in a row.</p>`],
+      ['How much mobile data CS2 uses', `<p>Valve gives no official number. Players who measured it report roughly 150 to 450 MB for an hour of play, more than CS:GO used. Voice chat adds a little.</p><p>The game is rarely what empties a data plan. Everything else on the PC is: Windows updates, downloads, video, a Discord stream. That is what Game only mode is for: only CS2, Steam and your servers use the phone, and the browser, Discord and downloads stay on your home connection. The Phone box on the Connection page counts what went through the phone since the app opened and this month, and the app warns you at the number of GB you pick.</p>`],
+      ['USB tethering or Wi-Fi hotspot', `<p>Both work, with an Android phone or an iPhone (<a href="../cs2-iphone-hotspot/">CS2 with an iPhone</a>). USB tethering is usually the steadier one: there is no Wi-Fi between the PC and the phone, the phone charges while you play, and on Android the same cable lets the app change your IP. The hotspot is fine when you have no data cable. If Windows jumps back to your home Wi-Fi, the app blocks the game instead of letting it out from home. A 4G or 5G USB dongle or router works as the connection too.</p>`],
+      ['Keep it steady', `<ul><li>Use Game only, so nothing else shares the phone with the game.</li><li>Keep the phone by a window, plugged in, with nothing heavy running on it.</li><li>Check that the phone's network mode includes 5G. Forcing 5G only helps where the 5G signal is good.</li><li>If the connection stays weak, Change IP can put you on another cell. With "Keep changing until the connection is good", the app does that for you.</li><li>The kill switch covers the bad moments: if the phone drops, Windows Firewall blocks CS2 instead of letting it fall back to your home IP.</li></ul><p>Ready to try it? <a href="../change-ip-with-phone/">Set up the phone</a>.</p>`],
+    ],
+    faq: [
+      ['Can you play CS2 on a mobile hotspot?', 'Yes. Connect the PC to the phone by USB tethering or its Wi-Fi hotspot and CS2 plays over mobile data. Expect a higher ping than on a home line. A good 5G or 4G signal makes the game steadier.'],
+      ['How much data does CS2 use per hour?', 'Valve gives no official number. Players who measured it report roughly 150 to 450 MB for an hour of play. Other programs on the PC usually use far more than the game, which is why Game only mode keeps them on your home connection.'],
+      ['Is USB tethering better than a hotspot for gaming?', 'Usually, yes. A cable takes Wi-Fi out of the path between the PC and the phone, so there is one less thing that can add lag, and the phone charges while you play.'],
+      ['Does the server see that I play on mobile data?', 'It sees your carrier\'s IP, like for any player on a phone connection. It doesn\'t see your home IP.'],
+    ],
+  },
+  {
     // Facts only from README.md (Quick start, the FAQ "Does it work with an iPhone?" and the VPN table). The iPhone steps of
     // Phone setup come with beta.11, so this page doesn't mention them until that release is out.
     slug: 'cs2-iphone-hotspot',
@@ -534,7 +577,12 @@ export const pages = [
     ],
     faq: [
       ['Does CS2 IP ban?', 'Valve\'s bans (VAC bans, game bans and cooldowns) are on your Steam account, not your IP. Community servers are different: their admin plugins can ban a SteamID, an IP address or a whole IP range.'],
+      // the words people search with (Search Console, Nov. 2026: "can you get ip banned on cs2", "are vac bans ip bans")
+      ['Can you get IP banned in CS2?', 'Not by Valve: VAC bans, game bans and cooldowns are on the Steam account. On community servers, yes: the admins and their plugins can ban your IP or a whole range, and that ban only counts on their servers.'],
+      ['Is a VAC ban an IP ban?', 'No. A VAC ban is on the Steam account that was caught, not on your IP. Other accounts on the same connection can still play, and a new IP doesn\'t lift the ban.'],
       ['Will a new IP lift a VAC ban?', 'No. VAC and game bans are on the Steam account, not the IP, and nothing in CS2 IP Changer hides cheats from VAC or any other anti-cheat.'],
+      ['How do I know if I am IP banned on a CS2 server?', 'Try another Steam account from the same connection. If the server refuses it too, the ban is on your IP. If the same account is refused from another connection as well, like your phone\'s hotspot, the ban is on the account.'],
+      ['How long does a CS2 IP ban last?', 'As long as the server\'s admin set it: minutes, days or forever. Each community has its own rules and only its admins can lift the ban. A ban on one community doesn\'t count on another.'],
       ['Some admins ban a whole IP range. Does that matter?', 'After each change the app tells you whether the new IP is in a new /16 or in the same one as before. If you want it to keep going until the range changes, turn on Settings > Keep changing until the IP is in a new range.'],
     ],
   },
@@ -564,6 +612,9 @@ export const pages = [
     faq: [
       ['Does official matchmaking show my IP?', 'Valve\'s matchmaking goes through Steam Datagram Relay, so other players don\'t get your IP there. Community servers you join directly are the ones that see it.'],
       ['Can a community server admin see my IP?', 'Yes. The server needs your IP to send you game packets, so the admins and their plugins can see it, log it and ban it. With your phone\'s mobile data, what they get is your carrier\'s IP.'],
+      // the words people search with ("cs2 vpn alternative", "vpn blocked cs2 server")
+      ['Why is my VPN blocked on CS2 community servers?', 'Many community servers run anti-VPN plugins. They check each player\'s IP against lists of VPN and datacenter addresses and kick or ban the ones on them. A phone\'s mobile data isn\'t on those lists: it is an ordinary connection from your carrier.'],
+      ['What is a VPN alternative for CS2?', 'Your phone\'s mobile data. The server sees your carrier\'s IP and not your home IP, with no VPN server in between and no subscription. You can play on the phone\'s hotspot by hand, or let CS2 IP Changer send only CS2 and Steam through the phone, with a kill switch and a new IP in one click.'],
       ['What does cl_hideserverip do?', 'It is a console setting for streamers: with cl_hideserverip 1, CS2 hides the IP of the server you are on from your own screen (console and status), so viewers can\'t see it. It doesn\'t hide your IP: the server still sees your home IP. To hide that, the server has to see another connection, like your phone\'s mobile data.',
         'It is a console setting for streamers: with <code>cl_hideserverip 1</code>, CS2 hides the IP of the server you are on from your own screen (console and status), so viewers can\'t see it. It doesn\'t hide your IP: the server still sees your home IP. To hide that, the server has to see another connection, like <a href="../change-ip-with-phone/">your phone\'s mobile data</a>.'],
     ],
@@ -603,6 +654,7 @@ const sectionsOf = (p) => p.howto
 // Each guide's readout: one number from its page of the app (example values, as on the screenshots) or the release itself.
 const SIG = {
   'change-ip-with-phone': ['198.51.100.23', 'IP servers see', 'Example IP, not yours', 'From the Connection page of the app. Example IPs only.'],
+  'cs2-mobile-data': ['198.51.100.23', 'IP servers see', 'Example IP, not yours', 'From the Connection page of the app. Example IPs only.'],
   'cs2-iphone-hotspot': ['192.0.2.140', 'IP servers see after Airplane Mode', 'Example IP, not yours', 'Airplane Mode on and off on the iPhone. Example IPs only.'],
   'cs2-ip-ban': ['192.0.2.140', 'New IP after a ban', 'Example IP, new range (was 198.51)', 'From the log of Change IP and rejoin. Example IPs only.'],
   'hide-ip-cs2': ['203.0.•••.•••', 'Your home IP, as the app shows it', 'Masked', "Servers see the carrier's IP; your home IP stays masked in the app too."],
@@ -617,6 +669,7 @@ const SIG = {
 // under the picture, and the canvas's text for screen readers), and its replay button. Example values only, as in the README.
 const WORLD = {
   'change-ip-with-phone': ['phone', "Only CS2, Steam and your servers take the phone; the browser, Discord and downloads stay home. Example IP.", 'Play it again'],
+  'cs2-mobile-data': ['phone', "Only CS2, Steam and your servers take the phone; the browser, Discord and downloads stay home. Example IP.", 'Play it again'],   // the phone scene of the setup guide
   'cs2-iphone-hotspot': ['iphone', "Airplane Mode on and off on the iPhone, and the server usually sees another carrier IP. Example IPs.", 'Play it again'],
   'cs2-ip-ban': ['ban', "Demo: banned, mobile data off and on (Airplane Mode on an iPhone), back on a new IP with the next account.", 'Play it again'],
   'hide-ip-cs2': ['hide', "Windows Firewall blocks CS2 and your servers at home, so the server only sees the carrier's IP. Example IPs.", 'Play it again'],

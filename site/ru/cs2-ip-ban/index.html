@@ -128,10 +128,42 @@ addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.docume
     },
     {
      "@type": "Question",
+     "name": "Могут ли в CS2 забанить по IP?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Valve так не делает: VAC-баны, игровые баны и кулдауны висят на аккаунте Steam. На комьюнити-серверах да: админы и их плагины могут забанить ваш IP или целый диапазон, и этот бан действует только на их серверах."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "VAC-бан — это бан по IP?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Нет. VAC-бан выдаётся аккаунту Steam, который поймали, а не вашему IP. Другие аккаунты с того же соединения могут играть, а новый IP бан не снимает."
+     }
+    },
+    {
+     "@type": "Question",
      "name": "Снимет ли новый IP VAC-бан?",
      "acceptedAnswer": {
       "@type": "Answer",
       "text": "Нет. VAC-баны и игровые баны висят на аккаунте Steam, а не на IP, и ничто в CS2 IP Changer не прячет читы от VAC или другого античита."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Как понять, что вас забанили по IP на сервере CS2?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Зайдите другим аккаунтом Steam с того же соединения. Если сервер не пускает и его, бан на вашем IP. Если тот же аккаунт не пускает и с другого соединения, например через точку доступа телефона, бан на аккаунте."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Сколько длится бан по IP в CS2?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Столько, сколько поставил админ сервера: минуты, дни или навсегда. У каждого сообщества свои правила, и снять бан могут только его админы. Бан в одном сообществе не действует в другом."
      }
     },
     {
@@ -747,7 +779,11 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
     <section class="gfaq" aria-labelledby="faq">
       <h2 id="faq">FAQ</h2>
       <details><summary>Банит ли CS2 по IP?</summary><p>Баны Valve (VAC-баны, игровые баны и кулдауны) висят на вашем аккаунте Steam, а не на IP. С комьюнити-серверами иначе: их админ-плагины могут банить SteamID, IP-адрес или целый диапазон IP.</p></details>
+      <details><summary>Могут ли в CS2 забанить по IP?</summary><p>Valve так не делает: VAC-баны, игровые баны и кулдауны висят на аккаунте Steam. На комьюнити-серверах да: админы и их плагины могут забанить ваш IP или целый диапазон, и этот бан действует только на их серверах.</p></details>
+      <details><summary>VAC-бан — это бан по IP?</summary><p>Нет. VAC-бан выдаётся аккаунту Steam, который поймали, а не вашему IP. Другие аккаунты с того же соединения могут играть, а новый IP бан не снимает.</p></details>
       <details><summary>Снимет ли новый IP VAC-бан?</summary><p>Нет. VAC-баны и игровые баны висят на аккаунте Steam, а не на IP, и ничто в CS2 IP Changer не прячет читы от VAC или другого античита.</p></details>
+      <details><summary>Как понять, что вас забанили по IP на сервере CS2?</summary><p>Зайдите другим аккаунтом Steam с того же соединения. Если сервер не пускает и его, бан на вашем IP. Если тот же аккаунт не пускает и с другого соединения, например через точку доступа телефона, бан на аккаунте.</p></details>
+      <details><summary>Сколько длится бан по IP в CS2?</summary><p>Столько, сколько поставил админ сервера: минуты, дни или навсегда. У каждого сообщества свои правила, и снять бан могут только его админы. Бан в одном сообществе не действует в другом.</p></details>
       <details><summary>Некоторые админы банят целый диапазон IP. Это важно?</summary><p>После каждой смены приложение сообщает, в новом ли /16 новый IP или в том же, что и раньше. Если хотите, чтобы оно продолжало, пока диапазон не сменится, включите Settings &gt; Keep changing until the IP is in a new range.</p></details>
     </section>
     <nav class="gmore" aria-labelledby="more-h">
@@ -773,7 +809,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
       <span class="fstat"><i></i>Последняя: <!--rel:ver-->v0.1.0-beta.13<!--/rel--></span>
     </div>
     <nav aria-labelledby="f1"><h3 id="f1">Продукт</h3><ul><li><a href="../#features">Возможности</a></li><li><a href="../#how">Как это работает</a></li><li><a href="../#vpn">CS2 IP Changer или VPN?</a></li><li><a href="../#setup">Настройка</a></li><li><a href="../#faq">FAQ</a></li></ul></nav>
-    <nav aria-labelledby="f2"><h3 id="f2">Гайды</h3><ul><li><a href="../change-ip-with-phone/">Смена IP через телефон</a></li><li><a href="../cs2-iphone-hotspot/">CS2 с iPhone</a></li><li><a href="../cs2-ip-ban/">Бан по IP в CS2</a></li><li><a href="../hide-ip-cs2/">Скрыть IP без VPN</a></li><li><a href="../is-it-safe/">Это безопасно?</a></li><li><a href="../steam-account-switcher/">Переключатель аккаунтов Steam</a></li><li><a href="../copy-cs2-config/">Копирование настроек CS2</a></li><li><a href="../cs2-region-picker/">Выбор региона CS2</a></li><li><a href="../steam-profile-editor/">Редактор профилей Steam</a></li></ul></nav>
+    <nav aria-labelledby="f2"><h3 id="f2">Гайды</h3><ul><li><a href="../change-ip-with-phone/">Смена IP через телефон</a></li><li><a href="../cs2-iphone-hotspot/">CS2 с iPhone</a></li><li><a href="../cs2-mobile-data/">CS2 на мобильном интернете</a></li><li><a href="../cs2-ip-ban/">Бан по IP в CS2</a></li><li><a href="../hide-ip-cs2/">Скрыть IP без VPN</a></li><li><a href="../is-it-safe/">Это безопасно?</a></li><li><a href="../steam-account-switcher/">Переключатель аккаунтов Steam</a></li><li><a href="../copy-cs2-config/">Копирование настроек CS2</a></li><li><a href="../cs2-region-picker/">Выбор региона CS2</a></li><li><a href="../steam-profile-editor/">Редактор профилей Steam</a></li></ul></nav>
     <nav aria-labelledby="f3"><h3 id="f3">Проект</h3><ul><li><a href="https://github.com/Sepd0x/cs2-ip-changer">Исходный код на GitHub</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/releases">Релизы</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/blob/main/CHANGELOG.md">Changelog</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer#privacy">Конфиденциальность</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose">Сообщить об ошибке</a></li></ul></nav>
   </div>
   <div class="wordmark" aria-hidden="true"><svg viewBox="7 0 1433 252" focusable="false">

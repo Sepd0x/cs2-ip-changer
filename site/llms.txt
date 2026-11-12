@@ -8,6 +8,27 @@ Source and downloads: https://github.com/Sepd0x/cs2-ip-changer (latest release: 
 Download: https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe (CS2IPChanger.exe, 63.7 MB, SHA-256 cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b, VirusTotal: 0 of 70 engines flag it, https://www.virustotal.com/gui/file/cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b/detection)
 Status: beta. Latest release 0.1.0-beta.13 (2026-11-12). Free, no account. Not affiliated with Valve.
 
+## What people use it for
+
+- Keep the home IP private on CS2 community servers: admins and their plugins see the carrier's IP, so the home IP is not in their logs and can't be banned or targeted.
+- CS2 server picker / region picker: choose which regions CS2 matchmaking (Premier, Competitive, Casual, Deathmatch, Wingman) can use, with the ping of each region. Works without the phone.
+- A new IP after an IP ban on a community server, without a VPN (community servers often block VPN and datacenter IPs).
+- Steam account switcher for players with several accounts, with ban and cooldown status.
+- Copy CS2 settings (binds, crosshair, video) between Steam accounts.
+
+## Short answers
+
+- What is CS2 IP Changer? A free Windows app that sends CS2 and Steam through a phone's mobile data, so community servers see the carrier's IP and not the home IP. It also has a CS2 region picker, a Steam account switcher, a CS2 config manager and a Steam profile editor.
+- Is there a CS2 server picker that still works in 2026? Yes, several. They all block Valve's relays (Steam Datagram Relay) for the regions you don't want with Windows Firewall rules. CS2 IP Changer's Regions page does it with one rule for cs2.exe only and shows the ping of each region; Server Picker X (FN-FAL113) also runs on Linux. Comparison: https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/#cs2-server-pickers-compared
+- How do you change region in CS2? CS2 has no region setting. Block the regions you don't want (a server picker does this) and matchmaking only finds matches in the regions left.
+- Is a CS2 server picker safe? It adds Windows Firewall rules and does not touch the game, its files or its memory. Nobody but Valve can promise how Valve treats it.
+- Does CS2 IP ban? Valve does not: VAC bans, game bans and cooldowns are on the Steam account. Community servers can ban a SteamID, an IP or an IP range.
+- Is a VAC ban an IP ban? No. It is on the Steam account. A new IP does not lift it.
+- How can a player hide their home IP from a CS2 community server without a VPN? By playing through a phone's mobile data (USB tethering or hotspot): the server sees the carrier's IP. CS2 IP Changer sends only the game through the phone and blocks it on the home connection.
+- Can you play CS2 on a phone hotspot? Yes, with a higher ping than on a home line. Valve gives no official data figure; players report roughly 150 to 450 MB an hour.
+- Is it a cheat? No. It does not read or change the game and does not hide anything from VAC or any anti-cheat.
+- Does it work with an iPhone? Yes. A new IP on an iPhone comes from switching Airplane Mode on and off.
+
 ## How it works
 
 - The phone shares its mobile data with the PC over USB tethering or its Wi-Fi hotspot. A 4G/5G USB dongle or router also works as the connection.
@@ -41,12 +62,13 @@ Status: beta. Latest release 0.1.0-beta.13 (2026-11-12). Free, no account. Not a
 
 - [Change IP with your phone](https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/): setup from start to finish, game-only routing and a new IP in one click.
 - [CS2 with an iPhone](https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/): the protection works the same with an iPhone (Personal Hotspot by USB or Wi-Fi); for a new IP the player switches Airplane Mode on and off on the iPhone.
-- [CS2 IP ban](https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/): which ban you have (IP, range, SteamID or Valve) and how to get back in.
+- [CS2 on mobile data](https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/): playing CS2 on a phone hotspot or USB tethering, the ping to expect, how much data a match uses and how to keep it steady.
+- [CS2 IP ban](https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/): does CS2 IP ban, is a VAC ban an IP ban, which ban you have (IP, range, SteamID or Valve) and how to get back in.
 - [Hide your IP without a VPN](https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/): who sees your IP, what they can do with it, and every method compared.
 - [Is it safe?](https://sepd0x.github.io/cs2-ip-changer/is-it-safe/): what it changes and how to check the download.
 - [Steam account switcher](https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/): no passwords, ban marks per server.
 - [Copy CS2 settings](https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/): crosshair, binds and video on every account.
-- [CS2 region picker](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/): how to change your region in CS2 (CS2 has no region setting), step by step, how to do the same block by hand with Windows Firewall, and why a server picker sometimes blocks nothing.
+- [CS2 server picker and region picker](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/): how to change your region in CS2 (CS2 has no region setting), step by step, the CS2 server pickers compared (Server Picker X, CS2 Server Picker, CS2 Region Picker, CS2 MM Server Picker), how to do the same block by hand with Windows Firewall, and why a server picker sometimes blocks nothing.
 - [Steam profile editor](https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/): name, avatar and privacy on many accounts.
 
 ## Safety and privacy

@@ -43,7 +43,7 @@
   </picture>
 </p>
 
-It isn't a VPN: servers see an ordinary mobile connection, so it usually gets in on servers that block VPNs and datacenter IPs. It works with an Android phone or an iPhone. In the same app: a Steam account switcher, a CS2 config manager, a Steam profile editor and a matchmaking region picker.
+It isn't a VPN: servers see an ordinary mobile connection, so it usually gets in on servers that block VPNs and datacenter IPs. It works with an Android phone or an iPhone. In the same app: a [CS2 server picker](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/) (matchmaking region picker, works without the phone), a [Steam account switcher](https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/), a [CS2 config manager](https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/) and a Steam profile editor.
 
 ## How it works
 
@@ -93,7 +93,7 @@ Click a picture for the details of that page.
   <a href="docs/FEATURES.md#cs2-config-manager"><picture><source srcset="docs/assets/shots/crop-configs.webp" type="image/webp"><img src="docs/assets/shots/crop-configs.png" alt="Configs: two accounts compared, with both crosshairs and the settings that differ" width="408"></picture></a>
 </p>
 
-**Regions.** Pick your matchmaking regions by their ping. One Windows Firewall rule blocks the others for `cs2.exe`, on the IPs of Valve's relays only ([how to change your region in CS2](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/)).
+**Regions (CS2 server picker).** Pick your matchmaking regions by their ping. One Windows Firewall rule blocks the others for `cs2.exe`, on the IPs of Valve's relays only. It works with or without the phone ([how to change your region in CS2, and the server pickers compared](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/)).
 
 **Configs.** Copy binds, crosshair, game settings and video between your accounts, with backups.
 

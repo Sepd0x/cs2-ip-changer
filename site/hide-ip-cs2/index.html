@@ -136,6 +136,22 @@ addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.docume
     },
     {
      "@type": "Question",
+     "name": "Why is my VPN blocked on CS2 community servers?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Many community servers run anti-VPN plugins. They check each player's IP against lists of VPN and datacenter addresses and kick or ban the ones on them. A phone's mobile data isn't on those lists: it is an ordinary connection from your carrier."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "What is a VPN alternative for CS2?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Your phone's mobile data. The server sees your carrier's IP and not your home IP, with no VPN server in between and no subscription. You can play on the phone's hotspot by hand, or let CS2 IP Changer send only CS2 and Steam through the phone, with a kill switch and a new IP in one click."
+     }
+    },
+    {
+     "@type": "Question",
      "name": "What does cl_hideserverip do?",
      "acceptedAnswer": {
       "@type": "Answer",
@@ -753,6 +769,8 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
       <h2 id="faq">FAQ</h2>
       <details><summary>Does official matchmaking show my IP?</summary><p>Valve's matchmaking goes through Steam Datagram Relay, so other players don't get your IP there. Community servers you join directly are the ones that see it.</p></details>
       <details><summary>Can a community server admin see my IP?</summary><p>Yes. The server needs your IP to send you game packets, so the admins and their plugins can see it, log it and ban it. With your phone's mobile data, what they get is your carrier's IP.</p></details>
+      <details><summary>Why is my VPN blocked on CS2 community servers?</summary><p>Many community servers run anti-VPN plugins. They check each player's IP against lists of VPN and datacenter addresses and kick or ban the ones on them. A phone's mobile data isn't on those lists: it is an ordinary connection from your carrier.</p></details>
+      <details><summary>What is a VPN alternative for CS2?</summary><p>Your phone's mobile data. The server sees your carrier's IP and not your home IP, with no VPN server in between and no subscription. You can play on the phone's hotspot by hand, or let CS2 IP Changer send only CS2 and Steam through the phone, with a kill switch and a new IP in one click.</p></details>
       <details><summary>What does cl_hideserverip do?</summary><p>It is a console setting for streamers: with <code>cl_hideserverip 1</code>, CS2 hides the IP of the server you are on from your own screen (console and status), so viewers can't see it. It doesn't hide your IP: the server still sees your home IP. To hide that, the server has to see another connection, like <a href="../change-ip-with-phone/">your phone's mobile data</a>.</p></details>
     </section>
     <nav class="gmore" aria-labelledby="more-h">
@@ -778,7 +796,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
       <span class="fstat"><i></i>Latest: <!--rel:ver-->v0.1.0-beta.13<!--/rel--></span>
     </div>
     <nav aria-labelledby="f1"><h3 id="f1">Product</h3><ul><li><a href="../#features">Features</a></li><li><a href="../#how">How it works</a></li><li><a href="../#vpn">CS2 IP Changer or a VPN?</a></li><li><a href="../#setup">Setup</a></li><li><a href="../#faq">FAQ</a></li></ul></nav>
-    <nav aria-labelledby="f2"><h3 id="f2">Guides</h3><ul><li><a href="../change-ip-with-phone/">Change IP with your phone</a></li><li><a href="../cs2-iphone-hotspot/">CS2 with an iPhone</a></li><li><a href="../cs2-ip-ban/">CS2 IP ban</a></li><li><a href="../hide-ip-cs2/">Hide your IP without a VPN</a></li><li><a href="../is-it-safe/">Is it safe?</a></li><li><a href="../steam-account-switcher/">Steam account switcher</a></li><li><a href="../copy-cs2-config/">Copy CS2 settings</a></li><li><a href="../cs2-region-picker/">CS2 region picker</a></li><li><a href="../steam-profile-editor/">Steam profile editor</a></li></ul></nav>
+    <nav aria-labelledby="f2"><h3 id="f2">Guides</h3><ul><li><a href="../change-ip-with-phone/">Change IP with your phone</a></li><li><a href="../cs2-iphone-hotspot/">CS2 with an iPhone</a></li><li><a href="../cs2-mobile-data/">CS2 on mobile data</a></li><li><a href="../cs2-ip-ban/">CS2 IP ban</a></li><li><a href="../hide-ip-cs2/">Hide your IP without a VPN</a></li><li><a href="../is-it-safe/">Is it safe?</a></li><li><a href="../steam-account-switcher/">Steam account switcher</a></li><li><a href="../copy-cs2-config/">Copy CS2 settings</a></li><li><a href="../cs2-region-picker/">CS2 region picker</a></li><li><a href="../steam-profile-editor/">Steam profile editor</a></li></ul></nav>
     <nav aria-labelledby="f3"><h3 id="f3">Project</h3><ul><li><a href="https://github.com/Sepd0x/cs2-ip-changer">Source on GitHub</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/releases">Releases</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/blob/main/CHANGELOG.md">Changelog</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer#privacy">Privacy</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose">Report a bug</a></li></ul></nav>
   </div>
   <div class="wordmark" aria-hidden="true"><svg viewBox="7 0 1433 252" focusable="false">

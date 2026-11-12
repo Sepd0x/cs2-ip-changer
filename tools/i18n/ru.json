@@ -108,7 +108,12 @@
   "CS2 IP Changer <i1>/</i1> <b2>Accounts</b2>": "CS2 IP Changer <i1>/</i1> <b2>Accounts</b2>",
   "The Accounts page of the app, a real screenshot with example names. Select it to see it full size.": "Страница Accounts в приложении, настоящий скриншот с примерами имён. Нажмите, чтобы открыть в полном размере.",
   "The Connection page: the IP servers see next to your masked home IP": "Страница Connection: IP, который видят серверы, рядом со скрытым домашним IP",
-  "Server sees": "Сервер видит"
+  "Server sees": "Сервер видит",
+  "CS2 on mobile data": "CS2 на мобильном интернете",
+  "Only CS2, Steam and your servers take the phone; the browser, Discord and downloads stay home. Example IP.": "Телефон используют только CS2, Steam и ваши серверы; браузер, Discord и загрузки остаются на домашнем интернете. Пример IP.",
+  "IP servers see: 198.51.100.23 (example)": "IP, который видят серверы: 198.51.100.23 (пример)",
+  "From the Connection page of the app. Example IPs only.": "Со страницы Connection приложения. Только примеры IP.",
+  "The Connection page: protection status, the IP servers see next to your home IP, and the phone ready to change IP": "Страница Connection: статус защиты, IP, который видят серверы, рядом с домашним IP и телефон, готовый сменить IP"
  },
  "js": {
   "IP servers see. Example, banned on this server": "IP, который видят серверы. Пример: забанен на этом сервере",
@@ -192,8 +197,6 @@
   "It works as the connection: if the app doesn't pick it on its own, choose it under Connection &gt; How the PC connects to the phone. Change IP needs an Android phone with ADB, though.": "Работает как соединение: если приложение не выбрало его само, выберите в Connection &gt; How the PC connects to the phone. Но для Change IP нужен телефон Android с ADB."
  },
  "copy-cs2-config": {
-  "Copy your CS2 settings and crosshair to your alt account": "Копирование настроек и прицела CS2 на твинк",
-  "Copy CS2 binds, crosshair, sensitivity and video settings between your Steam accounts in one click, with backups and undo. Free Windows app.": "Копируйте бинды, прицел, чувствительность и видеонастройки CS2 между аккаунтами Steam в один клик, с бэкапами и отменой. Бесплатное приложение для Windows.",
   "Got a new account and want your binds, crosshair and video settings on it? The Configs page of CS2 IP Changer copies your CS2 config between the accounts on your PC, one part at a time or all of it, and keeps a backup of everything it changes.": "Новый аккаунт, а бинды, прицел и видеонастройки нужны на нём? Страница Configs в CS2 IP Changer копирует конфиг CS2 между аккаунтами на вашем ПК, по частям или целиком, и хранит бэкап всего, что меняет.",
   "Where CS2 keeps each account's config": "Где CS2 хранит конфиг каждого аккаунта",
   "What the Configs page does": "Что делает страница Configs",
@@ -223,7 +226,14 @@
   "Steam Cloud. If an account was played on another PC since, Steam may bring that version back or ask which one to keep. If it keeps happening, turn off Steam Cloud for CS2 (CS2 &gt; Properties &gt; General).": "Steam Cloud. Если на аккаунте потом играли на другом ПК, Steam может вернуть ту версию или спросить, какую оставить. Если это повторяется, отключите Steam Cloud для CS2 (CS2 &gt; Properties &gt; General).",
   "Can I move my config to another PC?": "Можно перенести конфиг на другой ПК?",
   "Yes. Save a snapshot and export it as a .zip. The .zip only has the config files and the name, never the account.": "Да. Сохраните снимок и экспортируйте его как .zip. В .zip только файлы конфига и имя, никогда сам аккаунт.",
-  "How to change your region in CS2.": "Как сменить регион в CS2."
+  "How to change your region in CS2.": "Как сменить регион в CS2.",
+  "Copy CS2 settings to another account (config and crosshair)": "Копирование настроек CS2 на другой аккаунт (конфиг, прицел)",
+  "How to copy your CS2 config to another account: binds, crosshair, sensitivity and video between Steam accounts in one click, with backups and undo.": "Как скопировать конфиг CS2 на другой аккаунт: бинды, прицел, чувствительность и видео между аккаунтами Steam в один клик, с бэкапом и отменой.",
+  "Copy your CS2 settings and crosshair to another account": "Скопируйте настройки CS2 и прицел на другой аккаунт",
+  "Where is the CS2 config file?": "Где лежит конфиг CS2?",
+  "In your Steam folder, one folder per account: Steam\\userdata\\(account ID)\\730\\local\\cfg. Binds are in cs2_user_keys_0_slot0.vcfg, the crosshair and game settings in cs2_user_convars_0_slot0.vcfg, video in cs2_video.txt, and HUD, radar and audio in cs2_machine_convars.vcfg.": "В папке Steam, по одной папке на каждый аккаунт: Steam\\userdata\\(ID аккаунта)\\730\\local\\cfg. Бинды лежат в cs2_user_keys_0_slot0.vcfg, прицел и настройки игры в cs2_user_convars_0_slot0.vcfg, видео в cs2_video.txt, а HUD, радар и звук в cs2_machine_convars.vcfg.",
+  "How do I save or export my CS2 settings?": "Как сохранить или экспортировать настройки CS2?",
+  "Copy that cfg folder somewhere safe, or let the app do it: on the Configs page, save a snapshot under a name and export it as a .zip. You can bring it back on this PC or on another one.": "Скопируйте папку cfg в надёжное место или доверьте это приложению: на странице Configs сохраните снимок под любым именем и экспортируйте его в .zip. Потом его можно вернуть на этом ПК или на другом."
  },
  "cs2-ip-ban": {
   "Does CS2 IP ban? Community server bans and getting back in": "Банит ли CS2 по IP? Баны серверов и как вернуться",
@@ -266,7 +276,15 @@
   "Will a new IP lift a VAC ban?": "Снимет ли новый IP VAC-бан?",
   "No. VAC and game bans are on the Steam account, not the IP, and nothing in CS2 IP Changer hides cheats from VAC or any other anti-cheat.": "Нет. VAC-баны и игровые баны висят на аккаунте Steam, а не на IP, и ничто в CS2 IP Changer не прячет читы от VAC или другого античита.",
   "Some admins ban a whole IP range. Does that matter?": "Некоторые админы банят целый диапазон IP. Это важно?",
-  "After each change the app tells you whether the new IP is in a new /16 or in the same one as before. If you want it to keep going until the range changes, turn on Settings &gt; Keep changing until the IP is in a new range.": "После каждой смены приложение сообщает, в новом ли /16 новый IP или в том же, что и раньше. Если хотите, чтобы оно продолжало, пока диапазон не сменится, включите Settings &gt; Keep changing until the IP is in a new range."
+  "After each change the app tells you whether the new IP is in a new /16 or in the same one as before. If you want it to keep going until the range changes, turn on Settings &gt; Keep changing until the IP is in a new range.": "После каждой смены приложение сообщает, в новом ли /16 новый IP или в том же, что и раньше. Если хотите, чтобы оно продолжало, пока диапазон не сменится, включите Settings &gt; Keep changing until the IP is in a new range.",
+  "Can you get IP banned in CS2?": "Могут ли в CS2 забанить по IP?",
+  "Not by Valve: VAC bans, game bans and cooldowns are on the Steam account. On community servers, yes: the admins and their plugins can ban your IP or a whole range, and that ban only counts on their servers.": "Valve так не делает: VAC-баны, игровые баны и кулдауны висят на аккаунте Steam. На комьюнити-серверах да: админы и их плагины могут забанить ваш IP или целый диапазон, и этот бан действует только на их серверах.",
+  "Is a VAC ban an IP ban?": "VAC-бан — это бан по IP?",
+  "No. A VAC ban is on the Steam account that was caught, not on your IP. Other accounts on the same connection can still play, and a new IP doesn't lift the ban.": "Нет. VAC-бан выдаётся аккаунту Steam, который поймали, а не вашему IP. Другие аккаунты с того же соединения могут играть, а новый IP бан не снимает.",
+  "How do I know if I am IP banned on a CS2 server?": "Как понять, что вас забанили по IP на сервере CS2?",
+  "Try another Steam account from the same connection. If the server refuses it too, the ban is on your IP. If the same account is refused from another connection as well, like your phone's hotspot, the ban is on the account.": "Зайдите другим аккаунтом Steam с того же соединения. Если сервер не пускает и его, бан на вашем IP. Если тот же аккаунт не пускает и с другого соединения, например через точку доступа телефона, бан на аккаунте.",
+  "How long does a CS2 IP ban last?": "Сколько длится бан по IP в CS2?",
+  "As long as the server's admin set it: minutes, days or forever. Each community has its own rules and only its admins can lift the ban. A ban on one community doesn't count on another.": "Столько, сколько поставил админ сервера: минуты, дни или навсегда. У каждого сообщества свои правила, и снять бан могут только его админы. Бан в одном сообществе не действует в другом."
  },
  "cs2-iphone-hotspot": {
   "Play CS2 on your iPhone's Personal Hotspot, not your home IP": "CS2 через Personal Hotspot на iPhone, а не с домашним IP",
@@ -306,9 +324,39 @@
   "Is it a VPN?": "Это VPN?",
   "No. Servers see an ordinary mobile connection from your carrier, the same as someone playing on a phone hotspot, so it usually gets in on servers that block VPNs. It's not a promise: carriers share each IP between many phones, so an IP someone else misused can be flagged.": "Нет. Серверы видят обычное мобильное соединение вашего оператора, как у того, кто играет через точку доступа телефона, поэтому обычно проходит и на серверах, блокирующих VPN. Гарантии нет: операторы делят каждый IP между многими телефонами, поэтому IP, с которого кто-то уже нарушал правила, могут пометить."
  },
+ "cs2-mobile-data": {
+  "CS2 on a phone hotspot or mobile data: ping and data use": "CS2 на мобильном интернете и точке доступа: пинг и трафик",
+  "Can you play CS2 on your phone's hotspot or USB tethering? What ping to expect, how much mobile data a match uses, and how to keep the game steady.": "Можно ли играть в CS2 через точку доступа или USB-модем телефона? Какой пинг ждать, сколько трафика уходит за матч и как сделать игру стабильнее.",
+  "Play CS2 on mobile data: ping, lag and how much data it uses": "Игра в CS2 на мобильном интернете: пинг, лаги и расход трафика",
+  "Yes, you can play CS2 on your phone's mobile data, by USB tethering or its hotspot. The server then sees your carrier's IP, not your home IP. The price is a higher ping and a connection that changes with the signal. Here is what to expect and how to keep it steady.": "Да, в CS2 можно играть на мобильном интернете телефона, через USB tethering или точку доступа. Сервер тогда видит IP оператора, а не ваш домашний IP. Цена такая: пинг выше, а соединение зависит от сигнала. Вот чего ждать и как сделать игру стабильнее.",
+  "What ping to expect": "Какой пинг ждать",
+  "How much mobile data CS2 uses": "Сколько мобильного трафика расходует CS2",
+  "USB tethering or Wi-Fi hotspot": "USB tethering или точка доступа Wi-Fi",
+  "Keep it steady": "Как сделать игру стабильнее",
+  "Usually a higher one than at home. Mobile data adds latency and jitter, and a busy cell can drop packets, so the game can feel less smooth even when the ping looks fine. Your carrier, the signal and the time of day count for more than the phone itself.": "Обычно выше, чем дома. Мобильный интернет добавляет задержку и джиттер, а загруженная вышка может терять пакеты, поэтому игра может идти менее плавно, даже если пинг на вид нормальный. Оператор, сигнал и время суток важнее, чем сам телефон.",
+  "<b1>A good 5G or 4G signal</b1> helps a lot. Put the phone near a window and keep it charging.": "<b1>Хороший сигнал 5G или 4G</b1> очень помогает. Положите телефон у окна и держите его на зарядке.",
+  "<b1>A weak signal, 3G or a crowded cell</b1> means spikes, and no setting on the PC fixes that.": "<b1>Слабый сигнал, 3G или перегруженная вышка</b1> дают скачки пинга, и никакая настройка на ПК этого не исправит.",
+  "The app measures it for you. The ping column in Servers goes through the phone, so you see what you'll get before you join. Connection quality in Checks pings through the phone every 30 seconds and says Good, Fair or Weak. Weak means a ping of 150 ms or more, jitter of 40 ms or more, or 2 of 8 pings lost, twice in a row.": "Приложение измеряет его за вас. Колонка с пингом в Servers считается через телефон, так что вы видите, что получите, ещё до входа на сервер. Connection quality в Checks каждые 30 секунд пингует через телефон и показывает Good, Fair или Weak. Weak значит пинг от 150 мс, джиттер от 40 мс или потеря 2 из 8 пингов, два раза подряд.",
+  "Valve gives no official number. Players who measured it report roughly 150 to {size} for an hour of play, more than CS:GO used. Voice chat adds a little.": "Официальной цифры у Valve нет. Игроки, которые это замеряли, пишут примерно о 150–{size} за час игры, это больше, чем уходило в CS:GO. Голосовой чат добавляет немного.",
+  "The game is rarely what empties a data plan. Everything else on the PC is: Windows updates, downloads, video, a Discord stream. That is what Game only mode is for: only CS2, Steam and your servers use the phone, and the browser, Discord and downloads stay on your home connection. The Phone box on the Connection page counts what went through the phone since the app opened and this month, and the app warns you at the number of GB you pick.": "Тариф редко съедает сама игра. Его съедает всё остальное на ПК: обновления Windows, загрузки, видео, стрим в Discord. Для этого и нужен режим Game only: телефон используют только CS2, Steam и ваши серверы, а браузер, Discord и загрузки остаются на домашнем интернете. Блок Phone на странице Connection считает, сколько прошло через телефон с запуска приложения и за этот месяц, и приложение предупредит вас, когда расход дойдёт до выбранного числа ГБ.",
+  "Both work, with an Android phone or an iPhone (<a1>CS2 with an iPhone</a1>). USB tethering is usually the steadier one: there is no Wi-Fi between the PC and the phone, the phone charges while you play, and on Android the same cable lets the app change your IP. The hotspot is fine when you have no data cable. If Windows jumps back to your home Wi-Fi, the app blocks the game instead of letting it out from home. A 4G or 5G USB dongle or router works as the connection too.": "Работают оба способа, с телефоном Android или с iPhone (<a1>CS2 с iPhone</a1>). USB tethering обычно стабильнее: между ПК и телефоном нет Wi-Fi, телефон заряжается, пока вы играете, а на Android по тому же кабелю приложение может сменить ваш IP. Точка доступа подойдёт, если нет кабеля для данных. Если Windows перескочит обратно на домашний Wi-Fi, приложение заблокирует игру, а не выпустит её с домашнего IP. Как соединение подойдёт и USB-модем или роутер с 4G или 5G.",
+  "Use Game only, so nothing else shares the phone with the game.": "Включите Game only, чтобы телефон никто больше не делил с игрой.",
+  "Keep the phone by a window, plugged in, with nothing heavy running on it.": "Держите телефон у окна, на зарядке, и не запускайте на нём ничего тяжёлого.",
+  "Check that the phone's network mode includes 5G. Forcing 5G only helps where the 5G signal is good.": "Проверьте, что в режиме сети телефона включён 5G. Принудительный 5G помогает только там, где сигнал 5G хороший.",
+  "If the connection stays weak, Change IP can put you on another cell. With \"Keep changing until the connection is good\", the app does that for you.": "Если соединение остаётся слабым, Change IP может перевести вас на другую вышку. С опцией «Keep changing until the connection is good» приложение сделает это за вас.",
+  "The kill switch covers the bad moments: if the phone drops, Windows Firewall blocks CS2 instead of letting it fall back to your home IP.": "Kill switch подстрахует в плохие моменты: если телефон отключится, Windows Firewall заблокирует CS2, а не выпустит его с домашнего IP.",
+  "Ready to try it? <a1>Set up the phone</a1>.": "Хотите попробовать? <a1>Настройте телефон</a1>.",
+  "Can you play CS2 on a mobile hotspot?": "Можно ли играть в CS2 через мобильную точку доступа?",
+  "Yes. Connect the PC to the phone by USB tethering or its Wi-Fi hotspot and CS2 plays over mobile data. Expect a higher ping than on a home line. A good 5G or 4G signal makes the game steadier.": "Да. Подключите ПК к телефону по USB tethering или через точку доступа Wi-Fi, и CS2 пойдёт через мобильный интернет. Пинг будет выше, чем на домашней линии. Хороший сигнал 5G или 4G делает игру стабильнее.",
+  "How much data does CS2 use per hour?": "Сколько трафика CS2 расходует за час?",
+  "Valve gives no official number. Players who measured it report roughly 150 to {size} for an hour of play. Other programs on the PC usually use far more than the game, which is why Game only mode keeps them on your home connection.": "Официальной цифры у Valve нет. Игроки, которые это замеряли, пишут примерно о 150–{size} за час игры. Остальные программы на ПК обычно тратят намного больше, чем игра, поэтому режим Game only оставляет их на домашнем интернете.",
+  "Is USB tethering better than a hotspot for gaming?": "USB tethering лучше точки доступа для игры?",
+  "Usually, yes. A cable takes Wi-Fi out of the path between the PC and the phone, so there is one less thing that can add lag, and the phone charges while you play.": "Обычно да. Кабель убирает Wi-Fi из пути между ПК и телефоном, так что одним источником лагов становится меньше, а телефон заряжается, пока вы играете.",
+  "Does the server see that I play on mobile data?": "Видит ли сервер, что я играю на мобильном интернете?",
+  "It sees your carrier's IP, like for any player on a phone connection. It doesn't see your home IP.": "Он видит IP оператора, как у любого игрока с мобильным подключением. Ваш домашний IP он не видит."
+ },
  "cs2-region-picker": {
-  "CS2 server picker and region picker: change your region": "Выбор сервера и региона CS2: как сменить регион",
-  "Pick your CS2 matchmaking region: block the ones you don't want and see the ping of each. Free Windows app, one firewall rule for cs2.exe on Valve relays.": "Выберите регион матчмейкинга CS2: блокируйте ненужные и смотрите пинг каждого. Бесплатное приложение, одно правило брандмауэра для cs2.exe на реле Valve.",
+  "CS2 server picker and region picker: change your region": "CS2 server picker: выбор сервера и региона в ММ",
   "CS2 server picker: how to change your region in CS2, free": "Выбор сервера CS2: как сменить регион в CS2, бесплатно",
   "CS2 has no region setting: matchmaking picks the region for you, by ping. The Regions page of CS2 IP Changer lists Valve's matchmaking regions with the ping of each one, and blocks the ones you turn off. Premier, Competitive, Casual, Deathmatch and Wingman then only find matches in the regions you left on.": "В CS2 нет настройки региона: матчмейкинг выбирает его сам, по пингу. Страница Regions в CS2 IP Changer показывает регионы матчмейкинга Valve с пингом каждого и блокирует те, что вы отключили. Режимы «Премьер», «Соревновательный», «Обычный», «Бой насмерть» и «Напарники» тогда ищут матчи только в регионах, которые вы оставили.",
   "How CS2 picks your region": "Как CS2 выбирает ваш регион",
@@ -360,8 +408,6 @@
   "No. It picks the regions your matches are played in, not the players. Players from anywhere can queue into a region they can reach.": "Нет. Приложение выбирает регионы, где играются ваши матчи, а не игроков. Игроки из любых стран могут встать в очередь в регион, до которого дотягиваются.",
   "Do I need the phone for Regions?": "Нужен ли телефон для Regions?",
   "No. Regions works with or without the phone and doesn't depend on protection. The ping is measured through the phone while protection is on, and through your home connection when it's off.": "Нет. Regions работает с телефоном и без и не зависит от защиты. Пинг измеряется через телефон, пока защита включена, и через домашнее соединение, когда она выключена.",
-  "Does forcing a region get me banned?": "Забанят ли меня за принудительный регион?",
-  "The Regions page doesn't touch the game, its files or its memory. It adds one outbound Windows Firewall rule that stops cs2.exe from reaching Valve's relays in the regions you turned off, so to the game it looks like a bad connection to those relays. We can't speak for Valve and can't promise anything about how they treat it.": "Страница Regions не трогает игру, её файлы и память. Она добавляет одно исходящее правило Windows Firewall, которое не даёт cs2.exe достучаться до реле Valve в отключённых регионах, так что для игры это выглядит как плохое соединение с этими реле. За Valve мы отвечать не можем и ничего не обещаем насчёт того, как они к этому отнесутся.",
   "Does it change community servers or my friends list?": "Меняет ли это комьюнити-серверы или список друзей?",
   "No. The rule only covers cs2.exe and only Valve's relay IPs. Community servers, Steam and friends work as before.": "Нет. Правило касается только cs2.exe и только IP реле Valve. Комьюнити-серверы, Steam и друзья работают как раньше.",
   "How do I undo it?": "Как это отменить?",
@@ -378,7 +424,34 @@
   "Start CS2 and queue": "Запустите CS2 и вставайте в очередь",
   "CS2 measures the regions when it starts, so start it after the change. If your slowest region left on is above CS2's Max Acceptable Matchmaking Ping, the page tells you which number to set in Settings > Game.": "CS2 измеряет регионы при запуске, поэтому запускайте её после изменения. Если самый медленный из оставленных регионов выше CS2 Max Acceptable Matchmaking Ping, страница подскажет, какое число задать в Settings > Game.",
   "Undo it": "Отмена",
-  "Click Allow all (block off) on Regions. CS2IPChanger.exe --restore also removes the rule.": "Нажмите Allow all (block off) на Regions. CS2IPChanger.exe --restore тоже удаляет правило."
+  "Click Allow all (block off) on Regions. CS2IPChanger.exe --restore also removes the rule.": "Нажмите Allow all (block off) на Regions. CS2IPChanger.exe --restore тоже удаляет правило.",
+  "Free CS2 server picker for Windows: block the matchmaking regions you don't want and see each one's ping. One firewall rule for cs2.exe, easy to undo.": "Бесплатный server picker для CS2 на Windows: блокируйте ненужные регионы матчмейкинга и смотрите пинг каждого. Одно правило для cs2.exe, легко отменить.",
+  "CS2 server pickers compared": "Сравнение server picker для CS2",
+  "Every CS2 server picker works the same way underneath: Windows Firewall rules that stop the game from reaching Valve's relays (Steam Datagram Relay) in the regions you don't want. None of them changes the game. They differ in where they run, how they keep the relay list up to date and what else they do. Checked on {date}, on each project's own page:": "Все server picker для CS2 устроены одинаково: правила Windows Firewall не дают игре дотянуться до реле Valve (Steam Datagram Relay) в ненужных вам регионах. Игру никто из них не меняет. Различаются они тем, где работают, как обновляют список реле и что умеют ещё. Проверено {date} на странице каждого проекта:",
+  "Runs on": "Работает на",
+  "Latest release on {date}": "Последний релиз: {date}",
+  "What sets it apart": "Чем отличается",
+  "CS2 IP Changer (the Regions page)": "CS2 IP Changer (страница Regions)",
+  "Windows 10 and 11": "Windows 10 и 11",
+  "{date}": "{date}",
+  "One rule, for cs2.exe only. Ping for each region, measured the way you'll play. Shortcuts for the closest 3, one continent or a ping limit. Reads Valve's list again every hour.": "Одно правило, только для cs2.exe. Пинг каждого региона, измеренный так, как вы будете играть. Быстрый выбор: 3 ближайших, один континент или предел по пингу. Каждый час заново читает список Valve.",
+  "Server Picker X": "Server Picker X",
+  "Windows and Linux": "Windows и Linux",
+  "Open source (GPL-3.0). Also for Deadlock and other Steam Datagram Relay games.": "Открытый код (GPL-3.0). Подходит и для Deadlock, и для других игр на Steam Datagram Relay.",
+  "<a1>CS2 Server Picker</a1>, by FN-FAL113": "<a1>CS2 Server Picker</a1>, автор FN-FAL113",
+  "Windows": "Windows",
+  "Open source (GPL-3.0), and the one with the most stars on GitHub. Its author now marks it as legacy and points to Server Picker X.": "Открытый код (GPL-3.0), больше всего звёзд на GitHub. Автор теперь называет его устаревшим и отсылает к Server Picker X.",
+  "<a1>CS2 Region Picker</a1>, by oqyh": "<a1>CS2 Region Picker</a1>, автор oqyh",
+  "Open source (GPL-3.0). You pick the regions on a world map.": "Открытый код (GPL-3.0). Регионы выбираются на карте мира.",
+  "<a1>CS2 MM Server Picker</a1>, by Jyben": "<a1>CS2 MM Server Picker</a1>, автор Jyben",
+  "Source on GitHub, with builds for Windows and Linux.": "Исходники на GitHub, есть сборки для Windows и Linux.",
+  "If all you want is to pick regions, or you play on Linux, Server Picker X is a good choice. CS2 IP Changer makes sense when you also want what comes with it: a block that only touches cs2.exe, the ping of each region before you choose, and the rest of the app (the Steam account switcher, the config manager, and your phone's IP on community servers).": "Если вам нужен только выбор регионов или вы играете на Linux, Server Picker X подойдёт. CS2 IP Changer имеет смысл, когда нужно и то, что идёт в комплекте: блокировка, которая трогает только cs2.exe, пинг каждого региона до выбора и остальное в приложении (переключатель аккаунтов Steam, менеджер конфигов и IP вашего телефона на комьюнити-серверах).",
+  "What is a CS2 server picker?": "Что такое server picker для CS2?",
+  "A Windows tool that chooses which regions CS2 matchmaking can put you in. CS2 has no region setting, so a server picker blocks Valve's relays in the regions you don't want with Windows Firewall, and matchmaking only finds matches in the regions left on. In CS2 IP Changer it is the Regions page.": "Программа для Windows, которая выбирает, в каких регионах матчмейкинг CS2 может вас искать. В CS2 нет настройки региона, поэтому server picker блокирует через Windows Firewall реле Valve в ненужных регионах, и матчмейкинг ищет матчи только в оставшихся. В CS2 IP Changer это страница Regions.",
+  "Is a CS2 server picker safe? Can it get you VAC banned?": "Безопасен ли server picker для CS2? Можно ли из-за него получить VAC-бан?",
+  "A server picker doesn't touch the game, its files or its memory. The Regions page adds one outbound Windows Firewall rule that stops cs2.exe from reaching Valve's relays in the regions you turned off, so to the game it looks like a bad connection to those relays. Players have used firewall server pickers since CS:GO. We can't speak for Valve and can't promise anything about how they treat it.": "Server picker не трогает игру, её файлы и память. Страница Regions добавляет одно исходящее правило Windows Firewall, которое не пускает cs2.exe к реле Valve в отключённых регионах, так что для игры это выглядит как плохая связь с этими реле. Игроки пользуются такими server picker на основе брандмауэра ещё со времён CS:GO. Мы не можем говорить за Valve и ничего не обещаем насчёт того, как они к этому относятся.",
+  "Does a server picker lower my ping?": "Снижает ли server picker пинг?",
+  "It doesn't make any server faster. It keeps matchmaking away from regions that are far from you, so you stop landing on high-ping servers. The Regions page shows the ping of each region, so you know what you are choosing.": "Ни один сервер он быстрее не делает. Он не даёт матчмейкингу искать вам матч в далёких регионах, так что вы перестаёте попадать на серверы с высоким пингом. Страница Regions показывает пинг каждого региона, так что вы знаете, что выбираете."
  },
  "hide-ip-cs2": {
   "Hide your home IP from CS2 community servers without a VPN": "Скрыть домашний IP от серверов CS2 без VPN",
@@ -424,7 +497,11 @@
   "Can a community server admin see my IP?": "Видит ли админ комьюнити-сервера мой IP?",
   "Yes. The server needs your IP to send you game packets, so the admins and their plugins can see it, log it and ban it. With your phone's mobile data, what they get is your carrier's IP.": "Да. Серверу нужен ваш IP, чтобы слать игровые пакеты, поэтому админы и их плагины могут его видеть, логировать и банить. С мобильным интернетом телефона они получают IP вашего оператора.",
   "What does cl_hideserverip do?": "Что делает cl_hideserverip?",
-  "It is a console setting for streamers: with <code1/>, CS2 hides the IP of the server you are on from your own screen (console and status), so viewers can't see it. It doesn't hide your IP: the server still sees your home IP. To hide that, the server has to see another connection, like <a2>your phone's mobile data</a2>.": "Это консольная настройка для стримеров: с <code1/> CS2 скрывает на вашем экране IP сервера, на котором вы играете (консоль и status), чтобы зрители его не видели. Ваш IP она не скрывает: сервер всё равно видит ваш домашний IP. Чтобы скрыть его, сервер должен видеть другое соединение, например <a2>мобильный интернет вашего телефона</a2>."
+  "It is a console setting for streamers: with <code1/>, CS2 hides the IP of the server you are on from your own screen (console and status), so viewers can't see it. It doesn't hide your IP: the server still sees your home IP. To hide that, the server has to see another connection, like <a2>your phone's mobile data</a2>.": "Это консольная настройка для стримеров: с <code1/> CS2 скрывает на вашем экране IP сервера, на котором вы играете (консоль и status), чтобы зрители его не видели. Ваш IP она не скрывает: сервер всё равно видит ваш домашний IP. Чтобы скрыть его, сервер должен видеть другое соединение, например <a2>мобильный интернет вашего телефона</a2>.",
+  "Why is my VPN blocked on CS2 community servers?": "Почему мой VPN блокируют на комьюнити-серверах CS2?",
+  "Many community servers run anti-VPN plugins. They check each player's IP against lists of VPN and datacenter addresses and kick or ban the ones on them. A phone's mobile data isn't on those lists: it is an ordinary connection from your carrier.": "На многих комьюнити-серверах стоят анти-VPN плагины. Они сверяют IP каждого игрока со списками адресов VPN и дата-центров и кикают или банят тех, кто в них попал. Мобильного интернета телефона в этих списках нет: это обычное соединение от вашего оператора.",
+  "What is a VPN alternative for CS2?": "Чем заменить VPN в CS2?",
+  "Your phone's mobile data. The server sees your carrier's IP and not your home IP, with no VPN server in between and no subscription. You can play on the phone's hotspot by hand, or let CS2 IP Changer send only CS2 and Steam through the phone, with a kill switch and a new IP in one click.": "Мобильным интернетом телефона. Сервер видит IP оператора, а не ваш домашний IP, без VPN-сервера посередине и без подписки. Можно играть через точку доступа телефона вручную, а можно доверить CS2 IP Changer: он пустит через телефон только CS2 и Steam, с kill switch и новым IP в один клик."
  },
  "index": {
   "CS2 IP Changer: CS2 IP ban bypass with your phone's data": "CS2 IP Changer: обход бана по IP в CS2 через телефон",
@@ -646,7 +723,8 @@
   "0 of 70": "0 из 70",
   "<b1>VirusTotal: <c2/>0 of 70<c3/> flag it.</b1> The latest release, scanned when it comes out. <a4>See the report</a4>": "<b1>VirusTotal: <c2/>0 из 70<c3/> антивирусов помечают его.</b1> Последний релиз, проверенный при выходе. <a4>Открыть отчёт</a4>",
   "built by <b1>GitHub Actions</b1> · source Sepd0x/cs2-ip-changer · sha256 <c2/>cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b": "собрано <b1>GitHub Actions</b1> · исходный код Sepd0x/cs2-ip-changer · sha256 <c2/>cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b",
-  "<b1>Built in public.</b1> <span2><c3/>{version}<c4/>, sha256 <c5/>cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b<c6/>. </span2>GitHub Actions builds every release from the public source, with an attestation you can check.": "<b1>Всё в открытую.</b1> <span2><c3/>{version}<c4/>, sha256 <c5/>cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b<c6/>. </span2>GitHub Actions собирает каждый релиз из открытого кода, с аттестацией, которую можно проверить."
+  "<b1>Built in public.</b1> <span2><c3/>{version}<c4/>, sha256 <c5/>cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b<c6/>. </span2>GitHub Actions builds every release from the public source, with an attestation you can check.": "<b1>Всё в открытую.</b1> <span2><c3/>{version}<c4/>, sha256 <c5/>cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b<c6/>. </span2>GitHub Actions собирает каждый релиз из открытого кода, с аттестацией, которую можно проверить.",
+  "Ping, lag and how much data a match uses.": "Пинг, лаги и сколько трафика уходит за матч."
  },
  "is-it-safe": {
   "Is CS2 IP Changer safe? What it changes and how to check it": "Безопасен ли CS2 IP Changer? Что меняет и как проверить",

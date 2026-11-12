@@ -58,3 +58,8 @@ jobs:
       # the site in pt-br, es and ru: every English text translated, no language page older than the English
       - name: Check the site's languages
         run: node tools/site-i18n.mjs --check
+
+      # what search engines read: every guide in the home list, the sitemap and llms.txt, titles and descriptions that fit,
+      # valid structured data, the IndexNow key (no browser needed)
+      - name: Check the site for search engines
+        run: node --test tools/site-seo.test.mjs
