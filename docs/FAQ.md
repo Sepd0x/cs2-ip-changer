@@ -93,4 +93,4 @@ Routes and firewall rules are system settings, and Windows only lets admins chan
 `-condebug` makes CS2 write its console to `console.log`, which is how the app sees a kick or a ban. `-conclearlog` empties that file each time CS2 starts, so it doesn't grow forever. The app adds both when it opens CS2. If you start CS2 from Steam, add them to the launch options (CS2 > Properties).
 
 **What happens when I close the app?**<br>
-Protection stays on, so closing the app can't leak your IP. If you'd rather have it turn off, there's a setting for that. Until a phone has been connected once, CS2 isn't locked, so trying the app without a phone never leaves CS2 unable to connect at home.
+Protection stays on, so closing the app can't leak your IP. If you'd rather have it turn off, there's a setting for that. Until a phone has been connected once, CS2 isn't locked, so trying the app without a phone never leaves CS2 unable to connect at home. If the app is ended in Task Manager or the PC loses power while Whole PC is on, websites may stop loading once the phone is unplugged: open the app once (or run `CS2IPChanger.exe --restore`) and it puts that back.

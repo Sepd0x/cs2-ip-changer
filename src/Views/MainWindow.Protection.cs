@@ -30,6 +30,7 @@ public partial class MainWindow
     {
         var changed = NoteCs2(s, rep.Cs2Found);
         if (rep.LegacyCleaned && !s.LegacyCleaned) { s.LegacyCleaned = true; changed = true; }
+        if (rep.RulesRenamed && !s.RulesRenamed) { s.RulesRenamed = true; changed = true; }
         return changed;
     }
 
@@ -365,6 +366,15 @@ public partial class MainWindow
         // Hero
         var held = n == 0 || rep.KillSwitchOk ? "warn" : "bad";
         var cs2Off = _s.LockCs2 && rep.Cs2LockOk == false;
+        // Blocker 1: where it would say "Protected", it says that mobile data can't be confirmed (nothing is blocked for it)
+        var unconfirmed = MobileUnconfirmedNow(rep);
+        if (unconfirmed != _unconfirmedSaid) { _unconfirmedSaid = unconfirmed; if (unconfirmed) Log.Warn(UnconfirmedLog); }
+        void Good(string title, string sub)
+        {
+            if (!unconfirmed) { SetHero("good", title, sub); return; }
+            var (warnTitle, warnSub) = UnconfirmedHero();
+            SetHero("warn", warnTitle, warnSub);
+        }
         if (rep.FirewallProblem != null)
             SetHero("bad", Loc.T("Windows Firewall is off"), rep.FirewallProblem + ". " + FirewallHint(Loc.T("there is no kill switch")));
         else if (rep.Distrust == Distrust.Unchecked)
@@ -394,7 +404,7 @@ public partial class MainWindow
                     + (rep.EffectiveMode == "servers" ? " " + Loc.T("The rest of the PC works as usual.") : "")
                 : Loc.T("The block on your servers isn't confirmed, so they could see your home IP. Don't join until Checks are green."));
         else if (rep.EffectiveMode == "all" && rep.FullModeOk && (n == 0 || rep.KillSwitchOk) && !cs2Off)
-            SetHero("good", _s.Mode == "all" ? Loc.T("Protected · whole PC") : Loc.T("Protected · whole PC (CS2 open)"), Loc.T("The PC's traffic and DNS go out through the phone, and IPv6 is blocked. CS2 and your servers only see the phone's IP."));
+            Good(_s.Mode == "all" ? Loc.T("Protected · whole PC") : Loc.T("Protected · whole PC (CS2 open)"), Loc.T("The PC's traffic and DNS go out through the phone, and IPv6 is blocked. CS2 and your servers only see the phone's IP."));
         else if (rep.EffectiveMode == "all" && !rep.FullModeOk)
             SetHero(held, Loc.T("Whole PC hasn't switched over"), FullModeProblem(rep) + "." + (n > 0 && rep.KillSwitchOk ? " " + Loc.T("Servers on your Servers page are still protected.") : "") + " " + Loc.T("Check the Log."));
         else if (n == 0)
@@ -402,7 +412,7 @@ public partial class MainWindow
                 ? Loc.T("The phone is connected. While CS2 is open, the whole PC goes through the phone and every server sees its IP.")
                 : Loc.T("The phone is connected. Add servers on the Servers page, or pick \"Whole PC\" under What goes through the phone."));
         else if (rep.KillSwitchOk && routesOk == n && !cs2Off)
-            SetHero("good", Loc.T("Protected"), ProtectedText(rep));
+            Good(Loc.T("Protected"), ProtectedText(rep));
         else if (!rep.KillSwitchOk)
             SetHero("bad", Loc.T("Protection incomplete"), Loc.T("The firewall block was not confirmed, so servers on your Servers page could see your home IP. Check the Log."));
         else
@@ -881,7 +891,8 @@ public partial class MainWindow
         var homeRef = h ?? _s.LastHomeIp;
         // Without a home network at all (only the phone), there is no home IP to compare with: a home IP kept from before, or one
         // read through the phone, says nothing (9 nov.: "the phone is sharing your Wi-Fi" with the PC's Wi-Fi off)
-        var same = SameAsHome(e, homeRef, rep?.HasHome);
+        // ... except one measured through a home connection (blocker 1): Android shares its Wi-Fi over USB tethering, so equal is a leak
+        var same = SameAsHome(e, homeRef, rep?.HasHome, h != null || _s.LastHomeIpFromHome);
         // Protection off (or No phone): the phone is still checked for when protection is on, but nothing is blocked now
         var unprotected = rep?.Unprotected == true;
         if (e != null)
@@ -931,7 +942,8 @@ public partial class MainWindow
         {
             if (LookUpHome(h, _homePublic, cached: false)) _homeInfo = await Net.Lookup(h, homeIf);
             _homeCached = false;
-            if (_s.LastHomeIp != h) { _s.LastHomeIp = h; SaveSettings(); }
+            // h is only ever measured through a home connection (HomeIf), never a phone's
+            if (_s.LastHomeIp != h || !_s.LastHomeIpFromHome) { _s.LastHomeIp = h; _s.LastHomeIpFromHome = true; SaveSettings(); }
         }
         else if (_s.LastHomeIp != null)
         {
@@ -966,8 +978,34 @@ public partial class MainWindow
         ApplyBannedIpBlock();   // the IP the servers see may have changed
     }
 
-    /// <summary>The phone's IP is the home IP, only when there is a home network (no report yet: as before, it counts).</summary>
-    public static bool SameAsHome(string phoneIp, string homeIp, bool? hasHome) => phoneIp != null && homeIp != null && phoneIp == homeIp && hasHome != false;
+    /// <summary>
+    /// The phone's IP is the home IP: when there is a home network (no report yet: as before, it counts), or, without one, when the home
+    /// IP was measured through a home connection (<paramref name="homeIpFromHome"/>; one saved before 1.0.0 may be the phone's own, 9 nov.).
+    /// </summary>
+    public static bool SameAsHome(string phoneIp, string homeIp, bool? hasHome, bool homeIpFromHome = false) =>
+        phoneIp != null && homeIp != null && phoneIp == homeIp && (hasHome != false || homeIpFromHome);
+
+    /// <summary>
+    /// Audit blocker 1 (13 nov.): nothing can tell whether the phone shares mobile data or its own Wi-Fi. An Android by cable shares its
+    /// Wi-Fi over USB tethering when it is on one, and here the app can't see the phone's Wi-Fi (USB debugging not allowed yet), the PC
+    /// has no home network to compare IPs with, and no home IP was ever measured through a home connection. Status says so instead of
+    /// "Protected". Not an iPhone (it shares only mobile data), not the hotspot (the PC is on the phone's own network). An adapter only
+    /// taken for a phone by its driver name (A-09: "UsbNcm Host Device" is also some USB Ethernet adapters) lands here too.
+    /// </summary>
+    public static bool MobileUnconfirmed(bool? hasHome, Adapter exit, bool iphone, bool adbReady, bool homeIpFromHome) =>
+        hasHome == false && exit is { IsPhone: true, IsWifi: false } && !iphone && !PhoneUsb.IsIphone(exit) && !adbReady && !homeIpFromHome;
+
+    bool MobileUnconfirmedNow(GuardReport rep) =>
+        MobileUnconfirmed(rep?.HasHome, rep?.Egress, _iphone || _s.PhoneIsIphone, _phone?.Ready == true, _s.LastHomeIp != null && _s.LastHomeIpFromHome);
+
+    /// <summary>The Status for <see cref="MobileUnconfirmed"/>.</summary>
+    public static (string Title, string Sub) UnconfirmedHero() => (Loc.T("Mobile data not confirmed"),
+        Loc.T("If the phone is on Wi-Fi, it may be sharing your home connection, and the app can't check: USB debugging isn't allowed and the PC has no home network to compare with. Turn off the phone's Wi-Fi, or press Phone setup to allow USB debugging."));
+
+    /// <summary>The Log line for <see cref="MobileUnconfirmed"/> (said once each time it starts).</summary>
+    public const string UnconfirmedLog = "The phone's mobile data can't be confirmed: USB debugging isn't allowed and the PC has no home network to compare IPs with. If the phone's Wi-Fi is on, servers may see your home IP.";
+
+    bool _unconfirmedSaid;
 
     /// <summary>The phone's IP is the home IP. With protection off nothing is blocked: the Log says what to do before turning it on.</summary>
     public static string SameIpText(string ip, bool unprotected) => unprotected

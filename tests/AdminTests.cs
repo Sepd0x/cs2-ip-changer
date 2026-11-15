@@ -10,6 +10,8 @@ static class AdminTests
     const string Kill = "CS2IPChanger TESTE kill";
     const string Prog = "CS2IPChanger TESTE programa";
     const string Fake = "ServerRouteTool v9 - TESTE restore.cmd";
+    // 15 nov. (bloqueador 3): uma regra com o nome novo também tem de sair
+    const string FakeNew = AppIds.RulePrefix + " - TESTE restore.cmd";
     static readonly string[] Ips = { "203.0.113.9", "203.0.113.10" };
     static int _fails;
     static StreamWriter _out;
@@ -97,13 +99,16 @@ static class AdminTests
 
         // 6) A linha do restore.cmd apaga as regras com o nome da app
         Firewall.Apply(Fake, new[] { "203.0.113.99" }, null, null, "Teste do CS2 IP Changer (apagar à vontade)");
-        Check("Regra falsa com o nome da app criada", Firewall.Remaining().Contains(Fake));
-        var ps = Process.Start(new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe"),
-            "-NoProfile -Command \"$r = Get-NetFirewallRule -DisplayName 'ServerRouteTool v9*' -ErrorAction SilentlyContinue; if ($r) { $r | Remove-NetFirewallRule; Write-Host ('Removed ' + @($r).Count + ' rule(s).') } else { Write-Host 'No CS2 IP Changer rules found.' }\"")
+        Firewall.Apply(FakeNew, new[] { "203.0.113.99" }, null, null, "Teste do CS2 IP Changer (apagar à vontade)");
+        Check("Regras falsas com o nome da app criadas (antigo e novo)", Firewall.Remaining().Contains(Fake) && Firewall.Remaining().Contains(FakeNew));
+        // A linha lida do próprio restore.cmd (antes estava copiada aqui à mão e deixava de provar o script real)
+        var cmdLine = File.ReadAllLines(Path.Combine(SecurityTests.Repo(), "tools", "restore.cmd")).First(l => l.Contains("Get-NetFirewallRule"));
+        var psArgs = cmdLine[(cmdLine.IndexOf("powershell.exe\"", StringComparison.Ordinal) + "powershell.exe\"".Length)..].Trim();
+        var ps = Process.Start(new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe"), psArgs)
             { UseShellExecute = false, RedirectStandardOutput = true, CreateNoWindow = true });
         var psOut = await ps.StandardOutput.ReadToEndAsync();
         ps.WaitForExit();
-        Check("restore.cmd apaga a regra", !Firewall.Remaining().Contains(Fake), psOut.Trim());
+        Check("restore.cmd apaga as regras (nome antigo e novo)", !Firewall.Remaining().Contains(Fake) && !Firewall.Remaining().Contains(FakeNew), psOut.Trim());
 
         // 7) Rotas guardadas em disco e o Restore que confirma
         var wifi = Net.Scan().FirstOrDefault(a => a.Up && a.Gateway != null && !a.IsPhone);
@@ -215,9 +220,9 @@ static class AdminTests
 
     static async Task Cleanup()
     {
-        foreach (var n in new[] { Kill, Prog, Fake }) Firewall.Remove(n);
+        foreach (var n in new[] { Kill, Prog, Fake, FakeNew }) Firewall.Remove(n);
         foreach (var rt in (await Net.ListRoutes()).Where(x => x.Prefix == "203.0.113.77/32")) await Net.DeleteRoute(rt);
-        var leftRules = CountStartingWith("CS2IPChanger TESTE") + CountStartingWith(Fake);
+        var leftRules = CountStartingWith("CS2IPChanger TESTE") + CountStartingWith(Fake) + CountStartingWith(FakeNew);
         var leftRoute = (await Net.ListRoutes()).Any(x => x.Prefix == "203.0.113.77/32");
         Check("Limpeza: sem regras nem rota de teste", leftRules == 0 && !leftRoute, $"regras {leftRules}, rota {leftRoute}");
     }

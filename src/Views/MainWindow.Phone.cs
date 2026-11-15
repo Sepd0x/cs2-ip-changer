@@ -877,6 +877,7 @@ public partial class MainWindow
     static string CycleErrorText(string err)
     {
         const string back = "Turned data off but could not turn it back on: ", hand = " (turn it on manually on the phone)";
+        if (err == Adb.Gone) return Loc.T("The phone isn't connected any more (the cable or USB debugging dropped).");
         if (err.StartsWith(Adb.Refused)) return Loc.T("The phone refused the command:") + " " + err[Adb.Refused.Length..];
         if (err.StartsWith(back) && err.EndsWith(hand)) return Loc.F("Turned data off but could not turn it back on: {0} (turn it on manually on the phone)", err[back.Length..^hand.Length]);
         return err;

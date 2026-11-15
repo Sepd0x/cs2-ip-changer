@@ -158,7 +158,7 @@ static class RevisaoETests
             closing.Contains("if (!_s.CleanupOnExit && _protOn)\n        {\n            e.Cancel = true;\n            await KeepAndClose();") && !closing.Contains("if (!_guard.PcOffPhoneApplied) return;")
             && keep.Contains("await _guard.KeepOnClose(Steam.Cs2Running);"), "");
         check("Revisão E1: o Keep tira o DNS e o IPv6 e as rotas 0/1 e 128/1 só com o CS2 fechado (o jogo aberto precisa delas)",
-            onClose.Contains("foreach (var n in Firewall.WholePcRules) if (rules.Error != null || rules.Contains(n)) Firewall.Remove(n);")
+            onClose.Contains("foreach (var n in Firewall.WholePcRules) if (rules.Error != null || Firewall.Has(rules, n)) Firewall.Remove(n);")
             && onClose.Contains("if (!cs2Running) await RemoveSplitRoutes(Net.Scan());") && onClose.Contains("await RestoreMetric();")
             && !onClose.Contains("Firewall.Remove(Firewall.RuleName)") && !onClose.Contains("RemoveAll("), "");
         check("Revisão E1: o kill switch que fica ainda mantém o jogo no arranque seguinte com o CS2 aberto",

@@ -483,7 +483,15 @@ public partial class MainWindow
             : "\n\n" + Loc.T("Change IP gives you a new one."));
 
     HashSet<string> _bannedIpTargets = new();
-    string _bannedIpSig = "?";   // "?" = not applied yet in this run: the first look removes a rule a crash left behind
+    string _bannedIpSig = "?";   // "?" = not applied yet in this run: the first look (with the IP known) removes a rule a crash left behind
+    /// <summary>The banned-IP rule is written one change at a time, the latest one last (A-08).</summary>
+    readonly LatestOnly<Firewall.FwRule> _bannedIpWrite = new();
+
+    /// <summary>
+    /// The first look waits for the IP the servers see: a rule a crash left behind for that IP stays until it is known (removing it first
+    /// left the banned server open until the first IP check, A-08).
+    /// </summary>
+    public static bool BannedIpWaits(bool first, string ip) => first && ip == null;
 
     /// <summary>
     /// Keeps the Firewall rule that blocks UDP to the servers that banned the IP the servers see now (with protection on or off).
@@ -498,12 +506,13 @@ public partial class MainWindow
         var sig = string.Join(",", targets.OrderBy(t => t, StringComparer.Ordinal));
         if (sig == _bannedIpSig) return;
         var first = _bannedIpSig == "?";
+        if (BannedIpWaits(first, ip)) return;
         _bannedIpSig = sig;
         _bannedIpTargets = targets.ToHashSet();
         var rule = Firewall.BannedIpRule(targets);
-        _ = Task.Run(() =>
+        _ = _bannedIpWrite.Run(rule, r =>
         {
-            try { if (rule != null) Firewall.Apply(rule); else Firewall.Remove(Firewall.BannedIpRuleName); }
+            try { if (r != null) Firewall.Apply(r); else Firewall.Remove(Firewall.BannedIpRuleName); }
             catch (Exception ex) { Log.Warn("Could not update the block on servers that banned this IP: " + (ex.InnerException ?? ex).Message); }
         });
         if (rule != null) Log.Warn($"Your IP ({ShownIp(ip)}) was banned on {string.Join(", ", targets)}: the app blocks {(targets.Count == 1 ? "that server" : "those servers")} until the IP changes.");

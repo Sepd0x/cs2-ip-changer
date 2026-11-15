@@ -209,7 +209,7 @@ public static class Uninstall
         var problem = network != null || task != null || o.Registry != null || files.ProgramDataRefused || files.DataRefused || files.AppRefused;
         var lines = new List<string>
         {
-            network == null ? (task == null ? Loc.T("The Firewall rules, the routes and the Start with Windows task are gone.") : Loc.T("The Firewall rules and routes are gone.")) : Loc.F("Couldn't remove: {0}.", network) + " " + Loc.T("Restart the PC to clear routes. Rules are in Windows Firewall > Outbound Rules (names start with ServerRouteTool)."),
+            network == null ? (task == null ? Loc.T("The Firewall rules, the routes and the Start with Windows task are gone.") : Loc.T("The Firewall rules and routes are gone.")) : Loc.F("Couldn't remove: {0}.", network) + " " + Loc.F("Restart the PC to clear routes. Rules can be removed in Windows Firewall > Outbound Rules (names start with {0}).", AppIds.RulePrefix),
         };
         if (task != null) lines.Add(task);
         if (o.Registry != null) lines.Add(Loc.F("The entry in Windows Settings > Installed apps couldn't be removed: {0}", o.Registry));

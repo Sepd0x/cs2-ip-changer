@@ -127,7 +127,14 @@ public sealed partial class Settings
     public bool CloseAsked { get; set; }
     public int DefaultPort { get; set; } = 27015;
     public bool LegacyCleaned { get; set; }
+    /// <summary>No Firewall rule named before 1.0.0 ("ServerRouteTool v9 - …") was left after a sync (Guard: until then it looks each sync).</summary>
+    public bool RulesRenamed { get; set; }
     public string LastHomeIp { get; set; }
+    /// <summary>
+    /// LastHomeIp was measured through a home connection (1.0.0). One saved before may be the phone's own IP (9 nov., the PC's Wi-Fi
+    /// off), so only this one is compared with the phone's IP when the PC has no home network now.
+    /// </summary>
+    public bool LastHomeIpFromHome { get; set; }
     public string LastServer { get; set; }                // IP:port of the last server you joined through the app
     public DateTime? LastServerAt { get; set; }
     public string AccountSort { get; set; } = "recent";

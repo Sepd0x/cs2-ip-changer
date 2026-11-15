@@ -59,7 +59,7 @@ static class RegionTests
         const string cs2 = @"C:\Games\Steam\steamapps\common\Counter-Strike Global Offensive\game\bin\win64\cs2.exe";
         var rule = Regions.Rule(regions, new[] { "frankfurt-germany", "madrid-spain" }, cs2);
         var expected = fr.RelayIps.Concat(R("madrid-spain").RelayIps).ToHashSet();
-        check("Regiões: regra com o nome da app", rule?.Name == Firewall.RegionsRuleName && rule.Name.StartsWith("ServerRouteTool v9"));
+        check("Regiões: regra com o nome da app", rule?.Name == Firewall.RegionsRuleName && rule.Name.StartsWith(AppIds.RulePrefix + " - "));
         check("Regiões: regra só para o cs2.exe", rule?.Program == cs2);
         check("Regiões: regra com os IPs certos, nem mais nem menos", rule != null && rule.RemoteIps.ToHashSet().SetEquals(expected), $"{rule?.RemoteIps.Count} de {expected.Count}");
         check("Regiões: regra bloqueia de qualquer origem, qualquer protocolo", rule?.AllowLocalIp == null && rule.LocalAddresses == null && rule.Protocol == Firewall.NET_FW_IP_PROTOCOL_ANY && rule.RemotePorts == null);

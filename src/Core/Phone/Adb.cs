@@ -361,15 +361,38 @@ public static class Adb
     }
 
     static string _used;
-    static Task<ProcResult> Run(string adb, string args, int timeout = 12000)
+    static async Task<ProcResult> Run(string adb, string args, int timeout = 12000)
     {
         // The copy in %ProgramData%\CS2IPChanger\adb was checked when it was made; adb runs every few seconds, so the folder is checked
         // again each time (programs without admin rights must not have been able to swap a DLL since).
         if (Elevated && !AdminOnly(Path.GetDirectoryName(adb)!))
-            return Task.FromResult(new ProcResult(-1, "The ADB folder can be changed by programs without admin rights, so adb didn't run. Restart the app."));
+            return new ProcResult(-1, "The ADB folder can be changed by programs without admin rights, so adb didn't run. Restart the app.");
         _used = adb;
-        return Proc.Run(adb, args, timeout);
+        var r = await Proc.Run(adb, args, timeout);
+        return r with { Output = MaskSerial(r.Output, args) };
     }
+
+    static readonly System.Text.RegularExpressions.Regex SerialArg = new(@"(?:^|\s)-s\s+(\S+)", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    /// <summary>
+    /// adb's answer without the phone's serial number (B-02, 13 nov.): an error ("device 'R58M…' not found") or a timeout repeats the
+    /// "-s SERIAL" it was given, and from there it reached the Phone box, a toast, the Log and the bug report. The app never shows it.
+    /// </summary>
+    public static string MaskSerial(string output, string args)
+    {
+        var m = SerialArg.Match(args ?? "");
+        if (output == null || !m.Success || m.Groups[1].Value.Length < 3) return output;
+        return output.Replace(m.Groups[1].Value, "(phone)", StringComparison.Ordinal);
+    }
+
+    static readonly System.Text.RegularExpressions.Regex GoneLine = new(@"error: (device .*not found|no devices|device offline|device unauthorized)",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    /// <summary>adb couldn't reach the phone at all (the cable came out, or USB debugging dropped): the phone didn't refuse anything.</summary>
+    public static bool IsGone(string output) => output != null && GoneLine.IsMatch(output);
+
+    /// <summary><see cref="Cycle"/>'s answer when the phone went away before the command (nothing changed on the phone).</summary>
+    public const string Gone = "The phone isn't connected any more (the cable or USB debugging dropped).";
 
     /// <summary>On exit: an adb server started by the app runs with its admin rights and keeps the adb folder locked, so it is
     /// stopped. One the app never talked to (Android Studio's, say) is left alone.</summary>
@@ -469,9 +492,18 @@ public static class Adb
     // Wi-Fi network. The battery is last: when its grep finds nothing, no line before it moves.
         var q = await Run(adb, $"-s {serial} shell \"getprop ro.product.model; getprop gsm.operator.alpha; getprop gsm.network.type; getprop ro.product.brand; getprop ro.build.version.release; dumpsys battery | grep -m1 level; " +
             "echo ---; settings get global wifi_on; cmd wifi status 2>/dev/null | grep -m1 -i 'connected'\"");
-        var all = q.Output.Replace("\r", "").Split('\n');
+        return ParseStatus(serial, state, q.Output);
+    }
+
+    /// <summary>
+    /// The status shell's answer. With no "---" it isn't the answer (an adb error, a timeout: the cable came out between "adb devices"
+    /// and this): nothing is read from it, so an error never shows as the phone's model (B-02), and the Wi-Fi is unknown (kept as before).
+    /// </summary>
+    public static PhoneInfo ParseStatus(string serial, string state, string output)
+    {
+        var all = (output ?? "").Replace("\r", "").Split('\n');
         var cut = Array.FindIndex(all, l => l.Trim() == "---");
-        var lines = (cut >= 0 ? all[..cut] : all).Select(l => l.Trim()).ToArray();
+        var lines = (cut >= 0 ? all[..cut] : Array.Empty<string>()).Select(l => l.Trim()).ToArray();
         string L(int i) => i < lines.Length ? lines[i] : null;
         int? battery = null;
         var lv = L(5);
@@ -480,7 +512,7 @@ public static class Adb
         var net = L(2)?.Split(',').FirstOrDefault(s => !string.IsNullOrWhiteSpace(s) && s != "Unknown");
         // Not q.Ok: with Wi-Fi off the last grep finds nothing and the shell exits 1, though the answer is right (seen on a Samsung, 29 Oct).
         // An adb error has no "---", so ParseWifi still gives unknown for it.
-        var (wifiOn, ssid, connected) = ParseWifi(q.Output);
+        var (wifiOn, ssid, connected) = ParseWifi(output);
         return new PhoneInfo(serial, state, L(0), carrier, PrettyNet(net), battery, wifiOn == true, ssid, wifiOn == true ? connected : false, wifiOn == null, L(3), L(4));
     }
 
@@ -556,6 +588,8 @@ public static class Adb
             on = "svc data enable";
         }
         var r1 = await shell(off);
+        // The phone went away (not "refused"): no fallback to airplane mode, nothing changed on the phone
+        if (!r1.Ok && IsGone(r1.Output)) return (Gone, method);
         if (!r1.Ok || r1.Output.Contains("Exception") || r1.Output.Contains("not found"))
         {
             // On some Android versions "svc data" is not available: try airplane mode.

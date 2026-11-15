@@ -2,8 +2,9 @@ namespace SRT.Core;
 
 /// <summary>
 /// The names the app is known by: its exe, its folders and files, its command line, its Firewall rules and its User-Agent.
-/// They never change between versions: an older copy, the update, the Install copy, Windows' Uninstall button and
-/// tools/restore.cmd all count on them (tests/Untangle12Tests.cs checks the csproj and restore.cmd against these).
+/// An older copy, the update, the Install copy, Windows' Uninstall button and tools/restore.cmd all count on them
+/// (tests/Untangle12Tests.cs checks the csproj and restore.cmd against these). Only the Firewall rules were renamed (1.0.0), with
+/// the old names still read and removed (<see cref="LegacyRulePrefixes"/>); the rest never changes.
 /// </summary>
 public static class AppIds
 {
@@ -78,8 +79,14 @@ public static class AppIds
         public static string ForUpdate(string state) => IsUpdateState(state) ? Updated + " " + state : Updated;
     }
 
-    /// <summary>Every Firewall rule of the app starts with this (since alpha.1; tools/restore.cmd removes them by it too).</summary>
-    public const string RulePrefix = "ServerRouteTool v9";
+    /// <summary>Every Firewall rule of the app starts with this and " - " (1.0.0; tools/restore.cmd removes them by it too).</summary>
+    public const string RulePrefix = "CS2 IP Changer";
+
+    /// <summary>
+    /// What the rules started with before 1.0.0 (alpha.1 to beta.13). Never written again; read and removed everywhere the app reads
+    /// or removes its rules, and each rule the app writes takes its old copy out once the new one is in place (Firewall.Apply).
+    /// </summary>
+    public static readonly string[] LegacyRulePrefixes = { "ServerRouteTool v9" };
 
     /// <summary>The app's own requests (GitHub releases, the public IP check).</summary>
     public const string UserAgent = Name + "/0.1";

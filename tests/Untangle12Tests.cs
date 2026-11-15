@@ -552,9 +552,12 @@ static class Untangle12Tests
         check("B3: o update usa .new.exe e .old com o mesmo nome", AppIds.NewExeName == "CS2IPChanger.new.exe" && AppIds.ExeName + AppIds.OldSuffix == "CS2IPChanger.exe.old", "");
 
         var cmd = File.ReadAllText(Path.Combine(repo, "tools", "restore.cmd"));
-        check("B3: o restore.cmd apaga as regras com o mesmo prefixo da app", cmd.Contains($"-DisplayName '{AppIds.RulePrefix}*'"), "");
+        // 15 nov. (bloqueador 3): o prefixo novo e os de antes da 1.0.0, todos no restore.cmd
+        check("B3: o restore.cmd apaga as regras com o mesmo prefixo da app (o novo e os antigos)",
+            cmd.Contains($"-DisplayName '{AppIds.RulePrefix} - *'") && AppIds.LegacyRulePrefixes.All(p => cmd.Contains($"'{p}*'")), "");
         check("B3: todas as regras da app começam pelo prefixo", new[] { Firewall.RuleName, Firewall.EchoRuleName, Firewall.Cs2RuleName, Firewall.DnsUdpRuleName,
-            Firewall.DnsTcpRuleName, Firewall.Ipv6RuleName, Firewall.RegionsRuleName }.All(n => n.StartsWith(AppIds.RulePrefix + " - ")) && Firewall.RuleName == "ServerRouteTool v9 - kill switch", "");
+            Firewall.DnsTcpRuleName, Firewall.Ipv6RuleName, Firewall.RegionsRuleName, Firewall.BannedIpRuleName }.All(n => n.StartsWith(AppIds.RulePrefix + " - "))
+            && Firewall.RuleName == "CS2 IP Changer - kill switch", "");
 
         check("B3: a cópia nova recebe o estado da proteção depois de --updated",
             AppIds.Args.ForUpdate(AppIds.Args.UpdateState(true)) == "--updated --on" && AppIds.Args.ForUpdate(AppIds.Args.UpdateState(false)) == "--updated --off"

@@ -30,7 +30,13 @@ public partial class MainWindow
     int _commandWaiting;
 
     /// <summary>The running command was stopped by a newer one: it returns without doing anything else.</summary>
-    bool CommandCancelled => _commandCts?.IsCancellationRequested == true;
+    bool CommandCancelled => IsCancelled(_command != null, _commandCts?.IsCancellationRequested == true);
+
+    /// <summary>
+    /// Only a command that is running can be cancelled: the last command's Cancel stays on its token until the next one starts, and
+    /// Phone setup's Turn on (outside any command) said "Cancelled." for it (B-01, 13 nov.).
+    /// </summary>
+    public static bool IsCancelled(bool commandRunning, bool tokenCancelled) => commandRunning && tokenCancelled;
 
     /// <summary>Marks a wait inside the running command: while it lasts, a new command stops it instead of being refused.</summary>
     IDisposable CommandWait()

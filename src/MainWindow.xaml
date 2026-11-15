@@ -2362,7 +2362,7 @@
                                 <HeaderedContentControl Grid.Row="5" Style="{StaticResource Group}" Header="Maintenance">
                                     <StackPanel Orientation="Horizontal">
                                         <Button Click="OpenData_Click" Margin="0,0,6,0" Content="Open data folder" ToolTip="Opens the SRT_Dados folder, next to the .exe"/>
-                                        <Button Click="OpenFirewall_Click" Margin="0" Content="Open Windows Firewall" ToolTip="The app's rules are under Outbound Rules, named 'ServerRouteTool'."/>
+                                        <Button Click="OpenFirewall_Click" Margin="0" Content="Open Windows Firewall" ToolTip="The app's rules are under Outbound Rules, named 'CS2 IP Changer'."/>
                                     </StackPanel>
                                 </HeaderedContentControl>
 

@@ -60,6 +60,18 @@ public static partial class Net
         PhonePattern.IsMatch(description ?? "") || PhonePattern.IsMatch(name ?? "")
         || !wifi && gateway != null && phoneUsbIps != null && phoneUsbIps.Contains(gateway);
 
+    /// <summary>
+    /// An adapter with no gateway listed is looked up in the registry (Save mobile data hides the phone's): one named like a phone, a
+    /// Wi-Fi one, and (A-02, 15 nov.) any adapter while the phone's USB tethering addresses are known, because a phone taken only by its
+    /// gateway would otherwise stop being the phone as soon as Save mobile data applies, and come back when it is undone, every minute.
+    /// </summary>
+    public static bool WantsSavedGateway(bool namedLikePhone, bool wifi, IReadOnlyCollection<string> phoneUsbIps) =>
+        namedLikePhone || wifi || phoneUsbIps?.Count > 0;
+
+    /// <summary>The registry's gateway counts for a phone-named or Wi-Fi adapter (as before), and for any other only when it is the phone's.</summary>
+    public static string UseSavedGateway(string saved, bool namedLikePhone, bool wifi, IReadOnlyCollection<string> phoneUsbIps) =>
+        saved == null ? null : namedLikePhone || wifi || phoneUsbIps?.Contains(saved) == true ? saved : null;
+
     static readonly Regex UsbNetPattern = new("USB.*Ethernet|USB.*Network|USB.*GbE|USB.*LAN", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public static bool LooksLikePhone(string description) => PhonePattern.IsMatch(description ?? "");
@@ -91,10 +103,10 @@ public static partial class Net
                 var desc = ni.Description ?? "";
                 // Save mobile data makes the phone's adapter ignore its default route, and Windows then lists no gateway for it.
                 // The app's routes still need it: the one in the registry (DHCP's, or set by hand) if it is on the adapter's network.
-                if (gw == null && addr != null && ni.OperationalStatus == OperationalStatus.Up &&
-                    (PhonePattern.IsMatch(desc) || PhonePattern.IsMatch(ni.Name) || ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211))
-                    gw = SavedGateway(ni.Id, v4.IsDhcpEnabled, addr.Address, addr.IPv4Mask);
                 var wifi = ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211;
+                var named = PhonePattern.IsMatch(desc) || PhonePattern.IsMatch(ni.Name);
+                if (gw == null && addr != null && ni.OperationalStatus == OperationalStatus.Up && WantsSavedGateway(named, wifi, _phoneUsbIps))
+                    gw = UseSavedGateway(SavedGateway(ni.Id, v4.IsDhcpEnabled, addr.Address, addr.IPv4Mask), named, wifi, _phoneUsbIps);
                 var phone = IsPhoneAdapter(desc, ni.Name, wifi, gw, _phoneUsbIps);
                 list.Add(new Adapter
                 {

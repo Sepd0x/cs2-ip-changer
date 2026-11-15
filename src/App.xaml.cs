@@ -62,7 +62,13 @@ public partial class App : Application
             if (Installer.KeepRegistered(Environment.ProcessPath, Updater.Clean(AppInfo.Version)) is string why) Log.Warn("The entry in Windows Settings > Installed apps couldn't be written: " + why);
         });
         DispatcherUnhandledException += OnUiError;
-        AppDomain.CurrentDomain.UnhandledException += (_, a) => { Crash.Write(a.ExceptionObject as Exception, "fatal"); Telemetry.Fatal(a.ExceptionObject as Exception); };
+        AppDomain.CurrentDomain.UnhandledException += (_, a) =>
+        {
+            Crash.Write(a.ExceptionObject as Exception, "fatal");
+            // Whole PC's DNS and IPv6 rules would leave the PC without names once the phone is gone (2 s at most; kill switch and CS2 lock stay)
+            if (Adb.Elevated && !args.Contains(AppIds.Args.Demo)) Guard.RemoveOnCrash(TimeSpan.FromSeconds(2));
+            Telemetry.Fatal(a.ExceptionObject as Exception);
+        };
         if (!args.Contains(AppIds.Args.Demo)) Crash.Started();
         Exit += (_, _) => { Crash.Ended(); Adb.SendPendingOn(); Adb.KillOwnServer(); };
         TaskScheduler.UnobservedTaskException += (_, a) => { Log.Error("Task: " + a.Exception?.GetBaseException().Message); Crash.Write(a.Exception, "task"); Telemetry.Error(a.Exception); a.SetObserved(); };

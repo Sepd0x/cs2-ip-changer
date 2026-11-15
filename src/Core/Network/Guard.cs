@@ -108,6 +108,8 @@ public sealed class GuardReport
     public string Cs2Found { get; init; }
     /// <summary>The rules of v6, v7 and v8 were removed in this sync (Settings.LegacyCleaned).</summary>
     public bool LegacyCleaned { get; init; }
+    /// <summary>No rule named before 1.0.0 is left after this sync (Settings.RulesRenamed).</summary>
+    public bool RulesRenamed { get; init; }
 }
 
 /// <summary>
@@ -471,6 +473,7 @@ public sealed class Guard
         if (mode is "home" or "off") return await HomeMode(s, ips, adapters, candidate, fwProblem, force, mode, distrust);
         var cs2 = s.LockCs2 && (s.PhoneSeen || egress != null) ? Steam.FindCs2(s.Cs2Path) : null;
         var legacyCleaned = false;
+        var rulesRenamed = false;
 
         // 1) Firewall first: there is never a moment when a server is reachable with the home IP.
         var killOk = false;
@@ -519,11 +522,13 @@ public sealed class Guard
             if (dnsOk == true) _warned.Remove("dns");
             if (ipv6Ok == true) _warned.Remove("ipv6");
 
-            if (!s.LegacyCleaned)
+            // v6/v7/v8 once, and the rules named before 1.0.0 until none is left (LegacyCleaned was already true for anyone on a beta)
+            if (!s.LegacyCleaned || !s.RulesRenamed)
             {
-                var n = Firewall.RemoveLegacy();
-                if (n > 0) Log.Ok($"Removed {n} old rules from v6/v7/v8.");
-                legacyCleaned = true;
+                var (n, left) = Firewall.RemoveLegacy();
+                if (n > 0) Log.Ok($"Removed {n} rules of older versions of the app.");
+                legacyCleaned = left >= 0;
+                rulesRenamed = left == 0;
             }
         }
 
@@ -604,6 +609,7 @@ public sealed class Guard
             HasHome = PhoneLink.HasHome(adapters, candidate),
             Cs2Found = cs2 != s.Cs2Path ? cs2 : null,
             LegacyCleaned = legacyCleaned,
+            RulesRenamed = rulesRenamed,
         };
     }
 
@@ -692,14 +698,26 @@ public sealed class Guard
         try
         {
             var rules = Firewall.Remaining();
-            foreach (var n in Firewall.WholePcRules) if (rules.Error != null || rules.Contains(n)) Firewall.Remove(n);
+            foreach (var n in Firewall.WholePcRules) if (rules.Error != null || Firewall.Has(rules, n)) Firewall.Remove(n);
             // The banned-IP block only holds while the app watches the IP: with the app closed the phone's IP can change under it
-            if (rules.Error != null || rules.Contains(Firewall.BannedIpRuleName)) Firewall.Remove(Firewall.BannedIpRuleName);
+            if (rules.Error != null || Firewall.Has(rules, Firewall.BannedIpRuleName)) Firewall.Remove(Firewall.BannedIpRuleName);
             if (!cs2Running) await RemoveSplitRoutes(Net.Scan());
             await RestoreMetric();
         }
         finally { _gate.Release(); }
     });
+
+    /// <summary>
+    /// The app is going down on an error it can't handle (audit blocker 2, 13 nov.): the Whole PC rules go, as with Keep, so the PC
+    /// still resolves names once the phone is gone. The kill switch and the CS2 lock stay. Never waits more than <paramref name="limit"/>
+    /// (the process ends right after). True when every rule was removed in time. <paramref name="remove"/>: Firewall.Remove (tests pass their own).
+    /// </summary>
+    public static bool RemoveOnCrash(TimeSpan limit, Action<string> remove = null)
+    {
+        remove ??= Firewall.Remove;
+        try { return Task.Run(() => { foreach (var n in Firewall.WholePcRules) remove(n); }).Wait(limit); }
+        catch { return false; }
+    }
 
     /// <summary>
     /// Windows is signing out or shutting down and closes the app without waiting: only the Firewall rules <paramref name="names"/>
@@ -991,7 +1009,7 @@ public sealed class Guard
             var rules = Firewall.Remaining();
             // A Firewall that couldn't be read isn't "nothing left": the restore isn't confirmed
             if (rules.Error != null) left.Add("rule \"" + rules.ErrorText + "\"");
-            left.AddRange(rules.Where(n => !keepRegions || !n.StartsWith(Firewall.RegionsRuleName)).Select(n => "rule \"" + n + "\""));
+            left.AddRange(rules.Where(n => !keepRegions || !Firewall.Current(n).StartsWith(Firewall.RegionsRuleName, StringComparison.Ordinal)).Select(n => "rule \"" + n + "\""));
             if (_metricAppliedTo >= 0) left.Add($"the metric of adapter {_metricAppliedTo}");
             if (left.Count == 0) { Log.Ok("Network restored: app rules and routes removed, checked."); return null; }
             var what = string.Join(", ", left.Take(5)) + (left.Count > 5 ? $" and {left.Count - 5} more" : "");

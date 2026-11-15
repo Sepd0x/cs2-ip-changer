@@ -17,7 +17,6 @@ public static class Program
     [STAThread]
     static int Main(string[] args)
     {
-        Loc.Hook();
         // The app's own P/Invokes (kernel32, iphlpapi, wintrust, winmm...) only load from System32, never a copy planted next to the exe.
         // First thing, so LockDllSearch's own call goes through it too. .NET's CoreLib doesn't use this resolver and looks in the exe's
         // folder first (by full path) before and after Main: that is why the folder check below exists.
@@ -25,6 +24,8 @@ public static class Program
         // Windows looks for a DLL loaded by name (UMPDC, WindowsCodecs, DEVOBJ, ncrypt...) in the exe's folder and the current folder
         // first. From here on only System32 counts. What the host loaded before Main isn't covered: that is what the folder check is for.
         var locked = LockDllSearch();
+        // Loads WPF types (a class handler on FrameworkElement): only after the DLL search is locked (A-13). Nothing makes a window before this.
+        Loc.Hook();
         // As admin, a search Windows wouldn't lock is the same hole as the folder below: the app doesn't start. --restore still works.
         // No Log line here: it would write as admin into SRT_Dados before the folder check below.
         if (DllSearchProblem(locked, Adb.Elevated, args) is string dllWhy)

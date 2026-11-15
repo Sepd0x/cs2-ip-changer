@@ -247,7 +247,8 @@ public static class Regions
     /// <paramref name="unreadableCounts"/>: a Firewall that couldn't be read counts as the rule still being there.
     /// </summary>
     public static bool RuleLeft(IEnumerable<string> remaining, bool unreadableCounts = false) =>
-        remaining is FirewallRules { Error: not null } ? unreadableCounts : remaining.Any(n => n.StartsWith(Firewall.RegionsRuleName));
+        remaining is FirewallRules { Error: not null } ? unreadableCounts
+        : remaining.Any(n => Firewall.Current(n).StartsWith(Firewall.RegionsRuleName, StringComparison.Ordinal));
 
     /// <summary>
     /// Whether the 30 s check writes the rule again: regions are blocked and the rule isn't on (not written yet, CS2 not found,

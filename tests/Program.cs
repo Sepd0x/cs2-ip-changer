@@ -661,6 +661,8 @@ Dashboard10NovTests.Run(Check);
 OnboardingTests.Run(Check);
 // 11 nov.: idiomas da app (LocTests.cs)
 LocTests.Run(Check);
+// 15 nov.: auditoria final, rede e proteção: "Protected" com o IP de casa, crash em Whole PC, nome das regras com migração (Rede15NovTests.cs)
+await Rede15NovTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

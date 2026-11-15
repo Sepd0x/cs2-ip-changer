@@ -23,16 +23,61 @@ public sealed class FirewallRules : List<string>
 public static class Firewall
 {
     public const string RuleName = AppIds.RulePrefix + " - kill switch";
-    public const string EchoRuleName = AppIds.RulePrefix + " - teste de IP";
-    public const string Cs2RuleName = AppIds.RulePrefix + " - CS2 so pela saida";
+    public const string EchoRuleName = AppIds.RulePrefix + " - IP check";
+    public const string Cs2RuleName = AppIds.RulePrefix + " - CS2 only through the phone";
     // Whole PC mode: DNS only through the protected connection, and no IPv6 at all (the routes only move IPv4).
-    public const string DnsUdpRuleName = AppIds.RulePrefix + " - DNS UDP so pela saida";
-    public const string DnsTcpRuleName = AppIds.RulePrefix + " - DNS TCP so pela saida";
-    public const string Ipv6RuleName = AppIds.RulePrefix + " - IPv6 bloqueado";
+    public const string DnsUdpRuleName = AppIds.RulePrefix + " - DNS UDP only through the phone";
+    public const string DnsTcpRuleName = AppIds.RulePrefix + " - DNS TCP only through the phone";
+    public const string Ipv6RuleName = AppIds.RulePrefix + " - IPv6 blocked";
     // Regions page: cs2.exe can't reach the Valve relays of the regions you turned off (see Regions.cs).
-    public const string RegionsRuleName = AppIds.RulePrefix + " - CS2 regioes bloqueadas";
+    public const string RegionsRuleName = AppIds.RulePrefix + " - CS2 regions turned off";
     // Servers that banned the IP the PC has now (beta.13): UDP to them is blocked, with protection on or off, until the IP changes.
-    public const string BannedIpRuleName = AppIds.RulePrefix + " - IP banido no servidor";
+    public const string BannedIpRuleName = AppIds.RulePrefix + " - servers that banned this IP";
+
+    /// <summary>Each rule's name before 1.0.0 (alpha.1 to beta.13, partly in Portuguese) and its name now.</summary>
+    static readonly (string Old, string New)[] Renamed =
+    {
+        ("ServerRouteTool v9 - kill switch", RuleName),
+        ("ServerRouteTool v9 - teste de IP", EchoRuleName),
+        ("ServerRouteTool v9 - CS2 so pela saida", Cs2RuleName),
+        ("ServerRouteTool v9 - DNS UDP so pela saida", DnsUdpRuleName),
+        ("ServerRouteTool v9 - DNS TCP so pela saida", DnsTcpRuleName),
+        ("ServerRouteTool v9 - IPv6 bloqueado", Ipv6RuleName),
+        ("ServerRouteTool v9 - CS2 regioes bloqueadas", RegionsRuleName),
+        ("ServerRouteTool v9 - IP banido no servidor", BannedIpRuleName),
+    };
+
+    /// <summary>Every rule name the app writes now.</summary>
+    public static IEnumerable<string> AllNames => Renamed.Select(r => r.New);
+
+    /// <summary>The name a rule had before 1.0.0, or null (a name the app never used).</summary>
+    public static string LegacyName(string name) => Renamed.FirstOrDefault(r => r.New == name).Old;
+
+    const string Updating = " (updating";
+
+    /// <summary>
+    /// One of the app's rules: its name now (prefix and " - "), or one from before 1.0.0, or the leftover of an interrupted
+    /// <see cref="Apply"/> of either ("... (updating ...)").
+    /// </summary>
+    public static bool IsAppRule(string name) =>
+        name != null && (name.StartsWith(AppIds.RulePrefix + " - ", StringComparison.OrdinalIgnoreCase)
+            || AppIds.LegacyRulePrefixes.Any(p => name.StartsWith(p, StringComparison.OrdinalIgnoreCase)));
+
+    /// <summary>A name from before 1.0.0 (any "ServerRouteTool v9..." rule, known or not).</summary>
+    public static bool IsLegacyName(string name) =>
+        name != null && AppIds.LegacyRulePrefixes.Any(p => name.StartsWith(p, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// The name the app uses now for a rule name from before 1.0.0 (an "(updating ...)" leftover keeps its tail); any other name as it is.
+    /// Everything that reads a rule name (what is left, what it means, whether a block is still there) reads it through this.
+    /// </summary>
+    public static string Current(string name)
+    {
+        if (name == null) return null;
+        foreach (var (old, now) in Renamed)
+            if (name == old || name.StartsWith(old + Updating, StringComparison.Ordinal)) return now + name[old.Length..];
+        return name;
+    }
 
     /// <summary>
     /// The banned-IP rule from "IP:port" endpoints: the hosts and the ports (one rule, so a host and a port of two different servers
@@ -178,14 +223,20 @@ public static class Firewall
     {
         var name = r.Name;
         var rules = Get(Policy(), "Rules");
-        if (r.RemoteIps != null && r.RemoteIps.Count == 0) { RemoveAllNamed(rules, name); return; }
+        var legacy = LegacyName(name);
+        if (r.RemoteIps != null && r.RemoteIps.Count == 0)
+        {
+            RemoveAllNamed(rules, name);
+            if (legacy != null) RemoveAllNamed(rules, legacy);
+            return;
+        }
 
         // A unique temporary name: if the rename at the end ever fails, that rule keeps blocking until the next Apply.
         var temp = $"{name} (updating {Guid.NewGuid():N})"[..(name.Length + 20)] + ")";
         var rule = Activator.CreateInstance(Type.GetTypeFromCLSID(RuleClsid, true)!);
         SetP(rule, "Name", temp);
         SetP(rule, "Description", r.Description);
-        SetP(rule, "Grouping", "ServerRouteTool");
+        SetP(rule, "Grouping", AppIds.RulePrefix);
         SetP(rule, "Direction", NET_FW_RULE_DIR_OUT);
         SetP(rule, "Action", NET_FW_ACTION_BLOCK);
         SetP(rule, "Protocol", r.Protocol);   // before the ports: COM refuses ports on "any protocol"
@@ -202,15 +253,20 @@ public static class Firewall
         if (old > 1) Log.Ok($"Removed {old - 1} duplicate rules ({name}).");
         RemoveTemps(rules, name, keep: temp);
         var added = Item(rules, temp);
-        if (added != null) SetP(added, "Name", name);
+        if (added == null) return;
+        SetP(added, "Name", name);
+        // 1.0.0: the same rule under its name from before goes only now, with the new one in place: never a moment less blocked
+        // (for a moment both block). This is how a rule left by beta.13 is renamed, whatever path writes it.
+        if (legacy != null) { RemoveAllNamed(rules, legacy); RemoveTemps(rules, legacy); }
     }
 
-    /// <summary>Removes leftovers of an interrupted <see cref="Apply"/> (except <paramref name="keep"/>).</summary>
-    static void RemoveTemps(object rules, string name, string keep = null)
+    /// <summary>Removes leftovers of an interrupted <see cref="Apply"/> of <paramref name="name"/> or <paramref name="legacy"/> (except <paramref name="keep"/>).</summary>
+    static void RemoveTemps(object rules, string name, string legacy = null, string keep = null)
     {
         var names = new List<string>();
         foreach (var r in (IEnumerable)rules)
-            if ((string)Get(r, "Name") is string n && n.StartsWith(name + " (updating") && n != keep) names.Add(n);
+            if ((string)Get(r, "Name") is string n && n != keep
+                && (n.StartsWith(name + Updating, StringComparison.Ordinal) || legacy != null && n.StartsWith(legacy + Updating, StringComparison.Ordinal))) names.Add(n);
         foreach (var n in names.Distinct()) RemoveAllNamed(rules, n);
     }
 
@@ -353,9 +409,17 @@ public static class Firewall
             l6.Equals(IPAddress.IPv6Any) && h6.Equals(IPAddress.Parse("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"));
     }
 
+    /// <summary>Removes a rule under its name now and its name from before 1.0.0, with the leftovers of an interrupted Apply of both.</summary>
     public static void Remove(string name = RuleName)
     {
-        try { var rules = Get(Policy(), "Rules"); RemoveAllNamed(rules, name); RemoveTemps(rules, name); }
+        try
+        {
+            var rules = Get(Policy(), "Rules");
+            var legacy = LegacyName(name);
+            RemoveAllNamed(rules, name);
+            if (legacy != null) RemoveAllNamed(rules, legacy);
+            RemoveTemps(rules, name, legacy);
+        }
         catch (Exception ex) { Log.Warn($"Remove {name}: " + (ex.InnerException ?? ex).Message); }
     }
 
@@ -376,7 +440,10 @@ public static class Firewall
     /// nothing is known, so it is never "nothing left". False only where saying it is there would be a guess (the Install window).</param>
     public static bool BlockLeft(IEnumerable<string> remaining, bool unreadableCounts = true) =>
         remaining is FirewallRules { Error: not null } ? unreadableCounts
-        : (remaining ?? Enumerable.Empty<string>()).Any(n => n != EchoRuleName && ProtectionRules.Contains(n));
+        : (remaining ?? Enumerable.Empty<string>()).Select(Current).Any(n => n != EchoRuleName && ProtectionRules.Contains(n));
+
+    /// <summary>The rule <paramref name="name"/> is among <paramref name="remaining"/>, under its name now or from before 1.0.0.</summary>
+    public static bool Has(IEnumerable<string> remaining, string name) => (remaining ?? Enumerable.Empty<string>()).Any(n => Current(n) == name);
 
     /// <summary>
     /// The rules a restore removes. Turn off protection (and closing the app) keep the Regions rule: regions don't depend on the
@@ -406,7 +473,7 @@ public static class Firewall
         try
         {
             foreach (var r in (IEnumerable)Get(Policy(), "Rules"))
-                if ((string)Get(r, "Name") is string n && n.StartsWith(AppIds.RulePrefix)) left.Add(n);
+                if ((string)Get(r, "Name") is string n && IsAppRule(n)) left.Add(n);
         }
         catch (Exception ex) { return new FirewallRules { Error = ex.Message }; }
         return left;
@@ -422,14 +489,14 @@ public static class Firewall
         try
         {
             foreach (var r in (IEnumerable)Get(Policy(), "Rules"))
-                if ((string)Get(r, "Name") is string n && n.StartsWith(AppIds.RulePrefix)) list.Add(new RuleInfo(n, (string)Get(r, "RemoteAddresses")));
+                if ((string)Get(r, "Name") is string n && IsAppRule(n)) list.Add(new RuleInfo(n, (string)Get(r, "RemoteAddresses")));
         }
         catch (Exception ex) { Log.Warn("Could not read the Firewall: " + ex.Message); }
         return list;
     }
 
-    /// <summary>What one rule is for, in a few words (the rule names stay as they were since alpha.1, partly in Portuguese).</summary>
-    public static string Meaning(string name) => name switch
+    /// <summary>What one rule is for, in a few words (a name from before 1.0.0 means the same as its name now).</summary>
+    public static string Meaning(string name) => Current(name) switch
     {
         RuleName => Loc.T("Kill switch: your servers only through the phone"),
         EchoRuleName => Loc.T("The app's IP check only through the phone"),
@@ -441,26 +508,50 @@ public static class Firewall
         _ => Loc.T("From an older version"),
     };
 
-    /// <summary>Removes the old v6/v7/v8 rules (one per IP and per adapter).</summary>
-    public static int RemoveLegacy()
+    /// <summary>
+    /// The rules of older versions to remove now, from every rule's name and group:
+    /// v6/v7/v8 (one per IP and per adapter: "SRTv…", "ServerRouteTool: …", the groups "ServerRouteTool v6/v7/v8"), and the ones
+    /// named before 1.0.0 ("ServerRouteTool v9 - …") whose rule under the name now is already there, or that no version writes any
+    /// more. A v9 rule whose new one isn't there yet stays: the next Apply or Remove of that rule takes it, so nothing is ever less
+    /// blocked than before. Left: the v9 rules that stay.
+    /// </summary>
+    public static (List<string> Remove, int Left) LegacyToRemove(IEnumerable<(string Name, string Group)> rules)
+    {
+        var all = (rules ?? Enumerable.Empty<(string, string)>()).Where(r => r.Name != null).ToList();
+        var present = all.Select(r => r.Name).ToHashSet();
+        var remove = new List<string>();
+        var left = 0;
+        foreach (var (name, group) in all)
+        {
+            if (IsLegacyName(name))
+            {
+                var now = Current(name);
+                var i = now.IndexOf(Updating, StringComparison.Ordinal);
+                if (now == name || present.Contains(i > 0 ? now[..i] : now)) remove.Add(name); else left++;
+                continue;
+            }
+            if (IsAppRule(name)) continue;
+            var g = group ?? "";
+            // Over COM, "Name" is the display name; old versions used "ServerRouteTool: ..." and the group "ServerRouteTool v…".
+            if (name.StartsWith("SRTv", StringComparison.Ordinal) || name.StartsWith("ServerRouteTool", StringComparison.Ordinal) || g.StartsWith("ServerRouteTool v6", StringComparison.Ordinal) ||
+                g.StartsWith("ServerRouteTool v7", StringComparison.Ordinal) || g.StartsWith("ServerRouteTool v8", StringComparison.Ordinal)) remove.Add(name);
+        }
+        return (remove.Distinct().ToList(), left);
+    }
+
+    /// <summary>Removes the rules of older versions (<see cref="LegacyToRemove"/>). Left: rules named before 1.0.0 still there (-1: not read).</summary>
+    public static (int Removed, int Left) RemoveLegacy()
     {
         var n = 0;
         try
         {
             var rules = Get(Policy(), "Rules");
-            var names = new List<string>();
-            foreach (var r in (IEnumerable)rules)
-            {
-                // Over COM, "Name" is the display name; old versions used "ServerRouteTool: ..." and the group "ServerRouteTool v…".
-                var name = (string)Get(r, "Name");
-                var group = (string)Get(r, "Grouping") ?? "";
-                if (name == null || name.StartsWith(AppIds.RulePrefix)) continue;
-                if (name.StartsWith("SRTv") || name.StartsWith("ServerRouteTool") || group.StartsWith("ServerRouteTool v6") ||
-                    group.StartsWith("ServerRouteTool v7") || group.StartsWith("ServerRouteTool v8")) names.Add(name);
-            }
-            foreach (var name in names.Distinct()) { RemoveAllNamed(rules, name); n++; }
+            var seen = new List<(string, string)>();
+            foreach (var r in (IEnumerable)rules) seen.Add(((string)Get(r, "Name"), (string)Get(r, "Grouping")));
+            var (names, left) = LegacyToRemove(seen);
+            foreach (var name in names) { RemoveAllNamed(rules, name); n++; }
+            return (n, left);
         }
-        catch (Exception ex) { Log.Warn("Cleaning up old rules failed: " + ex.Message); }
-        return n;
+        catch (Exception ex) { Log.Warn("Cleaning up old rules failed: " + ex.Message); return (n, -1); }
     }
 }
