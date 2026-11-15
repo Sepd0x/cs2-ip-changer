@@ -10,7 +10,7 @@ import { fakeD1 } from './d1.mjs';
 import * as api from '../src/api.js';
 import * as dash from '../src/dashboard.js';
 import { memo, pruneMemo, forgetMemo, fnv } from '../src/memo.js';
-import { findBackup, loadMiniflare, localD1, countRows, loads, ALL } from '../tools/rows-read.mjs';
+import { findBackup, loadMiniflare, localD1, countRows, loads, stretch, ALL } from '../tools/rows-read.mjs';
 
 const NOW = Date.parse('2026-11-12T22:00:00Z');
 const ID = 'ab'.repeat(16);
@@ -137,4 +137,36 @@ test('rows read: the summary, a dashboard load, the live tick and the cron stay 
     const cron = await rows((d) => dash.sampleLive(d, { now: NOW }));
     assert.ok(cron <= LIMIT.cron, `cron read ${cron}, limit ${LIMIT.cron}`);
   } finally { await dispose(); }
+});
+
+// 15 Nov. 2026 (audit F-01): what a summary reads must not grow with the days of data. The same backup copied back in time (stretch:
+// 15, 30 and 60 days, then 120, at the same users a day), the summary of 30 days worked out from the tables (rolledTo null, as before)
+// and from the written days (roll.js), on a local D1. Measured 15 Nov. 2026 (rows read): from the tables 38,847 / 77,464 / 100,296,
+// from the written days 4,528 / 6,697 / 7,248, and the numbers the same.
+export const LIMIT_ROLLED = { days60: 9_000, over: 1.15 };
+test('rows read: the summary from the written days reads about the same at 15, 30, 60 and 120 days of data, and gives the same numbers', { skip, timeout: 300_000 }, async () => {
+  const { readFileSync } = await import('node:fs');
+  const { rollMissing, lastRolled } = await import('../src/roll.js');
+  const first = { tables: [], rolled: [] };
+  for (const k of [0, 1, 3, 7]) {
+    const { db, dispose } = await localD1(mfMod.Miniflare, backup, { indexes: true });
+    try {
+      const days = await stretch(db, k);
+      const opt = { period: 30, f: ALL, dev: false, now: NOW };
+      const a = await countRows(db, (d) => api.summary(d, opt));
+      const ref = JSON.parse(JSON.stringify(await api.summary(db, opt)));
+      assert.equal((await rollMissing(db, NOW, 1000)).length, days - 1, 'every day that has ended');
+      const to = await lastRolled(db);
+      const b = await countRows(db, (d) => api.summary(d, { ...opt, rolledTo: to }));
+      assert.deepEqual(JSON.parse(JSON.stringify(await api.summary(db, { ...opt, rolledTo: to }))), ref, `${days} days: the same numbers`);
+      first.tables.push(a.total); first.rolled.push(b.total);
+      if (k === 3) assert.ok(b.total <= LIMIT_ROLLED.days60, `60 days read ${b.total}, limit ${LIMIT_ROLLED.days60}`);
+      // none of the closed days' report rows is read: the reads of counts, clicks and errors start at the first day not written
+      assert.ok(b.log.filter(([sql]) => /FROM (counts|clicks)\b/.test(sql) && !/id_install/.test(sql)).every(([, n]) => n <= 2000), 'counts and clicks: only the open day');
+    } finally { await dispose(); }
+  }
+  // 15 to 30 days it grows (the window of 60 days fills), from 60 to 120 days it does not (only the one row per install-day of the kept IDs' first day)
+  assert.ok(first.tables[3] > 2.5 * first.tables[0], `from the tables it grows with the days: ${first.tables}`);
+  assert.ok(first.rolled[3] <= first.rolled[2] * LIMIT_ROLLED.over, `from the written days: ${first.rolled}`);
+  assert.ok(first.rolled[3] < first.tables[3] / 10, `at least 10 times fewer rows: ${first.rolled} against ${first.tables}`);
 });

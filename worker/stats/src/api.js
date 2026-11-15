@@ -7,6 +7,7 @@
 // account, a click or a minute; the rest is shown apart as "automated".
 
 import { DAILY_ROWS, LIVE_ROWS, SITE_ROWS, FORGET_ROWS, contract } from './index.js';
+import { rawFromDay, readRolled, readKept, readLatest, expand } from './roll.js';
 
 const PERIODS = [1, 7, 30, 90];
 // v4 (Nov. 2026, performance review 4.7): the days of each install are read for this long, and its first day apart with one row
@@ -145,8 +146,47 @@ export function params(url) {
   return { period, f, dev: q.get('dev') === '1' };
 }
 
+// The counters read per install-day, as a test of a name (the same names as the SQL's IN and GLOB below)
+const inPerInstall = (name) => INSTALL_NAMES.includes(name) || INSTALL_GLOBS.some((g) => name.startsWith(g.slice(0, -1)));
+
+/** What the written days (iday, roll.js) give the summary: their install-days, the kept IDs with their first day, the newest report. */
+async function readRolledAll(db, W, { prevSince, installFrom, d90, rawFrom }) {
+  const [recs, kept, last, lastAny] = await Promise.all([
+    rawFrom > prevSince ? readRolled(db, W, prevSince, rawFrom) : [],
+    readKept(db, W, installFrom, rawFrom),
+    readLatest(db, W, d90, rawFrom), readLatest(db, null, d90, rawFrom),
+  ]);
+  return { recs, first: kept.first, days: kept.days, last, lastAny };
+}
+
+/** The sums query's rows (name, version, link, n, days) worked out here, from the written days: the real install-days that pass the filters. */
+function rolledSums(recs, since, f) {
+  const out = new Map();
+  for (const x of recs) {
+    if (x.day < since) continue;
+    const acc = x.c.accounts ? x.c.accounts[1] : 0, clicks = Object.values(x.k).reduce((a, b) => a + b, 0);
+    if (!(acc >= 1 || clicks > 0 || Math.min(x.ms, 1440) >= 1)) continue;
+    const app = x.ta.slice(14), country = x.country || '?', mode = x.tm.slice(14) || '?', link = LINK_RANK[x.lk] ?? '?';
+    if ((f.version !== 'all' && app !== f.version) || (f.country !== 'all' && country !== f.country) || (f.mode !== 'all' && mode !== f.mode) || (f.link !== 'all' && link !== f.link)) continue;
+    for (const [name, [n]] of Object.entries(x.c)) {
+      const k = `${name}\u0000${app}\u0000${link}`, e = out.get(k) || out.set(k, { name, app, link, n: 0, days: 0 }).get(k);
+      e.n += n; e.days++;
+    }
+  }
+  return [...out.values()];
+}
+/** Two lists of the sums query's rows as one (a day is in one of them only, so n and days add). */
+function mergeSums(a, b) {
+  const out = new Map();
+  for (const r of [...a, ...b]) {
+    const k = `${r.name}\u0000${r.app}\u0000${r.link}`, e = out.get(k);
+    if (e) { e.n += r.n; e.days += r.days; } else out.set(k, { ...r });
+  }
+  return [...out.values()];
+}
+
 /** Everything the dashboard draws for one period, added up. */
-export async function summary(db, { period, f, dev, now, exclude = [], sums = 'sql', until = null }) {
+export async function summary(db, { period, f, dev, now, exclude = [], sums = 'sql', until = null, rolledTo = null }) {
   const since = day(now - (period - 1) * 864e5);
   // v4: a brief for a past day (until) reads nothing after that day (critic, 4 Nov.: it counted later sessions). A checked date,
   // written into the SQL as text, never a value from the request.
@@ -174,31 +214,41 @@ export async function summary(db, { period, f, dev, now, exclude = [], sums = 's
   const SQL = sums !== 'js';
   const perInstall = SQL ? ` AND (name IN (${INSTALL_NAMES.map(() => '?').join(',')}) OR ${INSTALL_GLOBS.map(() => 'name GLOB ?').join(' OR ')})` : '';
   const perInstallArgs = SQL ? [...INSTALL_NAMES, ...INSTALL_GLOBS] : [];
-  const [pings, counts, clicks, heat, errors, envRows, installDays, hours, last, lastAnyR, budgetR, recentR, errFirstR, siteR, firstR, sumsR] = await Promise.all([
+  // 15 Nov. 2026 (audit F-01, roll.js): the days that have ended are read from iday (one row per install-day, already added up)
+  // and only the days from rawFrom on from the report tables. rawFrom is null when no day was written yet (or for a brief of a
+  // past day, or sums 'js'): every read is then the one it always was.
+  // rolledTo: the newest day written (roll.js lastRolled), passed by cachedSummary; without it the reads are the ones they always were
+  const rawFrom = SQL && !U && rolledTo ? rawFromDay(rolledTo, now) : null;
+  const lo = (from) => (rawFrom && rawFrom > from ? rawFrom : from);   // where the table read starts
+  const installFrom = day(now - (INSTALL_DAYS - 1) * 864e5), d90 = day(now - 89 * 864e5);
+  const FAILED = Symbol('rolled');
+  const rolledP = rawFrom ? readRolledAll(db, W, { prevSince, installFrom, d90, rawFrom }).catch(() => FAILED) : null;
+  const [pingsR, countsR, clicksR, heat, errorsR, envRows, installDaysR, hoursR, lastR, lastAnyRR, budgetR, recentR, errFirstR, siteR, firstRR, sumsRR, rolled, rawKept] = await Promise.all([
     // D7: the version and the mode of the day are the newest report's, not the highest text ("0.1.0-beta.10" < "0.1.0-beta.9" as
     // text). D3: the link is the best the install-day had (USB, then hotspot), so a report from before the phone was up doesn't win.
     // v4: r = the reports of the install-day (data health: the share from builds before beta.10)
     capped('pings', `SELECT day, id, MIN(COALESCE(SUM(minutes), 0), 1440) AS m, SUBSTR(MAX(ts || '|' || app), 15) AS app, MAX(country) AS country,
          SUBSTR(MAX(ts || '|' || COALESCE(mode, '')), 15) AS mode, MAX(CASE link WHEN 'usb' THEN 3 WHEN 'hotspot' THEN 2 WHEN 'other' THEN 1 WHEN 'none' THEN 0 END) AS lk,
-         MAX(os) AS os, COUNT(*) AS r FROM pings WHERE ${W.sql} AND day >= ?${ud()} GROUP BY day, id ORDER BY day DESC`, ...W.args, prevSince),
-    capped('counts', `SELECT day, id, name, SUM(n) AS n, MAX(n) AS mx FROM counts WHERE ${W.sql} AND day >= ?${ud()}${perInstall} GROUP BY day, id, name ORDER BY day DESC`, ...W.args, prevSince, ...perInstallArgs),
-    capped('clicks', `SELECT day, id, name, SUM(n) AS n FROM clicks WHERE ${W.sql} AND day >= ?${ud()} GROUP BY day, id, name ORDER BY day DESC`, ...W.args, prevSince),
+         MAX(os) AS os, COUNT(*) AS r FROM pings WHERE ${W.sql} AND day >= ?${ud()} GROUP BY day, id ORDER BY day DESC`, ...W.args, lo(prevSince)),
+    capped('counts', `SELECT day, id, name, SUM(n) AS n, MAX(n) AS mx FROM counts WHERE ${W.sql} AND day >= ?${ud()}${perInstall} GROUP BY day, id, name ORDER BY day DESC`, ...W.args, lo(prevSince), ...perInstallArgs),
+    capped('clicks', `SELECT day, id, name, SUM(n) AS n FROM clicks WHERE ${W.sql} AND day >= ?${ud()} GROUP BY day, id, name ORDER BY day DESC`, ...W.args, lo(prevSince)),
     soft('heat', all(`SELECT screen, kind, cell, app, SUM(n) AS n FROM heat WHERE dev = ? AND day >= ?${ud()} GROUP BY screen, kind, cell, app`, d, since)),
-    capped('errors', `SELECT day, id, type, at, app, SUM(n) AS n FROM errors WHERE ${W.sql} AND day >= ?${ud()} GROUP BY day, id, type, at, app ORDER BY day DESC`, ...W.args, prevSince),
+    capped('errors', `SELECT day, id, type, at, app, SUM(n) AS n FROM errors WHERE ${W.sql} AND day >= ?${ud()} GROUP BY day, id, type, at, app ORDER BY day DESC`, ...W.args, lo(prevSince)),
     soft('env', all(`SELECT k, v, SUM(n) AS n FROM env WHERE dev = ? AND day >= ?${ud()} GROUP BY k, v`, d, since)),
     // v4: bounded to INSTALL_DAYS (it read every ping ever); the first day of each install comes from firstR below
-    capped('installDays', `SELECT DISTINCT p.day, p.id FROM pings p JOIN (${idsK}) k ON k.id = p.id
-         WHERE ${Wp.sql} AND p.day >= ?${ud('p.day')} ORDER BY p.day DESC`, ...W.args, ...Wp.args, day(now - (INSTALL_DAYS - 1) * 864e5)),
+    rawFrom ? capped('installDays', `SELECT DISTINCT day, id FROM pings WHERE ${W.sql} AND day >= ? ORDER BY day DESC`, ...W.args, lo(installFrom))
+      : capped('installDays', `SELECT DISTINCT p.day, p.id FROM pings p JOIN (${idsK}) k ON k.id = p.id
+         WHERE ${Wp.sql} AND p.day >= ?${ud('p.day')} ORDER BY p.day DESC`, ...W.args, ...Wp.args, installFrom),
     // D9: when the app is open, from the reports' times (each install counts once an hour)
-    capped('hours', `SELECT day, id, CAST(ts / 3600000 AS INTEGER) AS h FROM pings WHERE ${W.sql} AND day >= ?${ud()} GROUP BY day, id, h ORDER BY day DESC`, ...W.args, since),
+    capped('hours', `SELECT day, id, CAST(ts / 3600000 AS INTEGER) AS h FROM pings WHERE ${W.sql} AND day >= ?${ud()} GROUP BY day, id, h ORDER BY day DESC`, ...W.args, lo(since)),
     // The dashboard's freshness bar: the newest report in this view (last 90 days, on the day index)
-    all(`SELECT MAX(ts) AS t FROM pings WHERE ${W.sql} AND day >= ?${ut()}`, ...W.args, day(now - 89 * 864e5)),
+    all(`SELECT MAX(ts) AS t FROM pings WHERE ${W.sql} AND day >= ?${ut()}`, ...W.args, lo(d90)),
     // v3 (Nov. 2026), all small reads on the day index: the newest report from any PC (dev builds and EXCLUDE_IDS too), the day's
     // row budget (index.js), the reports of the last 3 days with their times (Por hora, yesterday at the same time) and, for each
     // error in the last 90 days, the first day and version it was seen in
     // Nov. 2026: the website's visit counter (no ID: never filtered, same for ?dev=1) for this period and the one before
     // Nov. 2026 (performance review): in the same Promise.all as the reads above, so the answer waits one D1 round trip, not two
-    all(`SELECT MAX(ts) AS t FROM pings WHERE day >= ?${ut()}`, day(now - 89 * 864e5)),
+    all(`SELECT MAX(ts) AS t FROM pings WHERE day >= ?${ut()}`, lo(d90)),
     // v4: the last 14 days of every share (reports, live, site, forget) for Sistema e dados
     soft('budget', all(`SELECT day, rows FROM budget WHERE day >= ?${ud('substr(day, 1, 10)')}`, day(now - 13 * 864e5))),
     // v4: 8 days, for "the same weekday last week at the same time" too
@@ -206,7 +256,9 @@ export async function summary(db, { period, f, dev, now, exclude = [], sums = 's
     all(`SELECT type, at, MIN(day) AS first, SUBSTR(MIN(day || '|' || app), 12) AS app FROM errors WHERE ${W.sql} AND day >= ?${ud()} GROUP BY type, at`, ...W.args, day(now - 89 * 864e5)),
     soft('site', all(`SELECT day, page, ref, country, event, SUM(n) AS n FROM site WHERE day >= ?${ud()} GROUP BY day, page, ref, country, event`, prevSince)),
     // v4: one row per install, its first report (pings_id_ts index)
-    capped('firstSeen', `SELECT p.id, MIN(p.ts) AS t FROM pings p JOIN (${idsK}) k ON k.id = p.id WHERE ${Wp.sql}${ut('p.ts')} GROUP BY p.id`, ...W.args, ...Wp.args),
+    // (GROUP BY id || '': so the planner reads the day index, not the whole (id, ts) index in order of id)
+    rawFrom ? capped('firstSeen', `SELECT id, MIN(ts) AS t FROM pings WHERE ${W.sql} AND day >= ? GROUP BY id || ''`, ...W.args, rawFrom)
+      : capped('firstSeen', `SELECT p.id, MIN(p.ts) AS t FROM pings p JOIN (${idsK}) k ON k.id = p.id WHERE ${Wp.sql}${ut('p.ts')} GROUP BY p.id`, ...W.args, ...Wp.args),
     // v4: every counter of the period added up by D1, per name, version and link, over the install-days that are real (an account,
     // a click or a minute, as real() below) and pass the filters (as match() below). One row per name, version and link.
     // 12 Nov. 2026 (D1 over its free 5 M rows a day, 58,000 rows read here per load): counts is read once, added up per
@@ -223,8 +275,29 @@ export async function summary(db, { period, f, dev, now, exclude = [], sums = 's
              AND (? = 'all' OR COALESCE(NULLIF(d.country, ''), '?') = ?) AND (? = 'all' OR COALESCE(NULLIF(d.mode, ''), '?') = ?))
          SELECT c.name, ok.app, ok.link, SUM(c.n) AS n, COUNT(*) AS days FROM c JOIN ok ON ok.day = c.day AND ok.id = c.id
          WHERE (? = 'all' OR ok.link = ?) GROUP BY c.name, ok.app, ok.link`,
-      ...W.args, since, ...W.args, since, ...W.args, since, f.version, f.version, f.country, f.country, f.mode, f.mode, f.link, f.link) : [],
+      ...W.args, lo(since), ...W.args, lo(since), ...W.args, lo(since), f.version, f.version, f.country, f.country, f.mode, f.mode, f.link, f.link) : [],
+    rolledP,
+    // the ids with id_install in the days still read from the tables (the kept ids of the written days come from iday)
+    // (name written as a range: an equality would take the whole counts_install index, every id_install row ever, not the days read)
+    rawFrom ? all(`SELECT DISTINCT id FROM counts WHERE name >= 'id_install' AND name <= 'id_install' AND ${W.sql} AND day >= ?`, ...W.args, rawFrom) : [],
   ]);
+  if (rolled === FAILED) return summary(db, { period, f, dev, now, exclude, sums, until });
+  // The written days and the days read from the tables, as one list of rows each (newest day first, as the queries return them)
+  const X = rolled ? expand(rolled.recs, inPerInstall) : null;
+  const pings = X ? [...pingsR, ...X.pings] : pingsR, counts = X ? [...countsR, ...X.counts] : countsR, clicks = X ? [...clicksR, ...X.clicks] : clicksR;
+  const errors = X ? [...errorsR, ...X.errors] : errorsR, hours = X ? [...hoursR, ...X.hours.filter((r) => r.day >= since)] : hoursR;
+  const sumsR = X ? mergeSums(sumsRR, rolledSums(rolled.recs, since, f)) : sumsRR;
+  let installDays = installDaysR, firstR = firstRR, last = lastR, lastAnyR = lastAnyRR;
+  if (rolled) {
+    const kept = new Set(rolled.first.filter((r) => r.kept).map((r) => r.id));
+    for (const r of rawKept) kept.add(r.id);
+    installDays = [...installDaysR, ...[...new Map(rolled.days.map((r) => [`${r.day}|${r.id}`, r])).values()]].filter((r) => kept.has(r.id));
+    const first = new Map(rolled.first.map((r) => [r.id, r.d]));
+    for (const r of firstRR) { const d = day(r.t); if (!first.has(r.id) || d < first.get(r.id)) first.set(r.id, d); }
+    firstR = [...kept].filter((id) => first.has(id)).map((id) => ({ id, t: Date.parse(`${first.get(id)}T00:00:00Z`) }));
+    last = [{ t: Math.max(lastR[0]?.t ?? 0, rolled.last ?? 0) || null }];
+    lastAnyR = [{ t: Math.max(lastAnyRR[0]?.t ?? 0, rolled.lastAny ?? 0) || null }];
+  }
 
   // One entry per install-day, with what decides real or automated
   const key = (r) => `${r.day}|${r.id}`;
@@ -634,13 +707,16 @@ export async function summary(db, { period, f, dev, now, exclude = [], sums = 's
  * 10 nov. (dashboard audit, P3, with the real data): a live signal counts only from an install that is real by the same rule as
  * the reports (an account, a click or a minute): 4 antivirus sandboxes (no Steam, no click, 0 minutes) showed up in Agora.
  * Its accounts and clicks from yesterday on (the day indexes), its minutes from any day (pings_id_ts). <t> is the live table's name.
+ * 15 Nov. 2026 (audit F-06): the accounts and clicks are read once (an IN on a subquery that does not depend on the live row, with the two
+ * days as equalities so counts_day_name finds just the 'accounts' rows), not once per live row that has no minutes yet: that scanned
+ * every counter and click of two days for each such row (new installs in their first half hour, antivirus sandboxes).
  */
 export function liveReal(now, t = 'live') {
-  const since = day(now - 864e5);
+  const since = day(now - 864e5), today = day(now);
   return {
-    sql: `(EXISTS (SELECT 1 FROM pings p WHERE p.id = ${t}.id AND p.minutes >= 1) OR EXISTS (SELECT 1 FROM counts c WHERE c.day >= ? AND c.name = 'accounts' AND c.id = ${t}.id AND c.n >= 1)`
-      + ` OR EXISTS (SELECT 1 FROM clicks k WHERE k.day >= ? AND k.id = ${t}.id))`,
-    args: [since, since],
+    sql: `(EXISTS (SELECT 1 FROM pings p WHERE p.id = ${t}.id AND p.minutes >= 1) OR ${t}.id IN (SELECT id FROM counts WHERE day IN (?, ?) AND name = 'accounts' AND n >= 1)`
+      + ` OR ${t}.id IN (SELECT id FROM clicks WHERE day IN (?, ?)))`,
+    args: [since, today, since, today],
   };
 }
 
