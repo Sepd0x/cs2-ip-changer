@@ -384,7 +384,7 @@ public static partial class Steam
     {
         // Checked before closing Steam, and again after (Steam writes the file when it exits).
         // A link is refused before Steam is closed, so Steam isn't left closed for nothing
-        if (SwitchProblem(steamId) is string why) throw why == Linked ? new IOException(why) : new InvalidOperationException(why);
+        if (SwitchProblem(steamId) is string why) throw why == Linked ? new IOException(Loc.T(why)) : new InvalidOperationException(Loc.T(why));   // the toast shows the message, the Log takes Loc.En of it
         var path = LoginUsersPath;
         var edit = path != null && File.Exists(path) && steamId != null;
         await CloseSteam(whileClosed);

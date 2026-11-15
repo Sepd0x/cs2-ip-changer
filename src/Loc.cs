@@ -55,6 +55,10 @@ public static class Loc
         if (_hooked) return;
         _hooked = true;
         EventManager.RegisterClassHandler(typeof(FrameworkElement), FrameworkElement.LoadedEvent, new RoutedEventHandler((s, _) => ApplyOne((DependencyObject)s)));
+        // Loaded is only raised in the branches of the tree where an element has its own Loaded handler, so the rows of a list, the
+        // contents of a template and the like never got it (15 nov.: "As admin", "Follow" and the player list stayed English in pt-BR,
+        // es and ru). SizeChanged is raised for every element at its first layout, before it is drawn.
+        EventManager.RegisterClassHandler(typeof(FrameworkElement), FrameworkElement.SizeChangedEvent, new RoutedEventHandler((s, _) => ApplyOne((DependencyObject)s)));
     }
 
     /// <summary>The table of a language: from the embedded src/Lang/&lt;code&gt;.json (empty values are texts not translated yet: English shows).</summary>
@@ -104,6 +108,9 @@ public static class Loc
         return n + " " + f[i];
     }
 
+    /// <summary>The noun alone, in the singular ("game ban" -> "игровой бан"): its entry holds all the forms joined by "|", see <see cref="Plural"/>.</summary>
+    public static string One(string one) => _t.TryGetValue(one, out var forms) ? forms.Split('|')[0] : one;
+
     /// <summary>The English of a text <see cref="T"/> or <see cref="F"/> made (for the Log and the telemetry); any other text as it is.</summary>
     public static string En(string s) => s != null && _english.TryGetValue(s, out var e) ? e : s;
 
@@ -150,5 +157,7 @@ public static class Loc
         if (d is HeaderedContentControl h && h.Header is string hs) h.Header = T(hs);
         else if (d is HeaderedItemsControl hi && hi.Header is string his) hi.Header = T(his);
         if (d is FrameworkElement fe && fe.ToolTip is string tt) fe.ToolTip = T(tt);
+        // the grey hint inside an empty box is its Tag (the style draws it)
+        if (d is TextBox or PasswordBox && ((FrameworkElement)d).Tag is string hint && hint.Length > 0) ((FrameworkElement)d).Tag = T(hint);
     }
 }

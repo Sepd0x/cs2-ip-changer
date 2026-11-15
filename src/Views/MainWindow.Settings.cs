@@ -202,8 +202,14 @@ public partial class MainWindow
         if (chosen == (_s.Language ?? "auto")) return;
         _s.Language = chosen;
         SaveSettings();
-        Toast(Loc.T("Language changed. Close and open the app to apply it."), true);
+        Toast(LanguageChangedText(_s.CloseToTray && _tray?.Shown == true), true);
     }
+
+    /// <summary>What to do for the new language to apply. With "Close to the notification area" the X only hides the window, so the
+    /// language would not change: Quit from the icon's menu closes the app.</summary>
+    public static string LanguageChangedText(bool closeToTray) => closeToTray
+        ? Loc.T("Language changed. Quit from the icon's menu in the notification area, then open the app again to apply it.")
+        : Loc.T("Language changed. Close and open the app to apply it.");
 
     void SaveSettings() { if (!_demo) Store.Save(Paths.File(AppIds.Files.Settings), _s); }
 

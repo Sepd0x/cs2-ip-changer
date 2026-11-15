@@ -25,7 +25,7 @@ public partial class MainWindow
         if (_regionsReady) return;
         _regionsReady = true;
         _regionView = CollectionViewSource.GetDefaultView(_regions);
-        _regionView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(RegionItem.Continent)));
+        _regionView.GroupDescriptions.Add(new PropertyGroupDescription(nameof(RegionItem.Continent), new LocName()));
         _regionView.SortDescriptions.Add(new SortDescription(nameof(RegionItem.ContinentRank), ListSortDirection.Ascending));
         _regionView.SortDescriptions.Add(new SortDescription(nameof(RegionItem.SortPing), ListSortDirection.Ascending));
         _regionView.SortDescriptions.Add(new SortDescription(nameof(RegionItem.City), ListSortDirection.Ascending));
@@ -495,4 +495,11 @@ public partial class MainWindow
         if (worst > 0)
             RegionsMaxPingHint.Text = Loc.F("Your slowest allowed region is {0} at {1} ms. In CS2, open Settings > Game and set Max Acceptable Matchmaking Ping to {1} or more, or CS2 won't use {0}.", slowest.City, worst);
     }
+}
+
+/// <summary>The name of a group in the language of the app (the continents of the Regions list: the header binds to the name, which Loc does not reach).</summary>
+public sealed class LocName : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => value is string s ? Loc.T(s) : value;
+    public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => value;
 }

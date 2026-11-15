@@ -1001,7 +1001,7 @@
                                     <TextBlock Grid.Column="2" Text="Country" Style="{StaticResource CardTitle}" Margin="0"/>
                                     <TextBlock Grid.Column="3" Text="Ping" Style="{StaticResource CardTitle}" Margin="0" ToolTip="Measured on the connection the game uses now: the phone with protection on, your home connection otherwise."/>
                                     <!-- beta.10: Only this region shows on the row under the pointer or the one clicked; the header says so -->
-                                    <TextBlock Grid.Column="5" Grid.ColumnSpan="2" Text="Just one region? Point at it: Only this region" Style="{StaticResource CardTitle}" Margin="0"
+                                    <TextBlock Grid.Column="5" Grid.ColumnSpan="2" Text="Just one region? Point at it: Only this region" Style="{StaticResource CardTitle}" Margin="0" TextTrimming="CharacterEllipsis"
                                                HorizontalAlignment="Right" Foreground="{StaticResource Faint}"/>
                                 </Grid>
                                 <ListBox x:Name="RegionList" Grid.Row="1" ItemContainerStyle="{StaticResource ServerRowItem}" SelectionMode="Single"
@@ -1650,7 +1650,7 @@
                                         <TextBlock Text="Privacy" Style="{StaticResource Key}" Margin="0,0,0,6"/>
                                         <Grid x:Name="TplPrivacy">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="104"/>
+                                                <ColumnDefinition Width="Auto" MinWidth="104"/>
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <Grid.RowDefinitions>

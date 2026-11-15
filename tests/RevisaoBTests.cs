@@ -155,7 +155,7 @@ static class RevisaoBTests
         check("Revisão B10: o switch vê o Steam antes do IP", kick.IndexOf("SwitchProblem(next) is string cant") is var j10 && j10 > 0 && j10 < kick.IndexOf("ChangeIp(confirm: false)"), "");
         var core = Src("Core", "Steam", "SteamAccounts.cs");
         check("Revisão B10: uma só verificação no Core, usada também pelo SwitchTo", core.Contains("public static string SwitchProblem(string steamId)")
-            && core.Contains("if (SwitchProblem(steamId) is string why) throw why == Linked ? new IOException(why) : new InvalidOperationException(why);"), "");
+            && core.Contains("if (SwitchProblem(steamId) is string why) throw why == Linked ? new IOException(Loc.T(why)) : new InvalidOperationException(Loc.T(why));"), "");
 
         // B11. Nada para fazer: diz o que tirou cada passo, em vez de mandar ligar passos já ligados
         var nothing = MainWindow.NothingText(ipSkipped: true, serverMissing: true);

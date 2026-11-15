@@ -67,7 +67,7 @@ public sealed class SteamWeb : IDisposable
         req.Headers.TryAddWithoutValidation("User-Agent", UserAgent);
         req.Headers.AcceptLanguage.ParseAdd("en-US,en;q=0.8");
         try { return await _http.SendAsync(req, ct); }
-        catch (HttpRequestException ex) { throw new SteamWebException(Loc.F("Couldn't reach Steam ({0}).", ex.HttpRequestError == HttpRequestError.Unknown ? "network error" : ex.HttpRequestError.ToString())); }
+        catch (HttpRequestException ex) { throw new SteamWebException(Loc.F("Couldn't reach Steam ({0}).", ex.HttpRequestError == HttpRequestError.Unknown ? Loc.T("network error") : ex.HttpRequestError.ToString())); }
         catch (TaskCanceledException) when (!ct.IsCancellationRequested) { throw new SteamWebException("Steam took too long to answer."); }
     }
 

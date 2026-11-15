@@ -1,1 +1,17 @@
 *.cmd text eol=crlf
+
+# GitHub's language bar: what the tools write, and other people's code, is not this project's code (the app is C#).
+# Generated: the guides (tools/site-pages.mjs), the language folders (tools/site-i18n.mjs), the 3D bundles (esbuild, from
+# site/assets/src and site/assets/guides/src) and the dashboard's packed files (tools/dashboard-assets.mjs).
+# site/index.html and site/404.html are written by hand and stay counted.
+site/*/index.html linguist-generated
+site/pt-br/** linguist-generated
+site/es/** linguist-generated
+site/ru/** linguist-generated
+site/assets/js/scenes.min.js linguist-generated
+site/assets/guides/world.min.js linguist-generated
+worker/stats/src/assets.js linguist-generated
+# Vendored: GSAP, ScrollTrigger and Lenis (see THIRD-PARTY-NOTICES).
+site/assets/js/gsap.min.js linguist-vendored
+site/assets/js/ScrollTrigger.min.js linguist-vendored
+site/assets/js/lenis.min.js linguist-vendored

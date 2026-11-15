@@ -238,7 +238,7 @@ There's no account. Besides the usage stats of the beta ([Telemetry](#telemetry)
 | Profiles, avatars and bans of your accounts, and the public profile of a link you paste in Profiles | steamcommunity.com, Steam's avatar servers and, if you add a key, api.steampowered.com |
 | Regions: Valve's relay list (at every start, and every hour while regions are off) | api.steampowered.com (`GetSDRConfig`, no key), plus pings to Valve's relays through the phone (your home connection in No phone mode) |
 | Changing your profiles (only accounts you sign in to on the Profiles page) | steamcommunity.com, login.steampowered.com, api.steampowered.com and Steam's avatar servers |
-| Downloading ADB (only if you ask) | dl.google.com |
+| Downloading ADB (Phone setup does it by itself when you open it, unless the phone is an iPhone or the PC is on the phone's mobile data; Install on the Phone page does it too) | dl.google.com |
 | Checking for updates (can be turned off) | api.github.com, github.com |
 | Usage stats, required to use the app (beta, [Telemetry](#telemetry)) | the project's Cloudflare Worker (source in [`worker/stats`](worker/stats)) |
 
@@ -307,7 +307,7 @@ Once a day it also sends a separate report about your setup, with **no ID and no
 
 While the app is open, every 5 minutes it also sends a short signal: this install's ID, the app version, the mode, how the phone is connected, the screen open (or that it's in the tray), whether CS2 is open and whether protection is on. The server keeps one line per ID, written over each time, and the stats page only counts them ("3 using it now").
 
-The server is a Cloudflare Worker whose code is in this repo ([`worker/stats`](worker/stats)). Cloudflare has to see your IP to deliver the request, like with any website, and gives the Worker only the country; the Worker never reads the IP or stores it, and its request logs are off. The stats are stored per day in a database with no IP column ([`schema.sql`](worker/stats/schema.sql)). The recording build sends nothing.
+The server is a Cloudflare Worker whose code is in this repo ([`worker/stats`](worker/stats)). Cloudflare has to see your IP to deliver the request, like with any website, and gives the Worker only the country. The Worker reads the IP for one thing, a rate limit that slows down floods of requests: it turns the IP into a SHA-256 hash for Cloudflare's rate limiter and never writes or logs it, and the Worker's request logs are off. The stats are stored per day in a database with no IP column ([`schema.sql`](worker/stats/schema.sql)). The recording build sends nothing.
 </details>
 
 ## Support

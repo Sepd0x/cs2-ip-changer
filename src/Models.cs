@@ -547,7 +547,7 @@ public sealed class AccountItem : Observable
     public bool Private => P?.Private == true;
     public bool Clean => Checked && !HasVac && !HasGameBan && !HasTradeBan && !HasCommunityBan;
     public string VacText => P == null ? null : P.VacBans > 1 ? $"{P.VacBans} VAC" : "VAC";
-    public string GameBanText => P == null ? null : P.GameBans > 1 ? Loc.F("{0} game bans", P.GameBans) : Loc.T("game ban");
+    public string GameBanText => P == null ? null : P.GameBans > 1 ? Loc.F("{0} game bans", P.GameBans) : Loc.One("game ban");
     public string BanAgeText => P?.DaysSinceLastBan is int d ? Loc.F("last {0} d ago", d) : null;
     public string LevelText => P?.Level is int l ? Loc.F("Level {0}", l) : null;
     public string HoursText => P?.Cs2Hours is double h ? Loc.F("{0} h CS2", h.ToString("0")) : null;

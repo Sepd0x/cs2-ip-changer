@@ -1,0 +1,71 @@
+THIRD-PARTY NOTICES
+
+CS2 IP Changer includes or uses the components below. Each keeps its own license; the LICENSE of this repository
+does not change them. Where a license asks for its notice to travel with the code, the notice is here.
+
+----------------------------------------------------------------------------------------------------
+three.js (r186)            https://github.com/mrdoob/three.js
+Where: inside site/assets/js/scenes.min.js and site/assets/guides/world.min.js (the 3D scenes of the website),
+       built with esbuild from site/assets/src and site/assets/guides/src.
+License: MIT
+
+Copyright © 2010-2026 three.js authors
+
+----------------------------------------------------------------------------------------------------
+Lenis (1.3.26)             https://github.com/darkroomengineering/lenis
+Where: site/assets/js/lenis.min.js (smooth scrolling of the website).
+License: MIT
+
+Copyright (c) 2024 darkroom.engineering
+
+----------------------------------------------------------------------------------------------------
+System.Security.Cryptography.ProtectedData (8.0.0)    https://github.com/dotnet/runtime
+Where: inside CS2IPChanger.exe (the NuGet package the app uses to seal the Steam Web API key and the Profiles
+       sign-ins with Windows DPAPI).
+License: MIT
+
+Copyright (c) .NET Foundation and Contributors
+
+----------------------------------------------------------------------------------------------------
+The MIT License, for the three components above
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of
+the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+----------------------------------------------------------------------------------------------------
+GSAP (3.15.0) and ScrollTrigger (3.15.0)    https://gsap.com
+Where: site/assets/js/gsap.min.js and site/assets/js/ScrollTrigger.min.js (animation of the website).
+License: GreenSock Standard "no charge" License, https://gsap.com/standard-license
+Copyright 2026, GreenSock. All rights reserved. Not open source: it is used under that license, and it stays
+with its owner. The notice is also at the top of each file.
+
+----------------------------------------------------------------------------------------------------
+Interface Sounds (1.0), by Kenney    https://www.kenney.nl
+Where: src/Assets/Sounds/*.wav (the app's sounds). The license text is in src/Assets/Sounds/LICENSE-kenney.txt.
+License: Creative Commons Zero (CC0 1.0), http://creativecommons.org/publicdomain/zero/1.0/
+Crediting Kenney is not required; it is done here anyway.
+
+----------------------------------------------------------------------------------------------------
+Funnel Display and Funnel Sans    https://github.com/Dicotype/Funnel
+Copyright 2024 The Funnel Project Authors
+Fragment Mono                     https://github.com/weiweihuanghuang/fragment-mono
+Copyright 2022 The Fragment-Mono Project Authors
+Where: site/fonts/*.woff2 (the website's fonts).
+License: SIL Open Font License 1.1, https://openfontlicense.org. The full text of each is in site/fonts/OFL-*.txt.
+
+----------------------------------------------------------------------------------------------------
+Not included, only used when you ask or by the build:
+- ADB (Android SDK Platform-Tools, Google, Apache License 2.0): Phone setup downloads it from dl.google.com to
+  your PC. It is not part of this repository or of the exe.
+- esbuild (MIT): builds the 3D bundles of the website; not shipped.
+- Steam, Counter-Strike and Valve are trademarks of Valve Corporation. This project is not affiliated with Valve.

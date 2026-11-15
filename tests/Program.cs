@@ -652,8 +652,8 @@ Beta13AppTests.Run(Check);
 Beta13TelemetriaTests.Run(Check);
 // 9 nov.: o teste com o iPhone do dono por cabo: driver da Apple, Change IP que espera, Log sem ruído (IphoneNov9Tests.cs)
 await IphoneNov9Tests.Run(Check);
-// 9 nov.: o feedback de um utilizador da beta.12: login, tethering que a app não via, IP já banido, cooldown (Xao9NovTests.cs)
-Xao9NovTests.Run(Check);
+// 9 nov.: o feedback de um utilizador da beta.12: login, tethering que a app não via, IP já banido, cooldown (Feedback9NovTests.cs)
+Feedback9NovTests.Run(Check);
 // 10 nov.: a contagem da dashboard com os dados reais: join só num servidor, o iPhone conta como o Android, partidas em casa,
 // minutos do sinal ao vivo e o PC do dono (Dashboard10NovTests.cs)
 Dashboard10NovTests.Run(Check);
@@ -663,6 +663,8 @@ OnboardingTests.Run(Check);
 LocTests.Run(Check);
 // 15 nov.: auditoria final, rede e proteção: "Protected" com o IP de casa, crash em Whole PC, nome das regras com migração (Rede15NovTests.cs)
 await Rede15NovTests.Run(Check);
+// 15 nov.: auditoria final, textos, idiomas e repo: palavras sem tradução, nome do dono fora do repo, docs que não batem, SMOKE, .gitattributes, avisos de terceiros (Textos15NovTests.cs)
+Textos15NovTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;
