@@ -89,8 +89,7 @@ addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.docume
       "@id": "https://sepd0x.github.io/cs2-ip-changer/pt-br/#app",
       "name": "CS2 IP Changer",
       "alternateName": [
-        "CS2IPChanger",
-        "ServerRouteTool"
+        "CS2IPChanger"
       ],
       "description": "App para Windows que passa o CS2 e a Steam pelos dados móveis do celular (Android ou iPhone), para que os servidores comunitários do Counter-Strike 2 vejam o IP da operadora e não o de casa. Change IP por ADB e volta ao servidor depois de um ban de IP, kill switch do Windows Firewall, trocador de contas Steam, gerenciador de configs do CS2, editor de perfil Steam e seletor de região de matchmaking.",
       "applicationCategory": "UtilitiesApplication",
@@ -581,6 +580,9 @@ code{font-size:max(12px,.86em)}
   .app-grid>.win-fig{grid-column:2;grid-row:1;margin-right:0;width:100%;max-width:calc((100svh - var(--top-h) - 7rem)*1.55);justify-self:start}
   .app-grid .win{border-radius:12px}
 }
+/* UI-005 (13 Nov. audit, 15 Nov.): from 1600 px the title "One window," touched the app window that the 3D screen docks on at 2560 and 3840 px.
+   The copy of that beat and the window both scale with the width, so the copy gets a share of it that stops before the window */
+@media (min-width:1600px){.beat[data-beat="5"] .copy{width:21vw}}
 .gl .win-fig:not(.docked):not(:focus-within){opacity:0;pointer-events:none}
 .win img{display:block;width:100%;height:auto}
 /* the IP the story ended on, over the screenshot's own (the same places the 3D screen patches) */
@@ -1379,7 +1381,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
         <h2 class="rv" id="faq-h">FAQ. <span class="m">As respostas curtas.</span></h2>
         <div class="qs">
         <details><summary>É uma VPN? Funciona em servidores que bloqueiam VPN?</summary><p>Não é uma VPN. Uma VPN passa seu tráfego por um datacenter, e muitos servidores comunitários usam plugins anti-VPN que expulsam ou banem IPs de datacenter e de VPN. Este app passa o CS2 e a Steam pelos dados móveis do seu próprio celular, então o servidor vê uma conexão móvel comum da sua operadora, e geralmente entra onde uma VPN não entra. Não é garantia: as operadoras dividem IPs entre vários celulares, então um IP que outra pessoa usou de forma abusiva pode ser sinalizado; o Change IP te dá outro. Não há servidor de VPN no meio nem assinatura.</p></details>
-        <details><summary>O que eu preciso?</summary><p>Windows 10 ou 11 (64 bits), direitos de administrador, Windows Firewall ligado e um celular Android ou iPhone com dados móveis, conectado por cabo USB (USB tethering, ou Personal Hotspot no iPhone) ou pelo hotspot Wi-Fi dele. O Change IP pelo PC precisa de um Android com USB debugging ligado; no iPhone você liga e desliga o Airplane Mode por conta própria. CS2 e Steam passam a usar o plano de dados do celular.</p></details>
+        <details><summary>O que eu preciso?</summary><p>Windows 10 ou 11 (64 bits), direitos de administrador, Windows Firewall ligado e um celular Android ou iPhone com dados móveis, conectado por cabo USB (USB tethering, ou Personal Hotspot no iPhone) ou pelo hotspot Wi-Fi dele. O Change IP pelo PC precisa de um Android com USB debugging ligado; no iPhone você liga e desliga o Airplane Mode por conta própria. CS2 e Steam passam a usar o plano de dados do celular (<a href="cs2-mobile-data/">quantos dados o CS2 usa e que ping esperar</a>; <a href="cs2-ping-test/">teste seu ping para cada região</a>).</p></details>
         <details><summary>Funciona com iPhone?</summary><p>Sim, a proteção funciona: o USB tethering (Personal Hotspot) do iPhone aparece no Windows como o de um Android, e o hotspot Wi-Fi também. O Change IP pelo PC precisa do ADB, que só o Android tem, então no iPhone você pega um IP novo ligando e desligando o Airplane Mode no celular.</p></details>
         <details><summary>Posso levar VAC ban? Precisa da minha senha da Steam?</summary><p>Ele nunca toca no jogo: nem no cs2.exe, nem na memória dele, nem nos arquivos de programa dele. Muda rotas e regras de firewall do Windows e qual conta Steam salva entra. Trocar de conta usa os logins que a Steam já salvou e nunca pede sua senha da Steam. Não esconde cheat do VAC nem de nenhum anti-cheat, e não podemos falar pela Valve nem pelos admins de um servidor, que definem as próprias regras.</p></details>
         <details><summary>Ele envia algo sobre mim?</summary><p>Enquanto o app está em beta, ele envia estatísticas de uso, que são obrigatórias para usá-lo: a primeira abertura mostra o que é enviado, com Accept e Quit (Quit fecha o app sem mudar nada). Elas saem quando o app está aberto há 20 segundos, a cada 30 minutos enquanto ele fica aberto e quando fecha, com um sinal curto a cada 5 minutos do que está ligado: um ID aleatório criado para esta instalação, sem nome (não vem do seu PC nem de você; Settings > Delete my stats apaga tudo), versões, seu país, o modo, como o celular está conectado, minutos de uso, quantas vezes cada botão é usado, alguns contadores, o tamanho das suas listas e erros. Nunca IPs, servidores, contas, nomes nem nada que você digitou, e o servidor não guarda IP. A lista completa está no <a href="https://github.com/Sepd0x/cs2-ip-changer#telemetry">README</a>.</p></details>

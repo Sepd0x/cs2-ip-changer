@@ -16,7 +16,7 @@ import {
   MeshStandardMaterial, MeshPhysicalMaterial, MeshBasicMaterial, MeshLambertMaterial, ShaderMaterial, Material,
   CanvasTexture, HemisphereLight, DirectionalLight, PointLight, RectAreaLight, FogExp2, PMREMGenerator, VSMShadowMap,
   SRGBColorSpace, AdditiveBlending, DoubleSide, BackSide, ColorManagement, SRGBTransfer, RepeatWrapping, LinearFilter,
-  ShaderChunk, Shape, ShapeGeometry, Path, ExtrudeGeometry, Matrix4, Matrix3, Quaternion, Euler, Vector4, LinearMipmapLinearFilter,
+  ShaderChunk, Shape, ShapeGeometry, Path, ExtrudeGeometry, Matrix4, Matrix3, Quaternion, Euler, Vector4, LinearMipmapLinearFilter, Frustum,
 } from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -429,6 +429,7 @@ function* build(canvas, opts = {}) {
   Object.assign(mirror.material, { transparent: true, depthWrite: false, blending: AdditiveBlending });
   mirror.material.uniforms.tRough.value = R.concrete;
   mirror.rotation.x = -Math.PI / 2; mirror.position.y = 0.002; scene.add(noMirror(mirror));
+  const _fr = new Frustum(), _pm = new Matrix4();
   const mirrorDraw = mirror.onBeforeRender; let mirrorAt = -1, frameNo = 0, inBloom = false;
   // once a frame, in the real render (6b): drawn in the bloom's render it had the screens black and no key light
   mirror.onBeforeRender = function (...a) { if (inBloom || mirrorAt === frameNo) return; mirrorAt = frameNo; const lk = leds.uniforms.uK.value; leds.uniforms.uK.value = lk * 0.6; mirrorDraw.apply(this, a); leds.uniforms.uK.value = lk; }; // 6c: the racks' lights softer in the wet floor (it was three solid green columns) // once a frame, not once per render
@@ -1201,7 +1202,7 @@ function* build(canvas, opts = {}) {
     cut: { at: PORT.clone().add(V3(0, 0.05, 0)), beats: [3], dn: 1, side: { wide: [1, 1], tall: [1, 1] }, html: '<b>Cable pulled</b><span>CS2 is cut off, not sent home</span>' },
   };
   // the guides build on this world: they may add props, labels and shots, and run their own story each frame
-  const __gx = (opts.extend && opts.extend({ scene, camera, renderer, C, M, LAB, SHOTS, K, rbox, cable, air, arc, mCable, mAir, mArc, homeMat, hatch, tryMat, gate, gateFrameMat, Lbad, L2, L3, leds, mastTop, mastBase, serverTop, routerPos, gatePos, PORT, PHONE_TOP, SX, SZ, monW, scrC, scrN, mon, REFL, glows, spU })) || {};
+  const __gx = (opts.extend && opts.extend({ scene, camera, renderer, C, M, LAB, SHOTS, K, rbox, cable, air, arc, mCable, mAir, mArc, homeMat, hatch, tryMat, gate, gateFrameMat, Lbad, L2, L3, leds, fuse, mastTop, mastBase, serverTop, routerPos, gatePos, PORT, PHONE_TOP, SX, SZ, monW, scrC, scrN, mon, REFL, glows, spU })) || {};
   for (const k in LAB) {
     const el = document.createElement('div'); el.className = 'wd-lab' + (LAB[k].hot ? ' wd-hot' : ''); el.dataset.lab = k; el.innerHTML = '<i></i><div>' + LAB[k].html + '</div>';
     wrap.appendChild(el); LAB[k].el = el; LAB[k].s = {};
@@ -1415,6 +1416,13 @@ function* build(canvas, opts = {}) {
     bloom.render(renderer, null, bloomIn, 0, false);
     addBloom.uniforms.tBloom.value = bloom.renderTargetsHorizontal[0].texture;
     renderer.setRenderTarget(null);
+    // the wet floor's reflection, drawn here and not from inside the main render: a render started inside another one keeps its
+    // own light state in three.js, so every material both of them draw was worked out again, twice a frame (15 Nov., 4b). The
+    // same picture, from the same state; the floor then finds it done (mirrorAt) and draws nothing more
+    if (mirror.visible && mirrorAt !== frameNo) {
+      _fr.setFromProjectionMatrix(_pm.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse));
+      if (_fr.intersectsObject(mirror)) mirror.onBeforeRender(renderer, scene, camera);
+    }
     composer.render();
   }
 
@@ -1607,6 +1615,31 @@ function* build(canvas, opts = {}) {
 
   yield;
   // ---------- start: build, environment, compile every program without blocking, then draw ----------
+  // An InstancedMesh and a plain Mesh drawn with the same material make three.js work out that material's program again at every
+  // switch between them (about 20 times a frame, in each of the three passes: 15 Nov., 4b). Each instanced mesh gets its own copy
+  // of a material it shares, so the two kinds never alternate on one material. The copy keeps the shader hooks (clone() leaves
+  // them out). A material the frame changes by hand (the gate, the beacon) is left alone.
+  {
+    const plain = new Set(), own = new Map(), keep = new Set([gateFrameMat, beacon.material]), _v3 = new Vector3();
+    scene.traverse(o => { if (o.isMesh && !o.isInstancedMesh && !Array.isArray(o.material)) plain.add(o.material); });
+    scene.traverse(o => {
+      if (!o.isInstancedMesh || Array.isArray(o.material) || !plain.has(o.material) || keep.has(o.material)) return;
+      let m = own.get(o.material);
+      if (!m) { const src = o.material; m = src.clone(); m.onBeforeCompile = src.onBeforeCompile; m.customProgramCacheKey = src.customProgramCacheKey; m.name = src.name; own.set(src, m); }
+      o.material = m;
+    });
+    // A see-through material drawn on both sides is drawn twice by three.js (back faces, then front faces), and each time it sets
+    // needsUpdate, so its program is worked out again twice per draw, in every pass. On a flat shape (the rings, the glass panes)
+    // one pass on both sides draws exactly the same pixels: those materials are drawn once.
+    const solid = new Set(), flat = new Set();
+    scene.traverse(o => {
+      if (!o.isMesh || Array.isArray(o.material) || !o.material.transparent || o.material.side !== DoubleSide) return;
+      o.geometry.computeBoundingBox();
+      const s = o.geometry.boundingBox.getSize(_v3), big = Math.max(s.x, s.y, s.z);
+      (Math.min(s.x, s.y, s.z) <= big * 1e-3 ? flat : solid).add(o.material);
+    });
+    for (const m of flat) if (!solid.has(m)) m.forceSinglePass = true;
+  }
   resize();
   const fontsReady = (document.fonts ? Promise.all(['600 30px "Funnel Sans"', '400 28px "Funnel Sans"', '600 19px "Fragment Mono"'].map(f => document.fonts.load(f))) : Promise.resolve()).catch(() => {});
   // how far the start has got, 0 to 1, for the page's loading screen (it listens for worldprogress on the document)

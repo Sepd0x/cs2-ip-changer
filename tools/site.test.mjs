@@ -192,3 +192,48 @@ test('Site: nas guias nada salta ao chegar ao rodape, num tablet ao alto e num t
   }
   assert.deepEqual(bad, [], 'layout shifts while scrolling a guide to its end');
 });
+
+// 15 Nov. 2026 (4b): the footer of a guide is laid out when it comes near the screen, and until then it counts as the height
+// declared in contain-intrinsic-size. The three newest guides added three rows to its list and the guess was 7 rem short, so the
+// wordmark below jumped by about 120 px at the end of a guide (it showed as a layout shift of 0.017 on one page by luck of
+// where the scroll steps landed). The guess must stay within 4% of the real height, at the widths where it changes.
+test('Site: o rodape das guias conta com a altura que tem de verdade (contain-intrinsic-size), em varias larguras', async (t) => {
+  if (!browser) return t.skip(why);
+  const bad = [];
+  for (const { width, touch } of [{ width: 390 }, { width: 600 }, { width: 800 }, { width: 1280 }, { width: 800, touch: true }, { width: 1280, touch: true }]) {
+    const ctx = await browser.newContext({ viewport: { width, height: 900 }, ...(touch ? { hasTouch: true, isMobile: width < 800 } : {}) });
+    const page = await ctx.newPage();
+    await page.goto(origin + 'change-ip-with-phone/', { waitUntil: 'load' });
+    const r = await page.evaluate(async () => {
+      const e = document.querySelector('footer .fgrid'), c = getComputedStyle(e), guess = parseFloat(c.containIntrinsicBlockSize.replace('auto ', ''));
+      e.style.contentVisibility = 'visible'; await new Promise((ok) => setTimeout(ok, 300));
+      const pad = parseFloat(c.paddingTop) + parseFloat(c.paddingBottom) + parseFloat(c.borderTopWidth) + parseFloat(c.borderBottomWidth);
+      return { guess, real: e.getBoundingClientRect().height - pad };
+    });
+    if (Math.abs(r.guess - r.real) / r.real > 0.04) bad.push(`${width}${touch ? ' touch' : ''}: guessed ${r.guess.toFixed(0)} px, is ${r.real.toFixed(0)} px`);
+    await ctx.close();
+  }
+  assert.deepEqual(bad, [], 'the footer list changes height when a guide is added: update footer .fgrid in tools/site-pages.mjs');
+});
+
+// UI-005 (final audit, 13 Nov. 2026): at 2560 and 3840 px the title "One window," and the copy under it touched the app window
+// that the 3D screen docks on (#win-fig). Fixed 15 Nov.: the copy of that beat stops before the window at every wide size.
+test('Site: UI-005, o titulo "One window" nao toca na janela da app a 1600, 2560 e 3840 px', async (t) => {
+  if (!browser) return t.skip(why);
+  const bad = [];
+  for (const [width, height] of [[1600, 900], [1920, 1080], [2560, 1440], [3840, 2160]]) {
+    const ctx = await browser.newContext({ viewport: { width, height } });
+    const page = await ctx.newPage();
+    await page.goto(origin, { waitUntil: 'load' });
+    const r = await page.evaluate(() => {
+      const h = document.querySelector('#features-h'), fig = document.querySelector('#win-fig');
+      const rg = document.createRange(); rg.selectNodeContents(h);
+      const p = h.parentNode.querySelector('p'), rp = document.createRange(); rp.selectNodeContents(p);
+      const right = Math.max(...[...rg.getClientRects(), ...rp.getClientRects()].map((q) => q.right));
+      return { right, left: fig.getBoundingClientRect().left };
+    });
+    if (r.right > r.left - 8) bad.push(`${width}: the copy reaches ${r.right.toFixed(0)} px, the window starts at ${r.left.toFixed(0)} px`);
+    await ctx.close();
+  }
+  assert.deepEqual(bad, [], 'the title or its text touches the app window');
+});

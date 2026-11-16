@@ -3,4 +3,5 @@
 //
 // Build: in any folder, npm i three@0.186.1 esbuild, then from the repo root:
 //   NODE_PATH=<that folder>/node_modules npx esbuild site/assets/src/scenes.js --bundle --minify --format=iife --target=es2020 --legal-comments=none --outfile=site/assets/js/scenes.min.js
+// Then put the MIT notices back, which --legal-comments=none drops: node tools/site-legal.mjs (tools/site-audit.test.mjs checks them).
 import './world.js';

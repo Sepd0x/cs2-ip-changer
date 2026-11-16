@@ -89,8 +89,7 @@ addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.docume
       "@id": "https://sepd0x.github.io/cs2-ip-changer/ru/#app",
       "name": "CS2 IP Changer",
       "alternateName": [
-        "CS2IPChanger",
-        "ServerRouteTool"
+        "CS2IPChanger"
       ],
       "description": "Приложение для Windows, которое пускает CS2 и Steam через мобильный интернет телефона (Android или iPhone), поэтому комьюнити-серверы Counter-Strike 2 видят IP оператора, а не ваш домашний. Change IP через ADB и возвращение после бана по IP, kill switch на Windows Firewall, переключатель аккаунтов Steam, менеджер конфигов CS2, редактор профилей Steam и выбор региона матчмейкинга.",
       "applicationCategory": "UtilitiesApplication",
@@ -581,6 +580,9 @@ code{font-size:max(12px,.86em)}
   .app-grid>.win-fig{grid-column:2;grid-row:1;margin-right:0;width:100%;max-width:calc((100svh - var(--top-h) - 7rem)*1.55);justify-self:start}
   .app-grid .win{border-radius:12px}
 }
+/* UI-005 (13 Nov. audit, 15 Nov.): from 1600 px the title "One window," touched the app window that the 3D screen docks on at 2560 and 3840 px.
+   The copy of that beat and the window both scale with the width, so the copy gets a share of it that stops before the window */
+@media (min-width:1600px){.beat[data-beat="5"] .copy{width:21vw}}
 .gl .win-fig:not(.docked):not(:focus-within){opacity:0;pointer-events:none}
 .win img{display:block;width:100%;height:auto}
 /* the IP the story ended on, over the screenshot's own (the same places the 3D screen patches) */
@@ -1270,7 +1272,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
         <li class="rv" style="--i:2">
           <span class="rd sm" aria-hidden="true" id="ver-rd"><!--rel:ver-->v0.1.0-beta.13<!--/rel--></span>
           <div class="tape" aria-hidden="true"><span>собрано <b>GitHub Actions</b> · исходный код Sepd0x/cs2-ip-changer · sha256 <!--rel:sha-->cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b<!--/rel--></span></div>
-          <p><b>Всё в открытую.</b> <span class="vh"><!--rel:ver-->v0.1.0-beta.13<!--/rel-->, sha256 <!--rel:sha-->cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b<!--/rel-->. </span>GitHub Actions собирает каждый релиз из открытого кода, с аттестацией, которую можно проверить.</p>
+          <p><b>Всё в открытую.</b> <span class="vh"><!--rel:ver-->v0.1.0-beta.13<!--/rel-->, sha256 <!--rel:sha-->cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b<!--/rel-->. </span>GitHub Actions собирает каждый релиз из опубликованного кода, с аттестацией, которую можно проверить.</p>
         </li>
         <li class="rv" style="--i:3">
           <span class="rd" aria-hidden="true">1&times;<small> SmartScreen спрашивает один раз</small></span>
@@ -1379,7 +1381,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
         <h2 class="rv" id="faq-h">FAQ. <span class="m">Короткие ответы.</span></h2>
         <div class="qs">
         <details><summary>Это VPN? Работает на серверах, которые блокируют VPN?</summary><p>Это не VPN. VPN пускает трафик через дата-центр, а многие комьюнити-серверы ставят anti-VPN плагины, которые кикают или банят IP дата-центров и VPN. Это приложение пускает CS2 и Steam через мобильный интернет вашего телефона, поэтому сервер видит обычное мобильное соединение вашего оператора, и его обычно пускают там, где VPN не проходит. Гарантии нет: операторы делят IP между многими телефонами, поэтому IP, с которого кто-то уже нарушал правила, могут пометить; Change IP даст другой. VPN-сервера посередине нет, подписки тоже нет.</p></details>
-        <details><summary>Что мне нужно?</summary><p>Windows 10 или 11 (64-бит), права администратора, включённый Windows Firewall и телефон Android или iPhone с мобильным интернетом, подключённый по USB-кабелю (USB tethering, на iPhone Personal Hotspot) или через точку доступа Wi-Fi. Для Change IP с ПК нужен Android с включённым USB debugging; на iPhone вы сами включаете и выключаете Airplane Mode. После этого CS2 и Steam расходуют мобильный трафик телефона.</p></details>
+        <details><summary>Что мне нужно?</summary><p>Windows 10 или 11 (64-бит), права администратора, включённый Windows Firewall и телефон Android или iPhone с мобильным интернетом, подключённый по USB-кабелю (USB tethering, на iPhone Personal Hotspot) или через точку доступа Wi-Fi. Для Change IP с ПК нужен Android с включённым USB debugging; на iPhone вы сами включаете и выключаете Airplane Mode. После этого CS2 и Steam расходуют мобильный трафик телефона (<a href="cs2-mobile-data/">сколько трафика тратит CS2 и какого пинга ждать</a>; <a href="cs2-ping-test/">проверьте пинг до каждого региона</a>).</p></details>
         <details><summary>Работает с iPhone?</summary><p>Да, защита работает: USB tethering на iPhone (Personal Hotspot) виден в Windows так же, как у Android, и точка доступа Wi-Fi тоже. Change IP с ПК требует ADB, который есть только на Android, поэтому на iPhone новый IP вы получаете, включив и выключив Airplane Mode на телефоне.</p></details>
         <details><summary>Можно ли из-за него получить VAC-бан? Нужен ли пароль от Steam?</summary><p>Приложение игру не трогает: ни cs2.exe, ни его память, ни файлы игры. Оно меняет маршруты Windows, правила брандмауэра и то, под каким сохранённым аккаунтом Steam идёт вход. Переключение аккаунтов использует логины, которые Steam уже сохранил, и никогда не спрашивает ваш пароль от Steam. Оно не спрячет чит от VAC или любого античита, а за Valve и за админов серверов, у которых свои правила, мы отвечать не можем.</p></details>
         <details><summary>Отправляет ли приложение что-то обо мне?</summary><p>Пока приложение в бете, оно отправляет статистику использования, она обязательна для работы: при первом запуске показывается, что отправляется, с кнопками Accept и Quit (Quit закрывает приложение, ничего не меняя). Статистика уходит, когда приложение открыто 20 секунд, каждые 30 минут, пока оно открыто, и при закрытии, плюс короткий сигнал каждые 5 минут о том, что включено: случайный ID, созданный для этой установки, без имени (не берётся ни с вашего ПК, ни от вас; Settings > Delete my stats удаляет всё), версии, ваша страна, режим, способ подключения телефона, минуты в работе, как часто используется каждая кнопка, несколько счётчиков, длина ваших списков и ошибки. Никогда IP, серверов, аккаунтов, имён или того, что вы вводили, и сервер не хранит IP. Полный список в <a href="https://github.com/Sepd0x/cs2-ip-changer#telemetry">README</a>.</p></details>
@@ -1402,7 +1404,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
     <div class="wrap">
       <div class="copy">
         <h2 id="cta-h">Держите домашний IP <span class="m">вне их логов.</span></h2>
-        <p class="lead">Бесплатно, один .exe. Каждый релиз собирает GitHub Actions из открытого кода, а обновления проверяются по подписи.</p>
+        <p class="lead">Бесплатно, один .exe. Каждый релиз собирает GitHub Actions из опубликованного кода, а обновления проверяются по подписи.</p>
         <p class="req">Windows 10/11 · Android или iPhone, по USB-кабелю или через точку доступа · мобильный интернет · права администратора</p>
         <div class="get-phone">
           <div class="copyrow">

@@ -271,7 +271,7 @@ The stats are kept by the author of this project (Sepd0x on GitHub), who decides
 <details>
 <summary><b>The website</b></summary>
 
-The website counts visits and clicks on Download, with no cookies and no ID: each page sends which page it is, the name of the site you came from (like `google.com`, never the page; or the short name in the link, like `?ref=tiktok`) and whether it was a visit or a Download click. The Worker adds the country Cloudflare works out and keeps only counts per day ([`/v1/site`](worker/stats/src/index.js)). Nothing is stored in your browser, and with Do Not Track or Global Privacy Control on, nothing is sent. GitHub Pages, which hosts the site, keeps its own logs under GitHub's privacy statement.
+The website counts visits and clicks on Download, with no cookies and no ID: each page sends which page it is, the name of the site you came from (like `google.com`, never the page; or the short name in the link, like `?ref=tiktok`) and whether it was a visit or a Download click. The Worker adds the country Cloudflare works out and keeps only counts per day ([`/v1/site`](worker/stats/src/index.js)). The only things the site keeps in your browser are your own choices (`cs2-lang`, the language, and `cs2-fx` and `cs2-motion`, whether motion plays), never an ID and never sent anywhere. With Do Not Track or Global Privacy Control on, nothing is sent. GitHub Pages, which hosts the site, keeps its own logs under GitHub's privacy statement.
 </details>
 
 <details>

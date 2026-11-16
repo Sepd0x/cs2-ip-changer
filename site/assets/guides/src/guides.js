@@ -309,16 +309,19 @@ const PAGES = {
       c.LAB.mast.beats = [0];
       const P = findParts(c); P.server.visible = false; P.arcMesh.visible = false; P.shadows.forEach(o => (o.visible = false)); c.leds.visible = false;
       X.sites = []; const ON = [2, 3, 5];
+      // the 8 servers are copies that never move again: one group, fused, so the same parts are drawn together (15 Nov., 4b: this page drew about twice the home's draw calls)
+      const farm = new Group(); c.scene.add(farm);
       for (let i = 0; i < 8; i++) {
         const a = lerp(Math.PI * 1.06, Math.PI * 1.92, i / 7), x = 7 + 16.5 * Math.cos(a), z = -8 + 12.5 * Math.sin(a);
         const g = P.server.clone(); g.visible = true; g.scale.setScalar(0.42);
         g.position.set(x - c.SX * 0.42, 0, z - c.SZ * 0.42); // the copy is built around (SX, SZ): move its middle onto the site
-        g.rotation.y = 0; c.scene.add(g);
+        g.rotation.y = 0; farm.add(g);
         const top = V3(x, 2.2, z);
         const curve = new CubicBezierCurve3(c.mastTop.clone(), c.mastTop.clone().lerp(top, 0.33).add(V3(0, 4.5, 0)), c.mastTop.clone().lerp(top, 0.72).add(V3(0, 3, 0)), top);
         const leg = routeLike(c, curve, { uS: 0.58, uE: 1 });
         X.sites.push({ top, lit: ON.includes(i), g, leg, order: [0, 7, 1, 6, 4].indexOf(i) });
       }
+      c.fuse(farm);
       c.LAB.on = lab(X.sites[3].top.clone().add(V3(0, 0.15, 0)), T('Left on', 'CS2 can match here'), { beats: [0] });
       c.LAB.off = lab(X.sites[6].top.clone().add(V3(0, 0.15, 0)), T('Turned off', 'blocked for cs2.exe'), { beats: [0], r: 1, hot: 1 });
     },

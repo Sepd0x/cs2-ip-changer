@@ -6,3 +6,5 @@ scenes.min.js     The two 3D scenes: the cover (proposal A's route) and "How it 
 gsap.min.js       GSAP 3.15.0 and ScrollTrigger.min.js, under the GSAP Standard License: https://gsap.com/standard-license
 ScrollTrigger.min.js
 lenis.min.js      Lenis 1.3.26, MIT licensed: https://github.com/darkroomengineering/lenis
+
+Notices: scenes.min.js, ../guides/world.min.js and lenis.min.js start with the MIT notice of their library (tools/site-legal.mjs puts it back after a build; tools/site-audit.test.mjs checks it). The same texts, with GSAP's, are in ../THIRD-PARTY.txt.

@@ -83,7 +83,7 @@ test('SEO: the questions people search have their answer on the right page', () 
   has('cs2-region-picker', 'CS2 server picker', 'What is a CS2 server picker?', 'Is a CS2 server picker safe? Can it get you VAC banned?', 'How do I change my region in CS2?',
     'CS2 server pickers compared', 'github.com/FN-FAL113/server-picker-x', 'github.com/FN-FAL113/cs2-server-picker', 'github.com/oqyh/cs2-Region-Picker', 'github.com/Jyben/cs2-mm-server-picker');
   has('cs2-ip-ban', 'Does CS2 IP ban?', 'Can you get IP banned in CS2?', 'Is a VAC ban an IP ban?', 'How do I know if I am IP banned on a CS2 server?');
-  has('copy-cs2-config', 'Copy CS2 settings to another account', 'Where is the CS2 config file?', 'How do I save or export my CS2 settings?');
+  has('copy-cs2-config', 'How to copy CS2 settings to another account', 'Where is the CS2 config file?', 'How do I save or export my CS2 settings?');
   has('hide-ip-cs2', 'Why is my VPN blocked on CS2 community servers?', 'What is a VPN alternative for CS2?');
   has('cs2-ping-test', 'How do I test my ping to CS2 servers?', 'What is a good ping in CS2?', 'Why is my CS2 ping high when my internet is fast?');
   has('cs2-config-file-location', 'Where do I find my CS2 cfg folder on Windows?', 'Where does autoexec.cfg go in CS2?', 'How do I find my Steam account ID?');

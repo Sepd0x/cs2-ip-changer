@@ -59,7 +59,7 @@ html{color-scheme:dark;-webkit-text-size-adjust:100%}
 @media (min-width:1600px){html{font-size:clamp(1rem,1vw,1.125rem)}}
 @media (min-width:1915px){html{font-size:clamp(1.125rem,.94vw,1.5rem)}}
 @media (min-width:2561px){html{font-size:clamp(1.5rem,min(.94vw,1.67vh),3rem)}}
-body{margin:0;min-height:100svh;display:grid;grid-template-rows:auto 1fr;background:var(--t-bg);color:var(--ink);font:400 1rem/1.6 var(--sans);-webkit-font-smoothing:antialiased;border-top:2px solid transparent;border-image:var(--t-top) 1;overflow-x:clip}
+body{margin:0;min-height:100svh;display:grid;grid-template-rows:auto 1fr auto;background:var(--t-bg);color:var(--ink);font:400 1rem/1.6 var(--sans);-webkit-font-smoothing:antialiased;border-top:2px solid transparent;border-image:var(--t-top) 1;overflow-x:clip}
 a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--t-line-strong);text-underline-offset:.22em;transition:color .15s,text-decoration-color .15s}
 @media (hover:hover){a:hover{text-decoration-color:var(--t-accent)}}
 :focus-visible{outline:2px solid var(--t-accent-light);outline-offset:3px;border-radius:2px}
@@ -68,7 +68,9 @@ a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--t-line-
 .top{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;height:4rem;padding-inline:var(--g);border-bottom:1px solid var(--t-line)}
 .brand{display:flex;align-items:center;gap:10px;font:600 1rem/1 var(--disp);letter-spacing:-.01em;text-decoration:none}
 .brand img{width:28px;height:28px;border-radius:6px}
+.tm{position:relative;z-index:1;margin:0;padding:.9rem var(--g) 1.3rem;color:var(--ink3);font:400 .8rem/1.5 var(--sans);text-align:center}
 .nf{position:relative;z-index:1;display:grid;align-content:stretch;overflow:hidden;width:100%;padding:clamp(2.5rem,2rem + 4vw,6rem) var(--g)}
+.nf{padding-bottom:.5rem}/* the notice below has its own room: the page keeps fitting a 1280x800 window */
 /* the readout: 404 where the IP would be, on the same ruler as every page */
 .ro-head,.ro-foot{display:flex;justify-content:space-between;gap:.5rem 1.5rem;flex-wrap:wrap;font:400 .8rem/1.4 var(--mono);color:var(--ink3)}
 .ro-head span{display:inline-flex;align-items:center;gap:.55rem}
@@ -189,6 +191,7 @@ html.ldw .stage.ready .stage-still{opacity:0;transition:none}
     </nav>
   </div>
 </main>
+<footer class="tm"><p>CS2 IP Changer by Sepd0x. Not affiliated with Valve. Counter-Strike and Steam are trademarks of Valve Corporation.</p></footer>
 <script>
 /* Send the link to my PC: the share sheet on a phone, or the link copied */
 (function(){document.querySelectorAll('[data-share]').forEach(function(b){b.addEventListener('click',function(){var u=b.getAttribute('data-copy'),l=b.textContent,c=function(){if(navigator.clipboard)navigator.clipboard.writeText(u).then(function(){b.textContent=/*t*/'Copied';setTimeout(function(){b.textContent=l},1800)},function(){})};if(navigator.share)navigator.share({title:'CS2 IP Changer',url:u}).catch(function(x){if(x&&x.name!=='AbortError')c()});else c()})})})();
