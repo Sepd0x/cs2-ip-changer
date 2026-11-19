@@ -22,3 +22,5 @@ Many words that stayed in English in Portuguese, Spanish and Russian are transla
 Guides on CS2 on mobile data, the CS2 ping test and where CS2 keeps its config; server pickers compared; the 3D scenes cost a phone about half the work per frame (14 to 31 frames a second on the home page on a mid-range phone), with the same pictures.
 
 The full list is in the [CHANGELOG](https://github.com/Sepd0x/cs2-ip-changer/blob/main/CHANGELOG.md).
+
+VirusTotal: [0 of 70 engines](https://www.virustotal.com/gui/file/95122c779dd0eb0ef1fbd08a339c766711ef312112a899c1e233f5dcfbb3d99e/detection) flag it.
