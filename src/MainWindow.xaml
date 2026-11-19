@@ -931,6 +931,12 @@
 
                         <HeaderedContentControl Style="{StaticResource Group}" Header="Matchmaking regions">
                             <StackPanel>
+                                <WrapPanel Margin="0,0,0,8">
+                                    <Label Content="{x:Static local:Texts.RegionGame}" Foreground="{StaticResource Muted}" Padding="0"
+                                           Margin="0,0,10,0" VerticalAlignment="Center" Target="{Binding ElementName=RegionGamePicker}"/>
+                                    <ComboBox x:Name="RegionGamePicker" Width="160" DisplayMemberPath="Name" IsEnabled="False"
+                                              SelectionChanged="RegionGamePicker_Changed"/>
+                                </WrapPanel>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -959,7 +965,7 @@
                                     <Button x:Name="RegionsUnderBtn" IsEnabled="False" Click="RegionsUnder_Click" Content="Block slower" ToolTip="Turns off every region above that ping (and the ones that didn't answer)"/>
                                 </WrapPanel>
                                 <Border Margin="0,8,0,0" Padding="12,8" Background="{StaticResource Surface2}" BorderBrush="{StaticResource Warn}" BorderThickness="2,0,0,0" ToolTipService.ShowDuration="30000"
-                                        ToolTip="Changes apply at once, but CS2 only reads the regions when it starts, so a CS2 that is already open keeps the old ones until you restart it.&#x0A;Allowing too few regions can mean long queues or no match at all, and Premier can take longer.&#x0A;Only cs2.exe is blocked, and only from Valve's relays. Steam, friends and community servers are not touched.&#x0A;Valve can still send a match to a blocked region through a relay you allow.">
+                                        x:Name="RegionsWarningNote" ToolTip="Changes apply at once, but CS2 only reads the regions when it starts, so a CS2 that is already open keeps the old ones until you restart it.&#x0A;Allowing too few regions can mean long queues or no match at all, and Premier can take longer.&#x0A;Only cs2.exe is blocked, and only from Valve's relays. Steam, friends and community servers are not touched.&#x0A;Valve can still send a match to a blocked region through a relay you allow.">
                                     <DockPanel>
                                         <TextBlock DockPanel.Dock="Left" Text="&#xE7BA;" Style="{StaticResource Icon}" FontSize="16" Foreground="{StaticResource Warn}" VerticalAlignment="Top" Margin="0,0,10,0"/>
                                         <TextBlock x:Name="RegionsWarning" TextWrapping="Wrap"
@@ -967,6 +973,24 @@
                                     </DockPanel>
                                 </Border>
                                 <TextBlock x:Name="RegionsMaxPingHint" Style="{StaticResource Sub}" Margin="0,8,0,0" Visibility="Collapsed"/>
+                                <Expander x:Name="RegionPresetsPanel" Header="{x:Static local:Texts.RegionPresets}" Foreground="{StaticResource Text}" Margin="0,8,0,0">
+                                    <StackPanel Margin="0,8,0,0">
+                                        <WrapPanel>
+                                            <ComboBox x:Name="RegionPresetPicker" Width="210" Margin="0,0,8,6" DisplayMemberPath="Name" SelectedValuePath="Id"
+                                                      SelectionChanged="RegionPresetPicker_Changed"/>
+                                            <Button x:Name="RegionPresetApply" Content="{x:Static local:Texts.RegionPresetApply}" Click="RegionPresetApply_Click"/>
+                                            <Button x:Name="RegionPresetSave" Content="{x:Static local:Texts.RegionPresetSave}" Click="RegionPresetSave_Click"/>
+                                            <Button x:Name="RegionPresetRename" Content="{x:Static local:Texts.RegionPresetRename}" Click="RegionPresetRename_Click"/>
+                                            <Button x:Name="RegionPresetRemove" Content="{x:Static local:Texts.RegionPresetRemove}" Click="RegionPresetRemove_Click"/>
+                                        </WrapPanel>
+                                        <WrapPanel Margin="0,4,0,0">
+                                            <Label x:Name="RegionPresetStartupLabel" Content="{x:Static local:Texts.RegionPresetStart}" Foreground="{StaticResource Muted}" Padding="0" Margin="0,0,10,6"
+                                                   VerticalAlignment="Center" Target="{Binding ElementName=RegionPresetStartup}"/>
+                                            <ComboBox x:Name="RegionPresetStartup" Width="210" DisplayMemberPath="Name" SelectedValuePath="Id" SelectionChanged="RegionPresetStartup_Changed"/>
+                                        </WrapPanel>
+                                        <TextBlock x:Name="RegionPresetStartupHint" Text="{x:Static local:Texts.RegionPresetStartHint}" Style="{StaticResource Sub}" Margin="0,6,0,0"/>
+                                    </StackPanel>
+                                </Expander>
                                 <!-- 10 Nov: once, what the phone adds (every new user used Regions, none plugged in a phone) -->
                                 <Border x:Name="RegionsPitch" Margin="0,8,0,0" Padding="12,8" Background="{StaticResource Surface2}" BorderBrush="{StaticResource Accent}" BorderThickness="2,0,0,0" Visibility="Collapsed">
                                     <DockPanel>

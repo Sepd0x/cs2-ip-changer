@@ -75,21 +75,23 @@ public static class Regions
     /// The list from Valve; if that fails (offline, API down), the last good copy on this PC. Null only when there's neither.
     /// <paramref name="fetch"/> replaces the download (tests).
     /// </summary>
-    public static async Task<SdrConfig> Load(string cachePath = null, Func<Task<string>> fetch = null)
+    public static async Task<SdrConfig> Load(string cachePath = null, Func<Task<string>> fetch = null, RegionGame game = null)
     {
-        cachePath ??= CachePath;
+        game ??= RegionGames.Cs2;
+        cachePath ??= Paths.File(game.CacheFile);
+        var logKey = $"regions-valve|{game.AppId}";
         try
         {
-            var json = await (fetch ?? Download)();
+            var json = await (fetch ?? (() => Download(game.ConfigUrl)))();
             var cfg = Parse(json, DateTime.Now);
             try { File.WriteAllText(cachePath + ".tmp", json); File.Move(cachePath + ".tmp", cachePath, true); } catch { }
-            Log.Again("regions-valve|");
+            Log.Again(logKey);
             return cfg;
         }
         catch (Exception ex)
         {
             // Said before the saved copy is used (review C17: with a copy the failure never reached the Log), once until Valve answers again
-            Log.WarnOnce("regions-valve|", "Couldn't get Valve's relay list: " + (ex.InnerException ?? ex).Message);
+            Log.WarnOnce(logKey, $"Couldn't get Valve's relay list for {game.Name}: " + (ex.InnerException ?? ex).Message);
             try
             {
                 if (File.Exists(cachePath)) return Parse(File.ReadAllText(cachePath), File.GetLastWriteTime(cachePath), fromCache: true);
@@ -99,10 +101,10 @@ public static class Regions
         }
     }
 
-    static async Task<string> Download()
+    static async Task<string> Download(string url)
     {
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-        return await http.GetStringAsync(Url);
+        return await http.GetStringAsync(url);
     }
 
     // ------------------------------------------------------------ Cities, countries, continents
@@ -246,9 +248,9 @@ public static class Regions
     /// The regions rule (or the leftover of an interrupted update) is among these Firewall rule names (<see cref="Firewall.Remaining"/>).
     /// <paramref name="unreadableCounts"/>: a Firewall that couldn't be read counts as the rule still being there.
     /// </summary>
-    public static bool RuleLeft(IEnumerable<string> remaining, bool unreadableCounts = false) =>
+    public static bool RuleLeft(IEnumerable<string> remaining, bool unreadableCounts = false, RegionGame game = null) =>
         remaining is FirewallRules { Error: not null } ? unreadableCounts
-        : remaining.Any(n => Firewall.Current(n).StartsWith(Firewall.RegionsRuleName, StringComparison.Ordinal));
+        : remaining.Any(n => Firewall.IsRegionRule(n, game ?? RegionGames.Cs2));
 
     /// <summary>
     /// Whether the 30 s check writes the rule again: regions are blocked and the rule isn't on (not written yet, CS2 not found,
@@ -269,19 +271,21 @@ public static class Regions
     /// The one Firewall rule: outbound, cs2.exe only, to the blocked relays only, every protocol, from every local IP.
     /// Null when nothing is blocked (the rule is removed).
     /// </summary>
-    public static Firewall.FwRule Rule(IEnumerable<RegionInfo> regions, IEnumerable<string> blocked, string cs2Path)
+    public static Firewall.FwRule Rule(IEnumerable<RegionInfo> regions, IEnumerable<string> blocked, string gamePath, RegionGame game = null)
     {
         var ips = BlockedIps(regions, blocked);
-        if (ips.Count == 0 || string.IsNullOrEmpty(cs2Path)) return null;
-        return new Firewall.FwRule(Firewall.RegionsRuleName, ips, cs2Path, null,
-            "Managed by CS2 IP Changer (Regions page). Stops CS2 from reaching Valve's relays in the regions you turned off, so matchmaking plays elsewhere. Steam and other programs are not affected.");
+        if (ips.Count == 0 || string.IsNullOrEmpty(gamePath)) return null;
+        game ??= RegionGames.Cs2;
+        return new Firewall.FwRule(game.RuleName, ips, gamePath, null,
+            $"Managed by CS2 IP Changer (Regions page). Stops {game.Name} from reaching Valve's relays in the regions you turned off, so matchmaking plays elsewhere. Steam and other programs are not affected.");
     }
 
     /// <summary>Puts the rule in place (or removes it when nothing is blocked). Needs administrator.</summary>
-    public static void Apply(IEnumerable<RegionInfo> regions, IEnumerable<string> blocked, string cs2Path)
+    public static void Apply(IEnumerable<RegionInfo> regions, IEnumerable<string> blocked, string gamePath, RegionGame game = null)
     {
-        var rule = Rule(regions, blocked, cs2Path);
-        if (rule == null) Firewall.Remove(Firewall.RegionsRuleName);
+        game ??= RegionGames.Cs2;
+        var rule = Rule(regions, blocked, gamePath, game);
+        if (rule == null) Firewall.Remove(game.RuleName);
         else Firewall.Apply(rule);
     }
 

@@ -1,0 +1,16 @@
+{
+  "570": {
+    "revision": 11,
+    "pops": {
+      "lim": {"desc":"Lima (Peru)","geo":[-77,-12],"relays":[{"ipv4":"192.0.2.21","port_range":[27015,27020]}]}
+    }
+  },
+  "1422450": {
+    "response": {
+      "revision": 22,
+      "pops": {
+        "osl": {"desc":"Oslo (Norway)","geo":[10,60],"relays":[{"ipv4":"198.51.100.31","port_range":[27015,27020]}]}
+      }
+    }
+  }
+}

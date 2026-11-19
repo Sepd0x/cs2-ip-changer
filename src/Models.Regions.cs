@@ -3,12 +3,20 @@ using SRT.Core;
 
 namespace SRT;
 
-public sealed partial class Settings
+public class RegionSettings
 {
     public List<string> BlockedRegions { get; set; } = new();   // Regions page: cities whose Valve relays cs2.exe can't reach
     public List<string> RegionsKeep { get; set; }                 // set by a shortcut: only these stay on (ids or "continent:Europe"); null = turned off one by one
     public long RegionsRevision { get; set; }                     // revision of Valve's relay list the rule was last built from
     public int RegionsMaxPing { get; set; } = 60;                // the "Ping under" shortcut
+    public List<RegionPreset> RegionPresets { get; set; } = new();
+    public Guid? RegionPresetOnStart { get; set; }
+}
+
+public sealed partial class Settings : RegionSettings
+{
+    public RegionSettings DotaRegions { get; set; } = new();
+    public RegionSettings DeadlockRegions { get; set; } = new();
 }
 
 /// <summary>One row on the Regions page.</summary>

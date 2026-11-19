@@ -5,6 +5,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 ## [Unreleased]
 
 ### Added
+- Regions: choose CS2, Dota 2 or Deadlock. Each game keeps its own regions and presets.
+- Regions: save and name your current selection, reuse it later, or choose a preset to apply when CS2 starts.
 - Website: a new guide, "CS2 on mobile data": what ping to expect on a phone hotspot or USB tethering, how much data a match uses, and how to keep the game steady. In English, Brazilian Portuguese, Spanish and Russian.
 - Website: the region picker guide now compares the CS2 server pickers (Server Picker X, CS2 Server Picker, CS2 Region Picker, CS2 MM Server Picker) and answers "What is a CS2 server picker?", "Is a CS2 server picker safe?" and "Does a server picker lower my ping?".
 - Website: the IP ban guide answers "Can you get IP banned in CS2?", "Is a VAC ban an IP ban?", "How do I know if I am IP banned?" and "How long does a CS2 IP ban last?". The hide-your-IP guide answers why VPNs get blocked on community servers. The config guide says where the CS2 config file is and how to save or export your settings.
@@ -17,6 +19,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Windows Firewall: the app's rules are now named "CS2 IP Changer - ..." (they were "ServerRouteTool v9 - ...", partly in Portuguese). Rules left by an older version are renamed by the app on its own: each new rule is in place before the old one goes, so nothing is ever less blocked, and Turn off protection, Allow all, --restore, Remove and tools/restore.cmd remove both names. If you go back to an older version, run `CS2IPChanger.exe --restore` first: older versions don't know the new names.
 
 ### Fixed
+- The window stays responsive while collecting network details for a bug report or loading a region list. Phone setup pauses its periodic checks while the window is hidden.
+- Regions: Refresh keeps the warning visible when Valve is offline and a saved list is used. Restore network also removes region rules under the older name.
 - Protection: with an Android phone on a USB cable, USB debugging not allowed and no other network on the PC, the app said "Protected" even if the phone was sharing its Wi-Fi (your home connection) instead of mobile data. It now says "Mobile data not confirmed" and tells you to turn off the phone's Wi-Fi or allow USB debugging. Without a home network it also compares the phone's IP with the last home IP measured on a home connection, and blocks your servers if they are the same.
 - Whole PC: if the app crashed, its DNS and IPv6 rules stayed, and once the phone was unplugged websites stopped loading until the app was opened again. A crash now takes them off (the kill switch and the CS2 lock stay, as when you close with Keep). If the app is ended in Task Manager or the PC loses power, open the app once to put it back (the FAQ says so).
 - Save mobile data: a phone the app only recognised by its USB address (a driver name it doesn't know) stopped counting as the phone as soon as Save mobile data was on, so servers and CS2 were blocked for a few seconds every minute.

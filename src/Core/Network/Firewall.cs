@@ -34,7 +34,7 @@ public static class Firewall
     // Servers that banned the IP the PC has now (beta.13): UDP to them is blocked, with protection on or off, until the IP changes.
     public const string BannedIpRuleName = AppIds.RulePrefix + " - servers that banned this IP";
 
-    /// <summary>Each rule's name before 1.0.0 (alpha.1 to beta.13, partly in Portuguese) and its name now.</summary>
+    /// <summary>Rule names accepted under the previous prefix and their current names.</summary>
     static readonly (string Old, string New)[] Renamed =
     {
         ("ServerRouteTool v9 - kill switch", RuleName),
@@ -44,6 +44,8 @@ public static class Firewall
         ("ServerRouteTool v9 - DNS TCP so pela saida", DnsTcpRuleName),
         ("ServerRouteTool v9 - IPv6 bloqueado", Ipv6RuleName),
         ("ServerRouteTool v9 - CS2 regioes bloqueadas", RegionsRuleName),
+        ("ServerRouteTool v9 - Dota 2 regions turned off", RegionGames.DotaRule),
+        ("ServerRouteTool v9 - Deadlock regions turned off", RegionGames.DeadlockRule),
         ("ServerRouteTool v9 - IP banido no servidor", BannedIpRuleName),
     };
 
@@ -450,7 +452,17 @@ public static class Firewall
     /// phone or on protection, only Allow all lifts them. --restore and tools\restore.cmd are the way out and remove everything.
     /// </summary>
     public static string[] RulesToRemove(bool keepRegions) =>
-        keepRegions ? ProtectionRules.Append(BannedIpRuleName).ToArray() : ProtectionRules.Append(RegionsRuleName).Append(BannedIpRuleName).ToArray();
+        keepRegions ? ProtectionRules.Append(BannedIpRuleName).ToArray()
+        : ProtectionRules.Concat(RegionGames.All.Select(g => g.RuleName)).Append(BannedIpRuleName).ToArray();
+
+    public static bool IsRegionRule(string name, RegionGame game = null)
+    {
+        var current = Current(name);
+        if (current == null) return false;
+        bool Matches(RegionGame candidate) =>
+            current == candidate.RuleName || current.StartsWith(candidate.RuleName + Updating, StringComparison.Ordinal);
+        return game != null ? Matches(game) : RegionGames.All.Any(Matches);
+    }
 
     public static void RemoveAll(bool keepRegions = false)
     {
@@ -503,7 +515,7 @@ public static class Firewall
         Cs2RuleName => Loc.T("CS2 only through the phone"),
         DnsUdpRuleName or DnsTcpRuleName => Loc.T("Whole PC: DNS only through the phone"),
         Ipv6RuleName => Loc.T("Whole PC: IPv6 blocked"),
-        RegionsRuleName => Loc.T("Matchmaking regions you turned off"),
+        RegionsRuleName or RegionGames.DotaRule or RegionGames.DeadlockRule => Loc.T("Matchmaking regions you turned off"),
         BannedIpRuleName => Loc.T("Servers that banned the IP you have now"),
         _ => Loc.T("From an older version"),
     };

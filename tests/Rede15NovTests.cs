@@ -86,11 +86,11 @@ static class Rede15NovTests
     static void NomesDasRegras(Action<string, bool, string> check)
     {
         var names = new[] { Firewall.RuleName, Firewall.EchoRuleName, Firewall.Cs2RuleName, Firewall.DnsUdpRuleName, Firewall.DnsTcpRuleName,
-            Firewall.Ipv6RuleName, Firewall.RegionsRuleName, Firewall.BannedIpRuleName };
+            Firewall.Ipv6RuleName, Firewall.RegionsRuleName, Firewall.BannedIpRuleName, RegionGames.DotaRule, RegionGames.DeadlockRule };
         check("Bloqueador 3: o prefixo novo é o nome da app", AppIds.RulePrefix == "CS2 IP Changer" && AppIds.LegacyRulePrefixes.SequenceEqual(new[] { "ServerRouteTool v9" }), AppIds.RulePrefix);
-        check("Bloqueador 3: as 8 regras começam pelo prefixo novo, nenhuma por um antigo, todas diferentes",
+        check("Bloqueador 3: as regras começam pelo prefixo novo, nenhuma por um antigo, todas diferentes",
             names.All(n => n.StartsWith(AppIds.RulePrefix + " - ")) && !names.Any(n => AppIds.LegacyRulePrefixes.Any(p => n.StartsWith(p)))
-            && names.Distinct().Count() == 8 && Firewall.AllNames.ToHashSet().SetEquals(names), "");
+            && names.Distinct().Count() == names.Length && Firewall.AllNames.ToHashSet().SetEquals(names), "");
         check("Bloqueador 3: nenhum nome de regra em português", !names.Any(n => new[] { "teste", "saida", "bloquead", "regioes", "banido" }.Any(n.Contains)), string.Join(" | ", names));
         check("Bloqueador 3: nenhuma regra é o começo de outra (o RuleLeft e os temporários contam com isso)",
             !names.Any(a => names.Any(b => a != b && b.StartsWith(a))), "");
@@ -173,7 +173,9 @@ static class Rede15NovTests
             && Src("Views", "MainWindow.Protection.cs").Contains("if (rep.RulesRenamed && !s.RulesRenamed) { s.RulesRenamed = true; changed = true; }")
             && new Settings().RulesRenamed == false, "");
         check("Bloqueador 3: o Keep e o --restore veem as regras pelo nome antigo também",
-            guard.Contains("Firewall.Has(rules, n)") && guard.Contains("Firewall.Has(rules, Firewall.BannedIpRuleName)") && guard.Contains("!Firewall.Current(n).StartsWith(Firewall.RegionsRuleName"), "");
+            guard.Contains("Firewall.Has(rules, n)") && guard.Contains("Firewall.Has(rules, Firewall.BannedIpRuleName)")
+            && guard.Contains("Firewall.RemoveAll(keepRegions);") && guard.Contains("!keepRegions || !Firewall.IsRegionRule(n)")
+            && RegionGames.All.All(game => Firewall.IsRegionRule(Firewall.LegacyName(game.RuleName))), "");
     }
 
     // A-02: um telemóvel reconhecido só pelo gateway deixava de o ser quando o Save mobile data tirava o gateway (a cada minuto)

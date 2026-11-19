@@ -19,7 +19,7 @@ static class RegionTests
         return null;
     }
 
-    public static void Run(CheckFn check, CheckFn env)
+    public static void Run(CheckFn check, CheckFn env, bool includeLive = true)
     {
         var path = Fixture();
         check("Regiões: fixture encontrada", path != null, path ?? "");
@@ -127,6 +127,7 @@ static class RegionTests
         }
         finally { try { Directory.Delete(dir, true); } catch { } }
 
+        if (!includeLive) return;
         // A lista ao vivo (depende da rede deste PC)
         // A cópia vai para o %TEMP% e apaga-se logo (F66)
         var liveCache = Path.Combine(Path.GetTempPath(), "cs2ipchanger-live-" + Guid.NewGuid().ToString("N") + ".json");
@@ -159,7 +160,7 @@ static class RegionTests
         check("Regiões: Turn off protection guarda a regra das regiões", !Firewall.RulesToRemove(keepRegions: true).Contains(Firewall.RegionsRuleName)
             && Firewall.RulesToRemove(keepRegions: true).Contains(Firewall.RuleName) && Firewall.RulesToRemove(keepRegions: true).Contains(Firewall.Cs2RuleName));
         check("Regiões: --restore tira tudo, a regra das regiões também", Firewall.RulesToRemove(keepRegions: false).Contains(Firewall.RegionsRuleName)
-            && Firewall.RulesToRemove(keepRegions: false).Length == Firewall.RulesToRemove(keepRegions: true).Length + 1);
+            && Firewall.RulesToRemove(keepRegions: false).Length == Firewall.RulesToRemove(keepRegions: true).Length + RegionGames.All.Count);
     }
 
     static IEnumerable<string> RemoteIpsOrEmpty(this RegionInfo r) => r?.RelayIps ?? Enumerable.Empty<string>();

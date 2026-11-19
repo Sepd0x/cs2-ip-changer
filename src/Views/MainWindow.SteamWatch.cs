@@ -129,6 +129,7 @@ public partial class MainWindow
                     Dispatcher.BeginInvoke(() => OnCs2Exit(p, code, start));
                 };
                 _cs2Watched.Add(p);
+                if (_cs2Regions != null) RegionGameStarted(_cs2Regions, p.Id, start);
             }
             catch (Exception ex) { Log.Warn("Cannot watch CS2: " + ex.Message); p.Dispose(); }
         }
@@ -137,6 +138,7 @@ public partial class MainWindow
     void OnCs2Exit(Process p, int? code, DateTime start)
     {
         _cs2Watched.Remove(p);
+        if (_cs2Regions?.PendingPreset?.Pid == p.Id) _cs2Regions.PendingPreset = null;
         p.Dispose();
         ConfigsCs2Closed();   // queued config copies, and Latest change wins (Configs page)
         var min = (int)(DateTime.Now - start).TotalMinutes;

@@ -9,6 +9,15 @@ namespace SRT;
 /// </summary>
 public static class Texts
 {
+    public const string RegionPresets = "Region presets";
+    public const string RegionGame = "Game";
+    public const string RegionPresetApply = "Apply preset";
+    public const string RegionPresetSave = "Save current selection";
+    public const string RegionPresetRename = "Rename preset";
+    public const string RegionPresetRemove = "Remove preset";
+    public const string RegionPresetStart = "Apply when CS2 starts";
+    public const string RegionPresetStartHint = "Keep the app open. If CS2 has already measured the regions, restart it between matches.";
+
     // ------------------------------------------------------------ Phone setup: the phone tool (ADB), downloaded by the app
 
     public const string AdbTitle = "Phone tool (ADB)";
