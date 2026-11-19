@@ -131,7 +131,7 @@ export function buildBrief({ S, L = null, G = null, GH = { days: [] }, tables = 
   // ---------------- health
   const checks = [];
   const add = (c) => { checks.push(c); return c; };
-  const fr = S.fresh || {}, B = fr.budget || { rows: 0, cap: 40000, live: 0, liveCap: 12000, site: 0, siteCap: 3000 };
+  const fr = S.fresh || {}, B = fr.budget || { rows: 0, cap: 40000, live: 0, liveCap: 12000, site: 0, siteCap: 20000 };
   const fm = mins(now, fr.lastTs);
   // Why it is stale: nothing written today by anyone (the pipeline or nobody at all), only the owner's or dev PCs report, or quiet
   const anyM = mins(now, fr.lastAny);

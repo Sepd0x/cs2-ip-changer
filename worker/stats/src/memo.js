@@ -17,8 +17,8 @@ export function fnv(s) {
 }
 
 /**
- * The answer kept under key: used while it is younger than maxAge, or older but with the same stamp (nothing was written since),
- * else worked out again by compute() and kept. stamp is a promise of a short text (or null for none). Never fails a request on
+ * The answer kept under key: used while it is younger than maxAge, or older but with the same stamp (nothing was written since) and
+ * younger than maxStale (F-10: the hour and the clock inside it would otherwise stay as they were all night), else worked out again by compute() and kept. stamp is a promise of a short text (or null for none). Never fails a request on
  * its own: a memo that can't be read or written is the old way (compute every time). A hit waits one D1 round trip (the memo
  * row and the stamp together); a miss three (that, the reads themselves, the write).
  */
@@ -33,10 +33,10 @@ export function memo(db, opt) {
 }
 const inflight = new WeakMap();
 
-async function memoOnce(db, { key, now, maxAge, stamp = null, compute }) {
+async function memoOnce(db, { key, now, maxAge, maxStale = Infinity, stamp = null, compute }) {
   const stP = Promise.resolve(stamp).catch(() => null);
   const [hit, st] = await Promise.all([db.prepare('SELECT at, stamp, v FROM memo WHERE k = ?').bind(key).first().catch(() => null), stP]);
-  if (hit && hit.at <= now && (now - hit.at < maxAge || (st != null && hit.stamp === st))) {
+  if (hit && hit.at <= now && (now - hit.at < maxAge || (st != null && hit.stamp === st && now - hit.at < maxStale))) {
     try { return JSON.parse(hit.v); } catch { /* worked out again below */ }
   }
   const data = await compute();

@@ -5,6 +5,8 @@
 // --indexes applies migrations/*.sql first (production has them since 12 Nov. 2026, 17:22 UTC).
 // Miniflare comes from the global wrangler (npm i -g wrangler) or MINIFLARE=<path to miniflare's dist/src/index.js>.
 // test/rows-read.test.mjs uses the same functions to fail when a load reads too much again.
+// Since 15 Nov. 2026 it also writes the days that have ended (src/roll.js) and reads the loads again; --stretch=k copies the data
+// k times further back first, to see how the reads grow with the days.
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
@@ -52,6 +54,27 @@ export async function localD1(Miniflare, file, { indexes = true } = {}) {
     }
   }
   return { db, dispose: () => mf.dispose() };
+}
+
+/**
+ * More days of the same kind of use, for measuring how the reads grow with the data: every row of the database is copied k more
+ * times, each copy one whole length of the data further back and with other install IDs (the first 28 characters of the ID and the
+ * copy's number), so a backup of 15 days becomes 30 (k = 1) or 60 (k = 3) at the same users a day. Local only: it only ever
+ * runs on the local copy Miniflare makes, never on the real database.
+ */
+export async function stretch(db, k) {
+  const tables = { pings: 'day, ts, id, app, os, mode, link, minutes, dev, country', counts: 'day, id, name, n, dev', clicks: 'day, id, name, n, dev',
+    errors: 'day, id, app, type, at, n, dev', heat: 'day, app, screen, kind, cell, n, dev', env: 'day, k, v, n, dev' };
+  const { lo, hi } = await db.prepare('SELECT MIN(day) AS lo, MAX(day) AS hi FROM pings').first();
+  const span = Math.round((Date.parse(hi) - Date.parse(lo)) / 864e5) + 1;
+  for (let i = 1; i <= k; i++) {
+    const shift = span * i;
+    for (const [t, cols] of Object.entries(tables)) {
+      const sel = cols.split(', ').map((c) => (c === 'day' ? `date(day, '-${shift} day')` : c === 'ts' ? `ts - ${shift * 864e5}` : c === 'id' ? `substr(id, 1, 28) || printf('%04x', ${i})` : c)).join(', ');
+      await db.prepare(`INSERT OR IGNORE INTO ${t} (${cols}) SELECT ${sel} FROM ${t} WHERE day >= ? AND day <= ?`).bind(lo, hi).run();
+    }
+  }
+  return span * (k + 1);
 }
 
 /** The same D1, adding up rows_read of every query fn sends: { total, log: [[sql, rows]] }. */
@@ -118,6 +141,19 @@ async function main() {
     await dash.sampleLive(d, { now: NOW });
     await d.prepare("SELECT 1 AS y FROM gh_daily WHERE day = ? AND kind = 'repo' LIMIT 1").bind(new Date(NOW).toISOString().slice(0, 10)).first();
   });
+  // 15 Nov. 2026 (audit F-01, src/roll.js): the same loads once the days that have ended are written (what the dashboard does after a
+  // few runs of its cron), with the memo emptied. --stretch=k copies the data k times further back first (more days, same users a day).
+  const sx = args.find((a) => a.startsWith('--stretch='));
+  if (sx) console.log(`\nthe data copied ${sx.slice(10)} times further back: ${await stretch(db, Number(sx.slice(10)))} days`);
+  const roll = await import(pathToFileURL(join(HERE, 'src', 'roll.js')).href);
+  await db.prepare('DELETE FROM memo').run().catch(() => {});
+  const days = await roll.rollMissing(db, NOW, 10_000);
+  const to = await roll.lastRolled(db);
+  console.log(`\n${days.length} days written (up to ${to}); the day still open is read from the tables`);
+  for (const period of [7, 30, 90]) await report(`written${period}`, `summary(period ${period}), from the written days`, (d) => api.summary(d, { period, f: ALL, dev: false, now: NOW, rolledTo: to }));
+  await report('writtenOwnerFirst', '/dashboard, first load (memo empty), days written', L.owner);
+  await db.prepare('DELETE FROM memo').run().catch(() => {});
+  await report('writtenDataFirst', '/data, first load (memo empty), days written', L.data);
   console.log('\n' + JSON.stringify(out));
   await dispose();
 }

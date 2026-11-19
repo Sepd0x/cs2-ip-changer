@@ -7,11 +7,12 @@
 // whether the sender's network is a hosting or cloud one (only yes or no, from Cloudflare's network number, to keep online virus scanners apart),
 // minutes the app was open, the country (two letters, from Cloudflare), how many times each button or hotkey was used, a few counters (IP changes, kicks, bans marked,
 // list sizes: servers, accounts, flagged players, "Open with CS2" programs and turned-off regions) and errors as type + code location. Never kept: the sender's IP (Cloudflare needs it to deliver the
-// request and works out the country from it; this code only gets the country, never the IP), and nothing the app doesn't send (no IPs, servers, accounts, names). Logs are off (wrangler.jsonc).
+// request and works out the country from it; this code keeps no IP and writes none to the database or a log; to limit abuse it reads the IP during the request and passes a 16-byte SHA-256 of it to Cloudflare's rate limiter, see ipAllowed), and nothing the app doesn't send (no IPs, servers, accounts, names). Logs are off (wrangler.jsonc).
 
 // The names, bands and limits the app sends with: one file shared with the app's tests and the dashboard (contract.json)
 import contract from '../contract.json' with { type: 'json' };
 export { contract };
+import { IDAY_DDL } from './roll.js';
 
 const MAX_BODY = contract.limits.bodyBytes;
 // Rows written a day, index updates included (D1 counts them). Well under D1's free 100,000: the per-install limit below is keyed
@@ -29,7 +30,11 @@ export const NEW_ROWS = 30000;
 export const MAX_COUNT = 5000, MAX_HEAT = 1000;
 // Nov. 2026: the website's visit counter (POST /v1/site) has its own small budget, outside the day's, so a flood of made-up
 // visits can't take anything from the app's reports
-export const SITE_ROWS = 3000;
+// 15 Nov. 2026 (audit F-02): a visit costs 4 of this (2 for its row and 2 for the budget row), so 3,000 stopped the counter at 750 visits
+// a day, with the SEO work and one post enough to fill it. 20,000 is 5,000 visits a day. The writes a visit really makes are at most 3
+// (the site row and its index, once per new combination, and the budget row), so at most 15,000 a day; with the reports' 40,000 (about
+// 50,000 real, counts have 3 index writes) and Delete my stats' 2,000 it is under 70,000 of D1's free 100,000. test/audit-f.test.mjs has the sum.
+export const SITE_ROWS = 20000;
 // The website: the only origin that may send visits, and its pages (site/ and tools/site-pages.mjs; a test checks the list),
 // in English and, since Nov. 2026, under /pt-br/, /es/ and /ru/ (tools/site-i18n.mjs): the same pages, one folder down
 export const SITE_ORIGIN = 'https://sepd0x.github.io';
@@ -224,6 +229,7 @@ async function withinBudget(env, day, stmts, cost, kind = 'report') {
     await env.DB.prepare(LIVE_TABLE).run();
     await env.DB.prepare(ENV_TABLE).run();
     await env.DB.prepare(SITE_TABLE).run();
+    for (const s of IDAY_DDL) await env.DB.prepare(s).run();
     try { await env.DB.batch(stmts); } catch (e2) { if (overBudget(e2)) return new Response('later', { status: 429 }); throw e2; }
   }
   return new Response(null, { status: 204 });
@@ -294,6 +300,8 @@ async function forget(request, env) {
   const stmts = ['clicks', 'counts', 'errors'].map((t) => env.DB.prepare(`DELETE FROM ${t} WHERE day IN (${days}) AND id = ?`).bind(b.id, b.id));
   stmts.push(env.DB.prepare('DELETE FROM pings WHERE id = ?').bind(b.id));
   if (liveRow) stmts.push(env.DB.prepare('DELETE FROM live WHERE id = ?').bind(b.id));
+  // 15 Nov. 2026: the copy of the install's days the dashboard keeps (roll.js), by its own index on the ID
+  stmts.push(env.DB.prepare('DELETE FROM iday WHERE id = ?').bind(b.id));
   return withinBudget(env, day, stmts, 60, 'forget');
 }
 

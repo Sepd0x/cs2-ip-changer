@@ -11,6 +11,7 @@
 import { verifyAccess } from './access.js';
 import { params, summary, live, livePeaks, liveReal, who, compareVersions } from './api.js';
 import { memo, fnv, pruneMemo, forgetMemo } from './memo.js';
+import { rollMissing, lastRolled } from './roll.js';
 import { ASSETS } from './assets.js';
 import { buildBrief, renderMd } from './brief.js';
 import { annotations } from './annotations.js';
@@ -55,6 +56,8 @@ export default {
       let failed = null;
       try { await prune(env.DB, now); } catch (e) { failed = e; }
       await pruneMemo(env.DB, now).catch(() => 0);
+      // 15 Nov. 2026 (audit F-01, roll.js): the days that have ended, written once for the summary to read (a few a run while the first ones are made)
+      await rollMissing(env.DB, now, 2);
       await snapshotGithub(env.DB, env, fetch, now).catch(() => false);
       // beta.13: Google's search impressions and clicks (only with GSC_KEY and GSC_SITE)
       await snapshotSearch(env.DB, env, fetch, now).catch(() => false);
@@ -64,6 +67,7 @@ export default {
       return;
     }
     await sampleLive(env.DB, { now, exclude });
+    await rollMissing(env.DB, now, 1);   // F-01: one day a run until the days that have ended are written; after that one read
     // The daily picture failed (GitHub's public API has a small limit per address): tried again once an hour until there is one
     if (new Date(now).getUTCMinutes() < 10 && new Date(now).getUTCHours() >= 4) {
       let have = null;
@@ -128,8 +132,11 @@ export default {
     if (url.pathname !== '/classic') return text('Not found', 404);
     const days = DAYS.includes(Number(url.searchParams.get('days'))) ? Number(url.searchParams.get('days')) : 30;
     const now = Date.now();
+    // F-09 (15 Nov. 2026): 11 reads over up to 90 days, so kept like the summary (an old tab or a bookmark must not cost them on every open)
+    const ex = excludeIds(env.EXCLUDE_IDS);
     const [stats, gh] = await Promise.all([
-      collect(env.DB, { days, now, exclude: excludeIds(env.EXCLUDE_IDS) }).catch((e) => ({ error: String(e?.message || e) })),
+      memo(env.DB, { key: ['classic', ymd(now), days, ex.length ? fnv(ex.join(',')) : ''].join('|'), now, maxAge: SUMMARY_MAX_AGE, compute: () => collect(env.DB, { days, now, exclude: ex }) })
+        .catch((e) => ({ error: String(e?.message || e) })),
       github(env, fetch, now),
     ]);
     return new Response(request.method === 'HEAD' ? null : page({ days, stats, gh, now, email: gate.email }), {
@@ -229,9 +236,13 @@ export async function readBrief(env, { now, dev = false, date = null, fetchFn = 
 // 12 Nov. 2026 (D1 over its free reads, see memo.js): what a load reads, kept in the memo table. The summary is worked out again
 // when it is SUMMARY_MAX_AGE old and something was written since (the day's budget rows, the live share left out: it changes every
 // 5 minutes while anyone has the app open); a quiet night keeps one answer. Each key has the UTC day, so a new day starts fresh.
-// Working the 30-day summary out reads about 40,000 rows with the data of 12 Nov. (tools/rows-read.mjs): every 30 minutes is at
-// most 48 a day per page left open, about 2 M rows, inside the free 5 M with the app's own reads. "Agora" stays live (/api/live).
+// Working the 30-day summary out from the report tables reads about 40,000 rows with the data of 12 Nov. (tools/rows-read.mjs), and
+// that grew with the days (100,000 at 60 days of the same use). Since 15 Nov. (audit F-01, roll.js) the days that have ended are read
+// from iday, one row per install-day: about 4,700 rows with those data, 7,900 at 120 days, and a day that has ended is not read
+// from the tables again. "Agora" stays live (/api/live).
 export const SUMMARY_MAX_AGE = 30 * 60_000;
+// F-10 (15 Nov. 2026): with nothing written since, the answer is kept, but not longer than this: it has the hour and the "now" it was worked out at
+export const SUMMARY_MAX_STALE = 3 * 3600_000;
 export const PEAKS_MAX_AGE = 5 * 60_000;
 export const GH_MAX_AGE = 60 * 60_000;
 /** summary() through the memo. clock = the real time now (opt.now is the time the summary is for: a past day's end in a brief). */
@@ -241,7 +252,14 @@ export function cachedSummary(db, opt, clock = opt.now) {
   const key = ['sum', today, opt.period, opt.dev ? 1 : 0, opt.until || '', f.version, f.country, f.mode, f.link, ex.length ? fnv(ex.join(',')) : ''].join('|');
   const stamp = opt.until ? null : db.prepare("SELECT GROUP_CONCAT(x, ',') AS s FROM (SELECT day || '=' || rows AS x FROM budget WHERE day >= ? AND day < ? AND day NOT LIKE '%:live' ORDER BY day)")
     .bind(today, ymd(clock + 864e5)).first().then((r) => r?.s ?? '', () => null);
-  return memo(db, { key, now: clock, maxAge: opt.until ? 6 * 3600_000 : SUMMARY_MAX_AGE, stamp, compute: () => summary(db, opt) });
+  // F-01: after working it out, a day that has ended and is not written yet is (one: the free plan allows 50 queries a request), so the next one reads less
+  const compute = async () => {
+    const rolledTo = opt.until ? null : await lastRolled(db).catch(() => null);
+    const r = await summary(db, { ...opt, rolledTo });
+    if (!opt.until) await rollMissing(db, clock, 1);
+    return r;
+  };
+  return memo(db, { key, now: clock, maxAge: opt.until ? 6 * 3600_000 : SUMMARY_MAX_AGE, maxStale: SUMMARY_MAX_STALE, stamp, compute });
 }
 /** livePeaks() through the memo: the cron adds a sample every 10 minutes, the pages ask every minute. */
 export function cachedPeaks(clock) {
@@ -360,6 +378,8 @@ export async function prune(db, now, { slice = 5000, maxRows = 20000 } = {}) {
       if (n < take) break;
     }
   }
+  // 15 Nov. 2026: the written days (roll.js) go with the rows they were made from
+  for (const t of ['iday', 'iday_done']) { try { await db.prepare(`DELETE FROM ${t} WHERE day < ?`).bind(cut).run(); } catch (e) { if (!noTable(e)) throw e; } }
   out.live = 0;
   try { out.live = Number((await db.prepare('DELETE FROM live WHERE ts < ?').bind(now - RETAIN_DAYS * 864e5).run())?.meta?.changes ?? 0); } catch (e) { if (!noTable(e)) throw e; }
   await db.prepare('DELETE FROM budget WHERE substr(day, 1, 10) < ?').bind(ymd(now - 30 * 864e5)).run();

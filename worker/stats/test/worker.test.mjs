@@ -1497,3 +1497,23 @@ test('v5: /api/brief still answers (JSON and Markdown) and its series now covers
   assert.equal(md.status, 200);
   assert.ok((await md.text()).startsWith('# CS2 IP Changer · brief '));
 });
+
+test('F-09: /classic is kept like the summary: the second open reads no report table, and a failed read is not kept', async () => {
+  const DB = fakeD1();
+  await ingest.fetch(post(report()), { DB });
+  let reads = 0, fail = false;
+  const db = { ...DB, prepare: (sql) => { if (/FROM (pings|counts|clicks|errors)\b/.test(sql)) { reads++; if (fail) throw new Error('D1_ERROR: limit'); } return DB.prepare(sql); } };
+  const token = await jwt(claims());
+  const html = async () => (await dashboard.fetch(get('/classic?days=7', token), { ...env0(), DB: db })).text();
+  const a = await html();
+  const first = reads;
+  assert.ok(first >= 10, `the page reads its tables once (${first})`);
+  assert.equal(await html(), a, 'the same page');
+  assert.equal(reads, first, 'and nothing more the second time');
+  // another view is another key; an error is shown but not kept
+  fail = true;
+  const err = await (await dashboard.fetch(get('/classic?days=30', token), { ...env0(), DB: db })).text();
+  assert.match(err, /D1_ERROR/);
+  fail = false;
+  assert.ok(!(await (await dashboard.fetch(get('/classic?days=30', token), { ...env0(), DB: db })).text()).includes('D1_ERROR'), 'the failure was not kept');
+});

@@ -1,4 +1,4 @@
--- Pseudonymous usage stats (worker/stats). No IP column: the Worker never reads the sender's address, only the country Cloudflare works out.
+-- Pseudonymous usage stats (worker/stats). No IP column: the Worker keeps no IP (and logs none); it takes only the country Cloudflare works out, and reads the address during a request only to limit abuse (a hash of it goes to Cloudflare's rate limiter, written nowhere).
 -- id: random, made on the PC, never from the PC or the user. Kept per install until beta.7, new every day in beta.8, kept per install again
 -- since beta.9 (counts id_install marks those). Delete my stats in the app deletes every row under it.
 -- A database made before the country column needs it once: ALTER TABLE pings ADD COLUMN country TEXT;
@@ -9,6 +9,9 @@ CREATE TABLE IF NOT EXISTS clicks (day TEXT NOT NULL, id TEXT NOT NULL, name TEX
 CREATE INDEX IF NOT EXISTS clicks_day ON clicks (day);
 CREATE TABLE IF NOT EXISTS counts (day TEXT NOT NULL, id TEXT NOT NULL, name TEXT NOT NULL, n INTEGER NOT NULL, dev INTEGER NOT NULL DEFAULT 0);
 CREATE INDEX IF NOT EXISTS counts_day ON counts (day);
+-- v4 (migrations/0001-v4-indexes.sql, kept here too since 15 Nov. 2026: a database made from this file alone lacked them and the dashboard read more): the counters by day and name, and the installs with a kept ID
+CREATE INDEX IF NOT EXISTS counts_day_name ON counts (day, name);
+CREATE INDEX IF NOT EXISTS counts_install ON counts (id) WHERE name = 'id_install';
 CREATE TABLE IF NOT EXISTS errors (day TEXT NOT NULL, id TEXT NOT NULL, app TEXT NOT NULL, type TEXT NOT NULL, at TEXT NOT NULL, n INTEGER NOT NULL, dev INTEGER NOT NULL DEFAULT 0);
 CREATE INDEX IF NOT EXISTS errors_day ON errors (day);
 -- Rows written each day (src/index.js DAILY_ROWS): a flood of fresh ids can't use up D1's daily writes. Nov. 2026: day:live is the
@@ -29,10 +32,11 @@ CREATE INDEX IF NOT EXISTS live_ts ON live (ts);
 CREATE TABLE IF NOT EXISTS env (day TEXT NOT NULL, k TEXT NOT NULL, v TEXT NOT NULL, n INTEGER NOT NULL, dev INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, k, v, dev));
 -- Nov. 2026. The website's visit counter (POST /v1/site): no ID, no IP, no cookie, only counts per day of page, referrer host,
 -- country and event (view or download). Its own share of the day's budget (day:site, SITE_ROWS in src/index.js) with its own
--- triggers, next to the two above. Made by the Worker if missing.
+-- triggers, next to the two above. Made by the Worker if missing. 15 Nov. 2026: 20,000 (was 3,000: the counter stopped at 750 visits a day);
+-- a database made before keeps the old text of these two (CREATE TRIGGER IF NOT EXISTS): migrations/0003-site-budget.sql replaces them.
 CREATE TABLE IF NOT EXISTS site (day TEXT NOT NULL, page TEXT NOT NULL, ref TEXT NOT NULL, country TEXT NOT NULL, event TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (day, page, ref, country, event));
-CREATE TRIGGER IF NOT EXISTS budget_site_insert BEFORE INSERT ON budget WHEN NEW.day LIKE '%:site' AND NEW.rows > 3000 BEGIN SELECT RAISE(ABORT, 'over budget'); END;
-CREATE TRIGGER IF NOT EXISTS budget_site_update BEFORE UPDATE ON budget WHEN NEW.day LIKE '%:site' AND NEW.rows > 3000 BEGIN SELECT RAISE(ABORT, 'over budget'); END;
+CREATE TRIGGER IF NOT EXISTS budget_site_insert BEFORE INSERT ON budget WHEN NEW.day LIKE '%:site' AND NEW.rows > 20000 BEGIN SELECT RAISE(ABORT, 'over budget'); END;
+CREATE TRIGGER IF NOT EXISTS budget_site_update BEFORE UPDATE ON budget WHEN NEW.day LIKE '%:site' AND NEW.rows > 20000 BEGIN SELECT RAISE(ABORT, 'over budget'); END;
 -- Nov. 2026 (security audit). Reports from installs with nothing before today: at most NEW_ROWS of the day (day:new), so the
 -- installs already here keep the rest even through a flood of made-up reports. Made by the Worker if missing.
 CREATE TRIGGER IF NOT EXISTS budget_new_insert BEFORE INSERT ON budget WHEN NEW.day LIKE '%:new' AND NEW.rows > 30000 BEGIN SELECT RAISE(ABORT, 'over budget'); END;
@@ -46,3 +50,11 @@ CREATE TABLE IF NOT EXISTS live_hourly (hour INTEGER NOT NULL, dev INTEGER NOT N
 -- 12 Nov. 2026, written by the dashboard Worker (src/memo.js): its added-up answers (the summary, the GitHub history, the live
 -- peaks), one row per question, so a page load reads one row instead of every report again. Never an install ID. Made by the Worker if missing.
 CREATE TABLE IF NOT EXISTS memo (k TEXT PRIMARY KEY, at INTEGER NOT NULL, stamp TEXT, v TEXT NOT NULL);
+-- 15 Nov. 2026 (audit F-01, src/roll.js, migrations/0002-iday.sql): one row per install-day for each day that has ended, with what the
+-- dashboard's summary needs of it already added up, so the summary reads that row instead of the day's reports, counters, clicks and
+-- errors. A copy made by the dashboard Worker's cron (it can be dropped and made again); it has the install ID the other tables
+-- have, so Delete my stats (src/index.js forget, by iday_id) and the 12-month cleanup (src/dashboard.js prune) remove it too.
+-- iday_done: the days written, oldest first. Made by the Workers if missing.
+CREATE TABLE IF NOT EXISTS iday (day TEXT NOT NULL, id TEXT NOT NULL, dev INTEGER NOT NULL DEFAULT 0, ms INTEGER, ta TEXT, tm TEXT, country TEXT, lk INTEGER, os TEXT, r INTEGER NOT NULL DEFAULT 0, kept INTEGER NOT NULL DEFAULT 0, j TEXT NOT NULL, PRIMARY KEY (day, id, dev));
+CREATE INDEX IF NOT EXISTS iday_id ON iday (id);
+CREATE TABLE IF NOT EXISTS iday_done (day TEXT PRIMARY KEY);
