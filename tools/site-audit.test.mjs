@@ -104,3 +104,14 @@ test('SEO measurement 15 Nov.: the region guide names what people call a server 
 test('Final audit: the notices of the libraries are also served as a text file next to the scripts, the same as THIRD-PARTY-NOTICES', () => {
   assert.equal(read('assets/THIRD-PARTY.txt').replace(/\r\n/g, '\n'), readFileSync(join(ROOT, 'THIRD-PARTY-NOTICES'), 'utf8').replace(/\r\n/g, '\n'));
 });
+
+test('beta.14: the 3D posters are rendered in English, so the bar that offers the PC\'s language never sits over the scene', () => {
+  const src = readFileSync(join(ROOT, 'tools', 'site-renders.mjs'), 'utf8');
+  const opens = src.match(/browser\.new(Context|Page)\(\{[^\n]*\}\)/g) || [];
+  assert.ok(opens.length >= 2, 'site-renders opens a context for the posters and a page for the stills');
+  for (const o of opens) assert.match(o, /locale: 'en-US'/, o);
+});
+
+test('beta.14: site-legal --check reads a file with Windows line ends (core.autocrlf) as the same notice', () => {
+  assert.ok(readFileSync(join(ROOT, 'tools', 'site-legal.mjs'), 'utf8').includes(".replace(/\\r\\n/g, '\\n')"), 'site-legal turns CRLF into LF before it compares');
+});

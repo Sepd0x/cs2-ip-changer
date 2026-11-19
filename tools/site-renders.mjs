@@ -160,7 +160,8 @@ if (args.includes('--serve')) {
     try {
       if (POSTERS[n]) {
         const [w, h, dpr, phone] = POSTERS[n];
-        const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: dpr, isMobile: phone, hasTouch: phone });
+        // en-US: on a PC in another language the home offers that language in a bar over the scene (beta.14 posters had it)
+        const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: dpr, isMobile: phone, hasTouch: phone, locale: 'en-US' });
         const p = await ctx.newPage();
         p.on('pageerror', (e) => console.log(`  ${n}: pageerror ${e.message}`));
         await p.goto(origin, { waitUntil: 'networkidle' });
@@ -174,7 +175,7 @@ if (args.includes('--serve')) {
         ffmpeg(['-i', png, '-c:v', 'libwebp', '-quality', '82', webp]);
       } else {
         const c = STILLS[n];
-        const p = await browser.newPage({ viewport: { width: c.w, height: c.h }, deviceScaleFactor: STILL_SCALE });
+        const p = await browser.newPage({ viewport: { width: c.w, height: c.h }, deviceScaleFactor: STILL_SCALE, locale: 'en-US' });
         p.on('pageerror', (e) => console.log(`  ${n}: pageerror ${e.message}`));
         const cam = '&cam=' + encodeURIComponent(JSON.stringify([c.cam]));
         await p.goto(`${origin}__lab.html?p=${c.p}&still&nolab${cam}${c.extra}`);

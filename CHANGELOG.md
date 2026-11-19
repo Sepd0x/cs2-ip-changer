@@ -4,6 +4,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+## [0.1.0-beta.14] - 2026-11-19
+
 ### Added
 - THIRD-PARTY-NOTICES: the licenses and copyright notices of the code and files from other people that this project includes (three.js, Lenis, GSAP, the .NET package the app uses, Kenney's sounds, the website's fonts), with where each one is.
 - Website: a new guide, "CS2 on mobile data": what ping to expect on a phone hotspot or USB tethering, how much data a match uses, and how to keep the game steady. In English, Brazilian Portuguese, Spanish and Russian.

@@ -21,7 +21,8 @@ export const FILES = [
 const check = process.argv.includes('--check');
 let bad = 0;
 for (const [f, banner] of FILES) {
-  const p = join(ROOT, f), s = readFileSync(p, 'utf8');
+  // A Windows checkout with core.autocrlf has CRLF here: the notice is the same, only the line end differs.
+  const p = join(ROOT, f), s = readFileSync(p, 'utf8').replace(/\r\n/g, '\n');
   if (s.startsWith(banner)) continue;
   bad++;
   if (check) { console.error(`${f}: the MIT notice is missing`); continue; }
