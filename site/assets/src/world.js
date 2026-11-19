@@ -181,15 +181,49 @@ function* build(canvas, opts = {}) {
   const Lsrv = new PointLight(C.bad, 0, 7, 1.6); Lsrv.position.set(SX, 2.6, SZ + 2.4); scene.add(Lsrv);
   const Lbad = new PointLight(C.bad, 0, 6, 1.8); Lbad.position.set(-8.4, 1.4, -1.6); scene.add(Lbad);
 
+  // 19 Nov.: clouds (the owner: "nuvens e bonito, optimizado para não lagar"). One 512x128 map of soft cloud banks, made once
+  // here (a few ms), read by the sky's own shader: no new object, no draw call, one texture read per sky pixel. The map goes
+  // once round the horizon (it tiles in x) and covers the low sky, where the town's glow lights the clouds from below.
+  const cloudMap = cvTex(512, 128, (g, w, h) => {
+    const hash = (x, y) => { let n = (x * 374761393 + y * 668265263) | 0; n = Math.imul(n ^ (n >>> 13), 1274126177); return ((n ^ (n >>> 16)) >>> 0) / 4294967295; };
+    const sm = (t) => t * t * (3 - 2 * t);
+    const noise = (x, y, p) => {   // value noise, periodic every p cells in x
+      const xi = Math.floor(x), yi = Math.floor(y), u = sm(x - xi), v = sm(y - yi), x0 = ((xi % p) + p) % p, x1 = (x0 + 1) % p;
+      const a = hash(x0, yi), b = hash(x1, yi), c = hash(x0, yi + 1), d = hash(x1, yi + 1);
+      return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+    };
+    const img = g.createImageData(w, h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let n = 0, amp = 0.55, f = 14;
+      for (let o = 0; o < 5; o++) { n += amp * noise((x / w) * f, (y / h) * f * 0.42 + o * 17, f); amp *= 0.5; f *= 2; }
+      // separate banks with clear night between (not a mist over the whole sky: the owner saw one on OLED in 6c)
+      const k = Math.round(255 * sm(Math.min(1, Math.max(0, (n - 0.52) / 0.14))));
+      const i = (y * w + x) * 4; img.data[i] = img.data[i + 1] = img.data[i + 2] = k; img.data[i + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+  }, false);
+  cloudMap.wrapS = RepeatWrapping; cloudMap.generateMipmaps = false; cloudMap.minFilter = LinearFilter; cloudMap.anisotropy = 1;   // no mip seam where the map closes
+
   // sky: darker overhead; low down the same haze the fog uses, seen from the camera, so far things melt into it. A hair of dither
   const sky = new Mesh(new SphereGeometry(150, 48, 24), new ShaderMaterial({
-    side: BackSide, depthWrite: false, fog: false, uniforms: { uBg: { value: C.bg }, uNight: { value: C.accentDeep.clone() } },
+    side: BackSide, depthWrite: false, fog: false, uniforms: { uBg: { value: C.bg }, uNight: { value: C.accentDeep.clone() }, uCloud: { value: cloudMap }, uDrift: { value: 0 } },
     vertexShader: `varying vec3 vP; void main(){ vec4 w = modelMatrix*vec4(position,1.); vP = w.xyz - cameraPosition; gl_Position = projectionMatrix*viewMatrix*w; }`,
     // 9 Nov. (session 6b): a night sky, blue going violet low down, under it the band in the route's colours (it was black)
-    fragmentShader: `uniform vec3 uBg,uNight; varying vec3 vP; ${HZ}
+    fragmentShader: `uniform vec3 uBg,uNight; uniform sampler2D uCloud; uniform float uDrift; varying vec3 vP; ${HZ}
     // 6c: night black overhead (OLED), a hair of blue night low down; the dither moved to the last pass (3D-011: here it was a
     // sine hash, which mobile GPUs turn into a grid, and in the darkest sky it lit and unlit single pixels)
     void main(){ vec3 d = normalize(vP); vec3 c = uBg*(.62 - .5*smoothstep(.04, .5, d.y)) + uNight*.022*smoothstep(-.04, .05, d.y)*(1. - smoothstep(.06, .3, d.y)) + mix(hzTint(d), ${v3(C.top2)}, .45)*hzSky(d);
+      // 19 Nov.: the clouds. Low banks over the town, thinning upwards; lit from below by the band's colours, a little lighter
+      // than the night round them and never bright (the world stays dark, no bloom on them); the black overhead is untouched
+      float ev = clamp(d.y/.4, 0., 1.), az = atan(d.x, d.z)*.1591549 + .5 + uDrift;
+      float cl = texture2D(uCloud, vec2(az, ev)).r, under = texture2D(uCloud, vec2(az, max(ev - .045, 0.))).r;
+      float m = smoothstep(.01, .05, d.y)*(1. - smoothstep(.24, .4, d.y)); cl *= m;
+      float base = clamp(cl - under*m, 0., 1.);   // the underside of each bank: what the town lights
+      // the body hides part of the town's glow behind it (a silhouette over the band, a faint grey-violet over the black);
+      // only the underside lights up, a thin rim: shape without a mist over the sky
+      vec3 glow = mix(hzTint(d), ${v3(C.top2)}, .45);
+      vec3 body = c*.5 + uBg*.25 + glow*.018;
+      c = mix(c, body + glow*base*.2, cl);
       gl_FragColor = vec4(c, 1.); }`,
   })); scene.add(noMirror(sky));
   yield;
@@ -1524,6 +1558,7 @@ function* build(canvas, opts = {}) {
     for (const m of [mCable, mTail, mAir, mArc]) { m.uniforms.uTime.value = time; m.uniforms.uReveal.value = reveal * 1.02; }
     spU.uSpRev.value = s.cut > 0.02 ? Math.min(reveal * 1.02, 0.3 * fJ) : reveal * 1.02; // no light on the mat where the cable was (0.92 of reveal never cut it)
     homeMat.uniforms.uTime.value = time;
+    sky.material.uniforms.uDrift.value = time * 0.0004;   // the clouds go round once in about 40 minutes
     homeMat.uniforms.uLive.value = smooth(0.4, 0.85, p) * (1 - smooth(1.4, 1.8, p)) + smooth(2.5, 2.9, p) * (1 - smooth(3.2, 3.6, p));
     // the firewall: comes up with the cut, CS2's run home stops at it
     const hot = s.cut;

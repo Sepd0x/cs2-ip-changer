@@ -45,3 +45,14 @@ test('the region guide\'s 8 servers, copies that never move, are one fused group
   assert.ok(g.includes('const farm = new Group(); c.scene.add(farm);') && g.includes('farm.add(g);') && g.includes('c.fuse(farm);'), 'the copies go in a group that is fused (the region page drew about 585 calls a frame, the home 285)');
   assert.ok(!g.includes('g.rotation.y = 0; c.scene.add(g);'), 'a copy is no longer added to the scene alone');
 });
+
+test('Clouds (19 Nov.): drawn by the sky\'s own shader from one map made once, so no new object, draw call or pass', () => {
+  const skyAt = src.indexOf('const sky = new Mesh(');
+  assert.ok(skyAt > 0, 'the sky mesh');
+  const sky = src.slice(skyAt, src.indexOf('scene.add(noMirror(sky))', skyAt));
+  assert.match(sky, /uniform sampler2D uCloud/, 'the sky samples the cloud map');
+  assert.equal((src.match(/const cloudMap = cvTex\(/g) || []).length, 1, 'one cloud map, made once');
+  assert.ok(!/new (Mesh|Sprite|Points|InstancedMesh)\([^)]*cloud/i.test(src), 'no object of its own for the clouds');
+  assert.match(src, /sky\.material\.uniforms\.uDrift\.value = time \* 0\.0004/, 'they drift slowly with the world\'s time');
+  for (const [name, b] of Object.entries(bundles)) assert.ok(b.includes('uCloud'), `${name} is built from this world.js (tools/site-build.mjs)`);
+});

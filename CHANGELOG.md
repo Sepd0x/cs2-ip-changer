@@ -7,6 +7,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 ### Added
 - Regions: choose CS2, Dota 2 or Deadlock. Each game keeps its own regions and presets.
 - Regions: save and name your current selection, reuse it later, or choose a preset to apply when CS2 starts.
+- Website: clouds in the night sky of the 3D scenes, lit from below by the town and drifting slowly. They are drawn by the sky itself, so a phone draws the same as before.
 
 ### Fixed
 - The window stays responsive while collecting network details for a bug report or loading a region list. Phone setup pauses its periodic checks while the window is hidden.
