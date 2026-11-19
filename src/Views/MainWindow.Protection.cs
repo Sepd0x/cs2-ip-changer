@@ -82,6 +82,7 @@ public partial class MainWindow
             var ips = _servers.Select(x => x.Ip).Distinct().ToList();
             var cs2Running = Steam.Cs2Running;
             if (cs2Running) WatchCs2Exit();
+            WatchOtherRegionGames();
             if (cs2Running != _cs2WasRunning)
             {
                 _cs2WasRunning = cs2Running;
@@ -1173,7 +1174,7 @@ public partial class MainWindow
         try
         {
             await SyncNow(force: true);
-            KeepRegionRule();   // the Regions rule checked now, not at the next 30 s tick
+            if (_cs2Regions != null) _ = KeepRegionRule(_cs2Regions);   // check the CS2 rule now, not at the next 30 s tick
             await RefreshPublicIps();
             if (_s.NoPhone)
             {

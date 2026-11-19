@@ -162,6 +162,7 @@ public partial class MainWindow
 
     void ShowRegionsPitch()
     {
+        if (_regionGame != null && _regionGame != _cs2Regions) return;
         var due = RegionsPitchDue(_s.RegionsPitchSeen, PhoneKnown, _s.NoPhone, _demo);
         DemoRegionsPitch(ref due);
         if (RegionsPitch.Visibility == Visibility.Visible || !due) return;

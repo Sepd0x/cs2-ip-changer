@@ -1,7 +1,7 @@
 {
  "note": "Made by tools/shots.mjs. Do not edit: tests/DesignSyncTests.cs checks it against the app and the files.",
  "app": "0.1.0-beta.14",
- "ui": "0c3b16bafa0e82ca86795de6ab8a26f419f32b6933af61232367b10e30404b70",
+ "ui": "e1e82f4cfcd0d5f9473875a25bd0df7481fb18a552e99919ed9197aa9eb81be0",
  "uiFiles": [
   "src/App.xaml",
   "src/MainWindow.xaml",
@@ -18,7 +18,7 @@
  "files": [
   {
    "file": "docs/screenshots/connection.png",
-   "sha256": "a93f69b9601c4adec35b804a35cc4c2307043bf0719050e4ab059842da3078b6",
+   "sha256": "29179749476e31d7aca7c557d10d16d0f5af19d6a592c74dc73555290f1fd5cc",
    "size": [
     2480,
     1600
@@ -34,7 +34,7 @@
   },
   {
    "file": "docs/screenshots/regions.png",
-   "sha256": "f67ffcb6c7039dfe29cfc92209ca2e5888ccc396406e946cda249026b96475b2",
+   "sha256": "be8c15c0ea6e148316264a84e5b85d1d728c37176b16d15f9fa01eb205f59b02",
    "size": [
     2480,
     1600
@@ -90,7 +90,7 @@
   },
   {
    "file": "docs/assets/shots/connection.png",
-   "sha256": "6908b2ff29c121a07fd2da10b799775bac22fbbe03fa8f9b4359d84a72a7cd06",
+   "sha256": "11892f055f8623959ed9bb33793778db6a41b2a46ffe65308842db487414fc10",
    "size": [
     2572,
     1692
@@ -98,7 +98,7 @@
   },
   {
    "file": "docs/assets/shots/connection.webp",
-   "sha256": "7fc0f39b2a3ccc860563b89e1e2eba69a3e0f06fb80a5efe0a1a73d1873e41b6"
+   "sha256": "7a93d73d5721a81aa295e4be8dd4968760bb28584349a88160f5bfef58da8644"
   },
   {
    "file": "docs/assets/shots/crop-accounts-mobile.png",
@@ -150,7 +150,7 @@
   },
   {
    "file": "docs/assets/shots/crop-protection.png",
-   "sha256": "1d7ae4b2f6924e165bd9f76e7db8d2f3ed6d124325511ba089875823a728e1e7",
+   "sha256": "52ac60bc5420770d5e6258342294f867103722b02e6fc6110482eaae43958ee5",
    "size": [
     1194,
     596
@@ -158,11 +158,11 @@
   },
   {
    "file": "docs/assets/shots/crop-protection.webp",
-   "sha256": "00e4743c27622ddb9da5448981f802a41d61d36c9fef5e0542a605d2c40ffb77"
+   "sha256": "a1bb41c81049252bbbac451f57069ea1632cc42a5575b520102db54fbfe08037"
   },
   {
    "file": "docs/assets/shots/crop-regions.png",
-   "sha256": "86031e2b336a8e9602f7887f599628abe3a98bbac42aeed0bafde03ac15661cf",
+   "sha256": "4bc5c9386ba56842f28f70f729803cc6e860546ffd8e9099a621a408b28249c1",
    "size": [
     1480,
     844
@@ -170,7 +170,7 @@
   },
   {
    "file": "docs/assets/shots/crop-regions.webp",
-   "sha256": "aa6f93d7fe1ef4cc2098ae5394ca6e4d0ccad0f202b7eecb18a171ddfa91ee69"
+   "sha256": "54b7072d25da0bf906f983f6a8c3c73964f2f1c48c47f83feb7ae293e153487b"
   },
   {
    "file": "docs/assets/shots/crop-servers-mobile.png",
@@ -210,7 +210,7 @@
   },
   {
    "file": "docs/assets/shots/regions.png",
-   "sha256": "b01379cd7972b9d6e10b925fa8644b8ae24d21dc6bbcf9ea09e6e15935532202",
+   "sha256": "feeb0c929c55ef62bc102e026e8d1e43a09a1f848d7baa2e27680aadd0b3291f",
    "size": [
     2572,
     1692
@@ -218,7 +218,7 @@
   },
   {
    "file": "docs/assets/shots/regions.webp",
-   "sha256": "f7a1f05df976dc86a7f3df3e5810c71dda272ffa4084acd335e4a06b0016ab29"
+   "sha256": "1bbe217d690aef1ece7e63be2e74c70569f64f0834887cd67e606a2592001d62"
   },
   {
    "file": "docs/assets/shots/servers.png",
@@ -234,7 +234,7 @@
   },
   {
    "file": "worker/stats/dashboard/ui/connection.png",
-   "sha256": "abc1d694fb83784e00b5ae257ba41b6b8789443b653ce8e4b250823b061a7011",
+   "sha256": "c71c29d4e790b1b7a4f0b9794e0ccccf302ea454e0d5c3d479e7b0f8d331c1fd",
    "size": [
     1240,
     800
@@ -250,7 +250,7 @@
   },
   {
    "file": "worker/stats/dashboard/ui/regions.png",
-   "sha256": "d31564b90cbdd03f6c50d50fd21e47c65ab437636df6673d2e0944c4175bbfea",
+   "sha256": "55e3ab64c8358ace873f43bd86d5ca1baaa070abab81055e47d9cd1f7ff37d84",
    "size": [
     1240,
     935
@@ -314,31 +314,31 @@
   }
  ],
  "renders": {
-  "from": "a93f69b9601c4adec35b804a35cc4c2307043bf0719050e4ab059842da3078b6",
+  "from": "29179749476e31d7aca7c557d10d16d0f5af19d6a592c74dc73555290f1fd5cc",
   "files": [
    {
     "file": "site/img/poster-1280.webp",
-    "sha256": "d4c145c356247c6f1b3bfe010532ec01bc39c85c00bb324a96da3f46d1dafd27"
+    "sha256": "21d412cfb3cba76ff491da3a0f322542eb61f9ad0d744f261e79afbf20e9dc1c"
    },
    {
     "file": "site/img/poster-1366.webp",
-    "sha256": "3915233a3a3a5875fcc7480b5c53d3a4adcfe279bf31d3633ea35891af11467f"
+    "sha256": "9ebf8860b15353d77923d068cac6325d8e2410cb76b6ba3cd26e820f3e17346e"
    },
    {
     "file": "site/img/poster-1440.webp",
-    "sha256": "39a84cb93b2f0bb32ce0fd60a920e26da5abd249ae454498ee0d99d62f5c13dd"
+    "sha256": "df1c1b2e2521c6e342cf3a31f6cf99c4e54e6991d9ae18388813ec89d8e8e8a2"
    },
    {
     "file": "site/img/poster-1536.webp",
-    "sha256": "6f6f0044d91e845a0adfe9c3c6f030f83b86e9f862c5dbe802005723307fbfc0"
+    "sha256": "05d908581c766cd4c6aff107f5b241cc7f32891a12521bc3b96a1dbd010982f3"
    },
    {
     "file": "site/img/poster-1920.webp",
-    "sha256": "c4c072b2f81668b905dca114f6dba06c92add29a6e30f68d7302ad978d547c30"
+    "sha256": "c48ba64dca3b3051af637a66e8de7eacd903df13b43470353e238238f98542f0"
    },
    {
     "file": "site/img/poster-390.webp",
-    "sha256": "87884572b79155bb7ed7ab820cdf6438c819f33ddcb5987dd401605d75354dfe"
+    "sha256": "eff21223f127f2f4a1ebead7bd36f594ce2c90a5fe196e80d5f825942cae0fa9"
    },
    {
     "file": "site/img/world-tower.webp",
@@ -346,7 +346,7 @@
    },
    {
     "file": "site/img/world-plug.webp",
-    "sha256": "685087435615f89936c2326bde488df14d39925002b016125fd1648e7dc7528f"
+    "sha256": "cf16cdd8227c3a4319941bf9ed0c5d210f814b2aef8475893605e503184d388b"
    }
   ]
  },

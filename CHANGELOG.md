@@ -4,6 +4,14 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Added
+- Regions: choose CS2, Dota 2 or Deadlock. Each game keeps its own regions and presets.
+- Regions: save and name your current selection, reuse it later, or choose a preset to apply when CS2 starts.
+
+### Fixed
+- The window stays responsive while collecting network details for a bug report or loading a region list. Phone setup pauses its periodic checks while the window is hidden.
+- Regions: Refresh keeps the warning visible when Valve is offline and a saved list is used. Restore network also removes region rules under the older name.
+
 ## [0.1.0-beta.14] - 2026-11-19
 
 ### Added

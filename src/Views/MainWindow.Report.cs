@@ -83,18 +83,23 @@ public partial class MainWindow
             sb.AppendLine($"firewall={rep.FirewallProblem ?? "on"} killSwitch={rep.KillSwitchOk} cs2={rep.Cs2LockOk} routes={rep.RouteOk.Values.Count(v => v)}/{rep.RouteOk.Count} steamRoutes={rep.SteamRoutesOk} steamOnEgress={rep.SteamOnEgress}");
             sb.AppendLine($"wholePc={rep.FullModeOk} (routes={rep.FullRoutesOk} dns={rep.DnsOk} ipv6={rep.Ipv6Ok}) pcDefault={rep.PcDefaultName} homeNetwork={rep.HasHome} error={rep.Error}");
         }
+        var ips = _servers.Select(s => s.Ip).Append(Net.EchoIp).ToHashSet();
+        var (adapters, routes, rules) = await Task.Run(async () =>
+        {
+            var adapters = Net.Scan();
+            var routes = await Net.ListRoutes();
+            return (adapters, routes, rules: Firewall.Remaining());
+        });
         sb.AppendLine();
         sb.AppendLine("== Adapters");
-        foreach (var a in Net.Scan()) sb.AppendLine($"[{a.Index}] {a.Kind} · {a.Name} · {a.Description} · up={a.Up} · {a.LocalIp} gw {a.Gateway}{(a.IsWifi ? " · Wi-Fi " + (a.Ssid ?? "-") : "")}");
+        foreach (var a in adapters) sb.AppendLine($"[{a.Index}] {a.Kind} · {a.Name} · {a.Description} · up={a.Up} · {a.LocalIp} gw {a.Gateway}{(a.IsWifi ? " · Wi-Fi " + (a.Ssid ?? "-") : "")}");
         sb.AppendLine();
         sb.AppendLine("== The app's routes");
-        var ips = _servers.Select(s => s.Ip).Append(Net.EchoIp).ToHashSet();
-        foreach (var r in await Net.ListRoutes() ?? new())
+        foreach (var r in routes ?? new())
             if ((r.Prefix.EndsWith("/32") && ips.Contains(r.Prefix[..^3])) || Guard.SplitPrefixes.Contains(r.Prefix) || Net.ValvePrefixes.Contains(r.Prefix))
                 sb.AppendLine($"{r.Prefix} if {r.Index} via {r.NextHop}");
         sb.AppendLine();
         sb.AppendLine("== The app's Firewall rules");
-        var rules = Firewall.Remaining();
         if (rules.Error != null) sb.AppendLine(rules.ErrorText);
         foreach (var n in rules) sb.AppendLine(n);
         return sb.ToString();

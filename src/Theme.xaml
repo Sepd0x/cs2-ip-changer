@@ -687,6 +687,52 @@
     </Style>
 
     <!-- ============================================================ Thin scrollbars -->
+    <!-- A section that opens (Regions > Region presets, 19 Nov.): the box's chevron in Muted and the title in Text, no circle.
+         Without a style of its own WPF loaded Windows' whole theme for this one control (about 250 ms more at start). -->
+    <Style x:Key="ExpanderHeader" TargetType="ToggleButton">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <TextBlock x:Name="chev" Text="&#xE76C;" Style="{StaticResource Icon}" FontSize="9" Foreground="{StaticResource Muted}" Margin="0,1,8,0"/>
+                        <ContentPresenter x:Name="head" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="chev" Property="Text" Value="&#xE70D;"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="chev" Property="Foreground" Value="{StaticResource Text}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style TargetType="Expander">
+        <Setter Property="Foreground" Value="{StaticResource Text}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Expander">
+                    <StackPanel>
+                        <ToggleButton Style="{StaticResource ExpanderHeader}" Content="{TemplateBinding Header}" Foreground="{TemplateBinding Foreground}"
+                                      AutomationProperties.Name="{TemplateBinding Header}"
+                                      IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+                        <ContentPresenter x:Name="body" Margin="0,8,0,0" Visibility="Collapsed"/>
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsExpanded" Value="True">
+                            <Setter TargetName="body" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="ThumbStyle" TargetType="Thumb">
         <Setter Property="Template">
             <Setter.Value>

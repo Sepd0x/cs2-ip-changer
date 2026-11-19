@@ -1009,7 +1009,7 @@ public sealed class Guard
             var rules = Firewall.Remaining();
             // A Firewall that couldn't be read isn't "nothing left": the restore isn't confirmed
             if (rules.Error != null) left.Add("rule \"" + rules.ErrorText + "\"");
-            left.AddRange(rules.Where(n => !keepRegions || !Firewall.Current(n).StartsWith(Firewall.RegionsRuleName, StringComparison.Ordinal)).Select(n => "rule \"" + n + "\""));
+            left.AddRange(rules.Where(n => !keepRegions || !Firewall.IsRegionRule(n)).Select(n => "rule \"" + n + "\""));
             if (_metricAppliedTo >= 0) left.Add($"the metric of adapter {_metricAppliedTo}");
             if (left.Count == 0) { Log.Ok("Network restored: app rules and routes removed, checked."); return null; }
             var what = string.Join(", ", left.Take(5)) + (left.Count > 5 ? $" and {left.Count - 5} more" : "");

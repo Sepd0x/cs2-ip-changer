@@ -22,6 +22,18 @@ void Check(string name, bool ok, string detail = "")
     Console.WriteLine($"{(ok ? "OK  " : "FALHA")} {name} {detail}");
     if (!ok) fails++;
 }
+RegionPresetsTests.Run(Check);
+if (args is ["--region-presets"]) return fails == 0 ? 0 : 1;
+RegionGamesTests.Run(Check);
+if (args is ["--region-games"])
+{
+    RegionTests.Run(Check, Check, includeLive: false);
+    RegionTests.Continent(Check);
+    LocTests.Run(Check);
+    OrganizacaoTests.Run(Check);
+    return fails == 0 ? 0 : 1;
+}
+DesempenhoTests.Run(Check);
 // No GitHub Actions (CI=true) não há Steam, telemóvel nem IP de casa: o que depende deste PC é saltado em vez de falhar.
 var ci = Environment.GetEnvironmentVariable("CI") == "true";
 void Env(string name, bool ok, string detail = "")

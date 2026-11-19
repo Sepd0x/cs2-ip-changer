@@ -142,7 +142,10 @@ static class RevisaoCTests
         check("Revisão C16: o título diz que ainda não bloqueia", MainWindow.RegionsTitle(3, 30, failed: true, noCs2: true) == "3 of 30 regions picked, not blocked yet"
             && MainWindow.RegionsTitle(3, 30, true, false) == "3 of 30 regions picked: the Firewall rule didn't change" && MainWindow.RegionsTitle(3, 30, false, false) == "CS2 can play in 3 of 30 regions"
             && MainWindow.RegionsTitle(30, 30, true, true) == "All 30 regions allowed: CS2 picks as usual", "");
-        check("Revisão C16: sem cs2.exe um clique diz porquê", regions.Contains("if (!quiet) Toast(_regionError, false);"), "");
+        var missingExe = regions[regions.IndexOf("if (exe == null && hasBlockedRelays)", StringComparison.Ordinal)..];
+        missingExe = missingExe[..missingExe.IndexOf("state.NoGame = false;", StringComparison.Ordinal)];
+        check("Revisão C16: sem cs2.exe um clique diz porquê", missingExe.Contains("CS2 wasn't found on this PC")
+            && missingExe.Contains("if (!quiet && state == _regionGame) Toast(state.Error, false);"), "");
 
         // C17: sem a Valve, a cópia vem marcada e o Log diz porquê
         {
@@ -164,7 +167,10 @@ static class RevisaoCTests
                 check("Revisão C17: sem a Valve, a cópia vem marcada e o Log diz porquê", cfg is { FromCache: true } && logged, string.Join(" | ", seen));
             }
             finally { Log.Added -= On; try { Directory.Delete(dir, true); } catch { } }
-            check("Revisão C17: um Refresh com a cópia diz que não chegou à Valve", regions.Contains("if (cfg.FromCache && asked) Toast(") && regions.Contains("await LoadRegions(atStart: false, asked: true);"), "");
+            check("Revisão C17: um Refresh com a cópia diz que não chegou à Valve",
+                regions.Contains("if (cfg.FromCache && asked && state == _regionGame) Toast(Loc.F(\"Couldn't reach Valve:")
+                && regions.Contains("await LoadRegions(atStart: false, asked: true, state: state);")
+                && regions.Contains("await PingRegions(quiet: state.Config?.FromCache == true);"), "");
         }
 
         // C18

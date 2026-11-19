@@ -295,9 +295,12 @@ public partial class MainWindow
 
     async void FirstStartCheck()
     {
-        var steam = Steam.InstallDir() != null;
         var saved = _s.Cs2Path;
-        var found = steam ? await Task.Run(() => Steam.FindCs2(saved)) : null;
+        var (steam, found) = await Task.Run(() =>
+        {
+            var installed = Steam.InstallDir() != null;
+            return (installed, installed ? Steam.FindCs2(saved) : null);
+        });
         if (NoteCs2(_s, found)) SaveSettings();
         var cs2 = found != null;
         var p = StartProblems(steam, cs2);
@@ -460,16 +463,20 @@ public partial class MainWindow
     /// <summary>Opens the panel: every 2 s it reads the phone again and redraws the steps, until you close it.</summary>
     async Task RunPhoneSetup()
     {
+        var wasOpen = SetupPane.Visibility == Visibility.Visible;
         SetupSteps.ItemsSource = _setupRows;
         SetupPane.Visibility = Visibility.Visible;
         if (_demo) { DemoPhoneSetup(); return; }
-        if (_setupTimer?.IsEnabled == true) return;
+        if (wasOpen) return;
         Log.Info("Phone setup opened.");
         _setupFirstTodo = _setupLeft = _setupStepKey = null;
-        _setupTimer ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
-        _setupTimer.Tick -= SetupTick;
-        _setupTimer.Tick += SetupTick;
-        _setupTimer.Start();
+        if (_setupTimer == null)
+        {
+            _setupTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+            _setupTimer.Tick += SetupTick;
+            SetupPane.IsVisibleChanged += (_, _) => _setupTimer.IsEnabled = SetupPane.IsVisible;
+        }
+        _setupTimer.IsEnabled = SetupPane.IsVisible;
         await ReadSetupNow();
         // No phone tool: the download starts with the panel (10 Nov), unless the PC is on mobile data (then the row waits for Install)
         // or the last one failed (Try again). Opening Phone setup is the yes: it can't do anything without it.

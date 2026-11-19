@@ -194,6 +194,10 @@ the rest of the height (since beta.9), so a list or a short group goes last, not
   `Game`, `Apps`, `Installed apps`, `General`. A new one goes here first.
 - The page frame: 16 px at the sides and 18 px under the last group (`16,0,16,6` plus the group's 12; `16,0,16,18` when
   the page is one group or its groups have no margin).
+- A part of a group that opens and closes (Regions > Region presets) is an `Expander` with the theme's style: the
+  box's chevron (9 px, `Muted`, `Text` under the mouse), 8 px, the title in `Text` 12 px, the content 8 px under it.
+  No circle, no border. Every control type a window uses has a style in `Theme.xaml`: one without it makes WPF load
+  Windows' whole theme (Region presets cost about 250 ms at start, 19 Nov 2026; `tests/DesempenhoTests.cs`).
 
 ### Pages
 
