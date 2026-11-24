@@ -8,6 +8,7 @@ site/*/index.html linguist-generated
 site/pt-br/** linguist-generated
 site/es/** linguist-generated
 site/ru/** linguist-generated
+site/tr/** linguist-generated
 site/assets/js/scenes.min.js linguist-generated
 site/assets/guides/world.min.js linguist-generated
 worker/stats/src/assets.js linguist-generated

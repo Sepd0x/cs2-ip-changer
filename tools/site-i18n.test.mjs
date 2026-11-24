@@ -199,7 +199,7 @@ test('i18n browser: a missing address under /es/ shows the Spanish 404 and keeps
   await ctx.close();
   const g = await open('ru/cs2-ip-ban/', 1440);
   const hrefs = await g.page.$$eval('.top .lang-pick a', (as) => as.map((a) => new URL(a.href).pathname));
-  assert.deepEqual(hrefs, ['/cs2-ip-changer/cs2-ip-ban/', '/cs2-ip-changer/pt-br/cs2-ip-ban/', '/cs2-ip-changer/es/cs2-ip-ban/', '/cs2-ip-changer/ru/cs2-ip-ban/']);
+  assert.deepEqual(hrefs, ['/cs2-ip-changer/cs2-ip-ban/', '/cs2-ip-changer/pt-br/cs2-ip-ban/', '/cs2-ip-changer/es/cs2-ip-ban/', '/cs2-ip-changer/ru/cs2-ip-ban/', '/cs2-ip-changer/tr/cs2-ip-ban/']);
   await g.ctx.close();
 });
 

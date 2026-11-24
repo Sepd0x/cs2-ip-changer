@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = join(ROOT, 'site');
 const BASE = 'https://sepd0x.github.io/cs2-ip-changer/';
-const LANGS = ['', 'pt-br/', 'es/', 'ru/'];
+const LANGS = ['', 'pt-br/', 'es/', 'ru/', 'tr/'];
 const read = (f) => readFileSync(join(SITE, f), 'utf8');
 const guides = readdirSync(SITE, { withFileTypes: true })
   .filter((d) => d.isDirectory() && !LANGS.includes(d.name + '/') && existsSync(join(SITE, d.name, 'index.html'))).map((d) => d.name);

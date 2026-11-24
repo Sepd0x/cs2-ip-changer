@@ -10,7 +10,7 @@ using System.Windows.Documents;
 namespace SRT;
 
 /// <summary>
-/// The app's languages (beta.13): English (the source and the fallback), pt-BR, es (neutral, Latin America) and ru.
+/// The app's languages (beta.13): English (the source and the fallback), pt-BR, es (neutral, Latin America), ru and tr.
 /// One mechanism: the English text is the key. src/Lang/*.json map each English text to its translation, and a text with no
 /// entry shows in English. XAML needs no change: <see cref="Apply"/> swaps the text of a window's elements once, when the window
 /// opens (changing the language in Settings > App restarts the window). Texts the code makes go through <see cref="T"/> and
@@ -19,10 +19,10 @@ namespace SRT;
 /// </summary>
 public static class Loc
 {
-    public static readonly string[] Codes = { "en", "pt-BR", "es", "ru" };
+    public static readonly string[] Codes = { "en", "pt-BR", "es", "ru", "tr" };
 
     /// <summary>The language names as each speaker writes them (the Settings > App box).</summary>
-    public static readonly string[] Names = { "English", "Português (Brasil)", "Español", "Русский" };
+    public static readonly string[] Names = { "English", "Português (Brasil)", "Español", "Русский", "Türkçe" };
 
     public static string Lang { get; private set; } = "en";
 
@@ -30,13 +30,13 @@ public static class Loc
     static readonly ConditionalWeakTable<string, string> _english = new();
     static readonly bool Pseudo = Environment.GetEnvironmentVariable("SRT_PSEUDO") == "1";
 
-    /// <summary>The language for a saved choice: null or "auto" follows Windows (pt → pt-BR, es, ru, anything else English).</summary>
+    /// <summary>The language for a saved choice: null or "auto" follows Windows (pt → pt-BR, es, ru, tr, anything else English).</summary>
     public static string Resolve(string saved)
     {
         if (Environment.GetEnvironmentVariable("SRT_LANG") is { Length: > 0 } forced) saved = forced;   // captures and layout checks
         if (!string.IsNullOrEmpty(saved) && saved != "auto")
             foreach (var c in Codes) if (string.Equals(c, saved, StringComparison.OrdinalIgnoreCase)) return c;
-        return CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToLowerInvariant() switch { "pt" => "pt-BR", "es" => "es", "ru" => "ru", _ => "en" };
+        return CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToLowerInvariant() switch { "pt" => "pt-BR", "es" => "es", "ru" => "ru", "tr" => "tr", _ => "en" };
     }
 
     public static void Init(string saved)
@@ -93,7 +93,7 @@ public static class Loc
     }
 
     /// <summary>"3 accounts" in the app's language. The key is the singular noun; its entry holds the forms joined by "|":
-    /// one|other (pt-BR, es) or one|few|many (ru: 1, 2-4, 5+). Null when the language has no entry (English builds it).</summary>
+    /// one|other (pt-BR, es; tr writes the same noun twice, Turkish keeps it singular after a number) or one|few|many (ru: 1, 2-4, 5+). Null when the language has no entry (English builds it).</summary>
     public static string Plural(int n, string one)
     {
         if (!_t.TryGetValue(one, out var forms)) return null;

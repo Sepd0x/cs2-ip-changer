@@ -33,7 +33,7 @@ static class Textos15NovTests
         return JsonSerializer.Deserialize<string[]>(json).ToHashSet();
     }
 
-    static readonly string[] Codes = { "pt-BR", "es", "ru" };
+    static readonly string[] Codes = { "pt-BR", "es", "ru", "tr" };
 
     static void Todas(Action<string, bool, string> check, string name, params string[] texts)
     {
@@ -175,7 +175,7 @@ static class Textos15NovTests
     {
         var a = Repo(".gitattributes");
         var rules = string.Join("\n", a.Split('\n').Where(l => !l.TrimStart().StartsWith("#")));
-        foreach (var rule in new[] { "site/*/index.html linguist-generated", "site/pt-br/** linguist-generated", "site/es/** linguist-generated", "site/ru/** linguist-generated",
+        foreach (var rule in new[] { "site/*/index.html linguist-generated", "site/pt-br/** linguist-generated", "site/es/** linguist-generated", "site/ru/** linguist-generated", "site/tr/** linguist-generated",
             "site/assets/js/scenes.min.js linguist-generated", "site/assets/guides/world.min.js linguist-generated", "worker/stats/src/assets.js linguist-generated",
             "site/assets/js/gsap.min.js linguist-vendored", "site/assets/js/ScrollTrigger.min.js linguist-vendored", "site/assets/js/lenis.min.js linguist-vendored" })
             check(".gitattributes: " + rule, a.Contains(rule), "");
