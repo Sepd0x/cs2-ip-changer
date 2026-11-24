@@ -25,8 +25,8 @@ static class RevisaoDTests
         check("Revisão D14: um update com a proteção desligada não a deixou ligada", !App.ProtectionLeftOn(new[] { AppIds.Args.Updated, AppIds.Args.Off }) && !App.ProtectionLeftOn(new[] { AppIds.Args.Updated, AppIds.Args.Standby }), "");
         check("Revisão D14: com --on, ou só --updated (beta.9), ficou ligada", App.ProtectionLeftOn(new[] { AppIds.Args.Updated, AppIds.Args.On }) && App.ProtectionLeftOn(new[] { AppIds.Args.Updated }), "");
         check("Revisão D14: sem update, nada ficou ligado", !App.ProtectionLeftOn(new[] { AppIds.Args.On }) && !App.ProtectionLeftOn(Array.Empty<string>()), "");
-        check("Revisão D14: o aviso recebe essa regra (o Quit continua a desfazer como antes)",
-            app.Contains("StatsNoticeWindow(ProtectionLeftOn(args), StatsNoticeIn(settingsFile))") && app.Contains("if (updated) UndoAfterUpdateQuit();"), "");
+        check("Revisão D14 (1.0.0): o aviso já não fecha a app, por isso não há Quit a desfazer a proteção",
+            app.Contains("StatsNoticeWindow(StatsNoticeIn(settingsFile))") && !app.Contains("UndoAfterUpdateQuit"), "");
 
         // D15. Update que não instala diz porquê
         var full = new Updater.Release("1.0.0", "v1.0.0", "https://x/r", "https://x/e", "https://x/s", 1, "https://x/sig");

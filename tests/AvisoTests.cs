@@ -21,9 +21,9 @@ static class AvisoTests
         var kept = linhas.FirstOrDefault(l => l.StartsWith("Kept by")) ?? "";
         check("Aviso: Kept by diz Cloudflare, 12 meses, Delete my stats, as issues e a autoridade de proteção de dados",
             kept.Contains("Cloudflare") && kept.Contains("12 months") && kept.Contains("Settings > Delete my stats") && kept.Contains("GitHub issues")
-            && kept.Contains("data protection authority") && kept.Contains("because you accept this notice") && kept.Contains("only to fix bugs"), kept);
-        check("Aviso: o curto diz obrigatório, quando envia e o Quit", curto.Contains("required while it is in beta") && curto.Contains("every 30 minutes")
-            && curto.Contains("Quit closes the app. Nothing on your PC changes."), "");
+            && kept.Contains("data protection authority") && !kept.Contains("because you accept this notice") && kept.Contains("only to fix bugs"), kept);
+        check("Aviso: o curto diz quando envia e que se pode desligar (nunca obrigatório)", !curto.Contains("required") && !curto.Contains("beta") && curto.Contains("every 30 minutes")
+            && curto.Contains("turn them off here or any time in Settings") && curto.Contains("Turn off sends nothing, and the app works the same.") && !curto.Contains("Quit"), "");
         check("Aviso: o curto nunca chama anónimo ao relatório com ID", !curto.Contains("anonymous", StringComparison.OrdinalIgnoreCase), "");
         // cada categoria da lista de antes tem a sua palavra no curto
         var sent = linhas.First(l => l.StartsWith("Sent: "));
@@ -38,12 +38,12 @@ static class AvisoTests
         check("Aviso: a lista inteira tem os 7 pontos", lista.Length == 7 && lista.All(l => l.StartsWith("•  ")), lista.Length.ToString());
         check("Aviso: cada ponto da lista está no texto de antes", lista.All(Telemetry.NoticeText.Contains), "");
         var app = Src("App.xaml.cs");
-        check("Aviso: a janela leva a lista inteira em See the full list", app.Contains("Loc.T(\"Accept\"), Loc.T(\"Quit\"), more: Telemetry.NoticeList"), "");
+        check("Aviso: a janela leva a lista inteira em See the full list", app.Contains("Loc.T(\"Accept\"), Loc.T(\"Turn off\"), more: Telemetry.NoticeList"), "");
         var xaml = Src("Views", "NoticeWindow.xaml");
         var cs = Src("Views", "NoticeWindow.xaml.cs");
         check("Aviso: o botão See the full list mostra e esconde a lista", xaml.Contains("Content=\"See the full list\"") && xaml.Contains("x:Name=\"MoreText\"")
             && cs.Contains("MoreText.Text = Loc.T(more") && cs.Contains("\"Hide the full list\""), "");
-        check("Aviso: Accept e Quit como antes (Enter aceita, Escape sai)", xaml.Contains("x:Name=\"OkBtn\"") && xaml.Contains("IsDefault=\"True\"")
+        check("Aviso: Accept e Turn off (Enter aceita, Escape desliga; nenhum fecha a app)", xaml.Contains("x:Name=\"OkBtn\"") && xaml.Contains("IsDefault=\"True\"")
             && xaml.Contains("x:Name=\"OtherBtn\"") && xaml.Contains("IsCancel=\"True\"") && cs.Contains("void Other_Click(object sender, RoutedEventArgs e) { Accepted = false; Close(); }"), "");
 
         // quem aceitou o aviso 3 (beta.10) vê o curto uma vez mais, com o que mudou e só isso
@@ -56,15 +56,14 @@ static class AvisoTests
             var asked = 0;
             check("Aviso: aceite na beta.10 (aviso 3) volta a ver o aviso uma vez", App.StatsNoticeIn(b10) == 3 && !App.StatsAcceptedIn(b10)
                 && App.StatsGate(Array.Empty<string>(), () => { asked++; return true; }, b10) is { Go: true, AskedAgain: true } && asked == 1, "");
-            var corpo = App.StatsNoticeBody(false, 3);
+            var corpo = App.StatsNoticeBody(3);
             var mudou = Telemetry.NoticeChangedFor(3);
             check("Aviso: com o que mudou (mais curto, quem guarda, quanto tempo, como perguntar)", corpo.StartsWith(Telemetry.NoticeShort) && corpo.Contains(mudou)
                 && mudou.Contains("shorter") && mudou.Contains("who keeps the stats") && mudou.Contains("how long") && mudou.Contains("how to ask"), mudou);
             check("Aviso: quem aceitou o 3 não relê os 30 minutos nem o ID", !mudou.Contains("every 30 minutes") && !mudou.Contains("kept for this install"), "");
             check("Aviso: quem aceitou antes da beta.9 lê tudo o que mudou", Telemetry.NoticeChangedFor(1).Contains("every 30 minutes") && Telemetry.NoticeChangedFor(1).Contains("kept for this install")
                 && Telemetry.NoticeChangedFor(2).Contains("every 30 minutes") && !Telemetry.NoticeChangedFor(2).Contains("kept for this install"), "");
-            check("Aviso: 1.º arranque sem o que mudou; depois de uma atualização com o Quit", App.StatsNoticeBody(false, 0) == Telemetry.NoticeShort
-                && App.StatsNoticeBody(true, 3).EndsWith(Telemetry.NoticeAfterUpdate), "");
+            check("Aviso: 1.º arranque sem o que mudou", App.StatsNoticeBody(0) == Telemetry.NoticeShort, "");
             var atual = Path.Combine(tmp, "s-b11.json");
             File.WriteAllText(atual, $"{{ \"StatsAccepted\": true, \"StatsNotice\": {Telemetry.NoticeVersion} }}");
             check("Aviso: quem aceitou o 4 não volta a ver", App.StatsAcceptedIn(atual) && Telemetry.NoticeChangedFor(4) == ""

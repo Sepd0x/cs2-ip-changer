@@ -2331,9 +2331,16 @@
                                                 <TextBlock Text="So a login or your home IP never ends up on a stream." Style="{StaticResource OptSub}"/>
                                             </StackPanel>
                                         </CheckBox>
-                                        <!-- Telemetry (beta): required, accepted once before the app opens (App.StatsGate), README > Telemetry -->
+                                        <!-- Telemetry: on by default, answered once before the app opens (App.StatsGate), this switch turns it off, README > Telemetry -->
+                                        <CheckBox x:Name="StatsBox" Style="{StaticResource Switch}" Click="StatsSwitch_Click" Margin="0,0,0,8"
+                                                  ToolTip="Off: nothing is counted or sent. The random ID stays, so turning it on again carries on with the same one.">
+                                            <StackPanel>
+                                                <TextBlock Text="Send usage stats"/>
+                                                <TextBlock Text="Helps find and fix bugs. Off: nothing is sent and the app works the same." Style="{StaticResource OptSub}"/>
+                                            </StackPanel>
+                                        </CheckBox>
                                         <TextBlock x:Name="StatsLine" Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0" Background="Transparent"
-                                                   Text="Usage stats, required while the app is in beta, with a random ID made for this install, with no name (never from your PC or you). Never IPs, servers, accounts or names."/>
+                                                   Text="A random ID made for this install, with no name (never from your PC or you). Never IPs, servers, accounts or names."/>
                                         <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                             <Button Click="DeleteStats_Click" Margin="0,0,6,0" HorizontalAlignment="Left" Content="Delete my stats"
                                                     ToolTip="Deletes everything the stats server keeps under this install's ID, then the app starts over with a new ID."/>

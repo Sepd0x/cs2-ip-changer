@@ -9,6 +9,9 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Regions: save and name your current selection, reuse it later, or choose a preset to apply when CS2 starts.
 - Website: clouds in the night sky of the 3D scenes, lit from below by the town and drifting slowly. They are drawn by the sky itself, so a phone draws the same as before.
 
+### Changed
+- Usage stats are no longer required. They are on by default, and the notice at the first start has Accept and Turn off (Turn off opens the app and sends nothing). Settings > Send usage stats turns them off or on again any time, with the same random ID. Anyone who accepted in the beta stays on. The app, the README, the privacy page and the website no longer say they are required.
+
 ### Fixed
 - The window stays responsive while collecting network details for a bug report or loading a region list. Phone setup pauses its periodic checks while the window is hidden.
 - Regions: Refresh keeps the warning visible when Valve is offline and a saved list is used. Restore network also removes region rules under the older name.

@@ -227,7 +227,7 @@ programs) and the buttons are not named here.
 | Open with CS2 | |
 | Player flags | `AutoJoinBox` |
 | Steam | `ApiKeyPwd`, `ApiKeyBox`, `LaunchOptsBox` |
-| Privacy | `OptStreamer`, `AutoStreamerBox` |
+| Privacy | `OptStreamer`, `AutoStreamerBox`, `StatsBox` |
 | App | `LanguageBox`, `StartWithWindowsBox`, `CloseToTrayBox`, `CheckUpdatesBox`, `TestVersionsBox` |
 | Maintenance | |
 | Remove the app | |

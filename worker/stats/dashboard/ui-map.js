@@ -171,6 +171,7 @@ const UI = {
         { id: 'AccOpt', label: 'Hide usernames (Privacy)', r: [682,751,525,32], note: 'beta.12: saiu da barra de Accounts' },
         { id: 'TestVersions', label: 'Get test versions (App)', r: [682,1087,525,32], note: 'beta.12: canal de teste' },
         { id: 'TourAgain', label: 'Show the tour again (App)', r: [682,1131,139,28], note: 'beta.13: a visita guiada outra vez' },
+        { id: 'StatsSwitch', label: 'Send usage stats (Privacy)', r: [682,838,525,32], note: '1.0.0: interruptor das estatisticas' },
         { id: 'AutoStreamer', label: 'AutoStreamer' },
         { id: 'CheckUpdates', label: 'CheckUpdates' },
         { id: 'DeleteStats', label: 'Delete my stats' },

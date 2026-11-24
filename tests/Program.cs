@@ -662,6 +662,7 @@ CanaisTests.Run(Check);
 // 7 nov.: o que o dono trouxe da beta.12 (app; telemetria, dashboard e mapa de calor)
 Beta13AppTests.Run(Check);
 Beta13TelemetriaTests.Run(Check);
+Estatisticas1_0Tests.Run(Check);
 // 9 nov.: o teste com o iPhone do dono por cabo: driver da Apple, Change IP que espera, Log sem ruído (IphoneNov9Tests.cs)
 await IphoneNov9Tests.Run(Check);
 // 9 nov.: o feedback de um utilizador da beta.12: login, tethering que a app não via, IP já banido, cooldown (Feedback9NovTests.cs)

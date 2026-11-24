@@ -50,6 +50,11 @@ public sealed partial class Settings
     /// ID was new every day, so it shows once more, saying what changed.
     /// </summary>
     public int StatsNotice { get; set; }
+    /// <summary>
+    /// 1.0.0: Settings > Send usage stats is off (or Turn off was picked in the first notice). Off: nothing is counted or sent and the
+    /// install ID is kept. False (also in an older settings file, so everyone who accepted in the beta stays on) means on.
+    /// </summary>
+    public bool StatsOff { get; set; }
     public DateTime? LastUpdateCheck { get; set; }
     public string UpdateLatest { get; set; }              // highest version seen on GitHub at the last check
     /// <summary>That version is a test version (a pre-release on GitHub).</summary>

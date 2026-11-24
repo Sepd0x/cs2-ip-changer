@@ -73,11 +73,22 @@ public partial class MainWindow
     /// <summary>3 drops of the phone's connection within 10 minutes.</summary>
     public static bool CableHint(IEnumerable<DateTime> drops, DateTime now) => drops.Count(t => now - t <= TimeSpan.FromMinutes(10)) >= 3;
 
+    /// <summary>Settings > Send usage stats: off sends and counts nothing (the ID is kept); on carries on with the same ID.</summary>
+    void StatsSwitch_Click(object sender, RoutedEventArgs e)
+    {
+        if (_uiLock) return;
+        _s.StatsOff = StatsBox.IsChecked != true;
+        SaveSettings();
+        if (_demo) return;
+        Telemetry.SetOff(_s.StatsOff);
+        Log.Info(_s.StatsOff ? "Usage stats turned off. Nothing is counted or sent." : "Usage stats turned on.");
+    }
+
     /// <summary>Settings > Delete my stats: the server deletes what it keeps under this install's ID, and the app takes a new one.</summary>
     async void DeleteStats_Click(object sender, RoutedEventArgs e)
     {
         if (_demo) { Toast(Loc.T("Demo: delete my stats."), true); return; }
-        if (!await Ask(Loc.T("Delete my stats"), Loc.T("Delete everything the stats server keeps under this install's ID? The app then starts over with a new ID. The stats stay on (they are required in the beta)."), Loc.T("Delete"))) return;
+        if (!await Ask(Loc.T("Delete my stats"), Loc.T("Delete everything the stats server keeps under this install's ID? The app then starts over with a new ID. The stats stay as they are, on or off."), Loc.T("Delete"))) return;
         if (await Telemetry.Forget()) { Log.Ok("Usage stats deleted on the server. New stats ID made."); Toast(Loc.T("Your stats were deleted. The app has a new stats ID."), true); }
         else Toast(Loc.T("Couldn't reach the stats server. Nothing was deleted; try again later."), Tone.Error);
     }

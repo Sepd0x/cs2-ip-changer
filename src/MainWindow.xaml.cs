@@ -96,11 +96,12 @@ public partial class MainWindow : Window
         {
             _s.StatsAccepted = true;
             _s.StatsNotice = Telemetry.NoticeVersion;
+            _s.StatsOff = stats.Off;
             Log.Info("Usage stats accepted. README > Telemetry lists what is sent.");
             try { SaveSettings(); }
             catch (Exception ex) { Log.Warn("Couldn't save that the usage stats notice was accepted (" + ex.Message + "); it shows again at the next start."); }
         }
-        Telemetry.Start(_demo, TelemetryNow, _s.StatsAccepted);
+        Telemetry.Start(_demo, TelemetryNow, _s.StatsAccepted, off: _s.StatsOff);
         TelemetryHook();
         // The day the notice was accepted: the dashboard's "new users" (also once for someone coming from beta.7, who sees it once;
         // not for an older notice accepted again, that's no first start)

@@ -15,8 +15,9 @@ using System.Windows.Threading;
 namespace SRT.Core;
 
 /// <summary>
-/// Usage stats (pseudonymous: a kept random install ID), required to use the app: accepted once at the first start, before the app opens (App.StatsGate;
-/// README > Telemetry). Until then nothing is sent and no ID is made. 20 s after the start, every 30 minutes while the app is open
+/// Usage stats (pseudonymous: a kept random install ID), on by default since 1.0.0 with a switch to turn them off (Settings > Send usage stats,
+/// or Turn off in the notice at the first start, before the app opens: App.StatsGate; README > Telemetry). Until the notice is answered
+/// nothing is sent and no ID is made; off, nothing is counted or sent and the ID stays for when they are turned on again. 20 s after the start, every 30 minutes while the app is open
 /// and something is new, when the PC goes to sleep, when Windows signs out or shuts down, and at close (Exit) it sends:
 /// a random ID for the install (since beta.9 kept, before new every day; never made from the PC or the user),
 /// the app and Windows versions, the mode, how the phone is connected, minutes open, how many times each button and hotkey
@@ -92,17 +93,17 @@ public static class Telemetry
     public const string NoticeTitle = "Usage stats";
 
     /// <summary>
-    /// The notice at the first start (Accept or Quit), since beta.11 (NoticeVersion 4): short, with every kind of stat named, and the
+    /// The notice at the first start (Accept or Turn off), since beta.11 (NoticeVersion 4): short, with every kind of stat named, and the
     /// full list (<see cref="NoticeList"/>) under See the full list. The "Kept by" line says who, why, the legal basis, where, how long
     /// and how to ask or complain (GDPR art. 13), like README > Telemetry and docs/PRIVACY-AND-SECURITY.md.
     /// </summary>
     public static string NoticeShort =>
-        Loc.T("This beta sends usage stats when it opens and closes and every 30 minutes while it's open, so bugs get found and fixed. They are required while it is in beta.") + "\n\n"
+        Loc.T("CS2 IP Changer sends usage stats when it opens and closes and every 30 minutes while it's open, so bugs get found and fixed. You can turn them off here or any time in Settings.") + "\n\n"
         + NoticeSent + "\n"
         + Loc.T("Never sent: IPs, servers, accounts, Steam names or IDs, your carrier, anything you type.") + "\n"
-        + Loc.T("Kept by the author (Sepd0x on GitHub) on Cloudflare, only to fix bugs and improve the app, because you accept this notice, for 12 months. "
+        + Loc.T("Kept by the author (Sepd0x on GitHub) on Cloudflare, only to fix bugs and improve the app, for 12 months. "
         + "Delete them any time: Settings > Delete my stats. Questions: GitHub issues. You can also complain to your data protection authority.") + "\n\n"
-        + Loc.T("Quit closes the app. Nothing on your PC changes.");
+        + Loc.T("Turn off sends nothing, and the app works the same.");
 
     /// <summary>The "Sent:" line of the notice, also the tooltip of the stats line in Settings > Privacy (one text, never a shorter copy).</summary>
     public static string NoticeSent =>
@@ -110,10 +111,10 @@ public static class Telemetry
 
     /// <summary>The full list (the notice until beta.10), shown under See the full list. README > Telemetry has the same list.</summary>
     public static string NoticeText =>
-        Loc.T("While CS2 IP Changer is in beta, using it means it sends usage stats when it opens and closes (and every 30 minutes while it's open), so bugs get found and fixed:") + "\n\n"
+        Loc.T("CS2 IP Changer sends usage stats when it opens and closes (and every 30 minutes while it's open), so bugs get found and fixed. You can turn them off in Settings:") + "\n\n"
         + NoticeList + "\n\n"
         + Loc.T("Never IPs, servers, accounts, Steam names or IDs, your carrier or anything you type.") + "\n\n"
-        + Loc.T("Quit closes the app without changing anything on your PC.");
+        + Loc.T("Turn off sends nothing, and the app works the same.");
 
     /// <summary>The 7 items of the full list, unchanged since beta.10.</summary>
     public static string NoticeList =>
@@ -150,24 +151,47 @@ public static class Telemetry
         return s;
     }
 
-    /// <summary>Added to the notice when it shows right after an update (--updated): Quit undoes what the version before left on.</summary>
-    public static string NoticeAfterUpdate =>
-        Loc.T("You just updated: the version before left its protection on. Quit also turns it off, like Turn off protection, so your servers "
-        + "aren't left blocked outside the phone without the app (not while CS2 is open).");
-
-    /// <summary>Stats are on (the notice was accepted, and this isn't the demo or the recording build).</summary>
+    /// <summary>Stats are on (the notice was answered, they aren't turned off, and this isn't the demo or the recording build).</summary>
     public static bool Running => _on;
 
     /// <summary>
     /// At start. <paramref name="now"/> gives the mode, the phone link and list sizes at send time. <paramref name="accepted"/> is
     /// Settings.StatsAccepted: until it's true nothing is sent and no ID is made.
     /// </summary>
-    public static void Start(bool demo, Func<(string, string, Dictionary<string, int>)> now, bool accepted, string file = null)
+    public static void Start(bool demo, Func<(string, string, Dictionary<string, int>)> now, bool accepted, string file = null, bool off = false)
     {
         if (demo || Rec.On) return;
         _now = now;
         _file = file;
-        if (accepted) TurnOn();
+        _canRun = accepted;
+        if (!_on) _st = null;
+        if (accepted && !off) TurnOn();
+    }
+
+    static bool _canRun;
+
+    /// <summary>
+    /// Tests only: takes the place of the network. Gets the URL and the body of every report that would go out and says whether
+    /// the server took it. Null (always, in the app) sends for real.
+    /// </summary>
+    public static Func<string, string, Task<bool>> TestSend;
+
+    /// <summary>
+    /// 1.0.0: Settings > Send usage stats, and "Turn off" in the first notice. Off: what is counted is saved, the timers stop and
+    /// nothing is counted, kept or sent any more (no report, no 5-minute signal, no environment report, no errors), not even at close.
+    /// The install ID stays in telemetry.json, so turning it on again carries on with the same one.
+    /// </summary>
+    public static void SetOff(bool off)
+    {
+        if (!_canRun) return;
+        if (off)
+        {
+            if (!_on) return;
+            Save();
+            _on = false;
+            _tick?.Stop(); _live?.Stop(); _first?.Stop();
+        }
+        else if (!_on && !_handedOver) { _closed = false; TurnOn(); }
     }
 
     static readonly Regex IdShape = new("^[0-9a-f]{32}$", RegexOptions.Compiled);
@@ -776,7 +800,7 @@ public static class Telemetry
         {
             var today = DateTime.UtcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             bool dev;
-            lock (Gate) { if (_st == null || _st.EnvDay == today) return; dev = Dev || _st.Mine; }
+            lock (Gate) { if (!_on || _st == null || _st.EnvDay == today) return; dev = Dev || _st.Mine; }
             if (_phoneEnv == null && !late) return;
             var (w, s) = _window != null ? _window() : (0, 0);
             var body = EnvBody(System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, w, s, Environment.OSVersion.Version.Build, _phoneEnv, dev);
@@ -791,16 +815,19 @@ public static class Telemetry
     /// </summary>
     public static async Task<bool> Forget()
     {
-        if (!_on) return false;
+        if (!_canRun) return false;
         string id;
-        lock (Gate) { if (_st == null) return false; id = _st.Id; }
+        // With the stats off the state is still on the disk (the ID is kept): deleting works the same, it is the user's own request
+        lock (Gate) { _st ??= Store.Load(File_, () => new State()); id = _st.Id; }
         try
         {
-            if (!await Post(JsonSerializer.Serialize(new { v = 1, id, app = Updater.Clean(AppInfo.Version.Split('+')[0]) }), TimeSpan.FromSeconds(8), Url + "/forget")) return false;
+            if (!IdShape.IsMatch(id ?? "")) return true;   // never turned on here: no ID, nothing kept on the server or here
+            if (!await Post(JsonSerializer.Serialize(new { v = 1, id, app = Updater.Clean(AppInfo.Version.Split('+')[0]) }), TimeSpan.FromSeconds(8), Url + "/forget", always: true)) return false;
         }
         catch { return false; }
         lock (Gate)
         {
+            _st.Clicks ??= new(); _st.Counts ??= new(); _st.Errors ??= new(); _st.Heat ??= new(); _st.Screens ??= new(); _st.Paths ??= new();
             _st.Id = null; _st.Install = false;
             NewId(_st);
             _st.Clicks.Clear(); _st.Counts.Clear(); _st.Errors.Clear(); _st.Heat.Clear(); _st.Screens.Clear(); _st.Paths.Clear(); _st.Active?.Clear();
@@ -1047,9 +1074,11 @@ public static class Telemetry
     }
 
     /// <summary>No await comes back to the window's thread, so the close can wait for it.</summary>
-    static async Task<bool> Post(string body, TimeSpan timeout, string url = null)
+    static async Task<bool> Post(string body, TimeSpan timeout, string url = null, bool always = false)
     {
         url ??= Url;
+        if (!_on && !always) return false;   // turned off (or handed over): nothing goes out, whichever path asked
+        if (TestSend != null) return await TestSend(url, body).ConfigureAwait(false);
         using var http = new HttpClient { Timeout = timeout };
         http.DefaultRequestHeaders.UserAgent.ParseAdd(AppIds.Name);
         using var resp = await http.PostAsync(url, new StringContent(body, Encoding.UTF8, "application/json")).ConfigureAwait(false);
@@ -1132,6 +1161,7 @@ public static class Telemetry
     /// <summary>Every 5 minutes: the periodic report when due; every hour the save and the environment report as before.</summary>
     static void OnTick()
     {
+        if (!_on) return;
         bool due;
         lock (Gate)
         {

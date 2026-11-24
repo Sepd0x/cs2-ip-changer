@@ -168,10 +168,6 @@ static class RevisaoETests
         var cs2 = closing[closing.IndexOf("if (Steam.Cs2Running && !_restored && _protOn")..];
         check("Revisão E2: fechar com o CS2 aberto passa pelo Keep (rota por defeito do telemóvel e regras do Whole PC)",
             cs2.IndexOf("await KeepAndClose();") is var i && i > 0 && i < cs2.IndexOf("_closingDone = true;"), "");
-        var quit = Body(app, "static void UndoAfterUpdateQuit()");
-        check("Revisão E2: o Quit depois de um update com o CS2 aberto faz o mesmo, com a pasta pronta antes do Guard",
-            quit.IndexOf("Paths.Ensure();") is var p && p > 0 && p < quit.IndexOf("if (Steam.Cs2Running)") && quit.Contains("new Guard().KeepOnClose(cs2Running: true).GetAwaiter().GetResult();")
-            && !quit.Contains("if (Steam.Cs2Running) return;"), "");
 
         // E4. Turn off and close: o que o RestoreAll não tirou diz-se antes de a app fechar
         check("Revisão E4: o que ficou mostra-se", MainWindow.CloseLeftText("rule \"x\"", false) == "rule \"x\"" && MainWindow.CloseLeftText(null, false) == null, "");

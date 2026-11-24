@@ -39,18 +39,13 @@ public partial class App : Application
         }
         // Uninstall in Windows Settings, no copy running: only the Remove question, without the main window (nothing is set up first)
         if (uninstall) { UninstallAndExit(); return; }
-        // The usage stats notice, before the app makes a folder, a rule or a route: Quit (or Escape) leaves the PC as it was.
+        // The usage stats notice, before the app makes a folder, a rule or a route: Accept or Turn off, and the app opens either way.
         // The notice would become the app's MainWindow and closing it would end the app, so the main window decides that again below.
         var updated = args.Contains(AppIds.Args.Updated);
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
         var settingsFile = Paths.File(AppIds.Files.Settings);
-        var stats = StatsGate(args, () => StatsNoticeWindow(ProtectionLeftOn(args), StatsNoticeIn(settingsFile)).ShowAndWait(), settingsFile);
-        if (!stats.Go)
-        {
-            if (updated) UndoAfterUpdateQuit();
-            Shutdown();
-            return;
-        }
+        var stats = StatsGate(args, () => StatsNoticeWindow(StatsNoticeIn(settingsFile)).ShowAndWait(), settingsFile);
+        if (!stats.Go) { Shutdown(); return; }
         ShutdownMode = ShutdownMode.OnMainWindowClose;
         Paths.Ensure();
         // This copy holds the lock, so no other copy runs from the older unpacked folders (the demo touches nothing).
@@ -203,28 +198,28 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// What the usage stats notice gave at this start, passed to the main window. Go: the app can go on. JustAccepted: Accept in this
-    /// start (the main window saves it with the rest of the settings). AskedAgain: the notice showed again because an older one was
-    /// accepted, so it isn't a first start.
+    /// What the usage stats notice gave at this start, passed to the main window. Go: the app can go on (always, since 1.0.0: Turn off
+    /// doesn't close it). JustAccepted: the notice was answered in this start (the main window saves it with the rest of the settings).
+    /// Off: the answer was Turn off. AskedAgain: the notice showed again because an older one was accepted, so it isn't a first start.
     /// </summary>
-    public readonly record struct StatsConsent(bool Go, bool JustAccepted = false, bool AskedAgain = false)
+    public readonly record struct StatsConsent(bool Go, bool JustAccepted = false, bool AskedAgain = false, bool Off = false)
     {
-        /// <summary>The first start on this PC (the notice was never accepted before): first_start and the Steam and CS2 check.</summary>
+        /// <summary>The first start on this PC (the notice was never answered before): first_start and the Steam and CS2 check.</summary>
         public bool FirstStart => JustAccepted && !AskedAgain;
     }
 
     /// <summary>
-    /// Go when the app can go on: the usage stats notice was accepted before (settings.json, read only) or is now.
-    /// Quit or Escape gives no Go before anything is made, changed or sent. The demo and the recording build send nothing,
-    /// so they don't ask.
+    /// The notice is answered once, before the app opens (settings.json, read only, says if it was). <paramref name="ask"/> gives true
+    /// for Accept, false for Turn off (or Escape): the app opens in both, and Turn off sends nothing. The demo and the recording build
+    /// send nothing, so they don't ask.
     /// </summary>
     public static StatsConsent StatsGate(string[] args, Func<bool> ask, string settingsFile)
     {
         if (args.Contains(AppIds.Args.Demo) || Rec.On) return new(true);
         var had = StatsNoticeIn(settingsFile);
         if (had >= Telemetry.NoticeVersion) return new(true);
-        if (!ask()) return new(false);
-        return new(true, JustAccepted: true, AskedAgain: had > 0);
+        var on = ask();
+        return new(true, JustAccepted: true, AskedAgain: had > 0, Off: !on);
     }
 
     /// <summary>The current notice was accepted before (<see cref="StatsNoticeIn"/>).</summary>
@@ -245,41 +240,16 @@ public partial class App : Application
     public static bool ProtectionLeftOn(string[] args) =>
         args.Contains(AppIds.Args.Updated) && Guard.OnAtStart(true, args, false, false, false, noPhone: false);
 
-    /// <summary>The usage stats notice: the short text, the full list under See the full list, Accept and Quit.</summary>
-    /// <param name="leftOn">Started by an update that left protection on (<see cref="ProtectionLeftOn"/>): the notice says Quit turns it off.</param>
+    /// <summary>The usage stats notice: the short text, the full list under See the full list, Accept and Turn off.</summary>
     /// <param name="had">The notice accepted before (<see cref="StatsNoticeIn"/>): above 0, what changed since then is added.</param>
-    internal static NoticeWindow StatsNoticeWindow(bool leftOn = false, int had = 0) =>
-        new(Loc.T(Telemetry.NoticeTitle), StatsNoticeBody(leftOn, had), Loc.T("Accept"), Loc.T("Quit"), more: Telemetry.NoticeList);
+    internal static NoticeWindow StatsNoticeWindow(int had = 0) =>
+        new(Loc.T(Telemetry.NoticeTitle), StatsNoticeBody(had), Loc.T("Accept"), Loc.T("Turn off"), more: Telemetry.NoticeList);
 
     /// <summary>The notice's visible text (<see cref="StatsNoticeWindow"/>), without the full list.</summary>
-    public static string StatsNoticeBody(bool leftOn, int had)
+    public static string StatsNoticeBody(int had)
     {
         var changed = Telemetry.NoticeChangedFor(had);
-        return Telemetry.NoticeShort + (changed != "" ? "\n\n" + changed : "") + (leftOn ? "\n\n" + Telemetry.NoticeAfterUpdate : "");
-    }
-
-    /// <summary>
-    /// Quit at the notice right after an update: the version before left its protection on for this copy to take over. With no
-    /// app left to turn it off, it's undone like Turn off protection (the Regions rule stays, as it does there).
-    /// Not while CS2 runs: it would carry on with your home IP. Then it goes as closing with Keep (Guard.KeepOnClose): the phone gets
-    /// its default route back and the Whole PC rules go, so the PC isn't left without internet once the phone is gone.
-    /// </summary>
-    static void UndoAfterUpdateQuit()
-    {
-        try
-        {
-            Paths.Ensure();
-            if (Steam.Cs2Running)
-            {
-                new Guard().KeepOnClose(cs2Running: true).GetAwaiter().GetResult();
-                Log.Info("Usage stats notice: Quit after an update with CS2 open. The block stays, the phone got its default route back.");
-                return;
-            }
-            var servers = Store.Load<List<ServerItem>>(Paths.File(AppIds.Files.Servers), () => new());
-            var left = new Guard().RestoreAll(servers.Select(s => s.Ip).Distinct().ToList(), keepRegions: true).GetAwaiter().GetResult();
-            Log.Info("Usage stats notice: Quit after an update. " + (left == null ? "The protection the version before left on was turned off." : "Couldn't remove: " + left));
-        }
-        catch (Exception ex) { Log.Warn("Quit after an update: couldn't turn off the protection the version before left on: " + ex.Message); }
+        return Telemetry.NoticeShort + (changed != "" ? "\n\n" + changed : "");
     }
 
     // The app's own windows for these two messages (NoticeWindow), not Windows' message box. The demo screenshots use them too.

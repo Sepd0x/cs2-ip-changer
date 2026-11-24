@@ -162,7 +162,7 @@ static class SecurityTests
                 var fresh = Path.Combine(tmp, "quit", "SRT_Dados");
                 var asked = 0;
                 var go = App.StatsGate(Array.Empty<string>(), () => { asked++; return false; }, Path.Combine(fresh, "settings.json"));
-                check("Telemetria: Quit fecha sem enviar nem criar nada", !go.Go && asked == 1 && !go.JustAccepted && !Directory.Exists(Path.GetDirectoryName(fresh)!) && !Telemetry.Running);
+                check("Telemetria: Turn off (ou Escape) abre a app, sem enviar nem criar nada, e fica guardado como desligado", go is { Go: true, JustAccepted: true, Off: true } && asked == 1 && !Directory.Exists(Path.GetDirectoryName(fresh)!) && !Telemetry.Running);
                 check("Telemetria: o demo não pergunta", App.StatsGate(new[] { "--demo" }, () => { asked++; return false; }, Path.Combine(fresh, "settings.json")).Go && asked == 1);
                 // Quem vem da beta.7 (sem campo) e da beta.8 de teste (UsageStats sim ou não) vê o aviso; quem aceitou não volta a ver
                 foreach (var (name, json) in new[] { ("b7", "{ \"Mode\": \"servers\" }"), ("b8-sim", "{ \"UsageStats\": true }"), ("b8-nao", "{ \"UsageStats\": false }"), ("estragado", "{ nao é json") })
@@ -206,20 +206,19 @@ static class SecurityTests
                 File.WriteAllText(est + ".prev", "{ \"StatsAccepted\": true }");
                 File.WriteAllText(est + ".prev", $"{{ \"StatsAccepted\": true, \"StatsNotice\": {Telemetry.NoticeVersion} }}");
                 check("Telemetria: settings estragado com o .prev aceite não pergunta outra vez", App.StatsAcceptedIn(est) && !File.Exists(Directory.GetFiles(tmp, "s-est.json.broken*").FirstOrDefault() ?? "x"));
-                check("Telemetria: depois de uma atualização, o aviso diz que Quit desliga a proteção que ficou", Telemetry.NoticeAfterUpdate.Contains("Quit also turns it off"));
 
                 // O texto (beta.9, ID fixo = pseudónimo no RGPD): obrigatório, a lista do que vai, e nunca chama anónimo ao relatório com ID.
                 // "anonymous" só onde é verdade: o mapa de calor e o relatório de ambiente, sem ID.
                 var n = Telemetry.NoticeText;
                 var primeira = n[..n.IndexOf('\n')];
-                check("Telemetria: o aviso diz obrigatório e nunca chama anónimo ao relatório com ID", Telemetry.NoticeTitle == "Usage stats" && n.Contains("using it means")
+                check("Telemetria: o aviso diz que se pode desligar e nunca chama anónimo ao relatório com ID", Telemetry.NoticeTitle == "Usage stats" && n.Contains("turn them off in Settings") && !n.Contains("required")
                     && primeira.Contains("usage stats") && !primeira.Contains("anonymous", StringComparison.OrdinalIgnoreCase)
                     && n.Contains("random ID made for this install, with no name")
                     && n.Split('\n').Where(l => l.Contains("anonymous", StringComparison.OrdinalIgnoreCase)).All(l => l.Contains("coarse grid") || l.Contains("no ID")));
                 check("Telemetria: o texto do Settings não chama anónimo ao relatório com ID", File.ReadAllText(Path.Combine(Repo(), "src", "MainWindow.xaml"))
-                    is var xs && xs.Contains("Text=\"Usage stats, required while the app is in beta, with a random ID made for this install, with no name") && !xs.Contains("Anonymous usage stats"));
+                    is var xs && xs.Contains("Text=\"A random ID made for this install, with no name") && !xs.Contains("required while the app is in beta") && !xs.Contains("Anonymous usage stats"));
                 check("Telemetria: o aviso diz o que vai e o que nunca vai", n.Contains("random ID made for this install") && n.Contains("Delete my stats") && n.Contains("country") && n.Contains("errors")
-                    && n.Contains("Never IPs, servers, accounts") && n.Contains("Quit closes the app without changing anything"));
+                    && n.Contains("Never IPs, servers, accounts") && n.Contains("Turn off sends nothing"));
             }
 
             // o192 (beta.8): o instalador. Oferecido só quando a pasta da app é o problema; copia o próprio exe e o SRT_Dados sem links

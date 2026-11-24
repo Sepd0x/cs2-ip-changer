@@ -139,7 +139,7 @@ Every detail of the setup (where the exe can run, the phone, ADB, launch options
 
 **Updates are checked with a signature.** Once a day at most the app looks for a new version, and you can turn that off. It installs one only if the exe matches the release's SHA-256 and that `.sha256` file is signed with the project's own key, which is kept off GitHub. Someone who got into this repo or its releases still couldn't push an exe of their own to your PC.
 
-**No account. Usage stats, required to use the app.** At the first start the beta shows what it sends when it opens, every 30 minutes and when it closes, with Accept and Quit: a random ID made for this install, with no name, versions, your country as two letters, the mode and counters. Never IPs, accounts, names or server addresses. Nothing is sent before you accept, and Quit closes the app without changing anything. [What is sent](#telemetry).
+**No account. Usage stats, on by default and easy to turn off.** At the first start the app shows what it sends when it opens, every 30 minutes and when it closes, with Accept and Turn off: a random ID made for this install, with no name, versions, your country as two letters, the mode and counters. Never IPs, accounts, names or server addresses. Nothing is sent before you answer, Turn off keeps the app working the same, and Settings > Send usage stats changes it any time. [What is sent](#telemetry).
 
 **Easy to undo.** The **Turn off protection** button removes the routes and firewall rules and checks that they're gone. `CS2IPChanger.exe --restore` removes everything, the region block too. More in [If something goes wrong](#if-something-goes-wrong).
 
@@ -240,16 +240,17 @@ There's no account. Besides the usage stats of the beta ([Telemetry](#telemetry)
 | Changing your profiles (only accounts you sign in to on the Profiles page) | steamcommunity.com, login.steampowered.com, api.steampowered.com and Steam's avatar servers |
 | Downloading ADB (Phone setup does it by itself when you open it, unless the phone is an iPhone or the PC is on the phone's mobile data; Install on the Phone page does it too) | dl.google.com |
 | Checking for updates (can be turned off) | api.github.com, github.com |
-| Usage stats, required to use the app (beta, [Telemetry](#telemetry)) | the project's Cloudflare Worker (source in [`worker/stats`](worker/stats)) |
+| Usage stats, on by default and off with one switch ([Telemetry](#telemetry)) | the project's Cloudflare Worker (source in [`worker/stats`](worker/stats)) |
 
 The app measures the phone's IP by asking 1.0.0.1 (Cloudflare's `/cdn-cgi/trace`). A firewall rule keeps the app's own requests to it on the phone connection, and leaves other programs alone. Windows routes can't be set per program, though: while the phone is connected, anything on your PC that talks to 1.0.0.1 (for example, if you use it as your DNS server) goes through the phone too.
 </details>
 
 ## Telemetry
 
-While CS2 IP Changer is in beta, it sends usage stats so bugs can be found and the parts people use get better. They are required to use the app.
+CS2 IP Changer sends usage stats so bugs can be found and the parts people use get better. They are on by default, and you can turn them off at the first start or any time in Settings.
 
-- **You decide first.** At the first start, before the app opens, a notice lists what is sent, with Accept and Quit. Until you accept, nothing is sent and no ID is made. Quit (or <kbd>Esc</kbd>) closes the app without changing anything on your PC.
+- **You decide first.** At the first start, before the app opens, a notice lists what is sent, with Accept and Turn off. Until you answer, nothing is sent and no ID is made. Turn off (or <kbd>Esc</kbd>) opens the app the same, and nothing is sent.
+- **A switch, any time.** Settings > Send usage stats. Off: no report, no 5-minute signal, no setup report, no errors, and nothing is counted or kept. Turning it on again carries on with the same ID. The choice is saved with the other settings, and anyone who accepted in the beta stays on.
 - **Never sent:** IPs (yours, the phone's or servers'), server names or addresses, Steam accounts, logins, names or IDs, your carrier, city or region, players' names, file paths or anything you typed.
 - **A random ID**, made once for this install, never from your PC, Windows, Steam or you. It isn't tied to your name, PC, Steam or anything else.
 - **Delete it any time.** Settings > Delete my stats deletes everything the server keeps under your ID and gives the app a new one.
@@ -257,7 +258,7 @@ While CS2 IP Changer is in beta, it sends usage stats so bugs can be found and t
 <details>
 <summary><b>The notice, the ID and the bands</b></summary>
 
-Right after an update from inside the app, Quit also turns off the protection the version before left on, so your servers aren't left blocked without the app (not while CS2 is open). Accept is saved and the notice doesn't show again, except once when its text changes: after beta.9, because the ID changed (below), and after beta.11, because the notice got shorter and now says who keeps the stats and for how long.
+Your answer is saved and the notice doesn't show again, except once when what is sent changes: after beta.9, because the ID changed (below), and after beta.11, because the notice got shorter and now says who keeps the stats and for how long. Since 1.0.0 the stats are no longer required: they are on by default and Settings > Send usage stats turns them off.
 
 The ID says nothing about who you are. Because it is kept, the usage report is pseudonymous rather than anonymous (that is the word the GDPR uses): one install's reports link up, but never to a person. Only the click map and the separate setup report below, which carry no ID, are anonymous. Since beta.9 it is kept (before, it was new every day), so the stats can tell a returning install from a new one and count how many use the app. The first report of each day also says how long ago the app was set up, only in rough bands (the same day, 1 day, 2 to 3, 4 to 6, 7 to 13, 14 to 29, 30 or more), never the date. List sizes go in rough bands, not exact numbers, for the same reason.
 </details>
@@ -265,7 +266,7 @@ The ID says nothing about who you are. Because it is kept, the usage report is p
 <details>
 <summary><b>Who keeps the stats, and your rights</b></summary>
 
-The stats are kept by the author of this project (Sepd0x on GitHub), who decides what is collected and why. They are used only to find and fix bugs and to make the app better: never sold, never shared, never used for ads. The legal basis is that you accept the notice at the first start. They are stored on Cloudflare (Workers and D1), which processes them for the project and nothing else. Rows with an install ID are deleted after 12 months; counts added up for everyone, with no ID, stay. Settings > Delete my stats deletes everything kept under your ID at once, with no account and no email. For anything else (what is kept, a correction, a question), open an [issue on GitHub](https://github.com/Sepd0x/cs2-ip-changer/issues) and don't paste your install ID there. You can also complain to your data protection authority (in Portugal, the CNPD).
+The stats are kept by the author of this project (Sepd0x on GitHub), who decides what is collected and why. They are used only to find and fix bugs and to make the app better: never sold, never shared, never used for ads. The legal basis is the author's legitimate interest in finding and fixing bugs (GDPR art. 6(1)(f)); you can object at any time by turning the stats off, at the first start or in Settings. They are stored on Cloudflare (Workers and D1), which processes them for the project and nothing else. Rows with an install ID are deleted after 12 months; counts added up for everyone, with no ID, stay. Settings > Delete my stats deletes everything kept under your ID at once, with no account and no email. For anything else (what is kept, a correction, a question), open an [issue on GitHub](https://github.com/Sepd0x/cs2-ip-changer/issues) and don't paste your install ID there. You can also complain to your data protection authority (in Portugal, the CNPD).
 </details>
 
 <details>

@@ -52,6 +52,7 @@ public partial class MainWindow
             UseOffBox.IsChecked = _s.UseWithProtectionOff;
             CloseToTrayBox.IsChecked = _s.CloseToTray;
             AutoStreamerBox.IsChecked = _s.AutoStreamer;
+            StatsBox.IsChecked = !_s.StatsOff;
             StatsLine.ToolTip = Loc.T(Telemetry.NoticeSent) + " " + Loc.T("Details in the README, under Telemetry.");
             if (LanguageBox.Items.Count == 1) foreach (var n in Loc.Names) LanguageBox.Items.Add(new ComboBoxItem { Content = n });
             LanguageBox.SelectedIndex = _s.Language is null or "auto" ? 0 : Math.Max(0, Array.FindIndex(Loc.Codes, c => string.Equals(c, _s.Language, StringComparison.OrdinalIgnoreCase)) + 1);

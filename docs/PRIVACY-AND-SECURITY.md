@@ -17,7 +17,7 @@ There's no account and no server of ours that sees your IPs. The app talks to th
 | steamcommunity.com, login.steampowered.com, Steam's picture servers (`*.steamstatic.com`) | Account profiles, avatars and bans; profile changes on the Profiles page | Public profile requests; for accounts you signed in to on Profiles, that account's Steam session |
 | dl.google.com | The ADB phone tool: Phone setup downloads it by itself when you open it (not for an iPhone, and not while the PC is on the phone's mobile data, where it waits for Install); Install on the Phone page does it too | A normal download |
 | api.github.com, github.com | Update check, once a day (can be turned off) | A normal request; release files come from GitHub's download servers |
-| stats.cs2ipchanger.workers.dev (Cloudflare Worker, source in [`worker/stats`](../worker/stats)) | Usage stats with a random install ID and no name, required in the beta, after you accept | What's listed in [Telemetry](../README.md#telemetry). Never IPs, servers, accounts or names |
+| stats.cs2ipchanger.workers.dev (Cloudflare Worker, source in [`worker/stats`](../worker/stats)) | Usage stats with a random install ID and no name, on by default (turn off at the first start or in Settings > Send usage stats) | What's listed in [Telemetry](../README.md#telemetry). Never IPs, servers, accounts or names |
 | stats.cs2ipchanger.workers.dev, from the website (not the app) | Each page of the website you open, and a click on Download. Never with Do Not Track or Global Privacy Control on | The page, the name of the site you came from, visit or Download, and the country Cloudflare works out, added into counts per day. No cookies, no ID, no IP |
 
 Pings and A2S queries go to the game servers in your list and to Valve's relays, through the phone (through home in No phone mode). Links like Leetify or csstats.gg open in your browser; the app itself doesn't contact them.
@@ -28,7 +28,7 @@ DNS: names like `ipwho.is` are looked up by Windows' normal DNS, which is your h
 
 - **Who keeps them:** the author of this project (Sepd0x on GitHub). Contact: [GitHub issues](https://github.com/Sepd0x/cs2-ip-changer/issues) (don't paste your install ID there).
 - **What for:** finding and fixing bugs and making the app better. Never sold, shared or used for ads.
-- **Legal basis:** you accept the notice at the first start (Quit closes the app and sends nothing).
+- **Legal basis:** the author's legitimate interest in finding and fixing bugs (GDPR art. 6(1)(f)). You can object at any time: Turn off at the first start, or Settings > Send usage stats. Off, nothing is sent and nothing is counted.
 - **Where:** Cloudflare (Workers and D1) processes and stores them for the project.
 - **How long:** rows with an install ID are deleted after 12 months. Counts added up for everyone with no ID (the click map, the setup report, the website counter) stay.
 - **Your rights:** Settings > Delete my stats deletes everything kept under your ID at once. For anything else (what is kept, a correction), open an issue. You can also complain to your data protection authority (in Portugal, the CNPD).

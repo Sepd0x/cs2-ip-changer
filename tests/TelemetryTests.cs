@@ -96,7 +96,7 @@ static class TelemetryTests
         check("Telemetria D6 (revisão): uma banda que muda manda outra vez", Telemetry.ExtrasDue("2026-11-04", sigOld, "2026-11-04",
             Telemetry.ExtrasSig("a".PadRight(32, '0'), new Dictionary<string, int> { ["servers"] = 21, ["accounts"] = 2 }, new[] { "fra", "mad" }, new[] { "Mode" }, "1", 2, null)), "");
         var forgetSrc = src[src.IndexOf("public static async Task<bool> Forget()", StringComparison.Ordinal)..];
-        forgetSrc = forgetSrc[..forgetSrc.IndexOf("return true;", StringComparison.Ordinal)];
+        forgetSrc = forgetSrc[..forgetSrc.IndexOf("public static void Click(", StringComparison.Ordinal)];
         check("Telemetria D6 (revisão): Delete my stats também esquece os extras e a ligação do ID antigo",
             forgetSrc.Contains("_st.ExtrasDay = null") && forgetSrc.Contains("_st.ExtrasSig = null") && forgetSrc.Contains("_st.BestLink = null"), "");
 
