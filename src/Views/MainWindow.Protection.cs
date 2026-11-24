@@ -117,7 +117,22 @@ public partial class MainWindow
     // ------------------------------------------------------------ Turn on, turn off (Guard.OnAtStart has the rules)
 
     // A command (4 nov.): the top bar says what it is doing while it connects the phone, and Cancel stops the wait for tethering
-    async void TurnOn_Click(object sender, RoutedEventArgs e) => await RunCommand(Loc.T("Turn on protection"), Loc.T("turning on…"), () => TurnProtectionOn(ask: true));
+    async void TurnOn_Click(object sender, RoutedEventArgs e)
+    {
+        if (!PhoneKnown) { await RunPhoneSetup(); return; }   // "Set up the phone" (TurnOnLook): nothing is blocked before a phone was checked
+        await RunCommand(Loc.T("Turn on protection"), Loc.T("turning on…"), () => TurnProtectionOn(ask: true));
+    }
+
+    /// <summary>The XAML's tooltip of Turn on protection, kept for when a phone was checked.</summary>
+    public const string TurnOnTip = "The kill switch, the routes and the CS2 lock: servers only see the phone's IP, and if the phone drops they are blocked instead of seeing your home IP. It stays on until you turn it off.";
+
+    /// <summary>
+    /// Connection's top button with protection off (24 Nov): Turn on protection, the page's main button, once a phone was checked on
+    /// this PC; before that "Set up the phone", grey, which only opens Phone setup (Phone setup's own button is the main one then).
+    /// </summary>
+    public static (string Text, string Style, string Tip) TurnOnLook(bool phoneKnown) => phoneKnown
+        ? ("Turn on protection", "Primary", TurnOnTip)
+        : (Texts.SetUpPhone, "Btn", Texts.SetUpPhoneTip);
 
     /// <summary>
     /// Protection on: the kill switch, the routes and the CS2 lock (and Whole PC, by the mode). With no phone, your servers and CS2
@@ -197,6 +212,16 @@ public partial class MainWindow
     {
         var canOn = !_protOn && !_s.NoPhone;
         TurnOnBtn.Visibility = canOn ? Visibility.Visible : Visibility.Collapsed;
+        // 24 Nov: with no phone ever checked here the button only opens Phone setup (11 of the 46 without a phone pressed Turn on
+        // protection, which blocked their servers and opened Phone setup)
+        var (text, style, tip) = TurnOnLook(PhoneKnown);
+        if (!Equals(TurnOnBtn.Tag, text))
+        {
+            TurnOnBtn.Tag = text;
+            TurnOnBtn.Content = Loc.T(text);
+            TurnOnBtn.Style = (Style)FindResource(style);
+            TurnOnBtn.ToolTip = Loc.T(tip);
+        }
         TurnOffBtn.Visibility = _protOn && !_s.NoPhone ? Visibility.Visible : Visibility.Collapsed;
         LeakBtn.Visibility = _protOn && !_s.NoPhone ? Visibility.Visible : Visibility.Collapsed;
         UpdateRejoinBtn();
@@ -688,6 +713,11 @@ public partial class MainWindow
         finally { _uiLock = false; }
     }
 
+    /// <summary>The question before a Wi-Fi network is taken as the phone's hotspot (the list under Phone, and Phone setup since 24 Nov).</summary>
+    public static string HotspotAskText(string ssid) =>
+        Loc.F("The PC's Wi-Fi is connected to \"{0}\". Confirm this is the phone's network (hotspot).", ssid) + "\n\n" +
+        Loc.T("The app remembers this name: if the PC's Wi-Fi changes to another network, like the home router, servers and CS2 get blocked while protection is on.");
+
     async void EgressCombo_Changed(object sender, SelectionChangedEventArgs e)
     {
         if (_uiLock || EgressCombo.SelectedItem is not ComboBoxItem it) return;
@@ -702,10 +732,7 @@ public partial class MainWindow
                 FillEgressCombo(_last.Adapters);
                 return;
             }
-            if (!await Ask(Loc.T("Phone hotspot"),
-                    Loc.F("The PC's Wi-Fi is connected to \"{0}\". Confirm this is the phone's network (hotspot).", a.Ssid) + "\n\n" +
-                    Loc.T("The app remembers this name: if the PC's Wi-Fi changes to another network, like the home router, servers and CS2 get blocked while protection is on."),
-                    Loc.T("It's the phone")))
+            if (!await Ask(Loc.T("Phone hotspot"), HotspotAskText(a.Ssid), Loc.T("It's the phone")))
             {
                 FillEgressCombo(_last.Adapters);
                 return;

@@ -215,7 +215,10 @@ public partial class MainWindow : Window
             _ = CheckForUpdates();
             _ = ShowAutostart();
             ShowData();
-            StartTourWhenFree();   // the first-run tour (10 Nov), once, before any phone
+            StartTourWhenFree();   // the first start's two doors (24 Nov; the tour before), once, before any phone
+            // 24 Nov: no phone ever checked here, the window opens on Regions (what most people use the app for). After the doors'
+            // wait started, so the Regions note waits for them (ShowRegionsPitch)
+            if (StartOnRegions(_s.PhoneSeen, _s.StartDoor, _demo)) NavRegions.IsChecked = true;
         }
         SizeChanged += (_, _) => PlaceTour();
         _secondTimer.Start();

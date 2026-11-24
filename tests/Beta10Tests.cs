@@ -144,7 +144,9 @@ static class Beta10Tests
         var drv = PhoneSetup.Steps(new PhoneSetupState { AdbTool = true, AdbState = "none", Usb = new PhoneUsbState(true, 28, "Samsung") }, samsung: true);
         check("Setup: driver falhado diz o código e o driver da Samsung", PhoneSetup.Current(drv) is { Step: PhoneStep.UsbDriverError } d1 && d1.Detail.Contains("code 28") && d1.Detail.Contains("Samsung USB Driver"), "");
         check("Setup: os botões da app são só passos que ela sabe fazer",
-            new[] { nada, cabo, dep, aut, teth, wifi, pc }.SelectMany(x => x).Where(i => i.Action != null).All(i => i.Step is PhoneStep.NoAdbTool or PhoneStep.AdbFailed or PhoneStep.TetherOff or PhoneStep.WifiOn or PhoneStep.PcOnPhone), "");
+            // 24 nov.: o cabo ganhou Use the hotspot (abre a lista de Wi-Fi), um botão cinzento, a segunda via (Usabilidade24NovTests)
+            new[] { nada, cabo, dep, aut, teth, wifi, pc }.SelectMany(x => x).Where(i => i.Action != null).All(i => i.Step is PhoneStep.NoAdbTool or PhoneStep.AdbFailed or PhoneStep.TetherOff or PhoneStep.WifiOn or PhoneStep.PcOnPhone
+                || i.Step == PhoneStep.NoUsb && i.Quiet && i.Action == SRT.Texts.HotspotUse), "");
         check("Setup: o painel tem um botão por passo e lê de 2 em 2 s",
             xaml.Contains("x:Name=\"SetupPane\"") && xaml.Contains("Click=\"SetupAction_Click\"") && File.ReadAllText(Path.Combine(repo, "src", "Views", "MainWindow.Phone.cs")).Contains("TimeSpan.FromSeconds(2)"), "");
     }

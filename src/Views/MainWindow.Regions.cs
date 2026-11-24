@@ -458,6 +458,15 @@ public partial class MainWindow
         if (PageRegions.IsVisible && PingVia?.LocalIp != null) _ = PingRegions(quiet: true);
     }
 
+    /// <summary>
+    /// The rule's line while it is on (<paramref name="game"/> null = CS2). 24 Nov: it says the rule stays when the app is closed and
+    /// how to lift it (21 of 46 one-day users closed the app with regions blocked, and nothing told them it stays).
+    /// </summary>
+    public static string RuleOnText(string game, bool fewLeft) =>
+        (game == null ? Loc.T("Block is on. Only CS2 is affected.") : Loc.F("Block is on. Only {0} is affected.", game))
+        + (fewLeft ? Loc.T(" Few regions left: expect longer queues.") : "")
+        + " " + Loc.T(Texts.RegionsStaysOn);
+
     void ShowRegionsStatus()
     {
         UpdateRegionsCheck();
@@ -505,8 +514,7 @@ public partial class MainWindow
         RegionsRule.Text = state.Error
             ?? (off == 0 ? Loc.T("No Firewall rule. Turn regions off below or use a shortcut.")
             : fwOff != null ? Loc.F("{0}. The rule is in place, but Windows doesn't enforce it until the Firewall is back on.", fwOff)
-            : state.RuleOn ? (state == _cs2Regions ? Loc.T("Block is on. Only CS2 is affected.") : Loc.F("Block is on. Only {0} is affected.", state.Game.Name))
-                + (on < 3 ? Loc.T(" Few regions left: expect longer queues.") : "")
+            : state.RuleOn ? RuleOnText(state == _cs2Regions ? null : state.Game.Name, on < 3)
             : Loc.T("Putting the Firewall rule in place…"));
 
         var src = Loc.F("Region list updated {0}", Fmt.Ago(_sdr.FetchedAt));

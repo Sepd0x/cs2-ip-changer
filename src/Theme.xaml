@@ -247,6 +247,37 @@
     </Style>
     <Style TargetType="Button" BasedOn="{StaticResource Btn}"/>
 
+    <!-- 24 Nov: a door of the first start (StartPane): a big square tile, Surface2 with the strong line, the accent line under the mouse
+         or the keyboard focus. Its content is a drawing of the page it opens, a title, one line and the action in Accent -->
+    <Style x:Key="Door" TargetType="Button">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Foreground" Value="{StaticResource Text}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="b" Background="{StaticResource Surface2}" BorderBrush="{StaticResource LineStrong}" BorderThickness="1" Padding="16,14,16,16">
+                        <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                            <Setter TargetName="b" Property="Background" Value="{StaticResource Surface3}"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="b" Property="BorderBrush" Value="{StaticResource Accent}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="b" Property="Background" Value="{StaticResource Surface}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource Btn}">
         <Setter Property="Foreground" Value="{StaticResource Accent}"/>
         <Setter Property="Background" Value="{StaticResource AccentSoft}"/>

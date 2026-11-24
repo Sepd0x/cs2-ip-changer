@@ -1,7 +1,7 @@
 {
  "note": "Made by tools/shots.mjs. Do not edit: tests/DesignSyncTests.cs checks it against the app and the files.",
  "app": "0.1.0-beta.14",
- "ui": "e1e82f4cfcd0d5f9473875a25bd0df7481fb18a552e99919ed9197aa9eb81be0",
+ "ui": "937e84b6e5578f50440721845eb4ef959bacf36679b338807c06ab1d1c0bc982",
  "uiFiles": [
   "src/App.xaml",
   "src/MainWindow.xaml",
@@ -9,7 +9,7 @@
   "src/Views/NoticeWindow.xaml",
   "src/Views/SteamLoginWindow.xaml"
  ],
- "made": "2026-11-19",
+ "made": "2026-11-24",
  "scale": 2,
  "base": [
   1240,
@@ -34,7 +34,7 @@
   },
   {
    "file": "docs/screenshots/regions.png",
-   "sha256": "be8c15c0ea6e148316264a84e5b85d1d728c37176b16d15f9fa01eb205f59b02",
+   "sha256": "ac004e4f8397b5cbc4f0cd17e0b98b50424ebe06694036c6853ccb55c147ef11",
    "size": [
     2480,
     1600
@@ -210,7 +210,7 @@
   },
   {
    "file": "docs/assets/shots/regions.png",
-   "sha256": "feeb0c929c55ef62bc102e026e8d1e43a09a1f848d7baa2e27680aadd0b3291f",
+   "sha256": "492df2448d617142a6f0fd09fe1a9037435c4ee776bb39ad6e29bf5cc35e969a",
    "size": [
     2572,
     1692
@@ -218,7 +218,7 @@
   },
   {
    "file": "docs/assets/shots/regions.webp",
-   "sha256": "1bbe217d690aef1ece7e63be2e74c70569f64f0834887cd67e606a2592001d62"
+   "sha256": "a34016f4d50a964c6977cee5cd57aa95d364906b7475e7d1f16591dc6108fc20"
   },
   {
    "file": "docs/assets/shots/servers.png",
@@ -250,7 +250,7 @@
   },
   {
    "file": "worker/stats/dashboard/ui/regions.png",
-   "sha256": "55e3ab64c8358ace873f43bd86d5ca1baaa070abab81055e47d9cd1f7ff37d84",
+   "sha256": "4c4bdb47855f12207b43c1db5f6c28c9e9dcda9e9c24bb65f89b19f988c2145d",
    "size": [
     1240,
     935
@@ -306,7 +306,7 @@
   },
   {
    "file": "docs/assets/social-preview.png",
-   "sha256": "2a7ef99cdc57218d56f43eb482c479dc726379bd49ba03f5b5bb66a8f7a9a46e",
+   "sha256": "3ed66034565b2021458acad48ea5979428fec1ec6fe8133e2847d417acc04519",
    "size": [
     1280,
     640

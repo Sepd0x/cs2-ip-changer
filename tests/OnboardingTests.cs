@@ -68,8 +68,9 @@ static class OnboardingTests
         var early = PhoneSetup.LiveDetail(noUsb, 6);
         check("Onboarding cabo: mostra o que está a ver, ao vivo", early.Contains(Texts.CableLive(6)) && !early.Contains("Still nothing"), early);
         var late = PhoneSetup.LiveDetail(noUsb, Texts.CableHelpAfterSeconds);
-        check("Onboarding cabo: depois de 20 s, o que tentar e o hotspot sem cabo", late.Contains("another cable") && late.Contains("Wi-Fi hotspot")
-            && late.Contains("How the PC connects to the phone"), late);
+        // 24 nov.: o hotspot passou para o início da linha (Usabilidade24NovTests); aos 20 s fica o que tentar com o cabo
+        check("Onboarding cabo: depois de 20 s, o que tentar, e o hotspot sem cabo desde o início", late.Contains("another cable") && late.Contains("Wi-Fi hotspot")
+            && late.Contains(Texts.CableStillNothing), late);
         var hot = PhoneSetup.Steps(new PhoneSetupState { AdbTool = true, AdbState = "none", Hotspot = true }).First(i => i.Step == PhoneStep.NoUsb);
         check("Onboarding cabo: com o hotspot nada muda (o cabo é só para o Change IP)", PhoneSetup.LiveDetail(hot, 60) == hot.Detail, hot.Detail);
         var allow = PhoneSetup.Steps(new PhoneSetupState { AdbTool = true, AdbState = "unauthorized", Usb = new(true, null, "Google") }).First(i => i.Step == PhoneStep.Unauthorized);

@@ -8,8 +8,17 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Regions: choose CS2, Dota 2 or Deadlock. Each game keeps its own regions and presets.
 - Regions: save and name your current selection, reuse it later, or choose a preset to apply when CS2 starts.
 - Website: clouds in the night sky of the 3D scenes, lit from below by the town and drifting slowly. They are drawn by the sky itself, so a phone draws the same as before.
+- First start: the app asks what you want to do first, "Pick my regions" or "Play through my phone". "Show me around" still opens the tour.
+- Phone setup: no USB data cable? "Use the hotspot" is there from the start. It opens the Wi-Fi list, and when the PC joins a new network it asks whether that is the phone's hotspot. A PC without Wi-Fi is told to use the cable.
+
+### Changed
+- Until a phone has been set up on this PC, the app opens on Regions, and the top button on Connection says "Set up the phone" and only opens Phone setup (so does Turn on protection in the notification area menu). Before, it said "Turn on protection" and blocked your servers when there was no phone yet.
+- Phone setup: when everything is green and protection is off, it ends with "Turn on protection" next to "Close".
+- Regions: the line under the count says the block stays on after you close the app, and that "Allow all (block off)" removes it.
 
 ### Fixed
+- The last stop of the tour in Portuguese, Spanish and Russian: "5 of 5" was pushed out of the box and the main button was cut off. The count is now in the title and the buttons move to a second line when they don't fit.
+- Phone setup on the phone's hotspot no longer stays at "3 of 6 done": the USB debugging steps are only needed for Change IP, and it says so.
 - The window stays responsive while collecting network details for a bug report or loading a region list. Phone setup pauses its periodic checks while the window is hidden.
 - Regions: Refresh keeps the warning visible when Valve is offline and a saved list is used. Restore network also removes region rules under the older name.
 

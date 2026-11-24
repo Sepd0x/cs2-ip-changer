@@ -243,7 +243,18 @@ To move or add an option: change it here and in `MainWindow.xaml` in the same st
   with a hole 6 px larger than the real control it points at, a 1 px `Accent` ring round the hole, and a `DialogGroup` box
   360 px wide, 14 px from the control (right, else below, else above, else left) and at least 12 px inside the window.
   4 to 6 stops; the buttons are Skip tour, Back and Next, the last stop's are Later and Open Phone setup. Nothing in it
-  is clickable but its box.
+  is clickable but its box. The box stays 360 px in every language: "2 of 5" sits in its title (`Faint`, Cascadia Mono), and
+  the buttons go to a second line when a language doesn't fit them (24 Nov 2026: ru, es and pt-BR cut them).
+- **The first start's two doors** (`StartPane`, `src/Views/MainWindow.Start.cs`, 24 Nov 2026): where the tour opened by itself,
+  a `DialogGroup` box 640 px wide over the same `#B0000000` shade, titled with the question. Two equal tiles in the `Door` style
+  (`Surface2`, 1 px `LineStrong`, `Accent` border under the mouse or the keyboard, square), 12 px apart: a 112 px drawing of
+  the page the door opens, made of the app's own parts (the Regions rows with real check boxes and green or red pings; the
+  phone as Phone setup draws it with the Status box's home IP and the carrier's IP), the title 16 px SemiBold, one line in
+  `Sub`, and the action in `Accent` with a chevron at the bottom. Show me around and Later on the right under them. One door
+  = one page; nothing else is decided there.
+- **The page the window opens on:** Connection, but Regions while no phone was ever checked on this PC (unless the phone door
+  was picked). Until then Connection's top button is "Set up the phone" in grey, and Phone setup is the page's main button.
+- **A second way in a Phone setup row** (Use the hotspot on the cable row) is a grey `Btn`; the row's main action stays `Primary`.
 - **A note inside a group** (the Regions note): `Surface2` with a 2 px left border, `Warn` for a warning, `Accent` for what
   the app offers; buttons on its right. One note per group.
 - **Drawn phone screens** (Phone setup's USB debugging, `src/Views/PhoneGuide.cs`): square like the rest of the app,

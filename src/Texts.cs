@@ -56,9 +56,8 @@ public static class Texts
     /// <summary>After this long with nothing on USB, the cable step adds what to try next.</summary>
     public const int CableHelpAfterSeconds = 20;
 
-    public const string CableStillNothing =
-        "Still nothing? Unlock the phone. Try another cable, or another USB port (one on the back of the PC).\n"
-        + "No data cable at hand? Turn on the phone's Wi-Fi hotspot, connect the PC to it and pick it in Connection > Phone > How the PC connects to the phone. Protection works over the hotspot; Change IP needs the cable later.";
+    /// <summary>24 Nov: the hotspot is offered from the first second now (the cable row's second line), so this is only about the cable.</summary>
+    public const string CableStillNothing = "Still nothing? Unlock the phone. Try another cable, or another USB port (one on the back of the PC).";
 
     // ------------------------------------------------------------ Phone setup: USB debugging, with the steps drawn per brand
 
@@ -138,6 +137,44 @@ public static class Texts
     public const string RegionsPitch = "Regions works without a phone. Plug your phone in and servers see your carrier's IP instead of your home IP, and Change IP gets you a new one in seconds.";
     public const string RegionsPitchSetup = "Set up the phone";
     public const string RegionsPitchHide = "Hide";
+
+    // ------------------------------------------------------------ 24 Nov: usability study (publish/plano-1-0-0/1-app-usabilidade.md)
+
+    /// <summary>Regions: the rule's line says it stays when the app is closed, and how to lift it.</summary>
+    public const string RegionsStaysOn = "It stays on after you close the app: Allow all (block off) removes it.";
+
+    /// <summary>Connection's top button while no phone was ever checked on this PC: it only opens Phone setup, and blocks nothing.</summary>
+    public const string SetUpPhone = "Set up the phone";
+    public const string SetUpPhoneTip = "No phone has been checked on this PC yet. Phone setup walks you through it, then Turn on protection takes its place.";
+
+    /// <summary>The first start's two doors (replace the tour opening by itself; the tour stays behind Show me around).</summary>
+    public const string DoorsTitle = "What do you want to do first?";
+    public const string DoorRegions = "Pick my regions";
+    public const string DoorRegionsText = "Block the far matchmaking regions. No phone needed, and it keeps working with the app closed.";
+    public const string DoorRegionsGo = "Open Regions";
+    public const string DoorPhone = "Play through my phone";
+    public const string DoorPhoneText = "Servers see your carrier's IP, not your home IP, and Change IP gets a new one. A USB cable or the phone's hotspot.";
+    public const string DoorTour = "Show me around";
+
+    /// <summary>Phone setup's cable step offers the phone's hotspot from the first second (2 of the 3 who stopped there on purpose used it).</summary>
+    public const string CableHotspot = "No data cable? Use the phone's Wi-Fi hotspot instead. To change IP you need the USB cable.";
+    public const string CableNoWifi = "This PC has no Wi-Fi, so the phone's hotspot can't be used here: use the cable.";
+    public const string HotspotUse = "Use the hotspot";
+    public const string HotspotTodo = "On the phone, turn on the Wi-Fi hotspot. On the PC, connect to it in the Wi-Fi list: it shows here by itself.";
+    public const string HotspotAlready = "Already on the phone's hotspot? Pick it in Connection > Phone > How the PC connects to the phone.";
+    public const string HotspotWifiList = "Wi-Fi list";
+    public const string HotspotItsPhone = "It's the phone";
+    public const string HotspotCableWaits = "You picked the hotspot: the cable is only needed for Change IP. Plugging it in also works.";
+    public const string HotspotOnlyChangeIp = "Only for Change IP, with the USB cable.";
+    public const string HotspotMoved = "The PC's Wi-Fi moved to another network meanwhile. Check the name in the row and try again.";
+    public const string HotspotReady = "The phone's hotspot is ready. Change IP needs the USB cable and USB debugging.";
+
+    /// <summary>The network the PC's Wi-Fi joined after Use the hotspot, to confirm (the app can't tell a phone's hotspot from a router).</summary>
+    public static string HotspotSeen(string ssid) => Loc.F("The PC's Wi-Fi is now on \"{0}\". Is that the phone's hotspot?", ssid);
+
+    /// <summary>The usage counters of the doors (tour_*: the Worker keeps them per install, no deploy needed).</summary>
+    public enum Door { Regions, Phone, Tour, Later }
+    public static string DoorCount(Door d) => "tour_door_" + d.ToString().ToLowerInvariant();
 
     // ------------------------------------------------------------ First-run tour (Settings > App > Show the tour again)
 

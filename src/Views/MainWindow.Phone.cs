@@ -306,7 +306,8 @@ public partial class MainWindow
         var p = StartProblems(steam, cs2);
         if (p.Count == 0) { Log.Ok("First start: Steam and CS2 found."); return; }
         Log.Warn("First start: " + string.Join(" ", p.Select(Loc.En)));
-        await Ask(Loc.T("Before you start"), string.Join("\n\n", p) + "\n\n" + Loc.T("The phone comes next: Phone setup on the Connection page walks you through it."), Loc.T("OK"), null);
+        // 24 Nov: no "the phone comes next" any more: the two doors come next, and most people want Regions
+        await Ask(Loc.T("Before you start"), string.Join("\n\n", p), Loc.T("OK"), null);
     }
 
     async void AdbInstall_Click(object sender, RoutedEventArgs e)
@@ -469,6 +470,7 @@ public partial class MainWindow
         if (_demo) { DemoPhoneSetup(); return; }
         if (wasOpen) return;
         Log.Info("Phone setup opened.");
+        _hotspotAsked = false;   // Use the hotspot is asked again in each Phone setup
         _setupFirstTodo = _setupLeft = _setupStepKey = null;
         if (_setupTimer == null)
         {
@@ -528,15 +530,43 @@ public partial class MainWindow
             _setupRows.Add(new SetupStepRow(i, now, _setupBusy == i.Step ? _setupBusyText : null, _setupBusy == null,
                 i == now ? PhoneSetup.LiveDetail(i, seconds) : null, _setupBusy == i.Step ? _setupPercent : null));
         ShowGuide(now?.Step == PhoneStep.NoUsbDebugging && _setupBusy == null ? st : null);
-        var ok = steps.Count(i => i.State == PhoneSetup.StepState.Ok);
-        SetupSummary.Text = now == null && steps.All(i => i.State == PhoneSetup.StepState.Ok)
-            ? SetupReadyText(_protOn)
-            : now == null ? Loc.F("{0} of {1} done.", ok, steps.Count) : Loc.F("{0} of {1} done. Next: {2}.", ok, steps.Count, now.Title);
+        SetupSummary.Text = SetupSummaryText(steps, now, st.Hotspot && !st.Iphone, _protOn);
         SetupFoot.Text = _s.NoPhone ? Loc.T("You picked No phone under What goes through the phone, so the app isn't using the phone right now.")
             : now == null ? Loc.T("For less lag in game:") + " " + NetReport.Tips(_last?.Egress?.IsWifi == true)
             : Loc.T("Updates by itself. Do the red step and it turns green.");
-        SetupCloseBtn.Content = Loc.T(now == null ? "Done" : "Close");
-        SetupCloseBtn.Style = (Style)FindResource(now == null ? "Primary" : "Btn");
+        var (closeText, closePrimary, turnOn) = SetupEnd(now == null, _protOn, _s.NoPhone);
+        SetupCloseBtn.Content = Loc.T(closeText);
+        SetupCloseBtn.Style = (Style)FindResource(closePrimary ? "Primary" : "Btn");
+        SetupTurnOnBtn.Visibility = turnOn ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>
+    /// How Phone setup ends (24 Nov): nothing left to do with protection off gives Close and Turn on protection (the step that was
+    /// missing after Done); with protection on, or in No phone, Done as before; a step still to do, Close.
+    /// </summary>
+    public static (string Close, bool ClosePrimary, bool TurnOn) SetupEnd(bool ready, bool protOn, bool noPhone) =>
+        !ready ? ("Close", false, false)
+        : !protOn && !noPhone ? ("Close", false, true)
+        : ("Done", true, false);
+
+    /// <summary>Phone setup's Turn on protection: closes the panel and turns it on as the Connection button does (with the CS2 question).</summary>
+    async void SetupTurnOn_Click(object sender, RoutedEventArgs e)
+    {
+        SetupClose_Click(sender, e);
+        if (_protOn || _s.NoPhone) return;   // read again: the 2 s refresh may have changed it
+        await RunCommand(Loc.T("Turn on protection"), Loc.T("turning on…"), () => TurnProtectionOn(ask: true));
+    }
+
+    /// <summary>
+    /// The line at the top of Phone setup: what is next, or that the phone is ready. 24 Nov: on the hotspot the ADB rows only wait for
+    /// Change IP, so nothing left to do there is ready too (it said "3 of 6 done" for good before).
+    /// </summary>
+    public static string SetupSummaryText(IReadOnlyList<PhoneSetup.SetupItem> steps, PhoneSetup.SetupItem now, bool hotspot, bool protOn)
+    {
+        var ok = steps.Count(i => i.State == PhoneSetup.StepState.Ok);
+        if (now != null) return Loc.F("{0} of {1} done. Next: {2}.", ok, steps.Count, now.Title);
+        if (steps.All(i => i.State == PhoneSetup.StepState.Ok)) return SetupReadyText(protOn);
+        return hotspot ? Loc.T(Texts.HotspotReady) + (protOn ? "" : " " + Loc.T("Turn on protection so servers see its IP instead of your home IP.")) : Loc.F("{0} of {1} done.", ok, steps.Count);
     }
 
     /// <summary>Phone setup with every step done. With protection off servers still see the home IP, so it says what is left.</summary>
@@ -570,9 +600,12 @@ public partial class MainWindow
     /// <summary>The button of a step: the app does it, the row says what is happening, then the steps are read again.</summary>
     async void SetupAction_Click(object sender, RoutedEventArgs e)
     {
-        if ((sender as FrameworkElement)?.DataContext is not SetupStepRow row || _setupBusy != null) return;
+        if ((sender as FrameworkElement)?.DataContext is not SetupStepRow row) return;
         if (_demo) { Toast("Demo: " + row.Action + ".", true); return; }   // demo only: stays in English
         var step = row.Item.Step;
+        // Use the hotspot (24 Nov) needs nothing from the phone tool, so it works even while that downloads (its row is busy then)
+        if (step == PhoneStep.NoUsb && row.Item.Quiet) { StartHotspot(); return; }
+        if (_setupBusy != null) return;
         // Install (on mobile data) and Try again: the download in the row, no second question (pressing it is the yes)
         if (step == PhoneStep.NoAdbTool) { await SetupInstallAdb(auto: false); return; }
         Telemetry.Click("Setup_" + PhoneSetup.Key(step));
@@ -597,6 +630,20 @@ public partial class MainWindow
                 case PhoneStep.AdbFailed:
                     Busy(Loc.T("Starting the phone tool again…"));
                     _adb = Adb.Find();
+                    break;
+                // Only while the hotspot is still being joined: a cable plugged in meanwhile gives the row back to USB tethering
+                case PhoneStep.TetherOff when _setupState != null && PhoneSetup.HotspotPending(_setupState):
+                    if (_setupState.WifiJoined is not { } ssid) { OpenWifiList(); break; }
+                    // Read again now (the last report can be 5 s old): the network must still be the one the row named
+                    var wifi = HotspotJoined(await Task.Run(Net.Scan), _hotspotFrom, _hotspotFromGateway);
+                    if (wifi?.Ssid != ssid) { why = Loc.T(Texts.HotspotMoved); break; }
+                    // The same question as Connection > Phone > How the PC connects to the phone (the app can't tell a phone from a router)
+                    if (!await Ask(Loc.T("Phone hotspot"), HotspotAskText(ssid), Loc.T("It's the phone"))) break;
+                    Busy(Loc.T("Using the phone's hotspot…"));
+                    Telemetry.Count("phone_hotspot_ok");
+                    await UseOffer(new ConnectionOffer(wifi.Id, ssid, null, true));
+                    _hotspotAsked = false;
+                    await Task.Delay(1500);
                     break;
                 case PhoneStep.TetherOff when _setupState?.Offer is { CanUse: true } offer:
                     Busy(Loc.T(offer.Ssid != null ? "Using the phone's hotspot…" : "Using the phone over USB…"));
@@ -663,7 +710,58 @@ public partial class MainWindow
             Offer = iphone ? null : ConnectionOffer.Find(adapters, phoneIps, _s.EgressAdapterId, !string.IsNullOrEmpty(_s.EgressSsid), phone),
             AdbFailed = _adb == null ? _adbFailed : null,
             AdbWaits = _adb == null && MobileDataNote().Length > 0,
+            PcWifi = adapters.Any(a => a.IsWifi),
+            HotspotAsked = _hotspotAsked,
+            WifiJoined = _hotspotAsked ? HotspotJoined(adapters, _hotspotFrom, _hotspotFromGateway)?.Ssid : null,
+            WifiNameHidden = _hotspotAsked && HotspotNameHidden(adapters),
         };
+    }
+
+    // ------------------------------------------------------------ 24 Nov: the phone's hotspot from Phone setup's cable step
+
+    bool _hotspotAsked;
+    string _hotspotFrom, _hotspotFromGateway;
+
+    /// <summary>
+    /// Use the hotspot: remember the Wi-Fi the PC is on now (its name, and its gateway for when Windows hides the name), so only a
+    /// network it joins after this is offered; then open Windows' Wi-Fi list.
+    /// </summary>
+    void StartHotspot()
+    {
+        var now = WifiNow(_last?.Adapters ?? new()).FirstOrDefault();
+        _hotspotAsked = true;
+        _hotspotFrom = now?.Ssid;
+        _hotspotFromGateway = now?.Gateway;
+        Telemetry.Count("phone_hotspot_ask");
+        Log.Info("Phone setup: Use the hotspot.");
+        OpenWifiList();
+        if (_setupState != null) ShowSetup(_setupState with { HotspotAsked = true });
+    }
+
+    /// <summary>The PC's connected Wi-Fi networks (up, with an address).</summary>
+    static IEnumerable<Adapter> WifiNow(IEnumerable<Adapter> adapters) => adapters.Where(a => a.IsWifi && a.Up && a.LocalIp != null);
+
+    /// <summary>
+    /// The Wi-Fi network the PC joined after Use the hotspot (<paramref name="from"/> and <paramref name="fromGateway"/>: the one it
+    /// was on then, null = none): another name and another gateway, so the home network a laptop was already on is never offered as
+    /// the phone, not even when its name only shows later (Location turned on meanwhile).
+    /// </summary>
+    public static Adapter HotspotJoined(IEnumerable<Adapter> adapters, string from, string fromGateway = null) =>
+        WifiNow(adapters).FirstOrDefault(a => a.Ssid != null && !string.Equals(a.Ssid, from, StringComparison.Ordinal)
+            && (fromGateway == null || !string.Equals(a.Gateway, fromGateway, StringComparison.OrdinalIgnoreCase)));
+
+    /// <summary>The PC is on a Wi-Fi network whose name Windows hides (Location off): it can't be confirmed as the phone.</summary>
+    public static bool HotspotNameHidden(IEnumerable<Adapter> adapters) => WifiNow(adapters).Any(a => a.Ssid == null && a.SsidUnknown);
+
+    /// <summary>Windows' list of Wi-Fi networks (its Settings page if the list doesn't open from an app that runs as admin).</summary>
+    void OpenWifiList()
+    {
+        foreach (var uri in new[] { "ms-availablenetworks:", "ms-settings:network-wifi" })
+        {
+            try { Process.Start(new ProcessStartInfo(uri) { UseShellExecute = true }); return; }
+            catch (Exception ex) { Log.Warn($"Couldn't open {uri}: {ex.Message}"); }
+        }
+        Toast(Loc.T("Open the Wi-Fi list from the network icon on the taskbar and connect to the phone's hotspot."), false);
     }
 
     List<Adb.PhoneAddress> _phoneAddrs;
@@ -988,6 +1086,9 @@ public sealed class SetupStepRow
     public Visibility DetailVisibility => Detail == null ? Visibility.Collapsed : Visibility.Visible;
     public string Action => Item.Action;
     public bool HasAction => Item.Action != null && Item.State == PhoneSetup.StepState.Todo && !_later;
+    public bool HasMainAction => HasAction && !Item.Quiet;
+    /// <summary>A second way (Use the hotspot) shows even while an earlier step is still to do (the phone tool downloading): it doesn't need it.</summary>
+    public bool HasQuietAction => Item.Action != null && Item.Quiet && Item.State == PhoneSetup.StepState.Todo;
     public Brush Brush => _later ? Ui.Faint : Item.State switch { PhoneSetup.StepState.Ok => Ui.Good, PhoneSetup.StepState.Todo => Busy != null ? Ui.Warn : Ui.Bad, _ => Ui.Faint };
     public Brush TitleBrush => _later || Item.State == PhoneSetup.StepState.Waiting ? Ui.Faint : Ui.Text;
     public Brush DetailBrush => Busy != null ? Ui.Warn : Current ? Ui.Text : Ui.Faint;
