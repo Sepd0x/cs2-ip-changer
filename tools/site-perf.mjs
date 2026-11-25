@@ -1,6 +1,7 @@
 // How heavy the site feels: the home and two guides on a phone (CPU 4x and 6x, 4G) and on a desktop, on the pixels of a real
 // Chrome. node tools/site-perf.mjs [--label before] [--runs 3] [--pages home,cs2-ip-ban,cs2-region-picker] [--profiles m4,m6,desktop]
-// Writes JSON to the folder given by --out (default: the temp folder) and prints one table.
+// Writes JSON to the folder given by --out (default: the temp folder) and prints one table. --stages also prints where the draw
+// calls of a frame go, pass by pass (the target they are drawn to and its size).
 // What it reads per run: first paint, largest paint, time until the 3D world says it is ready (worldready), long tasks (50 ms or
 // more) and the blocking time they add, JS and total bytes as gzip (what GitHub Pages sends), the frame time and the CPU time the
 // page spends in each requestAnimationFrame, the draw calls per frame, and the same again while scrolling.
@@ -77,12 +78,19 @@ const INIT = `(() => {
   const raf = window.requestAnimationFrame.bind(window);
   let lastT = -1;   // several callbacks share one frame (GSAP, Lenis, the world): one frame per timestamp
   window.requestAnimationFrame = (cb) => raf((t) => { const a = performance.now(); try { cb(t); } finally { if (P.on) { P.cb.push(performance.now() - a); if (t !== lastT) P.frames.push(t); } lastT = t; } });
+  // where each draw call goes (--stages): the target it is bound to (the screen, or the n-th framebuffer the page used) and the
+  // viewport's size tell the passes apart: the mirror's own render, the shadow map, the scene, each step of the bloom
+  const ids = new WeakMap(); let nFb = 0; P.st = {};
   for (const C of [window.WebGL2RenderingContext, window.WebGLRenderingContext]) {
     if (!C) continue;
     for (const n of ['drawElements', 'drawArrays', 'drawElementsInstanced', 'drawArraysInstanced', 'drawRangeElements']) {
       const o = C.prototype[n]; if (!o) continue;
-      C.prototype[n] = function () { if (P.on) P.draws++; return o.apply(this, arguments); };
+      C.prototype[n] = function () { if (P.on) { P.draws++; const k = (this.__pfT || 'screen') + ' ' + (this.__pfV || '?'); P.st[k] = (P.st[k] || 0) + 1; } return o.apply(this, arguments); };
     }
+    const bind = C.prototype.bindFramebuffer, view = C.prototype.viewport;
+    // 0x8D40 FRAMEBUFFER and 0x8CA9 DRAW_FRAMEBUFFER are what a draw writes to; READ_FRAMEBUFFER (a blit's source) is not
+    C.prototype.bindFramebuffer = function (t, fb) { if (t === 0x8D40 || t === 0x8CA9) { if (fb && !ids.has(fb)) ids.set(fb, ++nFb); this.__pfT = fb ? 'target ' + ids.get(fb) : 'screen'; } return bind.apply(this, arguments); };
+    C.prototype.viewport = function (x, y, w, h) { this.__pfV = w + 'x' + h; return view.apply(this, arguments); };
   }
   document.addEventListener('worldready', () => { if (!P.ready) P.ready = Math.round(performance.now()); }, true);
 })();`;
@@ -95,13 +103,13 @@ const stat = (a) => {
 const med = (a) => { const s = a.filter((x) => x != null).sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : null; };
 
 async function window_(page, ms, action) {
-  await page.evaluate(() => { const P = window.__perf; P.frames = []; P.cb = []; P.draws = 0; P.ltMark = P.lt.length; P.on = true; });
+  await page.evaluate(() => { const P = window.__perf; P.frames = []; P.cb = []; P.draws = 0; P.st = {}; P.ltMark = P.lt.length; P.on = true; });
   if (action) await action(); else await page.waitForTimeout(ms);
   return page.evaluate(() => {
     const P = window.__perf; P.on = false;
     const d = []; for (let i = 1; i < P.frames.length; i++) d.push(P.frames[i] - P.frames[i - 1]);
     const lt = P.lt.slice(P.ltMark);
-    return { dt: d, cb: P.cb, frames: P.frames.length, draws: P.draws, lt: lt.map((x) => x[1]) };
+    return { dt: d, cb: P.cb, frames: P.frames.length, draws: P.draws, st: P.st, lt: lt.map((x) => x[1]) };
   });
 }
 
@@ -146,7 +154,10 @@ async function one(pw, browser, origin, slug, prof, dev) {
   await ctx.close();
   const tbt = (a) => a.reduce((x, d) => x + Math.max(0, d - 50), 0);
   const ltAll = head.lt.map((x) => x[1]);
+  // draw calls per frame of each pass, the biggest first
+  const stages = (w) => Object.entries(w.st || {}).map(([k, n]) => [k, w.frames ? +(n / w.frames).toFixed(1) : 0]).sort((a, b) => b[1] - a[1]);
   return {
+    idleStages: stages(idle), scrollStages: stages(scroll),
     threadReady: Math.round(threadReady), idleThread: +idleThread.toFixed(2), scrollThread: +scrollThread.toFixed(2),
     loadMs, fcp: head.fcp, lcp: head.lcp, ready: head.ready, renderer: head.renderer,
     longTasks: ltAll.length, tbt: Math.round(tbt(ltAll)), longMax: Math.max(0, ...ltAll),
@@ -177,7 +188,9 @@ for (const pk of WANT) {
       idleFps: m((r) => r.idle.fps), idleFrameP95: m((r) => r.idle.frame.p95), idleCpuMean: m((r) => r.idle.cpu.mean), idleCpuP95: m((r) => r.idle.cpu.p95), idleDraws: m((r) => r.idle.drawsPerFrame),
       scrollFps: m((r) => r.scroll.fps), scrollFrameP95: m((r) => r.scroll.frame.p95), scrollCpuMean: m((r) => r.scroll.cpu.mean), scrollCpuP95: m((r) => r.scroll.cpu.p95), scrollDraws: m((r) => r.scroll.drawsPerFrame), scrollLongTasks: m((r) => r.scroll.lt), scrollTbt: m((r) => r.scroll.tbt),
     };
+    row.idleStages = rs[0].idleStages; row.scrollStages = rs[0].scrollStages;   // of the first run: the passes do not vary between runs
     out.results.push(row);
+    if (process.argv.includes('--stages')) for (const [k, n] of row.idleStages) console.log(`        ${String(n).padStart(6)} draws/frame  ${k}`);
     console.log(`${pk.padEnd(7)} ${slug.padEnd(20)} load ${loads.join('/')}%  FCP ${row.fcp}  LCP ${row.lcp}  ready ${row.ready}  TBT ${row.tbt}  longest ${row.longMax}  JS ${row.kb.js}K total ${row.kb.total}K CPU-to-ready ${row.threadReady}ms | CPU/frame idle ${row.idleThread}ms scroll ${row.scrollThread}ms | idle ${row.idleFps}fps p95 ${row.idleFrameP95}ms cpu ${row.idleCpuMean}/${row.idleCpuP95}ms draws ${row.idleDraws} | scroll ${row.scrollFps}fps p95 ${row.scrollFrameP95}ms cpu ${row.scrollCpuMean}/${row.scrollCpuP95}ms draws ${row.scrollDraws} lt ${row.scrollLongTasks}`);
   }
 }
