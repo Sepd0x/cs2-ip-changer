@@ -94,8 +94,10 @@ public static class Telemetry
 
     /// <summary>
     /// The notice at the first start (Accept or Turn off), since beta.11 (NoticeVersion 4): short, with every kind of stat named, and the
-    /// full list (<see cref="NoticeList"/>) under See the full list. The "Kept by" line says who, why, the legal basis, where, how long
-    /// and how to ask or complain (GDPR art. 13), like README > Telemetry and docs/PRIVACY-AND-SECURITY.md.
+    /// full list (<see cref="NoticeList"/>) under See the full list. The "Kept by" line says who, what for, where, how long and how
+    /// to delete, ask or complain, and the notice says twice that the stats can be turned off. The legal basis is not in the notice
+    /// since 1.0.0 (it said "because you accept this notice" while Accept was the only way in): it is in README > Telemetry and
+    /// docs/PRIVACY-AND-SECURITY.md.
     /// </summary>
     public static string NoticeShort =>
         Loc.T("CS2 IP Changer sends usage stats when it opens and closes and every 30 minutes while it's open, so bugs get found and fixed. You can turn them off here or any time in Settings.") + "\n\n"
@@ -129,26 +131,30 @@ public static class Telemetry
     /// <summary>
     /// The notice's version (Settings.StatsNotice). 2 since beta.9: the ID is kept for the install. 3 since beta.10: the stats also go
     /// out every 30 minutes while the app is open. 4 since beta.11: the short notice, which says who keeps the stats, for how long and
-    /// how to ask. An older accept is asked again once.
+    /// how to ask. 5 since 1.0.0: the stats are no longer required (Turn off in the notice, a switch in Settings), which nobody who
+    /// accepted in a beta was told. An older accept is asked again once, unless the stats are already off (App.StatsGate).
     /// </summary>
-    public const int NoticeVersion = 4;
+    public const int NoticeVersion = 5;
 
     /// <summary>Added to the notice for someone who accepted an older one, from any version before (<see cref="NoticeChangedFor"/>).</summary>
     public static string NoticeChanged => NoticeChangedFor(1);
 
     /// <summary>
     /// What changed since the notice <paramref name="had"/> accepted (Settings.StatsNotice, 1 = before beta.9), only what is new to
-    /// them: beta.8 said the ID was new every day, beta.9 said open and close only, beta.10 had the long notice. Empty for 0 (never accepted).
+    /// them: beta.8 said the ID was new every day, beta.9 said open and close only, beta.10 had the long notice, and beta.11 to
+    /// beta.14 (notice 4) said the stats were required. Empty for 0 (never accepted).
     /// </summary>
     public static string NoticeChangedFor(int had)
     {
         if (had <= 0 || had >= NoticeVersion) return "";
+        // notice 4 (beta.11 to beta.14) only differs in this: the stats can be turned off now
+        if (had >= 4) return Loc.T("Changed since you last accepted: the stats are no longer required. Turn them off here (Turn off) or any time in Settings > Send usage stats.");
         var s = Loc.T("Changed since you last accepted: this notice is shorter, with every item still under See the full list, and it now says "
             + "who keeps the stats, for how long and how to ask about them or complain.");
         if (had < 3) s += " " + Loc.T("The stats now also go out every 30 minutes while the app is open (and before the PC sleeps), not only when it opens and closes.");
         if (had < 2) s += " " + Loc.T("The ID is now kept for this install instead of new every day, so the stats can tell people who come back from new installs. "
             + "It is still random and has no name.");
-        return s;
+        return s + " " + Loc.T("The stats are also no longer required: turn them off here (Turn off) or any time in Settings > Send usage stats.");
     }
 
     /// <summary>Stats are on (the notice was answered, they aren't turned off, and this isn't the demo or the recording build).</summary>
@@ -191,7 +197,14 @@ public static class Telemetry
             _on = false;
             _tick?.Stop(); _live?.Stop(); _first?.Stop();
         }
-        else if (!_on && !_handedOver) { _closed = false; TurnOn(); }
+        else if (!_on && !_handedOver)
+        {
+            _closed = false;
+            // Off counts nothing: the session and the phone drops that go out at close start again here, not at the app's start
+            lock (Gate) _drops = 0;
+            _started = DateTime.UtcNow;
+            TurnOn();
+        }
     }
 
     static readonly Regex IdShape = new("^[0-9a-f]{32}$", RegexOptions.Compiled);
@@ -578,7 +591,7 @@ public static class Telemetry
 
     static int _drops;
     /// <summary>The phone's connection went away while it was up (not during Change IP). Counted per session, in bands, at close.</summary>
-    public static void PhoneDrop() { lock (Gate) _drops++; }
+    public static void PhoneDrop() { if (!_on) return; lock (Gate) _drops++; }
 
     /// <summary>Mobile data through the phone (Tray's data meter): added up per UTC day; only the day's band goes out.</summary>
     public static void Data(long added)
@@ -807,6 +820,16 @@ public static class Telemetry
             if (await Post(body, TimeSpan.FromSeconds(8), Url + "/env")) lock (Gate) { _st.EnvDay = today; try { Store.Save(File_, _st); } catch { } }
         }
         catch (Exception ex) { NotSent(Url + "/env", Kind(ex)); }
+    }
+
+    /// <summary>
+    /// This install has a stats ID (what <see cref="Forget"/> deletes by). None when the stats were never on here (Turn off at the
+    /// first start): then Delete my stats has nothing to delete and makes no new ID. Only reads; with the stats off, from the file.
+    /// </summary>
+    public static bool HasId()
+    {
+        if (!_canRun) return false;
+        lock (Gate) return IdShape.IsMatch((_st ?? Store.Load(File_, () => new State())).Id ?? "");
     }
 
     /// <summary>
@@ -1119,10 +1142,13 @@ public static class Telemetry
     /// <summary>Only what went out is taken away: anything counted while sending stays for next time.</summary>
     static void Sent(Snapshot s)
     {
-        // beta.13: after BeforeRestart the new copy owns telemetry.json; a late answer never writes over it
-        if (!_on) return;
+        // beta.13: after BeforeRestart the new copy owns telemetry.json; a late answer never writes over it.
+        // 1.0.0: turned off while the report was on its way, the server has it, so it still comes off what waits here (once, and
+        // nothing else is written while off); kept, it would go a second time when the stats are turned on again.
+        if (!_on && (_handedOver || !_canRun)) return;
         lock (Gate)
         {
+            if (_st == null) return;
             foreach (var (k, v) in s.Clicks) { _st.Clicks[k] -= v; if (_st.Clicks[k] <= 0) _st.Clicks.Remove(k); }
             foreach (var (k, v) in s.Counts) { _st.Counts[k] -= v; if (_st.Counts[k] <= 0) _st.Counts.Remove(k); }
             foreach (var x in s.Errors) { var key = x.Type + "@" + x.At; if (_st.Errors.TryGetValue(key, out var e) && (e.N -= x.N) <= 0) _st.Errors.Remove(key); }

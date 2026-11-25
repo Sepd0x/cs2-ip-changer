@@ -18,7 +18,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Regions: the line under the count says the block stays on after you close the app, and that "Allow all (block off)" removes it.
 
 ### Changed
-- Usage stats are no longer required. They are on by default, and the notice at the first start has Accept and Turn off (Turn off opens the app and sends nothing). Settings > Send usage stats turns them off or on again any time, with the same random ID. Anyone who accepted in the beta stays on. The app, the README, the privacy page and the website no longer say they are required.
+- Usage stats are no longer required. They are on by default, and the notice at the first start has Accept and Turn off (Turn off opens the app and sends nothing). Settings > Send usage stats turns them off or on again any time, with the same random ID. Anyone who accepted in a beta sees the notice once after updating, with Accept and Turn off, and keeps what they choose. The app, the README, the privacy page and the website no longer say they are required.
 
 ### Fixed
 - The last stop of the tour in Portuguese, Spanish and Russian: "5 of 5" was pushed out of the box and the main button was cut off. The count is now in the title and the buttons move to a second line when they don't fit.

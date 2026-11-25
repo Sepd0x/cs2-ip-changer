@@ -685,7 +685,7 @@ public sealed class Guard
     });
 
     /// <summary>
-    /// Closing with Keep (also "Keep protection and close" with CS2 open, and Quit after an update with CS2 open): the kill switch and
+    /// Closing with Keep (also "Keep protection and close" with CS2 open): the kill switch and
     /// the CS2 lock stay, as the question says. What would leave the PC without internet once the phone is gone goes: the Whole PC
     /// rules (DNS only from the phone's local IP and IPv6 blocked, which survive a restart), the phone's default route (Save mobile
     /// data) and, with CS2 closed, the 0/1 and 128/1 routes (a match still open needs them; they go with the phone's adapter or a

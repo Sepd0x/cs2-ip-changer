@@ -4,6 +4,8 @@ using SRT.Core;
 
 // beta.11 (6 nov.): o aviso das estatísticas curto (crítico 14 dos utilizadores simulados) com a frase do art. 13 do RGPD na linha
 // "Kept by"; a lista inteira de antes fica em See the full list. NoticeVersion 4: quem aceitou o 3 vê-o uma vez mais.
+// 1.0.0: a linha "Kept by" já não diz a base legal (dizia "because you accept this notice" quando aceitar era a única entrada);
+// a base está no README > Telemetry e no docs/PRIVACY-AND-SECURITY.md, e o aviso diz que se pode desligar (Estatisticas1_0Tests, revisão de 25 nov., 5).
 static class AvisoTests
 {
     public static void Run(Action<string, bool, string> check)
@@ -11,7 +13,8 @@ static class AvisoTests
         var repo = SecurityTests.Repo();
         string Src(params string[] p) => File.ReadAllText(Path.Combine(new[] { repo, "src" }.Concat(p).ToArray()));
 
-        check("Aviso: NoticeVersion é 4", Telemetry.NoticeVersion == 4, Telemetry.NoticeVersion.ToString());
+        // 1.0.0 (25 nov.): 5, porque as estatísticas deixaram de ser obrigatórias; quem aceitou o 4 vê-o uma vez mais (Estatisticas1_0Tests.Aviso5)
+        check("Aviso: NoticeVersion é 5", Telemetry.NoticeVersion == 5, Telemetry.NoticeVersion.ToString());
 
         // o texto curto: Sent, Never sent e Kept by, cada um na sua linha
         var curto = Telemetry.NoticeShort;
@@ -66,7 +69,7 @@ static class AvisoTests
             check("Aviso: 1.º arranque sem o que mudou", App.StatsNoticeBody(0) == Telemetry.NoticeShort, "");
             var atual = Path.Combine(tmp, "s-b11.json");
             File.WriteAllText(atual, $"{{ \"StatsAccepted\": true, \"StatsNotice\": {Telemetry.NoticeVersion} }}");
-            check("Aviso: quem aceitou o 4 não volta a ver", App.StatsAcceptedIn(atual) && Telemetry.NoticeChangedFor(4) == ""
+            check("Aviso: quem aceitou o de agora não volta a ver", App.StatsAcceptedIn(atual) && Telemetry.NoticeChangedFor(Telemetry.NoticeVersion) == ""
                 && App.StatsGate(Array.Empty<string>(), () => { asked++; return false; }, atual).Go && asked == 1, "");
         }
         finally { try { Directory.Delete(tmp, true); } catch { } }

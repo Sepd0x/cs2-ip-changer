@@ -226,7 +226,7 @@ Found a bug? [Open an issue](https://github.com/Sepd0x/cs2-ip-changer/issues/new
 
 ## Privacy
 
-There's no account. Besides the usage stats of the beta ([Telemetry](#telemetry)), the app only talks to the services below. Your Steam Web API key stays on your PC, encrypted for your Windows user, in `SRT_Dados/settings.json`. The Profiles sign-ins stay on your PC too, encrypted, in `SRT_Dados/profiles/sessions`. The full list, with what each service receives and what the app does with admin rights, is in [Privacy and security](docs/PRIVACY-AND-SECURITY.md).
+There's no account. Besides the usage stats ([Telemetry](#telemetry)), the app only talks to the services below. Your Steam Web API key stays on your PC, encrypted for your Windows user, in `SRT_Dados/settings.json`. The Profiles sign-ins stay on your PC too, encrypted, in `SRT_Dados/profiles/sessions`. The full list, with what each service receives and what the app does with admin rights, is in [Privacy and security](docs/PRIVACY-AND-SECURITY.md).
 
 <details>
 <summary><b>The services it talks to, and what for</b></summary>
@@ -250,7 +250,7 @@ The app measures the phone's IP by asking 1.0.0.1 (Cloudflare's `/cdn-cgi/trace`
 CS2 IP Changer sends usage stats so bugs can be found and the parts people use get better. They are on by default, and you can turn them off at the first start or any time in Settings.
 
 - **You decide first.** At the first start, before the app opens, a notice lists what is sent, with Accept and Turn off. Until you answer, nothing is sent and no ID is made. Turn off (or <kbd>Esc</kbd>) opens the app the same, and nothing is sent.
-- **A switch, any time.** Settings > Send usage stats. Off: no report, no 5-minute signal, no setup report, no errors, and nothing is counted or kept. Turning it on again carries on with the same ID. The choice is saved with the other settings, and anyone who accepted in the beta stays on.
+- **A switch, any time.** Settings > Send usage stats. Off: no report, no 5-minute signal, no setup report, no errors, and nothing new is counted. The ID and what was already counted and waiting to go stay on your PC, so turning it on again carries on with the same ID. The choice is saved with the other settings. Anyone who accepted in a beta sees the notice once more after updating, with Accept and Turn off, and keeps what they choose.
 - **Never sent:** IPs (yours, the phone's or servers'), server names or addresses, Steam accounts, logins, names or IDs, your carrier, city or region, players' names, file paths or anything you typed.
 - **A random ID**, made once for this install, never from your PC, Windows, Steam or you. It isn't tied to your name, PC, Steam or anything else.
 - **Delete it any time.** Settings > Delete my stats deletes everything the server keeps under your ID and gives the app a new one.
@@ -258,7 +258,7 @@ CS2 IP Changer sends usage stats so bugs can be found and the parts people use g
 <details>
 <summary><b>The notice, the ID and the bands</b></summary>
 
-Your answer is saved and the notice doesn't show again, except once when what is sent changes: after beta.9, because the ID changed (below), and after beta.11, because the notice got shorter and now says who keeps the stats and for how long. Since 1.0.0 the stats are no longer required: they are on by default and Settings > Send usage stats turns them off.
+Your answer is saved and the notice doesn't show again, except once when what is sent or your choice changes: after beta.9, because the ID changed (below), after beta.11, because the notice got shorter and now says who keeps the stats and for how long, and after 1.0.0, because the stats are no longer required: they are on by default, and Turn off in the notice or Settings > Send usage stats turns them off. If you already turned them off, the notice doesn't come back.
 
 The ID says nothing about who you are. Because it is kept, the usage report is pseudonymous rather than anonymous (that is the word the GDPR uses): one install's reports link up, but never to a person. Only the click map and the separate setup report below, which carry no ID, are anonymous. Since beta.9 it is kept (before, it was new every day), so the stats can tell a returning install from a new one and count how many use the app. The first report of each day also says how long ago the app was set up, only in rough bands (the same day, 1 day, 2 to 3, 4 to 6, 7 to 13, 14 to 29, 30 or more), never the date. List sizes go in rough bands, not exact numbers, for the same reason.
 </details>

@@ -78,16 +78,39 @@ public partial class MainWindow
     {
         if (_uiLock) return;
         _s.StatsOff = StatsBox.IsChecked != true;
-        SaveSettings();
         if (_demo) return;
-        Telemetry.SetOff(_s.StatsOff);
+        if (SwitchStats(_s.StatsOff, SaveSettings) is Exception ex)
+        {
+            Log.Warn("Couldn't save the usage stats choice (" + ex.Message + "). It holds while the app is open.");
+            Toast(Loc.T("Couldn't save your usage stats choice. It holds while the app is open; check this switch after the next start."), Tone.Warn);
+        }
         Log.Info(_s.StatsOff ? "Usage stats turned off. Nothing is counted or sent." : "Usage stats turned on.");
+    }
+
+    /// <summary>
+    /// The switch itself: the stats go off (or on) first and only then is the choice saved, so a settings.json that can't be written
+    /// (held by an antivirus, a full disk) never leaves them sending behind a switch that says off. Off is saved twice, like the API
+    /// key: settings.json.prev says off too, and a settings.json damaged before the next save can't turn them back on by itself.
+    /// Gives the save's error, or null.
+    /// </summary>
+    public static Exception SwitchStats(bool off, Action save)
+    {
+        Telemetry.SetOff(off);
+        try
+        {
+            save();
+            if (off) save();
+            return null;
+        }
+        catch (Exception ex) { return ex; }
     }
 
     /// <summary>Settings > Delete my stats: the server deletes what it keeps under this install's ID, and the app takes a new one.</summary>
     async void DeleteStats_Click(object sender, RoutedEventArgs e)
     {
         if (_demo) { Toast(Loc.T("Demo: delete my stats."), true); return; }
+        // The stats were never on here (Turn off at the first start): no ID was made, so there is nothing to delete and no new ID
+        if (!Telemetry.HasId()) { Toast(Loc.T("Nothing to delete: there is no stats ID on this PC. One is only made when the stats are on."), Tone.Info); return; }
         if (!await Ask(Loc.T("Delete my stats"), Loc.T("Delete everything the stats server keeps under this install's ID? The app then starts over with a new ID. The stats stay as they are, on or off."), Loc.T("Delete"))) return;
         if (await Telemetry.Forget()) { Log.Ok("Usage stats deleted on the server. New stats ID made."); Toast(Loc.T("Your stats were deleted. The app has a new stats ID."), true); }
         else Toast(Loc.T("Couldn't reach the stats server. Nothing was deleted; try again later."), Tone.Error);

@@ -211,13 +211,14 @@ public partial class App : Application
     /// <summary>
     /// The notice is answered once, before the app opens (settings.json, read only, says if it was). <paramref name="ask"/> gives true
     /// for Accept, false for Turn off (or Escape): the app opens in both, and Turn off sends nothing. The demo and the recording build
-    /// send nothing, so they don't ask.
+    /// send nothing, so they don't ask. An older notice is shown again once (1.0.0, notice 5: to everyone who accepted in a beta,
+    /// when the stats were required), but not to someone who already has the stats off: nothing is sent, so there is nothing to ask.
     /// </summary>
     public static StatsConsent StatsGate(string[] args, Func<bool> ask, string settingsFile)
     {
         if (args.Contains(AppIds.Args.Demo) || Rec.On) return new(true);
         var had = StatsNoticeIn(settingsFile);
-        if (had >= Telemetry.NoticeVersion) return new(true);
+        if (had >= Telemetry.NoticeVersion || had > 0 && StatsOffIn(settingsFile)) return new(true);
         var on = ask();
         return new(true, JustAccepted: true, AskedAgain: had > 0, Off: !on);
     }
@@ -232,6 +233,9 @@ public partial class App : Application
     /// </summary>
     public static int StatsNoticeIn(string settingsFile) =>
         Store.Peek<Settings>(settingsFile) is { StatsAccepted: true } s ? Math.Max(s.StatsNotice, 1) : 0;
+
+    /// <summary>settings.json says the notice was answered and the stats are off (read like <see cref="StatsNoticeIn"/>, nothing written).</summary>
+    public static bool StatsOffIn(string settingsFile) => Store.Peek<Settings>(settingsFile) is { StatsAccepted: true, StatsOff: true };
 
     /// <summary>
     /// Started by an update that left protection on: --updated with --on, or --updated alone (beta.9). With --off or --standby nothing

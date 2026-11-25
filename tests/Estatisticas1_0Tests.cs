@@ -25,15 +25,126 @@ static class Estatisticas1_0Tests
         try
         {
             Gate(check, tmp);
+            Aviso5(check, tmp, repo);
             Sending(check, tmp, sent);
+            Revisao(check, tmp);
             Texts(check, repo);
         }
         finally
         {
-            Telemetry.TestSend = null;
-            Telemetry.Start(false, () => (null, null, new()), false, Path.Combine(tmp, "reset.json"));   // back to "not answered": later tests start from nothing
+            Reset(tmp);
             try { Directory.Delete(tmp, true); } catch { }
         }
+    }
+
+    /// <summary>
+    /// Back to "not answered", so later tests start from nothing. Off first: Start alone never turns off stats that a check which
+    /// blew up left on, and the rest of the suite would run with them on and without the hook (a real report at a sleep or sign-out).
+    /// </summary>
+    static void Reset(string tmp)
+    {
+        Telemetry.SetOff(true);
+        Telemetry.TestSend = null;
+        Telemetry.Start(false, () => (null, null, new()), false, Path.Combine(tmp, "reset.json"));
+    }
+
+    static void Set(string field, object value) => (typeof(Telemetry).GetField(field, Priv) ?? throw new Exception("sem " + field)).SetValue(null, value);
+
+    /// <summary>
+    /// Revisão de 25 nov. (publish/plano-1-0-0/revisao-25nov-estatisticas.md, achados 1, 7, 8, 9, 10 e 12): o interruptor desliga
+    /// mesmo quando o settings.json não se deixa escrever, desligado não conta nada (quedas do telemóvel, duração da sessão), a cópia
+    /// de segurança das definições não volta a ligar, um relatório a caminho não sai a dobrar, e sem ID não há nada para apagar.
+    /// </summary>
+    static void Revisao(Action<string, bool, string> check, string tmp)
+    {
+        var sent = new List<(string Path, string Body)>();
+        var gate = new object();
+        Action<string> during = null;
+        Telemetry.TestSend = (url, body) =>
+        {
+            var path = url[url.LastIndexOf('/')..];
+            lock (gate) sent.Add((path, body));
+            during?.Invoke(path);
+            return Task.FromResult(true);
+        };
+        string Reports() { lock (gate) return string.Join("\n", sent.Where(x => x.Path == "/v1").Select(x => x.Body)); }
+        (string, string, Dictionary<string, int>) Now() => ("cs2open", "usb", new());
+        var tf = Path.Combine(tmp, "rev-telemetry.json");
+        Telemetry.Start(false, Now, true, tf, off: false);
+        Telemetry.Count("probe_rev");
+        Set("_started", DateTime.UtcNow.AddHours(-3));   // a app está aberta há 3 horas
+
+        // 1: o settings.json não se deixa escrever (antivírus, disco cheio) no momento em que se desliga
+        Exception err = null;
+        var threw = false;
+        try { err = MainWindow.SwitchStats(true, () => throw new IOException("settings.json is locked")); } catch { threw = true; }
+        Telemetry.Count("probe_after_fail");
+        Call("Send"); Call("SendLive"); Call("SendAtExit");
+        check("Revisão 25 nov. (1): com a gravação a falhar o interruptor desliga na mesma e devolve o erro em vez de rebentar",
+            !threw && err is IOException && !Telemetry.Running && sent.Count == 0, $"threw={threw} on={Telemetry.Running} sent={sent.Count}");
+        Telemetry.SetOff(true);
+        lock (gate) sent.Clear();
+
+        // 8: desligado, as quedas do telemóvel não contam, e a sessão que sai no fecho não cobre o tempo desligado
+        Telemetry.PhoneDrop(); Telemetry.PhoneDrop(); Telemetry.PhoneDrop();
+        Telemetry.SetOff(false);
+        Telemetry.PhoneDrop();
+        lock (gate) sent.Clear();
+        Call("SendAtExit");
+        var close = Reports();
+        check("Revisão 25 nov. (8): as quedas do telemóvel com as estatísticas desligadas não contam (só a de depois de ligar)",
+            close.Contains("\"drop_1\"") && !close.Contains("drop_3p"), close);
+        check("Revisão 25 nov. (8): a duração da sessão não cobre o tempo em que estiveram desligadas",
+            close.Contains("\"sess_lt5\"") && !close.Contains("sess_gt2h"), close);
+
+        // 10: um relatório a caminho quando se desliga: o servidor recebeu-o, por isso sai do que fica guardado para enviar
+        Telemetry.Count("probe_flight");
+        during = p => { if (p == "/v1") Telemetry.SetOff(true); };
+        Call("Send");
+        during = null;
+        check("Revisão 25 nov. (10): um relatório recebido enquanto se desligava não volta a sair ao ligar de novo",
+            !Telemetry.Running && File.Exists(tf) && !File.ReadAllText(tf).Contains("probe_flight"), "");
+        // ...e a guarda da beta.13 fica: entregue à cópia nova (BeforeRestart), a resposta atrasada não grava por cima do ficheiro dela
+        Telemetry.SetOff(false);
+        Telemetry.Count("probe_handover");
+        during = p => { if (p == "/v1") { Set("_on", false); Set("_handedOver", true); } };
+        Call("Send");
+        during = null;
+        var kept = File.ReadAllText(tf).Contains("probe_handover");
+        Set("_handedOver", false);
+        Set("_on", true);
+        Telemetry.SetOff(true);
+        check("Revisão 25 nov. (10): depois do BeforeRestart a resposta atrasada continua a não gravar", kept && !Telemetry.Running, "");
+
+        // 9: desligar grava duas vezes, por isso a cópia de segurança (settings.json.prev) também diz desligado
+        var sf = Path.Combine(tmp, "rev-settings.json");
+        var s = new Settings { StatsAccepted = true, StatsNotice = Telemetry.NoticeVersion };
+        Store.Save(sf, s);
+        Store.Save(sf, s);
+        s.StatsOff = true;
+        var saveErr = MainWindow.SwitchStats(true, () => Store.Save(sf, s));
+        File.WriteAllText(sf, "{ \"StatsAccepted\": tr");   // estragado antes da gravação seguinte
+        var asked = 0;
+        var again = App.StatsGate(Array.Empty<string>(), () => { asked++; return true; }, sf);
+        var back = Store.Load(sf, () => new Settings());
+        check("Revisão 25 nov. (9): um settings.json estragado logo a seguir a desligar não volta a ligar as estatísticas sozinho",
+            saveErr == null && again.Go && asked == 0 && back.StatsAccepted && back.StatsOff, $"asked={asked} off={back.StatsOff}");
+
+        // 7: quem nunca ligou não tem ID, por isso Delete my stats não tem nada para apagar (nem diz que há um ID novo)
+        var never = Path.Combine(tmp, "rev-never.json");
+        Telemetry.Start(false, Now, true, never, off: true);
+        check("Revisão 25 nov. (7): quem nunca ligou não tem ID para apagar, e perguntar não cria nada", !Telemetry.HasId() && !File.Exists(never), "");
+        Telemetry.SetOff(false);
+        var has = Telemetry.HasId();
+        Telemetry.SetOff(true);
+        check("Revisão 25 nov. (7): depois de ligar há ID, e continua a haver com as estatísticas desligadas", has && Telemetry.HasId(), "");
+
+        // 12: o fim deste teste desliga mesmo que uma verificação rebente com as estatísticas ligadas
+        Telemetry.Start(false, Now, true, Path.Combine(tmp, "rev-reset.json"), off: false);
+        var wasOn = Telemetry.Running;
+        Reset(tmp);
+        check("Revisão 25 nov. (12): o fim do teste deixa as estatísticas desligadas e sem o gancho, mesmo que tenham ficado ligadas",
+            wasOn && !Telemetry.Running && Telemetry.TestSend == null, $"wasOn={wasOn} on={Telemetry.Running}");
     }
 
     /// <summary>The notice: Accept and Turn off both open the app; the choice is kept with the settings and survives a restart.</summary>
@@ -53,12 +164,71 @@ static class Estatisticas1_0Tests
         asked = 0;
         var next = App.StatsGate(Array.Empty<string>(), () => { asked++; return true; }, file);
         check("Estatísticas 1.0: desligar sobrevive a reiniciar e o aviso não volta", again.StatsOff && again.StatsAccepted && next.Go && asked == 0 && !next.JustAccepted, "");
-        check("Estatísticas 1.0: quem aceitou na beta (sem o campo) fica ligado", !Store.Load(WriteJson(tmp, "beta.json", "{ \"StatsAccepted\": true, \"StatsNotice\": 4 }"), () => new Settings()).StatsOff
+        check("Estatísticas 1.0: quem aceitou na beta não tem o campo, e isso lê-se como ligado (o aviso 5 pergunta-lhe uma vez)",!Store.Load(WriteJson(tmp, "beta.json", "{ \"StatsAccepted\": true, \"StatsNotice\": 4 }"), () => new Settings()).StatsOff
             && !new Settings().StatsOff, "");
         check("Estatísticas 1.0: o demo não pergunta nem desliga", App.StatsGate(new[] { "--demo" }, () => { asked++; return false; }, Path.Combine(tmp, "x.json")) is { Go: true, Off: false } && asked == 0, "");
     }
 
     static string WriteJson(string dir, string name, string json) { var p = Path.Combine(dir, name); File.WriteAllText(p, json); return p; }
+
+    /// <summary>
+    /// Aviso 5 (25 nov., achado 2 da revisão, decidido pelo coordenador): quem aceitou o aviso 4 nas betas 11 a 14, quando as
+    /// estatísticas eram obrigatórias, vê o aviso uma vez ao atualizar, com o que mudou (já não são obrigatórias, e onde se desligam),
+    /// e fica com o que escolher. Quem já as tem desligadas não envia nada e não é perguntado outra vez.
+    /// </summary>
+    static void Aviso5(Action<string, bool, string> check, string tmp, string repo)
+    {
+        check("Aviso 5: NoticeVersion é 5", Telemetry.NoticeVersion == 5, Telemetry.NoticeVersion.ToString());
+        var beta = WriteJson(tmp, "a5-beta.json", "{ \"StatsAccepted\": true, \"StatsNotice\": 4 }");
+        var asked = 0;
+        var accept = App.StatsGate(Array.Empty<string>(), () => { asked++; return true; }, beta);
+        check("Aviso 5: quem aceitou o aviso 4 (betas 11 a 14) vê o aviso ao atualizar, e não conta como 1.º arranque",
+            asked == 1 && accept is { Go: true, JustAccepted: true, AskedAgain: true, Off: false } && !accept.FirstStart, accept.ToString());
+        var esc = App.StatsGate(Array.Empty<string>(), () => { asked++; return false; }, beta);
+        check("Aviso 5: Turn off, Escape ou fechar o aviso desligam e a app abre, como no 1.º arranque",
+            asked == 2 && esc is { Go: true, JustAccepted: true, AskedAgain: true, Off: true }, esc.ToString());
+        var mudou = Telemetry.NoticeChangedFor(4);
+        var corpo = App.StatsNoticeBody(4);
+        check("Aviso 5: a quem aceitou o 4 o aviso diz que já não são obrigatórias e onde se desligam, e só isso",
+            mudou != "" && corpo == Telemetry.NoticeShort + "\n\n" + mudou && mudou.StartsWith("Changed since you last accepted: ") && mudou.Contains("no longer required")
+            && mudou.Contains("(Turn off)") && mudou.Contains("Settings > Send usage stats") && !mudou.Contains("shorter") && !mudou.Contains("every 30 minutes") && mudou.Length < 200, mudou);
+        check("Aviso 5: quem aceitou um aviso mais antigo lê isso e o resto que mudou",
+            new[] { 1, 2, 3 }.All(h => Telemetry.NoticeChangedFor(h) is var m && m.Contains("no longer required") && m.Contains("Settings > Send usage stats") && m.Contains("shorter")), Telemetry.NoticeChangedFor(3));
+        // o que a janela principal grava ao responder (o aviso de agora e a escolha): não volta a perguntar, e a escolha fica
+        var s = Store.Load(beta, () => new Settings());
+        s.StatsNotice = Telemetry.NoticeVersion;
+        s.StatsOff = esc.Off;
+        Store.Save(beta, s);
+        asked = 0;
+        check("Aviso 5: respondido uma vez, não volta a aparecer e fica o que se escolheu",
+            App.StatsGate(Array.Empty<string>(), () => { asked++; return true; }, beta) is { Go: true, JustAccepted: false } && asked == 0 && Store.Load(beta, () => new Settings()).StatsOff, "");
+        var five = WriteJson(tmp, "a5-five.json", "{ \"StatsAccepted\": true, \"StatsNotice\": 5 }");
+        check("Aviso 5: com o aviso 5 aceite não aparece",
+            App.StatsGate(Array.Empty<string>(), () => { asked++; return false; }, five) is { Go: true, JustAccepted: false } && asked == 0 && App.StatsNoticeBody(5) == Telemetry.NoticeShort, "");
+        // já desligadas no interruptor com o aviso 4 guardado (uma build de teste da 1.0.0): nada é enviado, por isso não se pergunta outra vez
+        var off = WriteJson(tmp, "a5-off.json", "{ \"StatsAccepted\": true, \"StatsNotice\": 4, \"StatsOff\": true }");
+        var gateOff = App.StatsGate(Array.Empty<string>(), () => { asked++; return true; }, off);
+        check("Aviso 5: com as estatísticas já desligadas o aviso não aparece, e continuam desligadas",
+            gateOff is { Go: true, JustAccepted: false } && asked == 0 && Store.Load(off, () => new Settings()) is { StatsAccepted: true, StatsOff: true }, gateOff.ToString());
+        // o primeiro arranque continua igual: sem "o que mudou"
+        check("Aviso 5: o 1.º arranque não leva a frase do que mudou", App.StatsNoticeBody(0) == Telemetry.NoticeShort, "");
+
+        string Read(params string[] p) => File.ReadAllText(Path.Combine(new[] { repo }.Concat(p).ToArray()));
+        foreach (var lang in new[] { "es", "pt-BR", "ru", "tr" })
+        {
+            var j = Read("src", "Lang", lang + ".json");
+            check($"Aviso 5: {lang} tem as duas frases do que mudou",
+                j.Contains("\"Changed since you last accepted: the stats are no longer required. Turn them off here (Turn off) or any time in Settings > Send usage stats.\": \"")
+                && j.Contains("\"The stats are also no longer required: turn them off here (Turn off) or any time in Settings > Send usage stats.\": \""), lang);
+        }
+        var readme = Read("README.md");
+        var log = Read("CHANGELOG.md");
+        var unreleased = log[log.IndexOf("## [Unreleased]", StringComparison.Ordinal)..log.IndexOf("## [0.1.0-beta.14]", StringComparison.Ordinal)];
+        check("Aviso 5: o README e o CHANGELOG dizem que quem aceitou numa beta vê o aviso uma vez (já não \"stays on\")",
+            !readme.Contains("anyone who accepted in the beta stays on") && readme.Contains("Anyone who accepted in a beta sees the notice once more after updating")
+            && readme.Contains("and after 1.0.0, because the stats are no longer required")
+            && !unreleased.Contains("accepted in the beta stays on") && unreleased.Contains("Anyone who accepted in a beta sees the notice once after updating"), "");
+    }
 
     /// <summary>Every way a report can leave the app, on and off.</summary>
     static void Sending(Action<string, bool, string> check, string tmp, List<string> sent)
@@ -147,8 +317,34 @@ static class Estatisticas1_0Tests
         var main = Read("src", "MainWindow.xaml.cs");
         check("Estatísticas 1.0: o Settings tem o interruptor Send usage stats, ligado por omissão e guardado com as outras definições",
             xaml.Contains("x:Name=\"StatsBox\"") && xaml.Contains("Text=\"Send usage stats\"") && xaml.Contains("Click=\"StatsSwitch_Click\"")
-            && settings.Contains("StatsBox.IsChecked = !_s.StatsOff;") && tel.Contains("_s.StatsOff = StatsBox.IsChecked != true;") && tel.Contains("SaveSettings();") && tel.Contains("Telemetry.SetOff(_s.StatsOff);")
+            && settings.Contains("StatsBox.IsChecked = !_s.StatsOff;") && tel.Contains("_s.StatsOff = StatsBox.IsChecked != true;") && tel.Contains("SwitchStats(_s.StatsOff, SaveSettings)") && tel.Contains("Telemetry.SetOff(off);")
             && main.Contains("Telemetry.Start(_demo, TelemetryNow, _s.StatsAccepted, off: _s.StatsOff);") && main.Contains("_s.StatsOff = stats.Off;"), "");
+        // revisão de 25 nov.: o interruptor avisa quando a escolha não ficou guardada (1), o Log não diz "accepted" a quem desligou (4),
+        // e Delete my stats sem ID não diz que há um ID novo (7)
+        var click = tel[tel.IndexOf("void StatsSwitch_Click(", StringComparison.Ordinal)..];
+        click = click[..click.IndexOf("async void DeleteStats_Click(", StringComparison.Ordinal)];
+        check("Revisão 25 nov. (1): o interruptor diz ao utilizador quando a escolha não ficou guardada",
+            click.Contains("is Exception") && click.Contains("Log.Warn(") && click.Contains("Toast(Loc.T(\"Couldn't save your usage stats choice."), "");
+        check("Revisão 25 nov. (4): quem escolhe Turn off no aviso não lê \"Usage stats accepted\" no Log",
+            main.Contains("Log.Info(stats.Off ? \"Usage stats turned off in the notice. Nothing is counted or sent.\" : \"Usage stats accepted. README > Telemetry lists what is sent.\");")
+            && !main.Contains("the usage stats notice was accepted"), "");
+        var del = tel[tel.IndexOf("async void DeleteStats_Click(", StringComparison.Ordinal)..];
+        del = del[..del.IndexOf("void TelemetryHook()", StringComparison.Ordinal)];
+        check("Revisão 25 nov. (7): Delete my stats sem ID diz que não há nada para apagar, antes de perguntar e sem falar num ID novo",
+            del.IndexOf("if (!Telemetry.HasId())", StringComparison.Ordinal) is var no && no > 0 && no < del.IndexOf("await Ask(", StringComparison.Ordinal)
+            && del.Contains("Loc.T(\"Nothing to delete: there is no stats ID on this PC. One is only made when the stats are on.\")"), "");
+        // (5): o aviso não diz a base legal (decisão do dono); o comentário não pode dizer que diz, e a base está onde ele aponta
+        var telemetry = Read("src", "Core", "Telemetry.cs");
+        var doc = telemetry[telemetry.IndexOf("/// The notice at the first start", StringComparison.Ordinal)..telemetry.IndexOf("public static string NoticeShort", StringComparison.Ordinal)];
+        check("Revisão 25 nov. (5): o comentário do aviso não diz que a linha Kept by dá a base legal, e diz onde ela está",
+            !doc.Contains("why, the legal basis, where") && doc.Contains("The legal basis is not in the notice") && doc.Contains("README > Telemetry") && doc.Contains("docs/PRIVACY-AND-SECURITY.md"), doc);
+        check("Revisão 25 nov. (5): a base legal está no README e no PRIVACY, a mesma nos dois",
+            Read("README.md").Contains("legitimate interest in finding and fixing bugs (GDPR art. 6(1)(f))") && Read("docs", "PRIVACY-AND-SECURITY.md").Contains("legitimate interest in finding and fixing bugs (GDPR art. 6(1)(f))")
+            && !Telemetry.NoticeShort.Contains("because you accept") && !Telemetry.NoticeShort.Contains("consent"), "");
+        // (13): comentários do tempo em que o aviso tinha Quit
+        check("Revisão 25 nov. (13): nenhum comentário fala do Quit do aviso, que já não existe",
+            !Read("src", "Views", "NoticeWindow.xaml.cs").Contains("Accept and Quit") && !Read("src", "Core", "Network", "Guard.cs").Contains("Quit after an update")
+            && !Read("tests", "SecurityTests.cs").Contains("(Accept ou Quit)") && !Read("tests", "SecurityTests.cs").Contains("// Quit (ou Escape)"), "");
         var all = new[] { "src/Core/Telemetry.cs", "src/MainWindow.xaml", "src/Views/MainWindow.Telemetry.cs", "src/App.xaml.cs" }.Select(f => Read(f.Split('/'))).Aggregate((a, b) => a + b);
         check("Estatísticas 1.0: nenhum texto da app diz obrigatório ou em beta nas estatísticas", !all.Contains("required while") && !all.Contains("required in the beta") && !all.Contains("They are required") && !all.Contains("This beta sends"), "");
         foreach (var lang in new[] { "es", "pt-BR", "ru", "tr" })
@@ -157,6 +353,9 @@ static class Estatisticas1_0Tests
             check($"Estatísticas 1.0: {lang} sem frases obrigatórias nas estatísticas",
                 !j.Contains("\"This beta sends usage stats") && !j.Contains("required while the app is in beta") && !j.Contains("(they are required in the beta)")
                 && !j.Contains("Quit closes the app. Nothing on your PC changes.") && j.Contains("\"Send usage stats\"") && j.Contains("\"Turn off\""), lang);
+            check($"Revisão 25 nov.: {lang} tem os dois textos novos (a escolha que não ficou guardada, nada para apagar)",
+                j.Contains("\"Couldn't save your usage stats choice. It holds while the app is open; check this switch after the next start.\": \"")
+                && j.Contains("\"Nothing to delete: there is no stats ID on this PC. One is only made when the stats are on.\": \""), lang);
         }
     }
 }
