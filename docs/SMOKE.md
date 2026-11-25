@@ -18,7 +18,7 @@ About 20 minutes. Write the result in the release's session note; anything that 
 7. A kick or ban from a server shows up in the app (or trust the last real one in the Log).
 8. Turn off protection: Status says servers see your home IP. With Settings > Use the app with protection off on, Servers and Join work on the home connection; with it off, Join asks to turn protection on.
 9. Close the app with protection on: it asks what to keep; Log > What the app changed is empty after turning off.
-10. Update: an older installed copy finds this version (after the release), checks its signature and restarts on it.
+10. Update: an older installed copy finds this version (after the release), checks its signature and restarts on it. Coming from a beta where the stats were accepted, the Usage stats notice shows once after the update, with "the stats are no longer required" at the end and Accept and Turn off; it doesn't show at the next start.
 
 ## First run, phone, languages, bans, install (beta.13 and 1.0.0)
 

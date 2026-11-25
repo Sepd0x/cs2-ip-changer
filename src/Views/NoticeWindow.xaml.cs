@@ -106,7 +106,7 @@ public partial class NoticeWindow : Window
 
     void Other_Click(object sender, RoutedEventArgs e) { Accepted = false; Close(); }
 
-    // See the full list / Hide the full list: only shows or hides the text, Accept and Quit stay as they are
+    // See the full list / Hide the full list: only shows or hides the text, Accept and Turn off stay as they are
     void More_Click(object sender, RoutedEventArgs e)
     {
         var open = MoreBox.Visibility != Visibility.Visible;

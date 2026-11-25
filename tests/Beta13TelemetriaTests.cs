@@ -94,7 +94,7 @@ static class Beta13TelemetriaTests
         before = before[..before.IndexOf('}')];
         check("Atualização: o BeforeRestart usa o HandOver e espera por um envio a meio", before.Contains("HandOver(_on, _handedOver)") && before.Contains("_busy"), "");
         var sent = src[src.IndexOf("static void Sent(Snapshot s)", StringComparison.Ordinal)..];
-        check("Atualização: uma resposta que chega depois não grava por cima da cópia nova", sent[..sent.IndexOf("lock (Gate)", StringComparison.Ordinal)].Contains("if (!_on) return;"), "");
+        check("Atualização: uma resposta que chega depois não grava por cima da cópia nova", sent[..sent.IndexOf("lock (Gate)", StringComparison.Ordinal)].Contains("if (!_on && (_handedOver || !_canRun)) return;"), "");   // 25 nov.: só desligado no interruptor ainda desconta (Estatisticas1_0Tests.Revisao)
         var upd = File.ReadAllText(Path.Combine(repo, "src", "Views", "MainWindow.Update.cs"));
         var c = upd[upd.IndexOf("catch (Exception ex)", upd.IndexOf("Telemetry.BeforeRestart()", StringComparison.Ordinal), StringComparison.Ordinal)..];
         check("Atualização: se o Install falhar, a telemetria volta antes de contar upd_failed e o erro",

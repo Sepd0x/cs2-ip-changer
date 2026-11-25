@@ -151,14 +151,14 @@ static class SecurityTests
                 check("API key: o .prev da beta.7 também perde o texto", !File.ReadAllText(b7).Contains("CHAVEB7") && !File.ReadAllText(b7 + ".prev").Contains("CHAVEB7"));
             }
 
-            // beta.8 (o195): estatísticas anónimas obrigatórias. Aviso antes da app abrir (Accept ou Quit); ID novo cada dia, só aleatório
+            // beta.8 (o195): estatísticas com aviso antes da app abrir. Desde a 1.0.0 já não são obrigatórias: Accept ou Turn off, e a app abre nos dois
             {
                 var tf = Path.Combine(tmp, "telemetry.json");
                 (string, string, Dictionary<string, int>) Now() => ("cs2open", "none", new());
                 Telemetry.Start(false, Now, false, tf);
                 check("Telemetria: sem resposta não envia nem cria o ID", !Telemetry.Running && !File.Exists(tf));
 
-                // Quit (ou Escape): a app fecha antes de criar seja o que for; nem settings, nem telemetry.json, nem a pasta
+                // Turn off (ou Escape): a pergunta não cria seja o que for; nem settings, nem telemetry.json, nem a pasta
                 var fresh = Path.Combine(tmp, "quit", "SRT_Dados");
                 var asked = 0;
                 var go = App.StatsGate(Array.Empty<string>(), () => { asked++; return false; }, Path.Combine(fresh, "settings.json"));

@@ -47,6 +47,35 @@ test('Final audit: the README says what the website keeps in the browser (langua
   assert.match(r, /cs2-lang/);
 });
 
+// Review of the stats switch (25 Nov. 2026, findings 3, 6 and 12): the site said the basis was accepting the notice while the
+// README and the privacy page said legitimate interest, and three sentences still read as when the stats were required.
+test('Stats review: "Is it safe?" gives the legal basis the README and the privacy page give, in every language', () => {
+  const basis = "legitimate interest in finding and fixing bugs (GDPR art. 6(1)(f))";
+  const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
+  assert.ok(readme.includes(`The legal basis is the author's ${basis}; you can object at any time by turning the stats off, at the first start or in Settings.`), 'README > Telemetry');
+  assert.ok(readFileSync(join(ROOT, 'docs', 'PRIVACY-AND-SECURITY.md'), 'utf8').includes(basis), 'docs/PRIVACY-AND-SECURITY.md');
+  assert.ok(plain(read('is-it-safe/index.html')).includes(`The legal basis is the author's ${basis}; you can object at any time by turning the stats off, at the first start or in Settings.`),
+    'is-it-safe: the sentence of the README');
+  for (const l of LANGS) {
+    const h = plain(read(`${l}is-it-safe/index.html`));
+    assert.ok(!/The basis is that you accept|La base es que aceptes|A base é você aceitar|Основание: вы принимаете|Dayanak, bildirimi kabul/.test(h), `${l}is-it-safe: the basis is still "you accept the notice"`);
+    assert.ok(h.includes('6(1)(f)'), `${l}is-it-safe: no legal basis (GDPR art. 6(1)(f))`);
+  }
+  for (const l of LANGS.slice(1)) assert.ok(!plain(read(`${l}is-it-safe/index.html`)).includes('legitimate interest'), `${l}is-it-safe: the basis is still in English`);
+});
+
+test('Stats review: no sentence is left from when the stats were required (README, llms.txt)', () => {
+  const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
+  assert.ok(!readme.includes('usage stats of the beta'), 'README > Privacy: the stats are not "of the beta" any more');
+  assert.ok(readme.includes('Besides the usage stats ([Telemetry](#telemetry)), the app only talks to the services below.'));
+  // off: the ID and what was already counted stay on the PC (Telemetry.SetOff), so "nothing is kept" was not true
+  assert.ok(!readme.includes('nothing is counted or kept'), 'README > Telemetry: off keeps the ID and what was waiting');
+  assert.ok(readme.includes('nothing new is counted. The ID and what was already counted and waiting to go stay on your PC'), 'README > Telemetry: what off keeps');
+  const llms = read('llms.txt');
+  assert.ok(!llms.includes('before Accept'), 'llms.txt: Accept is not the only answer');
+  assert.ok(llms.includes('Nothing is sent and no ID is made before you answer.'), 'llms.txt: as the README says it');
+});
+
 test('Final audit: "your home IP never reaches the server" only with protection on, in every language', () => {
   for (const l of LANGS) assert.ok(!/<li>[^<]{0,6}(Your home IP never reaches|Tu IP de casa nunca|Seu IP de casa nunca|Ваш домашний IP никогда)/i.test(read(`${l}cs2-ip-ban/index.html`)), `${l}cs2-ip-ban: the sentence has no condition`);
   assert.ok(plain(read('cs2-ip-ban/index.html')).includes('With protection on, your home IP never reaches the server'));
