@@ -252,7 +252,7 @@ public sealed class Guard
         if (!RouteKey.TryParse(key, out var k) || k.Index <= 0) return false;
         if (!System.Net.IPAddress.TryParse(k.Hop, out var gw) || gw.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork || k.Hop != gw.ToString()) return false;
         if (SplitPrefixes.Contains(k.Prefix) || Net.ValvePrefixes.Contains(k.Prefix)) return true;
-        var host = k.Prefix.EndsWith("/32") ? k.Prefix[..^3] : null;
+        var host = k.Prefix.EndsWith("/32", StringComparison.Ordinal) ? k.Prefix[..^3] : null;
         return host != null && System.Net.IPAddress.TryParse(host, out var a) && a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && host == a.ToString()
             && !System.Net.IPAddress.Any.Equals(a);
     }
@@ -279,7 +279,7 @@ public sealed class Guard
         var onPhone = adapters.Any(a => a.Index == rt.Index && a.IsPhone);
         if (!onPhone && (exitIndex <= 0 || rt.Index != exitIndex)) return false;
         if (SplitPrefixes.Contains(rt.Prefix) || Net.ValvePrefixes.Contains(rt.Prefix)) return true;
-        return rt.Prefix.EndsWith("/32") && (onPhone && anyHostOnPhone && ViaGateway(rt) || serverIps.Contains(rt.Prefix[..^3]));
+        return rt.Prefix.EndsWith("/32", StringComparison.Ordinal) && (onPhone && anyHostOnPhone && ViaGateway(rt) || serverIps.Contains(rt.Prefix[..^3]));
     }
 
     /// <summary>
@@ -796,8 +796,8 @@ public sealed class Guard
             // A rule that wasn't written is tried again on the next sync (the Log line above is only said once)
             if (errors.Count == 0)
             {
-                if (off && was?.StartsWith("off|") != true) Log.Info("Protection is off: no kill switch, no CS2 lock and no routes. CS2 and servers see your home IP.");
-                if (!off && was?.StartsWith("home") != true) Log.Info("No phone mode: the kill switch and the routes are off. CS2 and servers see your home IP.");
+                if (off && was?.StartsWith("off|", StringComparison.Ordinal) != true) Log.Info("Protection is off: no kill switch, no CS2 lock and no routes. CS2 and servers see your home IP.");
+                if (!off && was?.StartsWith("home", StringComparison.Ordinal) != true) Log.Info("No phone mode: the kill switch and the routes are off. CS2 and servers see your home IP.");
                 _fwSignature = sig;
             }
         }
@@ -877,7 +877,7 @@ public sealed class Guard
         var missing = prefixes.Where(p => Net.BestInterface(probe(p)) != via.Index).ToList();
         if (missing.Count == 0) return 0;
         var want = missing.ToHashSet();
-        var hosts = missing.Where(p => p.EndsWith("/32")).Select(p => p[..^3]).ToHashSet();
+        var hosts = missing.Where(p => p.EndsWith("/32", StringComparison.Ordinal)).Select(p => p[..^3]).ToHashSet();
         await DeleteOurs(await _routes.List(), adapters, rt => want.Contains(rt.Prefix) && RouteKey.Of(rt) != RouteKey.Of(rt.Prefix, via), hosts);
         var added = 0;
         foreach (var p in missing)
@@ -886,7 +886,7 @@ public sealed class Guard
             if (r.Ok) { Own(RouteKey.Of(p, via)); added++; _warned.Remove("add " + p); }
             else if (RouteAlreadyThere(r.Output)) Own(RouteKey.Of(p, via));   // the same route is there already: it is the app's
             // An adapter on its way out (Airplane Mode, the cable) refuses routes: no news, the drop says it (9 nov., 5 lines)
-            else if (!RouteAlreadyGone(r.Output) && StillUp(via) && _warned.Add("add " + p)) Log.Warn($"Route {(p.EndsWith("/32") ? p[..^3] : p)}: {r.Output}");
+            else if (!RouteAlreadyGone(r.Output) && StillUp(via) && _warned.Add("add " + p)) Log.Warn($"Route {(p.EndsWith("/32", StringComparison.Ordinal) ? p[..^3] : p)}: {r.Output}");
         }
         return added;
     }
@@ -945,7 +945,7 @@ public sealed class Guard
         try
         {
             var set = ips.ToHashSet();
-            await DeleteOurs(await _routes.List(), Net.Scan(), rt => rt.Prefix.EndsWith("/32") && set.Contains(rt.Prefix[..^3]), set);
+            await DeleteOurs(await _routes.List(), Net.Scan(), rt => rt.Prefix.EndsWith("/32", StringComparison.Ordinal) && set.Contains(rt.Prefix[..^3]), set);
             _fwSignature = null;
         }
         finally { _gate.Release(); }

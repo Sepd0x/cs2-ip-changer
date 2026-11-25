@@ -467,14 +467,14 @@ public sealed class CommunitySession
         if (to != null && !to.IsAbsoluteUri) to = new Uri(new Uri(Base), to);
         var m = to != null && to.Host == "steamcommunity.com" ? Regex.Match(to.AbsolutePath, @"^(/(?:id|profiles)/[^/]+)/?$") : Match.Empty;
         if (!m.Success) throw new SteamWebException("The saved sign-in no longer works. Sign in again.") { Expired = true };
-        if (m.Groups[1].Value.StartsWith("/profiles/") && m.Groups[1].Value != "/profiles/" + SteamId)
+        if (m.Groups[1].Value.StartsWith("/profiles/", StringComparison.Ordinal) && m.Groups[1].Value != "/profiles/" + SteamId)
             throw new SteamWebException("The saved sign-in is for another account. Sign in again.") { Expired = true };
         return _profile = m.Groups[1].Value;
     }
 
     static JsonNode EditJson(string html)
     {
-        var tag = Regex.Match(html, @"<[^>]*\bid=""profile_edit_config""[^>]*>", RegexOptions.IgnoreCase);
+        var tag = Regex.Match(html, @"<[^>]*\bid=""profile_edit_config""[^>]*>", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         var attr = tag.Success ? Regex.Match(tag.Value, @"data-profile-edit=""([^""]*)""") : Match.Empty;
         if (!attr.Success) throw new SteamWebException("Steam's profile page was not what the app expects.");
         try { return JsonNode.Parse(WebUtility.HtmlDecode(attr.Groups[1].Value)); }
@@ -573,7 +573,7 @@ public sealed class CommunitySession
         string E(string n) => x.Element(n)?.Value?.Trim();
         // The XML gives the bio as HTML: line breaks back, tags out.
         var sum = E("summary");
-        if (sum != null) sum = WebUtility.HtmlDecode(Regex.Replace(Regex.Replace(sum, @"<br\s*/?>", "\n", RegexOptions.IgnoreCase), "<[^>]+>", "")).Trim();
+        if (sum != null) sum = WebUtility.HtmlDecode(Regex.Replace(Regex.Replace(sum, @"<br\s*/?>", "\n", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant), "<[^>]+>", "")).Trim();
         if (sum == "No information given.") sum = "";
         return new PublicLook { PersonaName = Steam.WebText(E("steamID")), RealName = Steam.WebText(E("realname")), Summary = sum, Location = Steam.WebText(E("location")), AvatarUrl = E("avatarFull"), CustomUrl = E("customURL"), SteamId64 = E("steamID64") };
     }

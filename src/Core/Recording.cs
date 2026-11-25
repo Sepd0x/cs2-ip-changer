@@ -33,11 +33,11 @@ public static class Rec
         @"|steamcommunity\.com/(?:id|profiles)/[^\s/]+" +
         @"|(?<=[\\/]userdata[\\/])\d{3,}|(?<=[\\/]configs[\\/]backups[\\/])\d{3,}" +                   // account folder (id32 = SteamID64 - 76561197960265728)
         @"|(?<=\\Users\\)[^\\/""\r\n]+";                                                                      // Windows user in paths
-    static readonly Regex Ids = new(IdPatterns, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    static readonly Regex Ids = new(IdPatterns, RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     static readonly Regex Patterns = new(
         @"(?<![\w.])\d{1,3}\.\d{1,3}\.(?:\d{1,3}|\*|•+)\.(?:\d{1,3}|\*|•+)(?:/\d{1,2})?(?::\d{1,5})?(?!\w)" +   // IPv4, ranges, half-masked IPs, :port
         "|" + IdPatterns,
-        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     // IPv6 needs "::", a hex letter or 4+ colons, so clock times (12:30:45) stay
     static readonly Regex V6 = new(@"(?<![\w:.])(?:[0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4}(?:%\w+)?(?![\w:])", RegexOptions.Compiled);

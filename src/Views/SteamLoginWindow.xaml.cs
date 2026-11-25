@@ -61,7 +61,7 @@ public partial class SteamLoginWindow : Window
     public static string FailedLine(string reason, string login)
     {
         var r = Secrets.Clean((reason ?? "").Trim().TrimEnd('.'));
-        if (!string.IsNullOrEmpty(login) && login.Length >= 2) r = System.Text.RegularExpressions.Regex.Replace(r, System.Text.RegularExpressions.Regex.Escape(login), "(hidden)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (!string.IsNullOrEmpty(login) && login.Length >= 2) r = System.Text.RegularExpressions.Regex.Replace(r, System.Text.RegularExpressions.Regex.Escape(login), "(hidden)", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
         return "Profiles: sign-in to an account failed: " + (r.Length == 0 ? "no reason given" : r) + ".";
     }
     void Working(bool on, string text = null)

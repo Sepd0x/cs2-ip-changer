@@ -386,7 +386,7 @@ public static class Adb
     }
 
     static readonly System.Text.RegularExpressions.Regex GoneLine = new(@"error: (device .*not found|no devices|device offline|device unauthorized)",
-        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant | System.Text.RegularExpressions.RegexOptions.Compiled);
 
     /// <summary>adb couldn't reach the phone at all (the cable came out, or USB debugging dropped): the phone didn't refuse anything.</summary>
     public static bool IsGone(string output) => output != null && GoneLine.IsMatch(output);
@@ -439,7 +439,7 @@ public static class Adb
     /// the app only looked for rndis).
     /// </summary>
     public static bool TetherInUsbState(string state) =>
-        System.Text.RegularExpressions.Regex.IsMatch(state ?? "", @"(^|[,\s])(rndis|ncm)([,\s]|$)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        System.Text.RegularExpressions.Regex.IsMatch(state ?? "", @"(^|[,\s])(rndis|ncm)([,\s]|$)", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
 
     /// <summary>An IPv4 address of the phone on one of its sharing interfaces: USB tethering (rndis, ncm, usb) or Wi-Fi (wlan, swlan, ap).</summary>
     public sealed record PhoneAddress(string Interface, string Ip, bool Wifi);
@@ -479,7 +479,7 @@ public static class Adb
         var r = await Run(adb, "devices", 15000);
         if (r.Code == -1) return null;
         var line = r.Output.Split('\n').Select(l => l.Trim())
-            .FirstOrDefault(l => l.Contains('\t') && !l.StartsWith("List of"));
+            .FirstOrDefault(l => l.Contains('\t') && !l.StartsWith("List of", StringComparison.Ordinal));
         if (line == null) return new PhoneInfo(null, "none", null, null, null, null);
         var parts = line.Split('\t');
         var serial = parts[0];
@@ -531,7 +531,7 @@ public static class Adb
         bool? on = first switch { "1" or "2" => true, "0" or "3" => false, _ => null };
         if (on != true) return (on, null, on == false ? false : null);
         var rest = string.Join("\n", all[(cut + 2)..]);
-        var m = System.Text.RegularExpressions.Regex.Match(rest, "(?<!not )connected to \"?([^\"\r\n]+)\"?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        var m = System.Text.RegularExpressions.Regex.Match(rest, "(?<!not )connected to \"?([^\"\r\n]+)\"?", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
         // "Wifi is not connected": the radio is on (Samsung turns it on by itself to scan), but tethering is still on mobile data.
         bool? connected = m.Success ? true : rest.Contains("not connected", StringComparison.OrdinalIgnoreCase) ? false : null;
         return (true, m.Success ? m.Groups[1].Value.Trim() : null, connected);

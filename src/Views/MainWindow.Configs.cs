@@ -839,8 +839,8 @@ public sealed class CfgDiffRow
     public CfgDiffRow(CfgDiff d)
     {
         Key = d.Key; A = Loc.T(d.A); B = Loc.T(d.B);   // on, off, unbound, the colors: words, translated like the labels
-        Label = d.Label.StartsWith("Key ") && d.Category == "binds" ? Loc.F("Key {0}", d.Label[4..])
-            : Loc.T(d.Label.StartsWith("Crosshair: ") ? char.ToUpper(d.Label[11]) + d.Label[12..] : d.Label);   // the category column already says crosshair
+        Label = d.Label.StartsWith("Key ", StringComparison.Ordinal) && d.Category == "binds" ? Loc.F("Key {0}", d.Label[4..])
+            : Loc.T(d.Label.StartsWith("Crosshair: ", StringComparison.Ordinal) ? char.ToUpperInvariant(d.Label[11]) + d.Label[12..] : d.Label);   // the category column already says crosshair
         CategoryText = d.Category switch { "game" => Loc.T("game"), "hud" => Loc.T("HUD, audio"), _ => Loc.T(d.Category) };
     }
     public string Key { get; }

@@ -30,8 +30,8 @@ public static class PhoneUsb
         ["05AC"] = "Apple",
     };
 
-    static readonly Regex VidPid = new(@"^USB\\VID_([0-9A-F]{4})&PID_[0-9A-F]{4}", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-    static readonly Regex PhoneName = new("Android|ADB Interface|Mobile USB|Mobile Phone|Remote NDIS|RNDIS|Galaxy|Pixel|\\bMTP\\b|iPhone|Apple Mobile Device", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    static readonly Regex VidPid = new(@"^USB\\VID_([0-9A-F]{4})&PID_[0-9A-F]{4}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+    static readonly Regex PhoneName = new("Android|ADB Interface|Mobile USB|Mobile Phone|Remote NDIS|RNDIS|Galaxy|Pixel|\\bMTP\\b|iPhone|Apple Mobile Device", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     /// <summary>The phone on USB is an iPhone (no ADB: its setup and Change IP are its own).</summary>
     public static bool IsIphone(PhoneUsbState usb) => usb?.Vendor == "Apple";
@@ -86,7 +86,7 @@ public static class PhoneUsb
 
     // The iPhone's whole USB device ("Apple Mobile Device USB Composite Device"), not one of its parts (…&MI_02\…): Apple's vendor ID
     // and its serial. Nothing else can pass, so it is safe in a command line.
-    static readonly Regex AppleWhole = new(@"^USB\\VID_05AC&PID_[0-9A-F]{4}\\[0-9A-Z]{8,40}$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    static readonly Regex AppleWhole = new(@"^USB\\VID_05AC&PID_[0-9A-F]{4}\\[0-9A-Z]{8,40}$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     /// <summary>The instance ID of the iPhone's whole USB device, or null (no iPhone, or an ID that doesn't look like one).</summary>
     public static string IphoneDeviceId(IEnumerable<UsbDevice> devices) =>

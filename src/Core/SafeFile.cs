@@ -131,7 +131,7 @@ public static class SafeFile
         var n = GetFinalPathNameByHandleW(h, sb, (uint)sb.Capacity, 0);
         if (n == 0 || n >= sb.Capacity) return null;
         var p = sb.ToString();
-        return p.StartsWith(@"\\?\UNC\") ? @"\\" + p[8..] : p.StartsWith(@"\\?\") ? p[4..] : p;
+        return p.StartsWith(@"\\?\UNC\", StringComparison.Ordinal) ? @"\\" + p[8..] : p.StartsWith(@"\\?\", StringComparison.Ordinal) ? p[4..] : p;
     }
 
     /// <summary>The same place (a real path from <see cref="FinalPath"/> against the expected one), case and a last \ aside.</summary>

@@ -79,7 +79,7 @@ public partial class MainWindow
         foreach (var ip in new[] { _s.LastHomeIp, _homePublic }.Where(x => !string.IsNullOrEmpty(x)).Distinct())
             text = Regex.Replace(text, @"(?<![\d.])" + Regex.Escape(ip) + @"(?![\d])", "•••");
         foreach (var login in _accounts.Select(a => a.Login).Where(l => !string.IsNullOrWhiteSpace(l)).Distinct(StringComparer.OrdinalIgnoreCase))
-            text = Regex.Replace(text, @"(?<![\w])" + Regex.Escape(login) + @"(?![\w])", "•••", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"(?<![\w])" + Regex.Escape(login) + @"(?![\w])", "•••", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         e.Shown = text == e.Text ? null : text;
     }
 

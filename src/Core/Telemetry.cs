@@ -857,7 +857,7 @@ public static class Telemetry
         if (!_on || ex == null) return;
         ex = ex.GetBaseException();
         var at = new StackTrace(ex).GetFrames()?.Select(f => f.GetMethod())
-            .FirstOrDefault(m => m?.DeclaringType?.Namespace?.StartsWith("SRT") == true);
+            .FirstOrDefault(m => m?.DeclaringType?.Namespace?.StartsWith("SRT", StringComparison.Ordinal) == true);
         var where = at == null ? "unknown" : Regex.Replace($"{at.DeclaringType!.Name}.{at.Name}", @"[^A-Za-z0-9_.<>`|+-]", "");
         var type = prefix + Regex.Replace(ex.GetType().Name, @"[^A-Za-z0-9_]", "");
         if (type.Length > 48) type = type[..48];
@@ -1099,7 +1099,7 @@ public static class Telemetry
     public static void SentOk(string url) => Log.Again(NotSentKey + url + "|");
 
     /// <summary>What each address is, for the Log.</summary>
-    static string What(string url) => url == Url ? "report" : url.EndsWith("/live") ? "5-minute signal" : url.EndsWith("/env") ? "environment report" : "request";
+    static string What(string url) => url == Url ? "report" : url.EndsWith("/live", StringComparison.Ordinal) ? "5-minute signal" : url.EndsWith("/env", StringComparison.Ordinal) ? "environment report" : "request";
 
     /// <summary>
     /// Why a send to <paramref name="url"/> didn't go, in the Log: once per kind of failure until one goes through again, so stats

@@ -28,11 +28,11 @@ public static partial class Steam
         return h;
     }
 
-    static readonly Regex VacRe = new(@"(\d+|Multiple)\s+VAC\s+bans?\s+on\s+record", RegexOptions.IgnoreCase);
-    static readonly Regex GameBanRe = new(@"(\d+|Multiple)\s+game\s+bans?\s+on\s+record", RegexOptions.IgnoreCase);
-    static readonly Regex DaysRe = new(@"(\d+)\s+day\(s\)\s+since\s+last\s+ban", RegexOptions.IgnoreCase);
-    static readonly Regex LevelRe = new(@"friendPlayerLevelNum""?>\s*(\d+)\s*<", RegexOptions.IgnoreCase);
-    static readonly Regex CommunityBanRe = new(@"profile_ban_status[^>]*>[^<]*community ban|This account has been banned from the Steam Community", RegexOptions.IgnoreCase);
+    static readonly Regex VacRe = new(@"(\d+|Multiple)\s+VAC\s+bans?\s+on\s+record", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    static readonly Regex GameBanRe = new(@"(\d+|Multiple)\s+game\s+bans?\s+on\s+record", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    static readonly Regex DaysRe = new(@"(\d+)\s+day\(s\)\s+since\s+last\s+ban", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    static readonly Regex LevelRe = new(@"friendPlayerLevelNum""?>\s*(\d+)\s*<", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    static readonly Regex CommunityBanRe = new(@"profile_ban_status[^>]*>[^<]*community ban|This account has been banned from the Steam Community", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     static int BanCount(Match m) => !m.Success ? 0 : m.Groups[1].Value.Equals("Multiple", StringComparison.OrdinalIgnoreCase) ? 2 : int.Parse(m.Groups[1].Value);
 

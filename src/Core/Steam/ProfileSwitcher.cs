@@ -919,6 +919,6 @@ public sealed class ProfileApplier
 public static class Secrets
 {
     static readonly Regex Jwt = new(@"eyJ[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{6,}", RegexOptions.Compiled);
-    static readonly Regex Cookies = new(@"\b(steamLoginSecure|sessionid|steamRefresh_steam|steamMachineAuth\d*)=[^;\s]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    static readonly Regex Cookies = new(@"\b(steamLoginSecure|sessionid|steamRefresh_steam|steamMachineAuth\d*)=[^;\s]+", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
     public static string Clean(string text) => string.IsNullOrEmpty(text) ? text : Jwt.Replace(Cookies.Replace(text, "$1=(hidden)"), "(token hidden)");
 }

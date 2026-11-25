@@ -81,6 +81,9 @@ export function codeKeys() {
     for (const m of t.matchAll(re2)) out.add(un(m[1]));
     // files that hold texts in arrays and records (guides, tour, menu paths): every plain literal that reads as a sentence or a name
     if (ALL.includes(f)) for (const m of t.matchAll(new RegExp('(?<![$@' + BS + ']|[A-Za-z])' + LIT, 'g'))) {
+      // a plain literal never holds a raw line break: this is the code between the end of a verbatim string and the next literal
+      // (two "keys" made of source lines sat in src/Lang/*.json, so changing those lines of code failed the language test)
+      if (/[\r\n]/.test(m[1])) continue;
       const v = un(m[1]);
       if (/[A-Za-z]{2}/.test(v) && (v.includes(' ') || /^[A-Z][a-z]{3,}/.test(v)) && !v.includes('{') && !/^[A-Za-z]+[.:]/.test(v)) out.add(v);
     }

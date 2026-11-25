@@ -15,7 +15,7 @@ public static class AppChanges
     {
         if (string.IsNullOrWhiteSpace(remote) || remote == "*") return Loc.T("everything outside the phone");
         var parts = remote.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(p => p.EndsWith("/255.255.255.255") ? p[..^16] : p).ToList();
+            .Select(p => p.EndsWith("/255.255.255.255", StringComparison.Ordinal) ? p[..^16] : p).ToList();
         if (parts.Any(p => p.Contains('-') || p.Contains('/'))) return Fmt.Count(parts.Count, "address range");
         return string.Join(", ", parts.Take(MaxIps)) + (parts.Count > MaxIps ? " " + Loc.F("and {0} more", parts.Count - MaxIps) : "");
     }

@@ -5,6 +5,8 @@ using SRT.Core;
 if (args.Length > 1 && args[0] == "--admin") Environment.Exit(await AdminTests.Run(args[1]));
 // "--dll-search <nome>": processo à parte do teste da pesquisa de DLLs (SecurityTests.cs)
 if (args.Length > 1 && args[0] == "--dll-search") return SecurityTests.DllSearchChild(args[1]);
+// "--cultura <nome>": processo à parte com o formato regional do Windows trocado desde o arranque (CulturaTests.cs)
+if (args.Length > 1 && args[0] == "--cultura") return CulturaTests.Child(args[1]);
 
 // "--a2s <ip> <porta> <ip local>": pergunta a um servidor real (pelo telemóvel) e mostra os jogadores
 if (args.Length > 3 && args[0] == "--a2s")
@@ -683,6 +685,8 @@ Textos15NovTests.Run(Check);
 // 24 nov.: estudo de usabilidade, as duas portas, o hotspot no passo do cabo, o botão do topo sem telemóvel, o fim do Phone setup, as
 // regras de regiões com a app fechada e o tour noutras línguas (Usabilidade24NovTests.cs)
 Usabilidade24NovTests.Run(Check);
+// 25 nov.: o formato regional do Windows (turco, finlandês, tailandês) não muda o que a app lê e escreve como dados (CulturaTests.cs)
+CulturaTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;
