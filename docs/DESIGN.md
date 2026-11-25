@@ -253,8 +253,17 @@ To move or add an option: change it here and in `MainWindow.xaml` in the same st
   `Sub`, and the action in `Accent` with a chevron at the bottom. Show me around and Later on the right under them. One door
   = one page; nothing else is decided there.
 - **The page the window opens on:** Connection, but Regions while no phone was ever checked on this PC (unless the phone door
-  was picked). Until then Connection's top button is "Set up the phone" in grey, and Phone setup is the page's main button.
+  was picked). Until then Connection's top button is "Set up the phone" in grey, and Phone setup is the page's main button;
+  the notification area menu says "Set up the phone" on that line too.
+- **The page never changes by itself** (25 Nov 2026): the page the window opens on is picked before the window is on screen
+  (`PickStartPage`, in the constructor), and after that only a click changes it. Later on the doors closes them and leaves
+  the page as it is.
 - **A second way in a Phone setup row** (Use the hotspot on the cable row) is a grey `Btn`; the row's main action stays `Primary`.
+- **How Phone setup ends** (`SetupEnd`, 24 Nov 2026): one `Primary` button at most, on the right. A step still to do: Close
+  alone, grey (`Btn`). Nothing left to do with protection off: Close grey and Turn on protection `Primary` (`SetupTurnOnBtn`),
+  the step that comes next. Nothing left to do with protection on, or in No phone mode: Done alone, `Primary`.
+- **A row of Phone setup never says done for something the PC can't see** (25 Nov 2026): a hotspot that is picked with the PC
+  off it is the red step (Connection, with Wi-Fi list), so the summary can't say "ready" and Turn on protection isn't offered.
 - **A note inside a group** (the Regions note): `Surface2` with a 2 px left border, `Warn` for a warning, `Accent` for what
   the app offers; buttons on its right. One note per group.
 - **Drawn phone screens** (Phone setup's USB debugging, `src/Views/PhoneGuide.cs`): square like the rest of the app,

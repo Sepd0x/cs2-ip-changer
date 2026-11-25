@@ -26,12 +26,14 @@ public partial class MainWindow
     /// </summary>
     void StartTourWhenFree()
     {
-        if (!TourDue(_s.TourSeen, _s.PhoneSeen, _demo) || Rec.On) return;
+        // Read again: the first sync may have seen a phone since the start page was picked
+        _doorsDue = DoorsDue(_s.TourSeen, _s.PhoneSeen, _demo, Rec.On);
+        if (!_doorsDue) return;
         var since = DateTime.UtcNow;
         _tourWait = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(700) };
         _tourWait.Tick += (_, _) =>
         {
-            if (DateTime.UtcNow - since > TimeSpan.FromMinutes(2)) { _tourWait.Stop(); return; }
+            if (DateTime.UtcNow - since > TimeSpan.FromMinutes(2)) { _tourWait.Stop(); _doorsDue = false; return; }
             if (!IsVisible || WindowState == WindowState.Minimized || Dialog.Visibility == Visibility.Visible || SetupPane.Visibility == Visibility.Visible
                 || _command != null || PhoneKnown) return;
             _tourWait.Stop();
@@ -53,20 +55,34 @@ public partial class MainWindow
         TourNextBtn.Focus();
     }
 
+    /// <summary>
+    /// What the box shows at a stop, in the app's language: its texts, whether the hint (last stop) and Back (not on the first)
+    /// show, and the two buttons' texts (the last stop's are Later and Open Phone setup). The measure test draws the box from this.
+    /// </summary>
+    public sealed record TourView(string Title, string Count, string Text, bool Hint, bool Back, string Skip, string Next);
+
+    public static TourView TourViewAt(int i)
+    {
+        var stop = Texts.Tour[i];
+        var last = i == Texts.Tour.Length - 1;
+        return new(Loc.T(stop.Title), Texts.TourCount(i + 1, Texts.Tour.Length), Loc.T(stop.Text), last, i > 0,
+            Loc.T(last ? Texts.TourLater : Texts.TourSkip), Loc.T(last ? Texts.TourOpenSetup : Texts.TourNext));
+    }
+
     void ShowTourStop(int i)
     {
         _tourAt = i;
         var stop = Texts.Tour[i];
-        var last = i == Texts.Tour.Length - 1;
+        var view = TourViewAt(i);
         // The stops on Connection need it open; the sidebar ones point at the sidebar from wherever you are
         if (FindName(stop.Target) is FrameworkElement t && !IsNav(t)) NavNet.IsChecked = true;
-        TourTitle.Text = Loc.T(stop.Title);
-        TourText.Text = Loc.T(stop.Text);
-        TourHint.Visibility = last ? Visibility.Visible : Visibility.Collapsed;
-        TourCount.Text = Texts.TourCount(i + 1, Texts.Tour.Length);
-        TourBackBtn.Visibility = i == 0 ? Visibility.Collapsed : Visibility.Visible;
-        TourSkipBtn.Content = Loc.T(last ? Texts.TourLater : Texts.TourSkip);
-        TourNextBtn.Content = Loc.T(last ? Texts.TourOpenSetup : Texts.TourNext);
+        TourTitle.Text = view.Title;
+        TourText.Text = view.Text;
+        TourHint.Visibility = view.Hint ? Visibility.Visible : Visibility.Collapsed;
+        TourCount.Text = view.Count;
+        TourBackBtn.Visibility = view.Back ? Visibility.Visible : Visibility.Collapsed;
+        TourSkipBtn.Content = view.Skip;
+        TourNextBtn.Content = view.Next;
         // After the layout (the page may have just switched), so the hole lands on the control
         Dispatcher.BeginInvoke(PlaceTour, DispatcherPriority.Loaded);
     }
@@ -163,8 +179,9 @@ public partial class MainWindow
     void ShowRegionsPitch()
     {
         if (_regionGame != null && _regionGame != _cs2Regions) return;
-        // Not behind the first start's doors, nor before they open (they show it when they close)
-        if (StartPane.Visibility == Visibility.Visible || _tourWait is { IsEnabled: true }) return;
+        // Not behind the first start's doors, nor before they open (they show it when they close). 25 Nov: _doorsDue is set with
+        // the start page, before the window shows; the wait's timer only starts after the first sync
+        if (PitchWaitsForDoors(StartPane.Visibility == Visibility.Visible, _doorsDue)) return;
         var due = RegionsPitchDue(_s.RegionsPitchSeen, PhoneKnown, _s.NoPhone, _demo);
         DemoRegionsPitch(ref due);
         if (RegionsPitch.Visibility == Visibility.Visible || !due) return;

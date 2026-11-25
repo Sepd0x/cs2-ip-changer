@@ -196,6 +196,11 @@ public sealed record PhoneSetupState
     public string WifiJoined { get; init; }
     /// <summary>24 Nov: the PC's Wi-Fi is connected but Windows hides its name (Location off), so it can't be confirmed here.</summary>
     public bool WifiNameHidden { get; init; }
+    /// <summary>
+    /// 25 Nov: a hotspot is picked but the PC isn't on it now: what is wrong, as the row says it
+    /// (<see cref="PhoneSetup.HotspotProblemText"/>). Null = the PC is on it, or no hotspot is picked.
+    /// </summary>
+    public string HotspotProblem { get; init; }
 }
 
 /// <summary>
@@ -359,6 +364,21 @@ public static class PhoneSetup
     /// </summary>
     public static bool HotspotPending(PhoneSetupState s) => s.HotspotAsked && !Plugged(s) && !s.Hotspot && s.PcWifi;
 
+    /// <summary>
+    /// 25 Nov: why the picked hotspot isn't the connection right now (null = it is, or none is picked). With a hotspot saved and the
+    /// PC off it (the phone turned its hotspot off, the laptop went back to the home Wi-Fi) the panel said the hotspot was ready,
+    /// and Turn on protection sent you back to the same panel. <paramref name="problem"/>: what Net.PickEgress found (the PC's
+    /// Wi-Fi on another network, or its name hidden by Windows); null when the Wi-Fi isn't connected to anything.
+    /// </summary>
+    public static string HotspotProblemText(bool hotspot, bool connected, string problem, string ssid) =>
+        !hotspot || connected ? null : problem ?? Loc.F("The PC's Wi-Fi is not connected to the hotspot \"{0}\".", ssid);
+
+    /// <summary>
+    /// 25 Nov: the hotspot is picked and the PC isn't on it: joining it again is the step to do. Not while the phone's USB
+    /// connection is up and the app can switch to it (that row, Use it, is the shorter way).
+    /// </summary>
+    public static bool HotspotAway(PhoneSetupState s) => s.Hotspot && s.HotspotProblem != null && s.Offer is not { CanUse: true };
+
     public static List<SetupItem> Steps(PhoneSetupState s, bool samsung = false, string model = null, string ssid = null)
     {
         if (s.Iphone) return IphoneSteps(s, ssid);
@@ -367,6 +387,7 @@ public static class PhoneSetup
         var plugged = Plugged(s);
         var paths = PathsFor(samsung ? "Samsung" : s.Usb.Vendor);
         var asked = HotspotPending(s);
+        var away = HotspotAway(s);
         // On the hotspot the ADB rows are only for Change IP: they wait, and say so once nothing else is left
         var onlyChangeIp = (s.Hotspot || asked) && !plugged;
         var list = new List<SetupItem>
@@ -383,8 +404,9 @@ public static class PhoneSetup
 
             s.Usb.Problem is int code ? new(PhoneStep.UsbDriverError, Loc.T("USB cable"), StepState.Todo, Advice(PhoneStep.UsbDriverError, code, samsung), null)
             : plugged ? new(PhoneStep.NoUsb, Loc.T("USB cable"), StepState.Ok, model != null && adb ? Loc.F("{0} plugged in", model) : Loc.T("Phone plugged in"), null)
-            : s.Hotspot ? new(PhoneStep.NoUsb, Loc.T("USB cable"), StepState.Waiting, Loc.T("You use the hotspot: the cable is only needed for Change IP."), null)
-            : asked ? new(PhoneStep.NoUsb, Loc.T("USB cable"), StepState.Waiting, Loc.T(Texts.HotspotCableWaits), null)
+            // 25 Nov: the same while the hotspot is being joined (that case had a sentence of its own that was never on screen: a row
+            // that isn't the step to do only shows its title)
+            : s.Hotspot || asked ? new(PhoneStep.NoUsb, Loc.T("USB cable"), StepState.Waiting, Loc.T("You use the hotspot: the cable is only needed for Change IP."), null)
             // 24 Nov: the hotspot from the first second, as a quiet button (the cable stays the main way: Change IP needs it)
             : s.PcWifi ? new(PhoneStep.NoUsb, Loc.T("USB cable"), StepState.Todo, Loc.T(Texts.CableTodo) + "\n" + Loc.T(Texts.CableHotspot), Loc.T(Texts.HotspotUse), true)
             : new(PhoneStep.NoUsb, Loc.T("USB cable"), StepState.Todo, Loc.T(Texts.CableTodo) + "\n" + Loc.T(Texts.CableNoWifi), null),
@@ -402,10 +424,13 @@ public static class PhoneSetup
             : onlyChangeIp ? new(PhoneStep.Unauthorized, Loc.T("Allowed on this PC"), StepState.Waiting, Loc.T(Texts.HotspotOnlyChangeIp), null)
             : new(PhoneStep.Unauthorized, Loc.T("Allowed on this PC"), StepState.Waiting, Loc.T("Your phone will ask \"Allow USB debugging?\". Tap Allow."), null),
 
-            s.Hotspot ? new(PhoneStep.TetherOff, Loc.T("Connection"), StepState.Ok, ssid != null ? Loc.F("The phone's hotspot ({0})", ssid) : Loc.T("The phone's hotspot"), null)
+            // 25 Nov: the picked hotspot with the PC off it is the step to do (it was green, and the panel said "ready")
+            away ? new(PhoneStep.TetherOff, Loc.T("Connection"), StepState.Todo, s.HotspotProblem + "\n" + Loc.T(Texts.HotspotTodo), Loc.T(Texts.HotspotWifiList))
+            : s.Hotspot && s.HotspotProblem == null ? new(PhoneStep.TetherOff, Loc.T("Connection"), StepState.Ok, ssid != null ? Loc.F("The phone's hotspot ({0})", ssid) : Loc.T("The phone's hotspot"), null)
             // 24 Nov, after Use the hotspot: join it in Windows' Wi-Fi list, then confirm the network the PC moved to
             : asked && s.WifiJoined != null ? new(PhoneStep.TetherOff, Loc.T("Connection"), StepState.Todo, Texts.HotspotSeen(s.WifiJoined), Loc.T(Texts.HotspotItsPhone))
-            : asked && s.WifiNameHidden ? new(PhoneStep.TetherOff, Loc.T("Connection"), StepState.Todo, Loc.T(Net.SsidLocationText), Loc.T(Texts.HotspotWifiList))
+            // 25 Nov: the Location text no longer takes the place of what to do with the hotspot (it came up 2 s after the click)
+            : asked && s.WifiNameHidden ? new(PhoneStep.TetherOff, Loc.T("Connection"), StepState.Todo, Loc.T(Net.SsidLocationText) + "\n" + Loc.T(Texts.HotspotTodo), Loc.T(Texts.HotspotWifiList))
             : asked ? new(PhoneStep.TetherOff, Loc.T("Connection"), StepState.Todo, Loc.T(Texts.HotspotTodo) + "\n" + Loc.T(Texts.HotspotAlready), Loc.T(Texts.HotspotWifiList))
             : s.Tethered ? new(PhoneStep.TetherOff, Loc.T("USB tethering"), StepState.Ok, Loc.T("On"), null)
             : s.Offer is { } offer ? new(PhoneStep.TetherOff, Loc.T(offer.Ssid != null || !offer.CanUse ? "Connection" : "USB tethering"), StepState.Todo, offer.Detail, offer.CanUse ? Loc.T("Use it") : null)
@@ -464,7 +489,9 @@ public static class PhoneSetup
             : plugged ? new(PhoneStep.Unauthorized, Loc.T("Trust this computer"), StepState.Todo, Loc.T("Unlock the iPhone. If it asks \"Trust This Computer?\", tap Trust and enter your passcode.") + "\n" + Loc.T("No question?") + " " + Loc.T(IphoneBringBack), null)
             : new(PhoneStep.Unauthorized, Loc.T("Trust this computer"), StepState.Waiting, Loc.T("The iPhone asks once it is plugged in."), null),
 
-            s.Hotspot ? new(PhoneStep.TetherOff, Loc.T("Connection"), StepState.Ok, ssid != null ? Loc.F("The iPhone's hotspot ({0})", ssid) : Loc.T("The iPhone's hotspot"), null)
+            // 25 Nov: the same as the Android rows: the picked hotspot with the PC off it is the step to do
+            HotspotAway(s) ? new(PhoneStep.TetherOff, Loc.T("Connection"), StepState.Todo, s.HotspotProblem + "\n" + Loc.T(Texts.HotspotTodo), Loc.T(Texts.HotspotWifiList))
+            : s.Hotspot ? new(PhoneStep.TetherOff, Loc.T("Connection"), StepState.Ok, ssid != null ? Loc.F("The iPhone's hotspot ({0})", ssid) : Loc.T("The iPhone's hotspot"), null)
             : s.Tethered ? new(PhoneStep.TetherOff, Loc.T("Personal Hotspot"), StepState.Ok, Loc.T("On, through the cable (mobile data)"), null)
             : noDriver ? new(PhoneStep.TetherOff, Loc.T("Personal Hotspot"), StepState.Waiting, Loc.T("Once Apple's driver is installed."), null)
             : plugged ? new(PhoneStep.TetherOff, Loc.T("Personal Hotspot"), StepState.Todo, Loc.T(IphoneHotspot) + "\n" + Loc.T("Still red?") + " " + Loc.T(IphoneBringBack), null)
@@ -530,6 +557,20 @@ public static class PhoneSetup
 
     /// <summary>The step the panel is at, for the usage counts: the red one, or "done" when there is nothing left to do.</summary>
     public static string StepKey(IReadOnlyList<SetupItem> steps) => Current(steps) is { } now ? Key(now.Step) : "done";
+
+    /// <summary>
+    /// A step's name in the usage counts (Setup_ clicks, phone_setup_ and phone_left_). 25 Nov: the Connection row of the hotspot
+    /// (being joined after Use the hotspot, or picked with the PC off it) has its own name: it shares PhoneStep.TetherOff with USB
+    /// tethering, and under that step's name the stats read it as stopped at USB tethering, for someone who never had a cable.
+    /// </summary>
+    public static string CountKey(PhoneStep step, PhoneSetupState s) =>
+        step == PhoneStep.TetherOff && s != null && (HotspotPending(s) || HotspotAway(s)) ? HotspotKey : Key(step);
+
+    /// <summary>The hotspot's Connection row in the usage counts: Setup_hotspot, phone_setup_hotspot, phone_left_hotspot.</summary>
+    public const string HotspotKey = "hotspot";
+
+    /// <summary>The step the panel is at, by its name in the usage counts (StepKey with the hotspot told apart).</summary>
+    public static string CountKey(IReadOnlyList<SetupItem> steps, PhoneSetupState s) => Current(steps) is { } now ? CountKey(now.Step, s) : "done";
 
     /// <summary>
     /// The usage counts when Phone setup closes (beta.11, dashboard v4 "where people get stuck"): the step when it was opened

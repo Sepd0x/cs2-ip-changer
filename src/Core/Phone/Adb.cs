@@ -310,7 +310,7 @@ public static class Adb
             var total = res.Content.Headers.ContentLength;
             await using var from = await res.Content.ReadAsStreamAsync();
             await using (var to = new FileStream(zip, FileMode.Create, FileAccess.Write, FileShare.None))
-                await CopyWithProgress(from, to, total, progress, percent);
+                await CopyWithProgress(from, to, total, progress, percent, DownloadStall);
         }
         progress?.Report(Loc.T(SRT.Texts.AdbUnpacking));
         await Task.Run(() => Extract(zip, Paths.Data));
@@ -319,8 +319,18 @@ public static class Adb
         return await Task.Run(Find);
     }
 
-    /// <summary>Copies the download, telling how far it is at most every 250 ms (and once at the end).</summary>
-    public static async Task CopyWithProgress(Stream from, Stream to, long? total, IProgress<string> progress, IProgress<double> percent = null)
+    /// <summary>
+    /// How long the download may go without a single byte before it gives up (25 Nov). The 3 minutes of the request only cover the
+    /// wait for the answer's first line: a connection left hanging after that (the PC's Wi-Fi moved to the phone's hotspot half way)
+    /// kept Phone setup on "Downloading" for good, and it reads nothing else while a download runs.
+    /// </summary>
+    public static readonly TimeSpan DownloadStall = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Copies the download, telling how far it is at most every 250 ms (and once at the end). <paramref name="stall"/>: gives up
+    /// (OperationCanceledException) when no byte comes for that long; null waits for as long as it takes.
+    /// </summary>
+    public static async Task CopyWithProgress(Stream from, Stream to, long? total, IProgress<string> progress, IProgress<double> percent = null, TimeSpan? stall = null)
     {
         var buf = new byte[81920];
         long got = 0;
@@ -331,7 +341,16 @@ public static class Adb
             progress?.Report(SRT.Texts.AdbDownloading(got, total));
             if (total is long t && t > 0) percent?.Report(Math.Clamp(got * 100.0 / t, 0, 100));
         }
-        while ((n = await from.ReadAsync(buf)) > 0)
+        using var quiet = new CancellationTokenSource();
+        async ValueTask<int> Next()
+        {
+            if (stall is not TimeSpan limit) return await from.ReadAsync(buf);
+            quiet.CancelAfter(limit);   // counted again from each read, and only while reading (not while the disk writes)
+            var read = await from.ReadAsync(buf, quiet.Token);
+            quiet.CancelAfter(Timeout.InfiniteTimeSpan);
+            return read;
+        }
+        while ((n = await Next()) > 0)
         {
             await to.WriteAsync(buf.AsMemory(0, n));
             got += n;

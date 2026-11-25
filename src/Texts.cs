@@ -164,7 +164,6 @@ public static class Texts
     public const string HotspotAlready = "Already on the phone's hotspot? Pick it in Connection > Phone > How the PC connects to the phone.";
     public const string HotspotWifiList = "Wi-Fi list";
     public const string HotspotItsPhone = "It's the phone";
-    public const string HotspotCableWaits = "You picked the hotspot: the cable is only needed for Change IP. Plugging it in also works.";
     public const string HotspotOnlyChangeIp = "Only for Change IP, with the USB cable.";
     public const string HotspotMoved = "The PC's Wi-Fi moved to another network meanwhile. Check the name in the row and try again.";
     public const string HotspotReady = "The phone's hotspot is ready. Change IP needs the USB cable and USB debugging.";

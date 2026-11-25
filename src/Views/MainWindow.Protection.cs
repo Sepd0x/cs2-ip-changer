@@ -119,9 +119,22 @@ public partial class MainWindow
     // A command (4 nov.): the top bar says what it is doing while it connects the phone, and Cancel stops the wait for tethering
     async void TurnOn_Click(object sender, RoutedEventArgs e)
     {
-        if (!PhoneKnown) { await RunPhoneSetup(); return; }   // "Set up the phone" (TurnOnLook): nothing is blocked before a phone was checked
+        // "Set up the phone" (TurnOnLook): nothing is blocked before a phone was checked
+        if (TurnOnPress(PhoneKnown) is (true, var count)) { Telemetry.Count(count); await RunPhoneSetup(); return; }
         await RunCommand(Loc.T("Turn on protection"), Loc.T("turning on…"), () => TurnProtectionOn(ask: true));
     }
+
+    /// <summary>
+    /// The usage count of "Set up the phone" on Connection's top button (25 Nov). The click itself still counts as TurnOn_Click (the
+    /// button's handler), so without this the stats couldn't tell it from Turn on protection.
+    /// </summary>
+    public const string SetUpPhoneCount = "phone_btn_setup";
+
+    /// <summary>
+    /// What a press of that button does: before any phone was checked on this PC it only opens Phone setup (nothing is turned on or
+    /// blocked) and has its own usage count; after that it turns protection on.
+    /// </summary>
+    public static (bool OnlySetup, string Count) TurnOnPress(bool phoneKnown) => phoneKnown ? (false, null) : (true, SetUpPhoneCount);
 
     /// <summary>The XAML's tooltip of Turn on protection, kept for when a phone was checked.</summary>
     public const string TurnOnTip = "The kill switch, the routes and the CS2 lock: servers only see the phone's IP, and if the phone drops they are blocked instead of seeing your home IP. It stays on until you turn it off.";

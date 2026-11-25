@@ -37,7 +37,23 @@ public partial class MainWindow
         RegionGamePicker.IsEnabled = true;
         await Task.WhenAll(_regionGames.Where(g => g == _cs2Regions || g.Settings.BlockedRegions.Count > 0 || g.PendingPreset != null)
             .Select(g => LoadRegions(atStart: true, state: g)));
+        PingRegionsAtStart();
     }
+
+    /// <summary>
+    /// 25 Nov: the window can open on Regions (StartOnRegions), before the list is read and before the first sync says which
+    /// connection to measure through, so the page being shown (PageRegions_VisibleChanged) comes too early for the pings. Called
+    /// when each of the two is done: the pings come by themselves whichever ends last, once.
+    /// </summary>
+    void PingRegionsAtStart()
+    {
+        if (_demo || !RegionsPingDue(PageRegions.IsVisible, _regionRulesReady, _regionGame?.PingedAt ?? DateTime.MinValue, DateTime.Now)) return;
+        _ = PingRegions(quiet: true);
+    }
+
+    /// <summary>The page is on screen, its list was read, and the pings are older than 2 minutes (or were never measured).</summary>
+    public static bool RegionsPingDue(bool pageVisible, bool listReady, DateTime pingedAt, DateTime now) =>
+        pageVisible && listReady && (now - pingedAt).TotalMinutes >= 2;
 
     async void PageRegions_VisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
     {

@@ -102,6 +102,8 @@ public partial class MainWindow : Window
             catch (Exception ex) { Log.Warn("Couldn't save that the usage stats notice was accepted (" + ex.Message + "); it shows again at the next start."); }
         }
         Telemetry.Start(_demo, TelemetryNow, _s.StatsAccepted, off: _s.StatsOff);
+        // 25 Nov: the page the window opens on, before it is on screen and before the stats read the screen that is open
+        PickStartPage();
         TelemetryHook();
         // The day the notice was accepted: the dashboard's "new users" (also once for someone coming from beta.7, who sees it once;
         // not for an older notice accepted again, that's no first start)
@@ -217,9 +219,10 @@ public partial class MainWindow : Window
             _ = ShowAutostart();
             ShowData();
             StartTourWhenFree();   // the first start's two doors (24 Nov; the tour before), once, before any phone
-            // 24 Nov: no phone ever checked here, the window opens on Regions (what most people use the app for). After the doors'
-            // wait started, so the Regions note waits for them (ShowRegionsPitch)
-            if (StartOnRegions(_s.PhoneSeen, _s.StartDoor, _demo)) NavRegions.IsChecked = true;
+            // 24 Nov: no phone ever checked here, the window opens on Regions (what most people use the app for). 25 Nov: the page is
+            // picked in the constructor (PickStartPage), never here: by now the window is on screen and a page may have been clicked.
+            // A window that opened on Regions gets its pings now that the first sync says which connection to measure through
+            PingRegionsAtStart();
         }
         SizeChanged += (_, _) => PlaceTour();
         _secondTimer.Start();

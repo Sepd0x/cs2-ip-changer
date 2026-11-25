@@ -683,6 +683,9 @@ Textos15NovTests.Run(Check);
 // 24 nov.: estudo de usabilidade, as duas portas, o hotspot no passo do cabo, o botão do topo sem telemóvel, o fim do Phone setup, as
 // regras de regiões com a app fechada e o tour noutras línguas (Usabilidade24NovTests.cs)
 Usabilidade24NovTests.Run(Check);
+// 25 nov.: a revisão independente do primeiro arranque e do Phone setup: a página de arranque antes de a janela aparecer, o hotspot
+// guardado com o PC fora dele, a lista de Wi-Fi sem direitos de administrador, os contadores com nome próprio (Correcao25NovTests.cs)
+Correcao25NovTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;
