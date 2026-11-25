@@ -119,7 +119,7 @@ test('the floor\'s mirror (3D-008): every object, not only what glows; nothing h
 });
 
 test('fewer draw calls (3D-008 pays for the mirror with them): the still parts of a thing that share a material are one mesh', () => {
-  assert.ok(src.includes('function fuse(group, keep = [], also = [])'));
+  assert.ok(src.includes('function fuse(group, keep = [], also = []'), 'fuse(group, keep, also) (25 Nov.: a fourth argument, the group the joined meshes are written in)');
   for (const call of ['fuse(t);', 'fuse(mon);', 'fuse(s, [pad]);', 'fuse(s, [slab], [doorMat]);', 'fuse(r);']) assert.ok(src.includes(call), call);
   assert.ok(src.includes('if (!o.visible || q.userData.noBake) return;') || src.includes('if (!q.visible || q.userData.noBake) return;'), 'nothing that moves or hides is fused');
   const g = readFileSync(join(ROOT, 'site/assets/guides/src/guides.js'), 'utf8');

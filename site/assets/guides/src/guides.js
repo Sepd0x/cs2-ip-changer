@@ -146,12 +146,14 @@ const PAGES = {
       // the source: a stack of pages
       const src = new Group(); src.position.set(-15.4, 0, 4.6); src.rotation.y = 0.3; c.scene.add(src);
       for (let i = 0; i < 6; i++) { const pg = c.rbox(1.5, 0.05, 1.05, 0.02, i === 5 ? edge(c.C.top1, 1.2) : c.M.metalDark); pg.position.y = 0.05 + i * 0.09; pg.rotation.y = (i % 2 ? 0.03 : -0.02); src.add(pg); }
+      c.fuse(src); // the five dark pages never move: one mesh (25 Nov.: each was a draw call in each of the frame's three passes)
       // the build: a gate the code passes through, with the attestation as a ring (its seal)
       const build = new Group(); build.position.set(-12.6, 0, 5.2); build.rotation.y = 0.5; c.scene.add(build);
       for (const x of [-0.8, 0.8]) { const p = c.rbox(0.12, 1.9, 0.12, 0.03, c.M.metal); p.position.set(x, 0.95, 0); build.add(p); }
       { const t2 = c.rbox(1.72, 0.12, 0.12, 0.03, c.M.metal); t2.position.set(0, 1.9, 0); build.add(t2); }
       const seal = new Mesh(new RingGeometry(0.3, 0.36, 64), new MeshBasicMaterial({ color: c.C.top2, transparent: true, opacity: 0.25, side: DoubleSide, toneMapped: false }));
       seal.position.set(0, 1.0, 0); build.add(seal);
+      c.fuse(build); // the gate's two posts and its top; the seal fades in, so it stays an object of its own (see-through parts are never fused)
       // the exe, with its .sha256 tag
       const exe = c.rbox(0.7, 0.95, 0.1, 0.05, edge(c.C.top3)); exe.position.set(-10.2, 0.5, 3.9); exe.rotation.y = 0.55; c.scene.add(exe);
       const tag = new Mesh(new PlaneGeometry(0.5, 0.07), new MeshBasicMaterial({ color: c.C.top3, toneMapped: false })); tag.position.set(0, -0.25, 0.056); exe.add(tag);
@@ -200,14 +202,18 @@ const PAGES = {
       only(c.LAB, ['phone']); c.LAB.phone.beats = [1]; // the phone in the corner of the shot, named
       const face = (lit) => new MeshStandardMaterial({ color: c.C.surface3, metalness: 0.2, roughness: 0.6, emissive: lit, emissiveIntensity: 0 });
       X.cards = [];
+      // the story moves the first two cards (the banned one tilts, the next one rises); the other four stand still, so their
+      // cards and feet are one mesh each (25 Nov.)
+      const fixed = new Group(); c.scene.add(fixed);
       for (let i = 0; i < 6; i++) {
-        const g = new Group(); g.position.set(-3.3 + i * 0.82, 0.05, 2.1 - i * 0.34); g.rotation.y = -0.45; c.scene.add(g);
+        const g = new Group(); g.position.set(-3.3 + i * 0.82, 0.05, 2.1 - i * 0.34); g.rotation.y = -0.45; (i < 2 ? c.scene : fixed).add(g);
         const card = c.rbox(1.3, 1.8, 0.07, 0.07, c.M.metalDark); card.position.y = 0.95; card.castShadow = true; g.add(card);
         const av = new Mesh(new PlaneGeometry(0.46, 0.46), face(i === 0 ? c.C.bad : c.C.accent)); av.position.set(-0.3, 1.4, 0.04); g.add(av);
         const line = new Mesh(new PlaneGeometry(0.85, 0.06), new MeshBasicMaterial({ color: c.C.lineStrong })); line.position.set(0.05, 0.85, 0.04); g.add(line);
         const foot = c.rbox(0.8, 0.07, 0.34, 0.02, c.M.metal); foot.position.set(0, 0.035, 0); g.add(foot);
         X.cards.push({ g, card, av, y: 0.05 });
       }
+      c.fuse(fixed);
       c.LAB.mon = lab(c.monW(0.2, 3.75), T('Accounts', 'the real page of the app'), { beats: [1] });
       c.LAB.skip = lab(V3(-3.3, 1.9, 2.1), T('Banned on this server', 'skipped'), { beats: [1], hot: 1, r: 1 });
       c.LAB.next = lab(V3(-2.48, 1.9, 1.76), T('Next account', 'logs in, no password typed'), { beats: [1] });
@@ -275,16 +281,19 @@ const PAGES = {
       g.strokeStyle = grd; g.lineWidth = 7; g.beginPath(); g.arc(64, 50, 22, 0, Math.PI * 2); g.stroke(); g.beginPath(); g.arc(64, 128, 44, Math.PI, 0); g.stroke();
       const look = new CanvasTexture(av); look.colorSpace = SRGBColorSpace;
       X.plates = [];
+      // the six stands never move, only the plates on them turn: the legs and feet are one mesh, the plates' frames stay their own (25 Nov.)
+      const stands = new Group(), frames = []; c.scene.add(stands);
       for (let i = 0; i < 6; i++) {
-        const st = new Group(); st.position.set(-2.8 + i * 0.64, 0.05, 2.4 - i * 0.26); st.rotation.y = -0.15; c.scene.add(st);
+        const st = new Group(); st.position.set(-2.8 + i * 0.64, 0.05, 2.4 - i * 0.26); st.rotation.y = -0.15; stands.add(st);
         const leg = c.rbox(0.05, 0.7, 0.05, 0.02, c.M.metal); leg.position.y = 0.35; st.add(leg);
         const foot = c.rbox(0.36, 0.04, 0.24, 0.02, c.M.metal); foot.position.y = 0.02; st.add(foot);
         const p = new Group(); p.position.y = 1.0; st.add(p);
-        const frame = c.rbox(0.62, 0.62, 0.05, 0.03, c.M.metalDark); frame.castShadow = true; p.add(frame);
+        const frame = c.rbox(0.62, 0.62, 0.05, 0.03, c.M.metalDark); frame.castShadow = true; p.add(frame); frames.push(frame);
         const blank = new Mesh(new PlaneGeometry(0.52, 0.52), new MeshBasicMaterial({ color: c.C.surface3 })); blank.position.z = 0.028; p.add(blank);
         const done = new Mesh(new PlaneGeometry(0.52, 0.52), new MeshBasicMaterial({ map: look, transparent: true, opacity: 0, toneMapped: false })); done.position.z = 0.03; p.add(done);
         X.plates.push({ p, done });
       }
+      c.fuse(stands, frames);
       c.LAB.mon = lab(c.monW(0.2, 3.75), T('Profiles', 'the real page of the app'), { beats: [1] });
       c.LAB.tpl = lab(V3(-2.8, 1.38, 2.4), T('Template', 'name, picture, privacy'), { beats: [1], r: 1 });
       c.LAB.run = lab(V3(-0.68, 0.06, 1.62), T('Apply', 'one account after another'), { beats: [1], dn: 1 });
