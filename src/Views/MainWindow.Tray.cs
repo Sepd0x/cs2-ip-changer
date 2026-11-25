@@ -27,14 +27,18 @@ public partial class MainWindow
     /// <summary>
     /// The menu, top to bottom: the state (not clickable), Open, the commands, Quit. Key null = separator. <paramref name="on"/>: protection
     /// is on, so the line turns it off; off, it turns it on (greyed in No phone mode, where there is nothing to turn on). <paramref name="quick"/>:
-    /// the switch's name as its button says it now ("Log in to atlas + rejoin" when the IP doesn't change).
+    /// the switch's name as its button says it now ("Log in to atlas + rejoin" when the IP doesn't change). <paramref name="phoneKnown"/>
+    /// (25 Nov): false while no phone was ever checked on this PC; the line then says what it does, "Set up the phone", as
+    /// Connection's top button (TurnOnLook), with its own key (and usage count, Tray_setup).
     /// </summary>
-    public static List<(string Text, string Key, bool Enabled)> TrayLayout(string state, bool on, bool phone, string quick = "New IP + next account") =>
+    public static List<(string Text, string Key, bool Enabled)> TrayLayout(string state, bool on, bool phone, string quick = "New IP + next account", bool phoneKnown = true) =>
     [
         (string.IsNullOrWhiteSpace(state) ? "CS2 IP Changer" : state, "state", false),
         (null, null, false),
         (Loc.T("Open"), "open", true),
-        on ? (Loc.T("Turn off protection"), "off", true) : (Loc.T("Turn on protection"), "on", phone),
+        on ? (Loc.T("Turn off protection"), "off", true)
+            : phone && !phoneKnown ? (Loc.T(Texts.SetUpPhone), "setup", true)
+            : (Loc.T("Turn on protection"), "on", phone),
         (string.IsNullOrWhiteSpace(quick) ? Loc.T("New IP + next account") : Loc.T(quick), "switch", true),
         (Loc.T("Change IP"), "changeip", phone),
         (Loc.T("Regions"), "regions", true),
@@ -43,18 +47,25 @@ public partial class MainWindow
     ];
 
     /// <summary>Built each time the menu opens, from the state of that moment. The state line has no command, so it is greyed.</summary>
-    public static List<Tray.Item> TrayItems(string state, bool on, bool phone, Action<string> command, string quick = "New IP + next account") =>
-        TrayLayout(state, on, phone, quick).Select(l => l.Text == null ? new Tray.Item(null)
+    public static List<Tray.Item> TrayItems(string state, bool on, bool phone, Action<string> command, string quick = "New IP + next account", bool phoneKnown = true) =>
+        TrayLayout(state, on, phone, quick, phoneKnown).Select(l => l.Text == null ? new Tray.Item(null)
             : new Tray.Item(l.Text, l.Key == "state" ? null : () => command(l.Key), l.Enabled, l.Key == "open")).ToList();
 
     IReadOnlyList<Tray.Item> TrayMenu()
     {
         UpdateQuickInfo();   // the switch's name as of now
-        return TrayItems(SideState.Text, _protOn && !_s.NoPhone, !_s.NoPhone, TrayCommand, _quickName);
+        return TrayItems(SideState.Text, _protOn && !_s.NoPhone, !_s.NoPhone, TrayCommand, _quickName, PhoneKnown);
     }
+
+    /// <summary>
+    /// What a line of the menu does, by its key. Before any phone was checked on this PC "on" is "setup" too (24 Nov: Phone setup,
+    /// nothing blocked, as Connection's button), also when the menu was drawn before that changed.
+    /// </summary>
+    public static string TrayDoes(string key, bool phoneKnown) => key == "on" && !phoneKnown ? "setup" : key;
 
     void TrayCommand(string key)
     {
+        key = TrayDoes(key, PhoneKnown);
         Telemetry.Click("Tray_" + key);
         switch (key)
         {
@@ -63,8 +74,7 @@ public partial class MainWindow
             case "changeip": _ = RunCommand("Change IP", "starting…", () => ChangeIp(confirm: true)); break;
             case "regions": ShowFromTray(); NavRegions.IsChecked = true; break;
             case "off": ShowFromTray(); Restore_Click(this, new RoutedEventArgs()); break;
-            // 24 Nov: before any phone was checked, the same as Connection's button (Set up the phone): Phone setup, nothing blocked
-            case "on" when !PhoneKnown: ShowFromTray(); NavNet.IsChecked = true; _ = RunPhoneSetup(); break;
+            case "setup": ShowFromTray(); NavNet.IsChecked = true; _ = RunPhoneSetup(); break;
             case "on": _ = TurnProtectionOn(ask: true); break;   // a question (CS2 open) opens the window
             case "quit": _quitting = true; Close(); break;   // a question on the way (Keep and close) opens the window
         }

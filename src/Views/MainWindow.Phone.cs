@@ -345,7 +345,7 @@ public partial class MainWindow
     /// <summary>The download's failure in a few words: no internet, too slow, or what the server said.</summary>
     public static string AdbErrorText(Exception ex) => ex switch
     {
-        TaskCanceledException => Loc.T("it took too long"),
+        OperationCanceledException => Loc.T("it took too long"),   // the request's 3 minutes, or 30 s without a byte (Adb.DownloadStall)
         System.Net.Http.HttpRequestException { StatusCode: { } code } => Loc.F("Google answered {0}", (int)code),
         System.Net.Http.HttpRequestException => Loc.T("no connection to dl.google.com"),
         IOException => Loc.T("the file couldn't be saved"),
@@ -511,9 +511,10 @@ public partial class MainWindow
         var samsung = st.Usb.Vendor == "Samsung" || _phone?.Model?.StartsWith("SM-", StringComparison.OrdinalIgnoreCase) == true;
         var steps = PhoneSetup.Steps(st, samsung, _phone?.Model, _s.EgressSsid);
         var now = PhoneSetup.Current(steps);
-        // The usage counts: where it stood when you opened it, and where it is now (counted when you close it, beta.11)
-        _setupFirstTodo ??= PhoneSetup.StepKey(steps);
-        _setupLeft = PhoneSetup.StepKey(steps);
+        // The usage counts: where it stood when you opened it, and where it is now (counted when you close it, beta.11). 25 Nov:
+        // the hotspot's Connection row has its own name there (CountKey), not USB tethering's
+        _setupFirstTodo ??= PhoneSetup.CountKey(steps, st);
+        _setupLeft = PhoneSetup.CountKey(steps, st);
         // How long the step to do now has been the one (the cable and Allow steps add what to try after a while), and USB debugging
         // turning on is said out loud: the person is looking at the phone, not at the PC (10 Nov)
         var key = PhoneSetup.StepKey(steps);
@@ -608,7 +609,7 @@ public partial class MainWindow
         if (_setupBusy != null) return;
         // Install (on mobile data) and Try again: the download in the row, no second question (pressing it is the yes)
         if (step == PhoneStep.NoAdbTool) { await SetupInstallAdb(auto: false); return; }
-        Telemetry.Click("Setup_" + PhoneSetup.Key(step));
+        Telemetry.Click("Setup_" + PhoneSetup.CountKey(step, _setupState));   // 25 Nov: Wi-Fi list and It's the phone are Setup_hotspot, not Setup_tetheroff
         string Busy(string text) { _setupBusyText = text; if (_setupState != null) ShowSetup(_setupState); return text; }
         _setupBusy = step;
         string why = null;
@@ -619,13 +620,15 @@ public partial class MainWindow
                 case PhoneStep.UsbDriverError:
                     // Only the iPhone's rows have this button: Apple Devices brings its network driver (9 nov.)
                     Busy(Loc.T("Opening Apple Devices in the Microsoft Store…"));
-                    try
+                    // 25 Nov: through Explorer, as the signed-in user (a link opened by this process is looked up with its admin rights)
+                    if (ShellLaunch.OpenAsUser(PhoneSetup.AppleDevicesStoreUri, "", null) is string storeErr)
                     {
-                        Process.Start(new ProcessStartInfo(PhoneSetup.AppleDevicesStoreUri) { UseShellExecute = true });
-                        Log.Info("Phone setup opened Apple Devices in the Microsoft Store, for the iPhone's network driver.");
-                        Toast(Loc.T("In the Microsoft Store, press Get. When it's installed, unplug the iPhone and plug it in again."), true);
+                        Log.Warn("Couldn't open the Microsoft Store: " + storeErr);
+                        why = Loc.T("Couldn't open the Microsoft Store. Open it and install \"Apple Devices\" (by Apple).");
+                        break;
                     }
-                    catch (Exception ex) { Log.Warn("Couldn't open the Microsoft Store: " + ex.Message); why = Loc.T("Couldn't open the Microsoft Store. Open it and install \"Apple Devices\" (by Apple)."); }
+                    Log.Info("Phone setup opened Apple Devices in the Microsoft Store, for the iPhone's network driver.");
+                    Toast(Loc.T("In the Microsoft Store, press Get. When it's installed, unplug the iPhone and plug it in again."), true);
                     break;
                 case PhoneStep.AdbFailed:
                     Busy(Loc.T("Starting the phone tool again…"));
@@ -644,6 +647,10 @@ public partial class MainWindow
                     await UseOffer(new ConnectionOffer(wifi.Id, ssid, null, true));
                     _hotspotAsked = false;
                     await Task.Delay(1500);
+                    break;
+                // 25 Nov: a hotspot is picked and the PC isn't on it: the Wi-Fi list (the row turns green by itself once it is back)
+                case PhoneStep.TetherOff when _setupState != null && PhoneSetup.HotspotAway(_setupState):
+                    OpenWifiList();
                     break;
                 case PhoneStep.TetherOff when _setupState?.Offer is { CanUse: true } offer:
                     Busy(Loc.T(offer.Ssid != null ? "Using the phone's hotspot…" : "Using the phone over USB…"));
@@ -691,7 +698,7 @@ public partial class MainWindow
         // The phone's own addresses first: an adapter Windows names in a way the app doesn't know is still found by its gateway
         var phoneIps = info?.Ready == true ? await ReadPhoneAddresses(info.Serial) : null;
         var adapters = await Task.Run(Net.Scan);
-        var phone = Net.PickEgress(adapters, _s.EgressAdapterId, _s.EgressSsid);
+        var phone = Net.PickEgress(adapters, _s.EgressAdapterId, _s.EgressSsid, out var linkProblem);
         var hotspot = PhoneLink.IsHotspot(_s.EgressSsid, phone?.IsWifi);
         var other = phone != null && PhoneLink.HasHome(adapters, phone);
         var mode = PhoneLink.EffectiveMode(_protOn, _s.Mode, _s.GameMode, Steam.Cs2Running);
@@ -714,6 +721,7 @@ public partial class MainWindow
             HotspotAsked = _hotspotAsked,
             WifiJoined = _hotspotAsked ? HotspotJoined(adapters, _hotspotFrom, _hotspotFromGateway)?.Ssid : null,
             WifiNameHidden = _hotspotAsked && HotspotNameHidden(adapters),
+            HotspotProblem = PhoneSetup.HotspotProblemText(hotspot, phone != null, linkProblem, _s.EgressSsid),
         };
     }
 
@@ -753,14 +761,30 @@ public partial class MainWindow
     /// <summary>The PC is on a Wi-Fi network whose name Windows hides (Location off): it can't be confirmed as the phone.</summary>
     public static bool HotspotNameHidden(IEnumerable<Adapter> adapters) => WifiNow(adapters).Any(a => a.Ssid == null && a.SsidUnknown);
 
-    /// <summary>Windows' list of Wi-Fi networks (its Settings page if the list doesn't open from an app that runs as admin).</summary>
+    /// <summary>Windows' list of Wi-Fi networks, then its Settings page if the list can't be opened.</summary>
+    public static readonly string[] WifiListLinks = { "ms-availablenetworks:", "ms-settings:network-wifi" };
+
+    /// <summary>
+    /// Opens the first of <paramref name="links"/> that <paramref name="open"/> takes (it gives null when it opened, else why not,
+    /// as ShellLaunch.OpenAsUser does). False when none opened: the caller says how to get there by hand.
+    /// </summary>
+    public static bool OpenFirst(IEnumerable<string> links, Func<string, string> open, Action<string, string> failed = null)
+    {
+        foreach (var link in links)
+        {
+            if (open(link) is not string why) return true;
+            failed?.Invoke(link, why);
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Windows' Wi-Fi list. 25 Nov: through Explorer, as the signed-in user, like every other link the app opens: this process runs
+    /// as admin, and a link it opens itself is looked up in the user's own registry (HKCU), which any program can write.
+    /// </summary>
     void OpenWifiList()
     {
-        foreach (var uri in new[] { "ms-availablenetworks:", "ms-settings:network-wifi" })
-        {
-            try { Process.Start(new ProcessStartInfo(uri) { UseShellExecute = true }); return; }
-            catch (Exception ex) { Log.Warn($"Couldn't open {uri}: {ex.Message}"); }
-        }
+        if (OpenFirst(WifiListLinks, link => ShellLaunch.OpenAsUser(link, "", null), (link, why) => Log.Warn($"Couldn't open {link}: {why}"))) return;
         Toast(Loc.T("Open the Wi-Fi list from the network icon on the taskbar and connect to the phone's hotspot."), false);
     }
 

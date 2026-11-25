@@ -687,6 +687,9 @@ Textos15NovTests.Run(Check);
 Usabilidade24NovTests.Run(Check);
 // 25 nov.: o formato regional do Windows (turco, finlandês, tailandês) não muda o que a app lê e escreve como dados (CulturaTests.cs)
 CulturaTests.Run(Check);
+// 25 nov.: a revisão independente do primeiro arranque e do Phone setup: a página de arranque antes de a janela aparecer, o hotspot
+// guardado com o PC fora dele, a lista de Wi-Fi sem direitos de administrador, os contadores com nome próprio (Correcao25NovTests.cs)
+Correcao25NovTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

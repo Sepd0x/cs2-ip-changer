@@ -47,8 +47,14 @@ static class Usabilidade24NovTests
         var start = Src("Views", "MainWindow.Start.cs");
         check("Usabilidade A: vistas ficam guardadas ao abrir, e a visita continua atrás de Show me around",
             start.Contains("_s.TourSeen = true;") && start.Contains("OpenTour(auto: true);"), "");
-        check("Usabilidade A: Esc é Later", start.Contains("key != Key.Escape") && Src("Views", "MainWindow.Feedback.cs").Contains("DoorsKey(e.Key)"), "");
-        check("Usabilidade A: a janela abre em Regions no arranque", Src("MainWindow.xaml.cs").Contains("if (StartOnRegions(_s.PhoneSeen, _s.StartDoor, _demo)) NavRegions.IsChecked = true;"), "");
+        // 25 nov.: a decisão é uma função (antes o teste só procurava a linha no ficheiro)
+        check("Usabilidade A: Esc é Later, só com as portas abertas, e mais nenhuma tecla é delas",
+            MainWindow.DoorsEsc(true, System.Windows.Input.Key.Escape) && !MainWindow.DoorsEsc(false, System.Windows.Input.Key.Escape)
+            && !MainWindow.DoorsEsc(true, System.Windows.Input.Key.Enter) && !MainWindow.DoorsEsc(true, System.Windows.Input.Key.Right)
+            && Src("Views", "MainWindow.Feedback.cs").Contains("DoorsKey(e.Key)"), "");
+        // 25 nov.: a página escolhe-se antes de a janela aparecer (Correcao25NovTests tem a ordem)
+        check("Usabilidade A: a janela abre em Regions no arranque", start.Contains("if (StartOnRegions(_s.PhoneSeen, _s.StartDoor, _demo)) NavRegions.IsChecked = true;")
+            && Src("MainWindow.xaml.cs").Contains("PickStartPage();"), "");
         check("Usabilidade A: o Before you start já não diz que o telemóvel vem a seguir", !Src("Views", "MainWindow.Phone.cs").Contains("The phone comes next"), "");
     }
 
@@ -78,14 +84,25 @@ static class Usabilidade24NovTests
             MainWindow.HotspotJoined(new[] { Wifi("Casa") }, null, "192.168.1.1") == null
             && MainWindow.HotspotJoined(new[] { Wifi("Galaxy A54", gateway: "192.168.43.1") }, null, "192.168.1.1")?.Ssid == "Galaxy A54", "");
         check("Verificador B3: ao confirmar, lê as redes outra vez", Src("Views", "MainWindow.Phone.cs").Contains("HotspotJoined(await Task.Run(Net.Scan), _hotspotFrom, _hotspotFromGateway)"), "");
+        // 25 nov.: estes quatro passaram a testar o comportamento (antes só procuravam a linha no ficheiro)
         check("Verificador C1: o menu da área de notificação também só abre o Phone setup sem telemóvel",
-            Src("Views", "MainWindow.Tray.cs").Contains("case \"on\" when !PhoneKnown: ShowFromTray(); NavNet.IsChecked = true; _ = RunPhoneSetup(); break;"), "");
-        var tour = Src("Views", "MainWindow.Tour.cs");
-        check("Verificador A: a nota de Regions espera pelas portas", tour.Contains("StartPane.Visibility == Visibility.Visible || _tourWait is { IsEnabled: true }")
+            MainWindow.TrayDoes("on", phoneKnown: false) == "setup" && MainWindow.TrayDoes("on", phoneKnown: true) == "on"
+            && MainWindow.TrayDoes("setup", phoneKnown: true) == "setup" && MainWindow.TrayDoes("off", phoneKnown: false) == "off"
+            && Src("Views", "MainWindow.Tray.cs").Contains("case \"setup\": ShowFromTray(); NavNet.IsChecked = true; _ = RunPhoneSetup(); break;"), "");
+        check("Verificador A: a nota de Regions espera pelas portas (abertas, ou ainda por abrir neste arranque)",
+            MainWindow.PitchWaitsForDoors(doorsOpen: true, doorsDue: false) && MainWindow.PitchWaitsForDoors(false, true) && !MainWindow.PitchWaitsForDoors(false, false)
+            && Src("Views", "MainWindow.Tour.cs").Contains("if (PitchWaitsForDoors(StartPane.Visibility == Visibility.Visible, _doorsDue)) return;")
             && Src("Views", "MainWindow.Start.cs").Contains("ShowRegionsPitch();"), "");
-        var start = Src("Views", "MainWindow.Start.cs");
-        check("Verificador A: os nomes das portas para leitores de ecrã na língua da app, e o Tab fica na caixa",
-            start.Contains("SetName(DoorRegionsBtn, Loc.T(Texts.DoorRegions))") && Src("MainWindow.xaml").Contains("x:Name=\"StartPane\" Grid.Row=\"1\" Background=\"#B0000000\" Visibility=\"Collapsed\" KeyboardNavigation.TabNavigation=\"Cycle\""), "");
+        var before = Loc.Lang;
+        (string Regions, string Phone) names;
+        try { Loc.Init("es"); names = MainWindow.DoorNames(); }
+        finally { Loc.Init(before); }
+        var es = Loc.Load("es");
+        check("Verificador A: os nomes das portas para leitores de ecrã na língua da app",
+            names == (es[Texts.DoorRegions], es[Texts.DoorPhone]) && names.Regions != Texts.DoorRegions && names.Phone != Texts.DoorPhone
+            && MainWindow.DoorNames() == (Loc.T(Texts.DoorRegions), Loc.T(Texts.DoorPhone)), names.ToString());
+        check("Verificador A: o Tab fica na caixa das portas",
+            Src("MainWindow.xaml").Contains("x:Name=\"StartPane\" Grid.Row=\"1\" Background=\"#B0000000\" Visibility=\"Collapsed\" KeyboardNavigation.TabNavigation=\"Cycle\""), "");
     }
 
     // B: o hotspot do telemóvel desde o primeiro segundo, sem confundir a rede de casa com o telemóvel
@@ -113,7 +130,8 @@ static class Usabilidade24NovTests
         var seen = PhoneSetup.Current(PhoneSetup.Steps(asked with { WifiJoined = "Galaxy A54" }));
         check("Usabilidade B: a rede nova é perguntada pelo nome, com It's the phone", seen.Detail == Texts.HotspotSeen("Galaxy A54") && seen.Action == Texts.HotspotItsPhone, seen.Detail);
         var hidden = PhoneSetup.Current(PhoneSetup.Steps(asked with { WifiNameHidden = true }));
-        check("Usabilidade B: nome escondido pelo Windows: diz como ligar a Localização", hidden.Detail == Net.SsidLocationText, hidden.Detail);
+        // 25 nov.: a seguir vem o que fazer com o hotspot (Correcao25NovTests, achado 7)
+        check("Usabilidade B: nome escondido pelo Windows: diz como ligar a Localização", hidden.Detail.StartsWith(Net.SsidLocationText), hidden.Detail);
         var plugged = PhoneSetup.Steps(asked with { Usb = new(true, null, "Google") });
         check("Usabilidade B: um cabo ligado a meio volta ao caminho do cabo", plugged.First(i => i.Step == PhoneStep.NoUsb).State == PhoneSetup.StepState.Ok
             && PhoneSetup.Current(plugged)?.Step == PhoneStep.NoUsbDebugging, "");
@@ -141,7 +159,9 @@ static class Usabilidade24NovTests
         check("Usabilidade C1: nunca houve telemóvel: Set up the phone, cinzento", MainWindow.TurnOnLook(false) is (Texts.SetUpPhone, "Btn", Texts.SetUpPhoneTip), "");
         check("Usabilidade C1: com telemóvel visto: Turn on protection, azul, como antes", MainWindow.TurnOnLook(true) is ("Turn on protection", "Primary", MainWindow.TurnOnTip), "");
         var prot = Src("Views", "MainWindow.Protection.cs");
-        check("Usabilidade C1: sem telemóvel não liga nada, só abre o Phone setup", prot.Contains("if (!PhoneKnown) { await RunPhoneSetup(); return; }"), "");
+        // 25 nov.: a decisão é uma função (antes o teste só procurava a linha no ficheiro)
+        check("Usabilidade C1: sem telemóvel não liga nada, só abre o Phone setup", MainWindow.TurnOnPress(phoneKnown: false).OnlySetup && !MainWindow.TurnOnPress(phoneKnown: true).OnlySetup
+            && prot.Contains("if (TurnOnPress(PhoneKnown) is (true, var count)) { Telemetry.Count(count); await RunPhoneSetup(); return; }"), "");
         check("Usabilidade C1: segue o estado a cada relatório", prot.Contains("TurnOnLook(PhoneKnown)"), "");
         check("Usabilidade C1: a dica do XAML é a mesma de TurnOnTip", Src("MainWindow.xaml").Contains($"ToolTip=\"{MainWindow.TurnOnTip}\""), "");
     }

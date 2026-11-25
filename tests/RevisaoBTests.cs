@@ -190,6 +190,6 @@ static class RevisaoBTests
         var tray = MainWindow.TrayLayout("x", false, false, "Log in to atlas + rejoin");
         check("Revisão D9: o menu do ícone diz o nome do botão", tray.Any(l => l.Key == "switch" && l.Text == "Log in to atlas + rejoin" && l.Enabled), "");
         check("Revisão D9: sem nome, o de sempre", MainWindow.TrayLayout("x", false, false).Any(l => l.Key == "switch" && l.Text == "New IP + next account"), "");
-        check("Revisão D9: o menu lê o nome de agora", Src("Views", "MainWindow.Tray.cs").Contains("return TrayItems(SideState.Text, _protOn && !_s.NoPhone, !_s.NoPhone, TrayCommand, _quickName);"), "");
+        check("Revisão D9: o menu lê o nome de agora", Src("Views", "MainWindow.Tray.cs").Contains("return TrayItems(SideState.Text, _protOn && !_s.NoPhone, !_s.NoPhone, TrayCommand, _quickName, PhoneKnown);"), "");
     }
 }

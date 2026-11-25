@@ -75,7 +75,8 @@ static class IphoneNov9Tests
         var phone = Src("Views", "MainWindow.Phone.cs");
         check("iPhone 9 nov.: a app não corre o winget como admin (abre a Store, que instala como o utilizador)",
             !phone.Contains("winget") && !Src("Core", "Phone", "PhoneSetup.cs").Contains("winget install")
-            && phone.Contains("Process.Start(new ProcessStartInfo(PhoneSetup.AppleDevicesStoreUri) { UseShellExecute = true });"), "");
+            // 25 nov.: pelo Explorer, como o utilizador (um protocolo aberto por este processo é resolvido com os direitos de administrador)
+            && phone.Contains("ShellLaunch.OpenAsUser(PhoneSetup.AppleDevicesStoreUri, \"\", null)"), "");
         check("iPhone 9 nov.: o setup lê o driver da Apple", phone.Contains("AppleDriver = !iphone || phone != null || await Task.Run(PhoneUsb.AppleNetDriver)"), "");
         check("iPhone 9 nov.: este PC responde se tem o driver (sem rebentar)", PhoneUsb.AppleNetDriver() || !PhoneUsb.AppleNetDriver(), "");
     }
