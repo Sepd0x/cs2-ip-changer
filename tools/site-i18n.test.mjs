@@ -119,6 +119,27 @@ test('i18n: every address on a translated page leads to a file, and its links st
   }
 });
 
+// Review of 25 Nov (findings 4 to 6 and 9): the iPhone menus on the Turkish pages follow the rule of the other languages (the
+// English name, with the phone's own name in Turkish in brackets the first time on a page), the home's title has its
+// possessive, and "public source" is not written with the Turkish words for open source ("açık kaynak").
+test('i18n: Turkish names the iPhone menus as the rule says, and "public source" does not read as open source', () => {
+  const tr = loadDicts().tr, values = Object.values(tr).flatMap((d) => Object.values(d));
+  assert.deepEqual(values.filter((v) => /Uçak modu/.test(v)), [], 'the menu is "Airplane Mode", with "(Uçak Modu)" the first time on a page');
+  const textOf = (h) => h.slice(h.indexOf('<body')).replace(/<script[\s\S]*?<\/script>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  for (const p of pages) {
+    const t = textOf(read(`tr/${p.file}`));
+    for (const [menu, own] of [['Personal Hotspot', 'Kişisel Erişim Noktası'], ['Airplane Mode', 'Uçak Modu']]) {
+      const i = t.indexOf(menu);
+      if (i >= 0) assert.ok(t.slice(i, i + menu.length + 40).includes(own), `tr/${p.file}: the first "${menu}" has no "${own}" next to it: ${t.slice(i, i + 60)}`);
+    }
+  }
+  assert.equal(tr.index["Change your CS2 IP with your phone's mobile data"], "CS2 IP'ni telefonunun mobil verisiyle değiştir");
+  const source = Object.entries(tr).flatMap(([g, d]) => Object.entries(d)).filter(([k]) => /public source/i.test(k));
+  assert.ok(source.length >= 5, 'the texts that say "public source"');
+  for (const [k, v] of source) assert.ok(!/açık/i.test(v), `"${k.slice(0, 50)}" reads as open source in Turkish: ${v.slice(0, 80)}`);
+  assert.match(read('llms.txt'), /the app is in English, Brazilian Portuguese, Spanish, Russian and Turkish/);
+});
+
 // ------------------------------------------------------------------ in a browser
 async function findChromium() {
   const where = [process.env.PLAYWRIGHT, ROOT];
