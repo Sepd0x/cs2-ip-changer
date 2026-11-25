@@ -338,12 +338,16 @@ function* build(canvas, opts = {}) {
   // 10 Nov. (3D-008): the parts of one thing that share a material become one mesh, so a frame is about half the draw calls.
   // On a phone the frame's time is mostly draw calls (three passes: the picture, the bloom's, the floor's mirror), and this is
   // what pays for the mirror showing every object instead of only what glows. Only still, opaque parts (plus the materials
-  // named in `also`); instanced parts, anything marked noBake and the parts in `keep` stay as they are
+  // named in `also`); anything marked noBake and the parts in `keep` stay as they are.
+  // 25 Nov. (1.0.0): the small instanced parts go in too, each copy written out where its matrix puts it (the fins, fans and
+  // RAM of the tower, the mast's bolts and fence posts, the raised floor's pedestals: each was a draw call of its own, in every
+  // pass, for a few hundred triangles). A set of instanced parts alone with nothing to join stays instanced (the tower's three
+  // lit fan rings), and so does one coloured copy by copy (instanceColor)
   function fuse(group, keep = [], also = []) {
     group.updateMatrixWorld(true);
-    const inv = group.matrixWorld.clone().invert(), sets = new Map(), rel = new Matrix4();
+    const inv = group.matrixWorld.clone().invert(), sets = new Map(), rel = new Matrix4(), base = new Matrix4(), im = new Matrix4();
     group.traverse(o => {
-      if (!o.isMesh || o.isInstancedMesh || keep.includes(o) || Array.isArray(o.material) || (o.material.transparent && !also.includes(o.material))) return;
+      if (!o.isMesh || o.instanceColor || keep.includes(o) || Array.isArray(o.material) || (o.material.transparent && !also.includes(o.material))) return;
       for (let q = o; q && q !== group; q = q.parent) if (!q.visible || q.userData.noBake) return;
       const k = o.material.uuid + '|' + (o.castShadow ? 1 : 0) + (o.receiveShadow ? 1 : 0) + '|' + o.layers.mask;
       if (!sets.has(k)) sets.set(k, []); sets.get(k).push(o);
@@ -353,22 +357,26 @@ function* build(canvas, opts = {}) {
     for (const list of sets.values()) {
       if (list.length < 2 || list.some(o => { const a = o.geometry.attributes; return !a.normal || !a.uv || a.position.isInterleavedBufferAttribute; })) continue;
       let nv = 0, ni = 0;
-      for (const o of list) { const g = o.geometry; nv += g.attributes.position.count; ni += g.index ? g.index.count : g.attributes.position.count; }
+      for (const o of list) { const g = o.geometry, t = o.isInstancedMesh ? o.count : 1; nv += g.attributes.position.count * t; ni += (g.index ? g.index.count : g.attributes.position.count) * t; }
       const P = new Float32Array(nv * 3), N = new Float32Array(nv * 3), U = new Float32Array(nv * 2), I = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
       let v0 = 0, i0 = 0;
       for (const o of list) {
         const g = o.geometry, p = g.attributes.position.array, n = g.attributes.normal.array, uv = g.attributes.uv.array, c = g.attributes.position.count;
-        const e = rel.multiplyMatrices(inv, o.matrixWorld).elements, ne = nrm.getNormalMatrix(rel).elements;
-        for (let k = 0, j = v0 * 3; k < c * 3; k += 3, j += 3) {
-          const x = p[k], y = p[k + 1], z = p[k + 2], a = n[k], b = n[k + 1], d = n[k + 2];
-          P[j] = e[0] * x + e[4] * y + e[8] * z + e[12]; P[j + 1] = e[1] * x + e[5] * y + e[9] * z + e[13]; P[j + 2] = e[2] * x + e[6] * y + e[10] * z + e[14];
-          const nx = ne[0] * a + ne[3] * b + ne[6] * d, ny = ne[1] * a + ne[4] * b + ne[7] * d, nz = ne[2] * a + ne[5] * b + ne[8] * d, l = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
-          N[j] = nx / l; N[j + 1] = ny / l; N[j + 2] = nz / l;
+        base.multiplyMatrices(inv, o.matrixWorld);
+        for (let t = 0, copies = o.isInstancedMesh ? o.count : 1; t < copies; t++) {
+          if (o.isInstancedMesh) rel.multiplyMatrices(base, im.fromArray(o.instanceMatrix.array, t * 16)); else rel.copy(base);
+          const e = rel.elements, ne = nrm.getNormalMatrix(rel).elements;
+          for (let k = 0, j = v0 * 3; k < c * 3; k += 3, j += 3) {
+            const x = p[k], y = p[k + 1], z = p[k + 2], a = n[k], b = n[k + 1], d = n[k + 2];
+            P[j] = e[0] * x + e[4] * y + e[8] * z + e[12]; P[j + 1] = e[1] * x + e[5] * y + e[9] * z + e[13]; P[j + 2] = e[2] * x + e[6] * y + e[10] * z + e[14];
+            const nx = ne[0] * a + ne[3] * b + ne[6] * d, ny = ne[1] * a + ne[4] * b + ne[7] * d, nz = ne[2] * a + ne[5] * b + ne[8] * d, l = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+            N[j] = nx / l; N[j + 1] = ny / l; N[j + 2] = nz / l;
+          }
+          U.set(uv.subarray(0, c * 2), v0 * 2);
+          if (g.index) { const ix = g.index.array; for (let k = 0; k < ix.length; k++) I[i0 + k] = ix[k] + v0; i0 += ix.length; }
+          else { for (let k = 0; k < c; k++) I[i0 + k] = v0 + k; i0 += c; }
+          v0 += c;
         }
-        U.set(uv.subarray(0, c * 2), v0 * 2);
-        if (g.index) { const ix = g.index.array; for (let k = 0; k < ix.length; k++) I[i0 + k] = ix[k] + v0; i0 += ix.length; }
-        else { for (let k = 0; k < c; k++) I[i0 + k] = v0 + k; i0 += c; }
-        v0 += c;
       }
       const merged = new BufferGeometry();
       merged.setAttribute('position', new BufferAttribute(P, 3)); merged.setAttribute('normal', new BufferAttribute(N, 3)); merged.setAttribute('uv', new BufferAttribute(U, 2)); merged.setIndex(new BufferAttribute(I, 1));
@@ -1399,6 +1407,10 @@ function* build(canvas, opts = {}) {
   // of the frame) spread every light over the whole picture: a grey-violet veil that lifted the night sky from 6 to 30 levels
   // and laid a white haze over the desk (measured with the bloom off, lab/session6c-probe.mjs). The halo close to the lines stays
   [1, 0.9, 0.55, 0.2, 0.05].forEach((k, i) => bloom.bloomTintColors[i].setScalar(k));
+  // 25 Nov. (1.0.0): the pass ends by adding its bloom on top of the texture it was given. Here that is bloomIn, which nothing reads
+  // again (the picture takes the bloom from the pass's own target, see renderAll, and bloomIn is cleared and drawn anew each
+  // frame): a half-size quad drawn every frame for nobody. A material that is not visible is not drawn
+  bloom.blendMaterial.visible = false;
   // the bloom is taken from a second render of the scene in which the screens are black; then added on top of the real one
   const bloomIn = new WebGLRenderTarget(4, 4, { type: HalfFloatType, samples: 0 });
   const black = new MeshBasicMaterial({ color: 0 });

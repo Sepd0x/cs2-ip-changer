@@ -5,11 +5,21 @@
 // 1342 times because an InstancedMesh and a plain Mesh shared one material, and 1098 times because three.js draws a see-through
 // two-sided material twice and sets needsUpdate each time. After the fixes: none of the three. tools/site-perf.mjs measures the rest;
 // the pictures are the same (tools/site-compare.mjs: 8 pixels in a million, none of them over 40 of 255).
-import { test } from 'node:test';
+// 25 Nov. 2026 (1.0.0): a frame draws the scene three times (the picture, the second render the bloom is taken from, the floor's
+// mirror), so every object left on its own costs up to three draw calls. The small instanced parts of each object (the tower's
+// fins, fans and RAM, the mast's bolts and fence posts, the raised floor's pedestals) were joined to the rest of it: 286 to 253
+// calls a frame on the home on a PC, 275 to 244 on a phone, 402 to 289 on the region guide. The last test here counts the calls
+// of a frame in a real Chrome, pass by pass, so they do not creep back. The pictures are the same but for a few lone pixels
+// (thin edges that fall on the other side of a sample, a last digit of shading): measured picture by picture on the home, the
+// 12 guides and the 404, with and without bloom (the session's notes, publish/plano-1-0-0/8-3d-juntar-malhas.md, are outside the repo).
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { createServer } from 'node:http';
+import { spawnSync } from 'node:child_process';
+import { existsSync, readFileSync, statSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { dirname, extname, join, resolve, sep } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = readFileSync(join(ROOT, 'site/assets/src/world.js'), 'utf8').replace(/\r\n/g, '\n');
@@ -55,4 +65,106 @@ test('Clouds (19 Nov.): drawn by the sky\'s own shader from one map made once, s
   assert.ok(!/new (Mesh|Sprite|Points|InstancedMesh)\([^)]*cloud/i.test(src), 'no object of its own for the clouds');
   assert.match(src, /sky\.material\.uniforms\.uDrift\.value = time \* 0\.0004/, 'they drift slowly with the world\'s time');
   for (const [name, b] of Object.entries(bundles)) assert.ok(b.includes('uCloud'), `${name} is built from this world.js (tools/site-build.mjs)`);
+});
+
+test('Joined (25 Nov.): the small instanced parts are fused with the rest of their object, and the bloom\'s last quad is not drawn', () => {
+  assert.ok(src.includes('function fuse(group, keep = [], also = []'));
+  assert.ok(src.includes('if (!o.isMesh || o.instanceColor || keep.includes(o)'), 'an instanced part is fused like any other (not one coloured per copy)');
+  assert.ok(src.includes('rel.multiplyMatrices(base, im.fromArray(o.instanceMatrix.array, t * 16))'), 'each copy is written out where its own matrix puts it');
+  assert.ok(src.includes('ne = nrm.getNormalMatrix(rel).elements'), 'normals are moved with the part, never worked out again from the joined shape');
+  assert.ok(!/merged\.computeVertexNormals|mergeVertices/.test(src), 'no computeVertexNormals or mergeVertices on a fused mesh: a hard edge would turn soft');
+  assert.ok(src.includes('bloom.blendMaterial.visible = false;'), 'UnrealBloomPass adds its bloom back onto bloomIn, which nothing reads: that quad is not drawn');
+  // what is never fused: glass, the screens, what glows and changes, the contact shadows, the route
+  for (const own of ['const glass = new Mesh(new PlaneGeometry(TD - 0.24, TH - 0.24), M.glass)', 'mon.add(glows(screen))', 'tilt.add(glows(phScreen))', 'scene.add(glows(new Mesh(tube(cableMain, 210, mainR), mCable)));', 'const airTube = glows(new Mesh(', 'const arcTube = glows(new Mesh('])
+    assert.ok(src.includes(own), 'still an object of its own: ' + own);
+  assert.ok(src.includes('(o.material.transparent && !also.includes(o.material))'), 'a see-through part is only fused when its material is named');
+  for (const [name, b] of Object.entries(bundles)) assert.ok(b.includes('blendMaterial.visible=!1'), `${name} is built from this world.js (tools/site-build.mjs)`);
+});
+
+// ---- the draw calls of one frame, counted on the WebGL calls of a real Chrome (as tools/site-perf.mjs --stages does) ----
+// A frame is: the bloom's own render of the scene (first), the bloom's quads, the floor's mirror (the run right before the
+// picture, on a target nothing else draws to), the picture (the big run at the canvas's own size), two more quads.
+// With prefers-reduced-motion the world draws only when something changes, so the last frame it drew is the one counted.
+// The ceilings are what 25 Nov. measured. A new object costs a call in up to three passes: when one is added on purpose, raise
+// the ceiling by what it costs and say so in the commit; when a count rises with nothing added, something stopped being joined.
+const CEILINGS = [
+  { name: 'the home\'s cover on a PC (1440x900)', path: '', view: { width: 1440, height: 900 }, scale: 1, picture: 102, bloom: 98, mirror: 39, total: 253 },
+  { name: 'the home\'s cover on a phone (412x839 at 2x)', path: '', view: { width: 412, height: 839 }, scale: 2, phone: true, picture: 99, bloom: 95, mirror: 36, total: 244 },
+  { name: 'the region guide on a PC, the page with the most objects', path: 'cs2-region-picker/', view: { width: 1440, height: 900 }, scale: 1, picture: 114, bloom: 110, mirror: 51, total: 289 },
+];
+const COUNT = `(() => {
+  const P = window.__dc = { ready: 0, frames: [], cur: null };
+  document.addEventListener('worldready', () => { P.ready = 1; }, true);
+  const raf = window.requestAnimationFrame.bind(window);
+  window.requestAnimationFrame = (cb) => raf((t) => { P.cur = []; try { cb(t); } finally { if (P.cur.length) { P.frames.push(P.cur); if (P.frames.length > 4) P.frames.shift(); } P.cur = null; } });
+  const C = window.WebGL2RenderingContext; if (!C) return;
+  const ids = new WeakMap(); let nFb = 0;
+  for (const n of ['drawElements', 'drawArrays', 'drawElementsInstanced', 'drawArraysInstanced', 'drawRangeElements']) {
+    const o = C.prototype[n];
+    C.prototype[n] = function () { if (P.cur) { const k = (this.__dcT || 'screen') + ' ' + (this.__dcV || '?'), L = P.cur[P.cur.length - 1]; if (L && L[0] === k) L[1]++; else P.cur.push([k, 1]); } return o.apply(this, arguments); };
+  }
+  const bind = C.prototype.bindFramebuffer, view = C.prototype.viewport;
+  C.prototype.bindFramebuffer = function (t, fb) { if (t === 0x8D40 || t === 0x8CA9) { if (fb && !ids.has(fb)) ids.set(fb, ++nFb); this.__dcT = fb ? 'target ' + ids.get(fb) : 'screen'; } return bind.apply(this, arguments); };
+  C.prototype.viewport = function (x, y, w, h) { this.__dcV = w + 'x' + h; return view.apply(this, arguments); };
+})();`;
+
+let dcBrowser = null, dcServer = null;
+after(async () => { await dcBrowser?.close(); dcServer?.close(); });
+async function chrome() {
+  const where = [process.env.PLAYWRIGHT, ROOT];
+  const g = spawnSync('npm root -g', { encoding: 'utf8', shell: true });
+  if (g.status === 0 && g.stdout.trim()) where.push(g.stdout.trim(), join(g.stdout.trim(), '@playwright', 'cli'));
+  let pw = null;
+  for (const w of where.filter(Boolean)) {
+    try { const m = await import(pathToFileURL(createRequire(join(resolve(w), 'x.js')).resolve('playwright')).href); pw = m.default || m; break; } catch { /* not there */ }
+  }
+  if (!pw) return { why: 'no Playwright (PLAYWRIGHT=<folder with it>)' };
+  let why = '';
+  for (const o of [{ channel: 'chrome' }, {}]) {
+    try { dcBrowser = await pw.chromium.launch({ ...o, args: ['--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] }); break; } catch (e) { why = `Chromium did not start: ${e.message.split('\n')[0]}`; }
+  }
+  if (!dcBrowser) return { why };
+  const SITE = join(ROOT, 'site'), SHOTS = join(ROOT, 'docs', 'screenshots'), BASE = '/cs2-ip-changer';
+  const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2', '.json': 'application/json', '.txt': 'text/plain' };
+  dcServer = createServer((q, s) => {
+    const p = decodeURIComponent(q.url.split('?')[0]);
+    if (!p.startsWith(BASE)) { s.writeHead(404); return s.end(); }
+    let f = resolve(SITE, '.' + (p.slice(BASE.length) || '/'));
+    if (f !== SITE && !f.startsWith(SITE + sep)) { s.writeHead(404); return s.end(); }
+    if (existsSync(f) && statSync(f).isDirectory()) f = join(f, 'index.html');
+    // like the Pages workflow: the app's captures sit in img/ (the png stands in for its webp)
+    if (!existsSync(f) && p.startsWith(BASE + '/img/')) { const n = p.slice((BASE + '/img/').length); for (const c of [join(SHOTS, n), join(SHOTS, n.replace(/\.webp$/, '.png'))]) if (existsSync(c)) { f = c; break; } }
+    if (!existsSync(f)) { s.writeHead(404); return s.end(); }
+    s.writeHead(200, { 'content-type': TYPES[extname(f)] || 'application/octet-stream', 'cache-control': 'no-store' });
+    s.end(readFileSync(f));
+  });
+  await new Promise((ok) => dcServer.listen(0, '127.0.0.1', ok));
+  return { pw, origin: `http://127.0.0.1:${dcServer.address().port}${BASE}/` };
+}
+
+test('Draw calls (25 Nov.): a frame stays under its ceiling in each pass, on the home (PC and phone) and on the region guide', async (t) => {
+  const { pw, origin, why } = await chrome();
+  if (!pw) return t.skip(why);
+  for (const c of CEILINGS) {
+    const ctx = await dcBrowser.newContext({ ...(c.phone ? pw.devices['Pixel 7'] : {}), viewport: c.view, deviceScaleFactor: c.scale, reducedMotion: 'reduce', locale: 'en-US' });
+    await ctx.addInitScript(COUNT);
+    const page = await ctx.newPage();
+    await page.goto(origin + c.path, { waitUntil: 'load', timeout: 120000 });
+    await page.waitForFunction(() => window.__dc.ready || document.documentElement.classList.contains('no-gl'), null, { timeout: 90000 });
+    if (await page.evaluate(() => document.documentElement.classList.contains('no-gl'))) { await ctx.close(); return t.skip('no WebGL in this browser: nothing is drawn'); }
+    await page.waitForTimeout(1500);
+    const got = await page.evaluate(() => {
+      const cv = document.querySelector('canvas'), full = cv.width + 'x' + cv.height;
+      const f = [...window.__dc.frames].reverse().find((x) => x.reduce((a, r) => a + r[1], 0) > 20); if (!f) return null;
+      let main = -1; f.forEach((r, i) => { if (r[0].endsWith(' ' + full) && r[1] > 2 && (main < 0 || r[1] > f[main][1])) main = i; });
+      const o = { bloom: f[0][1], mirror: 0, picture: main >= 0 ? f[main][1] : 0, total: f.reduce((a, r) => a + r[1], 0), runs: f.map((r) => r.join(' = ')) };
+      if (main > 1) { const k = f[main - 1][0]; if (!f.some((r, i) => i !== main - 1 && r[0] === k)) o.mirror = f[main - 1][1]; }
+      return o;
+    });
+    await ctx.close();
+    assert.ok(got && got.picture > 0, `${c.name}: a frame was drawn and its passes were told apart`);
+    t.diagnostic(`${c.name}: picture ${got.picture}, bloom's render ${got.bloom}, mirror ${got.mirror}, total ${got.total}`);
+    for (const k of ['picture', 'bloom', 'mirror', 'total']) assert.ok(got[k] <= c[k], `${c.name}: ${k} draws ${got[k]} calls a frame, the ceiling is ${c[k]} (the frame: ${got.runs.join(', ')})`);
+    assert.ok(got.total - got.picture - got.bloom - got.mirror <= 14, `${c.name}: the bloom and the last two passes are 14 quads, not ${got.total - got.picture - got.bloom - got.mirror}`);
+  }
 });
