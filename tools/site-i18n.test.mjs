@@ -77,6 +77,23 @@ test('i18n: sitemap.xml lists every page in every language, each with all its al
 });
 
 // what the Pages workflow adds to img/ (.github/workflows/pages.yml): the screenshots and pictures from docs/, with a WebP each
+test('i18n: the line that offers a language shows for a browser in that language (its pattern, as the page runs it)', () => {
+  // the page builds new RegExp(m) from the JSON it carries: a '\b' written with one backslash in the source is a backspace there,
+  // and the Turkish offer never showed
+  const h = read('index.html');
+  const list = JSON.parse(h.match(/O=(\[\{"m":.*?\}\]),w=/s)[1]);
+  assert.equal(list.length, LANGS.length - 1, 'one offer per language other than English');
+  for (const L of LANGS.slice(1)) {
+    const o = list.find((x) => x.l === L.hreflang || x.u === `${L.code}/`);
+    assert.ok(o, `${L.code}: in the page`);
+    const tag = L.intl.toLowerCase(), first = list.find((x) => new RegExp(x.m).test(tag));
+    assert.equal(first, o, `${L.code}: a browser in ${tag} gets its own offer`);
+    assert.ok(new RegExp(o.m).test(L.code === 'pt-br' ? 'pt' : L.code), `${L.code}: the bare code too`);
+    assert.ok(!/[\x00-\x1f]/.test(o.m), `${L.code}: no control character in the pattern`);
+    assert.ok(!new RegExp(o.m).test('en-us'), `${L.code}: not for English`);
+  }
+});
+
 const PAGES_IMG = (n) => [join(ROOT, 'docs/screenshots', n), join(ROOT, 'docs/assets', n), join(ROOT, 'docs/screenshots', n.replace(/\.webp$/, '.png'))];
 const served = (rel) => {
   const f = join(SITE, rel);
@@ -199,7 +216,7 @@ test('i18n browser: a missing address under /es/ shows the Spanish 404 and keeps
   await ctx.close();
   const g = await open('ru/cs2-ip-ban/', 1440);
   const hrefs = await g.page.$$eval('.top .lang-pick a', (as) => as.map((a) => new URL(a.href).pathname));
-  assert.deepEqual(hrefs, ['/cs2-ip-changer/cs2-ip-ban/', '/cs2-ip-changer/pt-br/cs2-ip-ban/', '/cs2-ip-changer/es/cs2-ip-ban/', '/cs2-ip-changer/ru/cs2-ip-ban/']);
+  assert.deepEqual(hrefs, ['/cs2-ip-changer/cs2-ip-ban/', '/cs2-ip-changer/pt-br/cs2-ip-ban/', '/cs2-ip-changer/es/cs2-ip-ban/', '/cs2-ip-changer/ru/cs2-ip-ban/', '/cs2-ip-changer/tr/cs2-ip-ban/']);
   await g.ctx.close();
 });
 

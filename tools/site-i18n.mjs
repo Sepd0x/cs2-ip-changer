@@ -1,4 +1,4 @@
-// The site in other languages, made from the English pages: site/pt-br/, site/es/ and site/ru/ (the home page, every guide
+// The site in other languages, made from the English pages: site/pt-br/, site/es/, site/ru/ and site/tr/ (the home page, every guide
 // and the 404), with hreflang on every page, the language picker in the header and the footer, and sitemap.xml with the
 // alternates. English stays the main site (x-default). One source of truth: the English HTML (site/index.html, site/404.html
 // and the guides that tools/site-pages.mjs writes) plus one file of translations per language, tools/i18n/<lang>.json. The
@@ -34,6 +34,8 @@ export const LANGS = [
     match: '^es', hint: 'Este sitio también está en español.', go: 'Ver en español', close: 'Cerrar' },
   { code: 'ru', hreflang: 'ru', og: 'ru_RU', name: 'Русский', short: 'RU', label: 'Язык', intl: 'ru-RU', mb: 'МБ', of: 'из',
     match: '^(ru|be|kk|ky)\\b', hint: 'Этот сайт есть и на русском.', go: 'Открыть на русском', close: 'Закрыть' },
+  { code: 'tr', hreflang: 'tr', og: 'tr_TR', name: 'Türkçe', short: 'TR', label: 'Dil', intl: 'tr-TR', mb: 'MB', of: '/',
+    match: '^tr\\b', hint: 'Bu site Türkçe de var.', go: 'Türkçe görüntüle', close: 'Kapat' },
 ];
 const OTHER = LANGS.slice(1);
 const CODES = new Set(OTHER.map((l) => l.code));
@@ -375,11 +377,11 @@ const PICK_JS = `<script>(function(d){d.addEventListener('click',function(e){var
 function hintJs(page, home) {
   const to = page.abs ? home : page;
   const opts = OTHER.map((L) => ({ m: L.match, u: hrefTo(L, to, LANGS[0], page), l: L.hreflang, t: L.hint, g: L.go, c: L.close }));
-  return `<script>addEventListener('load',function(){try{if(localStorage.getItem('cs2-lang'))return}catch(x){return}var O=${JSON.stringify(opts)},w=(navigator.languages&&navigator.languages[0]||navigator.language||'').toLowerCase(),o=null;if(/^en/.test(w))return;O.forEach(function(x){if(!o&&new RegExp(x.m).test(w))o=x});if(!o)return;var d=document,b=d.createElement('div');b.className='lang-hint';b.lang=o.l;b.setAttribute('role','note');b.innerHTML='<span></span><a data-lang></a><button type="button">\\u00d7</button>';b.firstChild.textContent=o.t;var a=b.querySelector('a'),x=b.querySelector('button');a.href=o.u;a.textContent=o.g;a.setAttribute('data-lang',o.u.replace(/^.*?(pt-br|es|ru)\\/.*$/,'$1'));x.setAttribute('aria-label',o.c);x.addEventListener('click',function(){try{localStorage.setItem('cs2-lang','en')}catch(e){}b.remove()});setTimeout(function(){d.body.appendChild(b)},1500)})</script>`;
+  return `<script>addEventListener('load',function(){try{if(localStorage.getItem('cs2-lang'))return}catch(x){return}var O=${JSON.stringify(opts)},w=(navigator.languages&&navigator.languages[0]||navigator.language||'').toLowerCase(),o=null;if(/^en/.test(w))return;O.forEach(function(x){if(!o&&new RegExp(x.m).test(w))o=x});if(!o)return;var d=document,b=d.createElement('div');b.className='lang-hint';b.lang=o.l;b.setAttribute('role','note');b.innerHTML='<span></span><a data-lang></a><button type="button">\\u00d7</button>';b.firstChild.textContent=o.t;var a=b.querySelector('a'),x=b.querySelector('button');a.href=o.u;a.textContent=o.g;a.setAttribute('data-lang',o.u.replace(/^.*?(pt-br|es|ru|tr)\\/.*$/,'$1'));x.setAttribute('aria-label',o.c);x.addEventListener('click',function(){try{localStorage.setItem('cs2-lang','en')}catch(e){}b.remove()});setTimeout(function(){d.body.appendChild(b)},1500)})</script>`;
 }
-// the 404: GitHub Pages serves the English one for every missing address, so under /pt-br/, /es/ or /ru/ it opens that
+// the 404: GitHub Pages serves the English one for every missing address, so under /pt-br/, /es/, /ru/ or /tr/ it opens that
 // language's 404 and puts the address that was asked for back in the address bar
-const NF_JS = `<script>(function(l){var m=/^\\/cs2-ip-changer\\/(pt-br|es|ru)\\//.exec(l.pathname);if(m&&!/\\/404\\.html$/.test(l.pathname))l.replace('/cs2-ip-changer/'+m[1]+'/404.html#from='+encodeURIComponent(l.pathname+l.search))})(location)</script>`;
+const NF_JS = `<script>(function(l){var m=/^\\/cs2-ip-changer\\/(pt-br|es|ru|tr)\\//.exec(l.pathname);if(m&&!/\\/404\\.html$/.test(l.pathname))l.replace('/cs2-ip-changer/'+m[1]+'/404.html#from='+encodeURIComponent(l.pathname+l.search))})(location)</script>`;
 const NF_BACK = (code) => `<script>(function(l){var m=/^#from=(.+)$/.exec(l.hash);if(m){var p=decodeURIComponent(m[1]);if(p.indexOf('/cs2-ip-changer/${code}/')===0)history.replaceState(null,'',p)}})(location)</script>`;
 
 /** Puts this script's parts on a page (English or translated): hreflang, the picker, the footer names, the hint. */
@@ -464,7 +466,7 @@ export function build({ site = SITE, dicts = loadDicts() } = {}) {
   }
   const map = readFileSync(join(site, 'sitemap.xml'), 'utf8');
   // the English sitemap as tools/site-pages.mjs writes it is the list; written again with every language
-  const enOnly = map.includes('xmlns:xhtml') ? map.replace(/<url>\s*<loc>https:\/\/sepd0x\.github\.io\/cs2-ip-changer\/(pt-br|es|ru)\/[\s\S]*?<\/url>\s*/g, '').replace(/\s*<xhtml:link[^>]*\/>/g, '') : map;
+  const enOnly = map.includes('xmlns:xhtml') ? map.replace(/<url>\s*<loc>https:\/\/sepd0x\.github\.io\/cs2-ip-changer\/(pt-br|es|ru|tr)\/[\s\S]*?<\/url>\s*/g, '').replace(/\s*<xhtml:link[^>]*\/>/g, '') : map;
   files['sitemap.xml'] = sitemap(enOnly, all);
   // the same addresses as plain text, one per line (12 Nov. 2026: Search Console kept saying "Couldn't fetch" for the XML
   // of this github.io project site; a text sitemap is the simplest thing a crawler can read, and robots.txt names both)

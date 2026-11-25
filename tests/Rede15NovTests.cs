@@ -102,7 +102,7 @@ static class Rede15NovTests
         check("Bloqueador 3: a tooltip do Open Windows Firewall e o fim do Remove dizem o nome novo",
             xaml.Contains("named 'CS2 IP Changer'.") && !xaml.Contains("named 'ServerRouteTool'")
             && !Src("Core", "Uninstall.cs").Contains("names start with ServerRouteTool") && Src("Core", "Uninstall.cs").Contains("(names start with {0}).\", AppIds.RulePrefix)"), "");
-        foreach (var code in new[] { "es", "pt-BR", "ru" })
+        foreach (var code in new[] { "es", "pt-BR", "ru", "tr" })
         {
             var json = Src("Lang", code + ".json");
             check($"Bloqueador 3: {code} sem as chaves com ServerRouteTool, com a tooltip nova traduzida",

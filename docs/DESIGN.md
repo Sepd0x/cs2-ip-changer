@@ -300,8 +300,8 @@ Rules, checked by `node --test tools/site-touch.test.mjs` with taps and flicks (
 
 ## The site in other languages
 
-English is the site (x-default). `site/pt-br/`, `site/es/` and `site/ru/` (Brazilian Portuguese, Spanish for Latin
-America, Russian; chosen 10 Nov 2026 from where the real users came from) are made by `node tools/site-i18n.mjs` from the
+English is the site (x-default). `site/pt-br/`, `site/es/`, `site/ru/` and `site/tr/` (Brazilian Portuguese, Spanish for Latin
+America, Russian, Turkish; chosen 10 Nov 2026 from where the real users came from, Turkish added 24 Nov) are made by `node tools/site-i18n.mjs` from the
 English pages and `tools/i18n/<lang>.json`; never edit them by hand. `node tools/site-pages.mjs` runs it after the guides.
 Same design, same `assets/`, same 3D script; only the words change.
 
@@ -350,13 +350,13 @@ At every release the version changes, so the captures (the sidebar shows it) are
 
 ### Languages (11 Nov 2026)
 
-- The app is in English (the source and the fallback), pt-BR, es (neutral, Latin America) and ru. The language follows Windows the
+- The app is in English (the source and the fallback), pt-BR, es (neutral, Latin America), ru and tr. The language follows Windows the
   first time; Settings > App > Language changes it (it applies the next time the app opens).
 - One mechanism, `src/Loc.cs`: the English text is the key, `src/Lang/<code>.json` hold the translations, and a text with no entry
   shows in English. XAML needs no marker: `Loc.Apply` swaps the text of each window once, when it opens. Texts the code builds go
   through `Loc.T("text")` and `Loc.F("text {0}", value)`. The Log, the telemetry and internal names stay in English
   (`Loc.En` gives the English back).
-- Spanish and Russian run about 40% longer: size a box for the longest language, never for English. `SRT_PSEUDO=1` stretches every
+- Spanish and Russian run about 40% longer (Turkish about 20%, with long words that cannot break): size a box for the longest language, never for English. `SRT_PSEUDO=1` stretches every
   text 40% to check the layout.
 - Menu names of Windows and Android that a text quotes are the ones the user sees on screen in that language.
 - `tools/loc-keys.mjs` lists the keys, `tools/loc-merge.mjs` folds translations in, `tests/LocTests.cs` fails when a key is missing

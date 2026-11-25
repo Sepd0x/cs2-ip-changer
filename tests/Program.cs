@@ -674,6 +674,8 @@ Dashboard10NovTests.Run(Check);
 OnboardingTests.Run(Check);
 // 11 nov.: idiomas da app (LocTests.cs)
 LocTests.Run(Check);
+// 24 nov.: a app em turco (TurcoTests.cs)
+TurcoTests.Run(Check);
 // 15 nov.: auditoria final, rede e proteção: "Protected" com o IP de casa, crash em Whole PC, nome das regras com migração (Rede15NovTests.cs)
 await Rede15NovTests.Run(Check);
 // 15 nov.: auditoria final, textos, idiomas e repo: palavras sem tradução, nome do dono fora do repo, docs que não batem, SMOKE, .gitattributes, avisos de terceiros (Textos15NovTests.cs)

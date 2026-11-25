@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using SRT;
 using SRT.Core;
 
-// 11 nov.: a app em pt-BR, es e ru (src/Loc.cs, src/Lang/*.json). O inglês é a chave.
+// 11 nov.: a app em pt-BR, es, ru e tr (src/Loc.cs, src/Lang/*.json). O inglês é a chave.
 static class LocTests
 {
     public static void Run(Action<string, bool, string> check)
@@ -14,7 +14,7 @@ static class LocTests
         var keys = Keys(repo);
         check("Idiomas: há textos para traduzir", keys.Count > 300, keys.Count.ToString());
 
-        foreach (var code in new[] { "pt-BR", "es", "ru" })
+        foreach (var code in new[] { "pt-BR", "es", "ru", "tr" })
         {
             var t = Loc.Load(code);
             var missing = keys.Where(k => !t.ContainsKey(k)).ToList();

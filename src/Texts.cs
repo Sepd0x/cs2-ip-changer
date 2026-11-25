@@ -2,7 +2,7 @@ namespace SRT;
 
 /// <summary>
 /// Every visible text added since the onboarding work of 10 Nov 2026 (first-run tour, Phone setup's ADB download, cable and USB
-/// debugging guides, the Regions note), in one place, so the app can be translated (pt-BR, es, ru) without hunting through the XAML.
+/// debugging guides, the Regions note), in one place, so the app can be translated (pt-BR, es, ru, tr) without hunting through the XAML.
 /// XAML reads these with {x:Static local:Texts.Name}. Older texts still live where they are used; move them here as they are touched.
 /// Menu names on the phone ("About phone", "Developer options"...) are the ones the phone shows in English: a translation uses the
 /// names the phone shows in that language.

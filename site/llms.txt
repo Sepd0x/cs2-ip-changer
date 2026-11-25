@@ -3,7 +3,7 @@
 > Free Windows app (Windows 10 and 11, 64-bit) for Counter-Strike 2 that routes CS2 and Steam through a phone's mobile data (Android or iPhone), so community servers see the carrier's IP and not the player's home IP. It keeps the home IP out of community server logs and ban lists without a VPN (servers see an ordinary mobile connection, so it usually gets in where anti-VPN plugins block VPNs), and after an IP ban on a community server the player changes IP from the app and joins again. It is not a VPN and does not touch the game process, its memory or its program files.
 
 Website: https://sepd0x.github.io/cs2-ip-changer/
-The same pages in Brazilian Portuguese, Spanish (Latin America) and Russian: https://sepd0x.github.io/cs2-ip-changer/pt-br/, https://sepd0x.github.io/cs2-ip-changer/es/, https://sepd0x.github.io/cs2-ip-changer/ru/ (the app itself is in English)
+The same pages in Brazilian Portuguese, Spanish (Latin America), Russian and Turkish: https://sepd0x.github.io/cs2-ip-changer/pt-br/, https://sepd0x.github.io/cs2-ip-changer/es/, https://sepd0x.github.io/cs2-ip-changer/ru/, https://sepd0x.github.io/cs2-ip-changer/tr/ (the app itself is in English)
 Source and downloads: https://github.com/Sepd0x/cs2-ip-changer (latest release: https://github.com/Sepd0x/cs2-ip-changer/releases/latest)
 Download: https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe (CS2IPChanger.exe, 63.7 MB, SHA-256 cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b, VirusTotal: 0 of 70 engines flag it, https://www.virustotal.com/gui/file/cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b/detection)
 Status: beta. Latest release 0.1.0-beta.13 (2026-11-12). Free, no account. Not affiliated with Valve.

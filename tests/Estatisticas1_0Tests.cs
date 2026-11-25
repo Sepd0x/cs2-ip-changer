@@ -151,7 +151,7 @@ static class Estatisticas1_0Tests
             && main.Contains("Telemetry.Start(_demo, TelemetryNow, _s.StatsAccepted, off: _s.StatsOff);") && main.Contains("_s.StatsOff = stats.Off;"), "");
         var all = new[] { "src/Core/Telemetry.cs", "src/MainWindow.xaml", "src/Views/MainWindow.Telemetry.cs", "src/App.xaml.cs" }.Select(f => Read(f.Split('/'))).Aggregate((a, b) => a + b);
         check("Estatísticas 1.0: nenhum texto da app diz obrigatório ou em beta nas estatísticas", !all.Contains("required while") && !all.Contains("required in the beta") && !all.Contains("They are required") && !all.Contains("This beta sends"), "");
-        foreach (var lang in new[] { "es", "pt-BR", "ru" })
+        foreach (var lang in new[] { "es", "pt-BR", "ru", "tr" })
         {
             var j = Read("src", "Lang", lang + ".json");
             check($"Estatísticas 1.0: {lang} sem frases obrigatórias nas estatísticas",

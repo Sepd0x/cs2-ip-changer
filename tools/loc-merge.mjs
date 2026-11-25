@@ -1,4 +1,4 @@
-// Folds the translators' work files (publish/loc/work/*.out.json: {"<English>": {"pt-BR","es","ru"}}) into src/Lang/<code>.json.
+// Folds the translators' work files (publish/loc/work/*.out.json: {"<English>": {"pt-BR","es","ru","tr"}}) into src/Lang/<code>.json.
 //   node tools/loc-merge.mjs            merge
 //   node tools/loc-merge.mjs --prune    also drop keys the app no longer uses
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { allKeys } from './loc-keys.mjs';
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
-const langs = ['pt-BR', 'es', 'ru'];
+const langs = ['pt-BR', 'es', 'ru', 'tr'];
 const work = join(ROOT, 'publish/loc/work');
 const tables = Object.fromEntries(langs.map(l => [l, JSON.parse(readFileSync(join(ROOT, `src/Lang/${l}.json`), 'utf8'))]));
 let n = 0;
