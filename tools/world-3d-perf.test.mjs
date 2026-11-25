@@ -6,9 +6,9 @@
 // two-sided material twice and sets needsUpdate each time. After the fixes: none of the three. tools/site-perf.mjs measures the rest;
 // the pictures are the same (tools/site-compare.mjs: 8 pixels in a million, none of them over 40 of 255).
 // 25 Nov. 2026 (1.0.0): a frame draws the scene three times (the picture, the second render the bloom is taken from, the floor's
-// mirror), so every object left on its own costs up to three draw calls. The small instanced parts of each object (the tower's
-// fins, fans and RAM, the mast's bolts and fence posts, the raised floor's pedestals) were joined to the rest of it: 286 to 253
-// calls a frame on the home on a PC, 275 to 244 on a phone, 402 to 289 on the region guide. The last test here counts the calls
+// mirror), so every object left on its own costs up to three draw calls. The small instanced parts of each object, what the
+// tower, the monitor and the keyboard share, the phone's stand, the plugs and the still props of three guides were joined: 286 to
+// 221 calls a frame on the home on a PC, 275 to 212 on a phone, 402 to 257 on the region guide. The last test here counts the calls
 // of a frame in a real Chrome, pass by pass, so they do not creep back. The pictures are the same but for a few lone pixels
 // (thin edges that fall on the other side of a sample, a last digit of shading): measured picture by picture on the home, the
 // 12 guides and the 404, with and without bloom (the session's notes, publish/plano-1-0-0/8-3d-juntar-malhas.md, are outside the repo).
@@ -67,18 +67,28 @@ test('Clouds (19 Nov.): drawn by the sky\'s own shader from one map made once, s
   for (const [name, b] of Object.entries(bundles)) assert.ok(b.includes('uCloud'), `${name} is built from this world.js (tools/site-build.mjs)`);
 });
 
-test('Joined (25 Nov.): the small instanced parts are fused with the rest of their object, and the bloom\'s last quad is not drawn', () => {
-  assert.ok(src.includes('function fuse(group, keep = [], also = []'));
+test('Joined (25 Nov.): the small instanced parts, the desk, the phone and the plugs are fused, and the bloom\'s last quad is not drawn', () => {
+  assert.ok(src.includes('function fuse(group, keep = [], also = [], into = group)'));
   assert.ok(src.includes('if (!o.isMesh || o.instanceColor || keep.includes(o)'), 'an instanced part is fused like any other (not one coloured per copy)');
   assert.ok(src.includes('rel.multiplyMatrices(base, im.fromArray(o.instanceMatrix.array, t * 16))'), 'each copy is written out where its own matrix puts it');
   assert.ok(src.includes('ne = nrm.getNormalMatrix(rel).elements'), 'normals are moved with the part, never worked out again from the joined shape');
   assert.ok(!/merged\.computeVertexNormals|mergeVertices/.test(src), 'no computeVertexNormals or mergeVertices on a fused mesh: a hard edge would turn soft');
+  assert.ok(src.includes('fuse(pc, [keys], [], tower);'), 'the tower, the monitor and the keyboard share one mesh per material; the 74 keys stay instanced');
+  assert.ok(src.includes('const asIs = into !== group && o.parent === into && !o.isInstancedMesh && o.matrix.equals(same);') && src.includes('if (asIs) { P.set(p.subarray(0, c * 3), v0 * 3); N.set(n.subarray(0, c * 3), v0 * 3); }'), 'written in the tower\'s space, the tower\'s own points copied as they are: it is drawn exactly as before');
+  assert.ok(src.includes('fuse(phone);') && src.includes('for (const o of [plate, rest, body, ...phParts.hooks]) o.userData.stay = true;'), 'the phone and its stand; the parts the contact check measures stay in the tree');
+  assert.ok(src.includes('boot.userData.stay = relief.userData.stay = true; fuse(g);'), 'each plug\'s boot and strain relief');
+  assert.ok(src.includes('if (o.userData.stay) o.visible = false; else o.removeFromParent();'), 'a measured part is hidden, not drawn twice');
   assert.ok(src.includes('bloom.blendMaterial.visible = false;'), 'UnrealBloomPass adds its bloom back onto bloomIn, which nothing reads: that quad is not drawn');
   // what is never fused: glass, the screens, what glows and changes, the contact shadows, the route
   for (const own of ['const glass = new Mesh(new PlaneGeometry(TD - 0.24, TH - 0.24), M.glass)', 'mon.add(glows(screen))', 'tilt.add(glows(phScreen))', 'scene.add(glows(new Mesh(tube(cableMain, 210, mainR), mCable)));', 'const airTube = glows(new Mesh(', 'const arcTube = glows(new Mesh('])
     assert.ok(src.includes(own), 'still an object of its own: ' + own);
   assert.ok(src.includes('(o.material.transparent && !also.includes(o.material))'), 'a see-through part is only fused when its material is named');
-  for (const [name, b] of Object.entries(bundles)) assert.ok(b.includes('blendMaterial.visible=!1'), `${name} is built from this world.js (tools/site-build.mjs)`);
+  for (const [name, b] of Object.entries(bundles)) assert.ok(b.includes('blendMaterial.visible=!1') && b.includes('userData.stay'), `${name} is built from this world.js (tools/site-build.mjs)`);
+  // the guides' own props that stand still: the pages and the gate of Is it safe?, four of the six account cards, the profile stands
+  const g = readFileSync(join(ROOT, 'site/assets/guides/src/guides.js'), 'utf8').replace(/\r\n/g, '\n');
+  for (const call of ['c.fuse(src);', 'c.fuse(build);', 'c.fuse(fixed);', 'c.fuse(stands, frames);']) assert.ok(g.includes(call), 'a guide\'s still props are one mesh per material: ' + call);
+  assert.ok(g.includes('(i < 2 ? c.scene : fixed).add(g);'), 'the two account cards the story moves stay their own');
+  assert.ok(g.includes('p.add(frame); frames.push(frame);'), 'the profile plates turn: their frames are kept out of the stands\' mesh');
 });
 
 // ---- the draw calls of one frame, counted on the WebGL calls of a real Chrome (as tools/site-perf.mjs --stages does) ----
@@ -88,9 +98,9 @@ test('Joined (25 Nov.): the small instanced parts are fused with the rest of the
 // The ceilings are what 25 Nov. measured. A new object costs a call in up to three passes: when one is added on purpose, raise
 // the ceiling by what it costs and say so in the commit; when a count rises with nothing added, something stopped being joined.
 const CEILINGS = [
-  { name: 'the home\'s cover on a PC (1440x900)', path: '', view: { width: 1440, height: 900 }, scale: 1, picture: 102, bloom: 98, mirror: 39, total: 253 },
-  { name: 'the home\'s cover on a phone (412x839 at 2x)', path: '', view: { width: 412, height: 839 }, scale: 2, phone: true, picture: 99, bloom: 95, mirror: 36, total: 244 },
-  { name: 'the region guide on a PC, the page with the most objects', path: 'cs2-region-picker/', view: { width: 1440, height: 900 }, scale: 1, picture: 114, bloom: 110, mirror: 51, total: 289 },
+  { name: 'the home\'s cover on a PC (1440x900)', path: '', view: { width: 1440, height: 900 }, scale: 1, picture: 86, bloom: 82, mirror: 39, total: 221 },
+  { name: 'the home\'s cover on a phone (412x839 at 2x)', path: '', view: { width: 412, height: 839 }, scale: 2, phone: true, picture: 83, bloom: 79, mirror: 36, total: 212 },
+  { name: 'the region guide on a PC, the page with the most objects', path: 'cs2-region-picker/', view: { width: 1440, height: 900 }, scale: 1, picture: 98, bloom: 94, mirror: 51, total: 257 },
 ];
 const COUNT = `(() => {
   const P = window.__dc = { ready: 0, frames: [], cur: null };

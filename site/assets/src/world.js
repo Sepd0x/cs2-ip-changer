@@ -341,11 +341,13 @@ function* build(canvas, opts = {}) {
   // named in `also`); anything marked noBake and the parts in `keep` stay as they are.
   // 25 Nov. (1.0.0): the small instanced parts go in too, each copy written out where its matrix puts it (the fins, fans and
   // RAM of the tower, the mast's bolts and fence posts, the raised floor's pedestals: each was a draw call of its own, in every
-  // pass, for a few hundred triangles). A set of instanced parts alone with nothing to join stays instanced (the tower's three
-  // lit fan rings), and so does one coloured copy by copy (instanceColor)
-  function fuse(group, keep = [], also = []) {
+  // pass, for a few hundred triangles). A set of instanced parts alone with nothing to join stays instanced, and so does one
+  // in `keep` (the keyboard's 74 keys: 66 000 points written out to save nothing).
+  // `into`: the group whose space the joined meshes are written in and that holds them (the group itself unless said). A mesh
+  // that already lies in that space, fused there before, is copied point for point, so it is drawn exactly as it was
+  function fuse(group, keep = [], also = [], into = group) {
     group.updateMatrixWorld(true);
-    const inv = group.matrixWorld.clone().invert(), sets = new Map(), rel = new Matrix4(), base = new Matrix4(), im = new Matrix4();
+    const inv = into.matrixWorld.clone().invert(), sets = new Map(), rel = new Matrix4(), base = new Matrix4(), im = new Matrix4(), same = new Matrix4();
     group.traverse(o => {
       if (!o.isMesh || o.instanceColor || keep.includes(o) || Array.isArray(o.material) || (o.material.transparent && !also.includes(o.material))) return;
       for (let q = o; q && q !== group; q = q.parent) if (!q.visible || q.userData.noBake) return;
@@ -363,10 +365,12 @@ function* build(canvas, opts = {}) {
       for (const o of list) {
         const g = o.geometry, p = g.attributes.position.array, n = g.attributes.normal.array, uv = g.attributes.uv.array, c = g.attributes.position.count;
         base.multiplyMatrices(inv, o.matrixWorld);
+        const asIs = into !== group && o.parent === into && !o.isInstancedMesh && o.matrix.equals(same);
+        if (asIs) { P.set(p.subarray(0, c * 3), v0 * 3); N.set(n.subarray(0, c * 3), v0 * 3); }
         for (let t = 0, copies = o.isInstancedMesh ? o.count : 1; t < copies; t++) {
           if (o.isInstancedMesh) rel.multiplyMatrices(base, im.fromArray(o.instanceMatrix.array, t * 16)); else rel.copy(base);
           const e = rel.elements, ne = nrm.getNormalMatrix(rel).elements;
-          for (let k = 0, j = v0 * 3; k < c * 3; k += 3, j += 3) {
+          for (let k = 0, j = v0 * 3; k < c * 3 && !asIs; k += 3, j += 3) {
             const x = p[k], y = p[k + 1], z = p[k + 2], a = n[k], b = n[k + 1], d = n[k + 2];
             P[j] = e[0] * x + e[4] * y + e[8] * z + e[12]; P[j + 1] = e[1] * x + e[5] * y + e[9] * z + e[13]; P[j + 2] = e[2] * x + e[6] * y + e[10] * z + e[14];
             const nx = ne[0] * a + ne[3] * b + ne[6] * d, ny = ne[1] * a + ne[4] * b + ne[7] * d, nz = ne[2] * a + ne[5] * b + ne[8] * d, l = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
@@ -381,7 +385,8 @@ function* build(canvas, opts = {}) {
       const merged = new BufferGeometry();
       merged.setAttribute('position', new BufferAttribute(P, 3)); merged.setAttribute('normal', new BufferAttribute(N, 3)); merged.setAttribute('uv', new BufferAttribute(U, 2)); merged.setIndex(new BufferAttribute(I, 1));
       const m = new Mesh(merged, list[0].material); m.castShadow = list[0].castShadow; m.receiveShadow = list[0].receiveShadow; m.layers.mask = list[0].layers.mask;
-      list.forEach(o => o.removeFromParent()); group.add(m);
+      // a part tools/world-3d-contacts.mjs measures (userData.stay) keeps its place in the tree, hidden: its shape is in the mesh that is drawn
+      list.forEach(o => { if (o.userData.stay) o.visible = false; else o.removeFromParent(); }); into.add(m);
     }
   }
   const nrm = new Matrix3();
@@ -546,9 +551,10 @@ function* build(canvas, opts = {}) {
   yield;
   // ---------- the PC tower: brushed side, a glass side panel with the parts inside, a vented front with the app's top line ----------
   const pc = new Group(); scene.add(pc);
+  let tower = null;   // the tower's own group: what the whole desk shares is joined in its space (see the keyboard)
   const TW = 1.15, TH = 2.5, TD = 2.5, TX = -7.6, TZ = 0.6;
   {
-    const t = new Group(); t.position.set(TX, 0, TZ); pc.add(t);
+    const t = new Group(); t.position.set(TX, 0, TZ); pc.add(t); tower = t;
     // a shell, not a block: a solid body filled the case, so nothing behind the glass ever showed (7 Nov.)
     const Y0 = 0.06, YC = TH / 2 + Y0;
     for (const [w, h, d, x, y, z] of [[0.05, TH, TD, TW / 2 - 0.025, YC, 0], [TW, 0.08, TD, 0, TH + Y0 - 0.04, 0], [TW, 0.1, TD, 0, Y0 + 0.05, 0], [TW, TH, 0.07, 0, YC, TD / 2 - 0.035], [TW, TH, 0.05, 0, YC, -TD / 2 + 0.025]]) { const p = rbox(w, h, d, 0.03, M.alu); p.position.set(x, y, z); t.add(p); }
@@ -685,6 +691,10 @@ function* build(canvas, opts = {}) {
     const mouse = new Mesh(new SphereGeometry(0.15, 24, 16), M.keycap); mouse.scale.set(0.75, 0.35, 1.15); mouse.position.set(1.9, 0.06, 0.1); kb.add(mouse);
     const wheel = new Mesh(new CylinderGeometry(0.022, 0.022, 0.014, 12), M.rubber); wheel.rotation.z = Math.PI / 2; wheel.position.set(1.9, 0.108, 0.01); kb.add(wheel);
     shadowy(kb); blob(-4.25, 1.75, 3.2, 1.3, 0.28);
+    // 25 Nov. (1.0.0): the tower, the monitor and the keyboard stand on one mat and never move or hide apart from each other, so
+    // what they share (the dark and the plain aluminium, the black plastic, the rubber) is one mesh for the whole desk. Written
+    // in the tower's space: the tower has most of the points, and those are copied as they are (it is drawn exactly as before)
+    fuse(pc, [keys], [], tower);
   }
 
   yield;
@@ -718,6 +728,10 @@ function* build(canvas, opts = {}) {
     if (opts.ios) { const cam = rbox(0.36, 0.36, 0.035, 0.08, M.metalDark); cam.position.set(-0.2, PH - 0.3, -PD / 2 - 0.014); tilt.add(cam); for (const [lx, ly] of [[-0.08, 0.08], [-0.08, -0.08], [0.08, 0]]) { const l = new Mesh(new CylinderGeometry(0.055, 0.055, 0.03, 20), M.chrome); l.rotation.x = Math.PI / 2; l.position.set(-0.2 + lx, PH - 0.3 + ly, -PD / 2 - 0.035); tilt.add(l); } }
     else { const cam = rbox(0.7, 0.18, 0.035, 0.08, M.plastic); cam.position.set(0, PH - 0.25, -PD / 2 - 0.014); tilt.add(cam); }
     shadowy(phone); phone.userData.noBake = true; blobAt(-0.55, 0.053, 2.85, 1.3, 1.3, 0.6); // it hides in some shots: a soft blob of its own
+    // 25 Nov. (1.0.0): the stand's eight aluminium parts and the phone's buttons were a draw call each; the phone only ever hides
+    // whole, so they are one mesh per material inside its group. The parts the contact check measures stay in the tree, hidden
+    for (const o of [plate, rest, body, ...phParts.hooks]) o.userData.stay = true;
+    fuse(phone);
   }
   const phCv = document.createElement('canvas'); phCv.width = 512; phCv.height = 1060;
   const phTex = new CanvasTexture(phCv); phTex.colorSpace = SRGBColorSpace; phTex.anisotropy = 8;
@@ -1024,6 +1038,7 @@ function* build(canvas, opts = {}) {
     if (angled) { boot.position.set(0, -0.04, 0.0775); relief.rotation.x = Math.PI / 2; relief.position.set(0, -0.04, 0.225); }
     else { boot.position.y = -0.112; relief.position.y = -0.25; }
     g.add(boot, relief);
+    boot.userData.stay = relief.userData.stay = true; fuse(g);   // the boot and its strain relief, one mesh that moves with the plug (25 Nov.)
     return { g, parts: [tip, boot, relief], at: angled ? V3(0, -0.04, 0.25) : V3(0, -0.275, 0), dir: angled ? V3(0, 0, 1) : V3(0, -1, 0) };
   }
   function pose(pl, pos, q) { pl.g.position.copy(pos); pl.g.quaternion.copy(q); pl.g.updateMatrixWorld(true); return { at: pl.at.clone().applyMatrix4(pl.g.matrixWorld), dir: pl.dir.clone().applyQuaternion(q) }; }

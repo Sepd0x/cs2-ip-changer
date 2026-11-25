@@ -16,7 +16,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Until a phone has been set up on this PC, the app opens on Regions, and the top button on Connection says "Set up the phone" and only opens Phone setup (so does Turn on protection in the notification area menu). Before, it said "Turn on protection" and blocked your servers when there was no phone yet.
 - Phone setup: when everything is green and protection is off, it ends with "Turn on protection" next to "Close".
 - Regions: the line under the count says the block stays on after you close the app, and that "Allow all (block off)" removes it.
-- Website: the 3D scenes ask less of a phone. Each frame is drawn in about a tenth fewer steps on the home page and over a quarter fewer on the region guides, and the picture is the same.
+- Website: the 3D scenes ask less of a phone. Each frame is drawn in about a quarter fewer steps on the home page and over a third fewer on the region guides, and the picture is the same.
 
 ### Changed
 - Usage stats are no longer required. They are on by default, and the notice at the first start has Accept and Turn off (Turn off opens the app and sends nothing). Settings > Send usage stats turns them off or on again any time, with the same random ID. Anyone who accepted in the beta stays on. The app, the README, the privacy page and the website no longer say they are required.
