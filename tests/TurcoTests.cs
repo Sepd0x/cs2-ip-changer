@@ -71,5 +71,18 @@ static class TurcoTests
         check("Turco: a letra İ, ı, ş, ğ está nos textos em UTF-8", json.Contains('ı') && json.Contains('ş') && json.Contains('ğ') && json.Contains('İ'), "");
         // a mudança de língua no turco: o aviso do Settings > App existe
         check("Turco: o aviso de língua mudada está traduzido", tr.ContainsKey("Language changed. Close and open the app to apply it.") && Regex.IsMatch(tr["Language changed. Close and open the app to apply it."], "[a-zçğıöşü]"), "");
+
+        // 25 nov. (revisão, achados 4 e 8): os menus do telemóvel com o nome que o telemóvel mostra em turco (docs/DESIGN.md, Languages)
+        var english = tr.Where(kv => kv.Value.Contains("Personal Hotspot")).Select(kv => kv.Key).ToList();
+        check("Turco: o menu do iPhone é \"Kişisel Erişim Noktası\" (nenhum texto diz Personal Hotspot)", english.Count == 0 && tr["Personal Hotspot"] == "Kişisel Erişim Noktası"
+            && tr.Where(kv => kv.Key.Contains("Personal Hotspot")).All(kv => kv.Value.Contains("Kişisel Erişim Noktası")), string.Join(" | ", english.Take(3)));
+        var noPhone = tr.Where(kv => kv.Key.StartsWith("No phone mode", StringComparison.Ordinal)).ToList();
+        check("Turco: \"No phone mode\" é sempre \"Telefonsuz mod\"", noPhone.Count >= 5 && noPhone.All(kv => kv.Value.StartsWith("Telefonsuz mod", StringComparison.Ordinal)), string.Join(" | ", noPhone.Where(kv => !kv.Value.StartsWith("Telefonsuz mod", StringComparison.Ordinal)).Select(kv => kv.Value).Take(2)));
+        var capital = tr.Values.Where(v => Regex.IsMatch(v, @"[a-zçğıöşü,] Ev IP")).ToList();
+        check("Turco: \"ev IP\" a meio de uma frase vai em minúsculas", capital.Count == 0, string.Join(" | ", capital.Take(2)));
+        // "Sunucudan {0}{1}." leva a palavra na 2.ª pessoa, como atıldın, engellendin e geri çevrildin
+        check("Turco: banido, expulso, bloqueado e recusado na 2.ª pessoa", new[] { "banned", "kicked", "blocked", "turned away" }.All(k => tr[k].EndsWith('n')), tr["banned"]);
+        // o botão "Turn off" é "Kapat", como "Close": a frase do aviso diz o botão entre aspas e o que ele faz
+        check("Turco: a frase do aviso das estatísticas nomeia o botão entre aspas", tr["Turn off sends nothing, and the app works the same."].StartsWith("\"" + tr["Turn off"] + "\"", StringComparison.Ordinal), tr["Turn off sends nothing, and the app works the same."]);
     }
 }

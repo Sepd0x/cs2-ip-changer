@@ -332,7 +332,8 @@ Same design, same `assets/`, same 3D script; only the words change.
   and the VirusTotal count are `{version}`, `{size}`, `{date}`, `{vt}`, filled at build time in the language's format.
 - A text a page's script shows is marked `/*t*/'…'` in the page; the shared scripts call `T('…')` and read
   `window.__i18n`, and reach the site's files through `window.__root` (`../` in a language folder).
-- What stays English: the app's name and everything the app shows (pages, buttons, options: the app is in English);
+- What stays English: the app's name and everything the app shows (pages, buttons, options). The app itself is in English,
+  Brazilian Portuguese, Spanish, Russian and Turkish (see Languages below), but the site quotes its English names in every language;
   code and commands; the 3D scene's own words; the addresses (the same slugs in every language). Windows, Android and
   iPhone menus keep their English name, with the phone's own name in that language in brackets the first time.
 - The picker: a globe and the language's code in the header, before the GitHub button, as quiet as the nav links; on a
