@@ -35,7 +35,7 @@ public partial class MainWindow
             if (!IsVisible || WindowState == WindowState.Minimized || Dialog.Visibility == Visibility.Visible || SetupPane.Visibility == Visibility.Visible
                 || _command != null || PhoneKnown) return;
             _tourWait.Stop();
-            OpenTour(auto: true);
+            OpenDoors();   // 24 Nov: the two doors first; the tour is behind Show me around (MainWindow.Start.cs)
         };
         _tourWait.Start();
     }
@@ -163,6 +163,8 @@ public partial class MainWindow
     void ShowRegionsPitch()
     {
         if (_regionGame != null && _regionGame != _cs2Regions) return;
+        // Not behind the first start's doors, nor before they open (they show it when they close)
+        if (StartPane.Visibility == Visibility.Visible || _tourWait is { IsEnabled: true }) return;
         var due = RegionsPitchDue(_s.RegionsPitchSeen, PhoneKnown, _s.NoPhone, _demo);
         DemoRegionsPitch(ref due);
         if (RegionsPitch.Visibility == Visibility.Visible || !due) return;

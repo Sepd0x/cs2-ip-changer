@@ -2463,7 +2463,10 @@
                                                 <ProgressBar Margin="0,6,0,0" Height="2" Maximum="100" Value="{Binding PercentValue, Mode=OneWay}" Visibility="{Binding PercentVisibility}"/>
                                             </StackPanel>
                                             <Button Grid.Column="3" Style="{StaticResource Primary}" Content="{Binding Action}" Click="SetupAction_Click" Margin="0" MinWidth="86" VerticalAlignment="Top"
-                                                    Visibility="{Binding HasAction, Converter={StaticResource Vis}}" IsEnabled="{Binding Idle}"/>
+                                                    Visibility="{Binding HasMainAction, Converter={StaticResource Vis}}" IsEnabled="{Binding Idle}"/>
+                                            <!-- 24 Nov: a second way (Use the hotspot on the cable row) is a grey button, so the cable stays the one to follow -->
+                                            <Button Grid.Column="3" Content="{Binding Action}" Click="SetupAction_Click" Margin="0" MinWidth="86" VerticalAlignment="Top"
+                                                    Visibility="{Binding HasQuietAction, Converter={StaticResource Vis}}"/>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -2477,8 +2480,110 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock x:Name="SetupFoot" Style="{StaticResource OptSub}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <Button x:Name="SetupCloseBtn" Grid.Column="1" Content="Close" Click="SetupClose_Click" Margin="0"/>
+                            <!-- 24 Nov: ready with protection off ends on Turn on protection, with Close next to it (SetupEnd) -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                <Button x:Name="SetupCloseBtn" Content="Close" Click="SetupClose_Click" Margin="0"/>
+                                <Button x:Name="SetupTurnOnBtn" Style="{StaticResource Primary}" Content="Turn on protection" Click="SetupTurnOn_Click" Margin="6,0,0,0" Visibility="Collapsed"/>
+                            </StackPanel>
                         </Grid>
+                    </StackPanel>
+                </HeaderedContentControl>
+            </Grid>
+            <!-- 24 Nov: the first start's two doors (MainWindow.Start.cs). 46 of 57 never plugged a phone in and Regions is the most used
+                 page, so the start asks before pushing anyone to the phone. Each door draws the page it opens; the tour is behind Show me around -->
+            <Grid x:Name="StartPane" Grid.Row="1" Background="#B0000000" Visibility="Collapsed" KeyboardNavigation.TabNavigation="Cycle">
+                <HeaderedContentControl Style="{StaticResource DialogGroup}" Width="640" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="18,20,18,16">
+                    <HeaderedContentControl.Header>
+                        <TextBlock Text="{x:Static local:Texts.DoorsTitle}"/>
+                    </HeaderedContentControl.Header>
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="DoorRegionsBtn" Style="{StaticResource Door}" Click="DoorRegions_Click" AutomationProperties.Name="{x:Static local:Texts.DoorRegions}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <!-- The Regions list as the page draws it: two allowed, two blocked -->
+                                    <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="10,8" Height="112" IsHitTestVisible="False">
+                                        <StackPanel>
+                                            <Grid Margin="0,2">
+                                                <Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                <CheckBox IsChecked="True" Focusable="False" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="1" Text="Frankfurt" FontSize="11" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="2" Text="24 ms" FontSize="11" FontFamily="{StaticResource Mono}" Foreground="{StaticResource Good}" VerticalAlignment="Center"/>
+                                            </Grid>
+                                            <Grid Margin="0,5,0,2">
+                                                <Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                <CheckBox IsChecked="True" Focusable="False" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="1" Text="Vienna" FontSize="11" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="2" Text="30 ms" FontSize="11" FontFamily="{StaticResource Mono}" Foreground="{StaticResource Good}" VerticalAlignment="Center"/>
+                                            </Grid>
+                                            <Grid Margin="0,5,0,2">
+                                                <Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                <CheckBox IsChecked="False" Focusable="False" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="1" Text="Chicago" FontSize="11" Foreground="{StaticResource Faint}" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="2" Text="128 ms" FontSize="11" FontFamily="{StaticResource Mono}" Foreground="{StaticResource Bad}" VerticalAlignment="Center"/>
+                                            </Grid>
+                                            <Grid Margin="0,5,0,2">
+                                                <Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                <CheckBox IsChecked="False" Focusable="False" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="1" Text="Dubai" FontSize="11" Foreground="{StaticResource Faint}" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="2" Text="141 ms" FontSize="11" FontFamily="{StaticResource Mono}" Foreground="{StaticResource Bad}" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                    <TextBlock Grid.Row="1" Text="{x:Static local:Texts.DoorRegions}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,14,0,4"/>
+                                    <TextBlock Grid.Row="2" Text="{x:Static local:Texts.DoorRegionsText}" Style="{StaticResource Sub}" TextWrapping="Wrap" LineHeight="18"/>
+                                    <TextBlock Grid.Row="3" Foreground="{StaticResource Accent}" FontWeight="SemiBold" Margin="0,10,0,0"><Run Text="{x:Static local:Texts.DoorRegionsGo}"/><Run Text="  &#xE76C;" FontFamily="{StaticResource Icons}" FontSize="10"/></TextBlock>
+                                </Grid>
+                            </Button>
+                            <Button x:Name="DoorPhoneBtn" Grid.Column="2" Style="{StaticResource Door}" Click="DoorPhone_Click" AutomationProperties.Name="{x:Static local:Texts.DoorPhone}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <!-- The phone as Phone setup draws it (PhoneGuide), and the Status box's pair: the home IP, then the carrier's -->
+                                    <Border Background="{StaticResource Bg}" BorderBrush="{StaticResource Line}" BorderThickness="1" Height="112" IsHitTestVisible="False">
+                                        <Grid>
+                                            <Border Width="50" Height="88" BorderBrush="{StaticResource LineStrong}" BorderThickness="1" Background="{StaticResource Bg}" HorizontalAlignment="Left" Margin="22,0,0,0" VerticalAlignment="Center">
+                                                <Grid>
+                                                    <Border Width="14" Height="2" Background="{StaticResource Line}" VerticalAlignment="Top" Margin="0,5,0,0"/>
+                                                    <Border Height="6" Background="{StaticResource Surface3}" VerticalAlignment="Top" Margin="6,16,6,0"/>
+                                                    <Border Height="6" Background="{StaticResource Surface3}" VerticalAlignment="Top" Margin="6,27,14,0"/>
+                                                    <Border Height="8" Background="{StaticResource AccentSoft}" BorderBrush="{StaticResource Accent}" BorderThickness="2,0,0,0" VerticalAlignment="Top" Margin="6,39,6,0"/>
+                                                    <Border Height="6" Background="{StaticResource Surface3}" VerticalAlignment="Top" Margin="6,53,10,0"/>
+                                                </Grid>
+                                            </Border>
+                                            <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center" Margin="92,0,8,0">
+                                                <TextBlock Text="Your home IP" FontSize="10" Foreground="{StaticResource Faint}" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="203.0.•••.•••" FontSize="13" FontFamily="{StaticResource Mono}" Foreground="{StaticResource Faint}" Margin="0,1,0,0"/>
+                                                <TextBlock Text="&#xE74B;" FontFamily="{StaticResource Icons}" FontSize="10" Foreground="{StaticResource Accent}" Margin="2,5,0,5"/>
+                                                <TextBlock Text="IP servers see" FontSize="10" Foreground="{StaticResource Faint}" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="198.51.100.23" FontSize="13" FontFamily="{StaticResource Mono}" Margin="0,1,0,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                    <TextBlock Grid.Row="1" Text="{x:Static local:Texts.DoorPhone}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,14,0,4"/>
+                                    <TextBlock Grid.Row="2" Text="{x:Static local:Texts.DoorPhoneText}" Style="{StaticResource Sub}" TextWrapping="Wrap" LineHeight="18"/>
+                                    <TextBlock Grid.Row="3" Foreground="{StaticResource Accent}" FontWeight="SemiBold" Margin="0,10,0,0"><Run Text="{x:Static local:Texts.SetUpPhone}"/><Run Text="  &#xE76C;" FontFamily="{StaticResource Icons}" FontSize="10"/></TextBlock>
+                                </Grid>
+                            </Button>
+                        </Grid>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                            <Button x:Name="DoorTourBtn" Click="DoorTour_Click" Content="{x:Static local:Texts.DoorTour}"/>
+                            <Button x:Name="DoorLaterBtn" Click="DoorLater_Click" Margin="0" Content="{x:Static local:Texts.TourLater}"/>
+                        </StackPanel>
                     </StackPanel>
                 </HeaderedContentControl>
             </Grid>
@@ -2515,24 +2620,19 @@
                 <Rectangle x:Name="TourRing" Stroke="{StaticResource Accent}" StrokeThickness="1" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False"/>
                 <Canvas>
                     <HeaderedContentControl x:Name="TourBox" Style="{StaticResource DialogGroup}" Width="360" Padding="16,18,16,14">
+                        <!-- 24 Nov: "5 of 5" sits in the title, and the buttons go to a second line when a language doesn't fit them in 360 px
+                             (ru, es and pt-BR pushed the count out and cut the last button) -->
                         <HeaderedContentControl.Header>
-                            <TextBlock x:Name="TourTitle"/>
+                            <TextBlock><Run x:Name="TourTitle"/><Run Text="   "/><Run x:Name="TourCount" Foreground="{StaticResource Faint}" FontFamily="{StaticResource Mono}"/></TextBlock>
                         </HeaderedContentControl.Header>
                         <StackPanel>
                             <TextBlock x:Name="TourText" Style="{StaticResource Sub}" TextWrapping="Wrap" LineHeight="19"/>
                             <TextBlock x:Name="TourHint" Style="{StaticResource OptSub}" TextWrapping="Wrap" Margin="0,8,0,0" Visibility="Collapsed" Text="{x:Static local:Texts.TourAgainHint}"/>
-                            <Grid Margin="0,16,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock x:Name="TourCount" Foreground="{StaticResource Faint}" FontFamily="{StaticResource Mono}" VerticalAlignment="Center"/>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <Button x:Name="TourSkipBtn" Click="TourSkip_Click" Content="{x:Static local:Texts.TourSkip}"/>
-                                    <Button x:Name="TourBackBtn" Click="TourBack_Click" Content="{x:Static local:Texts.TourBack}"/>
-                                    <Button x:Name="TourNextBtn" Style="{StaticResource Primary}" Margin="0" Click="TourNext_Click" Content="{x:Static local:Texts.TourNext}"/>
-                                </StackPanel>
-                            </Grid>
+                            <WrapPanel x:Name="TourButtons" HorizontalAlignment="Right" Margin="0,10,0,0">
+                                <Button x:Name="TourSkipBtn" Click="TourSkip_Click" Margin="0,6,6,0" Content="{x:Static local:Texts.TourSkip}"/>
+                                <Button x:Name="TourBackBtn" Click="TourBack_Click" Margin="0,6,6,0" Content="{x:Static local:Texts.TourBack}"/>
+                                <Button x:Name="TourNextBtn" Style="{StaticResource Primary}" Margin="0,6,0,0" Click="TourNext_Click" Content="{x:Static local:Texts.TourNext}"/>
+                            </WrapPanel>
                         </StackPanel>
                     </HeaderedContentControl>
                 </Canvas>

@@ -63,6 +63,8 @@ public partial class MainWindow
             case "changeip": _ = RunCommand("Change IP", "starting…", () => ChangeIp(confirm: true)); break;
             case "regions": ShowFromTray(); NavRegions.IsChecked = true; break;
             case "off": ShowFromTray(); Restore_Click(this, new RoutedEventArgs()); break;
+            // 24 Nov: before any phone was checked, the same as Connection's button (Set up the phone): Phone setup, nothing blocked
+            case "on" when !PhoneKnown: ShowFromTray(); NavNet.IsChecked = true; _ = RunPhoneSetup(); break;
             case "on": _ = TurnProtectionOn(ask: true); break;   // a question (CS2 open) opens the window
             case "quit": _quitting = true; Close(); break;   // a question on the way (Keep and close) opens the window
         }

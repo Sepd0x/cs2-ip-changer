@@ -680,6 +680,9 @@ TurcoTests.Run(Check);
 await Rede15NovTests.Run(Check);
 // 15 nov.: auditoria final, textos, idiomas e repo: palavras sem tradução, nome do dono fora do repo, docs que não batem, SMOKE, .gitattributes, avisos de terceiros (Textos15NovTests.cs)
 Textos15NovTests.Run(Check);
+// 24 nov.: estudo de usabilidade, as duas portas, o hotspot no passo do cabo, o botão do topo sem telemóvel, o fim do Phone setup, as
+// regras de regiões com a app fechada e o tour noutras línguas (Usabilidade24NovTests.cs)
+Usabilidade24NovTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

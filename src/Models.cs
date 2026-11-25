@@ -20,6 +20,9 @@ public sealed partial class Settings
     public bool PhoneSeen { get; set; }
     /// <summary>The first-run tour was shown (10 Nov 2026). It opens by itself once, only before a phone is seen; Settings > App opens it again.</summary>
     public bool TourSeen { get; set; }
+    /// <summary>The first start's door (24 Nov 2026): "regions", "phone", or null (none picked). With no phone yet the app opens on
+    /// Regions, unless "phone" was picked (MainWindow.StartOnRegions).</summary>
+    public string StartDoor { get; set; }
     /// <summary>App language: null or "auto" follows Windows, else en, pt-BR, es, ru or tr (Settings > App, Loc.cs).</summary>
     public string Language { get; set; }
     /// <summary>Regions said once what the phone adds (10 Nov 2026: every new user used Regions, none plugged in a phone).</summary>
