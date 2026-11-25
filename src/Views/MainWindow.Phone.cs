@@ -871,7 +871,7 @@ public partial class MainWindow
                 // On the hotspot airplane mode is never used, not even as the fallback where "svc data" is missing: it drops the hotspot
                 var (err, used) = await Adb.Cycle(_adb, _phone.Serial, how, Math.Clamp(_s.OffSeconds, 1, 60), allowAirplane: !hotspot);
                 // A phone that refuses airplane mode was left as it was: the retry goes the usual way
-                if (err != null && how != method && err.StartsWith(Adb.Refused))
+                if (err != null && how != method && err.StartsWith(Adb.Refused, StringComparison.Ordinal))
                 {
                     Log.Info("The phone refused airplane mode: trying again with " + (method == Adb.Method.Airplane ? "airplane mode." : "mobile data off and on."));
                     how = method;
@@ -983,8 +983,8 @@ public partial class MainWindow
     {
         const string back = "Turned data off but could not turn it back on: ", hand = " (turn it on manually on the phone)";
         if (err == Adb.Gone) return Loc.T("The phone isn't connected any more (the cable or USB debugging dropped).");
-        if (err.StartsWith(Adb.Refused)) return Loc.T("The phone refused the command:") + " " + err[Adb.Refused.Length..];
-        if (err.StartsWith(back) && err.EndsWith(hand)) return Loc.F("Turned data off but could not turn it back on: {0} (turn it on manually on the phone)", err[back.Length..^hand.Length]);
+        if (err.StartsWith(Adb.Refused, StringComparison.Ordinal)) return Loc.T("The phone refused the command:") + " " + err[Adb.Refused.Length..];
+        if (err.StartsWith(back, StringComparison.Ordinal) && err.EndsWith(hand, StringComparison.Ordinal)) return Loc.F("Turned data off but could not turn it back on: {0} (turn it on manually on the phone)", err[back.Length..^hand.Length]);
         return err;
     }
 

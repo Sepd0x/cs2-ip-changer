@@ -544,7 +544,7 @@ public sealed class Cs2ConfigStore
         {
             var root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(Root));
             var rel = Path.GetRelativePath(root, Path.GetFullPath(path));
-            if (rel == "." || rel.StartsWith("..") || Path.IsPathRooted(rel)) return null;
+            if (rel == "." || rel.StartsWith("..", StringComparison.Ordinal) || Path.IsPathRooted(rel)) return null;
             using var h = OpenDir(root);
             var text = FinalPath(h) is string real ? ReadText(path, Path.Combine(real, rel)) : null;
             lock (WarnedOwn) WarnedOwn.Remove(path);

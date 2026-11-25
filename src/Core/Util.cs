@@ -395,7 +395,8 @@ public static class Log
         Added?.Invoke(e);
     }
 
-    static string Line(LogEntry e) => $"{e.Time:yyyy-MM-dd HH:mm:ss} [{e.Level}] {e.Text}{Environment.NewLine}";
+    // Invariant: FirstLineAt reads this date back, and a Windows in Finnish writes "14.30.05", one in Thai the year 2569
+    static string Line(LogEntry e) => $"{e.Time.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)} [{e.Level}] {e.Text}{Environment.NewLine}";
 
     /// <summary>Once per start: the file goes to .old when it began more than <see cref="Keep"/> ago, and an .old that old goes away.</summary>
     public static void AgeOut(string path)
@@ -548,7 +549,7 @@ public static class Fmt
     {
         var total = TimeSpan.Zero;
         var any = false;
-        foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(text ?? "", @"(\d+(?:[.,]\d+)?)\s*(d|h|m)", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+        foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(text ?? "", @"(\d+(?:[.,]\d+)?)\s*(d|h|m)", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant))
         {
             var n = double.Parse(m.Groups[1].Value.Replace(',', '.'), System.Globalization.CultureInfo.InvariantCulture);
             total += char.ToLowerInvariant(m.Groups[2].Value[0]) switch { 'd' => TimeSpan.FromDays(n), 'h' => TimeSpan.FromHours(n), _ => TimeSpan.FromMinutes(n) };

@@ -25,6 +25,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Phone setup on the phone's hotspot no longer stays at "3 of 6 done": the USB debugging steps are only needed for Change IP, and it says so.
 - The window stays responsive while collecting network details for a bug report or loading a region list. Phone setup pauses its periodic checks while the window is hidden.
 - Regions: Refresh keeps the warning visible when Valve is offline and a saved list is used. Restore network also removes region rules under the older name.
+- Windows with the Turkish (or Azerbaijani) regional format: there, "i" and "I" are not the same letter, and the app compared some names that way. Two unrelated servers whose names start with "128tick" or "64tick" were taken as the same community, so a ban on one counted on the other. A phone, a VPN or a Steam profile link written in other capitals ("ANDROID", "rndis", "STEAMCOMMUNITY.COM/ID/...") was not recognized, and Hide usernames and the bug report did not cover a login, a Steam cookie or a profile link written in other capitals. All of this now works the same whatever the format of Windows.
+- Windows with a regional format that writes the time as 14.30.05 (Finnish, Danish) or counts the years another way (Thai, Arabic, Persian): the log file was not cleared after 14 days, only when it reached 2 MB. Its dates are now always written the same way.
 
 ## [0.1.0-beta.14] - 2026-11-19
 

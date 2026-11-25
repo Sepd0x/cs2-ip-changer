@@ -380,7 +380,7 @@ public static class Installer
         var n = GetFinalPathNameByHandleW(h, sb, (uint)sb.Capacity, flags);
         if (n == 0 || n >= sb.Capacity) return null;
         var p = sb.ToString();
-        return flags == 0 && p.StartsWith(@"\\?\") && !p.StartsWith(@"\\?\UNC\") ? p[4..] : p;
+        return flags == 0 && p.StartsWith(@"\\?\", StringComparison.Ordinal) && !p.StartsWith(@"\\?\UNC\", StringComparison.Ordinal) ? p[4..] : p;
     }
 
     static string MappedName(IntPtr address)

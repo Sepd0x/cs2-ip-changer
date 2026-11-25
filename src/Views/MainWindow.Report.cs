@@ -96,7 +96,7 @@ public partial class MainWindow
         sb.AppendLine();
         sb.AppendLine("== The app's routes");
         foreach (var r in routes ?? new())
-            if ((r.Prefix.EndsWith("/32") && ips.Contains(r.Prefix[..^3])) || Guard.SplitPrefixes.Contains(r.Prefix) || Net.ValvePrefixes.Contains(r.Prefix))
+            if ((r.Prefix.EndsWith("/32", StringComparison.Ordinal) && ips.Contains(r.Prefix[..^3])) || Guard.SplitPrefixes.Contains(r.Prefix) || Net.ValvePrefixes.Contains(r.Prefix))
                 sb.AppendLine($"{r.Prefix} if {r.Index} via {r.NextHop}");
         sb.AppendLine();
         sb.AppendLine("== The app's Firewall rules");

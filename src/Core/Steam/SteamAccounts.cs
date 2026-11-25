@@ -231,7 +231,7 @@ public static partial class Steam
             r >>= 5;
         }
         var code = sb.ToString();
-        return code.StartsWith("AAAA-") ? code[5..] : code;
+        return code.StartsWith("AAAA-", StringComparison.Ordinal) ? code[5..] : code;
     }
 
     /// <summary>

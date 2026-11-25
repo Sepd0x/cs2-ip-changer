@@ -318,8 +318,8 @@ public static class Cs2Console
         var m = all[^1];
         if (!long.TryParse(m.Groups[1].Value, out var n)) return null;
         var u = m.Groups[2].Value.ToLowerInvariant();
-        long minutes = u.StartsWith("s") ? (n + 59) / 60 : u.StartsWith("mo") ? n * 60 * 24 * 30 : u.StartsWith("m") ? n
-            : u.StartsWith("h") ? n * 60 : u.StartsWith("d") ? n * 60 * 24 : u.StartsWith("w") ? n * 60 * 24 * 7 : n * 60 * 24 * 365;
+        long minutes = u.StartsWith('s') ? (n + 59) / 60 : u.StartsWith("mo", StringComparison.Ordinal) ? n * 60 * 24 * 30 : u.StartsWith('m') ? n
+            : u.StartsWith('h') ? n * 60 : u.StartsWith('d') ? n * 60 * 24 : u.StartsWith('w') ? n * 60 * 24 * 7 : n * 60 * 24 * 365;
         return minutes is > 0 and <= int.MaxValue ? (int)minutes : null;
     }
 

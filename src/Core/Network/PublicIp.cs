@@ -66,12 +66,12 @@ public static partial class Net
         try
         {
             var trace = await http.GetStringAsync($"https://{EchoIp}/cdn-cgi/trace", ct);
-            var line = trace.Split('\n').FirstOrDefault(l => l.StartsWith("ip="));
+            var line = trace.Split('\n').FirstOrDefault(l => l.StartsWith("ip=", StringComparison.Ordinal));
             var ip = line?[3..].Trim();
             if (!IPAddress.TryParse(ip, out var a) || a.AddressFamily != AddressFamily.InterNetwork) { LastEgressError = "the answer had no IPv4"; return null; }
             LastEgressError = null;
             // The country Cloudflare saw: what the phone's line shows when ipwho.is can't be asked through the phone
-            if (CountryOf(trace.Split('\n').FirstOrDefault(l => l.StartsWith("loc="))?[4..].Trim()) is string country)
+            if (CountryOf(trace.Split('\n').FirstOrDefault(l => l.StartsWith("loc=", StringComparison.Ordinal))?[4..].Trim()) is string country)
                 lock (InfoCache) TraceCountry[ip] = country;
             return ip;
         }

@@ -40,7 +40,7 @@ public static partial class Net
     // "UsbNcm Host Device": Windows 11's own driver for phones that share over NCM instead of RNDIS (9 nov., tethering on and the app said Off).
     static readonly Regex PhonePattern = new(
         "Remote NDIS|RNDIS|Internet Sharing Device|Mobile USB|Android|Apple Mobile Device Ethernet|iPhone|UsbNcm",
-        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     static volatile string[] _phoneUsbIps = Array.Empty<string>();
 
@@ -72,14 +72,14 @@ public static partial class Net
     public static string UseSavedGateway(string saved, bool namedLikePhone, bool wifi, IReadOnlyCollection<string> phoneUsbIps) =>
         saved == null ? null : namedLikePhone || wifi || phoneUsbIps?.Contains(saved) == true ? saved : null;
 
-    static readonly Regex UsbNetPattern = new("USB.*Ethernet|USB.*Network|USB.*GbE|USB.*LAN", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    static readonly Regex UsbNetPattern = new("USB.*Ethernet|USB.*Network|USB.*GbE|USB.*LAN", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     public static bool LooksLikePhone(string description) => PhonePattern.IsMatch(description ?? "");
     public static bool LooksLikeUsbNet(string description) => !LooksLikePhone(description) && UsbNetPattern.IsMatch(description ?? "");
 
     static readonly Regex VpnPattern = new(
         "WireGuard|WARP|Cloudflare|TAP-|Wintun|OpenVPN|Proton|Mullvad|NordLynx|Nord|Surfshark|ExpressVPN|Windscribe|Tailscale|ZeroTier|VPN",
-        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     // ------------------------------------------------------------ Adapters (fast, no PowerShell)
 

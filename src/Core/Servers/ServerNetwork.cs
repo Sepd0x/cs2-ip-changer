@@ -38,7 +38,7 @@ public static class ServerNetwork
     }
 
     static bool IsGeneric(string tag) =>
-        Words.Split(tag).Where(w => w.Length > 0).All(w => Generic.Contains(w) || w.All(char.IsDigit) || Regex.IsMatch(w, @"^\d+(TICK|HZ)$", RegexOptions.IgnoreCase));
+        Words.Split(tag).Where(w => w.Length > 0).All(w => Generic.Contains(w) || w.All(char.IsDigit) || Regex.IsMatch(w, @"^\d+(TICK|HZ)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant));
 
     public static string Ip(string key) => key?.Split(':')[0];
 

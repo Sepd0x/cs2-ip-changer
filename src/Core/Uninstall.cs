@@ -162,7 +162,7 @@ public static class Uninstall
     public static string Script(int pid, Leftovers left)
     {
         // PowerShell also ends a '...' string at the curly quotes, so a path with one isn't given to it (it goes at the restart)
-        if (left.Files.Concat(left.Dirs).Any(p => !Path.IsPathFullyQualified(p) || p.Any(char.IsControl) || p.StartsWith(@"\\")
+        if (left.Files.Concat(left.Dirs).Any(p => !Path.IsPathFullyQualified(p) || p.Any(char.IsControl) || p.StartsWith(@"\\", StringComparison.Ordinal)
             || p.IndexOfAny(['‘', '’', '‚', '‛']) >= 0)) return null;
         static string List(IEnumerable<string> paths) => "@(" + string.Join(",", paths.Select(p => "'" + p.Replace("'", "''") + "'")) + ")";
         return "$ErrorActionPreference='SilentlyContinue'; " +
