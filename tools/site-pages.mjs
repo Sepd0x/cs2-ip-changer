@@ -3,23 +3,30 @@
 // and site/llms.txt, so the download line and the VirusTotal link are never typed by hand.
 // The look comes from site/index.html (its <style>), so the pages always match the home page. Run: node tools/site-pages.mjs
 // After a release: node tools/site-pages.mjs --release v0.1.0-beta.10 --vt 0/69 (the VirusTotal run's summary gives N/M).
+// --root <folder> (or SITE_ROOT=<folder>) reads and writes site/ and README.md in that folder, a copy of the repo's (the
+// tests use it); the dates that come from git, the theme and the translations are still the repo's own.
+// The end of lines never counts: every file is read with LF, and written only when its text changed (a Windows checkout
+// with Git's autocrlf has CRLF; a page that differs only by that is the same page and keeps its date).
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { readTheme } from './design-tokens.mjs';
-import { stamp, pagesOf, LANGS, write as writeLanguages } from './site-i18n.mjs';
+import { stamp, pagesOf, LANGS, same, write as writeLanguages } from './site-i18n.mjs';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const arg = (name) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : null; };
+const repo = join(dirname(fileURLToPath(import.meta.url)), '..');
+const root = resolve(arg('--root') || process.env.SITE_ROOT || repo);
 const site = join(root, 'site');
 const BASE = 'https://sepd0x.github.io/cs2-ip-changer/';
 const REPO = 'https://github.com/Sepd0x/cs2-ip-changer';
 const LATEST = `${REPO}/releases/latest`;
 const today = new Date().toISOString().slice(0, 10);
+const readText = (file) => readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+const put = (file, s) => { if (!existsSync(file) || !same(readFileSync(file, 'utf8'), s)) writeFileSync(file, s); };
 
 // ------------------------------------------------------------ the latest release, from one file
 const RELEASE = join(site, 'release.json');
-const arg = (name) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : null; };
 if (arg('--release')) {
   // Read from GitHub's public API, so the size, the date and the SHA-256 are the release's own.
   const tag = arg('--release'), vt = arg('--vt'), was = JSON.parse(readFileSync(RELEASE, 'utf8'));
@@ -47,7 +54,7 @@ const vtText = `${rel.virustotal.flagged} of ${rel.virustotal.engines} engines`;
 const relLine = `v${rel.version} · ${size} · ${day(rel.published)} · <a href="${LATEST}">Release notes and checksums</a>`;
 
 // git only reads here: when a file was first added, and when it last changed.
-const git = (...a) => { try { return execFileSync('git', a, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return ''; } };
+const git = (...a) => { try { return execFileSync('git', a, { cwd: repo, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return ''; } };
 const firstAdded = (file) => git('log', '--diff-filter=A', '--format=%cs', '--', file).split('\n').filter(Boolean).pop() || today;
 const lastChanged = (file) => (git('status', '--porcelain', '--', file) ? today : git('log', '-1', '--format=%cs', '--', file)) || today;
 
@@ -62,7 +69,7 @@ const vtLinks = (s) => s.replace(/https:\/\/www\.virustotal\.com\/gui\/file\/[0-
 // The home page: the download lines, the VirusTotal link and the release facts in its JSON-LD.
 {
   const file = join(site, 'index.html');
-  let s = readFileSync(file, 'utf8');
+  let s = readText(file);
   s = fill(s, 'line', relLine, 'site/index.html');
   s = fill(s, 'vt', `${rel.virustotal.flagged} of ${rel.virustotal.engines}`, 'site/index.html');
   s = fill(s, 'ver', `v${rel.version}`, 'site/index.html');
@@ -78,33 +85,33 @@ const vtLinks = (s) => s.replace(/https:\/\/www\.virustotal\.com\/gui\/file\/[0-
     .replace(/("dateModified": )"[^"]*"/, `$1"${rel.published}"`)
     .replace(/("fileSize": )"[^"]*"/, `$1"${size}"`)
     .replace(/("downloadUrl": )"[^"]*"/, `$1"${EXE}"`);
-  writeFileSync(file, s);
+  put(file, s);
 }
 // README.md: the download line under the button, the size in Quick start and the VirusTotal result.
 {
   const file = join(root, 'README.md');
-  let s = readFileSync(file, 'utf8');
+  let s = readText(file);
   s = fill(s, 'line', `<a href="${EXE}">${rel.asset}</a> · v${rel.version} · ${size} · ${day(rel.published)} · <a href="${LATEST}">release notes and checksums</a>`, 'README.md');
   s = fill(s, 'size', size, 'README.md');
   s = fill(s, 'vt', `${short}: [${vtText}](${VT}) flag it`, 'README.md');
   // the VirusTotal badge in the row under the title (the other badges read GitHub live, through shields.io)
   const deep = readTheme().AccentDeepColor.slice(1);
   s = fill(s, 'vtbadge', `<a href="${VT}"><img src="https://img.shields.io/badge/VirusTotal-${rel.virustotal.flagged}%2F${rel.virustotal.engines}-${deep}" alt="VirusTotal: ${vtText} flag it"></a>`, 'README.md');
-  writeFileSync(file, vtLinks(s));
+  put(file, vtLinks(s));
 }
 // site/llms.txt: the status line and the direct download.
 {
   const file = join(site, 'llms.txt');
-  let s = readFileSync(file, 'utf8');
+  let s = readText(file);
   if (!/^Status: .*$/m.test(s) || !/^Download: .*$/m.test(s)) throw new Error('site/llms.txt: the Status: or Download: line is missing');
   s = s.replace(/^Status: .*$/m, `Status: beta. Latest release ${rel.version} (${rel.published}). Free, no account. Not affiliated with Valve.`)
     .replace(/^Download: .*$/m, `Download: ${EXE} (${rel.asset}, ${size}, SHA-256 ${rel.sha256}, VirusTotal: ${vtText} flag it, ${VT})`);
-  writeFileSync(file, s);
+  put(file, s);
 }
 
 // Guide layout: one article in a text column, with a sticky rail (download, contents, a crop of the app) on the right.
 // The fonts are the site's own (site/fonts), so the copied style points one folder up.
-const home = readFileSync(join(site, 'index.html'), 'utf8');
+const home = readText(join(site, 'index.html'));
 const themeColor = home.match(/<meta name="theme-color" content="([^"]+)">/)[1];   // from src/Theme.xaml (tools/design-tokens.mjs)
 // The home page's own blocks (hero map, viewer, sections) are left out; its media queries stay, they hold the table rules too.
 // The home has more than one <style> (the language picker's comes first): the look is the one with the tokens.
@@ -323,7 +330,7 @@ const download = (url) => `<div class="get-desk"><a class="btn" href="${EXE}">${
           <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">${url.replace(/^https:\/\//, '').replace(/\/$/, '').replace(/\//g, '/<wbr>')}</code><button class="btn" type="button" data-share data-copy="${url}">Send to my PC</button></div><a class="link" href="${EXE}">Download the .exe anyway</a></div>`;
 const req = 'Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin';
 // The copy button and the screenshot viewer: the same code as the home page (between its /* shared */ marks).
-const shared = readFileSync(join(site, 'index.html'), 'utf8').match(/\/\* shared \*\/([\s\S]*?)\/\* \/shared \*\//)[1];
+const shared = home.match(/\/\* shared \*\/([\s\S]*?)\/\* \/shared \*\//)[1];
 // The footer is the home page's, with its links pointing one folder up.
 const footer = home.match(/<footer>[\s\S]*?<\/footer>/)[0].replace(/(href|src)="(?!https?:|#|\.\.\/)([^"]*)"/g, (m, a, u) => `${a}="../${u.replace(/^\.\//, '')}"`);
 // The trust line, the same as under the home page's buttons. Facts as in the README (the license isn't open source, so "Public source").
@@ -1011,7 +1018,7 @@ __ldGet('../assets/guides/world.min.js',964648,function(){window.__gw&&window.__
 for (const p of pages) {
   const file = join(site, p.slug, 'index.html');
   mkdirSync(dirname(file), { recursive: true });
-  const old = existsSync(file) ? readFileSync(file, 'utf8') : '';
+  const old = existsSync(file) ? readText(file) : '';
   const was = (old.match(/"dateModified": "(\d{4}-\d\d-\d\d)"/) || [])[1];
   // a new page (no file yet, or no date in it) is rendered with today's date
   // with the hreflang links and the language picker of tools/site-i18n.mjs, so an unchanged page compares equal
@@ -1019,7 +1026,7 @@ for (const p of pages) {
   let html = was ? en(render(p, was)) : null;
   p.modified = html === old ? was : today;
   if (html !== old) html = en(render(p, today));
-  writeFileSync(file, html);
+  put(file, html);
 }
 
 // Sitemap: the home page with its screenshots, then every guide page. The home page's date is its last change in git
@@ -1038,9 +1045,9 @@ ${pages.map((p) => `  <url>
   </url>`).join('\n')}
 </urlset>
 `;
-writeFileSync(join(site, 'sitemap.xml'), sitemap);
+put(join(site, 'sitemap.xml'), sitemap);
 // the same pages in the other languages, and the sitemap again with them (tools/site-i18n.mjs)
-const langs = writeLanguages();
+const langs = writeLanguages({ site });
 if (langs.report.missing.length) console.log(`site-i18n: ${new Set(langs.report.missing.map((m) => m.key)).size} texts have no translation yet (node tools/site-i18n.mjs --todo <folder>)`);
 const long = pages.filter((p) => p.title.length > 60 || p.desc.length > 155).map((p) => p.slug);
 console.log(`${pages.length} pages and sitemap.xml written (titles ${pages.map((p) => p.title.length).join(' ')}; descriptions ${pages.map((p) => p.desc.length).join(' ')})${long.length ? `; too long: ${long.join(', ')}` : ''}`);

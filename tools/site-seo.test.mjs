@@ -5,7 +5,9 @@
 // (Search Console, Nov. 2026) lose their page, and when the IndexNow step of the Pages workflow and the key file disagree.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -108,4 +110,38 @@ test('SEO: the Pages workflow tells IndexNow with the key that is on the site, a
   assert.match(read('robots.txt'), new RegExp(`Sitemap: ${BASE}sitemap\\.txt`));
   const xml = [...read('sitemap.xml').matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]).filter((u) => !u.includes('/img/'));
   assert.deepEqual(read('sitemap.txt').trim().split(/\r?\n/), xml, 'sitemap.txt has the addresses of sitemap.xml');
+});
+
+// 25 Nov. 2026: on a Windows checkout (Git's core.autocrlf, files with CRLF) tools/site-pages.mjs compared the page it made
+// (LF) with the file (CRLF), found every guide "changed" and gave all of them today's date, in dateModified and in the
+// sitemap's lastmod (56 files changed by a run that changed nothing). The same site is copied twice, once all LF and once
+// all CRLF, the builder runs on each copy (--root), and the dates and the text of every file must come out the same.
+test('SEO: the end of lines gives no page a new date (site-pages.mjs on a copy with LF and on one with CRLF)', () => {
+  const TEXT = /\.(html|js|css|txt|xml|json|svg|md)$/;
+  const walk = (dir, rel = '') => readdirSync(join(dir, rel), { withFileTypes: true }).flatMap((d) => d.isDirectory() ? walk(dir, `${rel}${d.name}/`) : [`${rel}${d.name}`]);
+  const lf = (f) => readFileSync(f, 'utf8').replace(/\r\n/g, '\n');
+  const datesOf = (site) => Object.fromEntries(walk(site).filter((f) => f.endsWith('index.html')).map((f) => [f, (lf(join(site, f)).match(/"dateModified": "(\d{4}-\d\d-\d\d)"/) || [])[1]]));
+  const lastmods = (site) => [...lf(join(site, 'sitemap.xml')).matchAll(/<loc>([^<]+)<\/loc>\s*<lastmod>([^<]+)<\/lastmod>/g)].map((m) => `${m[1].slice(BASE.length) || 'home'} ${m[2]}`);
+  const before = datesOf(SITE);
+  const tmp = mkdtempSync(join(tmpdir(), 'cs2-site-eol-'));
+  try {
+    const made = {};
+    for (const [name, eol] of [['lf', '\n'], ['crlf', '\r\n']]) {
+      const dir = join(tmp, name), site = join(dir, 'site');
+      // the pages, scripts and styles only: the builder reads no picture and no font
+      cpSync(SITE, site, { recursive: true, filter: (src) => statSync(src).isDirectory() || TEXT.test(src) });
+      cpSync(join(ROOT, 'README.md'), join(dir, 'README.md'));
+      for (const f of [...walk(site).map((x) => join(site, x)), join(dir, 'README.md')]) writeFileSync(f, lf(f).replace(/\n/g, eol));
+      const r = spawnSync(process.execPath, [join(ROOT, 'tools/site-pages.mjs'), '--root', dir], { encoding: 'utf8' });
+      assert.equal(r.status, 0, `site-pages.mjs --root (${name}): ${r.stderr}`);
+      made[name] = { site, dir, dates: datesOf(site), lastmods: lastmods(site) };
+    }
+    assert.ok(Object.keys(made.lf.dates).length >= 60 && made.lf.lastmods.length >= 60, 'the pages and the sitemap of the copy were read');
+    assert.deepEqual(made.crlf.dates, made.lf.dates, 'dateModified differs between the copy with CRLF and the one with LF');
+    assert.deepEqual(made.crlf.lastmods, made.lf.lastmods, 'the sitemap\'s lastmod differs between the copy with CRLF and the one with LF');
+    // the site in the repo is what the builder writes, so a run changes no date at all (the home's lastmod comes from git)
+    for (const name of ['lf', 'crlf']) assert.deepEqual(made[name].dates, before, `${name}: a run of site-pages.mjs gave these pages a new date`);
+    const differ = [...walk(made.lf.site).map((f) => `site/${f}`), 'README.md'].filter((f) => lf(join(made.lf.dir, f)) !== lf(join(made.crlf.dir, f)));
+    assert.deepEqual(differ, [], 'these files come out different from a CRLF copy than from an LF one');
+  } finally { rmSync(tmp, { recursive: true, force: true }); }
 });

@@ -313,10 +313,20 @@ Rules, checked by `node --test tools/site-touch.test.mjs` with taps and flicks (
 - `html` has `scroll-padding-top: calc(var(--top-h) + 1rem)`, so a heading's `scroll-margin-top` never adds the header
   again;
 - every target is at least 44 px; a label never breaks inside a word;
-- by touch the beats' cards snap with `proximity` and `snap-stop: always`: a flick rests on a card, never between two and
-  never back against the finger. A hard flick can pass a card (Chrome keeps snap-stop only when it snaps); the plain
-  sections scroll freely;
-- a step picked on the rail or the chip rests on that step's shot (`A[i].s` in `home.js`), not where its anchor would go.
+- by touch the page has no scroll snap: it stays where the finger leaves it. From 6 to 25 Nov 2026 the beats' cards
+  snapped (`proximity`, `snap-stop: always`); they are a screen apart, so a swipe shorter than half a screen was undone
+  and the page was pulled back up to 235 px;
+- a trip started by a tap (a link of the menu, a step of the chip) never holds the finger: Lenis locks it only when the
+  main pointer is a mouse (`pointer: coarse` has no `lock`), so a finger that drags stops it;
+- held upright on a phone each step of "How it works" is `78svh` (the home's own style; no other stylesheet gives
+  `#how .beat` a height), and a step's card is readable or gone: `home.js` sets its opacity to 0 once its bottom has
+  risen above 42 % of the screen under the header, with a 0.18 s fade (none with reduced motion). It is never half faded
+  over the scene;
+- a step picked on the rail or the chip rests on that step's shot (`A[i].s` in `home.js`), not where its anchor would go;
+- the close-up of the app tour (`.tour-crop`) is a window on the real screenshot at 1:1 round one mark: `--tour-h`
+  (`clamp(150px, 22svh, 180px)`; 130 px on a phone on its side), more when a mark with its 32 px margin and the faded
+  band would not fit (`--tour-mark`, set by `mobile-tour.js`), never over 56svh. Its edges fade out with a mask (20 px
+  top and bottom, 14 px at the sides), so the text next to the mark is never cut in half; the mark stays clear of the fade.
 
 ## The site in other languages
 

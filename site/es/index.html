@@ -855,17 +855,18 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
   ul.guides li::after{grid-row:1;grid-column:3}
   .rail{display:none}
 }
-/* by touch (6 Nov.): a fling rests on each of the window's six pages, its text right under the window, and upright on
-   each beat's card, so nothing goes by in a second and a rest never falls between two cards. Proximity only: the
-   plain sections scroll as they always did. With a mouse or trackpad, the smooth scroll does the holding instead. */
+/* by touch the page has no snap of its own: it stays where the finger leaves it. From 6 to 25 Nov. it snapped to each
+   beat's card and to the title of each of the window's pages (html: y proximity); the cards are a screen apart, so a
+   swipe shorter than half a screen was undone and the page was pulled back up to 235 px after the finger let go.
+   A page of the window opened by its link still rests with its title under the sticky window (home.js, --pg-top). */
 @media (max-width:999px) and (pointer:coarse){
-  html{scroll-snap-type:y proximity}
-  /* on the heading, not the page: a snap area taller than the screen would let it rest anywhere in a 30 px band */
-  .pages>li>h3{scroll-snap-align:start;scroll-snap-stop:always;scroll-margin-top:calc(var(--pg-top,0px) + 2.2rem)}
+  .pages>li>h3{scroll-margin-top:calc(var(--pg-top,0px) + 2.2rem)}
 }
-@media (max-width:999px) and (orientation:portrait) and (pointer:coarse){
-  .beat:not(.b-cover):not(.beat-long):not([data-beat="5"]) .copy{scroll-snap-align:end;scroll-snap-stop:always;scroll-margin-bottom:12px}
-}
+/* held upright a beat's card is readable or gone: home.js sets its opacity to 0 once it has risen into the upper part of
+   the screen (25 Nov.: it used to follow the scroll, and sat half faded over the scene). A short fade between the two,
+   none when the system asks for less motion */
+.beat:not(.b-cover) .copy{transition:opacity .18s linear}
+@media (prefers-reduced-motion:reduce){html:not(.fx-opt) .beat:not(.b-cover) .copy{transition:none}}
 /* held upright (a phone, a tablet): the route on top, each beat's text on its own plain card at the bottom */
 @media (max-width:999px) and (orientation:portrait){
   .stage::after{background:linear-gradient(transparent calc(var(--vt,62%) - 14%),color-mix(in srgb,var(--bg) 88%,transparent) calc(var(--vt,62%) - 2%),var(--bg) var(--vt,62%),var(--bg) var(--vb,100%),transparent calc(var(--vb,100%) + 6%))}
@@ -1110,7 +1111,9 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
       <div class="get-desk">
         <div class="actions">
           <a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Descargar para Windows</a>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
+            Descargar para Windows
+          </a>
           <a class="link" href="is-it-safe/">¿Es seguro?</a>
         </div>
         <p class="rel nowrap-bits"><!--rel:line-->v0.1.0-beta.13 · 63.7 MB · 12 nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Notas de la versión y checksums</a><!--/rel--></p>
@@ -1288,10 +1291,10 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
     <div class="wrap">
       <h2 class="rv" id="kit-h">Y lo demás. <span class="m">Detalles chicos que importan en plena partida.</span></h2>
       <div class="kit">
-        <div class="rv"><div class="art" aria-hidden="true"><div class="slot"><span>EU Retakes #1</span><div class="two"><span class="now"><span class="n">32<i>/32</i></span></span><span class="later"><span class="n">31<i>/32</i></span></span></div><div class="two"><span class="st now">lleno, esperando un lugar</span><span class="st go later">lugar libre, entrando</span></div></div></div><div class="tp"><h3>¿Servidor lleno? Espera.</h3>Servers puede esperar un lugar libre en un servidor lleno y entrar en cuanto se abre uno, por el teléfono.</div></div>
-        <div class="rv" style="--i:1"><div class="art" aria-hidden="true"><div class="list"><span><i style="--d:0"></i>Cable USB</span><span><i style="--d:1"></i>Driver</span><span><i style="--d:2"></i>USB debugging</span><span><i style="--d:3"></i>Tethering activado, Wi-Fi del teléfono apagado</span></div></div><div class="tp"><h3>Phone setup.</h3>Pasos para el cable, el driver, USB debugging, el tethering y el Wi-Fi del teléfono que se verifican solos y se ponen en verde, con un botón donde la app puede hacerlo.</div></div>
-        <div class="rv" style="--i:2"><div class="art" aria-hidden="true"><div class="q"><span class="bars2"><i></i><i></i><i></i><i></i></span><span><b>Good</b> · 41 ms · jitter 5 ms · 0% de pérdida</span></div></div><div class="tp"><h3>Connection quality.</h3>Ping, jitter y pérdida por el teléfono cada 30 segundos, con un aviso cuando es débil.</div></div>
-        <div class="rv" style="--i:3"><div class="art" aria-hidden="true"><div class="mask"><span class="ip two"><span class="now">203.0.113.7</span><span class="later">203.0.&#8226;&#8226;&#8226;.&#8226;&#8226;&#8226;</span></span><span class="sw"><i></i>Hide usernames</span></div></div><div class="tp"><h3>Pensado para streams.</h3>Tu IP de casa se mantiene oculta en la app, y Hide usernames mantiene los nombres de usuario fuera de la pantalla, también en el Log.</div></div>
+        <div class="rv"><div class="art" aria-hidden="true"><div class="slot"><span>EU Retakes #1</span><div class="two"><span class="now"><span class="n">32<i>/32</i></span></span><span class="later"><span class="n">31<i>/32</i></span></span></div><div class="two"><span class="st now">lleno, esperando un lugar</span><span class="st go later">lugar libre, entrando</span></div></div></div><div class="tp"><h3>¿Servidor lleno? Espera.</h3> Servers puede esperar un lugar libre en un servidor lleno y entrar en cuanto se abre uno, por el teléfono.</div></div>
+        <div class="rv" style="--i:1"><div class="art" aria-hidden="true"><div class="list"><span><i style="--d:0"></i>Cable USB</span><span><i style="--d:1"></i>Driver</span><span><i style="--d:2"></i>USB debugging</span><span><i style="--d:3"></i>Tethering activado, Wi-Fi del teléfono apagado</span></div></div><div class="tp"><h3>Phone setup.</h3> Pasos para el cable, el driver, USB debugging, el tethering y el Wi-Fi del teléfono que se verifican solos y se ponen en verde, con un botón donde la app puede hacerlo.</div></div>
+        <div class="rv" style="--i:2"><div class="art" aria-hidden="true"><div class="q"><span class="bars2"><i></i><i></i><i></i><i></i></span><span><b>Good</b> · 41 ms · jitter 5 ms · 0% de pérdida</span></div></div><div class="tp"><h3>Connection quality.</h3> Ping, jitter y pérdida por el teléfono cada 30 segundos, con un aviso cuando es débil.</div></div>
+        <div class="rv" style="--i:3"><div class="art" aria-hidden="true"><div class="mask"><span class="ip two"><span class="now">203.0.113.7</span><span class="later">203.0.&#8226;&#8226;&#8226;.&#8226;&#8226;&#8226;</span></span><span class="sw"><i></i>Hide usernames</span></div></div><div class="tp"><h3>Pensado para streams.</h3> Tu IP de casa se mantiene oculta en la app, y Hide usernames mantiene los nombres de usuario fuera de la pantalla, también en el Log.</div></div>
       </div>
     </div>
   </section>
@@ -1414,7 +1417,9 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
         </div>
         <div class="actions get-desk">
           <a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Descargar para Windows</a>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
+            Descargar para Windows
+          </a>
           <a class="btn btn-ghost" href="https://github.com/Sepd0x/cs2-ip-changer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>Star en GitHub</a>
         </div>
         <p class="rel get-desk"><!--rel:line-->v0.1.0-beta.13 · 63.7 MB · 12 nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Notas de la versión y checksums</a><!--/rel--></p>

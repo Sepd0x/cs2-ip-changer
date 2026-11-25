@@ -119,6 +119,44 @@ test('i18n: every address on a translated page leads to a file, and its links st
   }
 });
 
+// 25 Nov. 2026 (phone audit, M10): "<h3>Phone setup.</h3> Steps for the cable…" came out as "<h3>Phone setup.</h3>Kablo…" in
+// the four languages, and the page read "Phone setup.Kablo", "Bekler.Servers": a text is looked up by its trimmed English, and
+// the space at its two ends was not put back round the translation. The tags that never move in a translation (the ones that
+// are not inline: h3, p, div, li…) are the same list on both pages, so each must have a space before and after it on the
+// translated page exactly where the English page has one.
+test('i18n: where the English has a space between a tag and the text next to it, the translation has it too', () => {
+  const INLINE = new Set('a abbr b bdi bdo br cite data del dfn em i img ins mark q s small span strong sub sup time u var wbr code kbd samp svg pre'.split(' '));
+  const body = (h) => h.replace(/\r\n/g, '\n').replace(/<!--i18n(:[a-z]+)?-->[\s\S]*?<!--\/i18n\1-->/g, '').replace(/<(script|style)\b[\s\S]*?<\/\1>/g, '').replace(/<(svg|pre)\b[\s\S]*?<\/\1>/g, '<$1/>').replace(/<!--[\s\S]*?-->/g, '');
+  const edges = (h) => [...h.matchAll(/<(\/?)([a-zA-Z][\w:-]*)(?:"[^"]*"|'[^']*'|[^>"'])*>/g)].filter((m) => !INLINE.has(m[2].toLowerCase()))
+    .map((m) => ({ tag: m[1] + m[2].toLowerCase(), before: /\s/.test(h[m.index - 1] || ''), after: /\s/.test(h[m.index + m[0].length] || ''), at: m.index, end: m.index + m[0].length }));
+  const lost = [];
+  for (const p of all) {
+    const enH = body(read(p.file)), en = edges(enH);
+    for (const L of LANGS.slice(1)) {
+      const f = fileOf(L, p), h = body(read(f)), tr = edges(h);
+      assert.deepEqual(tr.map((e) => e.tag), en.map((e) => e.tag), `${f}: not the same tags as the English page`);
+      tr.forEach((e, i) => {
+        if (e.after !== en[i].after) lost.push(`${f}: ${en[i].after ? 'no space' : 'a space'} after <${e.tag}>: ${JSON.stringify(h.slice(Math.max(0, e.at - 24), e.end + 16))}`);
+        if (e.before !== en[i].before) lost.push(`${f}: ${en[i].before ? 'no space' : 'a space'} before <${e.tag}>: ${JSON.stringify(h.slice(Math.max(0, e.at - 16), e.end))}`);
+      });
+    }
+  }
+  assert.deepEqual(lost.slice(0, 12), [], `${lost.length} places where a translated page and the English one differ by a space next to a tag (node tools/site-pages.mjs makes the pages again)`);
+});
+
+// 25 Nov. 2026 (phone audit, A4): the app tour's "Full screenshot" asked for pt-br/img/servers.png (a 404, the viewer opened
+// empty) on every translated page: mobile-tour.js built 'img/' + page + '.png' without the way back to the site's folder.
+// A translated page is one folder down, so every picture address a shared script builds starts with ROOT (window.__root).
+test('i18n: every picture address the shared scripts build starts at the site\'s folder (ROOT), not at the language\'s', () => {
+  const bare = [];
+  for (const f of ['home.js', 'readout.js', 'mobile-tour.js', 'site-navigation.js']) {
+    read(`assets/js/${f}`).split(/\r?\n/).forEach((line, n) => {
+      for (const m of line.matchAll(/(['"])(?:\.\.\/)*img\//g)) if (!/\bROOT\s*\+\s*$/.test(line.slice(0, m.index))) bare.push(`${f}:${n + 1}: ${line.slice(Math.max(0, m.index - 30), m.index + 30).trim()}`);
+    });
+  }
+  assert.deepEqual(bare, [], 'an address that starts with img/ leads to <language>/img/ on a translated page: write ROOT + \'img/...\'');
+});
+
 // Review of 25 Nov (findings 4 to 6 and 9): the iPhone menus on the Turkish pages follow the rule of the other languages (the
 // English name, with the phone's own name in Turkish in brackets the first time on a page), the home's title has its
 // possessive, and "public source" is not written with the Turkish words for open source ("açık kaynak").
@@ -212,6 +250,22 @@ for (const L of LANGS.slice(1)) {
     }
   });
 }
+
+test('i18n browser: on a phone, "Full screenshot" of each of the six app pages leads to a picture that is there, in every language', async (t) => {
+  if (!browser) return t.skip(why);
+  for (const L of LANGS) {
+    const { ctx, page } = await open(L.code === 'en' ? '' : `${L.code}/`, 390);
+    const n = await page.$$eval('.tour-tabs button', (b) => b.length);
+    assert.equal(n, 6, `${L.code}: the app tour has its six tabs on a phone`);
+    for (let i = 0; i < n; i++) {
+      const href = await page.evaluate((i) => { document.querySelectorAll('.tour-tabs button')[i].click(); return document.querySelector('.tour-full').href; }, i);
+      const r = await page.request.get(href);
+      assert.equal(r.status(), 200, `${L.code}, tab ${i + 1}: "Full screenshot" asks for ${href.replace(origin, '')}`);
+      assert.match(r.headers()['content-type'] || '', /^image\/png/, `${L.code}, tab ${i + 1}: ${href.replace(origin, '')} is not a picture`);
+    }
+    await ctx.close();
+  }
+});
 
 test('i18n browser: every translated page fits a 320 px phone, and a 390 px phone with the text at 200% (UI-004)', async (t) => {
   if (!browser) return t.skip(why);

@@ -173,7 +173,8 @@
     e.preventDefault(); e.stopPropagation();
     var y = Math.round(A[i].s);
     try { history.pushState(null, '', STEPS[i]); } catch (x) {}
-    if (W.__lenis) W.__lenis.scrollTo(y, { duration: 1.1, lock: true }); else scrollTo({ top: y, behavior: FX ? 'smooth' : 'auto' });
+    // no lock on a touch screen: a locked trip cancels every touchmove, so the finger could not scroll for 1.1 s (25 Nov.)
+    if (W.__lenis) W.__lenis.scrollTo(y, { duration: 1.1, lock: !matchMedia('(pointer: coarse)').matches }); else scrollTo({ top: y, behavior: FX ? 'smooth' : 'auto' });
     var heading = copies[i] && $('h2,h3', copies[i]);
     if (heading) { heading.setAttribute('tabindex', '-1'); heading.focus({ preventScroll: true }); }
   }
@@ -204,10 +205,12 @@
     stage.style.setProperty('--veil-x', (p > 4.4 && p < 5 ? 16 * Math.sin((p - 4.4) / .6 * Math.PI) : 0).toFixed(1) + '%');
     // held upright, the ground under the cover's text stays plain; past the cover each beat has its own card
     if (tall()) { var cr = copies[0].getBoundingClientRect(), on0 = cr.bottom > 0; stage.style.setProperty('--vt', (on0 ? Math.max(0, cr.top / innerHeight * 100) : 100).toFixed(1) + '%'); stage.style.setProperty('--vb', (on0 ? Math.max(0, cr.bottom / innerHeight * 100) : 100).toFixed(1) + '%'); }
-    // held upright, a beat's card fades as it rises into the upper part of the screen, so the next card never stacks
-    // under a readable one and the route above is clear (6 Nov., the owner saw cards pile up between beats on a phone)
+    // held upright, a beat's card goes once it has risen into the upper part of the screen, so the next card never stacks
+    // under a readable one and the route above is clear (6 Nov., the owner saw cards pile up between beats on a phone).
+    // It is readable or gone, with a short fade in the CSS (.beat .copy): until 25 Nov. its opacity followed its place,
+    // 1 to 0 over a third of the screen, and most of the way between two beats its text sat at 30 to 50 % over the scene
     var T = tall(), th = topH(), av = H - th;
-    for (var k = 1; k < NB; k++) { var cc = copies[k]; if (!cc) continue; var o = T ? clamp((cc.getBoundingClientRect().bottom - th - av * .3) / (av * .32)) : 1; if (cc.__o !== o) { cc.__o = o; cc.style.opacity = o < 1 ? o.toFixed(3) : ''; } }
+    for (var k = 1; k < NB; k++) { var cc = copies[k]; if (!cc) continue; var o = !T || cc.getBoundingClientRect().bottom > th + av * .42 ? 1 : 0; if (cc.__o !== o) { cc.__o = o; cc.style.opacity = o ? '' : '0'; } }
     // the pause button sits on the free part of the scene; while a card passes under it, it steps aside
     // (the "where you are" chip sits at the same height, top left, and steps aside with it)
     if ((pauseBtn || whereEl) && T) { var pt = th + 10, lo = pt - 24, hi = pt + 44 + 64, under = copies.concat([$('.copy', cta)]).some(function (c) { if (!c || c.__o < .2) return false; var r = c.getBoundingClientRect(); return r.top < hi && r.bottom > lo; }) || plain.some(function (c) { var r = c.getBoundingClientRect(); return r.top < hi && r.bottom > lo; }); if (pauseBtn) pauseBtn.classList.toggle('under', under); if (whereEl && whereEl.classList.contains('under') !== under) { whereEl.classList.toggle('under', under); if (under) whereShut(); } }

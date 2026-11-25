@@ -71,7 +71,9 @@
         }
         var im = copy.querySelector('img'); im.alt = key.querySelector(':scope > span').textContent;
         im.loading = 'eager'; crop.appendChild(copy);
-      }
+        // the box is as tall as the mark needs (mobile-tour.css: the mark, its margin and the faded band at each end)
+        crop.style.setProperty('--tour-mark', (parseFloat(copy.style.getPropertyValue('--mh')) || 0) + 'px');
+      } else crop.style.removeProperty('--tour-mark');
       find('.tour-caption').textContent = (k + 1) + ' / ' + keys.length + ' · ' + key.querySelector(':scope > span').textContent;
       var hint = d.createElement('small'); hint.className = 'tour-pan'; hint.textContent = T('Scroll image sideways') + ' ↔'; hint.hidden = true;
       find('.tour-caption').appendChild(hint);
@@ -95,7 +97,7 @@
       find('h3').textContent = tabs[current].textContent;
       find('.tour-index').textContent = '0' + (current + 1) + ' / 06';
       find('.tour-intro').textContent = summaries[current];
-      find('.tour-full').href = 'img/' + pg + '.png';
+      find('.tour-full').href = ROOT + 'img/' + pg + '.png';
       find('.tour-full').setAttribute('aria-label', T('Full screenshot') + ': ' + tabs[current].textContent);
       var more = find('.tour-more-content'); more.replaceChildren(); more.hidden = true;
       Array.from(pages[current].children).forEach(function (el) {

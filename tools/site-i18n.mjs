@@ -24,6 +24,8 @@ const SITE = join(root, 'site');
 const I18N = join(root, 'tools', 'i18n');
 export const BASE = 'https://sepd0x.github.io/cs2-ip-changer/';
 const PATH = '/cs2-ip-changer/';
+// every page and script is read with LF, so what is written is the same from a Windows checkout (CRLF) and from any other
+const text = (file) => readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
 
 // The languages. hint/go/close: the line an English page shows when the browser asks for that language (never a redirect).
 export const LANGS = [
@@ -269,7 +271,10 @@ function itemsOut(items, ctx) {
   }).join('');
   const { key, vals } = mask(norm(key0));
   const tr = lookup(ctx, key, 'html');
-  const body = tr == null ? mid.map((i) => i.s).join('') : unmask(escText(tr), vals, ctx.L).replace(PH, (m) => map[m] ?? m);
+  // the key is trimmed, so the space the English has at its two ends goes back round the translation: in
+  // "<h3>Phone setup.</h3> Steps for…" the text after the title starts with a space, and without it the translated
+  // pages read "Phone setup.Kablo…" (25 Nov. 2026, as trPlain does above)
+  const body = tr == null ? mid.map((i) => i.s).join('') : key0.match(/^\s*/)[0] + unmask(escText(tr), vals, ctx.L).replace(PH, (m) => map[m] ?? m) + key0.match(/\s*$/)[0];
   // for the structured data: the same text without its tags
   const plainOf = (s) => norm(unesc(s.replace(PH, (m) => (map[m] || '').startsWith('<code') || (map[m] || '').startsWith('<kbd') ? map[m].replace(/<[^>]+>/g, '') : '').replace(/<[^>]+>/g, '')));
   ctx.plainEn.add(plainOf(key0));
@@ -418,7 +423,7 @@ const SHARED_JS = ['assets/js/home.js', 'assets/js/readout.js', 'assets/js/mobil
 function sharedStrings(site) {
   const s = new Set();
   for (const f of SHARED_JS) {
-    const src = readFileSync(join(site, f), 'utf8');
+    const src = text(join(site, f));
     for (const m of src.matchAll(/\bT\((['"])((?:\\.|(?!\1)[^\\])*)\1\)/g)) s.add(m[2].replace(/\\(.)/g, '$1'));
   }
   return [...s];
@@ -460,11 +465,11 @@ export function build({ site = SITE, dicts = loadDicts() } = {}) {
   PAGE_DIRS = new Set(all.filter((p) => p.dir).map((p) => `/${p.dir}`));
   const files = {}, report = { used: [], missing: [], bad: [] };
   for (const page of all) {
-    const en = stamp(readFileSync(join(site, page.file), 'utf8'), LANGS[0], page, all);
+    const en = stamp(text(join(site, page.file)), LANGS[0], page, all);
     files[page.file] = en;
     for (const L of OTHER) files[`${L.code}/${page.file}`] = translate(en, L, page, all, dicts[L.code], report, site);
   }
-  const map = readFileSync(join(site, 'sitemap.xml'), 'utf8');
+  const map = text(join(site, 'sitemap.xml'));
   // the English sitemap as tools/site-pages.mjs writes it is the list; written again with every language
   const enOnly = map.includes('xmlns:xhtml') ? map.replace(/<url>\s*<loc>https:\/\/sepd0x\.github\.io\/cs2-ip-changer\/(pt-br|es|ru|tr)\/[\s\S]*?<\/url>\s*/g, '').replace(/\s*<xhtml:link[^>]*\/>/g, '') : map;
   files['sitemap.xml'] = sitemap(enOnly, all);

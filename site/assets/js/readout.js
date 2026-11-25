@@ -46,7 +46,10 @@
         var t = d.getElementById(decodeURIComponent(u.hash.slice(1)));
         if (!t) return;
         e.preventDefault();
-        lenis.scrollTo(Math.round(t.getBoundingClientRect().top + scrollY - topH() - 16), { duration: 1.1, lock: true, onComplete: function () { t.setAttribute('tabindex', '-1'); t.focus({ preventScroll: true }); } });
+        // with a mouse the trip is locked (a turn of the wheel does not stop it half way). On a touch screen it is not:
+        // with lock Lenis cancels every touchmove, and for 1.1 s the page went on against the finger (25 Nov.). Without it
+        // a finger that drags stops the trip and scrolls the page as always
+        lenis.scrollTo(Math.round(t.getBoundingClientRect().top + scrollY - topH() - 16), { duration: 1.1, lock: !matchMedia('(pointer: coarse)').matches, onComplete: function () { t.setAttribute('tabindex', '-1'); t.focus({ preventScroll: true }); } });
         history.pushState(null, '', u.hash);
       });
     }

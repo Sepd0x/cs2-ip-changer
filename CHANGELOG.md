@@ -31,6 +31,13 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Regions: Refresh keeps the warning visible when Valve is offline and a saved list is used. Restore network also removes region rules under the older name.
 - Windows with the Turkish (or Azerbaijani) regional format: there, "i" and "I" are not the same letter, and the app compared some names that way. Two unrelated servers whose names start with "128tick" or "64tick" were taken as the same community, so a ban on one counted on the other. A phone, a VPN or a Steam profile link written in other capitals ("ANDROID", "rndis", "STEAMCOMMUNITY.COM/ID/...") was not recognized, and Hide usernames and the bug report did not cover a login, a Steam cookie or a profile link written in other capitals. All of this now works the same whatever the format of Windows.
 - Windows with a regional format that writes the time as 14.30.05 (Finnish, Danish) or counts the years another way (Thai, Arabic, Persian): the log file was not cleared after 14 days, only when it reached 2 MB. Its dates are now always written the same way.
+- Website on a phone, in Portuguese, Spanish, Russian and Turkish: "Full screenshot" in the tour of the app opened an empty viewer. It opens the screenshot now.
+- Website in Portuguese, Spanish, Russian and Turkish: the space after the short titles of "And the rest" was missing ("Phone setup.Kablo", "Espera.Servers").
+- Website on a phone: after a tap on a link of the menu (or on a step of "How it works") the page kept going for a second and ignored your finger. Your finger now stops it and scrolls the page.
+- Website on a phone: in "How it works" a short swipe was undone and the page was pulled back to the step it came from. The page now stays where your finger leaves it.
+- Website on a phone held upright: each step of "How it works" took a whole screen again. They are back to about three quarters of a screen, so there is less to scroll.
+- Website on a phone held upright: between two steps of "How it works" the card going up stayed half see-through over the 3D scene. It now stays readable until it leaves, then fades out quickly.
+- Website on a phone: in the tour of the app, the close-up of each page cut the text around the highlighted part in half. Its edges now fade out, and on a small phone the close-up is a little taller.
 
 ## [0.1.0-beta.14] - 2026-11-19
 

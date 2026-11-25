@@ -6,7 +6,8 @@
   .b-cover h1{max-width:20ch;text-wrap:balance;font-size:clamp(1.85rem,1rem + 4.6vw,2.8rem)}
   .b-cover .facts{max-width:44ch}
   .b-cover{padding-bottom:1rem}
-  #how .beat{min-height:100svh}
+  /* no height for the steps here: the home's own style has it (78svh on a phone held upright, the owner's choice of 6 Nov.;
+     a rule in this file put 100svh back until 25 Nov.) */
   .beat:not(.b-cover):not(.beat-long) .copy{margin-inline:0;border-radius:12px}
   .beat .story-next{margin-bottom:0}
 }
