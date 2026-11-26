@@ -1,7 +1,7 @@
 {
  "note": "Made by tools/shots.mjs. Do not edit: tests/DesignSyncTests.cs checks it against the app and the files.",
  "app": "1.0.0",
- "ui": "6f0578d062af26813016278c23d898b23cd80df843b8fdbe68592d63079ac836",
+ "ui": "8f7a1ac24b06da6895fd01d09a104183f3117c74a6d1a520b8dd414a1a39370c",
  "uiFiles": [
   "src/App.xaml",
   "src/MainWindow.xaml",

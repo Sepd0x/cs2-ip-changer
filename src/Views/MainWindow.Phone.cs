@@ -50,7 +50,6 @@ public partial class MainWindow
         AdbInstallBtn.Visibility = Visibility.Collapsed;
         // One stray Wi-Fi answer (an adb error, a timeout) neither flips the block nor lifts it: see Adb.SteadyWifi.
         var info = Adb.SteadyWifi(await Adb.Status(_adb), _phone, ref _wifiOnReads);
-        var wifiBefore = PhoneWifiOn;
         _phone = info;   // SetPhone below redraws the buttons for it (PhoneFirstRun)
         if (info?.Ready == true) NotePhoneKind(false);
         Telemetry.Phone(info);
@@ -106,14 +105,20 @@ public partial class MainWindow
         }
         else { _tetherHinted = false; _tetherMissingSince = null; }
 
-        if (PhoneWifiOn != wifiBefore)
+        // Audit 26 nov. (V2): compared with the last change handled here, not with _phone before this read: Phone setup's own reads
+        // (ReadSetupState) also write _phone, and when they saw the Wi-Fi first this never blocked or dropped the trust
+        if (PhoneWifiOn != _wifiHandled)
         {
+            _wifiHandled = PhoneWifiOn;
             if (PhoneWifiOn) { if (PhoneWifiOnText(_phone.WifiSsid, _protOn, _s.NoPhone) is string t) Log.Warn(t); _verifiedKey = null; }
             else Log.Ok("The phone's Wi-Fi is off again. Checking the phone's IP before trusting it.");
             await SyncNow(force: true);
             if (!PhoneWifiOn) _ = RefreshPublicIps();
         }
     }
+
+    /// <summary>The phone's Wi-Fi state the last refresh acted on (V2).</summary>
+    bool _wifiHandled;
 
     /// <summary>What the Log says when the phone's Wi-Fi comes on. Only protection on blocks anything; in No phone mode the phone's Wi-Fi doesn't matter.</summary>
     public static string PhoneWifiOnText(string ssid, bool protOn, bool noPhone)
@@ -849,7 +854,7 @@ public partial class MainWindow
         _ = RefreshPublicIps();
     }
 
-    async void ChangeIp_Click(object sender, RoutedEventArgs e) => await RunCommand("Change IP", "starting…", () => ChangeIp(confirm: true));
+    async void ChangeIp_Click(object sender, RoutedEventArgs e) => await RunCommand(Loc.T("Change IP"), Loc.T("starting…"), () => ChangeIp(confirm: true));
 
     /// <summary>The carrier kept the same IP. Airplane mode is suggested only where it would be new: not already the method, never on the hotspot.</summary>
     public static string SameIpToast(bool airplane, bool hotspot) =>

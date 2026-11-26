@@ -515,7 +515,9 @@ public sealed class AccountItem : Observable
     public string Name => Steam.ShownName(Steam.WebText(Meta.Profile?.Persona)) ?? Steam.ShownName(Local.PersonaName) ?? Login;
     public string Initial => Rec.On || string.IsNullOrEmpty(Name) ? "?" : Name.Substring(0, 1).ToUpperInvariant();
 
-    public bool Active { get => _active; set { if (Set(ref _active, value)) { Raise(nameof(CardBorder)); } } }
+    public bool Active { get => _active; set { if (Set(ref _active, value)) { Raise(nameof(CardBorder)); Raise(nameof(LoginText)); } } }
+    /// <summary>The card's button: "In use" on the account Steam is on, "Log in" on the others (audit 26 nov., X2).</summary>
+    public string LoginText => Active ? Loc.T("In use") : Loc.T("Log in");
     public bool Streamer { get => _streamer; set { if (Set(ref _streamer, value)) { Raise(nameof(LoginShown)); Raise(nameof(Tip)); } } }
     public bool Busy { get => _busy; set => Set(ref _busy, value); }
     public bool Favorite { get => Meta.Favorite; set { Meta.Favorite = value; Raise(nameof(Favorite)); Raise(nameof(StarGlyph)); } }

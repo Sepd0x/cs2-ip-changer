@@ -140,23 +140,36 @@ public static class Loc
             if (c is DependencyObject d) Apply(d);
     }
 
+    /// <summary>
+    /// The value comes from a Binding or a TemplateBinding: the code gives it already translated and changes it later, so a translated
+    /// copy written over it as a local value would hide every later change (audit 26 nov., X1 and X3: the Profiles menu kept "Sign in"
+    /// after signing in, a Servers row's tip showed another server, the dialog box kept the first hint).
+    /// </summary>
+    public static bool Bound(DependencyObject d, DependencyProperty p) =>
+        System.Windows.Data.BindingOperations.IsDataBound(d, p) || DependencyPropertyHelper.GetValueSource(d, p).IsExpression;
+
+    static bool Changes(string s, out string t) { t = T(s); return t != s; }
+
     static void ApplyOne(DependencyObject d)
     {
         if (Lang == "en" && !Pseudo) return;
         if (d == null || Done.TryGetValue(d, out _)) return;
         Done.Add(d, d);
+        // 26 nov. (X3): only a text that changes is written. A TemplateBinding inside a template is not an expression for WPF
+        // (its source is ParentTemplate), so Bound can't see it; the box's hint comes already translated from the Tag, and writing
+        // the same text over it as a local value cut the TemplateBinding, so the next dialog kept the first hint.
         switch (d)
         {
-            case Run r when !System.Windows.Data.BindingOperations.IsDataBound(r, Run.TextProperty): r.Text = T(r.Text); break;
+            case Run r when !Bound(r, Run.TextProperty) && Changes(r.Text, out var rt): r.Text = rt; break;
             case TextBlock tb when tb.Inlines.Count == 0 || (tb.Inlines.Count == 1 && tb.Inlines.FirstInline is Run):
-                if (!System.Windows.Data.BindingOperations.IsDataBound(tb, TextBlock.TextProperty) && !string.IsNullOrEmpty(tb.Text)) tb.Text = T(tb.Text);
+                if (!Bound(tb, TextBlock.TextProperty) && !string.IsNullOrEmpty(tb.Text) && Changes(tb.Text, out var tbt)) tb.Text = tbt;
                 break;
-            case Window w when w.Title != null && !System.Windows.Data.BindingOperations.IsDataBound(w, Window.TitleProperty): w.Title = T(w.Title); break;
-            case ContentControl cc when cc.Content is string c && !System.Windows.Data.BindingOperations.IsDataBound(cc, ContentControl.ContentProperty): cc.Content = T(c); break;
+            case Window w when w.Title != null && !Bound(w, Window.TitleProperty) && Changes(w.Title, out var wt): w.Title = wt; break;
+            case ContentControl cc when cc.Content is string c && !Bound(cc, ContentControl.ContentProperty) && Changes(c, out var ct): cc.Content = ct; break;
         }
-        if (d is HeaderedContentControl h && h.Header is string hs) h.Header = T(hs);
-        else if (d is HeaderedItemsControl hi && hi.Header is string his) hi.Header = T(his);
-        if (d is FrameworkElement fe && fe.ToolTip is string tt) fe.ToolTip = T(tt);
+        if (d is HeaderedContentControl h && h.Header is string hs && !Bound(h, HeaderedContentControl.HeaderProperty)) { if (Changes(hs, out var ht)) h.Header = ht; }
+        else if (d is HeaderedItemsControl hi && hi.Header is string his && !Bound(hi, HeaderedItemsControl.HeaderProperty) && Changes(his, out var hit)) hi.Header = hit;
+        if (d is FrameworkElement fe && fe.ToolTip is string tt && !Bound(fe, FrameworkElement.ToolTipProperty) && Changes(tt, out var ttt)) fe.ToolTip = ttt;
         // the grey hint inside an empty box is its Tag (the style draws it)
         if (d is TextBox or PasswordBox && ((FrameworkElement)d).Tag is string hint && hint.Length > 0) ((FrameworkElement)d).Tag = T(hint);
     }

@@ -37,7 +37,7 @@
   // Horas de Lisboa, onde o painel é lido
   const LX = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   const lx = (t) => { const p = Object.fromEntries(LX.formatToParts(new Date(t)).map((x) => [x.type, x.value])); return { date: `${p.year}-${p.month}-${p.day}`, hm: `${p.hour}:${p.minute}`, h: +p.hour }; };
-  const whenTxt = (t) => { if (!t) return 'nunca'; const a = lx(t), n = lx(Date.now()); const y = lx(Date.now() - 864e5).date; return `${a.date === n.date ? 'hoje' : a.date === y ? 'ontem' : `a ${dd(a.date)}`} às ${a.hm}`; };
+  const whenTxt = (t) => { if (!t) return 'nunca'; const a = lx(t), n = lx(Date.now()); const y = new Date(Date.parse(n.date + 'T00:00:00Z') - 864e5).toISOString().slice(0, 10); return `${a.date === n.date ? 'hoje' : a.date === y ? 'ontem' : `a ${dd(a.date)}`} às ${a.hm}`; };
   const agoT = (t) => (t ? ago(Math.max(0, Math.round((Date.now() - t) / 60000))) : 'nunca');
 
   const COUNTRY = { PT: 'Portugal', BR: 'Brasil', US: 'EUA', ES: 'Espanha', DE: 'Alemanha', FR: 'França', PL: 'Polónia', RU: 'Rússia', CA: 'Canadá', GB: 'Reino Unido', TR: 'Turquia', IT: 'Itália', NL: 'Países Baixos', '?': 'Desconhecido' };

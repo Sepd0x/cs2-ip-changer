@@ -38,7 +38,7 @@
   const addDays = (d, n) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
   const LX = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   const lx = (t) => { const p = Object.fromEntries(LX.formatToParts(new Date(t)).map((x) => [x.type, x.value])); return { date: `${p.year}-${p.month}-${p.day}`, hm: `${p.hour}:${p.minute}`, h: +p.hour }; };
-  const whenTxt = (t) => { if (!t) return 'nunca'; const a = lx(t), n = lx(Date.now()); const y = lx(Date.now() - 864e5).date; return `${a.date === n.date ? 'hoje' : a.date === y ? 'ontem' : `a ${dd(a.date)}`} às ${a.hm}`; };
+  const whenTxt = (t) => { if (!t) return 'nunca'; const a = lx(t), n = lx(Date.now()); const y = new Date(Date.parse(n.date + 'T00:00:00Z') - 864e5).toISOString().slice(0, 10); return `${a.date === n.date ? 'hoje' : a.date === y ? 'ontem' : `a ${dd(a.date)}`} às ${a.hm}`; };
   const agoT = (t) => (t ? ago(Math.max(0, Math.round((Date.now() - (typeof t === 'string' ? Date.parse(t) : t)) / 60000))) : 'nunca');
   /** Intervalo de Wilson a 95% de uma taxa (o mesmo que o brief), em texto. */
   const wilson = (a, n) => { if (!n) return null; const z = 1.96, p = a / n, z2 = z * z; const c = (p + z2 / (2 * n)) / (1 + z2 / n), h = (z * Math.sqrt((p * (1 - p)) / n + z2 / (4 * n * n))) / (1 + z2 / n); return [Math.max(0, c - h), Math.min(1, c + h)]; };

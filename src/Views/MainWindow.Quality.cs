@@ -70,7 +70,18 @@ public partial class MainWindow
             if (_s.WholePcBeforeWeak != null) RestoreWholePc();
             else Toast(Loc.F("Mobile connection is fine again: {0}.", q.Text), true);
         }
+        // Audit 26 nov. (V5): after Change IP or a new start the level starts again from Unknown, so "back from Bad" never came and
+        // Whole PC, dropped for a weak link, stayed off until CS2 closed. A first sample that isn't weak brings it back too.
+        else if (WholePcBack(before, _qualityLevel, _s.WholePcBeforeWeak != null))
+        {
+            Log.Ok($"The phone connection is fine ({Loc.En(q.Text)}).");
+            RestoreWholePc();
+        }
     }
+
+    /// <summary>Whole PC comes back: it was dropped for a weak link, and a sample after a fresh start (Unknown) isn't weak.</summary>
+    public static bool WholePcBack(QualityLevel before, QualityLevel now, bool droppedForWeak) =>
+        droppedForWeak && before == QualityLevel.Unknown && now is QualityLevel.Good or QualityLevel.Fair;
 
     /// <summary>
     /// Bad connection with Whole PC on: the browser, Discord and downloads were sharing the weak link with CS2.

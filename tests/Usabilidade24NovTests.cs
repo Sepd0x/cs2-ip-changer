@@ -102,7 +102,7 @@ static class Usabilidade24NovTests
             names == (es[Texts.DoorRegions], es[Texts.DoorPhone]) && names.Regions != Texts.DoorRegions && names.Phone != Texts.DoorPhone
             && MainWindow.DoorNames() == (Loc.T(Texts.DoorRegions), Loc.T(Texts.DoorPhone)), names.ToString());
         check("Verificador A: o Tab fica na caixa das portas",
-            Src("MainWindow.xaml").Contains("x:Name=\"StartPane\" Grid.Row=\"1\" Background=\"#B0000000\" Visibility=\"Collapsed\" KeyboardNavigation.TabNavigation=\"Cycle\""), "");
+            Src("MainWindow.xaml").Contains("x:Name=\"StartPane\" Grid.Row=\"1\" Margin=\"0,40,0,0\" Background=\"#B0000000\" Visibility=\"Collapsed\" KeyboardNavigation.TabNavigation=\"Cycle\""), "");
     }
 
     // B: o hotspot do telemóvel desde o primeiro segundo, sem confundir a rede de casa com o telemóvel

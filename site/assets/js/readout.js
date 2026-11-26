@@ -422,8 +422,9 @@
   /* ------------------------------------------------------------ trust: VirusTotal squares */
   var vg = $('.vt-grid'), vn = $('.instr .rd');
   if (vg && vn) {
-    var m = vn.textContent.match(/(\d+) of (\d+)/);
-    if (m) { var bad = +m[1], all = +m[2], h = ''; for (var j = 0; j < all; j++) h += '<i' + (j < bad ? ' class="bad"' : '') + ' style="--d:' + j + '"></i>'; vg.style.setProperty('--cols', Math.ceil(all / 4)); vg.innerHTML = h; }
+    // the two numbers in any language ("0 of 70", "0 de 70", Turkish "70'te 0"): the engines are the larger (audit 26 Nov 2026, S5)
+    var nums = (vn.textContent.match(/\d+/g) || []).map(Number), m = nums.length === 2;
+    if (m) { var bad = Math.min(nums[0], nums[1]), all = Math.max(nums[0], nums[1]), h = ''; for (var j = 0; j < all; j++) h += '<i' + (j < bad ? ' class="bad"' : '') + ' style="--d:' + j + '"></i>'; vg.style.setProperty('--cols', Math.ceil(all / 4)); vg.innerHTML = h; }
   }
 
   /* ------------------------------------------------------------ who: the sentence lights up part by part */

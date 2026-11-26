@@ -76,7 +76,7 @@ public partial class NoticeWindow : Window
     public void Finish()
     {
         _action = null;
-        OkBtn.Content = "Close";
+        OkBtn.Content = Loc.T("Close");   // X6: set after the window was translated
         OtherBtn.Visibility = Visibility.Collapsed;
     }
 

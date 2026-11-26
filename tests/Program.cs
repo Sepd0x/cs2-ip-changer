@@ -702,6 +702,8 @@ TesteRealTests.Run(Check);
 Criticos26NovTests.Run(Check);
 // 26 nov.: os achados confirmados da auditoria do Codex (CodexAuditTests.cs)
 CodexAuditTests.Run(Check);
+// 26 nov.: a continuação da auditoria, áreas 7 a 11 (Auditoria26NovTests.cs)
+Auditoria26NovTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

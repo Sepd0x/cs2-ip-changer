@@ -22,19 +22,26 @@ CS2 IP Changer is now **Pickroute**, and this is its first stable version: a new
 - **Banned IP block:** it now blocks only the exact servers that banned your IP, not other servers on the same machines.
 - **Regions:** Allow all works even when Valve's list can't be loaded.
 - The app only runs as administrator from a folder that only administrators can change: groups and other users with write rights now count too.
+- **Join** checks protection again right before it connects, so turning protection off while CS2 starts can't send you in through your home connection.
+- With Phone setup open, the phone turning its Wi-Fi on blocks at once.
 
 ### Privacy
 - Log > Copy all keeps your home IP and logins hidden when Hide logins is on, and the Log never writes a home IP whole.
 - Usage stats: the time they were off isn't counted, and a phone seen while they were off isn't sent.
+- The bug report hides every Wi-Fi network name, also those in older Log lines.
 
 ### Also fixed
 - An update download that stops receiving data gives up after 30 seconds, so Update can be pressed again.
 - Start with Windows shows off when the task was turned off in Task Scheduler.
 - Steam accounts with IDs starting 7656120 show in Accounts, and Steam's connection log in UTF-16 is read correctly after the first time.
+- Accounts: after logging in to another account from the app, In use and Log in move to the right cards at once.
+- Phone setup and the first start's question no longer dim the top bar, so the window buttons stay clickable.
+- Whole PC, turned off for a weak connection, comes back after a Change IP or a restart once the connection is good.
+- Regions: an allowed region with no ping yet waits for it instead of showing as 200 ms.
 
 ### Languages
 - The app and the website are now also in **Turkish**.
-- Many fixes in Portuguese, Spanish and Russian: country names in Regions, Join, Log in and Sign in each have their own word, and labels that were cut off now fit.
+- Many fixes in Portuguese, Spanish and Russian: country names in Regions, Join, Log in and Sign in each have their own word, and labels that were cut off now fit. Tooltips, dialog hints, the dial's continents and Change IP's progress follow the app's language.
 
 ### Also
 - Usage stats are no longer required: the first start asks, with Accept and Turn off, and Settings changes it any time.

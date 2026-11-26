@@ -71,7 +71,9 @@
             <Setter Property="Height" Value="28"/>
             <Setter Property="Padding" Value="13,0"/>
             <Setter Property="Margin" Value="0"/>
-            <Setter Property="Content" Value="Log in"/>
+            <!-- the text from the account (audit 26 nov., X2): a Setter's text is translated once into a local value, which then hid
+                 the trigger's "In use" in every language but English -->
+            <Setter Property="Content" Value="{Binding LoginText}"/>
             <Setter Property="ToolTip" Value="Closes Steam and reopens it on this account. Only works for accounts with 'Remember me' ticked on this PC."/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="True">
@@ -80,7 +82,6 @@
                     <Setter Property="Foreground" Value="{StaticResource AccentText}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Active}" Value="True">
-                    <Setter Property="Content" Value="In use"/>
                     <Setter Property="IsEnabled" Value="False"/>
                     <Setter Property="Background" Value="Transparent"/>
                     <Setter Property="BorderBrush" Value="{StaticResource LineStrong}"/>
@@ -2555,14 +2556,14 @@
                                                         <CheckBox IsChecked="{Binding Sync}" Click="CfgOptOut_Click" HorizontalAlignment="Left" AutomationProperties.Name="Gets sync">
                                                             <CheckBox.Style>
                                                                 <Style TargetType="CheckBox" BasedOn="{StaticResource CfgSwitch}">
-                                                                    <Setter Property="ToolTip" Value="Off: the sync never touches this account's config (Copy config… still can)"/>
+                                                                    <!-- from the row (audit 26 nov., X1): a Setter's text is translated once into a local value, which hid the paused one -->
+                                                                    <Setter Property="ToolTip" Value="{Binding SyncTip}"/>
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding IsMain}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
                                                                         <!-- Sync off for the page: drawn off and dimmed, the value kept (the switch still works) -->
                                                                         <DataTrigger Binding="{Binding SyncPaused}" Value="True">
                                                                             <Setter Property="Opacity" Value="0.4"/>
                                                                             <Setter Property="Tag" Value="paused"/>
-                                                                            <Setter Property="ToolTip" Value="Sync is off, so no account gets it now. This keeps your choice for when Sync is on again."/>
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
@@ -4267,7 +4268,7 @@
 
             <!-- Dialog -->
             <!-- beta.10: Phone setup as steps that check themselves (PhoneSetup.Steps), each with its button when the app can do it -->
-            <Grid x:Name="SetupPane" Grid.Row="1" Background="#B0000000" Visibility="Collapsed" local:Look.Round="True">
+            <Grid x:Name="SetupPane" Grid.Row="1" Margin="0,40,0,0" Background="#B0000000" Visibility="Collapsed" local:Look.Round="True">
                 <HeaderedContentControl Style="{StaticResource DialogGroup}" Width="580" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="18,10,18,8">
                     <HeaderedContentControl.Header>
                         <TextBlock Text="Phone setup" Style="{StaticResource DialogTitle}"/>
@@ -4325,7 +4326,7 @@
             </Grid>
             <!-- 24 Nov: the first start's two doors (MainWindow.Start.cs). 46 of 57 never plugged a phone in and Regions is the most used
                  page, so the start asks before pushing anyone to the phone. Each door draws the page it opens; the tour is behind Show me around -->
-            <Grid x:Name="StartPane" Grid.Row="1" Background="#B0000000" Visibility="Collapsed" KeyboardNavigation.TabNavigation="Cycle" local:Look.Round="True">
+            <Grid x:Name="StartPane" Grid.Row="1" Margin="0,40,0,0" Background="#B0000000" Visibility="Collapsed" KeyboardNavigation.TabNavigation="Cycle" local:Look.Round="True">
                 <HeaderedContentControl Style="{StaticResource DialogGroup}" Width="640" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="18,12,18,16">
                     <HeaderedContentControl.Header>
                         <TextBlock Text="{x:Static local:Texts.DoorsTitle}" Style="{StaticResource DialogTitle}"/>

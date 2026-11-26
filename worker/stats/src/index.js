@@ -195,6 +195,9 @@ function budgetKeys(day, kind) {
   if (kind === 'forget') return [[`${day}:forget`, FORGET_ROWS]];
   if (kind === 'site') return [[`${day}:site`, SITE_ROWS]];
   if (kind === 'live') return [[day, DAILY_ROWS], [`${day}:live`, LIVE_ROWS]];
+  // audit 26 nov. (W2): the live signal of an ID with no live row yet, and the environment report (no ID at all), also spend the
+  // share of new installs, so a flood of either can't take the rows NEW_ROWS keeps for the installs already here
+  if (kind === 'live-new') return [[day, DAILY_ROWS], [`${day}:live`, LIVE_ROWS], [`${day}:new`, NEW_ROWS]];
   if (kind === 'new') return [[day, DAILY_ROWS], [`${day}:new`, NEW_ROWS]];
   return [[day, DAILY_ROWS]];
 }
@@ -252,7 +255,7 @@ async function live(request, env) {
     + 'ON CONFLICT (id) DO UPDATE SET ts = excluded.ts, app = excluded.app, mode = excluded.mode, link = excluded.link, screen = excluded.screen, '
     + 'cs2 = excluded.cs2, prot = excluded.prot, tray = excluded.tray, dev = excluded.dev')
     .bind(b.id, now, b.app, word(b.mode), word(b.link), screen, yes(b.cs2), yes(b.prot), yes(b.tray), b.dev === true ? 1 : 0)];
-  return withinBudget(env, day, stmts, 3, 'live');
+  return withinBudget(env, day, stmts, 3, last ? 'live' : 'live-new');
 }
 
 /**
@@ -277,7 +280,7 @@ async function envReport(request, env) {
     stmts.push(env.DB.prepare('INSERT INTO env (day, k, v, n, dev) VALUES (?, ?, ?, 1, ?) ON CONFLICT (day, k, v, dev) DO UPDATE SET n = n + 1').bind(day, k, String(v), dev));
   }
   stmts.push(env.DB.prepare('INSERT INTO env (day, k, v, n, dev) VALUES (?, ?, ?, 1, ?) ON CONFLICT (day, k, v, dev) DO UPDATE SET n = n + 1').bind(day, 'reports', 'all', dev));
-  return withinBudget(env, day, stmts, 2 * stmts.length);
+  return withinBudget(env, day, stmts, 2 * stmts.length, 'new');
 }
 
 /**
@@ -380,7 +383,8 @@ export default {
     ];
     // Caps a little above what the app sends (it stops at 140 buttons and 90 counters with their bands, 30 errors). The good
     // names are picked before the cap, so junk first in the body can't push real counters out.
-    for (const [table, obj, max, cap, ok] of [['clicks', b.clicks, 100000, contract.limits.clicks, (x) => NAME.test(x)], ['counts', b.counts, 1000000, contract.limits.counts, counterOk]]) {
+    // a name Object.prototype has (toString, __proto__...) is never kept: it broke the dashboard's sums (audit 26 nov., W1)
+    for (const [table, obj, max, cap, ok] of [['clicks', b.clicks, 100000, contract.limits.clicks, (x) => NAME.test(x) && !(x in Object.prototype)], ['counts', b.counts, 1000000, contract.limits.counts, (x) => counterOk(x) && !(x in Object.prototype)]]) {
       if (!plain(obj)) continue;
       for (const [name, n] of Object.entries(obj).filter(([name, n]) => ok(name) && int(n, max) !== null).slice(0, cap))
         stmts.push(env.DB.prepare(`INSERT INTO ${table} (day, id, name, n, dev) VALUES (?, ?, ?, ?, ?)`).bind(day, b.id, name, Math.min(n, MAX_COUNT), dev));
@@ -397,7 +401,7 @@ export default {
     if (plain(b.paths))
       for (const [p, n] of Object.entries(b.paths).slice(0, 60)) {
         const [from, to, more] = p.split('>');
-        if (more === undefined && SCREEN.test(from || '') && SCREEN.test(to || '') && from !== to && int(n, 10000) && `path_${from}_${to}`.length <= 48) extra.push([`path_${from}_${to}`, n]);
+        if (more === undefined && SCREEN.test(from || '') && SCREEN.test(to || '') && from !== to && int(n, 10000) && `path_${from}_${to}`.length <= 48) extra.push([`path_${from}_${to}`, Math.min(n, MAX_COUNT)]);   // W4: the same cap as every count
       }
     if (typeof b.age === 'string' && Object.hasOwn(AGES, b.age)) extra.push([`age_${AGES[b.age]}`, 1]);
     if (hosting) extra.push(['net_dc', 1]);
@@ -427,7 +431,9 @@ export default {
           + 'ON CONFLICT (day, app, screen, kind, cell, dev) DO UPDATE SET n = n + excluded.n').bind(day, b.app, s, kind, cell, Math.min(n, MAX_HEAT), dev));
         cost += 2;
       }
-    // Nov. 2026 (security audit): an install with nothing before today counts against NEW_ROWS too (one read on pings_id_ts)
+    // Nov. 2026 (security audit): an install with nothing before today counts against NEW_ROWS too (one read on pings_id_ts).
+    // Audit 26 nov. (W2, its third path): IDs seeded the day before a flood count as here already. Left so on purpose: asking for
+    // two days would send a real install's second day to the new share too, and a flood planned a day ahead is rare
     const seen = await env.DB.prepare('SELECT 1 AS y FROM pings WHERE id = ? AND day < ? LIMIT 1').bind(b.id, day).first();
     return withinBudget(env, day, stmts, cost, seen ? 'report' : 'new');
   },

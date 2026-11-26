@@ -108,6 +108,13 @@ public sealed class RegionDial : FrameworkElement
         _ => fallback,
     };
 
+    /// <summary>
+    /// The amber dot, on the slowest region CS2 may play in: only among the regions with a ping (audit 26 nov., X8: one not measured
+    /// yet or with no answer was drawn as 200 ms and took the dot). None while no allowed region has a ping.
+    /// </summary>
+    public static RegionItem Slowest(IEnumerable<RegionItem> allowed) =>
+        allowed.Where(r => r.PingMs >= 0).OrderByDescending(r => r.PingMs).FirstOrDefault();
+
     static double Len(int ping) => Math.Min(ping < 0 ? MaxPing : ping, MaxPing) * K;
 
     /// <summary>The colour of a ping against the limit: green up to it, light grey up to a quarter more, amber after.</summary>
@@ -184,7 +191,7 @@ public sealed class RegionDial : FrameworkElement
         _spokes.Clear();
         _spokes.AddRange(spokes);
         var allowed = spokes.Where(s => s.Item.Allowed).ToList();
-        var lastAllowed = allowed.Count > 0 ? allowed.OrderByDescending(s => s.Item.SortPing).First().Item : null;
+        var lastAllowed = Slowest(allowed.Select(s => s.Item));
         var hover = HoverId;
 
         for (var i = 0; i < spokes.Count; i++)
@@ -250,7 +257,7 @@ public sealed class RegionDial : FrameworkElement
         foreach (var (continent, deg) in names)
         {
             var flip = Flip(deg);
-            var word = Loc.T(continent).ToUpper(CultureInfo.CurrentCulture);
+            var word = Loc.T(continent).ToUpper(CultureInfo.GetCultureInfo(Loc.Lang));   // X5: the app's language, not Windows' region ("AFRİCA")
             var glyphs = word.Select(ch => T(ch.ToString(), sansBold, 11, muted)).ToList();
             var width = glyphs.Sum(g => g.WidthIncludingTrailingWhitespace) + 0.66 * (glyphs.Count - 1);
             dc.PushTransform(new RotateTransform(flip ? deg + 180 : deg, C, C));

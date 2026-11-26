@@ -97,7 +97,7 @@ public partial class MainWindow
         if (f == null)
         {
             f = NewFlag(p.Name);
-            f.Label = "Followed";
+            f.Label = Loc.T("Followed");   // X6: the chip and Settings > Player flags show it as it is saved
             f.Color = PlayerFlag.Colors[3];
         }
         SetFollow(f, !f.Follow);

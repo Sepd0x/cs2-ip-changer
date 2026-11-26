@@ -152,6 +152,27 @@ function State { Text (ById $script:Win 'SideState') }
 function Rules { @(Get-NetFirewallRule -DisplayName $Prefixes -ErrorAction SilentlyContinue).Count }
 function Page([string]$nav) { [void](Click (ById $script:Win $nav)); Start-Sleep -Milliseconds 900 }
 
+# --restore of the test copy (audit 26 Nov 2026, S2): it ends on a window that waits for a click, so the script waits for the rules
+# to go (up to 60 s) and then closes that copy itself; before, it waited 2 minutes and left the last one open as admin.
+function Restore-Test([int]$before) {
+  $r = Start-Process -FilePath (Join-Path $AppDir 'CS2IPChanger.exe') -ArgumentList '--restore' -PassThru -WindowStyle Hidden
+  $t = Get-Date
+  while (((Get-Date) - $t).TotalSeconds -lt 60 -and -not $r.HasExited -and (Rules) -gt $before) { Start-Sleep -Milliseconds 500 }
+  Start-Sleep 2
+  if (-not $r.HasExited) { try { $r.Kill(); [void]$r.WaitForExit(5000) } catch {} }
+  Rules
+}
+
+# Start with Windows of the real install (S4): --restore of the test copy takes the task "CS2 IP Changer" off whatever exe it
+# starts, so its XML is kept before phase 3 and put back after it
+$TaskName = 'CS2 IP Changer'
+function Save-Task { $x = & schtasks /Query /TN $TaskName /XML 2>$null; if ($LASTEXITCODE -eq 0 -and $x) { $f = Join-Path $Out 'tarefa-arranque.xml'; [IO.File]::WriteAllText($f, ($x -join "`r`n"), [Text.Encoding]::Unicode); $f } }
+function Put-Task([string]$f) {
+  if (-not $f) { return }
+  & schtasks /Query /TN $TaskName 2>$null | Out-Null
+  if ($LASTEXITCODE -ne 0) { & schtasks /Create /TN $TaskName /XML $f /F 2>$null | Out-Null; Note '3 App' 'Fim: Start with Windows da instalacao real' $(if ($LASTEXITCODE -eq 0) { 'OK' } else { 'FALHA' }) 'a tarefa foi reposta como estava antes do teste' }
+}
+
 function Phase-Admin {
   $a = Run-Logged 'testes-admin' 'dotnet' "run --project tests -- --admin `"$Out\testes-admin.txt`""
   $last = if (Test-Path "$Out\testes-admin.txt") { (Get-Content "$Out\testes-admin.txt" -Encoding UTF8 | Select-Object -Last 1) } else { 'sem ficheiro' }
@@ -167,6 +188,7 @@ function Phase-App([string]$exe) {
   $mine = Join-Path $env:ProgramFiles 'CS2 IP Changer\SRT_Dados\servers.json'
   if (Test-Path $mine) { New-Item -ItemType Directory -Force -Path $data | Out-Null; Copy-Item $mine $data }   # his server list, a copy
   $rulesBefore = Rules
+  $taskFile = Save-Task
   $script:T0 = Get-Date
 
   try {
@@ -233,8 +255,7 @@ function Phase-App([string]$exe) {
         if (Start-App) {
           [void](Click (ById $script:Win 'TurnOnBtn')); $on2 = Wait-For { (State) -match '^Protected' } 90
           $kept = Close-App 'Keep and close'; $during = Rules
-          $r = Start-Process -FilePath (Join-Path $AppDir 'CS2IPChanger.exe') -ArgumentList '--restore' -PassThru -WindowStyle Hidden
-          [void]$r.WaitForExit(120000); Start-Sleep 2; $after = Rules
+          $after = Restore-Test $rulesBefore
           Note '3 App' 'SMOKE 17: --restore depois de fechar com Keep' $(if ($on2 -and $during -gt 0 -and $after -le $rulesBefore) { 'OK' } else { 'FALHA' }) "regras com Keep: $during, depois do --restore: $after"
         }
       }
@@ -252,10 +273,12 @@ function Phase-App([string]$exe) {
     Note '3 App' 'Erro' 'FALHA' $_.Exception.Message
   } finally {
     foreach ($p in (Ours)) { try { $p.Kill() } catch {} }
-    $r = Start-Process -FilePath (Join-Path $AppDir 'CS2IPChanger.exe') -ArgumentList '--restore' -PassThru -WindowStyle Hidden
-    [void]$r.WaitForExit(120000); Start-Sleep 2
-    $end = Rules
+    $end = Restore-Test $rulesBefore
+    foreach ($p in (Ours)) { try { $p.Kill() } catch {} }   # S2: never a copy of the app left open
     Note '3 App' 'Fim: --restore e Firewall sem regras da app' $(if ($end -le $rulesBefore) { 'OK' } else { 'FALHA' }) "regras da app: $end (antes do teste: $rulesBefore)"
+    Put-Task $taskFile
+    # S4: the regions rule of the real install also went with --restore; the installed app puts it back when it opens
+    Note '3 App' 'Fim: regioes da instalacao real' 'VER' 'abre a app instalada uma vez antes de jogar: ela repoe o bloqueio de regioes que o --restore do teste tirou'
   }
 }
 

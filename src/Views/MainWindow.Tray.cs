@@ -71,7 +71,7 @@ public partial class MainWindow
         {
             case "open": ShowFromTray(); break;
             case "switch": _ = QuickSwitch("Tray"); break;
-            case "changeip": _ = RunCommand("Change IP", "starting…", () => ChangeIp(confirm: true)); break;
+            case "changeip": _ = RunCommand(Loc.T("Change IP"), Loc.T("starting…"), () => ChangeIp(confirm: true)); break;
             case "regions": ShowFromTray(); NavRegions.IsChecked = true; break;
             case "off": ShowFromTray(); Restore_Click(this, new RoutedEventArgs()); break;
             case "setup": ShowFromTray(); NavNet.IsChecked = true; _ = RunPhoneSetup(); break;

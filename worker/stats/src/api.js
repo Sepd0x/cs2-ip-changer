@@ -284,7 +284,11 @@ export async function summary(db, { period, f, dev, now, exclude = [], sums = 's
   if (rolled === FAILED) return summary(db, { period, f, dev, now, exclude, sums, until });
   // The written days and the days read from the tables, as one list of rows each (newest day first, as the queries return them)
   const X = rolled ? expand(rolled.recs, inPerInstall) : null;
-  const pings = X ? [...pingsR, ...X.pings] : pingsR, counts = X ? [...countsR, ...X.counts] : countsR, clicks = X ? [...clicksR, ...X.clicks] : clicksR;
+  // A name that Object.prototype also has (toString, constructor, __proto__...) is never a counter or a button: dropped here, so a
+  // made-up report written before the check at the door can't break the sums below (audit 26 nov., W1)
+  const own = (r) => typeof r.name === 'string' && !(r.name in Object.prototype);
+  const pings = X ? [...pingsR, ...X.pings] : pingsR;
+  const counts = (X ? [...countsR, ...X.counts] : countsR).filter(own), clicks = (X ? [...clicksR, ...X.clicks] : clicksR).filter(own);
   const errors = X ? [...errorsR, ...X.errors] : errorsR, hours = X ? [...hoursR, ...X.hours.filter((r) => r.day >= since)] : hoursR;
   const sumsR = X ? mergeSums(sumsRR, rolledSums(rolled.recs, since, f)) : sumsRR;
   let installDays = installDaysR, firstR = firstRR, last = lastR, lastAnyR = lastAnyRR;
@@ -626,7 +630,7 @@ export async function summary(db, { period, f, dev, now, exclude = [], sums = 's
   const recentDays = [dayBlock(today), dayBlock(yday)];
   // Por hora: installs with a report in each Lisbon hour, today (null for the hours still to come) and yesterday. The live table
   // keeps one row per ID, so this is from the reports, not the live signal.
-  const lt = lisbonHour(now), ly = lisbonHour(now - 864e5).date;
+  const lt = lisbonHour(now), ly = addD(lt.date, -1);   // W3: the calendar day before
   const hourSets = { [lt.date]: [...Array(24)].map(() => new Set()), [ly]: [...Array(24)].map(() => new Set()) };
   // Yesterday up to this time (UTC day before, reports sent before now less a day): installs, the new ones, minutes
   const cut = now - 864e5;
@@ -759,7 +763,8 @@ export async function livePeaks(db, { dev, now }) {
   let rows = [];
   try { rows = (await db.prepare('SELECT hour, n, game, prot FROM live_hourly WHERE dev = ? AND hour >= ? ORDER BY hour').bind(dev ? 1 : 0, Math.floor(now / 3600_000) - 15 * 24).all()).results ?? []; }
   catch (e) { if (!/no such table/i.test(String(e && e.message))) throw e; }
-  const t = lisbonHour(now), y = lisbonHour(now - 864e5).date;
+  // yesterday and the 14 days by the calendar, not 24 h back: a 23 or 25 hour day (summer time) gave the wrong day (audit 26 nov., W3)
+  const t = lisbonHour(now), y = addD(t.date, -1);
   const today = Array(24).fill(null), yday = Array(24).fill(null), byDay = {};
   for (const r of rows) {
     const h = lisbonHour(r.hour * 3600_000);
@@ -770,7 +775,7 @@ export async function livePeaks(db, { dev, now }) {
   let ydayMax = null;
   yday.forEach((v, h) => { if (v != null && (!ydayMax || v > ydayMax.n)) ydayMax = { n: v, hour: h }; });
   const days14 = [];
-  for (let i = 13; i >= 0; i--) { const d = lisbonHour(now - i * 864e5).date; days14.push({ date: d, max: byDay[d] ?? null }); }
+  for (let i = 13; i >= 0; i--) { const d = addD(t.date, -i); days14.push({ date: d, max: byDay[d] ?? null }); }
   // v4: last = the newest hour with a sample (the brief's cron check)
   return { today, yday, hour: t.hour, ydayMax, days: days14, first: rows[0] ? rows[0].hour * 3600_000 : null, last: rows.length ? rows.at(-1).hour * 3600_000 : null };
 }

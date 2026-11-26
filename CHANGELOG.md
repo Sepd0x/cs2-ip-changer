@@ -71,6 +71,20 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - A cooldown typed as a huge number ("100000000d") no longer shows an error instead of "not a valid duration".
 - The Log line that says the phone's IP is the same as your home IP keeps that IP partly hidden, so an old home IP never ends up in a bug report.
 - Steam's connection log in UTF-16: after the first read, a disconnect written later was missed and the app kept showing Steam online.
+- Servers: Join while CS2 was still starting could go in through your home connection if protection was turned off during the wait. Join now checks protection again right before it connects.
+- Phone setup open: when the phone turned its Wi-Fi on, the app waited for Phone setup to close before blocking. It now blocks at once, as it does with Phone setup closed.
+- Bug report: the name of a Wi-Fi network from an older Log line could stay in the report. Every network name is now hidden.
+- Whole PC turned off because of a weak connection now comes back with the first good measure after a Change IP or after opening the app again.
+- Phone setup and the first start's question no longer dim the top bar: like the other dialogs, they start under it, so the window buttons stay clickable.
+- Portuguese, Spanish, Russian and Turkish: some tooltips and menu items kept the first text they showed (the Sync switch on Configs, for example). They now follow what they describe.
+- Accounts: after logging in to another account from the app, the old account said "In use" and the new one had a greyed-out Log in. Both buttons now change at once.
+- The grey hint in a dialog's text box was the one of the first dialog that showed it ("E.g. 21h, 3d…" in the box for a player flag). Each dialog now shows its own.
+- Portuguese, Spanish and Russian: the texts that say how to turn protection off or remove the region block name the buttons as they are now written.
+- Regions: with Windows in a Turkish regional format, the continent names on the dial read "AFRİCA" and "ASİA" in English. Their capitals now follow the app's language.
+- Change IP's progress in the top bar, the Close button of the Install and Remove windows, and the "Followed" player flag were always in English. They are now translated.
+- Regions: an allowed region with no ping yet was drawn as 200 ms and could get the yellow "slowest" mark. It now waits for its ping.
+- Website in Portuguese, Spanish, Russian and Turkish: the line with the version, size and date of the download, and the VirusTotal result on "Is it safe?", showed in English or empty. They are translated now.
+- Website on a phone: choosing a language in the menu no longer logs an error.
 
 ## [0.1.0-beta.14] - 2026-11-19
 

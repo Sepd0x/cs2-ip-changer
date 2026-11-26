@@ -362,7 +362,7 @@ export const pages = [
   {
     slug: 'cs2-region-picker',
     title: 'CS2 server picker and region picker: change your region',
-    desc: 'Free CS2 server picker for Windows: block the matchmaking regions you don\'t want and see each one\'s ping. One firewall rule for cs2.exe, easy to undo.',
+    desc: 'Free CS2 server picker for Windows, also for Dota 2 and Deadlock: block the matchmaking regions you don\'t want and see each one\'s ping. Easy to undo.',
     nav: 'CS2 region picker',
     blurb: 'How to change your region in CS2.',
     eyebrow: 'CS2 server picker',
@@ -376,7 +376,7 @@ export const pages = [
       // 12 Nov. 2026 (Search Console: "cs2 server picker", "server picker x", "cs2 mm server picker"): the other pickers, from each
       // project's own GitHub page on that day (platforms, licence, latest release). Check them again before changing a row.
       ['CS2 server pickers compared', `<p>Every CS2 server picker works the same way underneath: Windows Firewall rules that stop the game from reaching Valve's relays (Steam Datagram Relay) in the regions you don't want. None of them changes the game. They differ in where they run, how they keep the relay list up to date and what else they do. Checked on 12 Nov 2026 (Steam Route Tool on 15 Nov 2026), on each project's own page:</p><div class="tbl"><table><thead><tr><td></td><th scope="col">Runs on</th><th scope="col">Latest release on 12 Nov 2026</th><th scope="col">What sets it apart</th></tr></thead><tbody>
-<tr><th scope="row">Pickroute (the Regions page)</th><td class="us">Windows 10 and 11</td><td class="us">12 Nov 2026</td><td class="us">One rule, for cs2.exe only. Ping for each region, measured the way you'll play. Shortcuts for the closest 3, one continent or a ping limit. Reads Valve's list again every hour.</td></tr>
+<tr><th scope="row">Pickroute (the Regions page)</th><td class="us">Windows 10 and 11</td><td class="us">12 Nov 2026</td><td class="us">One rule per game (CS2, Dota 2, Deadlock), for its exe only. Ping for each region, measured the way you'll play. Shortcuts for the closest 3, one continent or a ping limit, and presets you name. Reads Valve's list again every hour.</td></tr>
 <tr><th scope="row"><a href="https://github.com/eyyMinda/SteamRouteTool">Steam Route Tool</a>, by eyyMinda</th><td>Windows</td><td>4 Nov 2026</td><td>Open source (GPL-3.0). Also for Dota 2 and Deadlock.</td></tr>
 <tr><th scope="row"><a href="https://github.com/FN-FAL113/server-picker-x">Server Picker X</a></th><td>Windows and Linux</td><td>25 Aug 2026</td><td>Open source (GPL-3.0). Also for Deadlock and other Steam Datagram Relay games.</td></tr>
 <tr><th scope="row"><a href="https://github.com/FN-FAL113/cs2-server-picker">CS2 Server Picker</a>, by FN-FAL113</th><td>Windows</td><td>14 Mar 2026</td><td>Open source (GPL-3.0), and the one with the most stars on GitHub. Its author now marks it as legacy and points to Server Picker X.</td></tr>

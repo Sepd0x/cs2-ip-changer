@@ -878,6 +878,9 @@ public sealed class CfgAccountRow : Observable
     /// <summary>The page's Sync is off: the Gets sync switch draws off (dimmed, RouteOff ring) whatever it holds, and keeps its value
     /// for when Sync is back (26 nov., critics: four switches lit in the accent next to "Sync is off").</summary>
     public bool SyncPaused { get; init; }
+    /// <summary>Gets sync's tip: what the switch does, or, with Sync off for the page, that it keeps the choice.</summary>
+    public string SyncTip => SyncPaused ? Loc.T("Sync is off, so no account gets it now. This keeps your choice for when Sync is on again.")
+        : Loc.T("Off: the sync never touches this account's config (Copy config… still can)");
     public bool Pending { get; init; }
     /// <summary>Its CS2 folder is a link or junction: never read or written, so never folded in with the accounts that have no config.</summary>
     public bool Linked { get; init; }

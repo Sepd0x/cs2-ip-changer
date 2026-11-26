@@ -148,7 +148,7 @@ The window draws the logo at the top of the sidebar, above Connection (`SideLogo
 paths of `logo-24.svg` with the theme's brushes): change both together. The README card (`docs/assets/src/social-preview.html`)
 signs with `logo.svg` in its lower left corner, and so does `banner.png` (`docs/assets/src/banner.html`, `render.cmd`). The
 README's animated demo (`demo.gif`, `demo-mobile.gif` and their `.png` stills) draws `logo-24.svg` (desktop) and `logo.svg`
-(phone) in its header; it is made outside git (`publish/readme-gif-2026-11-05/LEIA-ME.md`), so record it again when the logo
+(phone) in its header; it is made outside git (`publish/readme-gif-2026-11-26/LEIA-ME.md`; recorded again on 26 Nov 2026 with the Dial colours and the name Pickroute), so record it again when the logo
 changes. The GitHub avatar (`publish/logo-2026-11-06/avatar-460.png`) is uploaded by
 hand. `tests/LogoTests.cs` fails if any of these stop being the same logo, or if the logo gains a background, glow, mask or a
 colour outside the table.
@@ -178,7 +178,8 @@ there.
   while something runs, then on the right the state chip (24 px, rounded, a 10 % wash of the state's colour, its
   `StatusMark`, the state SemiBold and the IP in mono; a click goes to Connection), the quick switch (`TopPill`, 26 px:
   New IP + next account and the next account's name after a person mark, both in `Accent`) and the window buttons (`Chrome`).
-  A dialog covers the page, not this bar (`Dialog`, 40 px from the top). A dialog box (`DialogGroup`: a question, Phone
+  A dialog covers the page, not this bar (`Dialog`, Phone setup's `SetupPane` and the doors' `StartPane`, all 40 px from
+  the top, so the bar keeps its colours and the window buttons stay clickable; 26 Nov 2026). A dialog box (`DialogGroup`: a question, Phone
   setup, the two doors, the tour) is square, `Surface` with the `Edge` rim and a `LineStrong` line inside it, its title inside
   the box (`DialogTitle`: 16 px Display SemiBold on a 20 px line, 8 px over the text), the X 8 px from its right edge; its
   overlay has `Look.Round`, so its buttons are the pages' pills and its one `Primary` is filled (26 Nov 2026: the title chip

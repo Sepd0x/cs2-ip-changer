@@ -13,6 +13,14 @@ public static class Report
     const long TailBytes = 5 * 1024 * 1024;
     static readonly Regex ExternalAddr = new(@"external address = '[^']*'", RegexOptions.Compiled);
 
+    // The app's own Log lines that name a Wi-Fi network: "(connected to X)", hotspot "X", connected to "X" (audit 26 nov., V3: a
+    // network no longer in use isn't among the words hidden at export, and a home SSID is enough to find the home on public maps)
+    static readonly Regex SsidInLine = new(@"(?<=\(connected to )[^)\r\n]+(?=\))|(?<=hotspot "")[^""\r\n]+(?="")|(?<=connected to "")[^""\r\n]+(?="")",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    /// <summary>The Wi-Fi names in the app's Log lines, as (hidden).</summary>
+    public static string HideSsids(string text) => SsidInLine.Replace(text ?? "", "(hidden)");
+
     /// <summary>
     /// Creates the zip on the Desktop (or in SRT_Dados if there's no Desktop) and returns its path.
     /// <paramref name="settingsJson"/> already comes without the key and the home IP; every IP in <paramref name="hide"/> becomes "home-ip".
@@ -29,7 +37,7 @@ public static class Report
         string Clean(string text)
         {
             foreach (var ip in secrets) text = Regex.Replace(text, @"(?<![\d.])" + Regex.Escape(ip) + @"(?![\d])", "home-ip");
-            return Rec.ScrubIds(text, words);
+            return Rec.ScrubIds(HideSsids(text), words);
         }
 
         // Built in memory and written by handle (SafeFile): the Desktop is a folder other programs can change.

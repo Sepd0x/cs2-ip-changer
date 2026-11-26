@@ -107,7 +107,9 @@ function tokenize(h) {
 
 // ------------------------------------------------------------ values that change at each release, kept out of the keys
 const MASKS = [
-  ['version', /\bv?\d+\.\d+\.\d+-(?:alpha|beta|rc)\.\d+\b/g],
+  // 26 Nov 2026 (audit S1): a stable version too (v1.0.0), not only -beta.N; never a part of an IP or of a longer number
+  // and the short form alone ("flag beta.13" on is-it-safe, site-pages.mjs `short`), so the same key holds before and after 1.0.0
+  ['version', /(?<![\w.])(?:v?\d+\.\d+\.\d+(?:-(?:alpha|beta|rc)\.\d+)?|(?:alpha|beta|rc)\.\d+)(?![\w.])/g],
   ['date', /\b\d{1,2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}\b/g],
   ['iso', /\b20\d\d-\d\d-\d\d\b/g],
   ['size', /\b\d+(?:\.\d+)? MB\b/g],

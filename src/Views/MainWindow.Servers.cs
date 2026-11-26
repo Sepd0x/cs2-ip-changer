@@ -438,6 +438,10 @@ public partial class MainWindow
     /// <summary>Join from a button, the list, a notice or a free slot: with the command feedback.</summary>
     Task Join(ServerItem s, bool fromSlotWait = false) => RunCommand(Loc.T("Join"), Loc.F("joining {0}…", s.Title), () => Connect(s, fromSlotWait));
 
+    /// <summary>Right before the connect: protection that was on for the checks is off now, or the phone's IP isn't trusted any more.
+    /// On the home connection on purpose (No phone, Use the app with protection off) there is nothing to lose.</summary>
+    public static bool ProtectionChanged(bool onHome, bool protOn, bool distrust) => !onHome && (!protOn || distrust);
+
     /// <summary>Joins through the phone after all the checks. True when CS2 was sent to the server (or a slot wait started).</summary>
     async Task<bool> Connect(ServerItem s, bool fromSlotWait = false, bool openWith = true)
     {
@@ -508,6 +512,14 @@ public partial class MainWindow
                 Steam.Launch(Cs2Launch.SteamArgs);
                 JoinStarted(s);
                 return await ConnectWhenMenuReady(s, log, menu);
+            }
+            // Audit 26 nov. (V1): the waits above (after a crash up to 5 min, Steam up to 60 s) leave time to turn protection off; the
+            // join with CS2 closed checks again before it connects, this one too
+            if (ProtectionChanged(OnHome, _protOn, _distrust))
+            {
+                Log.Warn($"Not joining {s.Key}: protection changed while the join was waiting.");
+                Toast(Loc.F("Not joining {0}: protection changed while the join was waiting.", s.Title), false);
+                return false;
             }
             Steam.OpenUrl($"steam://connect/{s.Key}");
             JoinStarted(s);
