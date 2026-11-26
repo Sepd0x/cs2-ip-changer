@@ -1,4 +1,5 @@
-// The loading screen waits for the 3D world, for real. node --test tools/site-loading.test.mjs
+// The loading screen (the home on a PC) and the loading line (a phone, the guides, the 404) wait for the 3D world, for real.
+// node --test tools/site-loading.test.mjs
 // 9 Nov. 2026: the owner saw the loading screen go before the 3D scenes were there. It went on a timer (1.1 s on a phone,
 // 6 s on a PC) whatever the world was doing; measured with a slower CPU and network, the world came up to 12 s after it
 // (lab/evidence/session-6/loading-before.json). These tests load the home, a guide and the 404 in Chrome with the CPU and
@@ -94,9 +95,9 @@ const PROBE = () => {
   const now = () => performance.now();
   new MutationObserver(() => {
     const h = document.documentElement; if (!h) return;
-    if (h.classList.contains('ld')) T.on = T.on ?? now();
+    if (h.classList.contains('ld') || h.classList.contains('ldp')) { T.on = T.on ?? now(); T.mode = T.mode ?? (h.classList.contains('ldp') ? 'line' : 'screen'); }
     if (h.classList.contains('ld-out') && T.out == null) { T.out = now(); T.outWorld = T.world != null; T.outReady = !!document.querySelector('.stage.ready,.gw.ready'); T.ldw = h.classList.contains('ldw'); }
-    if (T.on != null && !h.classList.contains('ld') && T.gone == null) T.gone = now();
+    if (T.on != null && !h.classList.contains('ld') && !h.classList.contains('ldp') && T.gone == null) T.gone = now();
     const b = document.querySelector('.ld-bar b');
     if (b && !T.bar) { T.bar = 1; new MutationObserver(() => { const m = /scaleX\(([\d.]+)\)/.exec(b.style.transform); if (m) T.line.push([now(), +m[1]]); }).observe(b, { attributes: true, attributeFilter: ['style'] }); }
   }).observe(document, { attributes: true, childList: true, subtree: true, attributeFilter: ['class'] });
@@ -121,15 +122,33 @@ async function load(t, path, ctxOpts, { cpu = 4, net = { latency: 60, down: 9e6 
 }
 const gone = (page, ms) => page.waitForFunction(() => window.__lt && window.__lt.gone != null, null, { timeout: ms, polling: 100 });
 
+// 26 Nov.: the screen only covers the home on a PC. On a phone, and on every guide and the 404, the page shows at once over
+// the poster and only the line fills at the top (ldp): touch, the wheel and the keys are never held, and the line still ends
+// with the world's first frame
 for (const [label, ctxOpts] of [['a PC', PC], ['a phone', PHONE]]) {
   for (const [what, path] of [['the home', ''], ['a guide', 'cs2-ip-ban/'], ['the 404', '404.html']]) {
-    test(`Loading: on ${label}, ${what} keeps the loading screen until the world has drawn (CPU 4x slower, 9 Mbit/s)`, async (t) => {
+    const screen = label === 'a PC' && what === 'the home';
+    test(`Loading: on ${label}, ${what} ${screen ? 'keeps the loading screen' : 'shows the page at once with the line at the top'} until the world has drawn (CPU 4x slower, 9 Mbit/s)`, async (t) => {
       if (!browser) return t.skip(why);
       const page = await load(t, path, ctxOpts);
+      if (!screen) {
+        // the page is there and takes input while the line fills
+        const early = await page.waitForFunction(() => document.body && document.documentElement.classList.contains('ldp') && document.querySelector('h1') ? (() => {
+          const e = new WheelEvent('wheel', { cancelable: true, bubbles: true, deltaY: 100 }); document.body.dispatchEvent(e);
+          const tm = new Event('touchmove', { cancelable: true, bubbles: true }); document.body.dispatchEvent(tm);
+          const r = document.querySelector('.ld-scr').getBoundingClientRect();
+          return { wheel: e.defaultPrevented, touch: tm.defaultPrevented, h: r.height, ld: document.documentElement.classList.contains('ld') };
+        })() : null, null, { timeout: 30000, polling: 50 }).then((h) => h.jsonValue());
+        assert.equal(early.ld, false, 'the full loading screen showed');
+        assert.equal(early.wheel, false, 'the wheel is held while the line fills');
+        assert.equal(early.touch, false, 'touch is held while the line fills');
+        assert.ok(early.h <= 4, `the loading line is ${early.h} px tall: it covers the page`);
+      }
       await gone(page, 60000);
       const T = await page.evaluate(() => window.__lt);
-      assert.ok(T.on != null, 'no loading screen at all');
-      assert.ok(T.outWorld && T.ldw, `the loading screen began to go ${Math.round(T.out - T.on)} ms in, before the world's first frame (worldready ${T.world == null ? 'not yet' : Math.round(T.world) + ' ms'})`);
+      assert.ok(T.on != null, 'no loading screen or line at all');
+      assert.equal(T.mode, screen ? 'screen' : 'line', `${label}, ${what}: the ${T.mode} showed`);
+      assert.ok(T.outWorld && (T.ldw || !screen), `the loading ${T.mode} began to go ${Math.round(T.out - T.on)} ms in, before the world's first frame (worldready ${T.world == null ? 'not yet' : Math.round(T.world) + ' ms'})`);
       assert.ok(T.outReady, 'the scene was not marked ready when the screen went: the poster would still show');
       // the line only goes forward, and it moved while the 3D script came in (not one jump at the end)
       for (let i = 1; i < T.line.length; i++) assert.ok(T.line[i][1] >= T.line[i - 1][1], 'the line went back');
@@ -148,14 +167,15 @@ for (const [what, path, ctxOpts] of [['a guide on a phone on its side', 'cs2-ip-
     const page = await load(t, path, ctxOpts, { cpu: 1, net: null });
     await gone(page, 20000);
     const T = await page.evaluate(() => window.__lt);
-    assert.ok(T.outWorld && T.ldw, `the screen went after ${Math.round(T.out - T.on)} ms without the world's first frame`);
+    assert.ok(T.outWorld && (T.ldw || T.mode === 'line'), `the ${T.mode} went after ${Math.round(T.out - T.on)} ms without the world's first frame`);
     assert.ok(T.out - T.on < 9000, `the screen stayed ${Math.round(T.out - T.on)} ms`);
   });
 }
 
 test('Loading: with reduced motion the screen never holds the page (gone within 2 s with the CPU 6x slower, the wheel is not stopped)', async (t) => {
   if (!browser) return t.skip(why);
-  const page = await load(t, '', { ...PHONE, reducedMotion: 'reduce' }, { cpu: 6, net: { latency: 150, down: 1.6e6 } });
+  // 26 Nov.: the screen only shows on the home on a PC now (a phone has the line, which never holds anything), so on a PC
+  const page = await load(t, '', { ...PC, reducedMotion: 'reduce' }, { cpu: 6, net: { latency: 150, down: 1.6e6 } });
   const held = await page.waitForFunction(() => document.body && document.documentElement.classList.contains('ld') ? (() => { const e = new WheelEvent('wheel', { cancelable: true, bubbles: true, deltaY: 100 }); document.body.dispatchEvent(e); return { prevented: e.defaultPrevented }; })() : null, null, { timeout: 5000, polling: 50 }).then((h) => h.jsonValue()).catch(() => ({ prevented: false, never: true }));
   assert.equal(held.prevented, false, 'the wheel is held under the loading screen with reduced motion');
   await gone(page, 4000);

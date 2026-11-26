@@ -90,6 +90,12 @@ test('SEO: the questions people search have their answer on the right page', () 
   has('cs2-ping-test', 'How do I test my ping to CS2 servers?', 'What is a good ping in CS2?', 'Why is my CS2 ping high when my internet is fast?');
   has('cs2-config-file-location', 'Where do I find my CS2 cfg folder on Windows?', 'Where does autoexec.cfg go in CS2?', 'How do I find my Steam account ID?');
   has('cs2-mobile-data', 'Can you play CS2 on a mobile hotspot?', 'How much data does CS2 use per hour?', 'Is USB tethering better than a hotspot for gaming?');
+  // 26 Nov. 2026: the people a server picker failed, and the two other games of the Regions page
+  has('cs2-server-picker-not-working', 'CS2 server picker not working?', 'Why does my CS2 server picker not block anything?', 'Why do I still get matches in a region I blocked?', 'Do I have to restart CS2 after changing regions?', 'Windows Firewall is on.', 'Max Acceptable Matchmaking Ping');
+  has('dota-2-deadlock-region-picker', 'Dota 2 and Deadlock region picker', 'Is there a region picker for Dota 2?', 'Is there a server picker for Deadlock?', 'dota2.exe', 'deadlock.exe');
+  assert.ok(read('cs2-region-picker/index.html').includes('href="../cs2-server-picker-not-working/"'), 'the region guide links to the page for a server picker that does not work');
+  // a question lives on one page only: the region guide no longer asks why a picker blocks nothing
+  assert.ok(!plain(read('cs2-region-picker/index.html')).includes("My server picker doesn't block anything. Why?"), 'the region guide still has the question the new page answers');
   // the comparison is dated, so nobody reads an old row as today's
   assert.match(plain(read('cs2-region-picker/index.html')), /Checked on \d+ \w+ 20\d\d/);
   // llms.txt: the short answers an AI can quote, and the comparison's address

@@ -187,7 +187,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 .gl>*{grid-column:1;min-width:0}
 .rail{grid-column:2;grid-row:1/span 4;align-self:stretch}
 .rail-in{position:sticky;top:5.5rem;display:flex;flex-direction:column;gap:2.25rem}
-.gcard{position:relative;padding:1.2rem 0 1.1rem;border-top:2px solid transparent;border-image:var(--t-top) 1;border-bottom:1px solid var(--line)}
+.gcard{position:relative;padding:1.2rem 0 1.1rem;border-top:2px solid var(--t-accent);border-bottom:1px solid var(--line)}
 .rail .btn,.gget .btn{width:100%}
 .rail .copyrow .btn,.gget .copyrow .btn,.gmore .end .copyrow .btn{width:auto}
 .gcard .checks{margin-top:1.1rem;font-size:.86rem;gap:.35rem 1rem;padding:0}
@@ -209,13 +209,13 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
    grow with the type on big screens: the footer is two columns to 900 px (taller from 760, where the brand gets a row) and four after. With the old guesses
    (1250 px for the footer from 760 to 999 px, 120 for the last line everywhere) the page got shorter as the end came on
    screen, and on a tablet held upright or a phone in Desktop site the name at the end jumped */
-.gtext{content-visibility:auto;contain-intrinsic-size:auto 3400px}.gfaq{content-visibility:auto;contain-intrinsic-size:auto 19rem}.gmore{content-visibility:auto;contain-intrinsic-size:auto 45rem}footer .fgrid{content-visibility:auto;contain-intrinsic-size:auto 48rem}
-@media (min-width:600px){.gmore{contain-intrinsic-size:auto 34.5rem}}@media (min-width:760px){.gmore{contain-intrinsic-size:auto 31rem}footer .fgrid{contain-intrinsic-size:auto 63.8rem}}@media (min-width:901px){.gmore{contain-intrinsic-size:auto 19.5rem}footer .fgrid{contain-intrinsic-size:auto 32.7rem}}@media (min-width:1000px){.gtext{contain-intrinsic-size:auto 2100px}.gmore{contain-intrinsic-size:auto 20rem}}.gshot{content-visibility:auto;contain-intrinsic-size:auto 400px}.gtoc-m{content-visibility:auto;contain-intrinsic-size:auto 260px}footer .legal{content-visibility:auto;contain-intrinsic-size:auto 6rem}
+.gtext{content-visibility:auto;contain-intrinsic-size:auto 3400px}.gfaq{content-visibility:auto;contain-intrinsic-size:auto 19rem}.gmore{content-visibility:auto;contain-intrinsic-size:auto 45rem}footer .fgrid{content-visibility:auto;contain-intrinsic-size:auto 50.7rem}
+@media (min-width:600px){.gmore{contain-intrinsic-size:auto 34.5rem}}@media (min-width:760px){.gmore{contain-intrinsic-size:auto 31rem}footer .fgrid{contain-intrinsic-size:auto 68.9rem}}@media (min-width:901px){.gmore{contain-intrinsic-size:auto 19.5rem}footer .fgrid{contain-intrinsic-size:auto 37.8rem}}@media (min-width:1000px){.gtext{contain-intrinsic-size:auto 2100px}.gmore{contain-intrinsic-size:auto 20rem}}.gshot{content-visibility:auto;contain-intrinsic-size:auto 400px}.gtoc-m{content-visibility:auto;contain-intrinsic-size:auto 260px}footer .legal{content-visibility:auto;contain-intrinsic-size:auto 6rem}
 @media (min-width:600px){footer .legal{contain-intrinsic-size:auto 4.6rem}}@media (min-width:820px){footer .legal{contain-intrinsic-size:auto 3.3rem}}@media (min-width:1000px){footer .legal{contain-intrinsic-size:auto 1.3rem}}
 /* a touch screen: the links are 44 px rows, so the guides list and the footer are taller */
-@media (pointer:coarse){.gmore{contain-intrinsic-size:auto 50rem}}@media (pointer:coarse) and (min-width:600px){.gmore{contain-intrinsic-size:auto 37rem}}@media (pointer:coarse) and (min-width:760px){.gmore{contain-intrinsic-size:auto 32.5rem}footer .fgrid{contain-intrinsic-size:auto 67.4rem}}@media (pointer:coarse) and (min-width:901px){.gmore{contain-intrinsic-size:auto 19.5rem}footer .fgrid{contain-intrinsic-size:auto 35.3rem}}
+@media (pointer:coarse){.gmore{contain-intrinsic-size:auto 50rem}}@media (pointer:coarse) and (min-width:600px){.gmore{contain-intrinsic-size:auto 37rem}}@media (pointer:coarse) and (min-width:760px){.gmore{contain-intrinsic-size:auto 32.5rem}footer .fgrid{contain-intrinsic-size:auto 72.9rem}}@media (pointer:coarse) and (min-width:901px){.gmore{contain-intrinsic-size:auto 19.5rem}footer .fgrid{contain-intrinsic-size:auto 40.7rem}}
 .gtext h2::before{content:counter(sec,decimal-leading-zero);content:counter(sec,decimal-leading-zero) / "";display:inline-block;width:3.2rem;font:400 .8rem/1 var(--mono);letter-spacing:0;color:var(--ink3);vertical-align:.55em}
-.gtext h2{background:var(--t-top) 0 0/3rem 2px no-repeat;counter-increment:sec;color:var(--ink);font:500 clamp(1.7rem,1.1rem + 1.7vw,2.8rem)/1.06 var(--disp);letter-spacing:-.035em;margin:clamp(3.25rem,2.4rem + 2.6vw,5rem) 0 1.2rem;padding-top:clamp(1rem,.8rem + .6vw,1.4rem);border-top:0}
+.gtext h2{background:linear-gradient(var(--t-accent),var(--t-accent)) 0 0/3rem 2px no-repeat;counter-increment:sec;color:var(--ink);font:500 clamp(1.7rem,1.1rem + 1.7vw,2.8rem)/1.06 var(--disp);letter-spacing:-.035em;margin:clamp(3.25rem,2.4rem + 2.6vw,5rem) 0 1.2rem;padding-top:clamp(1rem,.8rem + .6vw,1.4rem);border-top:0}
 .gtext h2:first-child{margin-top:0;padding-top:clamp(1rem,.8rem + .6vw,1.4rem)}
 .gtext h2::before{color:var(--accent)}
 .gtext p,.gtext ul,.gtext ol{max-width:none;margin:0 0 1rem}
@@ -231,7 +231,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 .gtext ol.tl>li{counter-increment:hs;position:relative;padding:0 0 1.5rem 3.4rem;margin:0;background:linear-gradient(var(--line),var(--line)) no-repeat .6rem 1.9rem/1px calc(100% - 2.1rem)}
 .gtext ol.tl>li:last-child{padding-bottom:0;background:none}
 .gtext ol.tl>li::before{content:counter(hs,decimal-leading-zero);content:counter(hs,decimal-leading-zero) / "";position:absolute;left:0;top:.15rem;width:2.2rem;font:400 .8rem/1.4 var(--mono);color:var(--ink3);font-variant-numeric:tabular-nums;transition:color .6s .15s}
-.gtext ol.tl>li::after{content:"";position:absolute;left:.6rem;top:1.9rem;bottom:.2rem;width:1px;background:linear-gradient(var(--accent),color-mix(in srgb,var(--t-top2) 70%,transparent));transform-origin:50% 0;transition:transform 1.2s var(--ease-out) .35s}
+.gtext ol.tl>li::after{content:"";position:absolute;left:.6rem;top:1.9rem;bottom:.2rem;width:1px;background:var(--accent);transform-origin:50% 0;transition:transform 1.2s var(--ease-out) .35s}
 .gtext ol.tl>li:last-child::after{display:none}
 .gtext ol.tl>li.in::before{color:var(--accent)}
 @media (prefers-reduced-motion:no-preference){.js .gtext ol.tl>li.rv:not(.in)::after{transform:scaleY(0)}}
@@ -252,7 +252,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 .gmore ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr);border-top:1px solid var(--line)}
 .gmore li{margin:0;min-width:0}
 .gmore ul a{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 1.25rem;gap:1.5rem;align-items:baseline;padding:1.25rem 0;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}
-.gmore ul a::before{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--t-top);transform:scaleX(0);transform-origin:left;transition:transform .55s var(--ease-out)}
+.gmore ul a::before{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--t-accent);transform:scaleX(0);transform-origin:left;transition:transform .55s var(--ease-out)}
 .gmore ul a b{font:500 clamp(1.12rem,1rem + .4vw,1.35rem)/1.25 var(--disp);letter-spacing:-.015em}
 .gmore ul a span{color:var(--ink3);font-size:.92rem;line-height:1.45}
 .gmore ul a svg{width:1.1rem;height:1.1rem;align-self:center;justify-self:end;color:var(--ink3);transition:transform .45s var(--ease-out),color .3s}
@@ -275,7 +275,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 .gget .rel,.gget .safe{margin:.8rem 0 0}
 .gget .req{margin:.45rem 0 0}
 /* contents: the line beside them fills in the three colours as you read */
-.toc ul::after{content:"";position:absolute;left:-1px;top:0;width:1px;height:100%;background:linear-gradient(var(--t-top1),var(--t-top2),var(--t-top3));transform-origin:50% 0;transform:scaleY(var(--rp,0))}
+.toc ul::after{content:"";position:absolute;left:-1px;top:0;width:1px;height:100%;background:var(--t-accent);transform-origin:50% 0;transform:scaleY(var(--rp,0))}
 .toc ul{position:relative}
 @media (max-width:999px){
   /* phone and tablet: title and answer first, then the picture in its own band (never under the text), then the number */
@@ -296,7 +296,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
   .gget{display:block;margin:2.25rem 0 0}
   .gmore ul{grid-template-columns:repeat(2,minmax(0,1fr))}
   .gmore .end{display:block;margin-top:2rem}
-  .gtoc-m{display:block;margin:0 0 2.5rem;padding-top:1rem;border-top:2px solid transparent;border-image:var(--t-top) 1}
+  .gtoc-m{display:block;margin:0 0 2.5rem;padding-top:1rem;border-top:2px solid var(--t-accent)}
   .gtoc-m p{margin:0 0 .3rem;font:500 .86rem/1.4 var(--sans);color:var(--ink3)}
   .gtoc-m ol{list-style:none;margin:0;padding:0;counter-reset:t;border-bottom:1px solid var(--line)}
   .gtoc-m li{counter-increment:t;margin:0}
@@ -384,7 +384,7 @@ export const pages = [
 <tr><th scope="row"><a href="https://github.com/Jyben/cs2-mm-server-picker">CS2 MM Server Picker</a>, by Jyben</th><td>Windows and Linux</td><td>3 Oct 2024</td><td>Source on GitHub, with builds for Windows and Linux.</td></tr>
 </tbody></table></div><p>If all you want is to pick regions, or you play on Linux, Server Picker X is a good choice. Pickroute makes sense when you also want what comes with it: a block that only touches cs2.exe, the ping of each region before you choose, and the rest of the app (the Steam account switcher, the config manager, and your phone's IP on community servers).</p>`],
       ['Do it by hand, without the app', `<p>You can build the same block yourself with Windows Firewall:</p><ol><li>Open Valve's relay list for CS2: <code>https://api.steampowered.com/ISteamApps/GetSDRConfig/v1/?appid=730</code>. Each site (a "pop", like <code>fra</code> for Frankfurt) lists the IPs of its relays.</li><li>Open Windows Defender Firewall with Advanced Security and add an Outbound rule: Program, the path to <code>cs2.exe</code> (in <code>steamapps\\common\\Counter-Strike Global Offensive\\game\\bin\\win64</code>), Block the connection.</li><li>In the rule's Scope, add the relay IPs of every region you don't want as remote IP addresses.</li></ol><p>It works, but it's dozens of IPs, some cities have more than one pop (Stockholm has two; Frankfurt, Vienna and London also have a partner's relays), and Valve changes the list from time to time, so a rule made by hand goes out of date. You also don't see the ping of each region. The app reads the list, groups the pops by city, shows the ping and rebuilds the rule when Valve changes it.</p>`],
-      ['Things to know', `<ul><li>Changes apply at once, and CS2 measures the regions again on its next start. Don't change them during a match.</li><li>Blocking too much means long queues or no match at all, and Premier can take longer. Leave a few regions on; the app won't let you turn them all off.</li><li>CS2's Max Acceptable Matchmaking Ping still counts. If it's lower than the ping of your slowest region left on, CS2 never uses that region, and the page tells you which number to set.</li><li>Windows Firewall has to be on. If it's off, the page says the rule is in place but not enforced until the Firewall is back on.</li><li>It works with or without the phone. Regions don't depend on protection: they stay off until you click Allow all (block off).</li></ul>`],
+      ['Things to know', `<ul><li>Changes apply at once, and CS2 measures the regions again on its next start. Don't change them during a match.</li><li>Blocking too much means long queues or no match at all, and Premier can take longer. Leave a few regions on; the app won't let you turn them all off.</li><li>CS2's Max Acceptable Matchmaking Ping still counts. If it's lower than the ping of your slowest region left on, CS2 never uses that region, and the page tells you which number to set.</li><li>Windows Firewall has to be on. If it's off, the page says the rule is in place but not enforced until the Firewall is back on.</li><li>It works with or without the phone. Regions don't depend on protection: they stay off until you click Allow all (block off).</li><li>Still landing in a region you turned off? <a href="../cs2-server-picker-not-working/">What to check when a server picker doesn't work</a>. The same page works for <a href="../dota-2-deadlock-region-picker/">Dota 2 and Deadlock</a>.</li></ul>`],
     ],
     // A how-to, as steps on the page and as HowTo in the JSON-LD. It goes after the first section.
     // id: the anchor stays the one the page always had, so old links to it still land. A step's third item is its text on
@@ -403,7 +403,6 @@ export const pages = [
       ['How do I force CS2 to only put me in EU servers?', 'Open the Regions page and click your continent\'s shortcut (Europe only in Europe), or Only this region on one region. Every other region is blocked for cs2.exe, so matchmaking can only find you a match where you left regions on. Max Acceptable Matchmaking Ping in CS2\'s settings only limits the ping; it doesn\'t pick a region.'],
       ['Is there a region lock in CS2?', 'Not one you can set in the game. To lock yourself to one region, click Only this region on it: every other region stays blocked for cs2.exe until you click Allow all (block off).'],
       ['Does it work for Premier?', 'Yes. Premier, Competitive, Casual, Deathmatch and Wingman all pick a server by ping to Valve\'s relays, so they all follow the regions you left on. With few regions on, Premier can take longer to find a match.'],
-      ['My server picker doesn\'t block anything. Why?', 'Most of the time Windows Firewall is off, or another firewall has taken over (some antivirus suites do), so block rules do nothing. The Regions page checks Windows Firewall and tells you when the rule isn\'t enforced. Also start CS2 again after a change: it measures the regions when it starts.'],
       ['Can I choose which players I meet?', 'No. It picks the regions your matches are played in, not the players. Players from anywhere can queue into a region they can reach.'],
       ['Do I need the phone for Regions?', 'No. Regions works with or without the phone and doesn\'t depend on protection. The ping is measured through the phone while protection is on, and through your home connection when it\'s off.'],
       // the words people search with (Search Console, Nov. 2026: "is cs2 server picker safe", "is cs2 server picker bannable")
@@ -716,6 +715,69 @@ export const pages = [
       ['Why does my antivirus complain?', 'The exe is not code-signed and it changes firewall rules and runs ADB, which some antivirus engines flag on heuristics alone. Check the attestation and SHA-256 above; if a detection looks wrong, open an issue.'],
     ],
   },
+  {
+    // 26 Nov. 2026: a page for "cs2 server picker not working" (the people who already tried a picker). What the app does comes
+    // from its own texts (src/Views, the Regions page's warnings and tooltips) and docs/FEATURES.md; nothing here says Valve
+    // routes a match a certain way beyond what the app itself tells its users.
+    slug: 'cs2-server-picker-not-working',
+    title: 'CS2 server picker not working? What to check, in order',
+    desc: 'CS2 server picker not working and you still land in blocked regions, or never find a match? Check Windows Firewall, restart CS2, set the max ping.',
+    nav: 'Server picker not working',
+    blurb: 'What to check when blocked regions still show up.',
+    eyebrow: 'CS2 server picker not working',
+    h1: 'CS2 server picker not working? What to check, in order',
+    lead: "Every CS2 server picker blocks Valve's relays in the regions you don't want with Windows Firewall rules. When you still land in a region you blocked, or the queue never finds a match, something is in the way of those rules. Go through this page in order: the first three checks fix most cases.",
+    crop: ['regions', 640, 160, 600, 545, 'The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for cs2.exe'],
+    related: ['cs2-region-picker', 'cs2-ping-test', 'is-it-safe'],
+    sections: [
+      ['Check these three first', `<ol><li><b>Windows Firewall is on.</b> Block rules only count while Windows Firewall is on for the network you are on (Windows calls it a profile: Domain, Private or Public). Open Windows Security &gt; Firewall &amp; network protection: the profile marked active has to say the firewall is on. Some antivirus suites turn it off and use a firewall of their own; then Windows' rules do nothing. The Regions page of Pickroute reads the firewall's state and says "Windows Firewall is off" when the block is in place but not enforced.</li><li><b>CS2 started after the change.</b> CS2 measures the regions when it starts, so a CS2 that was already open keeps the ones it measured. Close it completely and start it again, between matches.</li><li><b>Max Acceptable Matchmaking Ping.</b> In CS2, Settings &gt; Game. If it is lower than the ping of the slowest region you left on, CS2 never uses that region, and with few regions left that can mean no match at all. The Regions page tells you the number to set: "Your slowest allowed region is ... In CS2, open Settings &gt; Game and set Max Acceptable Matchmaking Ping to ... or more."</li></ol>`],
+      ['Still in a region you blocked?', `<ul><li><b>The rule is for the wrong exe.</b> A firewall rule covers one program path. If CS2 is in another Steam library or moved to another drive, a rule made for the old path blocks nothing. Pickroute looks for the game's exe in your Steam libraries and makes the rule for the one it finds.</li><li><b>The relay list is old.</b> Valve adds and changes relays. A rule typed in by hand, or a picker that doesn't read the list again, misses the new ones, and the game reaches the region through them. While regions are off, Pickroute reads Valve's list again every hour and rebuilds the rule when it changes.</li><li><b>Something removed the rule.</b> Another tool, a firewall reset or a Windows update can take rules out. Pickroute checks its rule every 30 seconds and puts it back.</li><li><b>A match through a relay you allow.</b> Valve can still send a match to a blocked region through a relay you left on, because then the game never talks to the blocked relays at all. No server picker can stop that one. The app says so under the list.</li></ul>`],
+      ['No match, or very long queues', `<ul><li><b>Too few regions left on.</b> Fewer regions means fewer players to match with, and Premier can take longer. Turn a few more on, or use Closest 3 or Ping under X ms instead of Only this region. Pickroute won't let you turn them all off.</li><li><b>Rules from another picker.</b> Two server pickers at once each keep their own rules, and turning regions on in one doesn't remove what the other blocks. Use one. To see what is there, open <code>wf.msc</code> &gt; Outbound Rules and sort by name: Pickroute's rules start with "Pickroute -", and Allow all (block off) on the Regions page, or <code>CS2IPChanger.exe --restore</code>, removes them.</li><li><b>Max Acceptable Matchmaking Ping too low.</b> See the first section: it caps every region, the ones you left on too.</li></ul>`],
+      ['Check the block yourself', `<ol><li>On the Regions page, under the list: how many regions CS2 can play in, and "Block is on. Only CS2 is affected."</li><li>In <code>wf.msc</code> &gt; Outbound Rules: the rule "Pickroute - CS2 regions turned off" is enabled, its action is Block, its program is the <code>cs2.exe</code> you play with, and its scope lists remote IPs.</li><li>Start CS2 and queue. On the scoreboard (the Tab key) the Ping column shows your ping to the server you got, which should match a region you left on.</li></ol><p>The same checks work for Dota 2 and Deadlock, each with its own rule (<a href="../dota-2-deadlock-region-picker/">Dota 2 and Deadlock region picker</a>).</p>`],
+    ],
+    faq: [
+      ['Why does my CS2 server picker not block anything?', "Most of the time Windows Firewall is off, or another firewall has taken over (some antivirus suites do), so block rules do nothing. Also start CS2 again after a change: it measures the regions when it starts. The Regions page of Pickroute checks Windows Firewall and tells you when the rule isn't enforced."],
+      ['Why do I still get matches in a region I blocked?', "Either the game can still reach that region's relays (the firewall is off, the rule is for another cs2.exe, or the relay list is old), or Valve sent the match there through a relay you allowed. A server picker can only fix the first kind."],
+      ['Do I have to restart CS2 after changing regions?', 'Yes. CS2 measures the regions when it starts, so close it and start it again, between matches, after every change.'],
+      ['Why can\'t I find a match after blocking regions?', "Too few regions are left on, or CS2's Max Acceptable Matchmaking Ping is lower than the ping of the regions you left on. Turn more regions on, or raise the max ping in Settings > Game to the number the Regions page shows."],
+      ['How do I remove every server picker rule?', "In Pickroute, click Allow all (block off) on the Regions page, or run CS2IPChanger.exe --restore. Rules from other pickers have their own names: open wf.msc > Outbound Rules and look for rules that block cs2.exe."],
+    ],
+  },
+  {
+    // 26 Nov. 2026: Dota 2 and Deadlock on the Regions page (the Game box, since the Codex merge 51e6550). The counts are
+    // Valve's relay lists for app 570 and app 1422450 as saved in tests/ on 19 Nov. 2026; the rest from src/Core/Network/RegionGames.cs
+    // and the page's own texts ("Apply when {0} starts", the rule's name, the tooltips).
+    slug: 'dota-2-deadlock-region-picker',
+    title: 'Dota 2 and Deadlock region picker (server picker), free',
+    desc: 'Free region picker for Dota 2 and Deadlock on Windows: block the matchmaking regions you don\'t want, see the ping of each one and keep presets.',
+    nav: 'Dota 2 and Deadlock regions',
+    blurb: 'The same region picker for Dota 2 and Deadlock.',
+    eyebrow: 'Dota 2 and Deadlock server picker',
+    h1: 'Dota 2 and Deadlock region picker: choose where you play',
+    lead: "Dota 2 and Deadlock find matches over Valve's relays (Steam Datagram Relay), like CS2. The Regions page of Pickroute has a Game box: pick Dota 2 or Deadlock and you get that game's own regions, with the ping of each one, and the ones you turn off are blocked for that game only.",
+    crop: ['regions', 640, 160, 600, 545, 'The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for the game'],
+    related: ['cs2-region-picker', 'cs2-server-picker-not-working', 'cs2-ping-test'],
+    sections: [
+      ['How it works for each game', `<ul><li><b>Each game's own list.</b> The regions come from Valve's relay list for that game (<code>GetSDRConfig</code>, app 570 for Dota 2 and app 1422450 for Deadlock), grouped by city and continent. On 19 Nov 2026 the list had 30 regions for Dota 2 and 29 for Deadlock.</li><li><b>One rule per game, for its exe only.</b> Dota 2's turned-off regions are blocked for <code>dota2.exe</code> and Deadlock's for <code>deadlock.exe</code>, on Valve's relay IPs only, with the rules "Pickroute - Dota 2 regions turned off" and "Pickroute - Deadlock regions turned off". Steam, your friends list and your other games are not touched.</li><li><b>Separate from CS2.</b> Each game keeps its own regions, ping limit and presets. Turning regions off for Dota 2 changes nothing in CS2 or Deadlock.</li><li><b>Found where it is installed.</b> The app looks for the game in your Steam libraries.</li></ul>`],
+      ['Things to know', `<ul><li>Change regions between matches. If the game keeps using the previous regions, restart it.</li><li>Leaving too few regions on can make the queue longer.</li><li>Only the game's access to Valve's relays changes. Valve can still send a match to a blocked region through a relay you allow.</li><li>Windows Firewall has to be on. If it's off, the block is in place but not enforced (<a href="../cs2-server-picker-not-working/">what to check when a server picker doesn't work</a>).</li><li>It works with or without the phone, like the CS2 regions.</li></ul>`],
+    ],
+    howto: { h: 'How to pick your Dota 2 or Deadlock regions, step by step', id: 'pick-your-regions-step-by-step', steps: [
+      ['Get the app', 'Download CS2IPChanger.exe and run it. It asks for admin, because firewall rules are a system setting. You don\'t need the phone for Regions.',
+        'Download CS2IPChanger.exe and run it. It asks for admin, because firewall rules are a system setting (<a href="../is-it-safe/">what it changes on your PC</a>). You don\'t need the phone for Regions.'],
+      ['Pick the game', 'Open Regions and choose Dota 2 or Deadlock in the Game box. The page shows that game\'s regions.'],
+      ['Measure the ping', 'Press Refresh: the app reads Valve\'s relay list for the game again and measures the ping to every region.'],
+      ['Turn off the regions you don\'t want', 'Untick them one by one, or use a shortcut: Only this region, Closest 3, your continent only or Ping under X ms. Keep at least one region on.'],
+      ['Save it as a preset', 'A preset keeps the selection under a name, and Apply when the game starts puts it back each time you launch the game.'],
+      ['Undo it', 'Click Allow all (block off) with the game picked. CS2IPChanger.exe --restore removes every rule the app made.'],
+    ] },
+    faq: [
+      ['Is there a region picker for Dota 2?', 'Yes. The Regions page of Pickroute has Dota 2 in its Game box: it lists Dota 2\'s matchmaking regions with their ping and blocks the ones you turn off for dota2.exe only. It is free, for Windows 10 and 11.'],
+      ['Is there a server picker for Deadlock?', 'Yes. Pick Deadlock in the Game box of the Regions page: Deadlock\'s regions are listed with their ping, and the ones you turn off are blocked for deadlock.exe only.'],
+      ['Does blocking Dota 2 regions change CS2?', 'No. Each game has its own rule and its own regions. CS2, Dota 2 and Deadlock can each have different regions off at the same time.'],
+      ['Can it get me banned in Dota 2 or Deadlock?', 'It doesn\'t touch the game, its files or its memory: it adds one outbound Windows Firewall rule for the game\'s exe. We can\'t speak for Valve and can\'t promise anything about how they treat it.'],
+      ['Do I need the phone for this?', 'No. Regions works with or without the phone, for all three games.'],
+    ],
+  },
 ];
 
 const bySlug = Object.fromEntries(pages.map((p) => [p.slug, p]));
@@ -739,6 +801,8 @@ const SIG = {
   'cs2-ping-test': ['38 ms', 'Ping to the closest region', 'Example', 'From the Regions page of the app. Example values only.'],
   'cs2-config-file-location': ['4', 'Config files CS2 keeps per account', 'The ones the app copies', 'From the Configs page of the app.'],
   'steam-profile-editor': ['6/8', 'Accounts picked for one template', 'Example', 'From the Profiles page of the app, with example names.'],
+  'cs2-server-picker-not-working': ['8/30', 'Regions CS2 can play in', 'Example', 'From the Regions page of the app, with the block on.'],
+  'dota-2-deadlock-region-picker': ['3', 'Games on the Regions page', 'CS2, Dota 2, Deadlock', 'Each game with its own regions and its own rule.'],
 };
 
 // Each guide's piece of proposal A's world (site/assets/guides/src/world.js): the scene, what it shows in words (on screen
@@ -756,6 +820,8 @@ const WORLD = {
   'cs2-ping-test': ['regions', "Example: each region with its ping; the far ones go dark when you turn them off.", 'Play it again'],
   'cs2-config-file-location': ['configs', "Example: binds, crosshair, settings, video and HUD go to another account, with a backup of each change.", 'Play it again'],
   'steam-profile-editor': ['profiles', "Example: one template goes onto the accounts you pick, one after another, after a preview.", 'Play it again'],
+  'cs2-server-picker-not-working': ['regions', "Example: the regions you turn off go dark, blocked for cs2.exe only; CS2 matches in the ones left on.", 'Play it again'],
+  'dota-2-deadlock-region-picker': ['regions', "Example: the regions you turn off go dark, blocked for the game's exe only; it matches in the ones left on.", 'Play it again'],
 };
 
 // The caption under the app's own screen in the text: which page of the app it is, and that it is the real one.
@@ -842,7 +908,10 @@ function render(p, modified) {
    as they come in (__ldGet), then the world's own steps (worldprogress). It gives up only when nothing has moved for 12 s (a
    stalled network), after 45 s, when the world fails (no-gl), and it never shows without WebGL; then the poster stays until the
    world comes. While it shows, the wheel, touch and the scroll keys wait, so nothing moves under it. Reduced motion: it does not
-   hold the page (input passes, at most 1.2 s) and the still world takes the poster's place without a fade */
+   hold the page (input passes, at most 1.2 s) and the still world takes the poster's place without a fade.
+   26 Nov.: the screen is only for the home on a PC. On a touch screen, and on every guide and the 404, there is no screen
+   (ldp): the page shows at once over the poster, input is free, the same line fills at the very top, and the live scene
+   fades in over the poster when it is ready (on a phone the screen held the page 4 to 9 s) */
 (function(h){var w=window,d=document;
 /* the 3D script, read as its bytes come in so the line can follow them (size: its length in bytes, checked by tools/site.test.mjs),
    then run from those bytes. A browser without streams, a failed read or a blocked blob: a plain <script> */
@@ -851,12 +920,12 @@ if(!(w.fetch&&w.ReadableStream&&w.Blob&&w.URL&&URL.createObjectURL))return go(sr
 fetch(src).then(function(r){if(!r.ok||!r.body)throw r.status;var rd=r.body.getReader(),bits=[],n=0,pump=function(){return rd.read().then(function(x){if(x.done)return;bits.push(x.value);n+=x.value.length;w.__ldStep&&__ldStep(.15+.32*Math.min(1,n/size));return pump()})};
 return pump().then(function(){go(URL.createObjectURL(new Blob(bits,{type:'text/javascript'})),1)})}).catch(function(){go(src)})};
 try{var c=d.createElement('canvas');if(!(c.getContext('webgl2')||c.getContext('webgl')))return}catch(x){return}
-h.classList.add('ld','ldu');var rm=matchMedia('(prefers-reduced-motion: reduce)').matches&&(function(){try{return localStorage.getItem('cs2-fx')!=='on'}catch(x){return true}})(),t0=performance.now(),seen=t0,p=0,done=false,K={32:1,33:1,34:1,35:1,36:1,37:1,38:1,39:1,40:1},O={capture:true,passive:false},EV=rm?[]:['wheel','touchmove','keydown'],
+var q=location.pathname.replace(/index[.]html$/,'').split('/').filter(Boolean),lt=matchMedia('(pointer:coarse)').matches||!(q.length===1||q.length===2&&/^(pt-br|es|ru|tr)$/.test(q[1]));h.classList.add(lt?'ldp':'ld','ldu');var rm=matchMedia('(prefers-reduced-motion: reduce)').matches&&(function(){try{return localStorage.getItem('cs2-fx')!=='on'}catch(x){return true}})(),t0=performance.now(),seen=t0,p=0,done=false,K={32:1,33:1,34:1,35:1,36:1,37:1,38:1,39:1,40:1},O={capture:true,passive:false},EV=rm||lt?[]:['wheel','touchmove','keydown'],
 hold=function(e){if(e.type!=='keydown'||K[e.keyCode]){e.preventDefault();e.stopImmediatePropagation()}},
 set=function(v){if(v>p){p=v;seen=performance.now();var e=d.querySelector('.ld-bar b');if(e)e.style.transform='scaleX('+v+')'}},
 dog=setInterval(function(){var n=performance.now();if(d.hidden){seen=n;return}if(n-seen>12e3||n-t0>45e3)end()},500),
-end=function(e){if(done)return;done=true;clearInterval(dog);if(e&&e.type==='worldready')h.classList.add('ldw');set(1);EV.forEach(function(t){removeEventListener(t,hold,O)});
-setTimeout(function(){h.classList.add('ld-out');setTimeout(function(){h.classList.remove('ld','ld-out')},400)},Math.max(90,300-(performance.now()-t0)))};
+end=function(e){if(done)return;done=true;clearInterval(dog);if(e&&e.type==='worldready'&&!lt)h.classList.add('ldw');set(1);EV.forEach(function(t){removeEventListener(t,hold,O)});
+setTimeout(function(){h.classList.add('ld-out');setTimeout(function(){h.classList.remove('ld','ldp','ld-out')},400)},Math.max(90,300-(performance.now()-t0)))};
 EV.forEach(function(t){addEventListener(t,hold,O)});
 w.__ldStep=set;w.__ldEnd=end;set(.08);
 d.addEventListener('worldready',end,true);if(rm)setTimeout(end,1200);

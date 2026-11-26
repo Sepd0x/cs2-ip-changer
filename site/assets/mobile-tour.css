@@ -26,7 +26,7 @@
   .mobile-tour .cut-in{position:absolute;width:1240px;height:800px;container-type:inline-size;left:clamp(calc(100% - 1240px),calc(50% - var(--cx)),0px);top:clamp(calc(100% - 800px),calc(50% - var(--cy)),0px)}
   .mobile-tour .cut-in picture,.mobile-tour .cut-in img{display:block;width:1240px;height:800px;max-width:none}
   .mobile-tour .cut-in .patch{visibility:visible}
-  .mobile-tour .cut-in .cring{position:absolute;left:calc(var(--cx) - var(--mw)/2 - 3px);top:calc(var(--cy) - var(--mh)/2 - 3px);width:calc(var(--mw) + 6px);height:calc(var(--mh) + 6px);border-radius:6px;box-shadow:0 0 0 1.5px var(--t-accent),0 0 18px rgba(var(--t-accent-rgb),.25)}
+  .mobile-tour .cut-in .cring{position:absolute;left:calc(var(--cx) - var(--mw)/2 - 3px);top:calc(var(--cy) - var(--mh)/2 - 3px);width:calc(var(--mw) + 6px);height:calc(var(--mh) + 6px);border-radius:6px;box-shadow:0 0 0 1.5px var(--t-accent)}
   .tour-detail figcaption{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;min-height:58px;border-top:1px solid var(--line);gap:.25rem}
   .tour-detail button{min-width:44px;min-height:44px;border:0;background:transparent;color:var(--t-accent-light);font:1.2rem var(--sans);cursor:pointer}
   .tour-caption{padding-block:.35rem;font:.8rem/1.4 var(--sans);color:var(--ink2);text-align:center}

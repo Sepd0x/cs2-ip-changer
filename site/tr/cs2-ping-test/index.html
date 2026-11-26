@@ -34,7 +34,10 @@
    as they come in (__ldGet), then the world's own steps (worldprogress). It gives up only when nothing has moved for 12 s (a
    stalled network), after 45 s, when the world fails (no-gl), and it never shows without WebGL; then the poster stays until the
    world comes. While it shows, the wheel, touch and the scroll keys wait, so nothing moves under it. Reduced motion: it does not
-   hold the page (input passes, at most 1.2 s) and the still world takes the poster's place without a fade */
+   hold the page (input passes, at most 1.2 s) and the still world takes the poster's place without a fade.
+   26 Nov.: the screen is only for the home on a PC. On a touch screen, and on every guide and the 404, there is no screen
+   (ldp): the page shows at once over the poster, input is free, the same line fills at the very top, and the live scene
+   fades in over the poster when it is ready (on a phone the screen held the page 4 to 9 s) */
 (function(h){var w=window,d=document;
 /* the 3D script, read as its bytes come in so the line can follow them (size: its length in bytes, checked by tools/site.test.mjs),
    then run from those bytes. A browser without streams, a failed read or a blocked blob: a plain <script> */
@@ -43,12 +46,12 @@ if(!(w.fetch&&w.ReadableStream&&w.Blob&&w.URL&&URL.createObjectURL))return go(sr
 fetch(src).then(function(r){if(!r.ok||!r.body)throw r.status;var rd=r.body.getReader(),bits=[],n=0,pump=function(){return rd.read().then(function(x){if(x.done)return;bits.push(x.value);n+=x.value.length;w.__ldStep&&__ldStep(.15+.32*Math.min(1,n/size));return pump()})};
 return pump().then(function(){go(URL.createObjectURL(new Blob(bits,{type:'text/javascript'})),1)})}).catch(function(){go(src)})};
 try{var c=d.createElement('canvas');if(!(c.getContext('webgl2')||c.getContext('webgl')))return}catch(x){return}
-h.classList.add('ld','ldu');var rm=matchMedia('(prefers-reduced-motion: reduce)').matches&&(function(){try{return localStorage.getItem('cs2-fx')!=='on'}catch(x){return true}})(),t0=performance.now(),seen=t0,p=0,done=false,K={32:1,33:1,34:1,35:1,36:1,37:1,38:1,39:1,40:1},O={capture:true,passive:false},EV=rm?[]:['wheel','touchmove','keydown'],
+var q=location.pathname.replace(/index[.]html$/,'').split('/').filter(Boolean),lt=matchMedia('(pointer:coarse)').matches||!(q.length===1||q.length===2&&/^(pt-br|es|ru|tr)$/.test(q[1]));h.classList.add(lt?'ldp':'ld','ldu');var rm=matchMedia('(prefers-reduced-motion: reduce)').matches&&(function(){try{return localStorage.getItem('cs2-fx')!=='on'}catch(x){return true}})(),t0=performance.now(),seen=t0,p=0,done=false,K={32:1,33:1,34:1,35:1,36:1,37:1,38:1,39:1,40:1},O={capture:true,passive:false},EV=rm||lt?[]:['wheel','touchmove','keydown'],
 hold=function(e){if(e.type!=='keydown'||K[e.keyCode]){e.preventDefault();e.stopImmediatePropagation()}},
 set=function(v){if(v>p){p=v;seen=performance.now();var e=d.querySelector('.ld-bar b');if(e)e.style.transform='scaleX('+v+')'}},
 dog=setInterval(function(){var n=performance.now();if(d.hidden){seen=n;return}if(n-seen>12e3||n-t0>45e3)end()},500),
-end=function(e){if(done)return;done=true;clearInterval(dog);if(e&&e.type==='worldready')h.classList.add('ldw');set(1);EV.forEach(function(t){removeEventListener(t,hold,O)});
-setTimeout(function(){h.classList.add('ld-out');setTimeout(function(){h.classList.remove('ld','ld-out')},400)},Math.max(90,300-(performance.now()-t0)))};
+end=function(e){if(done)return;done=true;clearInterval(dog);if(e&&e.type==='worldready'&&!lt)h.classList.add('ldw');set(1);EV.forEach(function(t){removeEventListener(t,hold,O)});
+setTimeout(function(){h.classList.add('ld-out');setTimeout(function(){h.classList.remove('ld','ldp','ld-out')},400)},Math.max(90,300-(performance.now()-t0)))};
 EV.forEach(function(t){addEventListener(t,hold,O)});
 w.__ldStep=set;w.__ldEnd=end;set(.08);
 d.addEventListener('worldready',end,true);if(rm)setTimeout(end,1200);
@@ -207,6 +210,12 @@ p,li,dd{text-wrap:pretty}
 .ld-scr{display:none}
 html.ld .ld-scr{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:var(--t-bg);transition:opacity .38s cubic-bezier(.22,1,.36,1),visibility 0s .38s}
 html.ld-out .ld-scr{opacity:0;visibility:hidden}
+html.ldp .ld-scr{position:fixed;inset:0 0 auto;height:3px;z-index:100;display:block;pointer-events:none;transition:opacity .5s cubic-bezier(.22,1,.36,1),visibility 0s .5s}
+html.ldp .ld-scr::before,html.ldp .ld-name{display:none}
+html.ldp .ld-in{display:block;height:100%}
+html.ldp .ld-bar{width:100%;height:100%;border-radius:0;background:var(--t-line)}
+html.ldp .ld-bar i{animation-name:ld-glint-w;animation-duration:1.6s}
+@keyframes ld-glint-w{from{transform:translateX(-3rem)}to{transform:translateX(100vw)}}
 .ld-scr::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:var(--t-top)}
 .ld-in{display:grid;justify-items:center;gap:1.15rem}
 .ld-name{display:flex;align-items:center;gap:10px;font:600 1rem/1 "Funnel Display","Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;letter-spacing:-.01em;color:var(--t-text)}
@@ -245,7 +254,7 @@ main>*,footer{position:relative;z-index:1}
 @media (hover:hover){.top nav a:not(.btn):hover{color:var(--ink)}}
 .top nav a,.top nav .btn{white-space:nowrap}
 /* buttons: the app's accent with dark text (7.6:1), a hairline ghost, and a spring on press */
-.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;background:var(--t-accent);color:var(--t-bg);font:600 1rem/1.2 var(--sans);padding:.85rem 1.4rem;border:0;border-radius:999px;text-decoration:none;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 0 1px rgba(var(--t-accent-rgb),.5);transition:background-color .2s,box-shadow .25s,transform .5s var(--ease-spring)}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;background:var(--t-accent);color:var(--t-bg);font:600 1rem/1.2 var(--sans);padding:.85rem 1.4rem;border:0;border-radius:999px;text-decoration:none;cursor:pointer;box-shadow:0 0 0 1px rgba(var(--t-accent-rgb),.5);transition:background-color .2s,box-shadow .25s,transform .5s var(--ease-spring)}
 @media (hover:hover){.btn:hover{background:var(--t-accent-light)}}
 .btn:active{transform:scale(.96);transition-duration:.06s}
 .btn svg{width:1.125em;height:1.125em;flex:none}
@@ -308,7 +317,7 @@ h3{font:500 1.12rem/1.35 var(--disp);letter-spacing:-.01em;margin:0 0 .35rem}
 .digits .ch.hot .g:last-child{color:var(--t-accent-light)}
 .digits .g:last-child{transition:color .9s var(--ease-out)}
 .ro-rule{position:relative;height:1.4rem;margin-top:.9rem;border-top:1px solid var(--line2);background:repeating-linear-gradient(90deg,var(--line2) 0 1px,transparent 1px calc(100%/60)) 0 0/100% 6px no-repeat,repeating-linear-gradient(90deg,var(--ink3) 0 1px,transparent 1px calc(100%/12)) 0 0/100% 12px no-repeat}
-.ro-rule::after{content:"";position:absolute;left:0;right:0;top:-1px;height:2px;background:var(--t-top);transform-origin:0 50%;transform:scaleX(var(--fill,1));transition:transform .9s var(--ease-out)}
+.ro-rule::after{content:"";position:absolute;left:0;right:0;top:-1px;height:2px;background:var(--t-accent);transform-origin:0 50%;transform:scaleX(var(--fill,1));transition:transform .9s var(--ease-out)}
 .ro-foot{margin-top:.25rem}
 .ro canvas.dust{position:absolute;left:-4%;top:-60%;width:108%;height:220%;pointer-events:none;z-index:2}
 /* the phone, drawn as the app's own status: bars, Mobile data, USB tethering */
@@ -352,7 +361,7 @@ details{position:relative;border-top:1px solid var(--line);counter-increment:q}
 .faq details::before{content:counter(q,decimal-leading-zero) / "";position:absolute;left:0;top:1.75rem;font:400 .8rem/1 var(--mono);color:var(--ink3)}
 .faq summary{padding-left:3.5rem}.faq details p{padding-left:3.5rem}
 .faq .qs{counter-reset:q}
-.faq details[open] summary{background:linear-gradient(90deg in oklch,var(--t-top1),var(--t-top2) 50%,var(--t-top3)) 3.5rem 100%/calc(100% - 3.5rem) 1px no-repeat}
+.faq details[open] summary{background:linear-gradient(var(--t-accent),var(--t-accent)) 3.5rem 100%/calc(100% - 3.5rem) 1px no-repeat}
 details:last-of-type{border-bottom:1px solid var(--line)}
 details::details-content{block-size:0;overflow:hidden;transition:block-size .5s var(--ease-out),content-visibility .5s allow-discrete}
 details[open]::details-content{block-size:auto}
@@ -371,7 +380,7 @@ th,td{text-align:left;padding:1rem 1.25rem 1rem 0;border-bottom:1px solid var(--
 thead th,thead td{font:500 .85rem/1.4 var(--sans);color:var(--ink3);padding-bottom:.85rem}
 tbody th{font-weight:500;color:var(--ink)}
 td{color:var(--ink2)}
-.us{padding-left:1.25rem;background:linear-gradient(90deg,rgba(var(--t-accent-rgb),.075),transparent 90%)}
+.us{padding-left:1.25rem;background:rgba(var(--t-accent-rgb),.06)}
 td.us{color:var(--ink)}
 thead .us{color:var(--accent);box-shadow:inset 0 2px 0 var(--accent)}
 /* footer: columns, then the name in outline the width of the screen, lit by the app's top line */
@@ -393,16 +402,16 @@ footer a{color:var(--ink3);text-decoration:none;transition:color .15s;display:in
 .wordmark svg{display:block;width:100%;height:auto;overflow:visible;font:600 200px/1 var(--disp);letter-spacing:-4px}
 .wordmark use{fill:none;vector-effect:non-scaling-stroke}
 .wm-base{stroke:rgba(255,255,255,.1);stroke-width:1px}
-.wm-line{stroke:url(#wm-c);stroke-width:1.5px}
-.wm-glow{stroke:url(#wm-c);stroke-width:5px;opacity:.85}
+.wm-line{stroke:var(--t-accent);stroke-width:1.5px}
+.wm-glow{display:none}
 .wm-drawn{transform:translateX(calc(var(--wmp,1) * 1840px))}
-.wm-hz{stroke:url(#wm-c);stroke-width:1px;opacity:.55;vector-effect:non-scaling-stroke}
-.wm-hz-glow{stroke:url(#wm-c);stroke-width:6;opacity:.35}
-.wm-pk{stroke:url(#wm-c);stroke-width:2.5;stroke-linecap:round;stroke-dasharray:0 1420;opacity:0}
+.wm-hz{stroke:var(--t-accent);stroke-width:1px;opacity:.55;vector-effect:non-scaling-stroke}
+.wm-hz-glow{display:none}
+.wm-pk{stroke:var(--t-accent);stroke-width:2.5;stroke-linecap:round;stroke-dasharray:0 1420;opacity:0}
 .wm-pk-glow{stroke-width:9}
 .fx .wm-run .wm-pass{animation:wm-pass 7s cubic-bezier(.45,0,.25,1) infinite 1.2s}
 .fx .wm-run .wm-pk{opacity:1;stroke-dasharray:3 61 2 127 4 233 2 97 3 181 2 149;animation:wm-pk 6s linear infinite}
-.fx .wm-run .wm-pk-glow{opacity:.9}
+.fx .wm-run .wm-pk-glow{opacity:0}
 .fx .wm-hold .wm-pass,.fx .wm-hold .wm-pk,.fx .wordmark:not(.wm-vis) .wm-pass,.fx .wordmark:not(.wm-vis) .wm-pk{animation-play-state:paused}
 @keyframes wm-pass{from{transform:translateX(0)}62%,to{transform:translateX(2260px)}}
 @keyframes wm-pk{to{stroke-dashoffset:-864}}
@@ -534,7 +543,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 .gl>*{grid-column:1;min-width:0}
 .rail{grid-column:2;grid-row:1/span 4;align-self:stretch}
 .rail-in{position:sticky;top:5.5rem;display:flex;flex-direction:column;gap:2.25rem}
-.gcard{position:relative;padding:1.2rem 0 1.1rem;border-top:2px solid transparent;border-image:var(--t-top) 1;border-bottom:1px solid var(--line)}
+.gcard{position:relative;padding:1.2rem 0 1.1rem;border-top:2px solid var(--t-accent);border-bottom:1px solid var(--line)}
 .rail .btn,.gget .btn{width:100%}
 .rail .copyrow .btn,.gget .copyrow .btn,.gmore .end .copyrow .btn{width:auto}
 .gcard .checks{margin-top:1.1rem;font-size:.86rem;gap:.35rem 1rem;padding:0}
@@ -556,13 +565,13 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
    grow with the type on big screens: the footer is two columns to 900 px (taller from 760, where the brand gets a row) and four after. With the old guesses
    (1250 px for the footer from 760 to 999 px, 120 for the last line everywhere) the page got shorter as the end came on
    screen, and on a tablet held upright or a phone in Desktop site the name at the end jumped */
-.gtext{content-visibility:auto;contain-intrinsic-size:auto 3400px}.gfaq{content-visibility:auto;contain-intrinsic-size:auto 19rem}.gmore{content-visibility:auto;contain-intrinsic-size:auto 45rem}footer .fgrid{content-visibility:auto;contain-intrinsic-size:auto 48rem}
-@media (min-width:600px){.gmore{contain-intrinsic-size:auto 34.5rem}}@media (min-width:760px){.gmore{contain-intrinsic-size:auto 31rem}footer .fgrid{contain-intrinsic-size:auto 63.8rem}}@media (min-width:901px){.gmore{contain-intrinsic-size:auto 19.5rem}footer .fgrid{contain-intrinsic-size:auto 32.7rem}}@media (min-width:1000px){.gtext{contain-intrinsic-size:auto 2100px}.gmore{contain-intrinsic-size:auto 20rem}}.gshot{content-visibility:auto;contain-intrinsic-size:auto 400px}.gtoc-m{content-visibility:auto;contain-intrinsic-size:auto 260px}footer .legal{content-visibility:auto;contain-intrinsic-size:auto 6rem}
+.gtext{content-visibility:auto;contain-intrinsic-size:auto 3400px}.gfaq{content-visibility:auto;contain-intrinsic-size:auto 19rem}.gmore{content-visibility:auto;contain-intrinsic-size:auto 45rem}footer .fgrid{content-visibility:auto;contain-intrinsic-size:auto 50.7rem}
+@media (min-width:600px){.gmore{contain-intrinsic-size:auto 34.5rem}}@media (min-width:760px){.gmore{contain-intrinsic-size:auto 31rem}footer .fgrid{contain-intrinsic-size:auto 68.9rem}}@media (min-width:901px){.gmore{contain-intrinsic-size:auto 19.5rem}footer .fgrid{contain-intrinsic-size:auto 37.8rem}}@media (min-width:1000px){.gtext{contain-intrinsic-size:auto 2100px}.gmore{contain-intrinsic-size:auto 20rem}}.gshot{content-visibility:auto;contain-intrinsic-size:auto 400px}.gtoc-m{content-visibility:auto;contain-intrinsic-size:auto 260px}footer .legal{content-visibility:auto;contain-intrinsic-size:auto 6rem}
 @media (min-width:600px){footer .legal{contain-intrinsic-size:auto 4.6rem}}@media (min-width:820px){footer .legal{contain-intrinsic-size:auto 3.3rem}}@media (min-width:1000px){footer .legal{contain-intrinsic-size:auto 1.3rem}}
 /* a touch screen: the links are 44 px rows, so the guides list and the footer are taller */
-@media (pointer:coarse){.gmore{contain-intrinsic-size:auto 50rem}}@media (pointer:coarse) and (min-width:600px){.gmore{contain-intrinsic-size:auto 37rem}}@media (pointer:coarse) and (min-width:760px){.gmore{contain-intrinsic-size:auto 32.5rem}footer .fgrid{contain-intrinsic-size:auto 67.4rem}}@media (pointer:coarse) and (min-width:901px){.gmore{contain-intrinsic-size:auto 19.5rem}footer .fgrid{contain-intrinsic-size:auto 35.3rem}}
+@media (pointer:coarse){.gmore{contain-intrinsic-size:auto 50rem}}@media (pointer:coarse) and (min-width:600px){.gmore{contain-intrinsic-size:auto 37rem}}@media (pointer:coarse) and (min-width:760px){.gmore{contain-intrinsic-size:auto 32.5rem}footer .fgrid{contain-intrinsic-size:auto 72.9rem}}@media (pointer:coarse) and (min-width:901px){.gmore{contain-intrinsic-size:auto 19.5rem}footer .fgrid{contain-intrinsic-size:auto 40.7rem}}
 .gtext h2::before{content:counter(sec,decimal-leading-zero);content:counter(sec,decimal-leading-zero) / "";display:inline-block;width:3.2rem;font:400 .8rem/1 var(--mono);letter-spacing:0;color:var(--ink3);vertical-align:.55em}
-.gtext h2{background:var(--t-top) 0 0/3rem 2px no-repeat;counter-increment:sec;color:var(--ink);font:500 clamp(1.7rem,1.1rem + 1.7vw,2.8rem)/1.06 var(--disp);letter-spacing:-.035em;margin:clamp(3.25rem,2.4rem + 2.6vw,5rem) 0 1.2rem;padding-top:clamp(1rem,.8rem + .6vw,1.4rem);border-top:0}
+.gtext h2{background:linear-gradient(var(--t-accent),var(--t-accent)) 0 0/3rem 2px no-repeat;counter-increment:sec;color:var(--ink);font:500 clamp(1.7rem,1.1rem + 1.7vw,2.8rem)/1.06 var(--disp);letter-spacing:-.035em;margin:clamp(3.25rem,2.4rem + 2.6vw,5rem) 0 1.2rem;padding-top:clamp(1rem,.8rem + .6vw,1.4rem);border-top:0}
 .gtext h2:first-child{margin-top:0;padding-top:clamp(1rem,.8rem + .6vw,1.4rem)}
 .gtext h2::before{color:var(--accent)}
 .gtext p,.gtext ul,.gtext ol{max-width:none;margin:0 0 1rem}
@@ -578,7 +587,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 .gtext ol.tl>li{counter-increment:hs;position:relative;padding:0 0 1.5rem 3.4rem;margin:0;background:linear-gradient(var(--line),var(--line)) no-repeat .6rem 1.9rem/1px calc(100% - 2.1rem)}
 .gtext ol.tl>li:last-child{padding-bottom:0;background:none}
 .gtext ol.tl>li::before{content:counter(hs,decimal-leading-zero);content:counter(hs,decimal-leading-zero) / "";position:absolute;left:0;top:.15rem;width:2.2rem;font:400 .8rem/1.4 var(--mono);color:var(--ink3);font-variant-numeric:tabular-nums;transition:color .6s .15s}
-.gtext ol.tl>li::after{content:"";position:absolute;left:.6rem;top:1.9rem;bottom:.2rem;width:1px;background:linear-gradient(var(--accent),color-mix(in srgb,var(--t-top2) 70%,transparent));transform-origin:50% 0;transition:transform 1.2s var(--ease-out) .35s}
+.gtext ol.tl>li::after{content:"";position:absolute;left:.6rem;top:1.9rem;bottom:.2rem;width:1px;background:var(--accent);transform-origin:50% 0;transition:transform 1.2s var(--ease-out) .35s}
 .gtext ol.tl>li:last-child::after{display:none}
 .gtext ol.tl>li.in::before{color:var(--accent)}
 @media (prefers-reduced-motion:no-preference){.js .gtext ol.tl>li.rv:not(.in)::after{transform:scaleY(0)}}
@@ -599,7 +608,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 .gmore ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr);border-top:1px solid var(--line)}
 .gmore li{margin:0;min-width:0}
 .gmore ul a{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 1.25rem;gap:1.5rem;align-items:baseline;padding:1.25rem 0;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none}
-.gmore ul a::before{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--t-top);transform:scaleX(0);transform-origin:left;transition:transform .55s var(--ease-out)}
+.gmore ul a::before{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--t-accent);transform:scaleX(0);transform-origin:left;transition:transform .55s var(--ease-out)}
 .gmore ul a b{font:500 clamp(1.12rem,1rem + .4vw,1.35rem)/1.25 var(--disp);letter-spacing:-.015em}
 .gmore ul a span{color:var(--ink3);font-size:.92rem;line-height:1.45}
 .gmore ul a svg{width:1.1rem;height:1.1rem;align-self:center;justify-self:end;color:var(--ink3);transition:transform .45s var(--ease-out),color .3s}
@@ -622,7 +631,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 .gget .rel,.gget .safe{margin:.8rem 0 0}
 .gget .req{margin:.45rem 0 0}
 /* contents: the line beside them fills in the three colours as you read */
-.toc ul::after{content:"";position:absolute;left:-1px;top:0;width:1px;height:100%;background:linear-gradient(var(--t-top1),var(--t-top2),var(--t-top3));transform-origin:50% 0;transform:scaleY(var(--rp,0))}
+.toc ul::after{content:"";position:absolute;left:-1px;top:0;width:1px;height:100%;background:var(--t-accent);transform-origin:50% 0;transform:scaleY(var(--rp,0))}
 .toc ul{position:relative}
 @media (max-width:999px){
   /* phone and tablet: title and answer first, then the picture in its own band (never under the text), then the number */
@@ -643,7 +652,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
   .gget{display:block;margin:2.25rem 0 0}
   .gmore ul{grid-template-columns:repeat(2,minmax(0,1fr))}
   .gmore .end{display:block;margin-top:2rem}
-  .gtoc-m{display:block;margin:0 0 2.5rem;padding-top:1rem;border-top:2px solid transparent;border-image:var(--t-top) 1}
+  .gtoc-m{display:block;margin:0 0 2.5rem;padding-top:1rem;border-top:2px solid var(--t-accent)}
   .gtoc-m p{margin:0 0 .3rem;font:500 .86rem/1.4 var(--sans);color:var(--ink3)}
   .gtoc-m ol{list-style:none;margin:0;padding:0;counter-reset:t;border-bottom:1px solid var(--line)}
   .gtoc-m li{counter-increment:t;margin:0}
@@ -795,7 +804,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
       <span class="fstat"><i></i>Son sürüm: <!--rel:ver-->v0.1.0-beta.13<!--/rel--></span>
     </div>
     <nav aria-labelledby="f1"><h3 id="f1">Ürün</h3><ul><li><a href="../#features">Özellikler</a></li><li><a href="../#how">Nasıl çalışır</a></li><li><a href="../#vpn">Pickroute mı, VPN mi?</a></li><li><a href="../#setup">Kurulum</a></li><li><a href="../#faq">SSS</a></li></ul></nav>
-    <nav aria-labelledby="f2"><h3 id="f2">Rehberler</h3><ul><li><a href="../change-ip-with-phone/">Telefonunla IP değiştir</a></li><li><a href="../cs2-iphone-hotspot/">iPhone ile CS2</a></li><li><a href="../cs2-mobile-data/">Mobil veride CS2</a></li><li><a href="../cs2-ip-ban/">CS2 IP banı</a></li><li><a href="../hide-ip-cs2/">VPN olmadan IP'ni gizle</a></li><li><a href="../is-it-safe/">Güvenli mi?</a></li><li><a href="../steam-account-switcher/">Steam hesap değiştirici</a></li><li><a href="../copy-cs2-config/">CS2 ayarlarını kopyala</a></li><li><a href="../cs2-region-picker/">CS2 region seçici</a></li><li><a href="../steam-profile-editor/">Steam profil düzenleyici</a></li><li><a href="../cs2-ping-test/">CS2 ping testi</a></li><li><a href="../cs2-config-file-location/">CS2 config dosyasının yeri</a></li></ul></nav>
+    <nav aria-labelledby="f2"><h3 id="f2">Rehberler</h3><ul><li><a href="../change-ip-with-phone/">Telefonunla IP değiştir</a></li><li><a href="../cs2-iphone-hotspot/">iPhone ile CS2</a></li><li><a href="../cs2-mobile-data/">Mobil veride CS2</a></li><li><a href="../cs2-ip-ban/">CS2 IP banı</a></li><li><a href="../hide-ip-cs2/">VPN olmadan IP'ni gizle</a></li><li><a href="../is-it-safe/">Güvenli mi?</a></li><li><a href="../steam-account-switcher/">Steam hesap değiştirici</a></li><li><a href="../copy-cs2-config/">CS2 ayarlarını kopyala</a></li><li><a href="../cs2-region-picker/">CS2 region seçici</a></li><li><a href="../steam-profile-editor/">Steam profil düzenleyici</a></li><li><a href="../cs2-ping-test/">CS2 ping testi</a></li><li><a href="../cs2-config-file-location/">CS2 config dosyasının yeri</a></li><li><a href="../cs2-server-picker-not-working/">Server picker çalışmıyor</a></li><li><a href="../dota-2-deadlock-region-picker/">Dota 2 ve Deadlock region'ları</a></li></ul></nav>
     <nav aria-labelledby="f3"><h3 id="f3">Proje</h3><ul><li><a href="https://github.com/Sepd0x/cs2-ip-changer">GitHub'da kaynak kod</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/releases">Releases</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/blob/main/CHANGELOG.md">Changelog</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer#privacy">Gizlilik</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose">Hata bildir</a></li></ul></nav>
   </div>
   <div class="wordmark" aria-hidden="true"><svg viewBox="7 0 1433 252" focusable="false">

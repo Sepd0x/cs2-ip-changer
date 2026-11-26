@@ -548,7 +548,7 @@
   var idle = W.requestIdleCallback || function (fn) { return setTimeout(fn, 600); };
   // after the cover has come in (its lines take about 1.3 s), so building the world never takes a frame from it
   // Under the loading screen (html.ld) the lines wait too, so it starts at once: the screen stays until the world's first frame
-  var later = function () { var under = root.classList.contains('ld'); setTimeout(function () { idle(start, { timeout: under ? 100 : 1200 }); }, FX && !under ? 900 : 0); };
+  var later = function () { var under = root.classList.contains('ld') || root.classList.contains('ldp'); setTimeout(function () { idle(start, { timeout: under ? 100 : 1200 }); }, FX && !under ? 900 : 0); };
   if (W.WorldScene) later(); else W.__worldReady = later;
 })();
 /* Android or iPhone, on a phone: a switch of two tabs over the two cards (6 Nov., the owner asked for it). It opens on the

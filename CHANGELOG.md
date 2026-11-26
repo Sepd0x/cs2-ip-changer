@@ -4,6 +4,13 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Added
+- Website: a guide for when a CS2 server picker doesn't work (blocked regions still show up, or no match at all), with what to check in order, and a guide for picking the regions of Dota 2 and Deadlock. Both are in every language of the site.
+
+### Changed
+- Website: on a phone, and on every guide, the page shows at once instead of behind a loading screen. The 3D scene fades in over its picture when it is ready, and a thin line at the top shows how far it is. The home page on a PC keeps its loading screen.
+- Website: only the thin line at the top keeps the three colours. Lines, marks, the footer's name and the open FAQ line are the plain blue, and nothing glows.
+
 ## [1.0.0] - 2026-11-26
 
 ### Added
