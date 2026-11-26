@@ -282,7 +282,8 @@ public partial class MainWindow
         // beta.11 (2nd round, Hugo: "Ready to change IP" next to "Turn on USB tethering"): not while the phone's tethering already carries the connection
         TetherHost.Visibility = ShowTetherButton(first, _phone?.Ready == true, _last?.Egress?.IsPhone == true || _last?.Candidate?.IsPhone == true) ? Visibility.Visible : Visibility.Collapsed;
         // Protection on and the phone gone (seen before, Wi-Fi off): Phone setup is the fix, so it is the one blue button then too
-        var lost = _protOn && !_s.NoPhone && _last != null && PhoneLink.Exit(_last) == null;
+        // 26 nov. (audit A1): blocked because the mobile data can't be confirmed counts too: Phone setup opens on USB debugging
+        var lost = _protOn && !_s.NoPhone && _last != null && (PhoneLink.Exit(_last) == null || _last.Distrust == Distrust.Unconfirmed);
         PhoneSetupBtn.Style = (Style)FindResource(SetupPrimary(first, lost, PhoneWifiOn) ? "Primary" : typeof(Button));
         WifiOffBtn.Style = (Style)FindResource(first ? typeof(Button) : "Primary");
         var at = PhoneButtons.Children.IndexOf(PhoneSetupBtn);

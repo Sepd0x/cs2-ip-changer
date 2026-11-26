@@ -46,8 +46,10 @@ public partial class MainWindow
     string Cs2ConsoleLog() => Cs2Launch.ConsoleLog(_s.Cs2Path ?? Cs2Exe());
 
     /// <summary>Why the phone's connection isn't trusted now, from what the window knows (the Guard adds Unchecked itself).</summary>
-    public static Distrust DistrustNow(bool sameAsHome, bool phoneWifiOn, bool noHome) =>
-        sameAsHome ? Distrust.SameIp : phoneWifiOn ? Distrust.PhoneWifi : noHome ? Distrust.NoHome : Distrust.None;
+    /// <paramref name="unconfirmed"/> (26 nov., audit A1): <see cref="MobileUnconfirmed"/>, blocked like the others until the phone's mobile
+    /// data can be confirmed (USB debugging allowed, or a home IP measured once through a home connection).
+    public static Distrust DistrustNow(bool sameAsHome, bool phoneWifiOn, bool noHome, bool unconfirmed = false) =>
+        sameAsHome ? Distrust.SameIp : phoneWifiOn ? Distrust.PhoneWifi : noHome ? Distrust.NoHome : unconfirmed ? Distrust.Unconfirmed : Distrust.None;
 
     /// <summary>The phone's IP was measured, but there is a home network whose IP was never read: nothing to compare with yet.</summary>
     bool _noHome;
@@ -92,7 +94,7 @@ public partial class MainWindow
             }
             var rep = await _guard.Sync(_s, new SyncRequest(ips)
             {
-                Force = force, Distrust = DistrustNow(_distrust, PhoneWifiOn, _noHome), Cs2Running = cs2Running, VerifiedKey = _verifiedKey, On = _protOn,
+                Force = force, Distrust = DistrustNow(_distrust, PhoneWifiOn, _noHome, MobileUnconfirmedNow(_last)), Cs2Running = cs2Running, VerifiedKey = _verifiedKey, On = _protOn,
             });
             // Closing or Windows signing out: the Guard no longer writes, and its answer isn't shown
             if (!_restored && !_sessionEnding)
@@ -354,6 +356,7 @@ public partial class MainWindow
             : rep.Distrust == Distrust.PhoneWifi ? Loc.T("Blocked while the phone's Wi-Fi is on")
             : rep.Distrust == Distrust.SameIp ? Loc.T("Blocked: same IP as your home IP")
             : rep.Distrust == Distrust.NoHome ? Loc.T("Blocked: your home IP hasn't been measured yet")
+            : rep.Distrust == Distrust.Unconfirmed ? Loc.T("Blocked: mobile data not confirmed")
             : rep.EgressProblem ?? Loc.T("Waiting for the phone");
         // The square comes from the same branch as the text: never green next to "Not locked yet". Amber, not red: on a first run
         // that is the normal state, and red would fail the leak test before the phone was ever connected.
@@ -427,6 +430,8 @@ public partial class MainWindow
         }
         else if (rep.Distrust == Distrust.NoHome)
             SetHero(held, Loc.T("Home IP not known yet"), NoHomeSub(Blocked(rep), VpnIsDefault(rep)));
+        else if (rep.Distrust == Distrust.Unconfirmed)
+            SetHero(held, UnconfirmedHero().Title, UnconfirmedBlockedSub(Blocked(rep)));
         else if (rep.Distrust == Distrust.PhoneWifi && !same)
             SetHero(held, Loc.T("Phone Wi-Fi is on"),
                 Loc.F("{0} are blocked. With Wi-Fi on, the phone may share your home network instead of mobile data: turn it off under Phone.", Blocked(rep)));
@@ -1079,15 +1084,20 @@ public partial class MainWindow
     public static bool MobileUnconfirmed(bool? hasHome, Adapter exit, bool iphone, bool adbReady, bool homeIpFromHome) =>
         hasHome == false && exit is { IsPhone: true, IsWifi: false } && !iphone && !PhoneUsb.IsIphone(exit) && !adbReady && !homeIpFromHome;
 
+    // The phone's adapter whether trusted or not (Exit): once blocked for this, the report has no Egress, only the Candidate
     bool MobileUnconfirmedNow(GuardReport rep) =>
-        MobileUnconfirmed(rep?.HasHome, rep?.Egress, _iphone || _s.PhoneIsIphone, _phone?.Ready == true, _s.LastHomeIp != null && _s.LastHomeIpFromHome);
+        MobileUnconfirmed(rep?.HasHome, PhoneLink.Exit(rep), _iphone || _s.PhoneIsIphone, _phone?.Ready == true, _s.LastHomeIp != null && _s.LastHomeIpFromHome);
 
     /// <summary>The Status for <see cref="MobileUnconfirmed"/>.</summary>
     public static (string Title, string Sub) UnconfirmedHero() => (Loc.T("Mobile data not confirmed"),
         Loc.T("If the phone is on Wi-Fi, it may be sharing your home connection, and the app can't check: USB debugging isn't allowed and the PC has no home network to compare with. Turn off the phone's Wi-Fi, or press Phone setup to allow USB debugging."));
 
+    /// <summary>The Status line while blocked for it (26 nov., audit A1): what to do, in one sentence. Phone setup is the blue button then.</summary>
+    public static string UnconfirmedBlockedSub(string blocked) =>
+        Loc.F("{0} are blocked: if the phone is on Wi-Fi it may be sharing your home connection, and the app can't check. Press Phone setup to allow USB debugging, or connect the PC to your home network once so the app knows your home IP.", blocked);
+
     /// <summary>The Log line for <see cref="MobileUnconfirmed"/> (said once each time it starts).</summary>
-    public const string UnconfirmedLog = "The phone's mobile data can't be confirmed: USB debugging isn't allowed and the PC has no home network to compare IPs with. If the phone's Wi-Fi is on, servers may see your home IP.";
+    public const string UnconfirmedLog = "The phone's mobile data can't be confirmed: USB debugging isn't allowed and the PC has no home network to compare IPs with. Servers and CS2 blocked until it is (allow USB debugging in Phone setup, or connect the PC to the home network once).";
 
     bool _unconfirmedSaid;
 

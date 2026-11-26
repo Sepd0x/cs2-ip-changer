@@ -4,7 +4,7 @@ namespace SRT.Core;
 /// Why the phone's connection isn't trusted right now. Unchecked: its public IP wasn't measured yet. SameIp: it is the home IP.
 /// PhoneWifi: the phone's Wi-Fi is on (it may be sharing the home network). NoHome: the home IP wasn't measured, nothing to compare with.
 /// </summary>
-public enum Distrust { None, Unchecked, SameIp, PhoneWifi, NoHome }
+public enum Distrust { None, Unchecked, SameIp, PhoneWifi, NoHome, Unconfirmed }
 
 public static class DistrustText
 {
@@ -15,6 +15,7 @@ public static class DistrustText
         Distrust.SameIp => Loc.T("The public IP of the connection is the same as your home IP."),
         Distrust.PhoneWifi => Loc.T("The phone's Wi-Fi is on, so it may be sharing your home network instead of mobile data."),
         Distrust.NoHome => Loc.T("The home IP hasn't been measured yet."),
+        Distrust.Unconfirmed => Loc.T("The phone's mobile data can't be confirmed: USB debugging isn't allowed and the PC has no home network to compare IPs with."),
         _ => null,
     };
 }
@@ -174,6 +175,9 @@ public sealed class Guard
     public static readonly string[] SplitPrefixes = { "0.0.0.0/1", "128.0.0.0/1" };
 
     /// <summary>Whole PC is on the phone only when Windows sends a probe of each half (0/1 and 128/1) through it.</summary>
+    /// <summary>The connection the game may use: none while it isn't trusted (any <see cref="Distrust"/>), so the kill switch blocks.</summary>
+    public static Adapter EgressFor(Distrust distrust, Adapter candidate) => distrust != Distrust.None ? null : candidate;
+
     public static bool BothHalvesOn(int lowIndex, int highIndex, int egressIndex) => lowIndex == egressIndex && highIndex == egressIndex;
 
     /// <summary>What the app changed in Windows, saved to disk so a crash or a kill doesn't leave orphans behind.</summary>
@@ -465,7 +469,7 @@ public sealed class Guard
         _exit = candidate;
         // A new connection (another adapter or local IP) is only trusted after its public IP is measured.
         if (distrust == Distrust.None && candidate != null && KeyOf(candidate) != verifiedKey) distrust = Distrust.Unchecked;
-        var egress = distrust != Distrust.None ? null : candidate;
+        var egress = EgressFor(distrust, candidate);
         // Why there is no protected connection, in words: the distrust's, when there is a candidate
         if (distrust != Distrust.None && candidate != null) problem = DistrustText.Of(distrust);
         var mode = PhoneLink.EffectiveMode(on, s.Mode, s.GameMode, cs2Running);

@@ -51,5 +51,24 @@ static class CodexAuditTests
         var regions = File.ReadAllText(Path.Combine(SecurityTests.Repo(), "src", "Views", "MainWindow.Regions.cs"));
         check("Codex A5: sem a lista tira a regra pelo nome do jogo e relê antes de dizer que saiu",
             regions.Contains("AllowAllWithoutList(_regionGame)") && regions.Contains("Firewall.Remove(game.RuleName);") && regions.Contains("Firewall.IsRegionRule(n, game)"), "");
+
+        // A1 (decisão de 26 nov.: aceitar a proposta do Codex): Android por USB, sem ADB, sem IP de casa e o telemóvel no Wi-Fi de casa.
+        // A app não consegue ver o Wi-Fi do telemóvel nem comparar IPs: fica bloqueado e não confirmado, nunca Protected
+        var android = new Adapter { Index = 7, Name = "Ethernet 3", Description = "Remote NDIS based Internet Sharing Device", IsPhone = true, Up = true, LocalIp = "192.168.42.10", Gateway = "192.168.42.129" };
+        var unconfirmed = MainWindow.MobileUnconfirmed(hasHome: false, android, iphone: false, adbReady: false, homeIpFromHome: false);
+        var distrust = MainWindow.DistrustNow(sameAsHome: false, phoneWifiOn: false, noHome: false, unconfirmed);
+        check("Codex A1: USB sem ADB, sem IP de casa e o telemóvel no Wi-Fi de casa fica bloqueado e não confirmado",
+            unconfirmed && distrust == Distrust.Unconfirmed && Guard.EgressFor(distrust, android) == null, $"{unconfirmed} {distrust}");
+        check("Codex A1: com a depuração USB autorizada ou um IP de casa medido em casa, volta a confiar",
+            MainWindow.DistrustNow(false, false, false, MainWindow.MobileUnconfirmed(false, android, false, adbReady: true, false)) == Distrust.None
+            && MainWindow.DistrustNow(false, false, false, MainWindow.MobileUnconfirmed(false, android, false, false, homeIpFromHome: true)) == Distrust.None
+            && Guard.EgressFor(Distrust.None, android) == android, "");
+        check("Codex A1: as outras razões continuam primeiro (o mesmo IP, o Wi-Fi do telemóvel visto pelo ADB)",
+            MainWindow.DistrustNow(true, false, false, true) == Distrust.SameIp && MainWindow.DistrustNow(false, true, false, true) == Distrust.PhoneWifi, "");
+        check("Codex A1: a frase diz o que fazer e o Phone setup é o botão cheio",
+            MainWindow.UnconfirmedBlockedSub("Servers and CS2").Contains("Phone setup") && MainWindow.UnconfirmedBlockedSub("x").Contains("home network")
+            && !string.IsNullOrEmpty(DistrustText.Of(Distrust.Unconfirmed))
+            && File.ReadAllText(Path.Combine(SecurityTests.Repo(), "src", "Views", "MainWindow.Phone.cs")).Contains("_last.Distrust == Distrust.Unconfirmed")
+            && File.ReadAllText(Path.Combine(SecurityTests.Repo(), "src", "Views", "MainWindow.Protection.cs")).Contains("DistrustNow(_distrust, PhoneWifiOn, _noHome, MobileUnconfirmedNow(_last))"), "");
     }
 }
