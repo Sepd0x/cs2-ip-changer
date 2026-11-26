@@ -853,7 +853,6 @@
   "Setup. <span1>One cable, four steps.</span1>": "Configuración. <span1>Un cable, cuatro pasos.</span1>",
   "Windows 10 or 11 (64-bit), admin rights, Windows Firewall on, and a phone with mobile data.": "Windows 10 u 11 (64 bits), permisos de administrador, Firewall de Windows activado y un teléfono con datos móviles.",
   "One USB cable from the PC to the phone, with USB tethering on (Personal Hotspot on an iPhone).": "Un cable USB de la PC al teléfono, con USB tethering activado (Personal Hotspot en un iPhone).",
-  "<b1>Download <code2/></b1> from the <a3>latest release</a3>. Started from Downloads, it offers to install itself in <code4/> in one click.": "<b1>Descarga <code2/></b1> de la <a3>última versión</a3>. Si lo abres desde Descargas, te ofrece instalarse en <code4/> con un clic.",
   "<b1>Plug the phone in by USB,</b1> turn on USB tethering (Personal Hotspot on an iPhone) and turn off the phone's Wi-Fi. Using a VPN on the PC? Turn it off first.": "<b1>Conecta el teléfono por USB,</b1> activa USB tethering (Anclaje a red USB; Personal Hotspot en un iPhone) y apaga el Wi-Fi del teléfono. ¿Usas una VPN en la PC? Apágala primero.",
   "<b1>Run the app</b1> as admin. <b2>Phone setup</b2> shows each step in green or red and what's missing. Paste the servers you play on into Servers (the <code3/> from CS2's console, <code4/>), then press <b5>Turn on protection</b5>: it starts off each time the app opens.": "<b1>Abre la app</b1> como administrador. <b2>Phone setup</b2> muestra cada paso en verde o rojo y qué falta. Pega los servidores donde juegas en Servers (el <code3/> de la consola de CS2, <code4/>), y luego presiona <b5>Turn on protection</b5>: empieza apagada cada vez que se abre la app.",
   "<b1>Open Connection.</b1> With CS2 and Steam running, every check should be green, including Phone IP is not your home IP.": "<b1>Abre Connection.</b1> Con CS2 y Steam abiertos, todos los checks deben estar en verde, incluido Phone IP is not your home IP.",
@@ -925,7 +924,8 @@
   "The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones turned off blocked for cs2.exe": "La página Regions: cada región de matchmaking en un dial y en una lista por continente, cada una con su ping, y las desactivadas bloqueadas para cs2.exe",
   "The Profiles page in three steps: the look every picked account gets, the accounts, then review and apply": "La página Profiles en tres pasos: el aspecto que recibe cada cuenta elegida, las cuentas, y luego revisar y aplicar",
   "games on the Regions page": "juegos en la página Regions",
-  "The same region picker for Dota 2 and Deadlock.": "El mismo selector de regiones para Dota 2 y Deadlock."
+  "The same region picker for Dota 2 and Deadlock.": "El mismo selector de regiones para Dota 2 y Deadlock.",
+  "<b1>Download <code2/></b1> from the <a3>latest release</a3>. Started from Downloads, it offers to install itself in <code4/> in one click. The file and the folder keep the app's old name, CS2 IP Changer.": "<b1>Descarga <code2/></b1> de la <a3>última versión</a3>. Si lo abres desde Descargas, te ofrece instalarse en <code4/> con un clic. El archivo y la carpeta conservan el nombre anterior de la app, CS2 IP Changer."
  },
  "is-it-safe": {
   "Is Pickroute safe? What it changes and how to check it": "¿Pickroute es seguro? Qué cambia y cómo verificarlo",

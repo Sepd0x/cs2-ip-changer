@@ -853,7 +853,6 @@
   "Setup. <span1>One cable, four steps.</span1>": "Настройка. <span1>Один кабель, четыре шага.</span1>",
   "Windows 10 or 11 (64-bit), admin rights, Windows Firewall on, and a phone with mobile data.": "Windows 10 или 11 (64-бит), права администратора, включённый Windows Firewall и телефон с мобильным интернетом.",
   "One USB cable from the PC to the phone, with USB tethering on (Personal Hotspot on an iPhone).": "Один USB-кабель от ПК к телефону, с включённым USB tethering (на iPhone Personal Hotspot).",
-  "<b1>Download <code2/></b1> from the <a3>latest release</a3>. Started from Downloads, it offers to install itself in <code4/> in one click.": "<b1>Скачайте <code2/></b1> из <a3>последнего релиза</a3>. Если запустить из Загрузок, он предложит установить себя в <code4/> одним кликом.",
   "<b1>Plug the phone in by USB,</b1> turn on USB tethering (Personal Hotspot on an iPhone) and turn off the phone's Wi-Fi. Using a VPN on the PC? Turn it off first.": "<b1>Подключите телефон по USB,</b1> включите USB tethering (на iPhone Personal Hotspot) и выключите Wi-Fi на телефоне. VPN на ПК? Сначала выключите.",
   "<b1>Run the app</b1> as admin. <b2>Phone setup</b2> shows each step in green or red and what's missing. Paste the servers you play on into Servers (the <code3/> from CS2's console, <code4/>), then press <b5>Turn on protection</b5>: it starts off each time the app opens.": "<b1>Запустите приложение</b1> от администратора. <b2>Phone setup</b2> показывает каждый шаг зелёным или красным и чего не хватает. Вставьте в Servers серверы, на которых играете (<code3/> из консоли CS2, <code4/>), затем нажмите <b5>Turn on protection</b5>: при каждом запуске приложения она выключена.",
   "<b1>Open Connection.</b1> With CS2 and Steam running, every check should be green, including Phone IP is not your home IP.": "<b1>Откройте Connection.</b1> Когда CS2 и Steam запущены, все проверки должны быть зелёными, включая Phone IP is not your home IP.",
@@ -925,7 +924,8 @@
   "The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones turned off blocked for cs2.exe": "Страница Regions: все регионы матчмейкинга на круговой шкале и в списке по континентам, у каждого свой пинг, а отключённые заблокированы для cs2.exe",
   "The Profiles page in three steps: the look every picked account gets, the accounts, then review and apply": "Страница Profiles в три шага: оформление для выбранных аккаунтов, сами аккаунты, затем проверка и применение",
   "games on the Regions page": "игры на странице Regions",
-  "The same region picker for Dota 2 and Deadlock.": "Тот же выбор региона для Dota 2 и Deadlock."
+  "The same region picker for Dota 2 and Deadlock.": "Тот же выбор региона для Dota 2 и Deadlock.",
+  "<b1>Download <code2/></b1> from the <a3>latest release</a3>. Started from Downloads, it offers to install itself in <code4/> in one click. The file and the folder keep the app's old name, CS2 IP Changer.": "<b1>Скачайте <code2/></b1> из <a3>последнего релиза</a3>. Если запустить из Загрузок, он предложит установить себя в <code4/> одним кликом. Файл и папка сохранили старое название приложения, CS2 IP Changer."
  },
  "is-it-safe": {
   "Is Pickroute safe? What it changes and how to check it": "Безопасен ли Pickroute? Что меняет и как проверить",

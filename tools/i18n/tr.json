@@ -846,7 +846,6 @@
   "Setup. <span1>One cable, four steps.</span1>": "Kurulum. <span1>Bir kablo, dört adım.</span1>",
   "Windows 10 or 11 (64-bit), admin rights, Windows Firewall on, and a phone with mobile data.": "Windows 10 veya 11 (64 bit), yönetici hakları, açık Windows Güvenlik Duvarı ve mobil verili bir telefon.",
   "One USB cable from the PC to the phone, with USB tethering on (Personal Hotspot on an iPhone).": "PC'den telefona bir USB kablo, USB bağlantı paylaşımı açık (iPhone'da Personal Hotspot).",
-  "<b1>Download <code2/></b1> from the <a3>latest release</a3>. Started from Downloads, it offers to install itself in <code4/> in one click.": "<a3>Son sürümden</a3> <b1><code2/> dosyasını indir</b1>. İndirilenler klasöründen başlatırsan kendini <code4/> klasörüne tek tıkla kurmayı önerir.",
   "<b1>Plug the phone in by USB,</b1> turn on USB tethering (Personal Hotspot on an iPhone) and turn off the phone's Wi-Fi. Using a VPN on the PC? Turn it off first.": "<b1>Telefonu USB ile tak,</b1> USB bağlantı paylaşımını aç (iPhone'da Personal Hotspot) ve telefonun Wi-Fi'sini kapat. PC'de VPN mi kullanıyorsun? Önce onu kapat.",
   "<b1>Run the app</b1> as admin. <b2>Phone setup</b2> shows each step in green or red and what's missing. Paste the servers you play on into Servers (the <code3/> from CS2's console, <code4/>), then press <b5>Turn on protection</b5>: it starts off each time the app opens.": "<b1>Uygulamayı yönetici olarak çalıştır.</b1> <b2>Phone setup</b2> her adımı yeşil veya kırmızı gösterir ve neyin eksik olduğunu söyler. Oynadığın sunucuları Servers'a yapıştır (CS2 konsolundaki <code3/>, <code4/>), sonra <b5>Turn on protection</b5>'a bas: uygulama her açıldığında kapalı başlar.",
   "<b1>Open Connection.</b1> With CS2 and Steam running, every check should be green, including Phone IP is not your home IP.": "<b1>Connection'ı aç.</b1> CS2 ve Steam çalışırken tüm kontroller yeşil olmalı, Phone IP is not your home IP dahil.",
@@ -914,7 +913,8 @@
   "The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones turned off blocked for cs2.exe": "Regions sayfası: tüm matchmaking bölgeleri bir kadranda ve kıtalara göre bir listede, her birinin pingiyle; kapatılanlar cs2.exe için engelli",
   "The Profiles page in three steps: the look every picked account gets, the accounts, then review and apply": "Üç adımda Profiles sayfası: seçilen her hesabın alacağı görünüm, hesaplar, sonra gözden geçir ve uygula",
   "games on the Regions page": "Regions sayfasındaki oyunlar",
-  "The same region picker for Dota 2 and Deadlock.": "Dota 2 ve Deadlock için aynı region seçici."
+  "The same region picker for Dota 2 and Deadlock.": "Dota 2 ve Deadlock için aynı region seçici.",
+  "<b1>Download <code2/></b1> from the <a3>latest release</a3>. Started from Downloads, it offers to install itself in <code4/> in one click. The file and the folder keep the app's old name, CS2 IP Changer.": "<a3>Son sürümden</a3> <b1><code2/> dosyasını indir</b1>. İndirilenler klasöründen başlatırsan kendini <code4/> klasörüne tek tıkla kurmayı önerir. Dosya ve klasör uygulamanın eski adını taşır: CS2 IP Changer."
  },
  "is-it-safe": {
   "Is Pickroute safe? What it changes and how to check it": "Pickroute güvenli mi? Ne değiştirir, nasıl doğrulanır",
