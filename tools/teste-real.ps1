@@ -72,8 +72,9 @@ public static class W32 { [DllImport("user32.dll")] public static extern bool Se
 $AE = [System.Windows.Automation.AutomationElement]
 $TS = [System.Windows.Automation.TreeScope]
 function Cond($prop, $val) { New-Object System.Windows.Automation.PropertyCondition($prop, $val) }
-function ById($root, [string]$id) { if ($root) { $root.FindFirst($TS::Descendants, (Cond $AE::AutomationIdProperty $id)) } }
-function ByName($root, [string]$name) { if ($root) { $root.FindFirst($TS::Descendants, (Cond $AE::NameProperty $name)) } }
+# a copy of the app that is closing can't be read any more: that is no element, not an error
+function ById($root, [string]$id) { if ($root) { try { $root.FindFirst($TS::Descendants, (Cond $AE::AutomationIdProperty $id)) } catch { $null } } }
+function ByName($root, [string]$name) { if ($root) { try { $root.FindFirst($TS::Descendants, (Cond $AE::NameProperty $name)) } catch { $null } } }
 function Text($el) { if ($el) { try { $el.Current.Name } catch { '' } } else { '' } }
 function Click($el) {
   if (-not $el) { return $false }
@@ -89,7 +90,11 @@ function Wait-For([scriptblock]$test, [int]$seconds) {
   while (((Get-Date) - $t0).TotalSeconds -lt $seconds) { $r = & $test; if ($r) { return $r }; Start-Sleep -Milliseconds 400 }
   return $null
 }
-function Windows-Of([int]$procId) { $AE::RootElement.FindAll($TS::Children, (Cond $AE::ProcessIdProperty $procId)) }
+# the app starts itself again from an admin-only folder (Program.Main), so its window is in a second process: every copy started by
+# this run counts, never one that was running before it
+$script:T0 = Get-Date
+function Ours { @(Get-Process CS2IPChanger -ErrorAction SilentlyContinue | Where-Object { try { $_.StartTime -ge $script:T0 } catch { $false } }) }
+function Windows-Of([int]$ignored) { foreach ($p in (Ours)) { try { $AE::RootElement.FindAll($TS::Children, (Cond $AE::ProcessIdProperty $p.Id)) } catch {} } }
 $script:Shot = 0
 function Shot($win, [string]$name) {
   if (-not $win) { return '' }
@@ -122,16 +127,24 @@ function Start-App([hashtable]$envs = @{}) {
   if ($script:Win) {
     Start-Sleep 2
     foreach ($id in 'DoorLaterBtn', 'TourSkipBtn') { $b = ById $script:Win $id; if ($b -and -not $b.Current.IsOffscreen) { [void](Click $b) } }
+    # a question the app asks before anything else (CS2 not found, and the like): written down with its picture, then OK
+    $ask = ByName $script:Win 'Before you start'
+    if ($ask) {
+      $cap = Shot $script:Win 'antes-de-comecar'
+      $texts = $script:Win.FindAll($TS::Descendants, (Cond $AE::ControlTypeProperty ([System.Windows.Automation.ControlType]::Text))) | ForEach-Object { $_.Current.Name } | Where-Object { $_.Length -gt 40 }
+      Note '3 App' 'A app perguntou antes de comecar' 'VER' (($texts | Select-Object -First 2) -join ' / ') $cap
+      [void](Click (ByName $script:Win 'OK'))
+    }
   }
   return $script:Win
 }
 
 function Close-App([string]$answer) {
-  if (-not $script:App -or $script:App.HasExited) { return $true }
+  if ((Ours).Count -eq 0) { return $true }
   $pat = $null
   if ($script:Win.TryGetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern, [ref]$pat)) { $pat.Close() }
   if ($answer) { $b = Wait-For { foreach ($w in (Windows-Of $script:App.Id)) { $x = ByName $w $answer; if ($x) { return $x } }; $null } 20; [void](Click $b) }
-  $gone = Wait-For { $script:App.Refresh(); $script:App.HasExited } 90
+  $gone = Wait-For { (Ours).Count -eq 0 } 90
   return [bool]$gone
 }
 
@@ -154,12 +167,14 @@ function Phase-App([string]$exe) {
   $mine = Join-Path $env:ProgramFiles 'CS2 IP Changer\SRT_Dados\servers.json'
   if (Test-Path $mine) { New-Item -ItemType Directory -Force -Path $data | Out-Null; Copy-Item $mine $data }   # his server list, a copy
   $rulesBefore = Rules
+  $script:T0 = Get-Date
 
   try {
     # SMOKE 1
     if (-not (Start-App)) { Note '3 App' 'SMOKE 1: arranque' 'FALHA' 'a janela principal nao apareceu em 90 s'; return }
     $s = Wait-For { $x = State; if ($x -and $x -notmatch 'Checking') { $x } } 30
     Note '3 App' 'SMOKE 1: arranque com a protecao desligada' $(if ($s -and $s -notmatch '^Protected') { 'OK' } else { 'FALHA' }) "topo: $s" (Shot $script:Win 'arranque')
+    Page 'NavNet'   # the phone's state is on the Connection page (a hidden page is not in the tree)
     $phone = Wait-For { $x = Text (ById $script:Win 'PhoneState'); if ($x -and $x -notmatch 'Searching') { $x } } 30
     $noPhone = (-not $phone) -or $phone -match 'No phone|not found|Plug'
 
@@ -224,7 +239,7 @@ function Phase-App([string]$exe) {
         }
       }
     }
-    if ($script:App -and -not $script:App.HasExited) { [void](Close-App 'Turn off and close') }
+    if ((Ours).Count -gt 0) { [void](Close-App 'Turn off and close') }
 
     # SMOKE 14: every page in each language, for cut text
     foreach ($lang in 'en', 'pt-BR', 'es', 'ru', 'tr') {
@@ -236,7 +251,7 @@ function Phase-App([string]$exe) {
   } catch {
     Note '3 App' 'Erro' 'FALHA' $_.Exception.Message
   } finally {
-    if ($script:App -and -not $script:App.HasExited) { try { $script:App.Kill() } catch {} }
+    foreach ($p in (Ours)) { try { $p.Kill() } catch {} }
     $r = Start-Process -FilePath (Join-Path $AppDir 'CS2IPChanger.exe') -ArgumentList '--restore' -PassThru -WindowStyle Hidden
     [void]$r.WaitForExit(120000); Start-Sleep 2
     $end = Rules

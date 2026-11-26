@@ -49,7 +49,10 @@ NAMES = {"protection": "Protection", "change-ip": "Change IP", "servers": "Serve
 BAR, LINE = 30, 2  # 1x pixels
 FONT = Path("C:/Windows/Fonts/seguisb.ttf")
 
-# the social preview's piece of the Connection page, in pixels of the 1x capture (its border and top line included;
+# the social preview's piece (26 Nov: the dial of the Regions page, publish/plano-1-0-0/21-social-preview), in pixels of
+# the 1x capture: the dial with its labels, from the end of the region list to the window's right edge
+DIAL = (628, 170, 1230, 736)
+# before 26 Nov: the piece of the Connection page, in pixels of the 1x capture (its border and top line included;
 # from the page list's edge to just before the protection pill, so the status line loses its full stop)
 STATUS = (169, 0, 744, 296)
 STATUS_OUT = ROOT / "docs" / "assets" / "src" / "social-preview-status.png"
@@ -170,11 +173,11 @@ def main():
     if missing:
         sys.exit("Missing: " + ", ".join(missing))
 
-    # the social preview card (docs/assets/src/social-preview.html): the top line, the title bar and Status, unframed
-    if "connection" in loaded:
-        k = scale["connection"]
-        l, t, r, b = STATUS
-        status = raw["connection"].crop((l * k, t * k, r * k, b * k)).convert("RGB")
+    # the social preview card (docs/assets/src/social-preview.html): the Regions dial, unframed
+    if "regions" in loaded:
+        k = scale["regions"]
+        l, t, r, b = DIAL
+        status = raw["regions"].crop((l * k, t * k, r * k, b * k)).convert("RGB")
         status.save(STATUS_OUT, optimize=True)
         print(f"  {STATUS_OUT.relative_to(ROOT).as_posix()}  {status.size[0]}x{status.size[1]}")
 

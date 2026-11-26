@@ -298,15 +298,15 @@
   },
   {
    "file": "docs/assets/src/social-preview-status.png",
-   "sha256": "dd480293c1e437cf010fa5dff1f524df5b0a453a36df70b3fa460fbf5e917cf7",
+   "sha256": "1933f57d3ed76bb67f29227b63feb8d9a0d9ece02558873bde87a40308c64dbb",
    "size": [
-    1150,
-    592
+    1204,
+    1132
    ]
   },
   {
    "file": "docs/assets/social-preview.png",
-   "sha256": "598765ee78e6cb03eed37aa6de4466804fe8ed5cac79c9fcec876cd6b7b6da44",
+   "sha256": "4886132049e0adb3639c6041e6546b4b278fea62ff42a1ae77e99863b34452e4",
    "size": [
     1280,
     640
@@ -351,6 +351,6 @@
   ]
  },
  "social": {
-  "from": "dd480293c1e437cf010fa5dff1f524df5b0a453a36df70b3fa460fbf5e917cf7"
+  "from": "1933f57d3ed76bb67f29227b63feb8d9a0d9ece02558873bde87a40308c64dbb"
  }
 }

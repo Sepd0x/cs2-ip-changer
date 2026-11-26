@@ -761,7 +761,7 @@ const WORLD = {
 // The caption under the app's own screen in the text: which page of the app it is, and that it is the real one.
 const capOf = (p) => `The ${p.crop[0][0].toUpperCase() + p.crop[0].slice(1)} page of the app, a real screenshot${/accounts|profiles|configs/.test(p.crop[0]) ? ' with example names' : p.crop[0] === 'connection' ? ' with example IPs' : ''}. Select it to see it full size.`;
 
-const CARD = `${BASE}img/social-preview.png?v=${rel.version}`, CARD_ALT = "Pickroute: IP banned on a CS2 server? New IP in one click, with the app's Connection screen";
+const CARD = `${BASE}img/social-preview.png?v=${rel.version}`, CARD_ALT = "Pickroute: pick where CS2 plays, on the app's dial of regions by ping";
 function render(p, modified) {
   const url = `${BASE}${p.slug}/`;
   const image = `${BASE}img/${p.crop[0]}.png`;

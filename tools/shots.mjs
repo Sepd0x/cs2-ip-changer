@@ -69,7 +69,7 @@ function entry(rel) {
 export const RENDERS = ['poster-1280', 'poster-1366', 'poster-1440', 'poster-1536', 'poster-1920', 'poster-390', 'world-tower', 'world-plug'].map((n) => `site/img/${n}.webp`);
 const CONNECTION = 'docs/screenshots/connection.png';
 
-// The social preview card (the site's og:image) is rendered by Chrome from the Status piece readme-shots.py cuts from connection.png.
+// The social preview card (the site's og:image) is rendered by Chrome from the piece readme-shots.py cuts from regions.png (the dial).
 const STATUS = 'docs/assets/src/social-preview-status.png', SOCIAL = 'docs/assets/social-preview.png';
 
 /**

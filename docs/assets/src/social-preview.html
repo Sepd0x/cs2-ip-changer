@@ -3,17 +3,20 @@
 <title>Social preview</title>
 <link rel="stylesheet" href="social-preview.css">
 <style>
-  .h{position:absolute;left:0;right:0;top:62px;text-align:center;font-size:64px}
-  /* captura real (docs/screenshots/connection.png, recorte 575x296) a 1,16 */
-  .win{left:306px;top:236px;width:668px}
-  /* the logo and the name, signed in the empty corner left of the window (docs/assets/logo.svg) */
-  .brand{position:absolute;left:44px;bottom:40px;display:flex;align-items:center;gap:12px;font-family:var(--disp);font-weight:600;font-size:24px;letter-spacing:-.01em;color:var(--white)}
-  .brand img{display:block;width:44px;height:44px}
+  /* 26 Nov (publish/plano-1-0-0/21-social-preview, proposal A): the Regions dial of the real capture (social-preview-status.png,
+     cut by tools/readme-shots.py from docs/screenshots/regions.png at 1x), large on the right, fading into the page on its left */
+  .dial{position:absolute;left:556px;top:-2px;width:671px;height:auto;display:block;
+        -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 70px);mask-image:linear-gradient(90deg,transparent 0,#000 70px)}
+  .h{position:absolute;left:64px;top:104px;font-size:84px;letter-spacing:-.025em;line-height:1.02}
+  .sub{position:absolute;left:66px;top:308px;width:470px;font-size:23px;line-height:1.35;color:var(--muted)}
+  .brand{position:absolute;left:64px;bottom:52px;display:flex;align-items:center;gap:14px;font-family:var(--disp);font-weight:650;font-size:34px;letter-spacing:-.015em;color:var(--white)}
+  .brand img{display:block;width:50px;height:50px}
 </style>
 <body>
 <div class="f"><div class="top"></div><div class="in">
-  <div class="h">IP banned on a CS2 server?<br><em>New IP</em> in one click.</div>
-  <div class="win"><img src="social-preview-status.png" alt=""></div>
+  <img class="dial" src="social-preview-status.png" alt="">
+  <div class="h">Pick where<br>CS2 <em>plays.</em></div>
+  <div class="sub">Turn off the slow regions by ping, and play on your phone's IP, never your home one.</div>
   <div class="brand"><img src="../logo.svg" alt="">Pickroute</div>
 </div></div>
 </body>
