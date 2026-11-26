@@ -163,6 +163,13 @@ static class Auditoria26NovTests
         check("Auditoria V4: depois do Copy look, os campos só mostram o modelo se ele ainda for o escolhido",
             MainWindow.CopyStillShown(a, a) && !MainWindow.CopyStillShown(b, a) && !MainWindow.CopyStillShown(null, a)
             && !prof.Contains("ShowTemplate(t); SaveTemplates();") && prof.Split("ShowAfterCopy(t); SaveTemplates();").Length == 4, "");
+        // 26 nov. à noite (o dono): a barra lateral nova ficou sem os ícones da antiga
+        var theme = Src("Theme.xaml");
+        var nav = theme.Substring(theme.IndexOf("<Style x:Key=\"Nav\" TargetType=\"RadioButton\">"), 2600);
+        var navRows = System.Text.RegularExpressions.Regex.Matches(xaml, "Style=\"\\{StaticResource Nav\\}\" Tag=\"&#x[0-9A-F]{4};\"").Count;
+        check("Barra lateral: cada página com o seu ícone antes do nome, a azul na página aberta",
+            nav.Contains("<TextBlock x:Name=\"icon\" Text=\"{TemplateBinding Tag}\" FontFamily=\"{StaticResource Icons}\"")
+            && nav.Contains("<Setter TargetName=\"icon\" Property=\"Foreground\" Value=\"{StaticResource Accent}\"/>") && navRows == 8, navRows.ToString());
         var key = File.ReadAllText(Path.Combine(SecurityTests.Repo(), "tools", "release-key.mjs"));
         check("Auditoria S3: a frase-passe não se pede numa janela que a mostra (Git Bash sem TTY)",
             key.Contains("if (hidden && !canHide(process.stdin.isTTY))") && key.Contains("const canHide = (isTTY) => !!isTTY;"), "");

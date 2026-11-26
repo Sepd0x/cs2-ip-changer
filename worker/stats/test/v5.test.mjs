@@ -99,7 +99,7 @@ test('v5 model: the journey uses the closed week when it has 5 or more, the runn
   const H = buildHome({ B, G: GH_OK, L: { now: 9, inGame: 2, protectedN: 7 } });
   assert.equal(H.journey.base, B.funnel.activation.steps[0].n);
   assert.match(H.journey.text, /instalaram a app entre .* e .*. Na primeira semana de uso:/);
-  assert.deepEqual(H.journey.steps.map((s) => s.label), ['Abriram a app', 'Ligaram o telemóvel', 'Ligaram a proteção', 'Jogaram uma partida']);
+  assert.deepEqual(H.journey.steps.map((s) => s.label), ['Abriram a app', 'Ligaram o telemóvel', 'Ligaram a proteção', 'Escolheram regiões', 'Pessoas que jogaram uma partida']);
   assert.ok(H.live.peakToday >= 9);
   B.funnel.activation.steps[0].n = 3;
   const R = buildHome({ B, G: GH_OK });

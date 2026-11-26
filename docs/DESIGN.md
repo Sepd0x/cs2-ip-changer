@@ -42,7 +42,7 @@ The app also has keys with alpha (`AccentSoft`, `GoodSoft`, `WarnSoft`, `BadSoft
 | `RouteMid`, `RouteOff`, `RouteDash` | `AccentColor`, `#6c6c72`, `#37373b` | the route on Connection: its middle dot; the grey rings and dashes while not protected (`RouteOff` also rings a tick or a switch that is off) |
 | `Lift` | `#1d1d1f` | the row or card under the mouse or picked, the letter box, the tags, the Settings group in view |
 | `LineSoft` | `#171719` | white at 4 %: the line between the rows of a table (Log, Profiles, Compare) |
-| `TopLine` | `Top1`, `Top2` at 88 %, `Top3` | the window's 2 px top line, shown at 42 %; the toast's strip |
+| `TopLine` | `Top1`, `Top2` at 88 %, `Top3` | the window's 2 px top line, in full (42 % until 26 Nov at night); the toast's strip |
 | `NavMark` | `AccentColor` (`Top1` to `Top2` until 26 Nov at night) | the 3 x 14 px mark of the page picked in the sidebar |
 
 The web makes its soft colors with `color-mix(in srgb, var(--t-good) 12%, transparent)` or `rgba(var(--t-accent-rgb), …)`.
@@ -90,7 +90,7 @@ SEE", "START AND CLOSE") have none.
 | Dashboard v5 | `--r: 14px` cards, 10 px tabs, 999px chips | 1 px `--line` | `--gap: 20px` (14 px on phones) |
 | README pictures | 8 to 10 px frames around the captures, 8 px nodes | 1 px grey edge | |
 
-The line at the top (blue, magenta, yellow, `TopLine`) is the one shape all four share: 2 px at 42 % across the top of the
+The line at the top (blue, magenta, yellow, `TopLine`) is the one shape all four share: 2 px in full across the top of the
 app's window (and 2 px on its toasts), 3 to 5 px on the web. In the app it runs blue to magenta and the yellow only at its
 end (88 %); on the web the magenta is at 50 %.
 
@@ -175,11 +175,15 @@ there.
 
 ### The window
 
-- A 2 px line across the very top, over the sidebar and the top bar: `TopLine` at 42 %, no glow.
-- The sidebar, 168 px, `Side` with a 1 px `Line` on its right: the logo (26 px), then the eight pages by name only (32 px
-  rows, 12 px in, rounded 8, 13 px `Muted`; the page picked in `Surface2`, white SemiBold, with the 3 x 14 px `NavMark`
-  before its name; the icon stays in `Tag` for the tray and the stats, it isn't drawn), and at the bottom Update and the
-  version on one line ("v0.1.0 beta.14").
+- A 2 px line across the very top, over the sidebar and the top bar: `TopLine` in full (it was at 42 % until 26 Nov at night), no glow.
+- The sidebar, 168 px, `Side` with a 1 px `Line` on its right (26 Nov at night, the owner: the logo was weak in its corner,
+  the pages stuck under it and an empty black below; he asked for the logo and the version centred, the icon over the name, the
+  pages under the logo with a clean gap, and Log and Settings at the foot): the logo centred on top, 40 px; 24 px of air; the six
+  pages you use (Connection to Profiles); at the foot Log and Settings, then Update and the version, centred. Everything fits
+  at the 660 px minimum height. A page: a 66 px row with a 58 px tile 10 px in from each side, rounded 10, holding the icon
+  (`Tag`, Segoe Fluent 22 px) over the name (12 px, 6 px under), `Muted`; under the pointer the tile in `Surface` and the name
+  in `Text`; the page picked has the tile in `Surface2`, the icon in `Accent`, the name white SemiBold and a 3 x 32 px
+  `NavMark` on the sidebar's left edge.
 - The top bar, 40 px: "Pickroute / Page" in 13 px (`Muted`, the "/" in `Faint`, the page in `Text`), the activity pill
   while something runs, then on the right the state chip (24 px, rounded, a 10 % wash of the state's colour, its
   `StatusMark`, the state SemiBold and the IP in mono; a click goes to Connection), the quick switch (`TopPill`, 26 px:

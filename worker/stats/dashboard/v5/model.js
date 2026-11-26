@@ -47,7 +47,9 @@ const HOSTS = { 'youtube.com': 'YouTube', 'm.youtube.com': 'YouTube', 'google.co
   'twitter.com': 'X (Twitter)', 'x.com': 'X (Twitter)', 't.co': 'X (Twitter)', 'tiktok.com': 'TikTok', 'bing.com': 'Bing', 'duckduckgo.com': 'DuckDuckGo', direct: 'Direto (sem link)', '': 'Direto (sem link)' };
 export const hostName = (h) => HOSTS[String(h || '').replace(/^www\./, '')] || String(h).replace(/^www\./, '');
 
-const STEP = { first_start: 'Abriram a app', phone_seen: 'Ligaram o telemóvel', protected: 'Ligaram a proteção', first_match: 'Jogaram uma partida' };
+// Two doors (Nov. 2026): the phone (phone_seen, protected) and the Regions page (regions). "played" is people who played a match by
+// either door; the card "Partidas jogadas" counts matches, so the two never share a name.
+const STEP = { first_start: 'Abriram a app', phone_seen: 'Ligaram o telemóvel', protected: 'Ligaram a proteção', regions: 'Escolheram regiões', played: 'Pessoas que jogaram uma partida', first_match: 'Pessoas que jogaram uma partida' };
 
 /**
  * Tudo o que a página do dono mostra, já em números e frases. B = /api/brief, G = /api/github (ou null), L = /api/live (ou null).
@@ -88,7 +90,7 @@ export function buildHome({ B, G = null, L = null }) {
     { id: 'downloads', label: 'Downloads', value: dl.d7 ?? null, prev: typeof dl.prev7 === 'number' ? dl.prev7 : null, series: pts(S.exe_downloads), today: null,
       sub: dl.d7 == null ? 'o GitHub ainda não deu os downloads por dia' : W7, unit: ['download', 'downloads'], what: `Downloads da app no GitHub, em cada dia${exeTotal != null ? ` (${num(exeTotal)} desde o início)` : ''}` },
     { id: 'matches', label: 'Partidas jogadas', value: m7.d7, prev: m7.prev7, series: pts(S.matches), today: todayOf(S.matches),
-      sub: W7, unit: ['partida', 'partidas'], what: 'Partidas de CS2 que acabaram com a app aberta, em cada dia' },
+      sub: W7, unit: ['partida', 'partidas'], what: 'Partidas de CS2 no total (de todas as pessoas) que acabaram com a app aberta, em cada dia' },
     { id: 'stars', label: 'Estrelas no GitHub', value: starsTotal, prev: null, series: pts(starsSeries), cumulative: true, today: null,
       sub: null, unit: ['estrela', 'estrelas'], what: 'Estrelas no GitHub, o total em cada dia' },
     { id: 'visits', label: 'Visitas ao site', value: sv.d7 ?? null, prev: sv.prev7 ?? null, series: pts(S.site_visits), today: sv.today ?? null,
@@ -148,13 +150,23 @@ export function buildHome({ B, G = null, L = null }) {
     const st = closed ? act.steps : act.running_steps;
     const w = closed ? act.window : B.window && B.window.running7;
     if (st && st[0] && st[0].n) {
-      journey = { base: st[0].n, steps: st.map((x) => ({ id: x.id, label: STEP[x.id] || x.id, n: x.n, share: x.n / st[0].n })),
+      // The phone's own steps, then the Regions door and the people who played by either door (older briefs have no such fields:
+      // then the last step stays the phone's own)
+      const reg = act.regions ? (closed ? act.regions.n : act.regions.running_n) : null;
+      const played = act.played ? (closed ? act.played.n : act.played.running_n) : null;
+      const steps = st.filter((x) => x.id !== 'first_match' || played == null).map((x) => ({ id: x.id, n: x.n }));
+      if (reg != null) steps.push({ id: 'regions', n: reg });
+      if (played != null) steps.push({ id: 'played', n: played });
+      const dr = B.funnel && B.funnel.doors;
+      journey = { base: st[0].n, steps: steps.map((x) => ({ id: x.id, label: STEP[x.id] || x.id, n: x.n, share: x.n / st[0].n })),
+        // What the first start's question got (null until an install sends it)
+        doors: dr && dr.measured && dr.shown > 0 ? `Na pergunta do primeiro arranque: ${plural(dr.shown, 'pessoa viu', 'pessoas viram')}; ${num(dr.regions)} escolheram as regiões, ${num(dr.phone)} o telemóvel, ${num(dr.tour)} a visita e ${num(dr.later)} ficaram para depois.` : null,
         // Beta.13 (the owner: "os dados estão confusos"): the running week has today in it, so it is not the cards' "últimos 7 dias"
         // (the 7 complete days); its dates are said, so 1 new on the cards and 2 here don't read as a contradiction
         text: closed ? `${plural(st[0].n, 'pessoa instalou', 'pessoas instalaram')} a app entre ${dayPt(w[0])} e ${dayPt(w[1])}. Na primeira semana de uso:`
           : `${plural(st[0].n, 'pessoa instalou', 'pessoas instalaram')} a app de ${dayPt(w[0])} até hoje, ainda a meio da primeira semana. Até agora:` };
       const stk = B.stuck && closed ? B.stuck.buckets.filter((x) => x.id !== 'reached_match' && x.n).sort((a, b) => b.n - a.n)[0] : null;
-      if (stk) journey.note = { never_phone: 'Quem desiste, desiste sobretudo antes de ligar o telemóvel', phone_not_protected: 'Quem desiste, desiste sobretudo depois de ligar o telemóvel e antes de ligar a proteção', protected_no_match: 'Quem desiste, desiste sobretudo depois de ligar a proteção e antes de jogar' }[stk.id] + ` (${num(stk.n)} de ${num(st[0].n)}).`;
+      if (stk) journey.note = { never_phone: 'Quem desiste, desiste sobretudo antes de ligar o telemóvel ou de escolher regiões', phone_not_protected: 'Quem desiste, desiste sobretudo depois de ligar o telemóvel e antes de ligar a proteção', protected_no_match: 'Quem desiste, desiste sobretudo depois de ligar a proteção e antes de jogar' }[stk.id] + ` (${num(stk.n)} de ${num(st[0].n)}).`;
     }
   }
 

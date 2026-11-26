@@ -618,28 +618,33 @@
         </Setter>
     </Style>
 
-    <!-- ============================================================ Pages on the left: the name only (26 Nov, App v3)
-         32 px rows, 12 px in, rounded 8. The page picked: Surface2, white SemiBold, a 3 x 14 mark in the route colours.
-         The icon stays in Tag (the tray and the telemetry read it), it isn't drawn -->
+    <!-- ============================================================ Pages on the left (26 Nov at night, the owner: icons back,
+         the icon over the name, the logo and the version centred). Each page is a 66 px row; in it a 58 px tile 10 px in from
+         each side, rounded 10, holds the icon (its Tag, Segoe
+         Fluent, 22 px) over the name (12 px, 6 px under). The page picked: the tile in Surface2, the icon in the accent, the name
+         white SemiBold, and a 3 x 32 px NavMark on the sidebar's left edge. Under the pointer: the tile in Surface, the name in Text -->
     <Style x:Key="Nav" TargetType="RadioButton">
         <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
         <Setter Property="Foreground" Value="{StaticResource Muted}"/>
-        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontSize" Value="12"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="GroupName" Value="nav"/>
-        <Setter Property="Height" Value="32"/>
-        <Setter Property="Margin" Value="0,0,0,2"/>
+        <Setter Property="Height" Value="66"/>
         <Setter Property="ToolTipService.InitialShowDelay" Value="400"/>
         <Setter Property="ToolTipService.Placement" Value="Right"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
-                    <Border x:Name="b" Background="Transparent" CornerRadius="8" Padding="12,0,8,0">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border x:Name="bar" Width="3" Height="14" CornerRadius="2" Margin="0,0,9,0" Background="{StaticResource NavMark}" Visibility="Collapsed"/>
-                            <ContentPresenter VerticalAlignment="Center"/>
+                    <Grid Background="Transparent">
+                        <Border x:Name="b" Height="58" Margin="10,0" VerticalAlignment="Center" Background="Transparent" CornerRadius="10"/>
+                        <Border x:Name="bar" Width="3" Height="32" HorizontalAlignment="Left" VerticalAlignment="Center" CornerRadius="0,2,2,0"
+                                Background="{StaticResource NavMark}" Visibility="Hidden"/>
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="12,0">
+                            <TextBlock x:Name="icon" Text="{TemplateBinding Tag}" FontFamily="{StaticResource Icons}" FontSize="22" HorizontalAlignment="Center"
+                                       FontWeight="Normal"/>
+                            <ContentPresenter HorizontalAlignment="Center" Margin="0,6,0,0" TextBlock.TextAlignment="Center"/>
                         </StackPanel>
-                    </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="b" Property="Background" Value="{StaticResource Surface}"/>
@@ -647,6 +652,7 @@
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="bar" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="icon" Property="Foreground" Value="{StaticResource Accent}"/>
                             <Setter TargetName="b" Property="Background" Value="{StaticResource Surface2}"/>
                             <Setter Property="Foreground" Value="White"/>
                             <Setter Property="FontWeight" Value="SemiBold"/>
