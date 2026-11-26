@@ -40,9 +40,14 @@ function publicKeyInRepo() {
 }
 
 // One reader for the whole run (a second one would miss lines the first already took); what you type for a passphrase isn't shown.
+// That needs a real console: in Git Bash (mintty) node has no TTY and mintty itself echoes the passphrase into the window and its
+// scrollback (audit 26 nov., S3), so there it stops before asking.
+const canHide = (isTTY) => !!isTTY;
 let rl, muted = false;
 const lines = [], waiting = [];
 function ask(question, hidden) {
+  if (hidden && !canHide(process.stdin.isTTY))
+    fail('this window would show the passphrase as you type it (Git Bash). Run the same command in PowerShell or cmd, or as "winpty node ...".');
   if (!rl) {
     rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: !!process.stdin.isTTY });
     rl._writeToOutput = (s) => { if (!muted) rl.output.write(s); };

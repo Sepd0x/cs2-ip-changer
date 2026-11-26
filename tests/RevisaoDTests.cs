@@ -195,7 +195,7 @@ static class RevisaoDTests
         check("Revisão D4: a linha da Sync diz que nada está marcado", MainWindow.CfgSyncLine(CfgMode.Main, false, "6 Nov 10:00 · Sync now: 1 copied.") == "Sync is on, but nothing is ticked in Copy > What to copy.", "");
         check("Revisão D4: com algo marcado, a linha da Sync fica como era",
             MainWindow.CfgSyncLine(CfgMode.Main, true, null) == "No sync yet." && MainWindow.CfgSyncLine(CfgMode.Off, false, null) == "Sync is off. To copy once, use Copy." && MainWindow.CfgSyncLine(CfgMode.Latest, true, "x") == "x", "");
-        check("Revisão D4: mudar o What to copy refaz a linha da Sync", cfgSrc.Contains("SaveSettings();\n        ShowCfgResult(CfgSyncLine(_s.ConfigMode, _s.ConfigCategories.Count > 0, Cfg.State.LastResult));"), "");
+        check("Revisão D4: mudar o What to copy refaz a linha da Sync", cfgSrc.Contains("SaveSettings();\n        ShowCfgResult(CfgSyncLine(_s.ConfigMode, _s.ConfigCategories.Count > 0, CfgLastResult(Cfg.State)));"), "");
 
         // D5. Sem "on the right" nas strings do C# (o teste 8 da organização só lia o XAML)
         var lit = new Regex(@"""(?:[^""\\\n]|\\.)*""");

@@ -50,7 +50,7 @@ public partial class MainWindow
         IdentSource.DisplayMemberPath = nameof(ProfileRow.Name);
 
         TplCountry.Items.Add(new ComboBoxItem { Content = Loc.T("None shown"), Tag = "" });
-        foreach (var (code, name) in Countries.All) TplCountry.Items.Add(new ComboBoxItem { Content = name, Tag = code });
+        foreach (var (code, name) in Countries.InLanguage(Loc.Lang)) TplCountry.Items.Add(new ComboBoxItem { Content = name, Tag = code });
         foreach (var c in new[] { PrivProfile, PrivGames, PrivInventory, PrivFriends, PrivComments })
             foreach (var (text, level) in new (string, int?)[] { (Loc.T("Keep as it is"), null), (Loc.T("Public"), PrivacyPreset.Public), (Loc.T("Friends only"), PrivacyPreset.Friends), (Loc.T("Private"), PrivacyPreset.Private) })
                 c.Items.Add(new ComboBoxItem { Content = text, Tag = level });
@@ -250,13 +250,13 @@ public partial class MainWindow
         foreach (var r in _profRows)
         {
             var mi = new MenuItem { Header = r.Name + (r.SignedIn ? "" : "  " + Loc.T("(public profile)")), Tag = "" };
-            mi.Click += async (_, _) => { if (CurTemplate is ProfileTemplate t && await CopyLookInto(t, r)) { ShowTemplate(t); SaveTemplates(); Toast(Loc.F("Copied {0}'s look into \"{1}\".", r.Name, t.Title), true); } };
+            mi.Click += async (_, _) => { if (CurTemplate is ProfileTemplate t && await CopyLookInto(t, r)) { ShowAfterCopy(t); SaveTemplates(); Toast(Loc.F("Copied {0}'s look into \"{1}\".", r.Name, t.Title), true); } };
             menu.Items.Add(mi);
         }
         // Any profile, also one that isn't saved on this PC.
         if (menu.Items.Count > 0) menu.Items.Add(new Separator());
         var link = new MenuItem { Header = Loc.T("From a Steam profile link…"), Tag = "" };
-        link.Click += async (_, _) => { if (CurTemplate is ProfileTemplate t && await CopyLookFromLink(t)) { ShowTemplate(t); SaveTemplates(); Toast(Loc.F("Copied the profile's look into \"{0}\".", t.Title), true); } };
+        link.Click += async (_, _) => { if (CurTemplate is ProfileTemplate t && await CopyLookFromLink(t)) { ShowAfterCopy(t); SaveTemplates(); Toast(Loc.F("Copied the profile's look into \"{0}\".", t.Title), true); } };
         menu.Items.Add(link);
         menu.IsOpen = true;
     }
@@ -722,11 +722,19 @@ public partial class MainWindow
         catch (Exception ex) { Log.Error("Profiles: copy look from a link: " + Secrets.Clean(ex.GetBaseException().Message)); Toast(Loc.T("Couldn't read that profile."), false); return false; }
     }
 
+    /// <summary>
+    /// After a Copy look that read Steam (up to 60 s): the fields show the template only if it is still the one picked. Audit 26 nov.,
+    /// V4: picking another template during the read left the old one on screen, and the next edit or Apply went into the new one.
+    /// </summary>
+    void ShowAfterCopy(ProfileTemplate t) { if (CopyStillShown(CurTemplate, t)) ShowTemplate(t); }
+
+    public static bool CopyStillShown(ProfileTemplate current, ProfileTemplate copied) => ReferenceEquals(current, copied);
+
     async void ProfCopyInto_Click(object sender, RoutedEventArgs e)
     {
         if (PRow(sender) is ProfileRow r && CurTemplate is ProfileTemplate t && await CopyLookInto(t, r))
         {
-            ShowTemplate(t); SaveTemplates();
+            ShowAfterCopy(t); SaveTemplates();
             Toast(Loc.F("Copied {0}'s look into \"{1}\".", r.Name, t.Title), true);
         }
     }

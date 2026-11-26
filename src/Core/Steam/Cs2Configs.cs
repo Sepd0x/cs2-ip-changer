@@ -59,6 +59,11 @@ public sealed class CfgState
     public string LastSyncId { get; set; }
     public DateTime? LastSyncAt { get; set; }
     public string LastResult { get; set; }
+    /// <summary>26 nov.: the last result as data (when, why, copied/same/waiting/not changed), so its line follows the app's language;
+    /// LastResult stays for a state saved by an older version.</summary>
+    public DateTime? LastAt { get; set; }
+    public string LastWhy { get; set; }
+    public int[] LastCounts { get; set; }
 }
 
 public sealed class CfgBackup

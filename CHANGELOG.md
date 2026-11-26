@@ -85,6 +85,10 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Regions: an allowed region with no ping yet was drawn as 200 ms and could get the yellow "slowest" mark. It now waits for its ping.
 - Website in Portuguese, Spanish, Russian and Turkish: the line with the version, size and date of the download, and the VirusTotal result on "Is it safe?", showed in English or empty. They are translated now.
 - Website on a phone: choosing a language in the menu no longer logs an error.
+- The month in "Mobile data: ... in November" (Phone and the status bar) is in the app's language.
+- Configs: the result of the last sync ("Sync now: 2 copied, 3 already the same") follows the app's language, also after you change it.
+- Profiles: the Country list is in the app's language and sorted by it.
+- Profiles: picking another template while "Copy look" was still reading Steam showed the old template's fields over the new one, and the next edit or Apply went into the new one. The fields now stay on the template you picked.
 
 ## [0.1.0-beta.14] - 2026-11-19
 

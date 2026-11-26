@@ -38,10 +38,11 @@ CS2 IP Changer is now **Pickroute**, and this is its first stable version: a new
 - Phone setup and the first start's question no longer dim the top bar, so the window buttons stay clickable.
 - Whole PC, turned off for a weak connection, comes back after a Change IP or a restart once the connection is good.
 - Regions: an allowed region with no ping yet waits for it instead of showing as 200 ms.
+- Profiles: picking another template during Copy look no longer mixes the two.
 
 ### Languages
 - The app and the website are now also in **Turkish**.
-- Many fixes in Portuguese, Spanish and Russian: country names in Regions, Join, Log in and Sign in each have their own word, and labels that were cut off now fit. Tooltips, dialog hints, the dial's continents and Change IP's progress follow the app's language.
+- Many fixes in Portuguese, Spanish and Russian: country names in Regions, Join, Log in and Sign in each have their own word, and labels that were cut off now fit. Tooltips, dialog hints, the dial's continents, Change IP's progress, the month of the mobile data, the last sync's result and Profiles' countries follow the app's language.
 
 ### Also
 - Usage stats are no longer required: the first start asks, with Accept and Turn off, and Settings changes it any time.

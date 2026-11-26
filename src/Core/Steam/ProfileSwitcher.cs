@@ -150,6 +150,31 @@ public static class Countries
         .GroupBy(r => r.TwoLetterISORegionName).Select(g => (g.Key, g.First().EnglishName))
         .OrderBy(x => x.EnglishName, StringComparer.OrdinalIgnoreCase).ToList();
 
+    static Dictionary<string, Dictionary<string, string>> _names;
+
+    /// <summary>
+    /// The list for Profiles > Country in the app's language, sorted the way that language sorts (audit 26 nov., X7: always English).
+    /// The names are in src/Lang/countries.json (node tools/countries.mjs, from ICU); a code it doesn't have stays in English.
+    /// </summary>
+    public static IReadOnlyList<(string Code, string Name)> InLanguage(string lang)
+    {
+        if (lang == "en") return All;
+        try
+        {
+            if (_names == null)
+            {
+                using var s = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Lang.countries.json");
+                _names = s == null ? new() : JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(s) ?? new();
+            }
+        }
+        catch (Exception) { _names = new(); }
+        var names = _names.GetValueOrDefault(lang);
+        if (names == null) return All;
+        CultureInfo culture;
+        try { culture = CultureInfo.GetCultureInfo(lang); } catch (CultureNotFoundException) { culture = CultureInfo.InvariantCulture; }
+        return All.Select(c => (c.Code, names.GetValueOrDefault(c.Code, c.Name))).OrderBy(x => x.Item2, StringComparer.Create(culture, true)).ToList();
+    }
+
     public static string NameOf(string code) => string.IsNullOrEmpty(code) ? null : All.FirstOrDefault(c => c.Code == code).Name ?? code;
 
     /// <summary>"Lisboa, Lisboa, Portugal" (the public XML) to "PT". Null when it doesn't end in a known country.</summary>

@@ -255,7 +255,15 @@ public partial class MainWindow
 
     /// <summary>"Mobile data: 85 MB since the app opened, 1.24 GB in November."</summary>
     public static string DataText(long session, long month, DateTime now) =>
-        Loc.F("Mobile data: {0} since the app opened, {1} in {2}.", DataMeter.Text(session), DataMeter.Text(month), Loc.T(now.ToString("MMMM", System.Globalization.CultureInfo.InvariantCulture)));
+        Loc.F("Mobile data: {0} since the app opened, {1} in {2}.", DataMeter.Text(session), DataMeter.Text(month), MonthName(now));
+
+    /// <summary>The month in the app's language ("November", "novembro", "ноябрь", "Kasım"); 26 nov.: it stayed in English.</summary>
+    public static string MonthName(DateTime now)
+    {
+        var culture = System.Globalization.CultureInfo.InvariantCulture;
+        if (Loc.Lang != "en") try { culture = System.Globalization.CultureInfo.GetCultureInfo(Loc.Lang); } catch (System.Globalization.CultureNotFoundException) { }
+        return culture.DateTimeFormat.GetMonthName(now.Month);
+    }
 
     void DataWarn_Changed(object sender, RoutedEventArgs e)
     {

@@ -194,12 +194,8 @@ public partial class MainWindow
         int copied = results.Count(r => r.Outcome == CfgOutcome.Copied), same = results.Count(r => r.Outcome == CfgOutcome.Same),
             queued = results.Count(r => r.Outcome == CfgOutcome.Queued), failed = results.Count(r => r.Outcome is CfgOutcome.Failed or CfgOutcome.Skipped);
         if (copied + queued + failed == 0 && !manual) return;   // an automatic check that found nothing to do stays quiet
-        var parts = new List<string>();
-        if (copied > 0) parts.Add(Loc.F("{0} copied", copied));
-        if (same > 0) parts.Add(Loc.F("{0} already the same", same));
-        if (queued > 0) parts.Add(Loc.F("{0} waiting for CS2 to close", queued));
-        if (failed > 0) parts.Add(Loc.F("{0} not changed (see Log)", failed));
-        Cfg.State.LastResult = $"{Fmt.When(AppClock.Now)} · {char.ToUpper(reason[0]) + reason[1..]}: {string.Join(", ", parts)}.";
+        Cfg.State.LastAt = AppClock.Now; Cfg.State.LastWhy = why; Cfg.State.LastCounts = new[] { copied, same, queued, failed };
+        Cfg.State.LastResult = CfgLastResultText(Cfg.State.LastAt.Value, why, Cfg.State.LastCounts);
         Cfg.SaveState();
         if (manual) Toast(failed > 0 ? Loc.T("Some accounts weren't changed. Details are in the Log.") : queued > 0 ? Loc.T("CS2 is open: the copy goes in when it closes.") : copied > 0 ? Loc.F("Config copied to {0}.", Fmt.Count(copied, "account")) + " " + (copied == 1 ? Loc.T("Backup saved.") : Loc.T("Backups saved.")) : Loc.T("Every account already has the same config."), failed == 0);
         if (PageConfigs.IsVisible) ShowConfigs();
@@ -225,6 +221,23 @@ public partial class MainWindow
         // 26 nov. (critics): on the title's Sync line the time stays in the line's own font, with a separator before what it did
         CfgSyncLast.Text = CfgSyncLastText(m.Groups[1].Value, m.Groups[2].Value);
     }
+
+    /// <summary>"6 Nov 16:40 · Sync now: 2 copied, 3 already the same." in the app's language at the time it shows (26 nov.: it kept the
+    /// language of the moment it ran).</summary>
+    public static string CfgLastResultText(DateTime at, string why, int[] c)
+    {
+        var parts = new List<string>();
+        if (c[0] > 0) parts.Add(Loc.F("{0} copied", c[0]));
+        if (c[1] > 0) parts.Add(Loc.F("{0} already the same", c[1]));
+        if (c[2] > 0) parts.Add(Loc.F("{0} waiting for CS2 to close", c[2]));
+        if (c[3] > 0) parts.Add(Loc.F("{0} not changed (see Log)", c[3]));
+        var reason = CfgReasonText(why);
+        return $"{Fmt.When(at)} · {char.ToUpper(reason[0]) + reason[1..]}: {string.Join(", ", parts)}.";
+    }
+
+    /// <summary>The last result's line: from its data when the state has it, else the text an older version saved.</summary>
+    static string CfgLastResult(CfgState st) =>
+        st.LastAt is DateTime at && st.LastWhy != null && st.LastCounts?.Length == 4 ? CfgLastResultText(at, st.LastWhy, st.LastCounts) : st.LastResult;
 
     /// <summary>"last run 6 Nov 16:40 · Sync now: 2 copied, 3 already the same."</summary>
     public static string CfgSyncLastText(string when, string what) => Loc.T("last run") + " " + when + " · " + what;
@@ -395,7 +408,7 @@ public partial class MainWindow
             CfgBackupList.ItemsSource = backups;
             CfgBackupEmpty.Visibility = backups.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             CfgUndoBtn.IsEnabled = Cfg.CanUndo;   // nothing to put back: greyed out like Sync now
-            ShowCfgResult(CfgSyncLine(_s.ConfigMode, _s.ConfigCategories.Count > 0, Cfg.State.LastResult));
+            ShowCfgResult(CfgSyncLine(_s.ConfigMode, _s.ConfigCategories.Count > 0, CfgLastResult(Cfg.State)));
             var mainName = _accounts.FirstOrDefault(a => a.SteamId == _s.ConfigMainId)?.Name;
             CfgSummary.Text = CfgSummaryText(_cfgRows.Count, _s.ConfigMode, mainName);
             CfgSyncMode.Text = CfgSyncModeText(_s.ConfigMode, mainName);
@@ -478,7 +491,7 @@ public partial class MainWindow
     {
         _s.ConfigCategories = CfgCats.Children.OfType<CheckBox>().Where(c => c.IsChecked == true).Select(c => (string)c.Tag).ToList();
         SaveSettings();
-        ShowCfgResult(CfgSyncLine(_s.ConfigMode, _s.ConfigCategories.Count > 0, Cfg.State.LastResult));
+        ShowCfgResult(CfgSyncLine(_s.ConfigMode, _s.ConfigCategories.Count > 0, CfgLastResult(Cfg.State)));
     }
 
     void CfgWhen_Click(object sender, RoutedEventArgs e)

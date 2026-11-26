@@ -137,5 +137,34 @@ static class Auditoria26NovTests
         foreach (var pane in new[] { "SetupPane", "StartPane", "Dialog" })
             check($"Barra de cima: o véu de {pane} começa abaixo dela (40 px), como o dos diálogos",
                 xamlTop.Contains($"<Grid x:Name=\"{pane}\" Grid.Row=\"1\" Margin=\"0,40,0,0\""), pane);
+
+        // 26 nov. à noite: o que tinha ficado de fora (mês, resultado da Sync, X7, V4, S3)
+        foreach (var (n, ok, d) in EmPtBr(() =>
+        {
+            var l = new List<(string, bool, string)>();
+            var nov = new DateTime(2026, 11, 5, 12, 0, 0);
+            var data = MainWindow.DataText(85_400_000, 1_240_000_000, nov);
+            l.Add(("Barra de estado: o mês na língua da app (era \"em November\")", MainWindow.MonthName(nov) == "novembro" && data.Contains("novembro") && !data.Contains("November"), data));
+            var sync = MainWindow.CfgLastResultText(nov, CfgTrigger.Manual, new[] { 2, 3, 0, 0 });
+            l.Add(("Configs: o resultado da Sync faz-se na língua de agora, a partir dos números guardados",
+                sync.Contains(Loc.F("{0} copied", 2)) && sync.Contains(Loc.F("{0} already the same", 3)) && Loc.F("{0} copied", 2) != "2 copied", sync));
+            var pt = Countries.InLanguage("pt-BR");
+            string Name(string code) => pt.First(c => c.Code == code).Name;
+            l.Add(("Auditoria X7: Profiles > País na língua da app, ordenado por ela",
+                Name("BR") == "Brasil" && Name("DE") == "Alemanha" && pt.ToList().FindIndex(c => c.Code == "DE") < pt.ToList().FindIndex(c => c.Code == "BR")
+                && pt.Count == Countries.All.Count && Countries.InLanguage("en") == Countries.All, $"{Name("BR")} {Name("DE")}"));
+            return l;
+        })) check(n, ok, d);
+        var cfgSrc = Src("Views", "MainWindow.Configs.cs");
+        check("Configs: a linha da Sync lê os dados guardados (LastAt, LastWhy, LastCounts), e o texto antigo só como reserva",
+            cfgSrc.Contains("CfgLastResult(Cfg.State)") && !cfgSrc.Contains("Cfg.State.LastResult));") && Src("Core", "Steam", "Cs2Configs.cs").Contains("public int[] LastCounts"), "");
+        var prof = Src("Views", "MainWindow.Profiles.cs");
+        var a = new ProfileTemplate(); var b = new ProfileTemplate();
+        check("Auditoria V4: depois do Copy look, os campos só mostram o modelo se ele ainda for o escolhido",
+            MainWindow.CopyStillShown(a, a) && !MainWindow.CopyStillShown(b, a) && !MainWindow.CopyStillShown(null, a)
+            && !prof.Contains("ShowTemplate(t); SaveTemplates();") && prof.Split("ShowAfterCopy(t); SaveTemplates();").Length == 4, "");
+        var key = File.ReadAllText(Path.Combine(SecurityTests.Repo(), "tools", "release-key.mjs"));
+        check("Auditoria S3: a frase-passe não se pede numa janela que a mostra (Git Bash sem TTY)",
+            key.Contains("if (hidden && !canHide(process.stdin.isTTY))") && key.Contains("const canHide = (isTTY) => !!isTTY;"), "");
     }
 }
