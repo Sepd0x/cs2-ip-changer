@@ -485,7 +485,7 @@ public partial class MainWindow
     HashSet<string> _bannedIpTargets = new();
     string _bannedIpSig = "?";   // "?" = not applied yet in this run: the first look (with the IP known) removes a rule a crash left behind
     /// <summary>The banned-IP rule is written one change at a time, the latest one last (A-08).</summary>
-    readonly LatestOnly<Firewall.FwRule> _bannedIpWrite = new();
+    readonly LatestOnly<List<Firewall.FwRule>> _bannedIpWrite = new();
 
     /// <summary>
     /// The first look waits for the IP the servers see: a rule a crash left behind for that IP stays until it is known (removing it first
@@ -509,13 +509,18 @@ public partial class MainWindow
         if (BannedIpWaits(first, ip)) return;
         _bannedIpSig = sig;
         _bannedIpTargets = targets.ToHashSet();
-        var rule = Firewall.BannedIpRule(targets);
-        _ = _bannedIpWrite.Run(rule, r =>
+        var rules = Firewall.BannedIpRules(targets);
+        _ = _bannedIpWrite.Run(rules, list =>
         {
-            try { if (r != null) Firewall.Apply(r); else Firewall.Remove(Firewall.BannedIpRuleName); }
+            try
+            {
+                if (list.Count == 0) { Firewall.Remove(Firewall.BannedIpRuleName); return; }
+                foreach (var r in list) Firewall.Apply(r);
+                Firewall.RemoveBannedIpExcept(list.Select(r => r.Name));
+            }
             catch (Exception ex) { Log.Warn("Could not update the block on servers that banned this IP: " + (ex.InnerException ?? ex).Message); }
         });
-        if (rule != null) Log.Warn($"Your IP ({ShownIp(ip)}) was banned on {string.Join(", ", targets)}: the app blocks {(targets.Count == 1 ? "that server" : "those servers")} until the IP changes.");
+        if (rules.Count > 0) Log.Warn($"Your IP ({ShownIp(ip)}) was banned on {string.Join(", ", targets)}: the app blocks {(targets.Count == 1 ? "that server" : "those servers")} until the IP changes.");
         else if (!first) Log.Info("The IP changed (or the ban mark went): the block on the servers that banned the old IP is off.");
     }
 

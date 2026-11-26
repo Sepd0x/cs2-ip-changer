@@ -112,7 +112,7 @@ public partial class MainWindow
     public static string UseOffWarning => Loc.T(
         "While protection is off, Servers, Join and Log in with CS2 use your home connection and the app blocks nothing but the regions you turned off.\n\n" +
         "Every server you join sees your home IP. A ban there can reach that IP, and changing the phone's IP won't help with it.\n\n" +
-        "Turn on protection (Status or the tray icon) whenever you want to play through the phone. You can turn this off again here.");
+        "Turn on protection (Connection or the tray icon) whenever you want to play through the phone. You can turn this off again here.");
 
     /// <summary>Settings > Use the app with protection off: a warning before it turns on; turning it off needs none.</summary>
     async void UseOff_Click(object sender, RoutedEventArgs e)
@@ -269,11 +269,11 @@ public partial class MainWindow
         _bannedIpSig = "?";
         ApplyBannedIpBlock();
         ShowRegionsStatus();
-        if (left == null) Toast(Loc.T("Protection is off and checked. Turn on protection (Status or the tray icon) brings it back."), true);
+        if (left == null) Toast(Loc.T("Protection is off and checked. Turn on protection (Connection or the tray icon) brings it back."), true);
         else Toast(Loc.F("Couldn't remove: {0}. Restart the PC to clear the routes, or run the app with --restore.", left), Tone.Error);
     }
 
-    static string TurnOffText => Loc.T("Turns off the kill switch, the routes and the CS2 lock. Until you click Turn on protection (in Status, or the tray icon), servers see your home IP. " +
+    static string TurnOffText => Loc.T("Turns off the kill switch, the routes and the CS2 lock. Until you click Turn on protection (in Connection, or the tray icon), servers see your home IP. " +
         "Your servers stay saved, and the regions you turned off stay off (Regions > Allow all (block off) lifts them).");
 
     /// <summary>The Turn off question. With CS2 open, the server you are on sees the home IP at once: said in the same question.</summary>

@@ -468,13 +468,30 @@ public static class Cs2Config
             c.OutlineMode, Math.Max(1, Px(c.OutlineThickness ?? 1)));
     }
 
+    /// <summary>
+    /// A custom colour as a word (26 nov., critics: "#00FF0…" was cut in the middle of the hex; the crosshair drawn next to it
+    /// shows the exact colour). Grey, white and black when there's little colour, else the hue's name.
+    /// </summary>
+    public static string ColorWord(int? r, int? g, int? b)
+    {
+        if (r == null || g == null || b == null) return Loc.T("custom");
+        double R = r.Value / 255.0, G = g.Value / 255.0, B = b.Value / 255.0;
+        double max = Math.Max(R, Math.Max(G, B)), min = Math.Min(R, Math.Min(G, B)), l = (max + min) / 2, d = max - min;
+        var s = d == 0 ? 0 : d / (1 - Math.Abs(2 * l - 1));
+        if (s < 0.2 || d < 0.08) return l > 0.8 ? Loc.T("white") : l < 0.2 ? Loc.T("black") : Loc.T("grey");
+        var h = max == R ? 60 * (((G - B) / d) % 6) : max == G ? 60 * ((B - R) / d + 2) : 60 * ((R - G) / d + 4);
+        if (h < 0) h += 360;
+        return h < 15 || h >= 345 ? Loc.T("red") : h < 40 ? Loc.T("orange") : h < 70 ? Loc.T("yellow") : h < 160 ? Loc.T("green")
+            : h < 200 ? Loc.T("cyan") : h < 260 ? Loc.T("blue") : h < 290 ? Loc.T("purple") : Loc.T("pink");
+    }
+
     /// <summary>"size 1 · gap -4 · thick 1 · cyan · dot off", or null without crosshair settings.</summary>
     public static string CrosshairSummary(CfgSet s)
     {
         var c = ReadCrosshair(s);
         if (c == null) return null;
         string N(double? v) => v?.ToString("0.##", CultureInfo.InvariantCulture) ?? "?";
-        var color = c.Color >= 0 && c.Color < ColorNames.Length - 1 ? Loc.T(ColorNames[c.Color]) : $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+        var color = c.Color >= 0 && c.Color < ColorNames.Length - 1 ? Loc.T(ColorNames[c.Color]) : ColorWord(c.R, c.G, c.B);
         return Loc.F("{0} {1} · gap {2} · thick {3} · {4}", c.Pixels ? Loc.T("length") : Loc.T("size"), N(c.Size), N(c.Gap), N(c.Thickness), color)
             + (c.Dot == true ? " · " + Loc.T("dot") : "") + (c.Outline == true ? c.OutlineMode == 2 ? " · " + Loc.T("half outline") : " · " + Loc.T("outline") : "");
     }

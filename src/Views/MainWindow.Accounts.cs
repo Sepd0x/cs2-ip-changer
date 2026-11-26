@@ -309,6 +309,7 @@ public partial class MainWindow
         SideQuickLabel.Text = head.TrimEnd();
         SideQuickNext.Text = who ?? "";
         SideQuickNext.Margin = new Thickness(who == null ? 0 : 4, 0, 0, 0);
+        SideQuickIcon.Visibility = who == null ? Visibility.Collapsed : Visibility.Visible;
         SideQuickTail.Text = tail;
         // Shorter than the top bar: at the minimum width (1020) a longer name pushes the "On login:" row onto two lines. The tooltip has it whole.
         QuickBtn.Content = head + (who == null ? "" : ShortName(who)) + tail;
@@ -543,7 +544,7 @@ public partial class MainWindow
             for (var i = 0; i < list.Count; i++)
             {
                 var a = list[i];
-                AccRefreshText.Text = Loc.F("Checking {0}/{1}…", i + 1, list.Count);
+                AccChecking.Text = CheckingText(i + 1, list.Count);
                 try
                 {
                     var oldUrl = a.Meta.Profile?.AvatarUrl;
@@ -569,9 +570,13 @@ public partial class MainWindow
         {
             _refreshingAcc = false;
             AccRefreshBtn.IsEnabled = true;
-            AccRefreshText.Text = Loc.T("Refresh");
+            AccChecking.Text = "";
         }
     }
+
+    /// <summary>The title's line while Refresh runs: " · Checking 2/4…" after "4 of 4" (26 nov., critics: on the Refresh button it
+    /// doubled the button's width and pushed the filters onto a second line).</summary>
+    public static string CheckingText(int n, int of) => " · " + Loc.F("Checking {0}/{1}…", n, of);
 
     void AccProfile_Click(object sender, RoutedEventArgs e) => OpenUrl(Acc(sender), "https://steamcommunity.com/profiles/{0}");
     void AccLeetify_Click(object sender, RoutedEventArgs e) => OpenUrl(Acc(sender), "https://leetify.com/app/profile/{0}");

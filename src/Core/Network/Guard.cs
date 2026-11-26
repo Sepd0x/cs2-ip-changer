@@ -173,6 +173,9 @@ public sealed class Guard
 
     public static readonly string[] SplitPrefixes = { "0.0.0.0/1", "128.0.0.0/1" };
 
+    /// <summary>Whole PC is on the phone only when Windows sends a probe of each half (0/1 and 128/1) through it.</summary>
+    public static bool BothHalvesOn(int lowIndex, int highIndex, int egressIndex) => lowIndex == egressIndex && highIndex == egressIndex;
+
     /// <summary>What the app changed in Windows, saved to disk so a crash or a kill doesn't leave orphans behind.</summary>
     public sealed class OwnedState
     {
@@ -565,16 +568,22 @@ public sealed class Guard
         var fullOk = false;
         if (mode == "all" && egress?.Gateway != null)
         {
-            if (Net.BestInterface(Net.PcProbeIp) != egress.Index || Net.BestInterface(Net.PcProbeIpHigh) != egress.Index)
+            var repaired = false;
+            if (!BothHalvesOn(Net.BestInterface(Net.PcProbeIp), Net.BestInterface(Net.PcProbeIpHigh), egress.Index))
             {
                 foreach (var pfx in SplitPrefixes)
                 {
                     var r = await Net.AddRoute(pfx, egress, 5);
                     if (r.Ok) Own(RouteKey.Of(pfx, egress));
                 }
-                Log.Info(s.Mode == "all" ? "The whole PC goes through the phone." : "CS2 is open: the whole PC goes through the phone.");
+                repaired = true;
             }
-            fullOk = Net.BestInterface(Net.PcProbeIp) == egress.Index;
+            // Audit 26 nov. (A2): both halves read back after the writes (only 0/1 was, so a 128/1 that failed or lost to another
+            // adapter still showed the whole PC as protected), and the Log says so only then
+            fullOk = BothHalvesOn(Net.BestInterface(Net.PcProbeIp), Net.BestInterface(Net.PcProbeIpHigh), egress.Index);
+            if (repaired && fullOk) Log.Info(s.Mode == "all" ? "The whole PC goes through the phone." : "CS2 is open: the whole PC goes through the phone.");
+            else if (repaired) Log.WarnOnce("fullroutes|", "Whole PC: Windows doesn't send all of the PC through the phone yet (one of the two halves stays on another connection). Another VPN may be overriding it.");
+            if (fullOk) Log.Again("fullroutes|");
         }
         else await RemoveSplitRoutes(adapters);
 
@@ -700,7 +709,7 @@ public sealed class Guard
             var rules = Firewall.Remaining();
             foreach (var n in Firewall.WholePcRules) if (rules.Error != null || Firewall.Has(rules, n)) Firewall.Remove(n);
             // The banned-IP block only holds while the app watches the IP: with the app closed the phone's IP can change under it
-            if (rules.Error != null || Firewall.Has(rules, Firewall.BannedIpRuleName)) Firewall.Remove(Firewall.BannedIpRuleName);
+            if (rules.Error != null || rules.Any(Firewall.IsBannedIpRule)) Firewall.Remove(Firewall.BannedIpRuleName);
             if (!cs2Running) await RemoveSplitRoutes(Net.Scan());
             await RestoreMetric();
         }

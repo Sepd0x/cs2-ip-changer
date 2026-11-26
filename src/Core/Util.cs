@@ -532,9 +532,10 @@ public static class Fmt
     public static string Left(TimeSpan d)
     {
         if (d.TotalSeconds <= 0) return Loc.T("ended");
-        if (d.TotalDays >= 1) return Loc.F("{0} d {1} h", (int)d.TotalDays, d.Hours);
-        if (d.TotalHours >= 1) return Loc.F("{0} h {1} min", (int)d.TotalHours, d.Minutes.ToString("00"));
-        return Loc.F("{0} min {1} s", d.Minutes, d.Seconds.ToString("00"));
+        // Two units at most and no zero one (26 nov., critics: "2 d 0 h" next to "1 h 35 min"): "2 d", "1 d 4 h", "1 h", "1 h 35 min"
+        if (d.TotalDays >= 1) return d.Hours == 0 ? Loc.F("{0} d", (int)d.TotalDays) : Loc.F("{0} d {1} h", (int)d.TotalDays, d.Hours);
+        if (d.TotalHours >= 1) return d.Minutes == 0 ? Loc.F("{0} h", (int)d.TotalHours) : Loc.F("{0} h {1} min", (int)d.TotalHours, d.Minutes);
+        return d.Seconds == 0 && d.Minutes > 0 ? Loc.F("{0} min", d.Minutes) : Loc.F("{0} min {1} s", d.Minutes, d.Seconds.ToString("00"));
     }
 
     public static string MaskIp(string ip)

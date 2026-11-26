@@ -209,6 +209,10 @@ public partial class MainWindow
         await AddFromText(t);
     }
 
+    /// <summary>Where to find IPs? (26 nov., critics): the same help as the empty list, for a list that isn't empty.</summary>
+    async void WhereIps_Click(object sender, RoutedEventArgs e) =>
+        await Ask(Loc.T("Where to find server IPs"), ServersEmptyHelp.Text, Loc.T("OK"), null);
+
     async void ImportServers_Click(object sender, RoutedEventArgs e)
     {
         var dlg = new Microsoft.Win32.OpenFileDialog { Filter = Loc.T("Lists (*.txt;*.csv;*.cfg;*.log)") + "|*.txt;*.csv;*.cfg;*.log|" + Loc.T("All (*.*)") + "|*.*", Title = Loc.T("Choose a server list") };

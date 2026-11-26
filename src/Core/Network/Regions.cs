@@ -137,7 +137,25 @@ public static class Regions
         ["Australia"] = "Oceania", ["Guam"] = "Oceania", ["New Zealand"] = "Oceania",
     };
 
-    static readonly Dictionary<string, string> CityNames = new(StringComparer.OrdinalIgnoreCase) { ["Tokyo Koto City"] = "Tokyo" };
+    /// <summary>
+    /// The country in the app's language, for the Regions list (26 nov., critics: "Spain", "United States · Virginia" in pt-BR). The
+    /// literals are here so tools/loc-keys.mjs and tests/LocTests.cs find them; a country Valve adds later shows in English.
+    /// </summary>
+    public static string CountryName(string country) => country switch
+    {
+        "Netherlands" => Loc.T("Netherlands"), "Germany" => Loc.T("Germany"), "Finland" => Loc.T("Finland"), "United Kingdom" => Loc.T("United Kingdom"),
+        "Spain" => Loc.T("Spain"), "France" => Loc.T("France"), "Sweden" => Loc.T("Sweden"), "Austria" => Loc.T("Austria"), "Poland" => Loc.T("Poland"),
+        "Italy" => Loc.T("Italy"), "Portugal" => Loc.T("Portugal"), "Turkey" => Loc.T("Turkey"), "Russia" => Loc.T("Russia"), "Norway" => Loc.T("Norway"),
+        "Denmark" => Loc.T("Denmark"), "Romania" => Loc.T("Romania"), "United States" => Loc.T("United States"), "Canada" => Loc.T("Canada"),
+        "Mexico" => Loc.T("Mexico"), "Argentina" => Loc.T("Argentina"), "Brazil" => Loc.T("Brazil"), "Peru" => Loc.T("Peru"), "Chile" => Loc.T("Chile"),
+        "Colombia" => Loc.T("Colombia"), "China" => Loc.T("China"), "Hong Kong" => Loc.T("Hong Kong"), "South Korea" => Loc.T("South Korea"),
+        "Singapore" => Loc.T("Singapore"), "Japan" => Loc.T("Japan"), "India" => Loc.T("India"), "United Arab Emirates" => Loc.T("United Arab Emirates"),
+        "Saudi Arabia" => Loc.T("Saudi Arabia"), "Bahrain" => Loc.T("Bahrain"), "Israel" => Loc.T("Israel"), "South Africa" => Loc.T("South Africa"),
+        "Australia" => Loc.T("Australia"), "Guam" => Loc.T("Guam"), "New Zealand" => Loc.T("New Zealand"),
+        _ => country,
+    };
+
+    static readonly Dictionary<string, string> CityNames =new(StringComparer.OrdinalIgnoreCase) { ["Tokyo Koto City"] = "Tokyo" };
 
     // Partner networks in the name ("Datapacket Frankfurt"): the same city as Valve's own pop.
     static readonly string[] Providers = { "Alibaba Cloud ", "Tencent ", "Datapacket ", "Hetzner " };

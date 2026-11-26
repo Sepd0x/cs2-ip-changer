@@ -222,10 +222,12 @@ public partial class MainWindow
         var mono = (FontFamily)FindResource("Mono");
         CfgResult.Inlines.Add(new System.Windows.Documents.Run(m.Groups[1].Value) { FontFamily = mono });
         CfgResult.Inlines.Add(new System.Windows.Documents.Run(" · " + m.Groups[2].Value));
-        CfgSyncLast.Inlines.Add(new System.Windows.Documents.Run(Loc.T("last run") + " "));
-        CfgSyncLast.Inlines.Add(new System.Windows.Documents.Run(m.Groups[1].Value) { FontFamily = mono, FontSize = 11.5 });
-        CfgSyncLast.Inlines.Add(new System.Windows.Documents.Run(" " + m.Groups[2].Value));
+        // 26 nov. (critics): on the title's Sync line the time stays in the line's own font, with a separator before what it did
+        CfgSyncLast.Text = CfgSyncLastText(m.Groups[1].Value, m.Groups[2].Value);
     }
+
+    /// <summary>"last run 6 Nov 16:40 · Sync now: 2 copied, 3 already the same."</summary>
+    public static string CfgSyncLastText(string when, string what) => Loc.T("last run") + " " + when + " · " + what;
 
     /// <summary>The mode on the Sync line (App v4): "from main account nightfall", "off".</summary>
     public static string CfgSyncModeText(string mode, string mainName) => mode switch
@@ -359,6 +361,7 @@ public partial class MainWindow
                     Sync = sync,
                     Selected = selected.Contains(a.SteamId),
                     IsMain = isMain,
+                    SyncPaused = _s.ConfigMode == CfgMode.Off,
                     Pending = pending,
                     Linked = linked,
                     CrosshairText = xhText,
@@ -872,6 +875,9 @@ public sealed class CfgAccountRow : Observable
     public bool Sync { get => _sync; set => Set(ref _sync, value); }
     public bool Selected { get => _selected; set => Set(ref _selected, value); }
     public bool IsMain { get; init; }
+    /// <summary>The page's Sync is off: the Gets sync switch draws off (dimmed, RouteOff ring) whatever it holds, and keeps its value
+    /// for when Sync is back (26 nov., critics: four switches lit in the accent next to "Sync is off").</summary>
+    public bool SyncPaused { get; init; }
     public bool Pending { get; init; }
     /// <summary>Its CS2 folder is a link or junction: never read or written, so never folded in with the accounts that have no config.</summary>
     public bool Linked { get; init; }

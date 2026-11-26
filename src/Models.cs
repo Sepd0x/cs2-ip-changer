@@ -582,7 +582,8 @@ public sealed class AccountItem : Observable
     public string HideMenuText => Meta.Hidden ? Loc.T("Show in list") : Loc.T("Hide from list");
     public bool HasLastServer => Meta.LastServer != null;
     public string LastServerText => Meta.LastServer == null ? null
-        : Loc.F("Last: {0} · {1}", string.IsNullOrWhiteSpace(Meta.LastServerName) ? Meta.LastServer : Meta.LastServerName, Fmt.Ago(Meta.LastServerAt));
+        // the time first, on one line cut at its end (26 nov., critics: "ago" wrapped alone onto the card's next line)
+        : Loc.F("Last: {0} · {1}", Fmt.Ago(Meta.LastServerAt), string.IsNullOrWhiteSpace(Meta.LastServerName) ? Meta.LastServer : Meta.LastServerName);
     /// <summary>Eligible for Switch: not skipped, no cooldown, no VAC/game ban.</summary>
     public bool Usable => InRotation && !InCooldown && !HasVac && !HasGameBan;
     public string CooldownText => InCooldown ? Loc.F("Cooldown {0}", Fmt.Left(Meta.CooldownUntil.Value - AppClock.Now)) : null;

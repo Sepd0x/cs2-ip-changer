@@ -271,7 +271,7 @@ static class ConfigTests
             ("cl_crosshaircolor_r", "0"), ("cl_crosshaircolor_g", "255"), ("cl_crosshaircolor_b", "0"), ("cl_crosshaircolor_a", "255"), ("cl_crosshair_drawoutline", "1"),
             ("cl_crosshairsize", "3.9"), ("cl_crosshairthickness", "0.6"), ("cl_crosshair_screen_height", "1080"));
         var sum7 = Cs2Config.CrosshairSummary(x7);
-        check("Configs: mira nova (estilo 7)", sum7 == "length 8 · gap 4 · thick 2 · #00FF00 · outline" && Cs2Config.ReadCrosshair(x7).Pixels, sum7);
+        check("Configs: mira nova (estilo 7)", sum7 == "length 8 · gap 4 · thick 2 · green · outline" && Cs2Config.ReadCrosshair(x7).Pixels, sum7);
 
         // "1.000000" e "1" são o mesmo valor; só a diferença real aparece
         var n1 = new CfgSet(); n1.Files[CfgPart.Convars] = ConvarsOf(("sensitivity", "1.000000"), ("cl_crosshairgap", "-3"));

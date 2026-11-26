@@ -118,7 +118,32 @@ public static partial class Net
 
     public sealed record IpInfo(string Isp, string City, string Country, bool Mobile, bool Proxy)
     {
-        public string Short => string.Join(" · ", new[] { Isp, City, Country }.Where(s => !string.IsNullOrWhiteSpace(s)));
+        public string Short => string.Join(" · ", new[] { CarrierName(Isp), City, Country }.Where(s => !string.IsNullOrWhiteSpace(s)));
+    }
+
+    static readonly Regex LegalTail = new(@"[\s,]+(S\.?\s?A\.?|S\.?p\.?A\.?|S\.?L\.?|S\.?A\.?S\.?|Ltd\.?|Limited|AG|GmbH|Inc\.?|LLC|B\.?V\.?|N\.?V\.?|plc|Co\.?|Corp\.?|Corporation|Oy|AB|AS|A/S)$",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// The carrier as people say it (26 nov., critics: "MEO - SERVICOS DE COMUNICACOES E MULTIMEDIA S.A." took four lines on
+    /// Connection): what comes before " - ", without the legal form at the end (S.A., AG, Ltd…), and an all-capitals name longer
+    /// than an acronym with only its first letters up. "MEO - SERVICOS…" -> "MEO", "Deutsche Telekom AG" -> "Deutsche Telekom".
+    /// </summary>
+    public static string CarrierName(string isp)
+    {
+        if (string.IsNullOrWhiteSpace(isp)) return isp;
+        var s = isp.Trim();
+        var dash = s.IndexOf(" - ", StringComparison.Ordinal);
+        if (dash > 1) s = s[..dash].Trim();
+        for (var i = 0; i < 3; i++)
+        {
+            var cut = LegalTail.Replace(s, "").Trim().TrimEnd(',');
+            if (cut.Length < 2 || cut == s) break;
+            s = cut;
+        }
+        if (s.Length > 5 && !s.Any(char.IsLower))
+            s = string.Join(' ', s.Split(' ').Select(w => w.Length <= 3 || !w.Any(char.IsLetter) ? w : w[0] + w[1..].ToLowerInvariant()));
+        return s;
     }
 
     static readonly Dictionary<string, IpInfo> InfoCache = new();

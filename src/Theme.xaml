@@ -160,7 +160,18 @@
         </Setter>
     </Style>
 
-    <!-- Dialog: the title chip sits on the dimmed page -->
+    <!-- Dialog (26 nov., critics): the title inside the box, 16 px Display SemiBold, 8 px over the text; no more chip on the
+         border (it read as a Windows group box). Square, Surface, the dark Edge rim and a LineStrong line inside it. The overlays
+         that use it set Look.Round, so their buttons are the pages' pills and the one Primary is filled -->
+    <!-- The title a DialogGroup header holds (set on the TextBlock: a header written in the page inherits from the box, not the template) -->
+    <Style x:Key="DialogTitle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{StaticResource DisplayFont}"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Text}"/>
+        <Setter Property="LineHeight" Value="20"/>
+        <Setter Property="LineStackingStrategy" Value="BlockLineHeight"/>
+    </Style>
     <Style x:Key="DialogGroup" TargetType="HeaderedContentControl">
         <Setter Property="Margin" Value="0,0,0,12"/>
         <Setter Property="Padding" Value="14,16,14,12"/>
@@ -168,25 +179,16 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="HeaderedContentControl">
-                    <Grid>
-                        <Border Margin="0,7,0,0" Background="{StaticResource Surface}" BorderBrush="#000000" BorderThickness="1">
-                            <Border BorderBrush="{StaticResource LineStrong}" BorderThickness="1" Padding="{TemplateBinding Padding}">
+                    <Border Background="{StaticResource Surface}" BorderBrush="{StaticResource Edge}" BorderThickness="1">
+                        <Border BorderBrush="{StaticResource LineStrong}" BorderThickness="1" Padding="{TemplateBinding Padding}">
+                            <DockPanel>
+                                <ContentPresenter DockPanel.Dock="Top" ContentSource="Header" Margin="0,0,28,8"
+                                                  TextElement.FontFamily="{StaticResource DisplayFont}" TextElement.FontWeight="SemiBold"
+                                                  TextElement.FontSize="16" TextElement.Foreground="{StaticResource Text}"/>
                                 <ContentPresenter/>
-                            </Border>
+                            </DockPanel>
                         </Border>
-                        <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,0,0,0" Padding="5,0" Height="16">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                    <GradientStop Color="#040404" Offset="0"/>
-                                    <GradientStop Color="#040404" Offset="0.5"/>
-                                    <GradientStop Color="{StaticResource SurfaceColor}" Offset="0.5"/>
-                                    <GradientStop Color="{StaticResource SurfaceColor}" Offset="1"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
-                            <ContentPresenter ContentSource="Header" VerticalAlignment="Center"
-                                              TextElement.FontWeight="SemiBold" TextElement.FontSize="12" TextElement.Foreground="{StaticResource Text}"/>
-                        </Border>
-                    </Grid>
+                    </Border>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

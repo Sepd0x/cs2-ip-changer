@@ -254,6 +254,10 @@ public partial class MainWindow
     /// <summary>The trusted connection stays trusted only while the report still sees that same connection.</summary>
     public static string TrustAfter(string verifiedKey, string candidateKey) => candidateKey != null && candidateKey == verifiedKey ? verifiedKey : null;
 
+    /// <summary>A server row's Route with the game on the home network. 26 nov. (critics): "Off", not "Protection off": the Route column
+    /// is 112 px and "Proteção desligada" ran under the Join pill on every row.</summary>
+    public static string HomeRouteText(string effectiveMode) => Loc.T(effectiveMode == "off" ? "Off" : "Home IP");
+
     void ApplyReport(GuardReport rep)
     {
         if (rep.Error != null && rep.Adapters.Count == 0) { SetHero("bad", Loc.T("Error applying protection"), rep.Error); return; }
@@ -296,7 +300,7 @@ public partial class MainWindow
 
         foreach (var srv in _servers)
         {
-            if (home) { srv.Protected = null; srv.RouteText = rep.EffectiveMode == "off" ? Loc.T("Protection off") : Loc.T("Home IP"); continue; }
+            if (home) { srv.Protected = null; srv.RouteText = HomeRouteText(rep.EffectiveMode); continue; }
             var ok = rep.RouteOk.TryGetValue(srv.Ip, out var r) && r && rep.KillSwitchOk;
             srv.Protected = rep.Egress == null ? (rep.KillSwitchOk ? null : false) : ok;
             srv.RouteText = Loc.T(rep.Egress == null ? (rep.KillSwitchOk ? "Blocked" : "Unprotected") : ok ? "Protected" : !rep.KillSwitchOk ? "No kill switch" : "Route failed");
@@ -577,7 +581,7 @@ public partial class MainWindow
         UpdatePhoneCheck();
         PhoneNotInUse();
         UpdateProtectionButtons();
-        ServerCount.Text = ServerCountText(_servers.Count, n, _servers.All(s => s.Protected == true));
+        ServerCount.Text = ServerCountText(_servers.Count, n, false, notAsked: !OnHome);
         ServersEmpty.Visibility = _servers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         QueryBtn.IsEnabled = CopyBtn.IsEnabled = ServerSearch.IsEnabled = _servers.Count > 0;
         ServerHeader.Visibility = _servers.Count == 0 ? Visibility.Hidden : Visibility.Visible;
@@ -593,8 +597,10 @@ public partial class MainWindow
     /// The line under Servers' title (26 Nov, App v3): "12 servers on 2 IPs", and " · all protected" when every server's route is
     /// confirmed through the phone. Empty with no servers.
     /// </summary>
-    public static string ServerCountText(int servers, int ips, bool allProtected) => servers == 0 ? ""
-        : Loc.F("{0} on {1}", Fmt.Count(servers, "server"), Fmt.Count(ips, "IP")) + (allProtected ? " · " + Loc.T("all protected") : "");
+    public static string ServerCountText(int servers, int ips, bool allProtected, bool notAsked = false) => servers == 0 ? ""
+        : Loc.F("{0} on {1}", Fmt.Count(servers, "server"), Fmt.Count(ips, "IP")) + (allProtected ? " · " + Loc.T("all protected")
+        // 26 nov. (critics): with protection off the servers aren't asked over the home network, so 22 rows of "No name yet" read as broken
+        : notAsked ? " · " + Loc.T("names, players and ping show once protection is on") : "");
     public static string OffHeroTitle(bool useWithOff) => useWithOff ? Loc.T("Home IP: servers see it") : Loc.T("Protection off");
 
     /// <summary>Whole PC mode: what isn't confirmed yet (routes, DNS or IPv6).</summary>
@@ -835,7 +841,7 @@ public partial class MainWindow
         {
             if (await Ask(Loc.T("Turn on protection now?"), LeaveNoPhoneAsk(Steam.Cs2Running, _s.LockCs2 && PhoneKnown), Loc.T("Turn on"), Loc.T("Not now")))
                 await RunCommand(Loc.T("Turn on protection"), Loc.T("turning on…"), () => TurnProtectionOn(ask: false));
-            else Log.Info("Protection is off. Turn it on in Status when you want to play through the phone.");
+            else Log.Info("Protection is off. Turn it on in Connection when you want to play through the phone.");
         }
     }
 

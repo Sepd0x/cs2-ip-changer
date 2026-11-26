@@ -175,7 +175,9 @@ static class Rede15NovTests
             && Src("Views", "MainWindow.Protection.cs").Contains("if (rep.RulesRenamed && !s.RulesRenamed) { s.RulesRenamed = true; changed = true; }")
             && new Settings().RulesRenamed == false, "");
         check("Bloqueador 3: o Keep e o --restore veem as regras pelo nome antigo também",
-            guard.Contains("Firewall.Has(rules, n)") && guard.Contains("Firewall.Has(rules, Firewall.BannedIpRuleName)")
+            // 26 nov. (auditoria A4): a regra de ban passou a uma por porta; o fecho procura a família, também pelo nome antigo
+            guard.Contains("Firewall.Has(rules, n)") && guard.Contains("rules.Any(Firewall.IsBannedIpRule)")
+            && Firewall.IsBannedIpRule(Firewall.LegacyName(Firewall.BannedIpRuleName))
             && guard.Contains("Firewall.RemoveAll(keepRegions);") && guard.Contains("!keepRegions || !Firewall.IsRegionRule(n)")
             && RegionGames.All.All(game => Firewall.IsRegionRule(Firewall.LegacyName(game.RuleName))), "");
     }
@@ -219,7 +221,7 @@ static class Rede15NovTests
         var kick = Src("Views", "MainWindow.Kick.cs");
         var body = kick[kick.IndexOf("void ApplyBannedIpBlock()", StringComparison.Ordinal)..kick.IndexOf("void WarnBannedIpJoin(", StringComparison.Ordinal)];
         check("A-08: o ApplyBannedIpBlock escreve pelo LatestOnly, não por um Task.Run por mudança",
-            body.Contains("_bannedIpWrite.Run(rule,") && !body.Contains("Task.Run(") && body.Contains("if (BannedIpWaits(first, ip)) return;"), "");
+            body.Contains("_bannedIpWrite.Run(rules,") && !body.Contains("Task.Run(") && body.Contains("if (BannedIpWaits(first, ip)) return;"), "");
     }
 
     // A-13: o Loc.Hook() (tipos do WPF) corria antes do resolver de DLLs e do LockDllSearch

@@ -60,7 +60,7 @@ public partial class MainWindow
         foreach (var a in _accounts) { yield return a.Login; yield return a.Name; yield return a.Local.PersonaName; if (!CommonNote(a.Note)) yield return a.Note; }
         foreach (var s in _servers) if (s.Players != null) foreach (var p in s.Players) yield return p.Name;
         foreach (var f in _flags) { yield return f.Name; yield return f.Persona; }
-        foreach (var i in new[] { _homeInfo, _egressInfo }) if (i != null) { yield return i.Isp; yield return i.City; yield return i.Country; }
+        foreach (var i in new[] { _homeInfo, _egressInfo }) if (i != null) { yield return i.Isp; yield return Net.CarrierName(i.Isp); yield return i.City; yield return i.Country; }
         foreach (var h in _history) if (h.Isp != null) foreach (var part in h.Isp.Split(" · ")) yield return part;
         if (_phone != null) { yield return _phone.Model; yield return _phone.Carrier; yield return _phone.WifiSsid; yield return _phone.Serial; }
         if (_last?.Adapters != null) foreach (var ad in _last.Adapters) yield return ad.Ssid;

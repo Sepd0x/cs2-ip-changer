@@ -278,7 +278,39 @@ public partial class MainWindow
         _ = SetBlocked(Regions.AllExcept(_regionInfos, _regionInfos.Where(r => r.Continent == c).Select(r => r.Id)), keep: new[] { Regions.ContinentKey(c) });
     }
 
-    void RegionsAllowAll_Click(object sender, RoutedEventArgs e) => _ = SetBlocked(new HashSet<string>());
+    void RegionsAllowAll_Click(object sender, RoutedEventArgs e) =>
+        _ = _regionGame?.Infos == null && _regionGame != null && !_demo ? AllowAllWithoutList(_regionGame) : SetBlocked(new HashSet<string>());
+
+    /// <summary>
+    /// Allow all needs no list (audit 26 nov., A5): with Valve out of reach and no saved copy, the regions turned off before still had
+    /// their Firewall rule and the page had no way to lift it (only --restore, which also takes protection off). The rule goes by its
+    /// name and is read back before the page says so.
+    /// </summary>
+    async Task AllowAllWithoutList(RegionGameState state)
+    {
+        state.Settings.BlockedRegions = new();
+        state.Settings.RegionsKeep = null;
+        SaveSettings();
+        await _regionGate.WaitAsync();
+        bool left;
+        try
+        {
+            var game = state.Game;
+            left = await Task.Run(() =>
+            {
+                Firewall.Remove(game.RuleName);
+                return Firewall.Remaining() is var rules && (rules.Error != null || rules.Any(n => Firewall.IsRegionRule(n, game)));
+            });
+        }
+        finally { _regionGate.Release(); }
+        state.RuleOn = left;
+        Log.Info(left ? $"Regions: Allow all couldn't remove the {state.Game.Name} block (no region list to rebuild it)." : $"Regions: Allow all, the {state.Game.Name} block is off.");
+        Toast(left ? Loc.T("Couldn't remove the regions block. Run the app with --restore, or restart it and try again.") : Loc.T("Every region is allowed again."), !left);
+        ShowRegionsStatus();
+    }
+
+    /// <summary>Allow all works with or without Valve's list when something is still blocked (A5); the other shortcuts need the list.</summary>
+    public static bool AllowAllEnabled(bool hasList, bool demoReady, int blockedSaved, bool ruleOn) => hasList || demoReady || blockedSaved > 0 || ruleOn;
 
     void RegionsMaxPing_Changed(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
@@ -509,7 +541,8 @@ public partial class MainWindow
         if (RegionsStatus == null || state == null) return;
         RemeasureIfPathChanged();
         // Nothing to act on until Valve's list is here (the buttons would only answer "No regions yet"). The demo fills the page itself.
-        RegionsClosestBtn.IsEnabled = RegionsContinentBtn.IsEnabled = RegionsAllowAllBtn.IsEnabled = RegionsUnderBtn.IsEnabled = _regionInfos != null || (_demo && _sdr != null);
+        RegionsClosestBtn.IsEnabled = RegionsContinentBtn.IsEnabled = RegionsUnderBtn.IsEnabled = _regionInfos != null || (_demo && _sdr != null);
+        RegionsAllowAllBtn.IsEnabled = AllowAllEnabled(_regionInfos != null, _demo && _sdr != null, state.Settings.BlockedRegions.Count, state.RuleOn);
         UpdateRegionPresetButtons();
         // "<continent> only" for where you play from; hidden until the app knows it (a ping, or your home country).
         var mine = MyContinent;

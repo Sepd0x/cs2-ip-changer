@@ -319,9 +319,20 @@ public partial class MainWindow
         var p = StartProblems(steam, cs2);
         if (p.Count == 0) { Log.Ok("First start: Steam and CS2 found."); return; }
         Log.Warn("First start: " + string.Join(" ", p.Select(Loc.En)));
-        // 24 Nov: no "the phone comes next" any more: the two doors come next, and most people want Regions
-        await Ask(Loc.T("Before you start"), string.Join("\n\n", p), Loc.T("OK"), null);
+        // 24 Nov: no "the phone comes next" any more: the two doors come next, and most people want Regions.
+        // 26 nov. (critics): a question with something to do, not just OK: with Steam there, its button opens CS2's install in Steam
+        var (ok, cancel) = StartProblemButtons(steam);
+        if (await Ask(Loc.T("Before you start"), string.Join("\n\n", p), ok, cancel) && steam)
+            try { Steam.OpenUrl(Cs2InstallUrl); }
+            catch (Exception ex) { Log.Warn("First start: " + ex.Message); Toast(ex.Message, false); }
     }
+
+    /// <summary>steam://install/730 opens Steam's install window for CS2 (app 730).</summary>
+    public const string Cs2InstallUrl = "steam://install/730";
+
+    /// <summary>The first start's buttons: with Steam, "Install CS2 in Steam" and Later; without it only OK (there's no Steam to open).</summary>
+    public static (string Ok, string Cancel) StartProblemButtons(bool steam) =>
+        steam ? (Loc.T("Install CS2 in Steam"), Loc.T("Later")) : (Loc.T("OK"), null);
 
     async void AdbInstall_Click(object sender, RoutedEventArgs e)
     {

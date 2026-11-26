@@ -53,7 +53,7 @@ Check("181d", Fmt.ParseDuration("181d") == TimeSpan.FromDays(181));
 Check("90m", Fmt.ParseDuration("90m") == TimeSpan.FromMinutes(90));
 Check("36 (horas)", Fmt.ParseDuration("36") == TimeSpan.FromHours(36));
 Check("lixo", Fmt.ParseDuration("abc") == null);
-Check("Fmt.Left 181d", Fmt.Left(TimeSpan.FromDays(181)) == "181 d 0 h", Fmt.Left(TimeSpan.FromDays(181)));
+Check("Fmt.Left 181d (26 nov.: sem a unidade a zero)", Fmt.Left(TimeSpan.FromDays(181)) == "181 d", Fmt.Left(TimeSpan.FromDays(181)));
 
 // VDF: ida e volta numa cópia do loginusers.vdf
 var dir = Steam.InstallDir();
@@ -698,6 +698,10 @@ GuiDialV4Tests.Run(Check);
 PickrouteTests.Run(Check);
 // 26 nov.: a versão de testes automática no PC que joga (TesteRealTests.cs)
 TesteRealTests.Run(Check);
+// 26 nov.: a triagem dos críticos antes da 1.0.0 (Criticos26NovTests.cs)
+Criticos26NovTests.Run(Check);
+// 26 nov.: os achados confirmados da auditoria do Codex (CodexAuditTests.cs)
+CodexAuditTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

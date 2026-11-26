@@ -177,8 +177,12 @@ there.
 - The top bar, 40 px: "Pickroute / Page" in 13 px (`Muted`, the "/" in `Faint`, the page in `Text`), the activity pill
   while something runs, then on the right the state chip (24 px, rounded, a 10 % wash of the state's colour, its
   `StatusMark`, the state SemiBold and the IP in mono; a click goes to Connection), the quick switch (`TopPill`, 26 px:
-  New IP + next account and the next account's name) and the window buttons (`Chrome`). A dialog covers the page, not this
-  bar (`Dialog`, 40 px from the top).
+  New IP + next account and the next account's name after a person mark, both in `Accent`) and the window buttons (`Chrome`).
+  A dialog covers the page, not this bar (`Dialog`, 40 px from the top). A dialog box (`DialogGroup`: a question, Phone
+  setup, the two doors, the tour) is square, `Surface` with the `Edge` rim and a `LineStrong` line inside it, its title inside
+  the box (`DialogTitle`: 16 px Display SemiBold on a 20 px line, 8 px over the text), the X 8 px from its right edge; its
+  overlay has `Look.Round`, so its buttons are the pages' pills and its one `Primary` is filled (26 Nov 2026: the title chip
+  on the border and the square OK read as a Windows group box).
 - The status bar, 28 px, `Side` with a 1 px `Line` above it, 24 px in: the phone as Connection > Phone shows it (its mark,
   the state SemiBold, the detail in `Muted`) and the mobile data, and on the right New IP + next account with its hotkey in
   a key box (Settings > Hotkeys and sounds). It only repeats what the app already shows.
@@ -200,7 +204,8 @@ there.
   phone is ready (see First run). Regions: Block slower. Servers: Join, on the row under the mouse or picked. Accounts:
   Log in, on the card under the mouse. Configs: Copy config…, and Copy to N accounts in its panel. Profiles: Apply to N
   accounts. Log: Save bug report. Settings has none. The rest are pills (`Pill`; `Btn` and `Primary` turn into pills on a
-  page with `Look.Round`), plain words (`LinkBtn`) or a red word (`DangerLink`).
+  page with `Look.Round`), plain words (`LinkBtn`) or a red word (`DangerLink`). A word at the right end of a line has a
+  -8 px right margin, so its text ends where the pills end (its hover wash keeps the 8 px).
 - The route's colours (`Top1` to `Top3`) only on what is live: the window's top line, the sidebar's mark, the route This
   PC > phone > Servers on Connection while protected (`RouteOn`, with `RouteMid`; dashed and grey otherwise), the dial's
   lit arc on Regions and the toast's strip. Everything else uses the one accent.
@@ -237,10 +242,11 @@ there.
   the servers see), the row of buttons with Turn off protection as a red word at its right end, then What goes through the
   phone (the four modes, the one picked in `Field` with an `AccentLine` outline). Right: Checks (only the rows that need
   you, unless Show all), Phone (its buttons on the title's line), Previous IPs, How it works (it folds).
-- **Servers:** the paste box with Default port, Add, Paste and Import on one line; the bar with the search, Refresh every
-  30 s, Refresh all, Copy IPs and Remove; the follow and slot bars when they show (`Field`, rounded 8, an `AccentLine`
-  outline); the table Server, Map, Players, Ping, Route (46 px rows, Protected with its mark, the ping in mono
-  coloured against Regions > Ping under).
+- **Servers:** the paste box with Default port, Add, Paste, Import and Where to find IPs? on one line; the bar with the
+  search, Refresh every 30 s, Refresh all, Copy IPs and Remove; the follow and slot bars when they show (`Field`, rounded 8,
+  an `AccentLine` outline); the table Server, Map, Players 140, Ping 78, Route 112, Join 80 (46 px rows, Protected with its
+  mark, cut with an ellipsis 8 px before Join; the ping in mono coloured against Regions > Ping under).
+- **Searches:** 200 px on every page (Servers, Accounts, Configs, Log).
 - **Regions:** the title's line counts (8 allowed · best 24 ms · block on), the list's source and Refresh on its right;
   the bar with the game tabs, Preset (a pill that opens the presets) and the pills Closest 3, Europe only and Allow all
   (block off); Ping under with Block slower; the regions by continent (a continent folds to one line), each with a round
@@ -252,8 +258,9 @@ there.
   (`Surface`, rounded 10, the account in use with an accent outline).
 - **Configs:** the Sync line ("Sync: from main account nightfall · last run …") opens its menu (the four modes, When,
   What it copies, Sync now, Undo last sync); the bar with the search (from 8 accounts), the count, Compare and Copy
-  config…; the table Account, Last change, Sync status, Gets sync (54 px rows, the crosshair in a 36 px box, … for more);
-  Backups and snapshots folded under it (Backups, then Snapshots folded inside).
+  config…; the table Account, Last change, Sync status, Gets sync (54 px rows, the crosshair in a 36 px box, … for more;
+  a custom crosshair colour said as a word, the box draws it; with Sync off every Gets sync switch draws off at 40 % and keeps
+  its value); Backups and snapshots folded under it (Backups, then Snapshots folded inside).
 - **Profiles:** 1 The look (the template and its fields, the picture, Privacy; Copy the look of an account…), 2 Accounts
   (Pick All, Signed in, None and the count on the step's line; two columns of accounts with Sign in), 3 Review and apply
   (Fields to change, Now, After and Status for the accounts picked, Use this template on new accounts, Apply; Restore

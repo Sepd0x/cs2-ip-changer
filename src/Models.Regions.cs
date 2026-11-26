@@ -28,11 +28,12 @@ public sealed class RegionItem : Observable
     public RegionInfo Info { get; init; }
     public string Id => Info.Id;
     public string City => Info.City;
-    public string Country => Info.Area != null ? $"{Info.Country} · {Info.Area}" : Info.Country;
+    /// <summary>The country in the app's language; a US state only in the tooltip (26 nov., critics: "United States · Virg…" was cut).</summary>
+    public string Country => Regions.CountryName(Info.Country);
     public string Continent => Info.Continent;
     public int ContinentRank => Regions.ContinentRank(Info.Continent);
     public string RelayText => Fmt.Count(Info.RelayIps.Count, "relay", "relays");
-    public string Tip => Loc.F("Valve code: {0} · {1}", string.Join(", ", Info.Codes), RelayText);
+    public string Tip => (Info.Area != null ? $"{Info.City}, {Info.Area} · " : "") + Loc.F("Valve code: {0} · {1}", string.Join(", ", Info.Codes), RelayText);
 
     /// <summary>On = CS2 can reach this region. Off = its relays are blocked for cs2.exe.</summary>
     public bool Allowed { get => _allowed; set => Set(ref _allowed, value); }

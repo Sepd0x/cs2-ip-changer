@@ -194,7 +194,7 @@ static class Usabilidade24NovTests
         var xaml = Src("MainWindow.xaml");
         var box = xaml[xaml.IndexOf("x:Name=\"TourBox\"")..xaml.IndexOf("</HeaderedContentControl>", xaml.IndexOf("x:Name=\"TourBox\""))];
         check("Usabilidade C4: a caixa continua com 360 px", box.Contains("Width=\"360\""), "");
-        check("Usabilidade C4: o \"5 de 5\" está no título", Regex.IsMatch(box, @"<HeaderedContentControl.Header>\s*<TextBlock><Run x:Name=""TourTitle""/>.*<Run x:Name=""TourCount"""), "");
+        check("Usabilidade C4: o \"5 de 5\" está no título", Regex.IsMatch(box, @"<HeaderedContentControl.Header>\s*<TextBlock[^>]*><Run x:Name=""TourTitle""/>.*<Run x:Name=""TourCount"""), "");
         check("Usabilidade C4: os botões passam para baixo quando não cabem", Regex.IsMatch(box, @"<WrapPanel x:Name=""TourButtons""[^>]*>\s*<Button x:Name=""TourSkipBtn""") && !box.Contains("Orientation=\"Horizontal\""), "");
     }
 

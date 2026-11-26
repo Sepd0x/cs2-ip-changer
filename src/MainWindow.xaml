@@ -214,7 +214,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Row="2" TextElement.FontSize="12">
-                        <TextBlock Text="{Binding LastServerText}" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0" MaxHeight="34" TextTrimming="CharacterEllipsis"
+                        <TextBlock Text="{Binding LastServerText}" Foreground="{StaticResource Muted}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"
                                    Visibility="{Binding HasLastServer, Converter={StaticResource Vis}}" ToolTip="{Binding LastServerText}"/>
                         <TextBlock Text="{Binding Note}" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0" MaxHeight="34" TextTrimming="CharacterEllipsis"
                                    Visibility="{Binding HasNote, Converter={StaticResource Vis}}" ToolTip="{Binding Note}"/>
@@ -426,7 +426,8 @@
                     <ColumnDefinition Width="140"/>
                     <ColumnDefinition Width="78"/>
                     <ColumnDefinition Width="112"/>
-                    <ColumnDefinition Width="56"/>
+                    <!-- 80, not 56 (26 nov., critics): "Conectar", "Unirse" and "Войти" were cut to "Conecta", "Unirs" -->
+                    <ColumnDefinition Width="80"/>
                 </Grid.ColumnDefinitions>
                 <Button Style="{StaticResource SrvStar}" Content="{Binding StarGlyph}" Click="SrvFav_Click" HorizontalAlignment="Left"/>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,2,0" TextElement.FontWeight="SemiBold">
@@ -481,10 +482,11 @@
                         </MultiBinding>
                     </TextBlock.Foreground>
                 </TextBlock>
-                <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center"
+                <!-- 26 nov. (critics): a DockPanel, not a StackPanel, so a long state trims before the Join pill instead of running under it -->
+                <DockPanel Grid.Column="5" VerticalAlignment="Center" Margin="0,0,8,0" LastChildFill="True"
                             ToolTip="Protected = Windows sends this server through the phone and blocks it on the home network.">
-                    <local:StatusMark Brush="{Binding RouteBrush}"/>
-                    <TextBlock Text="{Binding RouteText}" FontSize="12" Margin="6,0,0,0" TextTrimming="CharacterEllipsis">
+                    <local:StatusMark DockPanel.Dock="Left" Brush="{Binding RouteBrush}" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding RouteText}" FontSize="12" Margin="6,0,0,0" TextTrimming="CharacterEllipsis" VerticalAlignment="Center">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Foreground" Value="{Binding RouteTextBrush}"/>
@@ -496,7 +498,7 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                </StackPanel>
+                </DockPanel>
                 <Button Grid.Column="6" Style="{StaticResource JoinBtn}" Click="SrvConnect_Click" HorizontalAlignment="Right" Content="Join"
                         ToolTip="Runs the checks for the way you play now (with protection on: this server's route through the phone), then opens the game. If a check fails, the game does not open."/>
             </Grid>
@@ -644,7 +646,10 @@
                                     ToolTip="New IP + next account (its hotkey works in game too): new IP, next account, back to the last server.">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock x:Name="SideQuickLabel" Text="New IP + next account"/>
-                                    <TextBlock x:Name="SideQuickNext" Text="" FontWeight="SemiBold" Margin="3,0,0,0" TextTrimming="CharacterEllipsis" MaxWidth="120"/>
+                                    <!-- 26 nov. (critics: "atlas" read as a word, not an account): the account with a person mark, in the accent -->
+                                    <TextBlock x:Name="SideQuickIcon" Text="&#xE77B;" FontFamily="{StaticResource Icons}" FontSize="11" Foreground="{StaticResource Accent}"
+                                               Margin="5,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
+                                    <TextBlock x:Name="SideQuickNext" Text="" FontWeight="SemiBold" Foreground="{StaticResource Accent}" Margin="3,0,0,0" TextTrimming="CharacterEllipsis" MaxWidth="120"/>
                                     <TextBlock x:Name="SideQuickTail" Text=""/>
                                 </StackPanel>
                             </Button>
@@ -952,7 +957,8 @@
                                                             ToolTip="Show or hide"/>
                                                 </StackPanel>
                                                 <TextBlock x:Name="HomeIsp" Text="—" Visibility="Collapsed"/>
-                                                <TextBlock x:Name="HomeLine" Text="—" Foreground="{StaticResource Faint}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                <!-- two lines at most (26 nov., critics: a long carrier name took four and pushed the buttons down) -->
+                                                <TextBlock x:Name="HomeLine" Text="—" Foreground="{StaticResource Faint}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="33.6" Margin="0,2,0,0"/>
                                             </StackPanel>
                                             <!-- the phone: its name, carrier and battery, and its state (PhoneDot, PhoneState); the full line in the tooltip -->
                                             <StackPanel Grid.Column="2" HorizontalAlignment="Center" ToolTip="{Binding Text, ElementName=PhoneDetail}">
@@ -1001,7 +1007,7 @@
                                                 </StackPanel>
                                                 <Button x:Name="LeakBtn" Style="{StaticResource LinkBtn}" Click="LeakTest_Click" VerticalAlignment="Top" Content="Run leak test"
                                                         ToolTip="Full test: Firewall, block, each server's route and whether the phone's IP really differs from your home IP."/>
-                                                <Button x:Name="TurnOffBtn" DockPanel.Dock="Right" Style="{StaticResource DangerLink}" Click="Restore_Click" Margin="8,0,0,0" VerticalAlignment="Top" Content="Turn off protection" Visibility="Collapsed"
+                                                <Button x:Name="TurnOffBtn" DockPanel.Dock="Right" Style="{StaticResource DangerLink}" Click="Restore_Click" Margin="8,0,-8,0" VerticalAlignment="Top" Content="Turn off protection" Visibility="Collapsed"
                                                         ToolTip="Removes the block, the routes and the CS2 lock. Use it if your internet stops working. Turn on protection brings it back. Your servers stay saved, and regions you turned off stay off (Regions > Allow all (block off) lifts them)."/>
                                             </DockPanel>
 
@@ -1050,7 +1056,7 @@
                                     <HeaderedContentControl Style="{StaticResource NetSection}" Header="Checks">
                                         <StackPanel>
                                             <!-- beta.11: only the rows that need you, unless Show all (remembered) -->
-                                            <Button x:Name="ChecksToggle" Style="{StaticResource LinkBtn}" HorizontalAlignment="Right" Margin="0,-28,0,0" Content="Show all" Click="ChecksToggle_Click"
+                                            <Button x:Name="ChecksToggle" Style="{StaticResource LinkBtn}" HorizontalAlignment="Right" Margin="0,-28,-8,0" Content="Show all" Click="ChecksToggle_Click"
                                                     ToolTip="Every check, also the ones that are fine"/>
                                             <DockPanel Margin="0,2,0,0">
                                                 <local:StatusMark x:Name="ChecksMark" DockPanel.Dock="Left" VerticalAlignment="Top" Margin="0,5,8,0" Brush="{StaticResource Good}"/>
@@ -1106,7 +1112,7 @@
                                     <Border BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="0,14,0,0" Margin="0,22,0,0">
                                         <HeaderedContentControl x:Name="HistoryGroup" Style="{StaticResource NetSection}" Header="Previous IPs">
                                             <StackPanel>
-                                                <Button x:Name="ClearHistoryBtn" Style="{StaticResource LinkBtn}" HorizontalAlignment="Right" Margin="0,-28,0,0" Content="Clear history" Click="ClearHistory_Click"/>
+                                                <Button x:Name="ClearHistoryBtn" Style="{StaticResource LinkBtn}" HorizontalAlignment="Right" Margin="0,-28,-8,0" Content="Clear history" Click="ClearHistory_Click"/>
                                                 <TextBlock x:Name="HistoryEmpty" Text="No IP changes yet." Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0"/>
                                                 <ScrollViewer MaxHeight="168" Margin="0,4,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                                                 <ItemsControl x:Name="History" TextElement.FontSize="12" TextBlock.LineHeight="16.8" TextBlock.LineStackingStrategy="BlockLineHeight">
@@ -1184,6 +1190,8 @@
                                 <Button Click="AddServers_Click" Content="Add" Margin="0,0,8,0" ToolTip="Adds those servers to the list (Ctrl+Enter). With protection on, they only go out through the phone."/>
                                 <Button Style="{StaticResource LinkBtn}" Click="PasteServers_Click" Content="Paste" Margin="0,0,8,0" ToolTip="Adds whatever is on the clipboard"/>
                                 <Button Style="{StaticResource LinkBtn}" Click="ImportServers_Click" Content="Import" ToolTip="Reads every IP:port from a .txt, .csv, .cfg or .log file"/>
+                                <!-- 26 nov. (critics): the field asks for IPs without saying where they come from -->
+                                <Button x:Name="WhereIpsBtn" Style="{StaticResource LinkBtn}" Click="WhereIps_Click" Content="Where to find IPs?" Margin="0,0,-8,0"/>
                             </StackPanel>
                         </Grid>
 
@@ -1231,7 +1239,7 @@
                                 </Border>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="240"/>
+                                        <ColumnDefinition Width="200"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
@@ -1255,7 +1263,7 @@
                                         <ColumnDefinition Width="140"/>
                                         <ColumnDefinition Width="78"/>
                                         <ColumnDefinition Width="112"/>
-                                        <ColumnDefinition Width="56"/>
+                                        <ColumnDefinition Width="80"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="1" Text="Server"/>
                                     <TextBlock Grid.Column="2" Text="Map"/>
@@ -1550,7 +1558,7 @@
                             </StackPanel>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="16,0,0,0">
                                 <TextBlock x:Name="RegionsSource" Foreground="{StaticResource Muted}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="560" Visibility="Collapsed"/>
-                                <Button x:Name="RegionsRefreshBtn" Style="{StaticResource LinkBtn}" Margin="10,0,0,0" Click="RegionsRefresh_Click" Content="Refresh"
+                                <Button x:Name="RegionsRefreshBtn" Style="{StaticResource LinkBtn}" Margin="10,0,-8,0" Click="RegionsRefresh_Click" Content="Refresh"
                                         ToolTip="Reads Valve's relay list again and measures the ping to every region on the connection the game uses now"/>
                             </StackPanel>
                         </Grid>
@@ -1865,6 +1873,8 @@
                                 <StackPanel Orientation="Horizontal" Margin="0,3,0,0" TextElement.FontSize="12.5" TextElement.Foreground="{StaticResource Muted}">
                                     <TextBlock x:Name="AccCount"/>
                                     <TextBlock x:Name="AccInUse"/>
+                                    <!-- 26 nov. (critics): Refresh's "Checking 1/4…" goes here, so Refresh keeps its width and the filters stay on one line -->
+                                    <TextBlock x:Name="AccChecking"/>
                                 </StackPanel>
                             </StackPanel>
                             <WrapPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="16,0,0,0">
@@ -1932,7 +1942,7 @@
                         <!-- search | filters | cards or rows, the order, Refresh. At the minimum width (1020) the filters go onto two lines
                              inside their capsule instead of pushing Refresh and Show hidden off the page -->
                         <DockPanel Grid.Row="1" Margin="0,16,0,0" LastChildFill="True">
-                            <TextBox x:Name="AccSearch" DockPanel.Dock="Left" Width="180" Style="{StaticResource FieldBox}" Tag="Search accounts" TextChanged="AccFilter_Changed" VerticalAlignment="Top"
+                            <TextBox x:Name="AccSearch" DockPanel.Dock="Left" Width="200" Style="{StaticResource FieldBox}" Tag="Search accounts" TextChanged="AccFilter_Changed" VerticalAlignment="Top"
                                      ToolTip="Name, username, SteamID, notes and tags"/>
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top" Margin="10,0,0,0">
                                 <Button x:Name="AccViewBtn" Style="{StaticResource AccViewSwitch}" Click="AccView_Click" Content="&#xE8FD;" Margin="0,0,10,0" ToolTip="Show as rows: more accounts at once"/>
@@ -2115,18 +2125,20 @@
                                                         <ControlTemplate TargetType="ToggleButton">
                                                             <Border x:Name="row" Background="Transparent" CornerRadius="6" Padding="8,0">
                                                                 <Grid>
+                                                                    <!-- 26 nov. (critics): the chevron on the right of the title's line, down when
+                                                                         folded and up when open, like How it works on Connection (NetFold) -->
                                                                     <Grid.ColumnDefinitions>
-                                                                        <ColumnDefinition Width="Auto"/>
                                                                         <ColumnDefinition Width="*"/>
+                                                                        <ColumnDefinition Width="Auto"/>
                                                                     </Grid.ColumnDefinitions>
-                                                                    <Path x:Name="chev" Data="M 0,0 L 3.5,3.5 L 0,7" Stroke="{StaticResource Muted}" StrokeThickness="1.5" Width="7"
-                                                                          VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                                                    <ContentPresenter Grid.Column="1" VerticalAlignment="Center"/>
+                                                                    <ContentPresenter VerticalAlignment="Center"/>
+                                                                    <Path x:Name="chev" Grid.Column="1" Data="M 0,0 L 3.5,3.5 L 7,0" Stroke="{StaticResource Muted}" StrokeThickness="1.5" Width="7"
+                                                                          VerticalAlignment="Center" Margin="10,0,1,0"/>
                                                                 </Grid>
                                                             </Border>
                                                             <ControlTemplate.Triggers>
                                                                 <Trigger Property="IsChecked" Value="True">
-                                                                    <Setter TargetName="chev" Property="Data" Value="M 0,0 L 3.5,3.5 L 7,0"/>
+                                                                    <Setter TargetName="chev" Property="Data" Value="M 0,3.5 L 3.5,0 L 7,3.5"/>
                                                                 </Trigger>
                                                                 <Trigger Property="IsMouseOver" Value="True">
                                                                     <Setter TargetName="row" Property="Background" Value="{StaticResource Surface}"/>
@@ -2221,6 +2233,17 @@
                                                 </MultiTrigger>
                                                 <Trigger Property="IsEnabled" Value="False">
                                                     <Setter Property="Opacity" Value="0.45"/>
+                                                </Trigger>
+                                                <!-- Tag paused (Sync off for the page, 26 nov.): the off look whatever it holds -->
+                                                <Trigger Property="Tag" Value="paused">
+                                                    <Setter TargetName="track" Property="Background" Value="Transparent"/>
+                                                    <Setter TargetName="track" Property="BorderBrush" Value="{StaticResource RouteOff}"/>
+                                                    <Setter TargetName="track" Property="BorderThickness" Value="1.5"/>
+                                                    <Setter TargetName="knob" Property="Fill" Value="{StaticResource Muted}"/>
+                                                    <Setter TargetName="knob" Property="Width" Value="10"/>
+                                                    <Setter TargetName="knob" Property="Height" Value="10"/>
+                                                    <Setter TargetName="knob" Property="HorizontalAlignment" Value="Left"/>
+                                                    <Setter TargetName="knob" Property="Margin" Value="4,0,0,0"/>
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
@@ -2394,7 +2417,7 @@
                                             ToolTip="Two accounts or snapshots side by side: the settings that differ"/>
                                     <!-- beta.10: from 8 accounts, a search; accounts with the same crosshair fold into one line (CfgDisplay) -->
                                     <Grid x:Name="CfgAccSearchHost" Margin="0,0,10,0" Visibility="Collapsed">
-                                        <TextBox x:Name="CfgAccSearch" Style="{StaticResource FieldBox}" Width="240" Tag="Search accounts" TextChanged="CfgAccSearch_Changed" ToolTip="Name or username. While you search, every match shows on its own line."/>
+                                        <TextBox x:Name="CfgAccSearch" Style="{StaticResource FieldBox}" Width="200" Tag="Search accounts" TextChanged="CfgAccSearch_Changed" ToolTip="Name or username. While you search, every match shows on its own line."/>
                                     </Grid>
                                     <TextBlock x:Name="CfgAccCount" FontSize="12" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
                                 </DockPanel>
@@ -2529,12 +2552,18 @@
                                                     </DockPanel>
                                                     <!-- Gets sync: the switch; the main account is the source -->
                                                     <Grid Grid.Column="10" VerticalAlignment="Center">
-                                                        <CheckBox IsChecked="{Binding Sync}" Click="CfgOptOut_Click" HorizontalAlignment="Left" AutomationProperties.Name="Gets sync"
-                                                                  ToolTip="Off: the sync never touches this account's config (Copy config… still can)">
+                                                        <CheckBox IsChecked="{Binding Sync}" Click="CfgOptOut_Click" HorizontalAlignment="Left" AutomationProperties.Name="Gets sync">
                                                             <CheckBox.Style>
                                                                 <Style TargetType="CheckBox" BasedOn="{StaticResource CfgSwitch}">
+                                                                    <Setter Property="ToolTip" Value="Off: the sync never touches this account's config (Copy config… still can)"/>
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding IsMain}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                                                                        <!-- Sync off for the page: drawn off and dimmed, the value kept (the switch still works) -->
+                                                                        <DataTrigger Binding="{Binding SyncPaused}" Value="True">
+                                                                            <Setter Property="Opacity" Value="0.4"/>
+                                                                            <Setter Property="Tag" Value="paused"/>
+                                                                            <Setter Property="ToolTip" Value="Sync is off, so no account gets it now. This keeps your choice for when Sync is on again."/>
+                                                                        </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
                                                             </CheckBox.Style>
@@ -2571,7 +2600,7 @@
                                                            Text="Saved before the app changes an account's files. The 20 newest per account are kept, and the first one (Original) for good."/>
                                             </DockPanel>
                                         </Expander.Header>
-                                        <StackPanel Margin="23,0,8,4">
+                                        <StackPanel Margin="8,0,8,4">
                                             <!-- Opened: Backups (where "Configs > Backups" points), then Snapshots folded -->
                                             <TextBlock Text="Backups" FontWeight="SemiBold" Margin="0,0,0,8"/>
                                             <TextBlock x:Name="CfgBackupEmpty" Text="No backups yet." Style="{StaticResource CfgNote}" Margin="0,0,0,6"/>
@@ -2858,7 +2887,9 @@
                             <Style x:Key="TplLabel" TargetType="TextBlock">
                                 <Setter Property="FontSize" Value="12"/>
                                 <Setter Property="Foreground" Value="{StaticResource Muted}"/>
-                                <Setter Property="Width" Value="96"/>
+                                <!-- 112, not 96 (26 nov., critics): "URL personalizada" ran up to its field -->
+                                <Setter Property="Width" Value="112"/>
+                                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
                                 <Setter Property="HorizontalAlignment" Value="Left"/>
                                 <Setter Property="Margin" Value="0,0,10,0"/>
                                 <Setter Property="VerticalAlignment" Value="Center"/>
@@ -3001,8 +3032,9 @@
                                                 </StackPanel>
 
                                                 <StackPanel Grid.Column="2">
-                                                    <TextBlock Text="Picture" FontSize="12" Foreground="{StaticResource Muted}"/>
-                                                    <Grid Width="96" Height="96" Margin="0,8,0,0" HorizontalAlignment="Left">
+                                                    <!-- 26 nov. (critics): Picture and Privacy in one style, 13 px Muted -->
+                                                    <TextBlock Text="Picture" FontSize="13" Foreground="{StaticResource Muted}" MinHeight="20" Margin="0,0,0,6"/>
+                                                    <Grid Width="96" Height="96" Margin="0,2,0,0" HorizontalAlignment="Left">
                                                         <Border Background="{StaticResource Lift}" CornerRadius="10">
                                                             <TextBlock Text="&#xE91B;" Style="{StaticResource Icon}" FontSize="20" Foreground="{StaticResource Faint}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                         </Border>
@@ -3021,7 +3053,7 @@
                                                 </StackPanel>
 
                                                 <StackPanel Grid.Column="4">
-                                                    <TextBlock Text="Privacy" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Info}" MinHeight="20" Margin="0,0,0,6"/>
+                                                    <TextBlock Text="Privacy" FontSize="13" Foreground="{StaticResource Muted}" MinHeight="20" Margin="0,0,0,6"/>
                                                     <!-- Comments: the fifth list, which the design doesn't show, stays last -->
                                                     <Grid x:Name="TplPrivacy">
                                                         <Grid.ColumnDefinitions>
@@ -3462,7 +3494,7 @@
                         <!-- beta.10: with 600 lines, what failed was hard to find: a filter by kind and a search -->
                         <DockPanel LastChildFill="True">
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="16,0,0,0">
-                                <TextBox x:Name="LogSearch" Style="{StaticResource FieldBox}" Width="240" Tag="Search the Log" TextChanged="LogFilter_Changed" VerticalAlignment="Center"/>
+                                <TextBox x:Name="LogSearch" Style="{StaticResource FieldBox}" Width="200" Tag="Search the Log" TextChanged="LogFilter_Changed" VerticalAlignment="Center"/>
                                 <Border Margin="10,0,0,0" Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="15" Padding="2" VerticalAlignment="Center">
                                     <StackPanel Orientation="Horizontal">
                                         <RadioButton x:Name="LogAll" Style="{StaticResource LogFilter}" GroupName="logf" Content="All" IsChecked="True" Checked="LogFilter_Changed"/>
@@ -3802,7 +3834,7 @@
                                         <TextBlock Text="{Binding Text, ElementName=SetStartCloseKey, Converter={StaticResource SetUpper}}" FontSize="11" FontWeight="SemiBold" LineHeight="15.4"
                                                    Foreground="{StaticResource Muted}" Margin="0,12,0,4"/>
                                         <CheckBox x:Name="ProtectOnStartBox" Style="{StaticResource Switch}" Click="SettingChanged"
-                                                  ToolTip="Off (the default): the app always starts with protection off and you turn it on in Status or the tray icon. On: it turns on by itself at every start, also with Windows. With no phone connected, your servers stay blocked until it is, and CS2 too once the app has checked a phone.">
+                                                  ToolTip="Off (the default): the app always starts with protection off and you turn it on in Connection or the tray icon. On: it turns on by itself at every start, also with Windows. With no phone connected, your servers stay blocked until it is, and CS2 too once the app has checked a phone.">
                                             <StackPanel>
                                                 <TextBlock Text="Turn on protection when the app starts"/>
                                                 <TextBlock Text="Also with Windows. Without the phone, your servers and CS2 stay blocked until you connect it." Style="{StaticResource OptSub}"/>
@@ -4235,13 +4267,13 @@
 
             <!-- Dialog -->
             <!-- beta.10: Phone setup as steps that check themselves (PhoneSetup.Steps), each with its button when the app can do it -->
-            <Grid x:Name="SetupPane" Grid.Row="1" Background="#B0000000" Visibility="Collapsed">
-                <HeaderedContentControl Style="{StaticResource DialogGroup}" Width="580" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="18,20,18,16">
+            <Grid x:Name="SetupPane" Grid.Row="1" Background="#B0000000" Visibility="Collapsed" local:Look.Round="True">
+                <HeaderedContentControl Style="{StaticResource DialogGroup}" Width="580" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="18,10,18,8">
                     <HeaderedContentControl.Header>
-                        <TextBlock Text="Phone setup"/>
+                        <TextBlock Text="Phone setup" Style="{StaticResource DialogTitle}"/>
                     </HeaderedContentControl.Header>
                     <StackPanel>
-                        <TextBlock x:Name="SetupSummary" Style="{StaticResource Sub}" TextWrapping="Wrap" Margin="0,0,0,12"
+                        <TextBlock x:Name="SetupSummary" Style="{StaticResource Sub}" TextWrapping="Wrap" Margin="0,0,0,8"
                                    Text="Updates by itself. Do the red step and it turns green."/>
                         <ItemsControl x:Name="SetupSteps">
                             <ItemsControl.ItemTemplate>
@@ -4293,10 +4325,10 @@
             </Grid>
             <!-- 24 Nov: the first start's two doors (MainWindow.Start.cs). 46 of 57 never plugged a phone in and Regions is the most used
                  page, so the start asks before pushing anyone to the phone. Each door draws the page it opens; the tour is behind Show me around -->
-            <Grid x:Name="StartPane" Grid.Row="1" Background="#B0000000" Visibility="Collapsed" KeyboardNavigation.TabNavigation="Cycle">
-                <HeaderedContentControl Style="{StaticResource DialogGroup}" Width="640" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="18,20,18,16">
+            <Grid x:Name="StartPane" Grid.Row="1" Background="#B0000000" Visibility="Collapsed" KeyboardNavigation.TabNavigation="Cycle" local:Look.Round="True">
+                <HeaderedContentControl Style="{StaticResource DialogGroup}" Width="640" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="18,12,18,16">
                     <HeaderedContentControl.Header>
-                        <TextBlock Text="{x:Static local:Texts.DoorsTitle}"/>
+                        <TextBlock Text="{x:Static local:Texts.DoorsTitle}" Style="{StaticResource DialogTitle}"/>
                     </HeaderedContentControl.Header>
                     <StackPanel>
                         <Grid>
@@ -4390,11 +4422,11 @@
                 </HeaderedContentControl>
             </Grid>
             <!-- Below the top bar (4 nov.): its Cancel stops the command that asked, so the question never hides the way out -->
-            <Grid x:Name="Dialog" Grid.Row="1" Margin="0,40,0,0" Background="#B0000000" Visibility="Collapsed" MouseLeftButtonDown="DialogBackdrop_MouseDown">
+            <Grid x:Name="Dialog" Grid.Row="1" Margin="0,40,0,0" Background="#B0000000" Visibility="Collapsed" local:Look.Round="True" MouseLeftButtonDown="DialogBackdrop_MouseDown">
                 <Grid Width="480" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <HeaderedContentControl Style="{StaticResource DialogGroup}" Padding="18,20,18,16">
+                <HeaderedContentControl Style="{StaticResource DialogGroup}" Padding="18,12,18,16">
                     <HeaderedContentControl.Header>
-                        <TextBlock x:Name="DialogTitle"/>
+                        <TextBlock x:Name="DialogTitle" Style="{StaticResource DialogTitle}" TextWrapping="Wrap"/>
                     </HeaderedContentControl.Header>
                     <StackPanel>
                         <TextBlock x:Name="DialogText" Style="{StaticResource Sub}" LineHeight="19"/>
@@ -4413,19 +4445,19 @@
                 </HeaderedContentControl>
                 <!-- Every question has a way out that does neither (like Esc): the X, or a click outside the box -->
                 <Button x:Name="DialogClose" Style="{StaticResource Chrome}" Width="34" Height="30" FontSize="10" Content="&#xE8BB;" HorizontalAlignment="Right" VerticalAlignment="Top"
-                        Margin="0,9,1,0" Click="DialogClose_Click" ToolTip="Close without choosing (Esc)" AutomationProperties.Name="Close"/>
+                        Margin="0,10,8,0" Click="DialogClose_Click" ToolTip="Close without choosing (Esc)" AutomationProperties.Name="Close"/>
                 </Grid>
             </Grid>
             <!-- 10 Nov: the first-run tour (MainWindow.Tour.cs, texts in Texts.Tour). The shade has a hole over the real control it points at -->
-            <Grid x:Name="TourPane" Grid.Row="1" Visibility="Collapsed" Background="Transparent">
+            <Grid x:Name="TourPane" Grid.Row="1" Visibility="Collapsed" Background="Transparent" local:Look.Round="True">
                 <Path x:Name="TourShade" Fill="#B0000000"/>
                 <Rectangle x:Name="TourRing" Stroke="{StaticResource Accent}" StrokeThickness="1" HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False"/>
                 <Canvas>
-                    <HeaderedContentControl x:Name="TourBox" Style="{StaticResource DialogGroup}" Width="360" Padding="16,18,16,14">
+                    <HeaderedContentControl x:Name="TourBox" Style="{StaticResource DialogGroup}" Width="360" Padding="16,12,16,14">
                         <!-- 24 Nov: "5 of 5" sits in the title, and the buttons go to a second line when a language doesn't fit them in 360 px
                              (ru, es and pt-BR pushed the count out and cut the last button) -->
                         <HeaderedContentControl.Header>
-                            <TextBlock><Run x:Name="TourTitle"/><Run Text="   "/><Run x:Name="TourCount" Foreground="{StaticResource Faint}" FontFamily="{StaticResource Mono}"/></TextBlock>
+                            <TextBlock Style="{StaticResource DialogTitle}"><Run x:Name="TourTitle"/><Run Text="   "/><Run x:Name="TourCount" Foreground="{StaticResource Faint}" FontFamily="{StaticResource Mono}"/></TextBlock>
                         </HeaderedContentControl.Header>
                         <StackPanel>
                             <TextBlock x:Name="TourText" Style="{StaticResource Sub}" TextWrapping="Wrap" LineHeight="19"/>

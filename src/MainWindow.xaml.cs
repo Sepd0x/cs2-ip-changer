@@ -191,7 +191,7 @@ public partial class MainWindow : Window
             catch { }
             _protOn = Guard.OnAtStart(_justUpdated, _startArgs, _s.ProtectOnStart, leftOn, Steam.Cs2Running, _s.NoPhone);
             if (_s.NoPhone) { }   // No phone mode says so itself (Guard.HomeMode)
-            else if (!_protOn) Log.Info("Protection is off. Turn it on in Status (or the tray icon) when you want to play through the phone.");
+            else if (!_protOn) Log.Info("Protection is off. Turn it on in Connection (or the tray icon) when you want to play through the phone.");
             else Log.Info(_justUpdated ? "Protection stays on after the update." : leftOn ? "CS2 is open with the block from the last run still on: protection stays on, so the match isn't moved to your home IP."
                 : "Protection turns on by itself (Settings > Protection > Turn on protection when the app starts).");
             StartupDev();

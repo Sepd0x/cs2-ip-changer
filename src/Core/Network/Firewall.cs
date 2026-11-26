@@ -100,25 +100,33 @@ public static class Firewall
     }
 
     /// <summary>
-    /// The banned-IP rule from "IP:port" endpoints: the hosts and the ports (one rule, so a host and a port of two different servers
-    /// are blocked together; both belong to servers that banned this IP). Null when there is nothing to block.
+    /// The banned-IP rules from "IP:port" endpoints: one per port, with the hosts banned on that port, so only the exact servers are
+    /// blocked (audit 26 nov., A4: one rule with every host and every port also blocked a server that didn't ban this IP, on the host
+    /// of one ban and the port of another). The lowest port's rule has <see cref="BannedIpRuleName"/>, the others
+    /// <see cref="BannedIpPortName"/>. Empty when there is nothing to block.
     /// </summary>
-    public static FwRule BannedIpRule(IEnumerable<string> endpoints)
+    public static List<FwRule> BannedIpRules(IEnumerable<string> endpoints)
     {
-        var hosts = new List<string>();
-        var ports = new List<string>();
+        var byPort = new SortedDictionary<int, List<string>>();
         foreach (var e in endpoints ?? Enumerable.Empty<string>())
         {
             var i = e?.LastIndexOf(':') ?? -1;
             if (i <= 0 || !IPAddress.TryParse(e[..i], out var a) || a.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork
                 || !int.TryParse(e[(i + 1)..], out var p) || p is < 1 or > 65535) continue;
+            if (!byPort.TryGetValue(p, out var hosts)) byPort[p] = hosts = new();
             if (!hosts.Contains(a.ToString())) hosts.Add(a.ToString());
-            if (!ports.Contains(p.ToString())) ports.Add(p.ToString());
         }
-        return hosts.Count == 0 ? null
-            : new FwRule(BannedIpRuleName, hosts, null, null, "Pickroute: servers that banned the IP this PC has now. Goes when the IP changes or the ban mark is cleared.",
-                NET_FW_IP_PROTOCOL_UDP, string.Join(",", ports));
+        return byPort.Select((kv, n) => new FwRule(n == 0 ? BannedIpRuleName : BannedIpPortName(kv.Key), kv.Value, null, null,
+            "Pickroute: servers that banned the IP this PC has now. Goes when the IP changes or the ban mark is cleared.",
+            NET_FW_IP_PROTOCOL_UDP, kv.Key.ToString())).ToList();
     }
+
+    /// <summary>The banned-IP rule of a second (third…) port: "Pickroute - servers that banned this IP (port 27016)".</summary>
+    public static string BannedIpPortName(int port) => $"{BannedIpRuleName} (port {port})";
+
+    /// <summary>One of the banned-IP rules (the first, a port's, or an interrupted Apply of either).</summary>
+    public static bool IsBannedIpRule(string name) =>
+        Current(name) is string n && (n == BannedIpRuleName || n.StartsWith(BannedIpRuleName + " (", StringComparison.Ordinal));
 
     const int NET_FW_RULE_DIR_OUT = 2;
     const int NET_FW_ACTION_BLOCK = 0;
@@ -438,8 +446,24 @@ public static class Firewall
             RemoveAllNamed(rules, name);
             RemoveTemps(rules, name);
             foreach (var l in LegacyNames(name)) { RemoveAllNamed(rules, l); RemoveTemps(rules, l); }
+            if (name == BannedIpRuleName) RemoveBannedPorts(rules, keep: null);   // and every port's rule (A4)
         }
         catch (Exception ex) { Log.Warn($"Remove {name}: " + (ex.InnerException ?? ex).Message); }
+    }
+
+    /// <summary>Removes the banned-IP rules of ports that aren't in <paramref name="keep"/> (their bans went), with their leftovers.</summary>
+    public static void RemoveBannedIpExcept(IEnumerable<string> keep)
+    {
+        try { RemoveBannedPorts(Get(Policy(), "Rules"), keep?.ToHashSet(StringComparer.Ordinal)); }
+        catch (Exception ex) { Log.Warn("Remove the old banned-IP rules: " + (ex.InnerException ?? ex).Message); }
+    }
+
+    static void RemoveBannedPorts(object rules, HashSet<string> keep)
+    {
+        var names = new List<string>();
+        foreach (var r in (IEnumerable)rules)
+            if ((string)Get(r, "Name") is string n && n.StartsWith(BannedIpRuleName + " (port ", StringComparison.Ordinal) && keep?.Contains(BaseName(n)) != true) names.Add(n);
+        foreach (var n in names.Distinct()) RemoveAllNamed(rules, n);
     }
 
     static readonly string[] ProtectionRules = { RuleName, EchoRuleName, Cs2RuleName, DnsUdpRuleName, DnsTcpRuleName, Ipv6RuleName };
@@ -459,10 +483,22 @@ public static class Firewall
     /// nothing is known, so it is never "nothing left". False only where saying it is there would be a guess (the Install window).</param>
     public static bool BlockLeft(IEnumerable<string> remaining, bool unreadableCounts = true) =>
         remaining is FirewallRules { Error: not null } ? unreadableCounts
-        : (remaining ?? Enumerable.Empty<string>()).Select(Current).Any(n => n != EchoRuleName && ProtectionRules.Contains(n));
+        : (remaining ?? Enumerable.Empty<string>()).Select(n => BaseName(Current(n))).Any(n => n != EchoRuleName && ProtectionRules.Contains(n));
 
-    /// <summary>The rule <paramref name="name"/> is among <paramref name="remaining"/>, under its name now or from before 1.0.0.</summary>
-    public static bool Has(IEnumerable<string> remaining, string name) => (remaining ?? Enumerable.Empty<string>()).Any(n => Current(n) == name);
+    /// <summary>The rule <paramref name="name"/> is among <paramref name="remaining"/>, under its name now or from before 1.0.0, also as
+    /// the "(updating ...)" copy an interrupted <see cref="Apply"/> left (it blocks like the rule; audit 26 nov., A3).</summary>
+    public static bool Has(IEnumerable<string> remaining, string name) => (remaining ?? Enumerable.Empty<string>()).Any(n => BaseName(Current(n)) == name);
+
+    /// <summary>
+    /// A rule's name without the " (updating ...)" tail of an interrupted <see cref="Apply"/>. Audit 26 nov. (A3): Apply adds the
+    /// temporary copy, removes the old rule and only then renames the copy; stopped in between, the copy is the only block left, and
+    /// <see cref="BlockLeft"/> didn't see it, so a start with CS2 open chose "off" and took it out.
+    /// </summary>
+    public static string BaseName(string name)
+    {
+        var i = name?.IndexOf(Updating, StringComparison.Ordinal) ?? -1;
+        return i > 0 ? name[..i] : name;
+    }
 
     /// <summary>
     /// The rules a restore removes. Turn off protection (and closing the app) keep the Regions rule: regions don't depend on the
@@ -525,7 +561,7 @@ public static class Firewall
     }
 
     /// <summary>What one rule is for, in a few words (a name from before 1.0.0 means the same as its name now).</summary>
-    public static string Meaning(string name) => Current(name) switch
+    public static string Meaning(string name) => IsBannedIpRule(name) ? Loc.T("Servers that banned the IP you have now") : Current(name) switch
     {
         RuleName => Loc.T("Kill switch: your servers only through the phone"),
         EchoRuleName => Loc.T("The app's IP check only through the phone"),

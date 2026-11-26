@@ -122,11 +122,15 @@ static class Feedback9NovTests
             && MainWindow.ServersSee(onHome: true, pcOnPhone: false, "37.1.1.1", "85.240.10.20") == "85.240.10.20"
             && MainWindow.ServersSee(onHome: true, pcOnPhone: true, "37.1.1.1", "85.240.10.20") == "37.1.1.1", "");
 
-        var rule = Firewall.BannedIpRule(new[] { "203.0.113.37:27015", "203.0.113.40:27016", "203.0.113.37:27015", "lixo", "::1:27015" });
+        // 26 nov. (auditoria A4): uma regra por porta, só com os pares exatos
+        var rules = Firewall.BannedIpRules(new[] { "203.0.113.37:27015", "203.0.113.40:27016", "203.0.113.37:27015", "lixo", "::1:27015" });
+        var rule = rules.FirstOrDefault();
         check("9 nov.: a regra da Firewall bloqueia só UDP para esses servidores (IP e portas), sem programa nem origem",
-            rule != null && rule.Name == Firewall.BannedIpRuleName && rule.Protocol == Firewall.NET_FW_IP_PROTOCOL_UDP
-            && rule.RemoteIps.SequenceEqual(new[] { "203.0.113.37", "203.0.113.40" }) && rule.RemotePorts == "27015,27016"
-            && rule.Program == null && rule.AllowLocalIp == null && Firewall.BannedIpRule(Array.Empty<string>()) == null, rule?.RemotePorts ?? "");
+            rules.Count == 2 && rule!.Name == Firewall.BannedIpRuleName && rule.Protocol == Firewall.NET_FW_IP_PROTOCOL_UDP
+            && rule.RemoteIps.SequenceEqual(new[] { "203.0.113.37" }) && rule.RemotePorts == "27015"
+            && rules[1].Name == Firewall.BannedIpPortName(27016) && rules[1].RemoteIps.SequenceEqual(new[] { "203.0.113.40" }) && rules[1].RemotePorts == "27016"
+            && rules.All(r => r.Program == null && r.AllowLocalIp == null && r.Protocol == Firewall.NET_FW_IP_PROTOCOL_UDP)
+            && Firewall.BannedIpRules(Array.Empty<string>()).Count == 0, rule?.RemotePorts ?? "");
         check("9 nov.: a regra sai no Turn off, ao fechar, no --restore e no Keep; não conta como proteção que ficou",
             Firewall.RulesToRemove(true).Contains(Firewall.BannedIpRuleName) && Firewall.RulesToRemove(false).Contains(Firewall.BannedIpRuleName)
             && !Firewall.BlockLeft(new[] { Firewall.BannedIpRuleName }) && Firewall.Meaning(Firewall.BannedIpRuleName) != "From an older version"

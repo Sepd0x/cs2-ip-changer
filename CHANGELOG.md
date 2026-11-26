@@ -48,6 +48,19 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Website on a phone held upright: each step of "How it works" took a whole screen again. They are back to about three quarters of a screen, so there is less to scroll.
 - Website on a phone held upright: between two steps of "How it works" the card going up stayed half see-through over the 3D scene. It now stays readable until it leaves, then fades out quickly.
 - Website on a phone: in the tour of the app, the close-up of each page cut the text around the highlighted part in half. Its edges now fade out, and on a small phone the close-up is a little taller.
+- Servers: with protection off, "Protection off" ran under the Join button on every row in some languages. The Route column now says "Off" and cuts a long state with "…" before the button, and Join has room for longer words ("Conectar", "Unirse").
+- Servers: with protection off, the line under the title says names, players and ping show once protection is on (the servers are not asked over your home network). "Where to find IPs?" next to Import says where to get a server's IP.
+- Portuguese: Join, Log in and Sign in all said "Entrar". They now say "Conectar" (join a server), "Entrar" (log in to an account) and "Fazer login" (sign in to Steam on the web). In Russian, Join no longer reads the same as Log in.
+- Dialogs, Phone setup, the first start and the tour look like the rest of the app: the title inside the box and rounded buttons. At the first start without CS2, the question has a button that opens CS2's install in Steam.
+- Accounts: Refresh's "Checking 1/4…" moved to the line under the title, so the filters no longer drop to a second line while it runs. The last server on a card fits on one line, with the time first. Cooldowns read "2 d" or "1 h 35 min", without "0 h".
+- Regions: country names are in the app's language, and a US state only shows when you point at the region.
+- Connection: a long carrier name ("MEO - SERVICOS DE COMUNICACOES E MULTIMEDIA S.A.") is shown short ("MEO") and never takes more than two lines. Texts that said to turn protection on "in Status" now say Connection.
+- Configs: a custom crosshair colour is named ("green") instead of a cut-off code. With Sync off, the Gets sync switches show as off (your choice is kept for when Sync is on). The arrow of Backups and snapshots is on the right, like everywhere else.
+- The top bar's New IP + next account button shows the next account with a person mark, so it reads as an account.
+- Whole PC mode said "protected" when only half of the internet went through the phone. Both halves are now checked before it says so.
+- If the app was stopped in the middle of updating a protection rule, the next start could take that block away while CS2 was still open. It now counts it as a block that is still on.
+- Two ban marks on servers with different ports also blocked other servers on the same machines. The app now blocks only the exact servers that banned your IP.
+- Regions: when Valve's list could not be loaded and no saved copy was left, Allow all was greyed out and the block stayed. Allow all now removes it without the list.
 
 ## [0.1.0-beta.14] - 2026-11-19
 
