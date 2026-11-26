@@ -374,7 +374,7 @@ details.lang-pick{border:0!important}
 .lang-hint button{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;flex:none;border:0;border-radius:50%;background:none;color:inherit;font-size:1.25rem;cursor:pointer}
 .lang-hint a:focus-visible,.lang-hint button:focus-visible{outline:2px solid var(--t-accent);outline-offset:2px}
 @media (hover:hover){.lang-pick>summary:hover,.lang-pick li a:hover,.lang-foot a:hover{color:var(--ink)}.lang-pick li a:hover{background:var(--bg3,var(--t-surface2))}.lang-hint button:hover{color:var(--ink)}}
-@media (max-width:420px){.lang-hint{left:1rem;right:1rem;transform:none;width:auto}}
+@media (max-width:560px){.lang-hint{left:1rem;right:1rem;transform:none;width:auto;display:grid;grid-template-columns:minmax(0,1fr) 44px;align-items:center;gap:.25rem .5rem;padding:.875rem .5rem .75rem 1rem;border-radius:16px;font-size:.9375rem;line-height:1.4}.lang-hint>span{color:var(--ink)}.lang-hint a{grid-column:1/-1;grid-row:2;justify-content:center;min-height:48px;margin-right:.5rem;font-size:.9375rem;background:var(--t-accent);color:var(--t-bg)}.lang-hint button{grid-column:2;grid-row:1;align-self:start;margin-top:-.6rem}}html:has(.thumb.on) .lang-hint{bottom:calc(5.25rem + env(safe-area-inset-bottom,0px))}
 .menu-langs{display:none}
 @media (max-width:759px),(max-height:540px) and (orientation:landscape){.top .lang-pick{display:none}.menu-langs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.25rem;grid-column:1/-1;margin-top:.5rem;padding-top:.75rem;border-top:1px solid var(--line,var(--t-line))}.menu-langs a[aria-current]{color:var(--ink)}}</style>`;
 // a picked language is remembered (so the hint stays away); the menu closes on a click outside it or on Escape

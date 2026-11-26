@@ -176,9 +176,7 @@
   "Full screenshot": "Captura completa",
   "More details": "Mais detalhes",
   "Windows app · Example IPs and names": "App para Windows · IPs e nomes de exemplo",
-  "Screenshot detail. Scroll horizontally to see the full row.": "Detalhe da captura. Role na horizontal para ver a linha inteira.",
   "Screenshot detail": "Detalhe da captura",
-  "Scroll image sideways": "Rolar a imagem para o lado",
   "Less detail": "Menos detalhes"
  },
  "change-ip-with-phone": {
@@ -712,7 +710,7 @@
   "Android / iPhone": "Android / iPhone",
   "Change your CS2 IP with your phone's mobile data": "Troque o IP do CS2 com os dados móveis do celular",
   "CS2 and Steam go through your phone, so community servers see your carrier's IP, not your home IP. IP banned? One click gets a new IP and puts you back on the server.": "CS2 e Steam passam pelo celular, então os servidores comunitários veem o IP da operadora, não o de casa. Levou ban de IP? Um clique pega um IP novo e te põe de volta no servidor.",
-  "It's a Windows app: open this page on your PC. <code1/> · <a2>Download the .exe anyway</a2>": "É um app para Windows: abra esta página no seu PC. <code1/> · <a2>Baixar o .exe mesmo assim</a2>",
+  "It's a Windows app: open this page on your PC.": "É um app para Windows: abra esta página no seu PC.",
   "Free beta · Windows 10/11 · <b1>Android or iPhone</b1> · USB cable or hotspot · never touches cs2.exe · not for VAC or game bans": "Beta grátis · Windows 10/11 · <b1>Android ou iPhone</b1> · cabo USB ou hotspot · nunca mexe no cs2.exe · não serve para VAC nem game ban",
   "Follow the route": "Siga a rota",
   "The route, step by step": "A rota, passo a passo",

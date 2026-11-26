@@ -7,7 +7,7 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -122,3 +122,83 @@ test('D: a guide\'s footer folds on a phone too, and not on a PC', async (t) => 
   const pc = await open(t, PC, 'cs2-ip-ban/');
   assert.equal(await pc.locator('footer nav.fold').count(), 0);
 });
+
+// 27 Nov. 2026, the phone made clean (the owner on his S21: cards of different heights, text squeezed into small boxes, things
+// cut or floating in the app tour, the 01s, the borders, the language notice, the guides). Measured on a 390 and a 360 px phone.
+for (const [w, h] of [[390, 844], [360, 800]]) {
+  test(`Clean phone (${w} px): the cards of a shelf are one height, one corner, one border, and the next shows only its empty edge`, async (t) => {
+    if (!browser) return t.skip(why);
+    const page = await open(t, { ...PHONE, viewport: { width: w, height: h } });
+    const r = await page.evaluate(() => ['#safety .instr', '.more-kit .kit', '#vpn .vs', '#setup .steps4'].map((s) => {
+      const el = document.querySelector(s), kids = [...el.children], cs = kids.map((k) => getComputedStyle(k));
+      const hs = kids.map((k) => Math.round(k.getBoundingClientRect().height));
+      const second = kids[1].getBoundingClientRect(), pad = parseFloat(cs[1].paddingLeft);
+      return { s, heights: [...new Set(hs)].length, radius: [...new Set(cs.map((c) => c.borderTopLeftRadius))], border: [...new Set(cs.map((c) => c.borderTopWidth + ' ' + c.borderTopStyle))], peek: innerWidth - second.left, pad };
+    }));
+    for (const x of r) {
+      assert.equal(x.heights, 1, `${x.s}: the cards have ${x.heights} different heights`);
+      assert.deepEqual(x.radius, ['16px'], `${x.s}: corners ${x.radius}`);
+      assert.deepEqual(x.border, ['1px solid'], `${x.s}: borders ${x.border}`);
+      assert.ok(x.peek > 4 && x.peek < x.pad, `${x.s}: ${Math.round(x.peek)} px of the next card show (its text starts ${x.pad} px in, so its words would show)`);
+    }
+    // Setup: each step's number on its own line over its words
+    const st = await page.evaluate(() => { const li = document.querySelector('#setup .steps4 > li'), b = getComputedStyle(li, '::before'); return { pos: b.position, disp: b.display, pad: getComputedStyle(li).paddingLeft }; });
+    assert.deepEqual(st, { pos: 'static', disp: 'block', pad: '20px' });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), w, 'the page got wider than the phone');
+  });
+}
+
+test('Clean phone: the app tour shows only the marked part of the real window, whole, scaled to fit, and the marks sit on the app of today', async (t) => {
+  if (!browser) return t.skip(why);
+  const page = await open(t, PHONE);
+  const r = await page.evaluate(async () => {
+    const out = [], wait = () => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)));
+    for (const tab of document.querySelectorAll('.tour-tabs button')) {
+      tab.click(); await wait();
+      for (let k = 0; k < 3; k++) {
+        const crop = document.querySelector('.tour-crop'), b = crop.getBoundingClientRect(), inn = crop.querySelector('.cut-in'), ring = crop.querySelector('.cring').getBoundingClientRect();
+        const s = parseFloat(getComputedStyle(crop.firstElementChild).getPropertyValue('--s')), clip = getComputedStyle(inn).clipPath;
+        const name = tab.textContent + ' ' + (k + 1);
+        if (!/^inset\(/.test(clip)) out.push(`${name}: nothing clips the rest of the window (${clip})`);
+        if (!(s > 0 && s <= 2)) out.push(`${name}: scale ${s}`);
+        if (ring.left < b.left + 8 || ring.right > b.right - 8 || ring.top < b.top + 8 || ring.bottom > b.bottom - 8) out.push(`${name}: the mark is not whole in its box`);
+        if (crop.scrollWidth > crop.clientWidth) out.push(`${name}: the close-up scrolls sideways`);
+        document.querySelector('.tour-next').click(); await wait();
+      }
+    }
+    // the captures since 26 Nov. have the sidebar to 13.6 % of the width: a mark there points at the old app
+    for (const mk of document.querySelectorAll('.marks .mk')) { const x = parseFloat(mk.style.getPropertyValue('--x')); if (x < 14) out.push(`${mk.dataset.pg} mark at x ${x}% is on the sidebar`); }
+    return out;
+  });
+  assert.deepEqual(r, []);
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.tour-detail'), '::before').content), 'none', 'the close-up carries a three-colour line');
+});
+
+test('Clean phone: the language notice has room (one line of text, the button across), and the header does not blur the 3D', async (t) => {
+  if (!browser) return t.skip(why);
+  const page = await open(t, { ...PHONE, viewport: { width: 360, height: 800 }, locale: 'pt-PT' });
+  await page.waitForSelector('.lang-hint', { timeout: 10000 });
+  const r = await page.evaluate(() => {
+    const hint = document.querySelector('.lang-hint'), hb = hint.getBoundingClientRect(), span = hint.querySelector('span'), a = hint.querySelector('a').getBoundingClientRect();
+    const lh = parseFloat(getComputedStyle(span).lineHeight);
+    return { lines: Math.round(span.getBoundingClientRect().height / lh), wide: a.width / hb.width > .8, inside: hb.left >= 0 && hb.right <= innerWidth, blur: getComputedStyle(document.querySelector('.top')).backdropFilter };
+  });
+  assert.deepEqual(r, { lines: 1, wide: true, inside: true, blur: 'none' });
+});
+
+test('Clean phone: every guide has the picture of its 3D band, shown under the live scene on a phone', async (t) => {
+  if (!browser) return t.skip(why);
+  const guides = readdirSync(SITE, { withFileTypes: true }).filter((d) => d.isDirectory() && existsSync(join(SITE, d.name, 'index.html')) && readFileSync(join(SITE, d.name, 'index.html'), 'utf8').includes('class="gw"')).map((d) => d.name);
+  assert.ok(guides.length >= 14, `${guides.length} guides`);
+  for (const g of guides) {
+    for (const l of ['', 'pt-br/']) {
+      const html = readFileSync(join(SITE, l, g, 'index.html'), 'utf8');
+      assert.ok(html.includes(`<img class="gw-poster" src="${l ? '../../' : '../'}img/gp-${g}.webp"`), `${l}${g}: no poster in its band`);
+    }
+    assert.ok(statSync(join(SITE, 'img', `gp-${g}.webp`)).size > 4000, `img/gp-${g}.webp`);
+  }
+  const page = await open(t, PHONE, 'cs2-ip-ban/');
+  const r = await page.evaluate(() => { const p = document.querySelector('.gw-poster'), c = document.querySelector('.gw canvas'), pb = p.getBoundingClientRect(), cb = c.getBoundingClientRect(); return { shown: getComputedStyle(p).display !== 'none' && p.complete && p.naturalWidth > 0, same: Math.abs(pb.top - cb.top) < 1 && Math.abs(pb.height - cb.height) < 1 }; });
+  assert.deepEqual(r, { shown: true, same: true });
+});
+

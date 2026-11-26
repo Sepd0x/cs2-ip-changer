@@ -175,9 +175,7 @@
   "Full screenshot": "Tam ekran görüntüsü",
   "More details": "Daha fazla detay",
   "Windows app · Example IPs and names": "Windows uygulaması · Örnek IP'ler ve adlar",
-  "Screenshot detail. Scroll horizontally to see the full row.": "Ekran görüntüsü detayı. Tüm satırı görmek için yana kaydır.",
   "Screenshot detail": "Ekran görüntüsü detayı",
-  "Scroll image sideways": "Görseli yana kaydır",
   "Less detail": "Daha az detay"
  },
  "change-ip-with-phone": {
@@ -702,7 +700,7 @@
   "Android / iPhone": "Android / iPhone",
   "Change your CS2 IP with your phone's mobile data": "CS2 IP'ni telefonunun mobil verisiyle değiştir",
   "CS2 and Steam go through your phone, so community servers see your carrier's IP, not your home IP. IP banned? One click gets a new IP and puts you back on the server.": "CS2 ve Steam telefonundan çıkar, bu yüzden topluluk sunucuları ev IP'ni değil operatörünün IP'sini görür. IP banı mı yedin? Tek tıkla yeni IP al ve sunucuya geri dön.",
-  "It's a Windows app: open this page on your PC. <code1/> · <a2>Download the .exe anyway</a2>": "Bu bir Windows uygulaması: bu sayfayı PC'nde aç. <code1/> · <a2>Yine de .exe'yi indir</a2>",
+  "It's a Windows app: open this page on your PC.": "Bu bir Windows uygulaması: bu sayfayı PC'nde aç.",
   "Free beta · Windows 10/11 · <b1>Android or iPhone</b1> · USB cable or hotspot · never touches cs2.exe · not for VAC or game bans": "Ücretsiz beta · Windows 10/11 · <b1>Android veya iPhone</b1> · USB kablo veya hotspot · cs2.exe'ye hiç dokunmaz · VAC veya oyun banları için değil",
   "Follow the route": "Rotayı takip et",
   "The route, step by step": "Rota, adım adım",

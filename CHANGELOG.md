@@ -11,6 +11,10 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Website: on a phone, and on every guide, the page shows at once instead of behind a loading screen. The 3D scene fades in over its picture when it is ready, and a thin line at the top shows how far it is. The home page on a PC keeps its loading screen.
 - Website on a phone: the story with the 3D scene stays as it is, and what comes after it is shorter. Is it safe?, And the rest, the reasons in Pickroute or a VPN and the setup steps swipe sideways, the VPN comparison reads one row at a time, the footer's lists open when you tap them, and "Send the link to my PC" stays at the bottom of the screen.
 - Website: only the thin line at the top keeps the three colours. Lines, marks, the footer's name and the open FAQ line are the plain blue, and nothing glows.
+- Website on a phone, cleaner: the cards you swipe sideways are all the same height, with the same corners and border, and the next one only peeks with its edge. Setup's step numbers sit above their text. Picture captions are under the picture in plain text. The VPN comparison has a key with a dot for Pickroute and one for a VPN. The language notice has room for its text and a full-width button. The guides show a picture of their 3D scene until the live one is ready, and scrolling no longer blurs the scene under the header.
+
+### Fixed
+- Website: the app tour, the app window on the home page and the screen in the 3D scene point at the right buttons and show the IP in the right place in the new app (they still used the places of the old look), and the close-ups no longer show text cut in half at their edges.
 
 ## [1.0.0] - 2026-11-26
 

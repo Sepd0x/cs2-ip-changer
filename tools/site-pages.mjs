@@ -155,6 +155,10 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
 .gw-pause[aria-pressed=true]::before,.gw-pause.play::before{border:0;border-left:9px solid currentColor;border-block:5px solid transparent;width:0;height:0}
 .gw-pause[aria-pressed=true],.gw-pause.play{background:color-mix(in srgb,var(--t-accent) 16%,transparent);box-shadow:inset 0 0 0 1px var(--t-accent)}
 .no-gl .gw,.no-gl .groom,.no-gl .gw-ctl{display:none}
+/* on a phone the band shows its own picture (tools/guide-posters.mjs) until the live scene fades in over it (27 Nov.: it stayed
+   empty for 4 to 5 s on the owner's S21); on a PC the scene stands beside the text, where the ground is plain */
+.gw-poster{display:none}
+@media (max-width:999px){.gw-poster{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.gw canvas{position:relative}}
 @media (max-width:760px){.gw .wd-lab>div{padding:.4rem .55rem;width:max-content;max-width:min(11.5rem,46vw);white-space:normal}.gw .wd-lab b{font-size:.82rem}.gw .wd-lab span,.gw .wd-lab small{font-size:.8125rem}}
 /* the app's own screen, at the top of the text: the real screenshot, the crop this page is about */
 .gshot{margin:0 0 clamp(2.5rem,1.6rem + 2vw,3.75rem);max-width:42rem}
@@ -317,6 +321,19 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
   .gl .gfaq{margin-top:2.75rem;padding-top:1.9rem}
   .gmore{margin-top:3rem;padding-top:1.9rem}
   .gcard{padding:1rem 0}
+  /* 27 Nov.: the crop of the app as on the home's tour: 16 px corners, no three-colour line (only the page's top keeps it), its
+     caption in the text face */
+  .gwin{border-radius:16px}
+  .gwin::before{content:none}
+  .gshot-cap{padding:.75rem 1rem .85rem;font:400 .875rem/1.5 var(--sans)}
+  /* a section's number and its short accent line on one row over the heading (27 Nov.: the line, a gap, the number alone and
+     the heading read as three things), the header as tall as the home's, one rule between the questions and the guides */
+  :root{--top-h:3.5rem}
+  .gtext h2{background:none;padding-top:0;margin-top:3rem}
+  .gtext h2::before{display:block;width:auto;margin-bottom:.6rem;padding-left:1.9rem;background:linear-gradient(var(--t-accent),var(--t-accent)) 0 55%/1.25rem 2px no-repeat;font-size:.8125rem;line-height:1.2;color:var(--ink3);vertical-align:0}
+  .gtext h2::after{content:none}
+  .gtext h2:first-child{padding-top:0}
+  .gmore{border-top:0;padding-top:0}
 }
 </style>`);
 
@@ -961,7 +978,7 @@ ${style}
 </header>
 <main id="main" class="gmain">
   <div class="gstage" data-world="${world[0]}">
-  <div class="gw" aria-hidden="true"><canvas class="gw-cv"></canvas></div>
+  <div class="gw" aria-hidden="true">${existsSync(join(site, 'img', `gp-${p.slug}.webp`)) ? `<img class="gw-poster" src="../img/gp-${p.slug}.webp" alt="" width="780" height="546" decoding="async">` : ''}<canvas class="gw-cv"></canvas></div>
   <div class="wrap ghero">
     <div class="ghero-copy">
       <p class="crumbs"><a href="../">Pickroute</a><i aria-hidden="true">/</i><span>${esc(p.nav)}</span></p>

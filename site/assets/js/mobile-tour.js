@@ -43,16 +43,15 @@
       e.preventDefault(); options.onSelect(pages[i].dataset.pg); tabs[i].focus({preventScroll:true});
     });
     function fitDetail() {
+      // the marked part, its margin and some room round it, scaled to the box: never over 1.5x (the screenshot is 2x,
+      // so it stays sharp on a 3x phone) and never cut (mobile-tour.css clips the rest away, so nothing next to the mark shows half)
       var crop = find('.tour-crop'), cut = crop.firstElementChild;
       if (!cut || !crop.clientWidth) return;
-      var width = parseFloat(cut.style.getPropertyValue('--mw')) + 32;
-      // "Scroll image sideways" only when there is something to see: the cut has 32 px of margin round its mark, and a
-      // phone on its side had the hint for a 13 px scroll (10 Nov.)
-      var wide = width > crop.clientWidth + 24;
-      crop.tabIndex = wide ? 0 : -1;
-      crop.setAttribute('role', 'region');
-      crop.setAttribute('aria-label', wide ? T('Screenshot detail. Scroll horizontally to see the full row.') : T('Screenshot detail'));
-      find('.tour-pan').hidden = !wide;
+      var mw = parseFloat(cut.style.getPropertyValue('--mw')) || 1, mh = parseFloat(cut.style.getPropertyValue('--mh')) || 1;
+      var s = Math.min(1.5, (crop.clientWidth - 40) / (mw + 20), (crop.clientHeight - 36) / (mh + 20));
+      cut.style.setProperty('--s', Math.max(.3, s).toFixed(3));
+      crop.setAttribute('role', 'img');
+      crop.setAttribute('aria-label', T('Screenshot detail'));
     }
     function detail() {
       var keys = pages[current].querySelectorAll('.mk-key>li'), k = detailsAt[current], key = keys[k];
@@ -71,13 +70,9 @@
         }
         var im = copy.querySelector('img'); im.alt = key.querySelector(':scope > span').textContent;
         im.loading = 'eager'; crop.appendChild(copy);
-        // the box is as tall as the mark needs (mobile-tour.css: the mark, its margin and the faded band at each end)
-        crop.style.setProperty('--tour-mark', (parseFloat(copy.style.getPropertyValue('--mh')) || 0) + 'px');
-      } else crop.style.removeProperty('--tour-mark');
+      }
       find('.tour-caption').textContent = (k + 1) + ' / ' + keys.length + ' · ' + key.querySelector(':scope > span').textContent;
-      var hint = d.createElement('small'); hint.className = 'tour-pan'; hint.textContent = T('Scroll image sideways') + ' ↔'; hint.hidden = true;
-      find('.tour-caption').appendChild(hint);
-      fitDetail(); crop.scrollLeft = 0;
+      fitDetail();
     }
     function move(dir) { detailsAt[current] = (detailsAt[current] + dir + 3) % 3; detail(); }
     find('.tour-prev').addEventListener('click', function () { move(-1); });

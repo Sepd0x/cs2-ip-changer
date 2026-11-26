@@ -374,12 +374,11 @@ test('Touch: the app tour says "Scroll image sideways" only when the close-up ha
   }
 });
 
-// 25 Nov. 2026 (phone audit, A5): the close-up of the app tour is a window on the real screenshot round a mark, and its edges
-// cut the text next to the mark in half ("Protected" at the top, "Ctrl+Shift+F10 in gam" at the bottom), which read as a
-// broken picture. Measured: the 18 marks are 17 to 84 px tall and always fitted the box (178 px at 390x844, 123 at 320x568);
-// what was cut is what lies round them. So the box keeps its height (150 px at least), its four edges fade out, the mark
-// with its margin stays clear of the faded band, and the box grows for a mark that would not fit (to 56svh at most).
-test('Touch: in the app tour the close-up\'s edges fade, every mark stays whole and clear of the fade, and the box grows for a tall mark', async (t) => {
+// 25 Nov. 2026 (phone audit, A5): the close-up of the app tour cut the text next to its mark in half. 27 Nov. (the owner on his
+// S21: "ervers", "egions", a box floating over another thing): it shows only the marked part of the real window with a few px of
+// its own ground, clipped (clip-path) and scaled to fit the box (up to 2x, the screenshot's own pixels), so nothing round it shows.
+// Every mark stays whole and clear of the box's edges, at 390x844 and 320x568, and a tall mark is scaled down to fit.
+test('Touch: in the app tour the close-up shows only its mark, whole, clipped and scaled to fit, even a tall one', async (t) => {
   if (!browser) return t.skip(why);
   for (const [w, h] of [[390, 844], [320, 568]]) {
     const { page, errors } = await open(t, '', phone(w, h));
@@ -387,13 +386,10 @@ test('Touch: in the app tour the close-up\'s edges fade, every mark stays whole 
       const out = [], wait = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       const crop = () => document.querySelector('.tour-crop');
       const look = (name) => {
-        const c = crop(), cs = getComputedStyle(c), b = c.getBoundingClientRect(), ring = c.querySelector('.cring').getBoundingClientRect();
-        const fade = parseFloat(cs.getPropertyValue('--tour-fade')) || 0, mask = cs.maskImage || cs.webkitMaskImage || 'none';
-        if (!/gradient/.test(mask)) out.push(`${name}: the close-up's edges do not fade (mask-image: ${mask})`);
-        if (fade < 12) out.push(`${name}: the faded band is ${fade} px`);
-        if (ring.top < b.top + fade || ring.bottom > b.bottom - fade) out.push(`${name}: the mark (${Math.round(ring.top - b.top)} to ${Math.round(ring.bottom - b.top)} px) is in the faded band of a ${Math.round(b.height)} px box (${fade} px at each end)`);
-        // sideways only when the whole mark is in the box (a wide mark is scrolled to, with the hint)
-        if (c.scrollWidth <= c.clientWidth && (ring.left < b.left + 12 || ring.right > b.right - 12)) out.push(`${name}: the mark touches the faded side (${Math.round(ring.left - b.left)} to ${Math.round(ring.right - b.left)} of ${Math.round(b.width)} px)`);
+        const c = crop(), b = c.getBoundingClientRect(), ring = c.querySelector('.cring').getBoundingClientRect();
+        const clip = getComputedStyle(c.querySelector('.cut-in')).clipPath;
+        if (!/^inset\(/.test(clip)) out.push(`${name}: the rest of the window is not clipped away (${clip})`);
+        if (ring.top < b.top + 8 || ring.bottom > b.bottom - 8 || ring.left < b.left + 8 || ring.right > b.right - 8) out.push(`${name}: the mark (${Math.round(ring.left - b.left)},${Math.round(ring.top - b.top)} to ${Math.round(ring.right - b.left)},${Math.round(ring.bottom - b.top)}) is not whole in a ${Math.round(b.width)}x${Math.round(b.height)} box`);
         return { box: b.height, ring: ring.height };
       };
       const tabs = [...document.querySelectorAll('.tour-tabs button')];
@@ -401,18 +397,18 @@ test('Touch: in the app tour the close-up\'s edges fade, every mark stays whole 
         tab.click(); await wait();
         for (let k = 0; k < 3; k++) { look(`${tab.textContent} ${document.querySelector('.tour-caption').textContent.slice(0, 5)}`); document.querySelector('.tour-next').click(); await wait(); }
       }
-      // a mark 220 px tall, put by hand on the first detail of the last tab: the box grows to hold it
+      // a mark 220 px tall, put by hand on the first detail of the last tab: it is scaled down into the box
       const before = crop().getBoundingClientRect().height;
       const cut = document.querySelector('#pages > li:last-child .mk-key > li .cut'), was = cut.dataset.crop;
       cut.dataset.crop = '300,200,200,220';
       for (let k = 0; k < 3; k++) { document.querySelector('.tour-next').click(); await wait(); if (/^1 \//.test(document.querySelector('.tour-caption').textContent)) break; }
       const tall = look('a 220 px mark');
       if (was === undefined) delete cut.dataset.crop; else cut.dataset.crop = was;
-      return { out, before, tall, max: innerHeight * .56 };
+      return { out, before, tall };
     });
     assert.deepEqual(r.out, [], `${w}x${h}`);
-    assert.ok(r.tall.ring >= 220 && r.tall.box >= r.tall.ring + 32 && r.tall.box <= r.max + 1, `${w}x${h}: for a mark ${Math.round(r.tall.ring)} px tall the box is ${Math.round(r.tall.box)} px (it was ${Math.round(r.before)}; at most ${Math.round(r.max)})`);
-    assert.ok(r.before >= 148, `${w}x${h}: the close-up is ${Math.round(r.before)} px tall, a strip`);
+    assert.ok(r.tall.ring < r.tall.box, `${w}x${h}: a mark 220 px tall shows ${Math.round(r.tall.ring)} px in a ${Math.round(r.tall.box)} px box`);
+    assert.ok(r.before >= 120, `${w}x${h}: the close-up is ${Math.round(r.before)} px tall, a strip`);
     assert.deepEqual(errors, []);
   }
 });

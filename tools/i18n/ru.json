@@ -176,9 +176,7 @@
   "Full screenshot": "Скриншот целиком",
   "More details": "Подробнее",
   "Windows app · Example IPs and names": "Приложение для Windows · Примеры IP и имён",
-  "Screenshot detail. Scroll horizontally to see the full row.": "Деталь скриншота. Прокрутите по горизонтали, чтобы увидеть всю строку.",
   "Screenshot detail": "Деталь скриншота",
-  "Scroll image sideways": "Прокрутить изображение вбок",
   "Less detail": "Меньше"
  },
  "change-ip-with-phone": {
@@ -712,7 +710,7 @@
   "Android / iPhone": "Android / iPhone",
   "Change your CS2 IP with your phone's mobile data": "Смена IP в CS2 через мобильный интернет телефона",
   "CS2 and Steam go through your phone, so community servers see your carrier's IP, not your home IP. IP banned? One click gets a new IP and puts you back on the server.": "CS2 и Steam идут через телефон, поэтому комьюнити-серверы видят IP оператора, а не ваш домашний. Бан по IP? Один клик даёт новый IP и возвращает вас на сервер.",
-  "It's a Windows app: open this page on your PC. <code1/> · <a2>Download the .exe anyway</a2>": "Это программа для Windows: откройте страницу на ПК. <code1/> · <a2>Всё равно скачать .exe</a2>",
+  "It's a Windows app: open this page on your PC.": "Это программа для Windows: откройте страницу на ПК.",
   "Free beta · Windows 10/11 · <b1>Android or iPhone</b1> · USB cable or hotspot · never touches cs2.exe · not for VAC or game bans": "Бесплатная бета · Windows 10/11 · <b1>Android или iPhone</b1> · USB-кабель или точка доступа · не трогает cs2.exe · не для VAC и игровых банов",
   "Follow the route": "Следите за маршрутом",
   "The route, step by step": "Маршрут по шагам",

@@ -664,14 +664,15 @@ function* build(canvas, opts = {}) {
     if (!scrImg) return;
     scrIP = ip;
     scrG.drawImage(scrImg, 0, 0, 1240, 800);
-    // the two places the app shows the IP servers see (as on the page's own window): the status bar and the Status card
+    // the two places the app shows the IP servers see (as on the page's own window): the top bar's Protected pill and the big
+    // IP under "IP servers see" (27 Nov. 2026: the places of the Dial capture; until then they were the old app's, over its sidebar)
     const patch = (x, y, w, h, size, col) => {
       scrG.fillStyle = col; scrG.fillRect(x, y, w, h);
       scrG.fillStyle = cssv('--t-text'); scrG.font = `600 ${size}px "Fragment Mono", Consolas, monospace`; scrG.textBaseline = 'middle';
       scrG.fillText(ip, x + 2, y + h / 2 + 1);
     };
-    if (!opts.plainScreen) patch(1240 * 0.708, 800 * 0.022, 1240 * 0.076, 800 * 0.023, 11.5, cssv('--t-bg'));
-    if (!opts.plainScreen) patch(1240 * 0.09, 800 * 0.201, 1240 * 0.15, 800 * 0.039, 19, cssv('--t-surface'));
+    if (!opts.plainScreen) patch(1240 * 0.6585, 800 * 0.016, 1240 * 0.074, 800 * 0.022, 11.5, '#111e19');
+    if (!opts.plainScreen) patch(1240 * 0.154, 800 * 0.262, 1240 * 0.25, 800 * 0.047, 37, cssv('--t-bg'));
     scrTex.needsUpdate = true;
   }
 

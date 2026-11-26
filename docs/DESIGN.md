@@ -86,7 +86,7 @@ SEE", "START AND CLOSE") have none.
 | | Corners | Borders | Spacing |
 |---|---|---|---|
 | App | buttons are 28 px pills (26 in the top bar), fields 28 px rounded 6, rows and the sidebar's pages 8, cards, panels and menus 10, tags 4; the window and its dialogs square | no boxes: a section is its title and a 1 px `Line` (`LineSoft` between table rows); 1 px `LineStrong` round a pill | the page frame 24,16,24,18; 22 to 28 px between sections; buttons 8 apart |
-| Site | 999px pills (buttons, chips), 8 to 16 px cards, 2 to 6 px small parts | 1 px `--line` | `--gutter: clamp(1.25rem, .4rem + 4.2vw, 5rem)`, `--max: 88rem`, top bar `--top-h: 4rem` |
+| Site | 999px pills (buttons, chips), 8 to 16 px cards (16 on a phone), 2 to 6 px small parts | 1 px `--line` | `--gutter: clamp(1.25rem, .4rem + 4.2vw, 5rem)`, `--max: 88rem`, top bar `--top-h: 4rem` |
 | Dashboard v5 | `--r: 14px` cards, 10 px tabs, 999px chips | 1 px `--line` | `--gap: 20px` (14 px on phones) |
 | README pictures | 8 to 10 px frames around the captures, 8 px nodes | 1 px grey edge | |
 
@@ -439,6 +439,38 @@ stay a list; the footer's three lists open in place under their heading and its 
 PC" waits at the bottom, in thumb reach, from the app to the guides (never over the story's cards; the header's Send to PC
 steps aside meanwhile). No new text: the bar copies the cover's button (`assets/js/home.js`, `assets/js/footer-fold.js`).
 The 3D stills (`.still`) no longer carry the three-colour line: it is not the app's window.
+On 27 Nov 2026 the owner saw it on his Samsung S21 and turned it down (cards of different heights, text squeezed into small
+boxes, things cut, the spacing of the 01s, the borders, the guides). Since then, under 760 px:
+
+- **One card for every shelf:** 16 px corners, a 1 px `--line` border, 20 px inside, `--t-surface`. The cards of a shelf
+  are all as tall as the tallest (`align-items: stretch`), and their parts sit on the same lines (Is it safe?: the reading
+  4.4rem, then its picture 6.75rem, then the words; And the rest: the demo on a 7rem band over a hairline; the VPN
+  reasons: both drawings 8.5rem tall, the source at the card's foot). A shelf has 28 px of room on its right and a card is as wide as
+  the rest, so the next one shows 16 px of its edge and none of its words; the last snaps to the same place as the first. The dots sit
+  16 px under the cards.
+- **Setup's steps:** the number on its own line (2.5rem mono, `--t-accent`) and the words under it, never beside it.
+- **Pictures of the world** (`.still`): 16 px corners (12 for the two side by side), one hairline, the caption under the
+  picture in the text face (.875rem, `--ink3`; .8125rem under the pair), never in a box or in mono.
+- **The VPN table** has a key on top (Pickroute with an accent dot, VPN or proxy with a grey one), then each row's topic and
+  its two answers, each with its dot.
+- **The app tour's close-up** shows only the marked part of the real window with 4 px of its own ground (`clip-path`),
+  scaled to fit its box (`--s`, up to 2x, the screenshot's own pixels) and centred on `--t-bg`, so nothing next to the mark
+  shows cut; its frame is 16 px, no three-colour line. The six pages are pills like Android | iPhone (the open one
+  `--t-accent` with dark text). The marks (`.marks .mk` in `index.html`, the same for the PC's window) are on the Dial
+  captures (the content starts at 15.5 % of the width; the sidebar is 0 to 13.6 %), and the two patches put the story's
+  IP over the big IP and over the top bar's pill.
+- **The language notice** on a phone (up to 560 px) is a 16 px card at the bottom: the line on its own row with the close
+  button, "Ver em português" across under it (48 px); it rises above the Send bar when that is on.
+- **The cover:** "It's a Windows app: open this page on your PC." on its own line, then the address in a small mono chip
+  and Download the .exe anyway.
+- **The header** on a touch screen is the ground itself, without the blur (it redid an 18 px blur of the moving 3D on every
+  frame, and text showed through it). Send to PC sits left of the menu, so the menu keeps its place when the button steps
+  aside, and it steps aside too while the close's own Send to my PC is on screen.
+- **The footer's languages** are two columns.
+- **The guides** show their own picture of the 3D band (`site/img/gp-<slug>.webp`, `node tools/guide-posters.mjs`) until
+  the live scene fades in over it; a section's number sits with a 20 px accent line on one row over its heading (.8125rem
+  mono, `--ink3`); the header is as tall as the home's; one rule between the questions and the related guides; and their
+  crop of the app has 16 px corners, no three-colour line, its caption in the text face.
 Rules, checked by `node --test tools/site-touch.test.mjs` with taps and flicks (10 Nov 2026):
 
 - every `:hover` style sits in `@media (hover:hover)`, so a phone, which keeps `:hover` on what was tapped, leaves nothing
@@ -456,10 +488,9 @@ Rules, checked by `node --test tools/site-touch.test.mjs` with taps and flicks (
   risen above 42 % of the screen under the header, with a 0.18 s fade (none with reduced motion). It is never half faded
   over the scene;
 - a step picked on the rail or the chip rests on that step's shot (`A[i].s` in `home.js`), not where its anchor would go;
-- the close-up of the app tour (`.tour-crop`) is a window on the real screenshot at 1:1 round one mark: `--tour-h`
-  (`clamp(150px, 22svh, 180px)`; 130 px on a phone on its side), more when a mark with its 32 px margin and the faded
-  band would not fit (`--tour-mark`, set by `mobile-tour.js`), never over 56svh. Its edges fade out with a mask (20 px
-  top and bottom, 14 px at the sides), so the text next to the mark is never cut in half; the mark stays clear of the fade.
+- the close-up of the app tour (`.tour-crop`, `clamp(132px, 19svh, 168px)` tall; 130 px on a phone on its side) shows
+  only its mark with 4 px round it, clipped and scaled to fit (27 Nov 2026; until then a 1:1 window whose faded edges
+  still showed words cut in half). Every mark stays whole, 8 px clear of the box's edges.
 
 ## The site in other languages
 

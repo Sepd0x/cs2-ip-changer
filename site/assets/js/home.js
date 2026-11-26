@@ -619,6 +619,8 @@
     var place = function () {
       var on = Q.matches && from.getBoundingClientRect().top < innerHeight * .5 && to.getBoundingClientRect().top > innerHeight - 8;
       bar.classList.toggle('on', on); bar.setAttribute('aria-hidden', !on); b.tabIndex = on ? 0 : -1;
+      // 27 Nov.: and the header's Send to PC steps aside while the close's own Send to my PC is on screen (two at once)
+      var tr = to.getBoundingClientRect(); d.documentElement.classList.toggle('cta-in', Q.matches && tr.top < innerHeight && tr.bottom > 0);
     };
     addEventListener('scroll', function () { requestAnimationFrame(place); }, { passive: true });
     addEventListener('resize', place); place();
