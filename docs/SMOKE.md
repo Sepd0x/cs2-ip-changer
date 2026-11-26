@@ -5,6 +5,8 @@ real PC, a real phone and a real Steam can show, the ones that broke between ver
 (`dotnet publish src/ServerRouteTool.csproj -c Release -o <folder>`) on the PC that plays CS2, with the phone, before the tag.
 About 20 minutes. Write the result in the release's session note; anything that fails gets fixed with a test that failed first.
 
+`tools/teste-real.ps1` does the code, the exe and the steps below that a script can do on its own (1 to 5, 8, 9, 14, 17; Join with `-Jogo`), with one UAC prompt, and leaves `publish/testes-auto/<date>/relatorio.md` with pictures. The rest stays by hand.
+
 ## The app
 
 1. Start: protection off, Status says so, no question pops up on its own.

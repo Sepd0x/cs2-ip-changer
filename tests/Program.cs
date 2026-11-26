@@ -696,6 +696,8 @@ GuiDialTests.Run(Check);
 GuiDialV4Tests.Run(Check);
 // 26 nov.: o nome novo, Pickroute; as regras CS2 IP Changer passam a antigas (PickrouteTests.cs)
 PickrouteTests.Run(Check);
+// 26 nov.: a versão de testes automática no PC que joga (TesteRealTests.cs)
+TesteRealTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;
