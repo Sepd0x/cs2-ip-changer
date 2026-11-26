@@ -179,10 +179,10 @@ const UI = {
         { id: 'AutoStreamer', label: 'AutoStreamer', r: [385,2437,781,58] },
         { id: 'CheckUpdates', label: 'CheckUpdates', r: [385,2841,781,58] },
         { id: 'DeleteStats', label: 'Delete my stats', r: [385,2570,114,28] },
-        { id: 'OpenData', label: 'OpenData', r: [385,3076,123,28] },
-        { id: 'OpenFirewall', label: 'OpenFirewall', r: [516,3076,158,28] },
+        { id: 'OpenData', label: 'OpenData', r: [385,3103,123,28] },
+        { id: 'OpenFirewall', label: 'OpenFirewall', r: [516,3103,158,28] },
         { id: 'DeleteLogs', label: 'DeleteLogs', r: [507,2570,111,28] },
-        { id: 'RemoveAll', label: 'RemoveAll', r: [1007,3187,159,28] },
+        { id: 'RemoveAll', label: 'RemoveAll', r: [1040,3214,126,28] },
       ] },
   ],
 };
