@@ -43,10 +43,14 @@ public partial class MainWindow
 
     void LogCopy_Click(object sender, RoutedEventArgs e)
     {
-        var text = string.Join(Environment.NewLine, _log.Reverse().Select(l => $"{l.TimeText}  {l.Text}"));
+        // What the page shows (audit 26 nov., A11): with Hide logins on, the home IP and the logins stay ••• in what you paste too
+        var text = LogCopyText(_log.Reverse());
         if (Rec.On) text = Rec.Scrub(text, PersonalWords().ToList());   // recording build: what you paste is as clean as the screen
         try { Clipboard.SetText(text); Toast(Loc.T("Log copied."), true); } catch { Toast(Loc.T("Couldn't copy. Try again."), false); }
     }
+
+    /// <summary>Copy all's text: each line as the Log page shows it (<see cref="LogEntry.Shown"/>, the masked one with Hide logins).</summary>
+    public static string LogCopyText(IEnumerable<LogEntry> lines) => string.Join(Environment.NewLine, lines.Select(l => $"{l.TimeText}  {l.Shown}"));
 
     void LogClear_Click(object sender, RoutedEventArgs e) => _log.Clear();
 

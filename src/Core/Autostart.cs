@@ -79,6 +79,8 @@ public static class Autostart
     public static bool IsOnFor(string xml, string exe, string sid, string account)
     {
         if (!string.Equals(CommandIn(xml), exe, StringComparison.OrdinalIgnoreCase)) return false;
+        // Audit 26 nov. (A7): a task (or its logon trigger) turned off in Task Scheduler never starts the app, so it isn't "on"
+        if (Regex.IsMatch(xml ?? "", @"<Enabled>\s*false\s*</Enabled>", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)) return false;
         var users = Regex.Matches(xml ?? "", @"<UserId>\s*([^<]*?)\s*</UserId>").Select(m => System.Net.WebUtility.HtmlDecode(m.Groups[1].Value)).ToList();
         var shortName = account?[(account.LastIndexOf('\\') + 1)..];
         return users.All(u => string.Equals(u, sid, StringComparison.OrdinalIgnoreCase) || string.Equals(u, account, StringComparison.OrdinalIgnoreCase)

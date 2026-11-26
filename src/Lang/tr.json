@@ -2237,6 +2237,7 @@
  "the app's own path is unknown": "uygulamanın kendi yolu bilinmiyor",
  "the copy doesn't match the app": "kopya uygulamayla eşleşmiyor",
  "the download left HTTPS": "indirme HTTPS'ten çıktı",
+ "the download received nothing for {0} s": "indirme {0} sn boyunca hiçbir şey almadı",
  "the downloaded file changed after the check": "indirilen dosya kontrolden sonra değişti",
  "the file couldn't be saved": "dosya kaydedilemedi",
  "the file is too big": "dosya çok büyük",

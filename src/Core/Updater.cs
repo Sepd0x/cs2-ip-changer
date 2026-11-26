@@ -225,6 +225,36 @@ public static partial class Updater
         return Convert.ToHexString(SHA256.HashData(fs)).ToLowerInvariant();
     }
 
+    /// <summary>How long the download may go without receiving a byte before it gives up.</summary>
+    public static readonly TimeSpan DownloadIdle = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Copies <paramref name="src"/> into <paramref name="dst"/>, giving up (TimeoutException) after <paramref name="idle"/> without a byte.
+    /// Audit 26 nov. (A8): with ResponseHeadersRead the request's timeout ends when the headers arrive, so a server that sent them and
+    /// then nothing left Update waiting for good. Throws past <paramref name="limit"/> bytes. Returns the bytes copied.
+    /// </summary>
+    public static async Task<long> CopyWithIdle(Stream src, Stream dst, TimeSpan idle, long limit, Action<long> progress, CancellationToken ct)
+    {
+        using var quiet = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        var buf = new byte[81920];
+        long got = 0;
+        while (true)
+        {
+            quiet.CancelAfter(idle);
+            int n;
+            try { n = await src.ReadAsync(buf, quiet.Token); }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+            {
+                throw new TimeoutException(Loc.F("the download received nothing for {0} s", (int)idle.TotalSeconds));
+            }
+            if (n <= 0) return got;
+            await dst.WriteAsync(buf.AsMemory(0, n), ct);
+            got += n;
+            if (got > limit) throw new InvalidDataException(Loc.T("the file is too big"));
+            progress?.Invoke(got);
+        }
+    }
+
     /// <summary>Downloads the exe as CS2IPChanger.new.exe next to the app. Returns its SHA-256, already checked.</summary>
     public static async Task<string> Download(Release r, IProgress<string> progress, CancellationToken ct = default)
     {
@@ -244,20 +274,13 @@ public static partial class Updater
             if (total > 400_000_000) throw new InvalidDataException(Loc.T("the file is too big"));
             using var src = await resp.Content.ReadAsStreamAsync(ct);
             using var fs = File.Create(part);
-            var buf = new byte[81920];
-            long got = 0, shown = 0;
-            int n;
-            while ((n = await src.ReadAsync(buf, ct)) > 0)
+            long shown = 0;
+            await CopyWithIdle(src, fs, DownloadIdle, 400_000_000, got =>
             {
-                await fs.WriteAsync(buf.AsMemory(0, n), ct);
-                got += n;
-                if (got > 400_000_000) throw new InvalidDataException(Loc.T("the file is too big"));
-                if (got - shown >= 1_000_000)
-                {
-                    shown = got;
-                    progress?.Report(total > 0 ? Loc.F("Downloading the update… {0} %", got * 100 / total) : Loc.F("Downloading the update… {0} MB", got / 1_000_000));
-                }
-            }
+                if (got - shown < 1_000_000) return;
+                shown = got;
+                progress?.Report(total > 0 ? Loc.F("Downloading the update… {0} %", got * 100 / total) : Loc.F("Downloading the update… {0} MB", got / 1_000_000));
+            }, ct);
         }
         progress?.Report(Loc.T("Checking the SHA-256…"));
         var have = Sha256Of(part);

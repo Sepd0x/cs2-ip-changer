@@ -2237,6 +2237,7 @@
  "the app's own path is unknown": "se desconoce la ruta de la propia app",
  "the copy doesn't match the app": "la copia no coincide con la app",
  "the download left HTTPS": "la descarga salió de HTTPS",
+ "the download received nothing for {0} s": "la descarga no recibió nada durante {0} s",
  "the downloaded file changed after the check": "el archivo descargado cambió después de la comprobación",
  "the file couldn't be saved": "no se pudo guardar el archivo",
  "the file is too big": "el archivo es demasiado grande",

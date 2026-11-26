@@ -196,15 +196,22 @@ public static class Adb
     }
 
     static readonly SecurityIdentifier TrustedInstaller = new("S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464");
-    static readonly SecurityIdentifier[] Anyone =
-    {
-        Users, new(WellKnownSidType.AuthenticatedUserSid, null), new(WellKnownSidType.WorldSid, null), new(WellKnownSidType.InteractiveSid, null),
-    };
+
+    static readonly SecurityIdentifier CreatorOwner = new(WellKnownSidType.CreatorOwnerSid, null);
+
+    /// <summary>
+    /// Who may write to a folder the app runs from as admin: Administrators, SYSTEM, TrustedInstaller and CREATOR OWNER (which only
+    /// stands for the owner, already one of those). Audit 26 nov. (A6): anyone else counts as a writer without admin rights. Before,
+    /// only Users, Authenticated Users, Everyone, INTERACTIVE and you did, so a local or domain group given write rights passed.
+    /// OWNER RIGHTS counts as trusted: it is the owner, already checked to be Administrators, SYSTEM or TrustedInstaller.
+    /// </summary>
+    public static bool TrustedWriter(SecurityIdentifier who) =>
+        who != null && (who == Admins || who == SystemSid || who == TrustedInstaller || who == CreatorOwner || who == OwnerRights);
 
     /// <summary>
     /// Programs without admin rights can change the folder: a link, owned by someone other than Administrators, SYSTEM or TrustedInstaller
-    /// (the owner can rewrite the permissions), or write rights for Users, Authenticated Users, Everyone, INTERACTIVE or you.
-    /// C:\Program Files\CS2 IP Changer passes (its TrustedInstaller and CREATOR OWNER entries don't count).
+    /// (the owner can rewrite the permissions), or write rights for anyone else (<see cref="TrustedWriter"/>: Users, Everyone, you,
+    /// another group). C:\Program Files\CS2 IP Changer passes (TrustedInstaller, SYSTEM, Administrators; CREATOR OWNER is inherit-only).
     /// </summary>
     public static bool UsersCanWrite(string d)
     {
@@ -215,12 +222,10 @@ public static class Adb
             var sec = info.GetAccessControl();
             var owner = sec.GetOwner(typeof(SecurityIdentifier)) as SecurityIdentifier;
             if (owner != Admins && owner != SystemSid && owner != TrustedInstaller) return true;
-            using var me = WindowsIdentity.GetCurrent();
             foreach (FileSystemAccessRule r in sec.GetAccessRules(true, true, typeof(SecurityIdentifier)))
             {
                 if (r.AccessControlType != AccessControlType.Allow || (r.FileSystemRights & WriteRights) == 0 || r.PropagationFlags.HasFlag(PropagationFlags.InheritOnly)) continue;
-                var who = r.IdentityReference as SecurityIdentifier;
-                if (Anyone.Contains(who) || who == me.User) return true;
+                if (!TrustedWriter(r.IdentityReference as SecurityIdentifier)) return true;
             }
             return false;
         }

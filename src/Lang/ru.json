@@ -2237,6 +2237,7 @@
  "the app's own path is unknown": "путь самого приложения неизвестен",
  "the copy doesn't match the app": "копия не совпадает с приложением",
  "the download left HTTPS": "загрузка ушла с HTTPS",
+ "the download received nothing for {0} s": "загрузка ничего не получала {0} с",
  "the downloaded file changed after the check": "скачанный файл изменился после проверки",
  "the file couldn't be saved": "не удалось сохранить файл",
  "the file is too big": "файл слишком большой",

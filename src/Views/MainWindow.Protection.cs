@@ -1101,10 +1101,12 @@ public partial class MainWindow
 
     bool _unconfirmedSaid;
 
-    /// <summary>The phone's IP is the home IP. With protection off nothing is blocked: the Log says what to do before turning it on.</summary>
+    /// <summary>The phone's IP is the home IP. With protection off nothing is blocked: the Log says what to do before turning it on.
+    /// Audit 26 nov. (A14): the IP is the home IP, so the Log gets it masked (82.154.•••.•••). A bug report only hides the home IPs
+    /// known when it is made, so a line from before the provider changed it would carry the old one whole.</summary>
     public static string SameIpText(string ip, bool unprotected) => unprotected
-        ? $"The phone's IP ({ip}) is the same as your home IP: it is sharing your Wi-Fi. Turn off the phone's Wi-Fi before you turn on protection."
-        : $"The phone connection IP ({ip}) is the same as your home IP. Servers and CS2 blocked.";
+        ? $"The phone's IP ({Fmt.MaskIp(ip)}) is the same as your home IP: it is sharing your Wi-Fi. Turn off the phone's Wi-Fi before you turn on protection."
+        : $"The phone connection IP ({Fmt.MaskIp(ip)}) is the same as your home IP. Servers and CS2 blocked.";
 
     public static string NoHomeText(bool unprotected) => "The home IP hasn't been measured yet, so the phone's IP can't be compared with it."
         + (unprotected ? "" : " Servers and CS2 blocked until it is.");

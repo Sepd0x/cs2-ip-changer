@@ -21,6 +21,16 @@ CS2 IP Changer is now **Pickroute**, and this is its first stable version: a new
 - If the app was stopped in the middle of updating a protection rule, the next start could take that block away while CS2 was still open. It now counts it as a block that is still on.
 - **Banned IP block:** it now blocks only the exact servers that banned your IP, not other servers on the same machines.
 - **Regions:** Allow all works even when Valve's list can't be loaded.
+- The app only runs as administrator from a folder that only administrators can change: groups and other users with write rights now count too.
+
+### Privacy
+- Log > Copy all keeps your home IP and logins hidden when Hide logins is on, and the Log never writes a home IP whole.
+- Usage stats: the time they were off isn't counted, and a phone seen while they were off isn't sent.
+
+### Also fixed
+- An update download that stops receiving data gives up after 30 seconds, so Update can be pressed again.
+- Start with Windows shows off when the task was turned off in Task Scheduler.
+- Steam accounts with IDs starting 7656120 show in Accounts, and Steam's connection log in UTF-16 is read correctly after the first time.
 
 ### Languages
 - The app and the website are now also in **Turkish**.

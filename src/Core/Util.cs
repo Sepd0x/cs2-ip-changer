@@ -548,14 +548,17 @@ public static class Fmt
     /// <summary>"3d 4h", "21h", "90m" or just hours ("36").</summary>
     public static TimeSpan? ParseDuration(string text)
     {
-        var total = TimeSpan.Zero;
+        // Counted in minutes as a double and checked before it becomes a TimeSpan (audit 26 nov., A13: "100000000d" threw OverflowException)
+        var minutes = 0.0;
         var any = false;
         foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(text ?? "", @"(\d+(?:[.,]\d+)?)\s*(d|h|m)", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant))
         {
             var n = double.Parse(m.Groups[1].Value.Replace(',', '.'), System.Globalization.CultureInfo.InvariantCulture);
-            total += char.ToLowerInvariant(m.Groups[2].Value[0]) switch { 'd' => TimeSpan.FromDays(n), 'h' => TimeSpan.FromHours(n), _ => TimeSpan.FromMinutes(n) };
+            minutes += n * char.ToLowerInvariant(m.Groups[2].Value[0]) switch { 'd' => 1440, 'h' => 60, _ => 1 };
             any = true;
         }
+        if (any && !(minutes <= 3650.0 * 1440)) return null;
+        var total = any ? TimeSpan.FromMinutes(minutes) : TimeSpan.Zero;
         // Like the units above: "1.5" and "1,5" are both an hour and a half, whatever the PC's language (no thousands separator)
         if (!any && double.TryParse((text ?? "").Trim().Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var hours)
             && hours > 0 && hours <= 3650 * 24) { total = TimeSpan.FromHours(hours); any = true; }

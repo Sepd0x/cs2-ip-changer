@@ -16,6 +16,10 @@ public sealed class SteamLogWatcher
     static readonly Regex Stamp = new(@"^\[(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)\]", RegexOptions.Compiled);
     long _pos = -1;
     string _path;
+    // Audit 26 nov. (A16): the file's encoding, from its byte order mark at the start, kept for the reads after the first (they start
+    // in the middle, where there is no mark), and the length of that mark
+    Encoding _enc;
+    int _bom;
     bool _loggingOff;
 
     public DateTime? LastLogon { get; private set; }
@@ -41,15 +45,18 @@ public sealed class SteamLogWatcher
         {
             using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
             var first = path != _path || _pos < 0;
-            if (first) { _path = path; _pos = Math.Max(0, fs.Length - 256 * 1024); }
-            if (fs.Length < _pos) _pos = 0;   // Steam restarted the file
-            if (fs.Length == _pos) return events;
+            if (first) { _path = path; _pos = Math.Max(0, fs.Length - 256 * 1024); _enc = null; }
+            if (fs.Length < _pos) { _pos = 0; _enc = null; }   // Steam restarted the file
+            if (_enc == null) (_enc, _bom) = EncodingOf(fs);
+            if (_pos < _bom) _pos = _bom;
+            if (_enc is UnicodeEncoding && (_pos - _bom) % 2 != 0) _pos++;   // UTF-16: start on a whole character
+            if (fs.Length <= _pos) return events;
             fs.Seek(_pos, SeekOrigin.Begin);
-            var text = new StreamReader(fs, Encoding.UTF8).ReadToEnd();
+            var text = new StreamReader(fs, _enc, detectEncodingFromByteOrderMarks: false).ReadToEnd();
             // Only advance to the last complete line.
             var end = text.LastIndexOf('\n');
             if (end < 0) return events;
-            _pos += Encoding.UTF8.GetByteCount(text.AsSpan(0, end + 1));
+            _pos += _enc.GetByteCount(text.AsSpan(0, end + 1));
             foreach (var raw in text[..(end + 1)].Split('\n'))
             {
                 var line = raw.TrimEnd('\r');
@@ -64,6 +71,18 @@ public sealed class SteamLogWatcher
         }
         catch { }
         return events;
+    }
+
+    /// <summary>The encoding by the byte order mark at the file's start (UTF-16 LE or BE, UTF-8), UTF-8 without one, and the mark's length.</summary>
+    public static (Encoding Encoding, int Bom) EncodingOf(Stream fs)
+    {
+        var b = new byte[3];
+        fs.Seek(0, SeekOrigin.Begin);
+        var n = fs.ReadAtLeast(b, 3, throwOnEndOfStream: false);
+        if (n >= 2 && b[0] == 0xFF && b[1] == 0xFE) return (new UnicodeEncoding(false, false), 2);
+        if (n >= 2 && b[0] == 0xFE && b[1] == 0xFF) return (new UnicodeEncoding(true, false), 2);
+        if (n >= 3 && b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF) return (new UTF8Encoding(false), 3);
+        return (new UTF8Encoding(false), 0);
     }
 
     string Classify(string line)

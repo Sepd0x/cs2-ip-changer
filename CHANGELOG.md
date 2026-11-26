@@ -62,6 +62,15 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Two ban marks on servers with different ports also blocked other servers on the same machines. The app now blocks only the exact servers that banned your IP.
 - Regions: when Valve's list could not be loaded and no saved copy was left, Allow all was greyed out and the block stayed. Allow all now removes it without the list.
 - An Android phone over USB, with USB debugging not allowed and a PC that has no home network of its own: if the phone was on your home Wi-Fi, servers could see your home IP while the app only warned. Your servers and CS2 now stay blocked until the mobile data can be confirmed. Connection says what to do, and Phone setup (the blue button) opens on the USB debugging step; connecting the PC to your home network once also works.
+- The check that the app's folder can only be changed by administrators also looks at groups and other users given write rights, not only Users and Everyone.
+- Start with Windows showed on when the task had been turned off in Task Scheduler.
+- An update download that stopped receiving data waited for ever. It now gives up after 30 seconds without data and Update can be pressed again.
+- Usage stats: after turning them off and on again, the time they were off no longer counts for the page that was open, and a phone seen while they were off is not sent.
+- Log > Copy all copies what the page shows: with Hide logins on, your home IP and logins stay hidden in what you paste.
+- Steam accounts whose ID starts with 7656120 were left out of Accounts.
+- A cooldown typed as a huge number ("100000000d") no longer shows an error instead of "not a valid duration".
+- The Log line that says the phone's IP is the same as your home IP keeps that IP partly hidden, so an old home IP never ends up in a bug report.
+- Steam's connection log in UTF-16: after the first read, a disconnect written later was missed and the app kept showing Steam online.
 
 ## [0.1.0-beta.14] - 2026-11-19
 

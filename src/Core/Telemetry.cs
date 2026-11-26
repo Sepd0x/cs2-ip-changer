@@ -195,13 +195,15 @@ public static class Telemetry
             if (!_on) return;
             Save();
             _on = false;
+            _phoneEnv = null;   // A15: a phone seen before or while off is never sent after turning stats on again
             _tick?.Stop(); _live?.Stop(); _first?.Stop();
         }
         else if (!_on && !_handedOver)
         {
             _closed = false;
-            // Off counts nothing: the session and the phone drops that go out at close start again here, not at the app's start
-            lock (Gate) _drops = 0;
+            // Off counts nothing: the session and the phone drops that go out at close start again here, not at the app's start.
+            // Audit 26 nov. (A10): the screen's clock too, or the next save added the whole time off to the screen open before
+            lock (Gate) { _drops = 0; _screenSince = DateTime.UtcNow; _phoneEnv = null; }
             _started = DateTime.UtcNow;
             TurnOn();
         }
@@ -776,7 +778,8 @@ public static class Telemetry
     // The environment: once a day, in its own report with no ID (worker/stats /v1/env keeps only counts per day)
     static PhoneInfo _phoneEnv;
     static Func<(double Width, double Scale)> _window;
-    public static void Phone(PhoneInfo p) { if (p?.Ready == true) _phoneEnv = p; }
+    /// <summary>The phone for the day's environment report, only while stats are on (audit 26 nov., A15).</summary>
+    public static void Phone(PhoneInfo p) { if (_on && p?.Ready == true) _phoneEnv = p; }
     public static void WindowFrom(Func<(double, double)> w) => _window = w;
 
     static readonly Dictionary<string, string> Brands = new(StringComparer.OrdinalIgnoreCase)

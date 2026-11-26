@@ -11,10 +11,14 @@ public static class SteamIds
 {
     public const long Base = 76561197960265728;
 
-    static readonly Regex Id64 = new(@"^7656119\d{10}\z", RegexOptions.Compiled);
+    static readonly Regex Id64 = new(@"^7656[0-9]{13}\z", RegexOptions.Compiled);
 
-    /// <summary>A real SteamID64. Ids become file names (avatars, sign-ins) and parts of URLs, so nothing else gets through.</summary>
-    public static bool IsId64(string s) => s != null && Id64.IsMatch(s);
+    /// <summary>
+    /// A real SteamID64: 17 ASCII digits, the base plus an account id of 1 to 2^32-1. Ids become file names (avatars, sign-ins) and
+    /// parts of URLs, so nothing else gets through. Audit 26 nov. (A12): the whole range <see cref="FromId32"/> makes, not only "7656119…".
+    /// </summary>
+    public static bool IsId64(string s) =>
+        s != null && Id64.IsMatch(s) && long.TryParse(s, NumberStyles.None, CultureInfo.InvariantCulture, out var id) && id > Base && id - Base <= uint.MaxValue;
 
     /// <summary>Steam's userdata folder id (SteamID64 minus the base), or null.</summary>
     public static string Id32(string steamId64) =>
