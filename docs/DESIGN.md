@@ -10,40 +10,40 @@ something is left behind (see [Checks](#checks)).
 ### Colors (from `src/Theme.xaml`)
 
 `node tools/design-tokens.mjs` reads `Theme.xaml` and writes these between `/* tokens` and `/* /tokens */` in every file
-listed in `FILES` there. Values as of 26 Nov 2026 (the palette of the new GUI: a violet black base and one accent, the
+listed in `FILES` there. Values as of 26 Nov 2026 (the palette of the new GUI: a neutral black base (violet until 26 Nov at night) and one accent, the
 app blue; see [App layout](#app-layout)):
 
 | Token | Theme.xaml key | Value | What for |
 |---|---|---|---|
-| `--t-bg` | `BgColor` | `#0e0c14` | the window, the page |
-| `--t-side` | `Side` | `#08070c` | the app's sidebar and status bar |
-| `--t-edge` | `Edge` | `#050408` | the dark rim of a dialog and a toast |
-| `--t-surface` | `SurfaceColor` | `#14121b` | cards, panels, a row under the mouse |
-| `--t-surface2`, `--t-surface3` | `Surface2`, `Surface3` | `#1c1a26`, `#262333` | the page picked, the filter picked, hover |
-| `--t-line`, `--t-line-strong` | `Line`, `LineStrong` | `#1f1d24`, `#302e35` | the thin lines (white at 7 % on the page); pill outlines (14 %) |
-| `--t-text`, `--t-muted`, `--t-faint` | `Text`, `Muted`, `Faint` | `#eeecf3`, `#a8aebb`, `#8c92a0` | body text, secondary, hints |
+| `--t-bg` | `BgColor` | `#0b0b0c` | the window, the page |
+| `--t-side` | `Side` | `#070708` | the app's sidebar and status bar |
+| `--t-edge` | `Edge` | `#040405` | the dark rim of a dialog and a toast |
+| `--t-surface` | `SurfaceColor` | `#131314` | cards, panels, a row under the mouse |
+| `--t-surface2`, `--t-surface3` | `Surface2`, `Surface3` | `#1a1a1c`, `#242426` | the page picked, the filter picked, hover |
+| `--t-line`, `--t-line-strong` | `Line`, `LineStrong` | `#1e1e20`, `#2e2e31` | the thin lines (white at 7 % on the page); pill outlines (14 %) |
+| `--t-text`, `--t-muted`, `--t-faint` | `Text`, `Muted`, `Faint` | `#ededef`, `#a9abb1`, `#8d9096` | body text, secondary, hints |
 | `--t-good`, `--t-warn`, `--t-bad` | `Good`, `Warn`, `Bad` | `#46c58a`, `#f0a948`, `#ef6461` | protected / attention / blocked, banned |
 | `--t-accent` | `AccentColor` | `#5ba8f0` | the one accent: the filled button, links, ticks and switches, the allowed regions |
-| `--t-accent-light`, `--t-accent-dark` | `AccentLightColor`, `AccentDarkColor` | `#74b6f3`, `#3e87d0` | hover, the accent gradient |
+| `--t-accent-light`, `--t-accent-dark` | `AccentLightColor`, `AccentDarkColor` | `#74b6f3`, `#3e87d0` | hover |
 | `--t-accent-deep` | `AccentDeepColor` | `#2b74c2` | web only: filled buttons with white text, the accent on light pages |
 | `--t-top1`, `--t-top2`, `--t-top3` | `Top1`…`Top3` | `#3bb4e5`, `#c64fc6`, `#d8e03a` | the route's colours: blue, magenta, yellow |
 | `--t-top` | | `linear-gradient(90deg, top1, top2 50%, top3)` | the web's top line, ready to use |
 | `--t-accent-rgb` | `AccentColor` | `91,168,240` | `rgba(var(--t-accent-rgb), .1)` |
 
 The app also has keys with alpha (`AccentSoft`, `GoodSoft`, `WarnSoft`, `BadSoft`, `BadDim`, …), the button fills (`BoxFill`,
-`BtnFill`, `BtnFillHover`, in violet greys) and keys of its own that the web doesn't take:
+`BtnFill`, `BtnFillHover`, flat neutral greys; no gradient but the top line since 26 Nov at night) and keys of its own that the web doesn't take:
 
 | Theme.xaml key | Value | What for |
 |---|---|---|
-| `Info` | `#cdd1da` | IPs and numbers next to text, a plain word button (`LinkBtn`) |
+| `Info` | `#cfd1d6` | IPs and numbers next to text, a plain word button (`LinkBtn`) |
 | `AccentText` | `#06111d` | the text on the filled accent button |
-| `Field` | `#17151f` | a field (`FieldBox`, `FieldCombo`, `FieldPwd`), the mode picked on Connection, a note |
+| `Field` | `#161617` | a field (`FieldBox`, `FieldCombo`, `FieldPwd`), the mode picked on Connection, a note |
 | `AccentLine` | `#595ba8f0` | the accent at 35 %: the outline of the mode picked and of the Servers bars |
-| `RouteMid`, `RouteOff`, `RouteDash` | `#8a82d8`, `#6d6980`, `#3a3648` | the route on Connection: its middle dot; the grey rings and dashes while not protected (`RouteOff` also rings a tick or a switch that is off) |
-| `Lift` | `#1f1c29` | the row or card under the mouse or picked, the letter box, the tags, the Settings group in view |
-| `LineSoft` | `#181620` | white at 4 %: the line between the rows of a table (Log, Profiles, Compare) |
+| `RouteMid`, `RouteOff`, `RouteDash` | `AccentColor`, `#6c6c72`, `#37373b` | the route on Connection: its middle dot; the grey rings and dashes while not protected (`RouteOff` also rings a tick or a switch that is off) |
+| `Lift` | `#1d1d1f` | the row or card under the mouse or picked, the letter box, the tags, the Settings group in view |
+| `LineSoft` | `#171719` | white at 4 %: the line between the rows of a table (Log, Profiles, Compare) |
 | `TopLine` | `Top1`, `Top2` at 88 %, `Top3` | the window's 2 px top line, shown at 42 %; the toast's strip |
-| `NavMark` | `Top1` to `Top2` | the 3 x 14 px mark of the page picked in the sidebar |
+| `NavMark` | `AccentColor` (`Top1` to `Top2` until 26 Nov at night) | the 3 x 14 px mark of the page picked in the sidebar |
 
 The web makes its soft colors with `color-mix(in srgb, var(--t-good) 12%, transparent)` or `rgba(var(--t-accent-rgb), …)`.
 
@@ -63,7 +63,7 @@ Each page keeps short names of its own; the shared ones must be `var(--t-…)` (
 | `--t-top` | the page's top line | `--gradient` | the logo square (`.mark`) | `--top1`…`--top3` |
 
 Kept on purpose, page by page: the text white (site `#e8e8e8`, dashboards `#ededed` and `#e4e4e4`: neutral greys, where the
-app's `#eeecf3` leans to violet; the README card takes the app's); the dashboard's charts, heat map and its other palettes (`quente`, `contraste`);
+the app's `#ededef` is neutral too since 26 Nov at night; the README card takes the app's); the dashboard's charts, heat map and its other palettes (`quente`, `contraste`);
 the v5 page's light "Papel" palette (its greys, green and red are made for a white page; only its blue is the app's
 `accent-deep`); the README SVGs' greys (`docs/assets/src/components.mjs`, tuned for GitHub's light and dark pages; their
 blue, green, red and top line come from `Theme.xaml`).
@@ -148,7 +148,7 @@ The window draws the logo at the top of the sidebar, above Connection (`SideLogo
 paths of `logo-24.svg` with the theme's brushes): change both together. The README card (`docs/assets/src/social-preview.html`)
 signs with `logo.svg` in its lower left corner, and so does `banner.png` (`docs/assets/src/banner.html`, `render.cmd`). The
 README's animated demo (`demo.gif`, `demo-mobile.gif` and their `.png` stills) draws `logo-24.svg` (desktop) and `logo.svg`
-(phone) in its header; it is made outside git (`publish/readme-gif-2026-11-26/LEIA-ME.md`; recorded again on 26 Nov 2026 with the Dial colours and the name Pickroute), so record it again when the logo
+(phone) in its header; it is made outside git (`publish/readme-gif-2026-11-26-neutro/LEIA-ME.md`; recorded again on 26 Nov 2026 with the Dial colours and the name Pickroute, and that night with the neutral black), so record it again when the logo
 changes. The GitHub avatar (`publish/logo-2026-11-06/avatar-460.png`) is uploaded by
 hand. `tests/LogoTests.cs` fails if any of these stop being the same logo, or if the logo gains a background, glow, mask or a
 colour outside the table.
@@ -207,9 +207,9 @@ there.
   accounts. Log: Save bug report. Settings has none. The rest are pills (`Pill`; `Btn` and `Primary` turn into pills on a
   page with `Look.Round`), plain words (`LinkBtn`) or a red word (`DangerLink`). A word at the right end of a line has a
   -8 px right margin, so its text ends where the pills end (its hover wash keeps the 8 px).
-- The route's colours (`Top1` to `Top3`) only on what is live: the window's top line, the sidebar's mark, the route This
-  PC > phone > Servers on Connection while protected (`RouteOn`, with `RouteMid`; dashed and grey otherwise), the dial's
-  lit arc on Regions and the toast's strip. Everything else uses the one accent.
+- The route's colours (`Top1` to `Top3`) only on the window's top line and the toast's strip, the brand's mark. Since 26 Nov at
+  night (the owner: gradients elsewhere read as AI slop) the sidebar's mark, the route on Connection (`RouteOn`, `RouteMid`) and the
+  dial's lit arc are the flat accent, and no other fill is a gradient. Everything else uses the one accent.
 - A state shows with `StatusMark` (a filled square when all is well, other shapes for the rest, so it reads without its
   colour), not a dot. Green, amber and red only for a state, a ping against Regions > Ping under, or a ban.
 - Fields are `FieldBox`, `FieldCombo` and `FieldPwd` (28 px, `Field`, rounded 6), ticks `Check` (a 14 px square) or

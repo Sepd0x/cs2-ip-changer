@@ -3,7 +3,9 @@
                     xmlns:local="clr-namespace:SRT">
 
     <!-- ============================================================ Accent color and top line -->
-    <!-- 26 Nov (App v3 design): the palette of the new frame. The base is a violet black; one accent, the app blue -->
+    <!-- 26 Nov (App v3 design): one accent, the app blue. 26 Nov at night (the owner: "it isn't black, it looks purple or pink";
+         gradients other than the top line read as AI slop): the base is a neutral black and every fill is flat. The only
+         gradient left is the 2 px route line at the top of the window, the brand's mark -->
     <Color x:Key="AccentColor">#5BA8F0</Color>
     <Color x:Key="AccentLightColor">#74B6F3</Color>
     <Color x:Key="AccentDarkColor">#3E87D0</Color>
@@ -15,20 +17,20 @@
     <Color x:Key="Top2">#C64FC6</Color>
     <Color x:Key="Top3">#D8E03A</Color>
 
-    <!-- ============================================================ Base (same for all three colors) -->
-    <Color x:Key="BgColor">#0E0C14</Color>
-    <Color x:Key="SurfaceColor">#14121B</Color>
-    <SolidColorBrush x:Key="Bg" Color="#0E0C14"/>
-    <SolidColorBrush x:Key="Side" Color="#08070C"/>
-    <SolidColorBrush x:Key="Surface" Color="#14121B"/>
-    <SolidColorBrush x:Key="Surface2" Color="#1C1A26"/>
-    <SolidColorBrush x:Key="Surface3" Color="#262333"/>
-    <SolidColorBrush x:Key="Edge" Color="#050408"/>
-    <SolidColorBrush x:Key="Line" Color="#1F1D24"/>
-    <SolidColorBrush x:Key="LineStrong" Color="#302E35"/>
-    <SolidColorBrush x:Key="Text" Color="#EEECF3"/>
-    <SolidColorBrush x:Key="Muted" Color="#A8AEBB"/>
-    <SolidColorBrush x:Key="Faint" Color="#8C92A0"/>
+    <!-- ============================================================ Base: neutral greys (red, green and blue equal, a hair of blue) -->
+    <Color x:Key="BgColor">#0B0B0C</Color>
+    <Color x:Key="SurfaceColor">#131314</Color>
+    <SolidColorBrush x:Key="Bg" Color="#0B0B0C"/>
+    <SolidColorBrush x:Key="Side" Color="#070708"/>
+    <SolidColorBrush x:Key="Surface" Color="#131314"/>
+    <SolidColorBrush x:Key="Surface2" Color="#1A1A1C"/>
+    <SolidColorBrush x:Key="Surface3" Color="#242426"/>
+    <SolidColorBrush x:Key="Edge" Color="#040405"/>
+    <SolidColorBrush x:Key="Line" Color="#1E1E20"/>
+    <SolidColorBrush x:Key="LineStrong" Color="#2E2E31"/>
+    <SolidColorBrush x:Key="Text" Color="#EDEDEF"/>
+    <SolidColorBrush x:Key="Muted" Color="#A9ABB1"/>
+    <SolidColorBrush x:Key="Faint" Color="#8D9096"/>
     <SolidColorBrush x:Key="Good" Color="#46C58A"/>
     <SolidColorBrush x:Key="GoodSoft" Color="#1A46C58A"/>
     <SolidColorBrush x:Key="Warn" Color="#F0A948"/>
@@ -36,51 +38,37 @@
     <SolidColorBrush x:Key="Bad" Color="#EF6461"/>
     <SolidColorBrush x:Key="BadSoft" Color="#22EF6461"/>
     <SolidColorBrush x:Key="BadDim" Color="#8CEF6461"/>
-    <SolidColorBrush x:Key="Info" Color="#CDD1DA"/>
+    <SolidColorBrush x:Key="Info" Color="#CFD1D6"/>
     <SolidColorBrush x:Key="InfoSoft" Color="#10FFFFFF"/>
     <!-- 26 Nov (App v3, Connection): a field and the picked option (between Surface and Surface2), the accent at 35 % for its
          outline, and the route This PC > phone > servers: its middle dot, and the grey rings and dashes while not protected -->
-    <SolidColorBrush x:Key="Field" Color="#17151F"/>
+    <SolidColorBrush x:Key="Field" Color="#161617"/>
     <SolidColorBrush x:Key="AccentLine" Color="#595BA8F0"/>
-    <SolidColorBrush x:Key="RouteMid" Color="#8A82D8"/>
-    <SolidColorBrush x:Key="RouteOff" Color="#6D6980"/>
-    <SolidColorBrush x:Key="RouteDash" Color="#3A3648"/>
+    <SolidColorBrush x:Key="RouteMid" Color="{StaticResource AccentColor}"/>
+    <SolidColorBrush x:Key="RouteOff" Color="#6C6C72"/>
+    <SolidColorBrush x:Key="RouteDash" Color="#37373B"/>
     <!-- 26 Nov (App v3, Servers and Accounts): the row or card under the pointer or picked, the letter box and the tag chips -->
-    <SolidColorBrush x:Key="Lift" Color="#1F1C29"/>
+    <SolidColorBrush x:Key="Lift" Color="#1D1D1F"/>
     <!-- 26 Nov (App v3, Profiles): the faint line between the rows of a table (white at 4 % on the page, Line is 7 %) -->
-    <SolidColorBrush x:Key="LineSoft" Color="#181620"/>
+    <SolidColorBrush x:Key="LineSoft" Color="#171719"/>
 
     <SolidColorBrush x:Key="Accent" Color="{StaticResource AccentColor}"/>
     <SolidColorBrush x:Key="AccentHover" Color="{StaticResource AccentLightColor}"/>
     <SolidColorBrush x:Key="AccentText" Color="#06111D"/>
     <SolidColorBrush x:Key="AccentSoft" Color="{StaticResource AccentSoftColor}"/>
-    <LinearGradientBrush x:Key="AccentFill" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="{StaticResource AccentLightColor}" Offset="0"/>
-        <GradientStop Color="{StaticResource AccentDarkColor}" Offset="1"/>
-    </LinearGradientBrush>
-    <LinearGradientBrush x:Key="BoxFill" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#2B2838" Offset="0"/>
-        <GradientStop Color="#211E2C" Offset="1"/>
-    </LinearGradientBrush>
-    <LinearGradientBrush x:Key="BtnFill" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#1F1C29" Offset="0"/>
-        <GradientStop Color="#1A1823" Offset="1"/>
-    </LinearGradientBrush>
-    <LinearGradientBrush x:Key="BtnFillHover" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="#2B2838" Offset="0"/>
-        <GradientStop Color="#221F2D" Offset="1"/>
-    </LinearGradientBrush>
+    <!-- flat since 26 Nov at night (they were top-to-bottom gradients); the keys stay so the styles don't change -->
+    <SolidColorBrush x:Key="AccentFill" Color="{StaticResource AccentColor}"/>
+    <SolidColorBrush x:Key="BoxFill" Color="#262628"/>
+    <SolidColorBrush x:Key="BtnFill" Color="#1C1C1E"/>
+    <SolidColorBrush x:Key="BtnFillHover" Color="#28282B"/>
     <!-- the thin line at the top of the window: blue to magenta, the yellow only at its end; the frame shows it at 42 % -->
     <LinearGradientBrush x:Key="TopLine" StartPoint="0,0" EndPoint="1,0">
         <GradientStop Color="{StaticResource Top1}" Offset="0"/>
         <GradientStop Color="{StaticResource Top2}" Offset="0.88"/>
         <GradientStop Color="{StaticResource Top3}" Offset="1"/>
     </LinearGradientBrush>
-    <!-- the mark of the page picked in the sidebar: 3 x 14 px, blue to magenta -->
-    <LinearGradientBrush x:Key="NavMark" StartPoint="0,0" EndPoint="0,1">
-        <GradientStop Color="{StaticResource Top1}" Offset="0"/>
-        <GradientStop Color="{StaticResource Top2}" Offset="1"/>
-    </LinearGradientBrush>
+    <!-- the mark of the page picked in the sidebar: 3 x 14 px, the accent (blue to magenta until 26 Nov at night) -->
+    <SolidColorBrush x:Key="NavMark" Color="{StaticResource AccentColor}"/>
 
     <FontFamily x:Key="UiFont">Segoe UI Variable Text, Segoe UI</FontFamily>
     <FontFamily x:Key="DisplayFont">Segoe UI Variable Display, Segoe UI</FontFamily>

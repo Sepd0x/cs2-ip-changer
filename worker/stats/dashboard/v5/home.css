@@ -4,8 +4,8 @@
    da app vêm dos tokens (--t-…, de src/Theme.xaml, docs/DESIGN.md); o claro "Papel" tem as suas, menos o azul. */
 :root {
   /* tokens: tools/design-tokens.mjs, from src/Theme.xaml. Don't edit here: change Theme.xaml and run it again */
-  --t-bg: #0e0c14; --t-side: #08070c; --t-edge: #050408; --t-surface: #14121b; --t-surface2: #1c1a26; --t-surface3: #262333;
-  --t-line: #1f1d24; --t-line-strong: #302e35; --t-text: #eeecf3; --t-muted: #a8aebb; --t-faint: #8c92a0; --t-good: #46c58a;
+  --t-bg: #0b0b0c; --t-side: #070708; --t-edge: #040405; --t-surface: #131314; --t-surface2: #1a1a1c; --t-surface3: #242426;
+  --t-line: #1e1e20; --t-line-strong: #2e2e31; --t-text: #ededef; --t-muted: #a9abb1; --t-faint: #8d9096; --t-good: #46c58a;
   --t-warn: #f0a948; --t-bad: #ef6461; --t-accent: #5ba8f0; --t-accent-light: #74b6f3; --t-accent-dark: #3e87d0; --t-accent-deep: #2b74c2;
   --t-top1: #3bb4e5; --t-top2: #c64fc6; --t-top3: #d8e03a; --t-accent-rgb: 91,168,240; --t-top: linear-gradient(90deg,#3bb4e5,#c64fc6 50%,#d8e03a);
   /* /tokens */

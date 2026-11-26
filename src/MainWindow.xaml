@@ -913,24 +913,16 @@
                                                        ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
                                         </StackPanel>
 
-                                        <!-- the route: in the route colours while protected (RouteOn), grey rings and dashes otherwise (RouteOff) -->
+                                        <!-- the route: one flat accent line while protected (RouteOn; a blue to magenta gradient until 26 Nov at
+                                             night), grey rings and dashes otherwise (RouteOff) -->
                                         <Grid Height="14" Margin="0,26,0,0">
                                             <Grid x:Name="RouteOn" Visibility="Collapsed">
-                                                <Rectangle Height="2" Margin="6,6,6,0" VerticalAlignment="Top">
-                                                    <Rectangle.Fill>
-                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                            <GradientStop Color="{StaticResource Top1}" Offset="0"/>
-                                                            <GradientStop Color="{StaticResource Top2}" Offset="1"/>
-                                                        </LinearGradientBrush>
-                                                    </Rectangle.Fill>
-                                                </Rectangle>
-                                                <Ellipse Width="12" Height="12" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,1,0,0" Fill="{StaticResource Bg}" StrokeThickness="2">
-                                                    <Ellipse.Stroke><SolidColorBrush Color="{StaticResource Top1}"/></Ellipse.Stroke>
-                                                </Ellipse>
+                                                <Rectangle Height="2" Margin="6,6,6,0" VerticalAlignment="Top" Fill="{StaticResource Accent}"/>
+                                                <Ellipse Width="12" Height="12" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,1,0,0" Fill="{StaticResource Bg}" StrokeThickness="2"
+                                                         Stroke="{StaticResource Accent}"/>
                                                 <Ellipse Width="12" Height="12" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,1,0,0" Fill="{StaticResource RouteMid}"/>
-                                                <Ellipse Width="14" Height="14" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,-1,0" Stroke="{StaticResource Bg}" StrokeThickness="3">
-                                                    <Ellipse.Fill><SolidColorBrush Color="{StaticResource Top3}"/></Ellipse.Fill>
-                                                </Ellipse>
+                                                <Ellipse Width="14" Height="14" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,-1,0" Stroke="{StaticResource Bg}" StrokeThickness="3"
+                                                         Fill="{StaticResource Accent}"/>
                                             </Grid>
                                             <Grid x:Name="RouteOff">
                                                 <Line X1="0" X2="1" Y1="0" Y2="0" Stretch="Fill" Margin="12,6,12,0" VerticalAlignment="Top" Stroke="{StaticResource RouteDash}"
@@ -2008,13 +2000,13 @@
                         <Grid.Resources>
                             <!-- The colours of App v4 that the theme has no brush for: the "·" between parts, the crosshair's box, the Sync
                                  menu, the side panels and the dim over the page behind them -->
-                            <SolidColorBrush x:Key="CfgSep" Color="#5A566B"/>
-                            <SolidColorBrush x:Key="CfgXhBg" Color="#0A0910"/>
-                            <SolidColorBrush x:Key="CfgMenuBg" Color="#15131D"/>
+                            <SolidColorBrush x:Key="CfgSep" Color="#58585D"/>
+                            <SolidColorBrush x:Key="CfgXhBg" Color="#0A0A0B"/>
+                            <SolidColorBrush x:Key="CfgMenuBg" Color="#151517"/>
                             <SolidColorBrush x:Key="CfgMenuEdge" Color="#1AFFFFFF"/>
-                            <SolidColorBrush x:Key="CfgPanelBg" Color="#121019"/>
+                            <SolidColorBrush x:Key="CfgPanelBg" Color="#121213"/>
                             <SolidColorBrush x:Key="CfgPanelEdge" Color="#14FFFFFF"/>
-                            <SolidColorBrush x:Key="CfgDimBrush" Color="#8C08070C"/>
+                            <SolidColorBrush x:Key="CfgDimBrush" Color="#8C070708"/>
                             <!-- An account or snapshot in a picker: an 18 px letter box rounded 6 (Lift, 8 px SemiBold Muted), 8 px to the name -->
                             <DataTemplate x:Key="CfgSourceTemplate">
                                 <StackPanel Orientation="Horizontal">

@@ -881,7 +881,7 @@ public partial class MainWindow
         var dv = new DrawingVisual();
         using (var dc = dv.RenderOpen())
         {
-            var bg = new LinearGradientBrush(Color.FromRgb(0x1E, 0x3A, 0x5F), Color.FromRgb(0x5B, 0xA8, 0xF0), 45);
+            var bg = new SolidColorBrush(Color.FromRgb(0x2B, 0x74, 0xC2));   // flat (a 45° gradient until 26 Nov at night)
             dc.DrawRectangle(bg, null, new Rect(0, 0, 256, 256));
             var pen = new Pen(Brushes.White, 10);
             dc.DrawEllipse(null, pen, new Point(128, 128), 70, 70);

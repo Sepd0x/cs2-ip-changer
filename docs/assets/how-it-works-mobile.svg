@@ -10,8 +10,8 @@
 .wire{stroke:#5BA8F0;stroke-width:2}
 .pkt{fill:#5BA8F0}
 .rule{stroke:#3A3A3A;stroke-dasharray:2 4}
-.x circle{fill:#1D1D1D;stroke:#F05A4F}
-.x path{stroke:#F05A4F}
+.x circle{fill:#1D1D1D;stroke:#EF6461}
+.x path{stroke:#EF6461}
 @media (prefers-color-scheme: light){
 .bg{fill:#F6F8FA;stroke:#D0D7DE}
 .node{fill:#FFFFFF;stroke:#D0D7DE}

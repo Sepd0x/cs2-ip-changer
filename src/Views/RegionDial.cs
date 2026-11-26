@@ -165,8 +165,6 @@ public sealed class RegionDial : FrameworkElement
         var info = B("Info", Color.FromRgb(0xCD, 0xD1, 0xDA));
         var dim = faint.Clone(); dim.Opacity = 0.6; dim.Freeze();   // the design's #5a566b: Faint at 60 % on the ground
         var accent = B("Accent", Color.FromRgb(0x5B, 0xA8, 0xF0));
-        var top1 = Col("Top1", Color.FromRgb(0x3B, 0xB4, 0xE5));
-        var top2 = Col("Top2", Color.FromRgb(0xC6, 0x4F, 0xC6));
         var top3 = B("Top3", Color.FromRgb(0xD8, 0xE0, 0x3A));
         var sans = new Typeface(new FontFamily("Segoe UI Variable Text, Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
         var sansBold = new Typeface(new FontFamily("Segoe UI Variable Text, Segoe UI"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
@@ -207,11 +205,9 @@ public sealed class RegionDial : FrameworkElement
                 var th = hot ? 6 : 4;
                 var pen = new Pen(accent, th) { StartLineCap = PenLineCap.Flat, EndLineCap = PenLineCap.Round };
                 dc.DrawLine(pen, new Point(C + R0, C), new Point(C + R0 + Math.Max(0, len - th / 2.0), C));
-                // its piece of the arc, blue to magenta in the order round the dial
-                var k = allowed.FindIndex(s => s.Item == r);
-                var n = Math.Max(1, allowed.Count);
-                var g = new LinearGradientBrush(Mix(top1, top2, k / (double)n), Mix(top1, top2, (k + 1) / (double)n), new Point(0, 0), new Point(0, 1));
-                DrawSegment(dc, new Pen(g, 2), 14);
+                // its piece of the arc, in the accent (blue to magenta round the dial until 26 Nov at night: gradients other than
+                // the window's top line read as AI slop)
+                DrawSegment(dc, new Pen(accent, 2), 14);
             }
             else
             {
@@ -309,13 +305,6 @@ public sealed class RegionDial : FrameworkElement
         }
         g.Freeze();
         dc.DrawGeometry(null, pen, g);
-    }
-
-    /// <summary>The design's blend: blue to magenta, slow at first (t^1.5).</summary>
-    static Color Mix(Color a, Color b, double t)
-    {
-        var e = Math.Pow(Math.Clamp(t, 0, 1), 1.5);
-        return Color.FromRgb((byte)Math.Round(a.R + (b.R - a.R) * e), (byte)Math.Round(a.G + (b.G - a.G) * e), (byte)Math.Round(a.B + (b.B - a.B) * e));
     }
 
     RegionItem Hit(Point p)
