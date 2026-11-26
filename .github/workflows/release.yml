@@ -88,7 +88,7 @@ jobs:
             if ($draft -ne 'true') { throw "Release $tag is already published; its exe is not replaced. Make a new tag." }
             gh release upload $tag @files --clobber
           } else {
-            $opts = @('--verify-tag', '--draft', '--title', "CS2 IP Changer $env:VERSION")
+            $opts = @('--verify-tag', '--draft', '--title', "Pickroute $env:VERSION")
             $notes = "docs/release-$env:VERSION.md"
             if (Test-Path $notes) { $opts += @('--notes-file', $notes) } else { $opts += '--generate-notes' }
             gh release create $tag @files @opts

@@ -21,8 +21,8 @@ public partial class MainWindow
         catch (Exception ex) { Log.Warn("The icon in the notification area couldn't be made: " + ex.Message); }
     }
 
-    /// <summary>"CS2 IP Changer: Protected" (what the top bar says).</summary>
-    public static string TrayTip(string state) => Tray.TrimTip(string.IsNullOrWhiteSpace(state) ? "CS2 IP Changer" : "CS2 IP Changer: " + state);
+    /// <summary>"Pickroute: Protected" (what the top bar says).</summary>
+    public static string TrayTip(string state) => Tray.TrimTip(string.IsNullOrWhiteSpace(state) ? "Pickroute" : "Pickroute: " + state);
 
     /// <summary>
     /// The menu, top to bottom: the state (not clickable), Open, the commands, Quit. Key null = separator. <paramref name="on"/>: protection
@@ -33,7 +33,7 @@ public partial class MainWindow
     /// </summary>
     public static List<(string Text, string Key, bool Enabled)> TrayLayout(string state, bool on, bool phone, string quick = "New IP + next account", bool phoneKnown = true) =>
     [
-        (string.IsNullOrWhiteSpace(state) ? "CS2 IP Changer" : state, "state", false),
+        (string.IsNullOrWhiteSpace(state) ? "Pickroute" : state, "state", false),
         (null, null, false),
         (Loc.T("Open"), "open", true),
         on ? (Loc.T("Turn off protection"), "off", true)
@@ -101,7 +101,7 @@ public partial class MainWindow
         if (_s.TrayHinted) return;
         _s.TrayHinted = true;
         SaveSettings();
-        _tray?.Balloon(Loc.T("CS2 IP Changer is still running"), TrayHintText);
+        _tray?.Balloon(Loc.T("Pickroute is still running"), TrayHintText);
     }
 
     /// <summary>The first X to the notification area, shown once: it says nothing about protection, which may be off or in No phone mode.</summary>

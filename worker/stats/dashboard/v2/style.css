@@ -1,4 +1,4 @@
-/* CS2 IP Changer · stats. Mesma família da app: cinzento muito escuro, linha em gradiente no topo,
+/* Pickroute · stats. Mesma família da app: cinzento muito escuro, linha em gradiente no topo,
    caixas de grupo com o título na linha, botões planos com 1 px. Três paletas para comparar (data-pal no <html>). */
 :root {
   /* tokens: tools/design-tokens.mjs, from src/Theme.xaml. Don't edit here: change Theme.xaml and run it again */

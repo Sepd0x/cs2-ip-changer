@@ -557,7 +557,7 @@ static class Untangle12Tests
             cmd.Contains($"-DisplayName '{AppIds.RulePrefix} - *'") && AppIds.LegacyRulePrefixes.All(p => cmd.Contains($"'{p}*'")), "");
         check("B3: todas as regras da app começam pelo prefixo", new[] { Firewall.RuleName, Firewall.EchoRuleName, Firewall.Cs2RuleName, Firewall.DnsUdpRuleName,
             Firewall.DnsTcpRuleName, Firewall.Ipv6RuleName, Firewall.RegionsRuleName, Firewall.BannedIpRuleName }.All(n => n.StartsWith(AppIds.RulePrefix + " - "))
-            && Firewall.RuleName == "CS2 IP Changer - kill switch", "");
+            && Firewall.RuleName == "Pickroute - kill switch", "");
 
         check("B3: a cópia nova recebe o estado da proteção depois de --updated",
             AppIds.Args.ForUpdate(AppIds.Args.UpdateState(true)) == "--updated --on" && AppIds.Args.ForUpdate(AppIds.Args.UpdateState(false)) == "--updated --off"

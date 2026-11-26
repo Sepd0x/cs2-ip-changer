@@ -1,4 +1,4 @@
-// Anonymous usage stats for CS2 IP Changer, on the project's own Cloudflare account. Deploy (from this folder): first
+// Anonymous usage stats for Pickroute, on the project's own Cloudflare account. Deploy (from this folder): first
 // npx wrangler d1 execute cs2ipc-stats --remote --file=schema.sql (new tables and indexes, safe to run again; it has the CREATEs of every
 // migration), then once each the migrations that change what exists (migrations/0003-site-budget.sql: the site counter's trigger), then npx wrangler deploy.
 {

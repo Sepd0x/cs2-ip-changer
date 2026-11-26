@@ -1495,7 +1495,7 @@ test('v5: /api/brief still answers (JSON and Markdown) and its series now covers
   for (const k of ['matches', 'minutes', 'new_installs', 'active_installs']) assert.equal(b.series[k].length, 30, k);
   const md = await dashboard.fetch(get('/api/brief?format=md', token), env);
   assert.equal(md.status, 200);
-  assert.ok((await md.text()).startsWith('# CS2 IP Changer · brief '));
+  assert.ok((await md.text()).startsWith('# Pickroute · brief '));
 });
 
 test('F-09: /classic is kept like the summary: the second open reads no report table, and a failed read is not kept', async () => {

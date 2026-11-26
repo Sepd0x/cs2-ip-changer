@@ -30,7 +30,7 @@ public static class Autostart
             <?xml version="1.0" encoding="UTF-16"?>
             <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
               <RegistrationInfo>
-                <Description>Opens CS2 IP Changer in the notification area when you sign in. Made by the app: Settings &gt; Start with Windows turns it off.</Description>
+                <Description>Opens Pickroute in the notification area when you sign in. Made by the app: Settings &gt; Start with Windows turns it off.</Description>
               </RegistrationInfo>
               <Triggers>
                 <LogonTrigger>

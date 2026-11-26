@@ -17,7 +17,7 @@ public sealed class Tray : IDisposable
     readonly Action _open;
     readonly IntPtr _icon;
     readonly uint _taskbarCreated;
-    string _tip = "CS2 IP Changer";
+    string _tip = "Pickroute";
     bool _added;
 
     const int CallbackMsg = 0x8000 + 0x51;   // WM_APP + 0x51
@@ -60,7 +60,7 @@ public sealed class Tray : IDisposable
 
     public static string TrimTip(string text)
     {
-        text = string.IsNullOrWhiteSpace(text) ? "CS2 IP Changer" : text.Trim();
+        text = string.IsNullOrWhiteSpace(text) ? "Pickroute" : text.Trim();
         return text.Length <= 127 ? text : text[..126] + "…";
     }
 

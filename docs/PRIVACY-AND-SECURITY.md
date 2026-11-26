@@ -1,6 +1,6 @@
 # Privacy and security
 
-What CS2 IP Changer sends where, what it does with admin rights, and what it can't protect you from. This page describes the code in this repo; if they ever disagree, the code is right and this page is a bug ([open an issue](https://github.com/Sepd0x/cs2-ip-changer/issues)).
+What Pickroute sends where, what it does with admin rights, and what it can't protect you from. This page describes the code in this repo; if they ever disagree, the code is right and this page is a bug ([open an issue](https://github.com/Sepd0x/cs2-ip-changer/issues)).
 
 No software is risk-free, and this app runs as admin. Read this, [check your download](../README.md#check-your-download), and decide for yourself.
 
@@ -61,7 +61,7 @@ Heuristics look at what a program can do, not why. Every sensitive thing the app
 
 | What it uses | What for |
 |---|---|
-| Windows Firewall (COM `HNetCfg.FwPolicy2`) | The kill switch, the CS2 lock, the Regions block and the block on servers that banned the IP you have now: outbound rules named `CS2 IP Changer - ...` (`ServerRouteTool v9 - ...` before 1.0.0; the app renames them by itself) |
+| Windows Firewall (COM `HNetCfg.FwPolicy2`) | The kill switch, the CS2 lock, the Regions block and the block on servers that banned the IP you have now: outbound rules named `Pickroute - ...` (`ServerRouteTool v9 - ...` before 1.0.0; the app renames them by itself) |
 | `netsh interface ipv4 ... route` | Routes that send your servers (or the whole PC) through the phone |
 | PowerShell `NetTCPIP\Set-NetIPInterface` (module loaded by full path) | Keeps the rest of the PC off the phone's mobile data, and undoes it |
 | `GetExtendedTcpTable`, `SetTcpEntry` | Closes Steam's own connections so Steam reconnects through the phone after an IP change. Steam only, never CS2 |

@@ -191,12 +191,12 @@ public sealed class AuthPoll
 
 /// <summary>
 /// Sign-in as a web browser (website "Community"): the result is a refresh token for steamcommunity.com, the same one the
-/// browser keeps. The device shows in Steam > Authorized devices as "CS2 IP Changer", so it can be revoked there.
+/// browser keeps. The device shows in Steam > Authorized devices as "Pickroute" ("CS2 IP Changer" before 1.0.0), so it can be revoked there.
 /// </summary>
 public sealed class SteamAuth
 {
     const string Api = "https://api.steampowered.com/IAuthenticationService/";
-    public const string DeviceName = "CS2 IP Changer";
+    public const string DeviceName = "Pickroute";
     const int PlatformWebBrowser = 2;
     readonly SteamWeb _web;
     public SteamAuth(SteamWeb web) { _web = web; }

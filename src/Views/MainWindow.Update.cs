@@ -54,7 +54,7 @@ public partial class MainWindow
     /// <summary>The toast when the check finds a newer version; a test version (pre-release) says so.</summary>
     public static string UpdateToast(string v, bool test) => test
         ? Loc.F("Test version {0} is out. Click Update under the version number.", v)
-        : Loc.F("CS2 IP Changer {0} is available. Click Update under the version number.", v);
+        : Loc.F("Pickroute {0} is available. Click Update under the version number.", v);
 
     /// <summary>The Update button's tooltip.</summary>
     public static string UpdateTip(string v, bool test) =>
@@ -102,7 +102,7 @@ public partial class MainWindow
             }
             HideProgress();
             var size = r.Size > 0 ? Loc.F(" (about {0} MB)", Math.Max(1, (r.Size + 500_000) / 1_000_000)) : "";
-            if (!await Ask(Loc.T("Update CS2 IP Changer"), Loc.F("Download {0}{1} from GitHub, check its SHA-256 and restart the app?{2}", UpdateWhat(r.Version, r.Test), size, MobileDataNote()) + "\n\n" + (!_protOn ? Loc.T("Protection stays off, as now.") : Loc.T("Protection stays on while it restarts. If you are on a server, you will be disconnected for a few seconds while the new version checks the phone's IP.")), Loc.T("Update"))) { Telemetry.Count("upd_declined"); return; }
+            if (!await Ask(Loc.T("Update Pickroute"), Loc.F("Download {0}{1} from GitHub, check its SHA-256 and restart the app?{2}", UpdateWhat(r.Version, r.Test), size, MobileDataNote()) + "\n\n" + (!_protOn ? Loc.T("Protection stays off, as now.") : Loc.T("Protection stays on while it restarts. If you are on a server, you will be disconnected for a few seconds while the new version checks the phone's IP.")), Loc.T("Update"))) { Telemetry.Count("upd_declined"); return; }
             Telemetry.Count("upd_accepted");
             ShowProgress(Loc.T("Downloading the update…"));
             var sha = await Updater.Download(r, new Progress<string>(t => ProgressText.Text = t));

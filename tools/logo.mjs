@@ -89,7 +89,7 @@ await page.setContent('<!doctype html><body></body>');
 SHAPE = await build(page);
 for (const [px, f] of Object.entries(FIT)) SHAPES[px] = await build(page, { ...G, ...f });
 const png = (r) => Buffer.from(r.png, 'base64');
-const T = { title: 'CS2 IP Changer' };
+const T = { title: 'Pickroute' };
 
 writeFileSync(join(OUT, 'logo.svg'), svg(color(), T));
 writeFileSync(join(OUT, 'logo-black.svg'), svg(mono('#000000'), T));

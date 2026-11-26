@@ -63,7 +63,7 @@ test('v4 brief: no install ID in the JSON or the Markdown, and the Markdown is m
   const md = renderMd(b);
   assert.ok(!/[0-9a-f]{32}/.test(JSON.stringify(b)) && !/[0-9a-f]{32}/.test(md));
   assert.equal(md, renderMd(JSON.parse(JSON.stringify(b))));
-  for (const h of ['# CS2 IP Changer · brief ', '## Anomalies', '## Stuck', '## Suggested next', '## Data caveats']) assert.ok(md.includes(h), h);
+  for (const h of ['# Pickroute · brief ', '## Anomalies', '## Stuck', '## Suggested next', '## Data caveats']) assert.ok(md.includes(h), h);
   assert.ok(md.split('\n').length <= 50, `about 30 lines: ${md.split('\n').length}`);
 });
 

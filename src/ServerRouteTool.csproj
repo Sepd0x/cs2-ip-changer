@@ -11,7 +11,7 @@
     <RootNamespace>SRT</RootNamespace>
     <Version>0.1.0-beta.14</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
-    <Product>CS2 IP Changer</Product>
+    <Product>Pickroute</Product>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>app.ico</ApplicationIcon>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>

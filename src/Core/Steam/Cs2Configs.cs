@@ -1050,7 +1050,7 @@ public sealed class Cs2ConfigStore
                 using var w = new StreamWriter(zip.CreateEntry(entry, CompressionLevel.Optimal).Open(), new UTF8Encoding(false));
                 w.Write(text);
             }
-            Add("snapshot.json", JsonSerializer.Serialize(new { s.Name, s.Created, s.Parts, App = "CS2 IP Changer " + AppInfo.Version }, new JsonSerializerOptions { WriteIndented = true }));
+            Add("snapshot.json", JsonSerializer.Serialize(new { s.Name, s.Created, s.Parts, App = "Pickroute " + AppInfo.Version }, new JsonSerializerOptions { WriteIndented = true }));
             foreach (var p in Enum.GetValues<CfgPart>())
                 if (ReadOwn(Path.Combine(s.Dir, Cs2Config.SnapshotFile(p)), fail: true) is string t) Add(Cs2Config.SnapshotFile(p), t);   // never a zip with a part left out
         }

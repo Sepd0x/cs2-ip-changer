@@ -273,7 +273,7 @@
     // Beta.13 (the owner): no loose line about units under the pages (it is in "Como se conta", at the foot of every page), and the
     // way back to Resumo is the Resumo | Dados tabs at the top (v4/index.html), not a small link here
     $('#crumbPage').textContent = PAGES.find((p) => p[0] === st.page)[1];
-    document.title = `${PAGES.find((p) => p[0] === st.page)[1]} · CS2 IP Changer dados`;
+    document.title = `${PAGES.find((p) => p[0] === st.page)[1]} · Pickroute dados`;
     renderFilters(D);
     const fn = { brief: pBrief, hoje: pHoje, funil: pFunil, crescimento: pGrowth, encalham: pStuck, qualidade: pQual, aquisicao: pAcq, app: pApp, sistema: pSys }[st.page];
     const devband = V4.DEV ? '<div class="devband">Só os teus PCs: builds de desenvolvimento e os IDs de EXCLUDE_IDS. Os números de toda a gente ficam de fora.<a href="?">ver toda a gente</a></div>' : '';

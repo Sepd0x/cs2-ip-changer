@@ -243,7 +243,7 @@
       + `<div class="foot">Unidade: a instalação (ID fixo desde a beta.9) e a instalação-dia. Dias em UTC, horas de Lisboa. Só tu vês este painel: números exatos, sem "menos de 5".</div>`
       + '<div class="links"><a href="/dashboard">v4</a><a href="/v2">v2</a><a href="/classic">clássico</a></div>';
     $('#crumbPage').textContent = PAGES.find((p) => p[0] === st.page)[1];
-    document.title = `${PAGES.find((p) => p[0] === st.page)[1]} · CS2 IP Changer stats`;
+    document.title = `${PAGES.find((p) => p[0] === st.page)[1]} · Pickroute stats`;
     renderFilters(D);
     const fn = { hoje: pHoje, funil: pFunil, utilizadores: pUsers, app: pApp, ligacao: pLink, qualidade: pQual, versoes: pVer, aquisicao: pAcq }[st.page];
     const devband = V3.DEV ? '<div class="devband">Só os teus PCs: builds de desenvolvimento e os IDs de EXCLUDE_IDS. Os números de toda a gente ficam de fora.<a href="?">ver toda a gente</a></div>' : '';

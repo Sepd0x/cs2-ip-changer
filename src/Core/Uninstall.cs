@@ -187,7 +187,7 @@ public static class Uninstall
 
     // ------------------------------------------------------------ What the question and the result say
 
-    public static string Title => Loc.T("Remove CS2 IP Changer?");
+    public static string Title => Loc.T("Remove Pickroute?");
 
     /// <summary>What goes either way, above the two choices.</summary>
     public static string Text() =>
@@ -220,7 +220,7 @@ public static class Uninstall
                 : Loc.T("Some files are in use by this copy: Windows deletes them at the next restart."));
         if (KeepsApp(network)) lines.Add(Loc.F("The app and its files stayed, so you can try again: open the app and Remove again, or run {0} {1}.", AppIds.ExeName, AppIds.Args.Restore));
         else if (!everything) lines.Add(Loc.F("Kept: {0}. Delete that folder if you won't install the app again.", dataDir));
-        return (problem ? Loc.T("Not everything was removed") : Loc.T("CS2 IP Changer was removed"), string.Join("\n\n", lines), problem);
+        return (problem ? Loc.T("Not everything was removed") : Loc.T("Pickroute was removed"), string.Join("\n\n", lines), problem);
     }
 
     const uint DelayUntilReboot = 4;

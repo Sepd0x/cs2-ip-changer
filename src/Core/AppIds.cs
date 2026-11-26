@@ -80,13 +80,17 @@ public static class AppIds
     }
 
     /// <summary>Every Firewall rule of the app starts with this and " - " (1.0.0; tools/restore.cmd removes them by it too).</summary>
-    public const string RulePrefix = "CS2 IP Changer";
+    public const string RulePrefix = "Pickroute";
+
+    /// <summary>The app's name before 1.0.0 and the rules' prefix in the 1.0.0 builds before the name Pickroute (test PCs only).</summary>
+    public const string FormerRulePrefix = "CS2 IP Changer";
 
     /// <summary>
-    /// What the rules started with before 1.0.0 (alpha.1 to beta.13). Never written again; read and removed everywhere the app reads
-    /// or removes its rules, and each rule the app writes takes its old copy out once the new one is in place (Firewall.Apply).
+    /// What the rules started with before: "ServerRouteTool v9" (alpha.1 to beta.13) and "CS2 IP Changer - " (the 1.0.0 builds before
+    /// the name Pickroute). Never written again; read and removed everywhere the app reads or removes its rules, and each rule the app
+    /// writes takes its old copies out once the new one is in place (Firewall.Apply).
     /// </summary>
-    public static readonly string[] LegacyRulePrefixes = { "ServerRouteTool v9" };
+    public static readonly string[] LegacyRulePrefixes = { "ServerRouteTool v9", FormerRulePrefix + " - " };
 
     /// <summary>The app's own requests (GitHub releases, the public IP check).</summary>
     public const string UserAgent = Name + "/0.1";

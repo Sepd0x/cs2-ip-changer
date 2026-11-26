@@ -47,7 +47,7 @@ static class LocTests
         return P(en) == P(tr);
     }
 
-    static HashSet<string> Keys(string repo)
+    internal static HashSet<string> Keys(string repo)
     {
         var p = Process.Start(new ProcessStartInfo("node", $"\"{Path.Combine(repo, "tools", "loc-keys.mjs")}\" --all") { RedirectStandardOutput = true, UseShellExecute = false });
         var json = p.StandardOutput.ReadToEnd();

@@ -694,6 +694,8 @@ Correcao25NovTests.Run(Check);
 GuiDialTests.Run(Check);
 // 26 nov.: Configs e Profiles na versão simplificada App v4 (GuiDialV4Tests.cs)
 GuiDialV4Tests.Run(Check);
+// 26 nov.: o nome novo, Pickroute; as regras CS2 IP Changer passam a antigas (PickrouteTests.cs)
+PickrouteTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

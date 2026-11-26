@@ -1,4 +1,4 @@
-# CS2 IP Changer: FAQ
+# Pickroute: FAQ
 
 Every question and answer in one place. The most common ones are also in the [README](../README.md#faq), and the guides on the [website](https://sepd0x.github.io/cs2-ip-changer/#guides) go deeper on each topic.
 

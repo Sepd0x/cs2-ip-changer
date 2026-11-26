@@ -55,6 +55,17 @@ public static class Firewall
     /// <summary>The name a rule had before 1.0.0, or null (a name the app never used).</summary>
     public static string LegacyName(string name) => Renamed.FirstOrDefault(r => r.New == name).Old;
 
+    /// <summary>
+    /// Every name a rule had before: under "ServerRouteTool v9" (alpha.1 to beta.13) and under "CS2 IP Changer" (the 1.0.0 builds
+    /// before the name Pickroute, on test PCs only). Apply and Remove take them all out.
+    /// </summary>
+    public static IEnumerable<string> LegacyNames(string name)
+    {
+        if (name == null) yield break;
+        if (LegacyName(name) is string v9) yield return v9;
+        if (name.StartsWith(AppIds.RulePrefix + " - ", StringComparison.Ordinal)) yield return AppIds.FormerRulePrefix + name[AppIds.RulePrefix.Length..];
+    }
+
     const string Updating = " (updating";
 
     /// <summary>
@@ -65,7 +76,7 @@ public static class Firewall
         name != null && (name.StartsWith(AppIds.RulePrefix + " - ", StringComparison.OrdinalIgnoreCase)
             || AppIds.LegacyRulePrefixes.Any(p => name.StartsWith(p, StringComparison.OrdinalIgnoreCase)));
 
-    /// <summary>A name from before 1.0.0 (any "ServerRouteTool v9..." rule, known or not).</summary>
+    /// <summary>A name from before (any "ServerRouteTool v9..." or "CS2 IP Changer - ..." rule, known or not).</summary>
     public static bool IsLegacyName(string name) =>
         name != null && AppIds.LegacyRulePrefixes.Any(p => name.StartsWith(p, StringComparison.OrdinalIgnoreCase));
 
@@ -78,6 +89,13 @@ public static class Firewall
         if (name == null) return null;
         foreach (var (old, now) in Renamed)
             if (name == old || name.StartsWith(old + Updating, StringComparison.Ordinal)) return now + name[old.Length..];
+        // "CS2 IP Changer - ...": only a name the app still writes (a test rule or one no version writes stays as it is, so it goes)
+        if (name.StartsWith(AppIds.FormerRulePrefix + " - ", StringComparison.Ordinal))
+        {
+            var renamed = AppIds.RulePrefix + name[AppIds.FormerRulePrefix.Length..];
+            var i = renamed.IndexOf(Updating, StringComparison.Ordinal);
+            if (AllNames.Contains(i > 0 ? renamed[..i] : renamed)) return renamed;
+        }
         return name;
     }
 
@@ -98,7 +116,7 @@ public static class Firewall
             if (!ports.Contains(p.ToString())) ports.Add(p.ToString());
         }
         return hosts.Count == 0 ? null
-            : new FwRule(BannedIpRuleName, hosts, null, null, "CS2 IP Changer: servers that banned the IP this PC has now. Goes when the IP changes or the ban mark is cleared.",
+            : new FwRule(BannedIpRuleName, hosts, null, null, "Pickroute: servers that banned the IP this PC has now. Goes when the IP changes or the ban mark is cleared.",
                 NET_FW_IP_PROTOCOL_UDP, string.Join(",", ports));
     }
 
@@ -225,11 +243,11 @@ public static class Firewall
     {
         var name = r.Name;
         var rules = Get(Policy(), "Rules");
-        var legacy = LegacyName(name);
+        var legacy = LegacyNames(name).ToList();
         if (r.RemoteIps != null && r.RemoteIps.Count == 0)
         {
             RemoveAllNamed(rules, name);
-            if (legacy != null) RemoveAllNamed(rules, legacy);
+            foreach (var l in legacy) RemoveAllNamed(rules, l);
             return;
         }
 
@@ -259,7 +277,7 @@ public static class Firewall
         SetP(added, "Name", name);
         // 1.0.0: the same rule under its name from before goes only now, with the new one in place: never a moment less blocked
         // (for a moment both block). This is how a rule left by beta.13 is renamed, whatever path writes it.
-        if (legacy != null) { RemoveAllNamed(rules, legacy); RemoveTemps(rules, legacy); }
+        foreach (var l in legacy) { RemoveAllNamed(rules, l); RemoveTemps(rules, l); }
     }
 
     /// <summary>Removes leftovers of an interrupted <see cref="Apply"/> of <paramref name="name"/> or <paramref name="legacy"/> (except <paramref name="keep"/>).</summary>
@@ -417,10 +435,9 @@ public static class Firewall
         try
         {
             var rules = Get(Policy(), "Rules");
-            var legacy = LegacyName(name);
             RemoveAllNamed(rules, name);
-            if (legacy != null) RemoveAllNamed(rules, legacy);
-            RemoveTemps(rules, name, legacy);
+            RemoveTemps(rules, name);
+            foreach (var l in LegacyNames(name)) { RemoveAllNamed(rules, l); RemoveTemps(rules, l); }
         }
         catch (Exception ex) { Log.Warn($"Remove {name}: " + (ex.InnerException ?? ex).Message); }
     }

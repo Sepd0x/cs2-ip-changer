@@ -173,7 +173,7 @@ public partial class MainWindow : Window
 
     async Task Startup()
     {
-        Log.Info($"CS2 IP Changer {AppInfo.Version} started{(_demo ? " (demo)" : "")}.");
+        Log.Info($"Pickroute {AppInfo.Version} started{(_demo ? " (demo)" : "")}.");
         if (_demo) { _protOn = true; LoadDemo(); }
         else
         {

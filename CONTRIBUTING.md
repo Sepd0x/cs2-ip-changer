@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for wanting to help. CS2 IP Changer is in beta, and the most useful thing right now is a good bug report.
+Thanks for wanting to help. Pickroute is in beta, and the most useful thing right now is a good bug report.
 
 ## Reporting a bug
 [Open an issue](https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose) with the bug template and add:

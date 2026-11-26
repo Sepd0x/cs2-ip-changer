@@ -215,7 +215,7 @@ static class Part5Tests
         {
             var entry = Installer.UninstallEntry(target + @"\CS2IPChanger.exe", "0.1.0-beta.8", 70_000_000, new DateTime(2026, 11, 1)).ToDictionary(e => e.Name, e => e.Value);
             check("Aplicações instaladas: nome, versão, editor, ícone, pasta, tamanho em KB, data",
-                (string)entry["DisplayName"] == "CS2 IP Changer" && (string)entry["DisplayVersion"] == "0.1.0-beta.8" && (string)entry["Publisher"] == "Sepd0x"
+                (string)entry["DisplayName"] == "Pickroute" && (string)entry["DisplayVersion"] == "0.1.0-beta.8" && (string)entry["Publisher"] == "Sepd0x"
                 && (string)entry["DisplayIcon"] == target + @"\CS2IPChanger.exe,0" && (string)entry["InstallLocation"] == target && (int)entry["EstimatedSize"] == 68360
                 && (string)entry["InstallDate"] == "20261101" && (int)entry["NoModify"] == 1 && (int)entry["NoRepair"] == 1);
             check("Aplicações instaladas: Uninstall abre a pergunta da app (exe entre aspas e --uninstall)",
@@ -257,7 +257,7 @@ static class Part5Tests
         left.Files.Add(@"C:\x.exe");
         var keep = Uninstall.Result(new Uninstall.Outcome(null, null, null, new Uninstall.Files(false, false, false, left), true, false), data);
         check("Resultado: removida, o resto sai depois de fechar, o reinício só se o Windows segurar um ficheiro, diz o que ficou",
-            keep.Title == "CS2 IP Changer was removed" && !keep.Problem && keep.Text.Contains("a few seconds after the app closes") && keep.Text.Contains("next restart")
+            keep.Title == "Pickroute was removed" && !keep.Problem && keep.Text.Contains("a few seconds after the app closes") && keep.Text.Contains("next restart")
             && keep.Text.Contains("Kept: " + data));
         var all = Uninstall.Result(new Uninstall.Outcome(null, null, null, new Uninstall.Files(false, false, false, new Uninstall.Leftovers()), true, true), data);
         check("Resultado: apagar tudo, sem nada para depois, não fala de reinício nem do que ficou", !all.Problem && !all.Text.Contains("restart") && !all.Text.Contains("Kept"));

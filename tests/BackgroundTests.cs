@@ -109,7 +109,7 @@ static class BackgroundTests
                 t.Join(10000);
                 check("Bandeja: o Windows aceita o ícone e a dica", shown && tipOk);
             }
-            check("Bandeja: dica até 127 carateres", MainWindow.TrayTip("Protected") == "CS2 IP Changer: Protected" && Tray.TrimTip(new string('a', 300)).Length == 127 && MainWindow.TrayTip(null) == "CS2 IP Changer");
+            check("Bandeja: dica até 127 carateres", MainWindow.TrayTip("Protected") == "Pickroute: Protected" && Tray.TrimTip(new string('a', 300)).Length == 127 && MainWindow.TrayTip(null) == "Pickroute");
         }
 
         // Fase 3: dicas de lag (só telemóvel e cabo; nunca comandos de consola do CS:GO)

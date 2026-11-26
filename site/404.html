@@ -35,7 +35,7 @@ new MutationObserver(function(){if(h.classList.contains('no-gl'))end()}).observe
 addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.documentElement)
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Page not found · CS2 IP Changer</title>
+<title>Page not found · Pickroute</title>
 <meta name="robots" content="noindex">
 <link rel="icon" href="/cs2-ip-changer/img/favicon.ico" sizes="32x32"><link rel="icon" href="/cs2-ip-changer/img/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/cs2-ip-changer/img/apple-touch-icon.png">
 <link rel="preload" href="/cs2-ip-changer/fonts/funnel-sans.woff2" as="font" type="font/woff2" crossorigin>
@@ -66,8 +66,10 @@ a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--t-line-
 .cols{position:fixed;inset:0;z-index:0;pointer-events:none;padding-inline:var(--g)}
 .cols i{display:block;height:100%;max-width:88rem;margin-inline:auto;background-image:linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:calc(100%/12) 100%;border-right:1px solid rgba(255,255,255,.035)}
 .top{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;height:4rem;padding-inline:var(--g);border-bottom:1px solid var(--t-line)}
-.brand{display:flex;align-items:center;gap:10px;font:600 1rem/1 var(--disp);letter-spacing:-.01em;text-decoration:none}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;font:600 1rem/1 var(--disp);letter-spacing:-.01em;text-decoration:none}
 .brand img{width:28px;height:28px;border-radius:6px}
+/* the name is one word: at 200 % text on a phone it gives way to the language picker instead of widening the page */
+.brand span{min-width:0;max-width:max(0px,calc(100vw - 12rem));overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tm{position:relative;z-index:1;margin:0;padding:.9rem var(--g) 1.3rem;color:var(--ink3);font:400 .8rem/1.5 var(--sans);text-align:center}
 .nf{position:relative;z-index:1;display:grid;align-content:stretch;overflow:hidden;width:100%;padding:clamp(2.5rem,2rem + 4vw,6rem) var(--g)}
 .nf{padding-bottom:.5rem}/* the notice below has its own room: the page keeps fitting a 1280x800 window */
@@ -157,9 +159,9 @@ html.ldw .stage.ready .stage-still{opacity:0;transition:none}
 <!--/i18n--></head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
-<div class="ld-scr" aria-hidden="true"><div class="ld-in"><span class="ld-name"><img src="/cs2-ip-changer/img/icon.png" alt="" width="28" height="28">CS2 IP Changer</span><span class="ld-bar"><b></b><i></i></span></div></div>
+<div class="ld-scr" aria-hidden="true"><div class="ld-in"><span class="ld-name"><img src="/cs2-ip-changer/img/icon.png" alt="" width="28" height="28">Pickroute</span><span class="ld-bar"><b></b><i></i></span></div></div>
 <div class="cols" aria-hidden="true"><i></i></div>
-<header class="top"><a class="brand" href="/cs2-ip-changer/"><img src="/cs2-ip-changer/img/icon.png" alt="" width="28" height="28">CS2 IP Changer</a><!--i18n:pick--><details class="lang-pick"><summary aria-label="Language: English"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.3 3.6 5.2 3.6 8.5s-1.2 6.2-3.6 8.5c-2.4-2.3-3.6-5.2-3.6-8.5s1.2-6.2 3.6-8.5z"/></svg><span>EN</span></summary><ul><li><a href="/cs2-ip-changer/" hreflang="en" lang="en" data-lang="en" aria-current="true">English</a></li><li><a href="/cs2-ip-changer/pt-br/" hreflang="pt-BR" lang="pt-BR" data-lang="pt-br">Português (Brasil)</a></li><li><a href="/cs2-ip-changer/es/" hreflang="es" lang="es" data-lang="es">Español</a></li><li><a href="/cs2-ip-changer/ru/" hreflang="ru" lang="ru" data-lang="ru">Русский</a></li><li><a href="/cs2-ip-changer/tr/" hreflang="tr" lang="tr" data-lang="tr">Türkçe</a></li></ul></details><!--/i18n:pick--><button class="btn sm get-top" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/">Send to PC</button></header>
+<header class="top"><a class="brand" href="/cs2-ip-changer/"><img src="/cs2-ip-changer/img/icon.png" alt="" width="28" height="28"><span>Pickroute</span></a><!--i18n:pick--><details class="lang-pick"><summary aria-label="Language: English"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.3 3.6 5.2 3.6 8.5s-1.2 6.2-3.6 8.5c-2.4-2.3-3.6-5.2-3.6-8.5s1.2-6.2 3.6-8.5z"/></svg><span>EN</span></summary><ul><li><a href="/cs2-ip-changer/" hreflang="en" lang="en" data-lang="en" aria-current="true">English</a></li><li><a href="/cs2-ip-changer/pt-br/" hreflang="pt-BR" lang="pt-BR" data-lang="pt-br">Português (Brasil)</a></li><li><a href="/cs2-ip-changer/es/" hreflang="es" lang="es" data-lang="es">Español</a></li><li><a href="/cs2-ip-changer/ru/" hreflang="ru" lang="ru" data-lang="ru">Русский</a></li><li><a href="/cs2-ip-changer/tr/" hreflang="tr" lang="tr" data-lang="tr">Türkçe</a></li></ul></details><!--/i18n:pick--><button class="btn sm get-top" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/">Send to PC</button></header>
 <main class="nf" id="main" tabindex="-1">
   <div class="gw" aria-hidden="true"><canvas></canvas></div>
   <div class="nf-in">
@@ -170,9 +172,9 @@ html.ldw .stage.ready .stage-still{opacity:0;transition:none}
         <div class="rule" aria-hidden="true"></div>
       </div>
       <h1>This page doesn't exist</h1>
-      <p>The link may be old. Everything about CS2 IP Changer is on the home page.</p>
+      <p>The link may be old. Everything about Pickroute is on the home page.</p>
       <div class="acts">
-        <a class="btn" href="/cs2-ip-changer/">Go to CS2 IP Changer</a>
+        <a class="btn" href="/cs2-ip-changer/">Go to Pickroute</a>
         <button class="btn ghost get-phone" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/">Send the link to my PC</button>
         <a class="btn ghost get-desk" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download</a>
       </div>
@@ -191,10 +193,10 @@ html.ldw .stage.ready .stage-still{opacity:0;transition:none}
     </nav>
   </div>
 </main>
-<footer class="tm"><p>CS2 IP Changer by Sepd0x. Not affiliated with Valve. Counter-Strike and Steam are trademarks of Valve Corporation.</p></footer>
+<footer class="tm"><p>Pickroute by Sepd0x. Not affiliated with Valve. Counter-Strike and Steam are trademarks of Valve Corporation.</p></footer>
 <script>
 /* Send the link to my PC: the share sheet on a phone, or the link copied */
-(function(){document.querySelectorAll('[data-share]').forEach(function(b){b.addEventListener('click',function(){var u=b.getAttribute('data-copy'),l=b.textContent,c=function(){if(navigator.clipboard)navigator.clipboard.writeText(u).then(function(){b.textContent=/*t*/'Copied';setTimeout(function(){b.textContent=l},1800)},function(){})};if(navigator.share)navigator.share({title:'CS2 IP Changer',url:u}).catch(function(x){if(x&&x.name!=='AbortError')c()});else c()})})})();
+(function(){document.querySelectorAll('[data-share]').forEach(function(b){b.addEventListener('click',function(){var u=b.getAttribute('data-copy'),l=b.textContent,c=function(){if(navigator.clipboard)navigator.clipboard.writeText(u).then(function(){b.textContent=/*t*/'Copied';setTimeout(function(){b.textContent=l},1800)},function(){})};if(navigator.share)navigator.share({title:'Pickroute',url:u}).catch(function(x){if(x&&x.name!=='AbortError')c()});else c()})})})();
 /* 404 rolls in once from other digits, then stays */
 (function(){
   var on=false;try{on=localStorage.getItem('cs2-fx')==='on'}catch(x){}

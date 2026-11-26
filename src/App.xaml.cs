@@ -258,14 +258,14 @@ public partial class App : Application
 
     // The app's own windows for these two messages (NoticeWindow), not Windows' message box. The demo screenshots use them too.
     internal static NoticeWindow AlreadyRunningWindow(bool otherSession = false) =>
-        new(Loc.T("CS2 IP Changer is already running"), RunningText(otherSession), Loc.T("Close"));
+        new(Loc.T("Pickroute is already running"), RunningText(otherSession), Loc.T("Close"));
 
     /// <summary>
     /// Why this start stops. The lock is for the whole PC (the rules are), but the window can only be brought back in this Windows
     /// session: a copy open in another user's session has nothing in this taskbar.
     /// </summary>
     public static string RunningText(bool otherSession) => otherSession
-        ? Loc.T("CS2 IP Changer is open in another Windows user's session. It changes the Firewall for the whole PC, so only one copy can run: close it in that session first.")
+        ? Loc.T("Pickroute is open in another Windows user's session. It changes the Firewall for the whole PC, so only one copy can run: close it in that session first.")
         : Loc.T("Close the copy that is open first (look in the taskbar), then start the app again.");
 
     /// <summary>Another copy of the app runs in another Windows session (fast user switching). Read as admin; false when it can't be told.</summary>
@@ -291,7 +291,7 @@ public partial class App : Application
     public static (string Title, string Text) RestoredText(string left, bool running, string task = null) =>
         (left == null && !running ? Loc.T("Network restored") : Loc.T("Network not fully restored"),
             (left == null
-                ? Loc.T("The Firewall rules and routes from CS2 IP Changer are gone.")
+                ? Loc.T("The Firewall rules and routes from Pickroute are gone.")
                 : Loc.F("Couldn't remove: {0}.", left) + "\n\n" + Loc.F("Restart the PC to clear routes. Rules can be removed in Windows Firewall > Outbound Rules (names start with {0}).", AppIds.RulePrefix))
             + (task != null ? "\n\n" + Loc.F("The Start with Windows task wasn't removed: {0}. Open the app and turn off Settings > App > Start with Windows, or delete the task \"CS2 IP Changer\" in Task Scheduler.", task.TrimEnd().TrimEnd('.')) : "")
             + (running ? "\n\n" + Loc.T("Another copy of the app is still running: close it, or it puts the rules back.") : ""));

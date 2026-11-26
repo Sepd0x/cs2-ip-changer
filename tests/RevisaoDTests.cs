@@ -62,7 +62,7 @@ static class RevisaoDTests
 
         // D8. O aviso ao fechar para a área de notificação não promete proteção
         check("Revisão D8: o aviso do X não diz que a proteção continua", !MainWindow.TrayHintText.Contains("carries on") && !MainWindow.TrayHintText.Contains("Protection") && !MainWindow.TrayHintText.Contains("New IP"), MainWindow.TrayHintText);
-        check("Revisão D8: o aviso usa esse texto", Src("Views", "MainWindow.Tray.cs").Contains("_tray?.Balloon(Loc.T(\"CS2 IP Changer is still running\"), TrayHintText);"), "");
+        check("Revisão D8: o aviso usa esse texto", Src("Views", "MainWindow.Tray.cs").Contains("_tray?.Balloon(Loc.T(\"Pickroute is still running\"), TrayHintText);"), "");
         check("Revisão D8: o tooltip de Close to the notification area não diz que protege", !xaml.Contains("keeps protecting") && xaml.Contains("ToolTip=\"The X hides the window and the app keeps running in the notification area (next to the clock)."), "");
 
         // D10. Start with Windows não diz "with protection off"

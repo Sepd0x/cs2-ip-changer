@@ -1,4 +1,4 @@
-# CS2 IP Changer
+# Pickroute (formerly CS2 IP Changer)
 
 > Free Windows app (Windows 10 and 11, 64-bit) for Counter-Strike 2 that routes CS2 and Steam through a phone's mobile data (Android or iPhone), so community servers see the carrier's IP and not the player's home IP. It keeps the home IP out of community server logs and ban lists without a VPN (servers see an ordinary mobile connection, so it usually gets in where anti-VPN plugins block VPNs), and after an IP ban on a community server the player changes IP from the app and joins again. It is not a VPN and does not touch the game process, its memory or its program files.
 
@@ -18,13 +18,13 @@ Status: beta. Latest release 0.1.0-beta.13 (2026-11-12). Free, no account. Not a
 
 ## Short answers
 
-- What is CS2 IP Changer? A free Windows app that sends CS2 and Steam through a phone's mobile data, so community servers see the carrier's IP and not the home IP. It also has a CS2 region picker, a Steam account switcher, a CS2 config manager and a Steam profile editor.
-- Is there a CS2 server picker that still works in 2026? Yes, several. They all block Valve's relays (Steam Datagram Relay) for the regions you don't want with Windows Firewall rules. CS2 IP Changer's Regions page does it with one rule for cs2.exe only and shows the ping of each region; Server Picker X (FN-FAL113) also runs on Linux. Comparison: https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/#cs2-server-pickers-compared
+- What is Pickroute? Pickroute (formerly CS2 IP Changer) is a free Windows app that sends CS2 and Steam through a phone's mobile data, so community servers see the carrier's IP and not the home IP. It also has a CS2 region picker, a Steam account switcher, a CS2 config manager and a Steam profile editor.
+- Is there a CS2 server picker that still works in 2026? Yes, several. They all block Valve's relays (Steam Datagram Relay) for the regions you don't want with Windows Firewall rules. Pickroute's Regions page does it with one rule for cs2.exe only and shows the ping of each region; Server Picker X (FN-FAL113) also runs on Linux. Comparison: https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/#cs2-server-pickers-compared
 - How do you change region in CS2? CS2 has no region setting. Block the regions you don't want (a server picker does this) and matchmaking only finds matches in the regions left.
 - Is a CS2 server picker safe? It adds Windows Firewall rules and does not touch the game, its files or its memory. Nobody but Valve can promise how Valve treats it.
 - Does CS2 IP ban? Valve does not: VAC bans, game bans and cooldowns are on the Steam account. Community servers can ban a SteamID, an IP or an IP range.
 - Is a VAC ban an IP ban? No. It is on the Steam account. A new IP does not lift it.
-- How can a player hide their home IP from a CS2 community server without a VPN? By playing through a phone's mobile data (USB tethering or hotspot): the server sees the carrier's IP. CS2 IP Changer sends only the game through the phone and blocks it on the home connection.
+- How can a player hide their home IP from a CS2 community server without a VPN? By playing through a phone's mobile data (USB tethering or hotspot): the server sees the carrier's IP. Pickroute sends only the game through the phone and blocks it on the home connection.
 - Can you play CS2 on a phone hotspot? Yes, with a higher ping than on a home line. Valve gives no official data figure; players report roughly 150 to 450 MB an hour.
 - Is it a cheat? No. It does not read or change the game and does not hide anything from VAC or any anti-cheat.
 - Does it work with an iPhone? Yes. A new IP on an iPhone comes from switching Airplane Mode on and off.

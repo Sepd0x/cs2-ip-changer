@@ -667,7 +667,7 @@ export function page({ days, stats, gh, now, email }) {
     gh.problems?.length ? card('GitHub problems', `<ul class="plain">${gh.problems.map((p) => `<li class="bad">${esc(p)}</li>`).join('')}</ul>`, 'wide') : '',
   ].join('');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>CS2 IP Changer · stats</title><style>
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>Pickroute · stats</title><style>
 :root{--bg:#0e0e0e;--bg2:#171717;--bg3:#1d1d1d;--line:#2a2a2a;--ink:#e4e4e4;--ink2:#adadad;--ink3:#888;--accent:#5ba8f0;--part:#a9d2f8;--blue:#2b74c2;--bad:#f07a6a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
 header{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between;padding:20px 20px 8px;max-width:1200px;margin:auto}
@@ -689,6 +689,6 @@ h2{font-size:14px;color:var(--ink2);font-weight:600;margin:0 0 10px;text-transfo
 footer{max-width:1200px;margin:auto;padding:0 20px 30px;color:var(--ink3);font-size:12px}
 @media(max-width:900px){main{grid-template-columns:repeat(2,minmax(0,1fr))}.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){header,main,footer{padding-left:12px;padding-right:12px}main{grid-template-columns:minmax(0,1fr)}.span2{grid-column:auto}.tv,.tile.big .tv{font-size:24px}}
-</style></head><body><header><h1>CS2 IP Changer <span>stats</span></h1><nav>${tabs}</nav></header>
+</style></head><body><header><h1>Pickroute <span>stats</span></h1><nav>${tabs}</nav></header>
 <main>${body}${ghBody}</main><footer>Dev builds left out. A user = one install open on one day, so someone who opens the app on 3 days counts 3 times. The app's ID is random (never from the PC or the person) and, since beta.9, kept for the install (in beta.8 it was new every day). New users = installs that accepted the usage stats notice that day (also once for someone coming from beta.7). Days in UTC. GitHub numbers kept 10 minutes. ${esc(new Date(now).toISOString().slice(0, 16).replace('T', ' '))} UTC · ${esc(email)}</footer></body></html>`;
 }

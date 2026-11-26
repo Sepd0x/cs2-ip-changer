@@ -436,7 +436,7 @@ export function renderMd(b) {
   const K = b.kpis, H = b.health;
   const bad = H.checks.filter((c) => c.status !== 'ok');
   const L = [];
-  L.push(`# CS2 IP Changer · brief ${b.window.today} (UTC day, Lisbon ${b.window.lisbon_now}) · last real report ${b.window.today_through ? `${b.window.today_through.slice(0, 10)} ${b.window.today_through.slice(11, 16)} UTC` : 'none in 90 days'}`);
+  L.push(`# Pickroute · brief ${b.window.today} (UTC day, Lisbon ${b.window.lisbon_now}) · last real report ${b.window.today_through ? `${b.window.today_through.slice(0, 10)} ${b.window.today_through.slice(11, 16)} UTC` : 'none in 90 days'}`);
   const val = (c) => (c.id === 'tables' ? `missing ${c.missing.join(',')}` : c.value == null ? c.reason || 'null' : Array.isArray(c.value) ? c.value.join(',') : c.unit ? `${c.value} ${c.unit}` : c.value);
   L.push(`Health: ${H.status.toUpperCase()}${bad.length ? ` (${bad.map((c) => `${c.id} ${val(c)}`).join('; ')})` : ''}`);
   L.push('');

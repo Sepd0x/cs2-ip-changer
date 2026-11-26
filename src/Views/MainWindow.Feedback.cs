@@ -26,7 +26,7 @@ public partial class MainWindow
         // What the notification said stays in the Log after it fades (in English)
         Log.Notice(tone switch { Tone.Ok => LogLevel.Ok, Tone.Error => LogLevel.Error, Tone.Info => LogLevel.Info, _ => LogLevel.Warn }, Loc.En(text));
         // The window is in the notification area: what a tray command or the tick has to say comes as a Windows notification.
-        if (!IsVisible && tone != Tone.Info) _tray?.Balloon(tone == Tone.Error ? Loc.T("CS2 IP Changer: problem") : "CS2 IP Changer", text);
+        if (!IsVisible && tone != Tone.Info) _tray?.Balloon(tone == Tone.Error ? Loc.T("Pickroute: problem") : "Pickroute", text);
         ToastText.Text = text;
         _toastAction = null;
         ToastActionBtn.Visibility = Visibility.Collapsed;

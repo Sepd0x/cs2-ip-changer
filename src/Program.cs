@@ -30,7 +30,7 @@ public static class Program
         // No Log line here: it would write as admin into SRT_Dados before the folder check below.
         if (DllSearchProblem(locked, Adb.Elevated, args) is string dllWhy)
         {
-            MessageBoxW(IntPtr.Zero, dllWhy, "CS2 IP Changer", 0x10);
+            MessageBoxW(IntPtr.Zero, dllWhy, "Pickroute", 0x10);
             return 1;
         }
         // As admin from a folder any program can change (Downloads, Desktop): a DLL put next to the exe would run as admin on the next
@@ -52,7 +52,7 @@ public static class Program
 #pragma warning restore IL3000
         if (folderWhy != null && (staged || appDirUnsafe))
         {
-            if (staged || !Installer.Offer(Paths.AppDir)) { MessageBoxW(IntPtr.Zero, folderWhy, "CS2 IP Changer", 0x10); return 1; }
+            if (staged || !Installer.Offer(Paths.AppDir)) { MessageBoxW(IntPtr.Zero, folderWhy, "Pickroute", 0x10); return 1; }
             return StageInstall(singleFile, folderWhy);
         }
         var moveNet = singleFile && Adb.Elevated && !NativeDirSafe(SafeBase);
@@ -65,7 +65,7 @@ public static class Program
             {
                 var what = moveNet ? "unpack its files to a folder only admins can change" : "start without the runtime variables " + string.Join(", ", runtimeVars);
                 if (folderWhy == null) Log.Error($"The app couldn't {what}. It didn't start.");
-                MessageBoxW(IntPtr.Zero, Loc.F("CS2 IP Changer couldn't {0}, so it didn't start. Restart the PC and try again.", moveNet ? Loc.T("unpack its files to a folder only admins can change") : Loc.F("start without the runtime variables {0}", string.Join(", ", runtimeVars))), "CS2 IP Changer", 0x10);
+                MessageBoxW(IntPtr.Zero, Loc.F("Pickroute couldn't {0}, so it didn't start. Restart the PC and try again.", moveNet ? Loc.T("unpack its files to a folder only admins can change") : Loc.F("start without the runtime variables {0}", string.Join(", ", runtimeVars))), "Pickroute", 0x10);
                 return 1;
             }
             try
@@ -90,7 +90,7 @@ public static class Program
             catch (Exception ex)
             {
                 if (folderWhy == null) Log.Error("The app couldn't restart from a safe folder: " + ex.Message);
-                MessageBoxW(IntPtr.Zero, Loc.F("CS2 IP Changer couldn't restart from a folder only admins can change: {0}", ex.Message), "CS2 IP Changer", 0x10);
+                MessageBoxW(IntPtr.Zero, Loc.F("Pickroute couldn't restart from a folder only admins can change: {0}", ex.Message), "Pickroute", 0x10);
                 return 1;
             }
         }
@@ -123,8 +123,8 @@ public static class Program
         }
         catch (Exception ex)
         {
-            MessageBoxW(IntPtr.Zero, Installer.StageBusy() ? Loc.T("The Install window of CS2 IP Changer is already open. Look for it in the taskbar.")
-                : why + "\n\n" + Loc.F("(The Install window couldn't open: {0})", ex.Message), "CS2 IP Changer", 0x10);
+            MessageBoxW(IntPtr.Zero, Installer.StageBusy() ? Loc.T("The Install window of Pickroute is already open. Look for it in the taskbar.")
+                : why + "\n\n" + Loc.F("(The Install window couldn't open: {0})", ex.Message), "Pickroute", 0x10);
             return 1;
         }
     }
@@ -153,7 +153,7 @@ public static class Program
     static int RunFolderProblem(string why)
     {
         Styles();
-        NoticeWindow.Ask(Loc.T("CS2 IP Changer can't start here"), why, Loc.T("Close"), problem: true);
+        NoticeWindow.Ask(Loc.T("Pickroute can't start here"), why, Loc.T("Close"), problem: true);
         return 1;
     }
 
@@ -175,7 +175,7 @@ public static class Program
         // beta.11 (audit P5): an older copy updated itself and left its protection on, which stays until the installed app starts
         // A Firewall that couldn't be read says nothing here: the note is only shown for a block that was seen
         var blockLeft = Firewall.BlockLeft(Firewall.Remaining(), unreadableCounts: false);
-        return new NoticeWindow(Loc.T("Install CS2 IP Changer"), InstallText(from, target, keep, Installer.InstalledVersion(target), AppInfo.Version, blockLeft), Loc.T("Install"), Loc.T("Close"), action: async w =>
+        return new NoticeWindow(Loc.T("Install Pickroute"), InstallText(from, target, keep, Installer.InstalledVersion(target), AppInfo.Version, blockLeft), Loc.T("Install"), Loc.T("Close"), action: async w =>
         {
             w.Working = true;
             w.Say(Loc.F("Copying to {0}…", target));
@@ -226,7 +226,7 @@ public static class Program
     {
         var keepExe = Installer.KeepExe(installed, version);
         if (blockLeft) return InstallText(from, target, keepData, installed, version) + "\n\n" + BlockLeftText(from);
-        return Loc.F("CS2 IP Changer runs as admin, and programs without admin rights can change the folder it was started from:\n{0}", from) + "\n\n"
+        return Loc.F("Pickroute runs as admin, and programs without admin rights can change the folder it was started from:\n{0}", from) + "\n\n"
             + Loc.T("A file put next to the app there could run with admin rights, so the app doesn't run from it.") + "\n\n"
             + (installed == null ? Loc.F("Install copies {0} to {1}, where only admins can change files,", AppIds.ExeName, target)
                 : keepExe ? Loc.F("Version {0} is already in {1}, the same or newer than this one, so Install keeps it,", installed, target)
@@ -269,7 +269,7 @@ public static class Program
     /// </summary>
     public static string DllSearchProblem(bool locked, bool elevated, IEnumerable<string> args) =>
         locked || !elevated || AppIds.Args.IsRestore(args) ? null
-            : Loc.T("Windows wouldn't limit where CS2 IP Changer loads its DLLs from, so a file next to the app could run with admin rights.")
+            : Loc.T("Windows wouldn't limit where Pickroute loads its DLLs from, so a file next to the app could run with admin rights.")
               + " " + Loc.T("The app didn't start.") + "\n\n" + Loc.F("Restart the PC and try again. To undo the app's network changes, run {0} {1}.", AppIds.ExeName, AppIds.Args.Restore);
 
     /// <summary>
@@ -290,9 +290,9 @@ public static class Program
         appDir = Path.TrimEndingDirectorySeparator(Path.GetFullPath(appDir));
         var fix = Loc.F("Close this, create the folder {0}, copy {1} into it (and your SRT_Dados folder, if you have one: copy it, don't move it) and start the app from there.", AppIds.InstallDir, AppIds.ExeName);
         if (Adb.UsersCanWrite(appDir))
-            return Loc.F("CS2 IP Changer runs as admin, and this folder can be changed by programs without admin rights:\n{0}", appDir) + "\n\n" + Loc.T("A file put next to the app there would run with admin rights, so the app doesn't start from it.") + "\n\n" + fix;
+            return Loc.F("Pickroute runs as admin, and this folder can be changed by programs without admin rights:\n{0}", appDir) + "\n\n" + Loc.T("A file put next to the app there would run with admin rights, so the app doesn't start from it.") + "\n\n" + fix;
         if ((Directory.Exists(dataDir) || File.Exists(dataDir)) && Adb.UsersCanWrite(dataDir))
-            return Loc.F("CS2 IP Changer runs as admin, and its data folder can be changed by programs without admin rights:\n{0}", dataDir) + "\n\n" + Loc.T("This happens when SRT_Dados is moved instead of copied. Close this, copy SRT_Dados to another place, delete the one here and copy it back, then start the app again.");
+            return Loc.F("Pickroute runs as admin, and its data folder can be changed by programs without admin rights:\n{0}", dataDir) + "\n\n" + Loc.T("This happens when SRT_Dados is moved instead of copied. Close this, copy SRT_Dados to another place, delete the one here and copy it back, then start the app again.");
         return null;
     }
 

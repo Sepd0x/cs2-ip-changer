@@ -364,7 +364,7 @@
     const s = UI.screens.find((q) => q.id === sid), d = D.screens[sid];
     if (!s.img) {
       const btns = s.buttons.map((b) => ({ ...b, n: d.buttons[b.id]?.n || 0 })).sort((a, b) => b.n - a.n);
-      return `<div class="placeholder"><div class="ttl">CS2 IP Changer &nbsp;/ <b>${esc(s.name)}</b></div><div class="body"><div class="pgb"><span>${esc(s.name)}</span>
+      return `<div class="placeholder"><div class="ttl">Pickroute &nbsp;/ <b>${esc(s.name)}</b></div><div class="body"><div class="pgb"><span>${esc(s.name)}</span>
         <div class="todo">Captura por fazer</div><p>Ficam os botões e os cliques. Nomes por confirmar no código.</p></div>
         <div class="pgb"><span>Botões</span><div class="pbtns">${btns.map((b) => `<span class="pb" data-tip="${esc(`${b.label}: ${plural(b.n, 'clique', 'cliques')}`)}">${esc(b.label)}<b>${nf(b.n)}</b></span>`).join('')}</div></div></div></div>`;
     }
@@ -911,7 +911,7 @@
     const main = $('#main');
     main.innerHTML = `<section class="page on" id="page-${page.id}"><div class="ptitle"><h1>${esc(page.name)}</h1><p>${esc(page.desc)}</p></div>${P[page.id]()}</section>`;
     $('#crumbPage').textContent = page.name;
-    document.title = `${page.name} · CS2 IP Changer stats`;
+    document.title = `${page.name} · Pickroute stats`;
     if (P[page.id].after) P[page.id].after();
     animateNumbers(main);
   }

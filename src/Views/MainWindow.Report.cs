@@ -67,7 +67,7 @@ public partial class MainWindow
     {
         var sb = new StringBuilder();
         var rep = _last;
-        sb.AppendLine($"CS2 IP Changer {AppInfo.Version} · {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine($"Pickroute {AppInfo.Version} · {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
         sb.AppendLine($"Windows: {System.Runtime.InteropServices.RuntimeInformation.OSDescription} ({Environment.OSVersion.Version}) · {System.Globalization.CultureInfo.CurrentUICulture.Name}");
         sb.AppendLine($"Options: mode={_s.Mode} game={_s.GameMode} cs2Locked={_s.LockCs2} steamOnEgress={_s.SteamOnEgress} pcOffPhone={_s.KeepPcOffPhone} offline={_s.SteamOffline} method={_s.ChangeMethod}");
         sb.AppendLine($"Steam: {Steam.InstallDir() ?? "not found"} · open={Steam.IsRunning} · CS2: {_s.Cs2Path ?? "not found"} · open={Steam.Cs2Running}");

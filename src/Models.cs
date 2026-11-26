@@ -135,7 +135,11 @@ public sealed partial class Settings
     public bool CloseAsked { get; set; }
     public int DefaultPort { get; set; } = 27015;
     public bool LegacyCleaned { get; set; }
-    /// <summary>No Firewall rule named before 1.0.0 ("ServerRouteTool v9 - …") was left after a sync (Guard: until then it looks each sync).</summary>
+    /// <summary>
+    /// No Firewall rule named before ("ServerRouteTool v9 - …", "CS2 IP Changer - …") was left after a sync (Guard: until then it looks
+    /// each sync). Saved under a new name with Pickroute, so a PC that had only the v9 names renamed looks once more.
+    /// </summary>
+    [JsonPropertyName("RulesRenamedPickroute")]
     public bool RulesRenamed { get; set; }
     public string LastHomeIp { get; set; }
     /// <summary>

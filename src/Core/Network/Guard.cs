@@ -408,7 +408,7 @@ public sealed class Guard
     }
 
     static Firewall.FwRule Cs2Rule(string cs2, string allow) => new(Firewall.Cs2RuleName, null, cs2, allow,
-        "Managed by CS2 IP Changer. CS2's game traffic (UDP) can only go out through the protected connection: servers not in the list never see your home IP.",
+        "Managed by Pickroute. CS2's game traffic (UDP) can only go out through the protected connection: servers not in the list never see your home IP.",
         Firewall.NET_FW_IP_PROTOCOL_UDP);
 
     /// <summary>
@@ -416,7 +416,7 @@ public sealed class Guard
     /// candidate, so the IP measured is the phone's. Other programs (1.0.0.1 is also a public DNS server) are left alone.
     /// </summary>
     static Firewall.FwRule EchoRule(string allow) => new(Firewall.EchoRuleName, new[] { Net.EchoIp }, Environment.ProcessPath, allow,
-        "Managed by CS2 IP Changer. Makes sure the app's IP test measures the protected connection.");
+        "Managed by Pickroute. Makes sure the app's IP test measures the protected connection.");
 
     /// <summary>Writes one Firewall rule; a failure is kept for the Log line instead of stopping the other rules.</summary>
     static void TryRule(List<string> errors, Action write)
@@ -502,7 +502,7 @@ public sealed class Guard
                 // Each rule on its own: one failing must not leave the others on an old allowed IP.
                 var errors = new List<string>();
                 void Try(Action a) => TryRule(errors, a);
-                Try(() => Firewall.Apply(Firewall.RuleName, ips, null, allow, "Managed by CS2 IP Changer. Servers in the list can only be reached from the local IP of the protected connection."));
+                Try(() => Firewall.Apply(Firewall.RuleName, ips, null, allow, "Managed by Pickroute. Servers in the list can only be reached from the local IP of the protected connection."));
                 Try(() => Firewall.Apply(EchoRule(candidate?.LocalIp)));
                 if (cs2 != null) Try(() => Firewall.Apply(Cs2Rule(cs2, allow)));
                 else Firewall.Remove(Firewall.Cs2RuleName);
@@ -834,11 +834,11 @@ public sealed class Guard
     /// <summary>DNS (UDP and TCP 53) only from the protected connection's local IP; all outbound IPv6 blocked.</summary>
     static Firewall.FwRule[] FullModeRules(string allowLocalIp) => new[]
     {
-        new Firewall.FwRule(Firewall.DnsUdpRuleName, null, null, allowLocalIp, "Managed by CS2 IP Changer. Whole PC mode: DNS only goes out through the protected connection.",
+        new Firewall.FwRule(Firewall.DnsUdpRuleName, null, null, allowLocalIp, "Managed by Pickroute. Whole PC mode: DNS only goes out through the protected connection.",
             Firewall.NET_FW_IP_PROTOCOL_UDP, "53"),
-        new Firewall.FwRule(Firewall.DnsTcpRuleName, null, null, allowLocalIp, "Managed by CS2 IP Changer. Whole PC mode: DNS only goes out through the protected connection.",
+        new Firewall.FwRule(Firewall.DnsTcpRuleName, null, null, allowLocalIp, "Managed by Pickroute. Whole PC mode: DNS only goes out through the protected connection.",
             Firewall.NET_FW_IP_PROTOCOL_TCP, "53"),
-        new Firewall.FwRule(Firewall.Ipv6RuleName, null, null, null, "Managed by CS2 IP Changer. Whole PC mode: the routes only move IPv4, so IPv6 is blocked (Windows falls back to IPv4).",
+        new Firewall.FwRule(Firewall.Ipv6RuleName, null, null, null, "Managed by Pickroute. Whole PC mode: the routes only move IPv4, so IPv6 is blocked (Windows falls back to IPv4).",
             LocalAddresses: Firewall.AllIpv6),
     };
 

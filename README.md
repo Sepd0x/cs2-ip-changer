@@ -1,6 +1,6 @@
 <h1 align="center">
   <img src="docs/assets/icon.png" alt="" width="72" height="72"><br>
-  CS2 IP Changer
+  Pickroute
 </h1>
 
 <p align="center">
@@ -14,7 +14,8 @@
 
 <p align="center">
   <b>CS2 IP ban bypass and home IP protection for community servers. Free, for Windows.</b><br>
-  CS2 plays through your phone's mobile data, so servers see your carrier's IP.
+  CS2 plays through your phone's mobile data, so servers see your carrier's IP.<br>
+  <sub>Formerly CS2 IP Changer. Same app, same downloads, same updates.</sub>
 </p>
 
 <p align="center">
@@ -173,9 +174,9 @@ Each release is also scanned on VirusTotal. <!--rel:vt-->beta.13: [0 of 70 engin
 An exe that isn't code-signed, asks for admin and changes firewall rules gets flagged by some engines on heuristics alone. That happened to an older beta: beta.6 was flagged by 2 of 70 engines (Google and Varist, generic "risk" labels), while Microsoft, Kaspersky, ESET, Bitdefender and Avast found nothing. The line above is always the latest release. If you see a detection that looks wrong, open an issue.
 </details>
 
-## CS2 IP Changer or a VPN?
+## Pickroute or a VPN?
 
-| | CS2 IP Changer | VPN or proxy |
+| | Pickroute | VPN or proxy |
 |---|---|---|
 | Server sees | Your carrier's mobile IP | An IP from a datacenter |
 | Servers that block VPNs | Usually gets in | Often kicked or banned |
@@ -191,7 +192,7 @@ On Android, a new IP is mobile data off and on over ADB; on an iPhone, you use A
 ## FAQ
 
 **Is it a VPN? Does it work on servers that block VPNs?**<br>
-No, and usually yes: there's no VPN server in between, and servers see an ordinary mobile IP from your carrier, not a datacenter. The details and the limits are in [CS2 IP Changer or a VPN?](#cs2-ip-changer-or-a-vpn)
+No, and usually yes: there's no VPN server in between, and servers see an ordinary mobile IP from your carrier, not a datacenter. The details and the limits are in [Pickroute or a VPN?](#pickroute-or-a-vpn)
 
 **Can this get me VAC banned?**<br>
 It never touches the game, and switching accounts never asks for your Steam password. It won't hide a cheat from VAC, and we can't speak for Valve or for a server's admins, who set their own rules. The rest is in [Is it safe?](#is-it-safe)
@@ -247,7 +248,7 @@ The app measures the phone's IP by asking 1.0.0.1 (Cloudflare's `/cdn-cgi/trace`
 
 ## Telemetry
 
-CS2 IP Changer sends usage stats so bugs can be found and the parts people use get better. They are on by default, and you can turn them off at the first start or any time in Settings.
+Pickroute sends usage stats so bugs can be found and the parts people use get better. They are on by default, and you can turn them off at the first start or any time in Settings.
 
 - **You decide first.** At the first start, before the app opens, a notice lists what is sent, with Accept and Turn off. Until you answer, nothing is sent and no ID is made. Turn off (or <kbd>Esc</kbd>) opens the app the same, and nothing is sent.
 - **A switch, any time.** Settings > Send usage stats. Off: no report, no 5-minute signal, no setup report, no errors, and nothing new is counted. The ID and what was already counted and waiting to go stay on your PC, so turning it on again carries on with the same ID. The choice is saved with the other settings. Anyone who accepted in a beta sees the notice once more after updating, with Accept and Turn off, and keeps what they choose.

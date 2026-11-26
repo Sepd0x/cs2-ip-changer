@@ -40,7 +40,7 @@ static class CanaisTests
 
         // O texto do update diz quando é uma versão de teste
         check("Canais: o aviso de uma versão de teste diz que é de teste", MainWindow.UpdateToast("0.1.0-beta.12", true).StartsWith("Test version 0.1.0-beta.12 is out."), MainWindow.UpdateToast("0.1.0-beta.12", true));
-        check("Canais: o aviso de uma estável fica como era", MainWindow.UpdateToast("0.1.0-beta.12", false) == "CS2 IP Changer 0.1.0-beta.12 is available. Click Update under the version number.", MainWindow.UpdateToast("0.1.0-beta.12", false));
+        check("Canais: o aviso de uma estável fica como era", MainWindow.UpdateToast("0.1.0-beta.12", false) == "Pickroute 0.1.0-beta.12 is available. Click Update under the version number.", MainWindow.UpdateToast("0.1.0-beta.12", false));
         check("Canais: a dica do Update diz que é de teste", MainWindow.UpdateTip("0.1.0-beta.12", true).StartsWith("Test version 0.1.0-beta.12 is available.")
             && MainWindow.UpdateTip("0.1.0-beta.12", false).StartsWith("Version 0.1.0-beta.12 is available."), MainWindow.UpdateTip("0.1.0-beta.12", true));
         check("Canais: a pergunta do Update diz que é de teste", MainWindow.UpdateWhat("0.1.0-beta.12", true) == "test version 0.1.0-beta.12" && MainWindow.UpdateWhat("0.1.0-beta.12", false) == "version 0.1.0-beta.12", "");

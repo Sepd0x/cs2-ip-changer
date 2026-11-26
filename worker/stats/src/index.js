@@ -1,4 +1,4 @@
-// Usage stats for CS2 IP Changer (beta), with a random install ID (pseudonymous; the heat map and /v1/env have no ID). README > Telemetry says what the app sends.
+// Usage stats for Pickroute (beta), with a random install ID (pseudonymous; the heat map and /v1/env have no ID). README > Telemetry says what the app sends.
 // Nov. 2026: also the website's visit counter (/v1/site), with no ID and no cookie, only counts per day. Rows with an install ID are
 // deleted after 12 months by the dashboard Worker's daily cron (src/dashboard.js), the added-up counts stay.
 //
@@ -354,12 +354,12 @@ export default {
           : new Response('origin', { status: 403 });
       if (request.method === 'POST') return siteHit(request, env);
     }
-    if (request.method !== 'POST') return new Response('CS2 IP Changer stats. See the README.', { status: 404 });
+    if (request.method !== 'POST') return new Response('Pickroute stats. See the README.', { status: 404 });
     if (['/v1', '/v1/live', '/v1/env', '/v1/forget'].includes(url.pathname) && !await ipAllowed(request, env.RL_APP)) return slowDown();
     if (request.method === 'POST' && url.pathname === '/v1/live') return live(request, env);
     if (request.method === 'POST' && url.pathname === '/v1/env') return envReport(request, env);
     if (request.method === 'POST' && url.pathname === '/v1/forget') return forget(request, env);
-    if (request.method !== 'POST' || url.pathname !== '/v1') return new Response('CS2 IP Changer stats. See the README.', { status: 404 });
+    if (request.method !== 'POST' || url.pathname !== '/v1') return new Response('Pickroute stats. See the README.', { status: 404 });
     const b = await body(request);
     if (b instanceof Response) return b;
     const now = Date.now();

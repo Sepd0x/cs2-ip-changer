@@ -13,6 +13,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Phone setup: no USB data cable? "Use the hotspot" is there from the start. It opens the Wi-Fi list, and when the PC joins a new network it asks whether that is the phone's hotspot. A PC without Wi-Fi is told to use the cable.
 
 ### Changed
+- CS2 IP Changer is now Pickroute. Nothing to do: your settings, regions, accounts and updates carry over, and the download is still CS2IPChanger.exe. Settings > App says the old name.
 - A new look for the whole app. Every page keeps all its buttons and options, laid out more calmly:
   - The window has a thin route line at the top, a narrower page list on the left, your protection and the quick button at the top right, and a status line at the bottom (phone, mobile data, hotkey).
   - Regions: all your regions on one dial. The length of a spoke is its ping, the ring is your ping limit, and the lit arc is where CS2 can play. The mouse on a spoke lights its row in the list, and the other way round. Continents fold, and presets are under the Preset button.
@@ -65,7 +66,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Website: the guides on 3D scenes cost a phone less per frame: the same pictures, with about a third less work for the processor and, on the region guide, a third fewer draw calls.
 - Website: search engines that use IndexNow (Bing, Yandex and others) are told about the pages each time the site is published.
 - README: the first lines now say the app is also a CS2 server picker, with links to the guides.
-- Windows Firewall: the app's rules are now named "CS2 IP Changer - ..." (they were "ServerRouteTool v9 - ...", partly in Portuguese). Rules left by an older version are renamed by the app on its own: each new rule is in place before the old one goes, so nothing is ever less blocked, and Turn off protection, Allow all, --restore, Remove and tools/restore.cmd remove both names. If you go back to an older version, run `CS2IPChanger.exe --restore` first: older versions don't know the new names.
+- Windows Firewall: the app's rules are now named "Pickroute - ..." (they were "ServerRouteTool v9 - ...", partly in Portuguese). Rules left by an older version are renamed by the app on its own: each new rule is in place before the old one goes, so nothing is ever less blocked, and Turn off protection, Allow all, --restore, Remove and tools/restore.cmd remove both names. If you go back to an older version, run `CS2IPChanger.exe --restore` first: older versions don't know the new names.
 
 ### Fixed
 - Website: on very wide screens (2560 and 3840 px) the title "One window, six pages." touched the app window; the footer of the guides jumped when it came into view; the 404 page now carries the notice that this is not a Valve site; the README says what the site keeps in your browser (your language and motion choice); "your home IP never reaches the server" now says "with protection on"; the old name "ServerRouteTool" is gone from the site's data; the three.js and Lenis license notices travel with their scripts.

@@ -277,7 +277,7 @@ public static class Regions
         if (ips.Count == 0 || string.IsNullOrEmpty(gamePath)) return null;
         game ??= RegionGames.Cs2;
         return new Firewall.FwRule(game.RuleName, ips, gamePath, null,
-            $"Managed by CS2 IP Changer (Regions page). Stops {game.Name} from reaching Valve's relays in the regions you turned off, so matchmaking plays elsewhere. Steam and other programs are not affected.");
+            $"Managed by Pickroute (Regions page). Stops {game.Name} from reaching Valve's relays in the regions you turned off, so matchmaking plays elsewhere. Steam and other programs are not affected.");
     }
 
     /// <summary>Puts the rule in place (or removes it when nothing is blocked). Needs administrator.</summary>

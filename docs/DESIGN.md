@@ -174,7 +174,7 @@ there.
   rows, 12 px in, rounded 8, 13 px `Muted`; the page picked in `Surface2`, white SemiBold, with the 3 x 14 px `NavMark`
   before its name; the icon stays in `Tag` for the tray and the stats, it isn't drawn), and at the bottom Update and the
   version on one line ("v0.1.0 beta.14").
-- The top bar, 40 px: "CS2 IP Changer / Page" in 13 px (`Muted`, the "/" in `Faint`, the page in `Text`), the activity pill
+- The top bar, 40 px: "Pickroute / Page" in 13 px (`Muted`, the "/" in `Faint`, the page in `Text`), the activity pill
   while something runs, then on the right the state chip (24 px, rounded, a 10 % wash of the state's colour, its
   `StatusMark`, the state SemiBold and the IP in mono; a click goes to Connection), the quick switch (`TopPill`, 26 px:
   New IP + next account and the next account's name) and the window buttons (`Chrome`). A dialog covers the page, not this

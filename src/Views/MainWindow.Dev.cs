@@ -30,7 +30,7 @@ public partial class MainWindow
     {
         var parts = AppInfo.Version.Split('+');
         VersionText.Text = "v" + parts[0].Replace("-", " ") + (parts.Length > 1 ? "\n" + parts[1] : "");
-        VersionText.ToolTip = "CS2 IP Changer " + AppInfo.Version
+        VersionText.ToolTip = "Pickroute " + AppInfo.Version
 ;
     }
 }

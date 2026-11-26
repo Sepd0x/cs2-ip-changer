@@ -82,12 +82,13 @@ static class Rede15NovTests
             Repo("docs", "FAQ.md").Contains("ended in Task Manager or the PC loses power while Whole PC is on"), "");
     }
 
-    // Bloqueador 3 (A-01): o nome das regras "ServerRouteTool v9" (e os sufixos em português) passa a "CS2 IP Changer".
+    // Bloqueador 3 (A-01): o nome das regras "ServerRouteTool v9" (e os sufixos em português) passa a "CS2 IP Changer", e com o nome
+    // novo (26 nov.) a "Pickroute"; "CS2 IP Changer - " passa a ser um prefixo antigo (tests/PickrouteTests.cs).
     static void NomesDasRegras(Action<string, bool, string> check)
     {
         var names = new[] { Firewall.RuleName, Firewall.EchoRuleName, Firewall.Cs2RuleName, Firewall.DnsUdpRuleName, Firewall.DnsTcpRuleName,
             Firewall.Ipv6RuleName, Firewall.RegionsRuleName, Firewall.BannedIpRuleName, RegionGames.DotaRule, RegionGames.DeadlockRule };
-        check("Bloqueador 3: o prefixo novo é o nome da app", AppIds.RulePrefix == "CS2 IP Changer" && AppIds.LegacyRulePrefixes.SequenceEqual(new[] { "ServerRouteTool v9" }), AppIds.RulePrefix);
+        check("Bloqueador 3: o prefixo novo é o nome da app", AppIds.RulePrefix == "Pickroute" && AppIds.LegacyRulePrefixes.SequenceEqual(new[] { "ServerRouteTool v9", "CS2 IP Changer - " }), AppIds.RulePrefix);
         check("Bloqueador 3: as regras começam pelo prefixo novo, nenhuma por um antigo, todas diferentes",
             names.All(n => n.StartsWith(AppIds.RulePrefix + " - ")) && !names.Any(n => AppIds.LegacyRulePrefixes.Any(p => n.StartsWith(p)))
             && names.Distinct().Count() == names.Length && Firewall.AllNames.ToHashSet().SetEquals(names), "");
@@ -95,21 +96,21 @@ static class Rede15NovTests
         check("Bloqueador 3: nenhuma regra é o começo de outra (o RuleLeft e os temporários contam com isso)",
             !names.Any(a => names.Any(b => a != b && b.StartsWith(a))), "");
         check("Bloqueador 3: o grupo das regras no wf.msc também é o nome novo", Src("Core", "Network", "Firewall.cs").Contains("SetP(rule, \"Grouping\", AppIds.RulePrefix);"), "");
-        check("Bloqueador 3: o restore.cmd tira os dois nomes", Repo("tools", "restore.cmd").Contains("Get-NetFirewallRule -DisplayName 'CS2 IP Changer - *','ServerRouteTool v9*'"), "");
+        check("Bloqueador 3: o restore.cmd tira os três nomes", Repo("tools", "restore.cmd").Contains("Get-NetFirewallRule -DisplayName 'Pickroute - *','CS2 IP Changer - *','ServerRouteTool v9*'"), "");
         check("Bloqueador 3: os manifestos já não dizem ServerRouteTool",
             !Src("app.manifest").Contains("ServerRouteTool") && !Src("app.debug.manifest").Contains("ServerRouteTool"), "");
         var xaml = Src("MainWindow.xaml");
         check("Bloqueador 3: a tooltip do Open Windows Firewall e o fim do Remove dizem o nome novo",
-            xaml.Contains("named 'CS2 IP Changer'.") && !xaml.Contains("named 'ServerRouteTool'")
+            xaml.Contains("named 'Pickroute'.") && !xaml.Contains("named 'ServerRouteTool'")
             && !Src("Core", "Uninstall.cs").Contains("names start with ServerRouteTool") && Src("Core", "Uninstall.cs").Contains("(names start with {0}).\", AppIds.RulePrefix)"), "");
         foreach (var code in new[] { "es", "pt-BR", "ru", "tr" })
         {
             var json = Src("Lang", code + ".json");
             check($"Bloqueador 3: {code} sem as chaves com ServerRouteTool, com a tooltip nova traduzida",
-                !json.Contains("ServerRouteTool") && json.Contains("\"The app's rules are under Outbound Rules, named 'CS2 IP Changer'.\": \"") && json.Contains("'CS2 IP Changer'.\","), "");
+                !json.Contains("ServerRouteTool") && json.Contains("\"The app's rules are under Outbound Rules, named 'Pickroute'.\": \"") && json.Contains("'Pickroute'.\","), "");
         }
         check("Bloqueador 3: a página de privacidade diz o nome novo (e o antigo, de onde vem)",
-            Repo("docs", "PRIVACY-AND-SECURITY.md").Contains("outbound rules named `CS2 IP Changer - ...`"), "");
+            Repo("docs", "PRIVACY-AND-SECURITY.md").Contains("outbound rules named `Pickroute - ...`"), "");
     }
 
     static void MigracaoDasRegras(Action<string, bool, string> check)
@@ -159,12 +160,13 @@ static class Rede15NovTests
         var apply = fw[fw.IndexOf("public static void Apply(FwRule r)", StringComparison.Ordinal)..fw.IndexOf("static void RemoveTemps(", StringComparison.Ordinal)];
         check("Bloqueador 3: o Apply tira a regra antiga só depois de a nova estar no lugar (nunca menos bloqueio)",
             apply.IndexOf("SetP(added, \"Name\", name);", StringComparison.Ordinal) is var set and > 0
-            && apply.IndexOf("RemoveAllNamed(rules, legacy); RemoveTemps(rules, legacy);", StringComparison.Ordinal) > set
+            && apply.IndexOf("foreach (var l in legacy) { RemoveAllNamed(rules, l); RemoveTemps(rules, l); }", StringComparison.Ordinal) > set
             && apply.Contains("if (added == null) return;"), "");
         var rm = fw[fw.IndexOf("public static void Remove(string name = RuleName)", StringComparison.Ordinal)..];
         rm = rm[..rm.IndexOf("ProtectionRules", StringComparison.Ordinal)];
         check("Bloqueador 3: Remove (Turn off, No phone, --restore, Uninstall, Allow all) tira o nome novo e o antigo, e os temporários dos dois",
-            rm.Contains("RemoveAllNamed(rules, name);") && rm.Contains("if (legacy != null) RemoveAllNamed(rules, legacy);") && rm.Contains("RemoveTemps(rules, name, legacy);"), "");
+            rm.Contains("RemoveAllNamed(rules, name);") && rm.Contains("RemoveTemps(rules, name);")
+            && rm.Contains("foreach (var l in LegacyNames(name)) { RemoveAllNamed(rules, l); RemoveTemps(rules, l); }"), "");
         check("Bloqueador 3: Remaining e Describe leem os dois prefixos (ordinal, sem cultura)",
             fw.Split("IsAppRule(n)").Length == 3 && !fw.Contains("n.StartsWith(AppIds.RulePrefix)"), "");
         var guard = Src("Core", "Network", "Guard.cs");

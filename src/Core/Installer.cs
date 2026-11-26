@@ -163,7 +163,7 @@ public static class Installer
     /// <summary>What the entry says: name, version, publisher, icon, size, folder, and Uninstall opens the app's own question.</summary>
     public static List<(string Name, object Value, RegistryValueKind Kind)> UninstallEntry(string exe, string version, long bytes, DateTime installed) =>
     [
-        ("DisplayName", "CS2 IP Changer", RegistryValueKind.String),
+        ("DisplayName", "Pickroute", RegistryValueKind.String),
         ("DisplayVersion", version, RegistryValueKind.String),
         ("Publisher", "Sepd0x", RegistryValueKind.String),
         ("DisplayIcon", exe + ",0", RegistryValueKind.String),
@@ -251,7 +251,7 @@ public static class Installer
         using (var check = File.OpenRead(tmp))
             if (!SHA256.HashData(check).AsSpan().SequenceEqual(want)) { File.Delete(tmp); throw new IOException(Loc.T("the copy doesn't match the app")); }
         try { File.Move(tmp, dest, true); }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { File.Delete(tmp); throw new IOException(Loc.F("{0} is in use. If CS2 IP Changer is open from there, close it and try again.", dest)); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { File.Delete(tmp); throw new IOException(Loc.F("{0} is in use. If Pickroute is open from there, close it and try again.", dest)); }
     }
 
     /// <summary>Files never copied: owned.json (the routes the app added, read only from an admin-only folder: one planted in the old

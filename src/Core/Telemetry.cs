@@ -100,7 +100,7 @@ public static class Telemetry
     /// docs/PRIVACY-AND-SECURITY.md.
     /// </summary>
     public static string NoticeShort =>
-        Loc.T("CS2 IP Changer sends usage stats when it opens and closes and every 30 minutes while it's open, so bugs get found and fixed. You can turn them off here or any time in Settings.") + "\n\n"
+        Loc.T("Pickroute sends usage stats when it opens and closes and every 30 minutes while it's open, so bugs get found and fixed. You can turn them off here or any time in Settings.") + "\n\n"
         + NoticeSent + "\n"
         + Loc.T("Never sent: IPs, servers, accounts, Steam names or IDs, your carrier, anything you type.") + "\n"
         + Loc.T("Kept by the author (Sepd0x on GitHub) on Cloudflare, only to fix bugs and improve the app, for 12 months. "
@@ -113,7 +113,7 @@ public static class Telemetry
 
     /// <summary>The full list (the notice until beta.10), shown under See the full list. README > Telemetry has the same list.</summary>
     public static string NoticeText =>
-        Loc.T("CS2 IP Changer sends usage stats when it opens and closes (and every 30 minutes while it's open), so bugs get found and fixed. You can turn them off in Settings:") + "\n\n"
+        Loc.T("Pickroute sends usage stats when it opens and closes (and every 30 minutes while it's open), so bugs get found and fixed. You can turn them off in Settings:") + "\n\n"
         + NoticeList + "\n\n"
         + Loc.T("Never IPs, servers, accounts, Steam names or IDs, your carrier or anything you type.") + "\n\n"
         + Loc.T("Turn off sends nothing, and the app works the same.");
