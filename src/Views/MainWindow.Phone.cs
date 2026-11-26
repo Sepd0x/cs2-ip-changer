@@ -245,7 +245,20 @@ public partial class MainWindow
         PhoneDot.Fill = dot;
         PhoneState.Text = state;
         PhoneDetail.Text = detail;
+        (RoutePhoneName.Text, RoutePhoneDetail.Text) = RoutePhone(_phone?.Ready == true ? _phone.Model : null, _iphone, detail);
         PhoneFirstRun();
+    }
+
+    /// <summary>
+    /// The phone's column on Connection's route (26 Nov, App v3): its model on top and the rest of the line under it
+    /// ("Pixel 8" / "o2 · 5G · 82%"); with no phone ready, "iPhone" or "No phone" and the whole line.
+    /// </summary>
+    public static (string Name, string Detail) RoutePhone(string model, bool iphone, string detail)
+    {
+        detail ??= "";
+        if (!string.IsNullOrWhiteSpace(model))
+            return (model, detail.StartsWith(model + " · ", StringComparison.Ordinal) ? detail[(model.Length + 3)..] : detail == model ? "" : detail);
+        return (iphone ? "iPhone" : Loc.T("No phone"), detail);
     }
 
     /// <summary>

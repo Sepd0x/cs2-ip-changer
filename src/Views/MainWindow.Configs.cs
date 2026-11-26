@@ -209,14 +209,97 @@ public partial class MainWindow
 
     static readonly System.Text.RegularExpressions.Regex CfgResultTime = new(@"^(\d{1,2} [A-Za-z]{3} \d{2}:\d{2}) · (.+)$", System.Text.RegularExpressions.RegexOptions.Compiled);
 
-    /// <summary>The last sync line, with its time in mono like every other absolute time on the page.</summary>
+    /// <summary>
+    /// The last sync line, with its time in mono like every other absolute time on the page: under Sync now in the Sync menu, and
+    /// after the mode on the Sync line under the title (App v4: "· last run 6 Nov 16:00 Sync now: 2 copied, 3 already the same.").
+    /// </summary>
     void ShowCfgResult(string text)
     {
         CfgResult.Inlines.Clear();
+        CfgSyncLast.Inlines.Clear();
         var m = CfgResultTime.Match(text ?? "");
-        if (!m.Success) { CfgResult.Text = text; return; }
-        CfgResult.Inlines.Add(new System.Windows.Documents.Run(m.Groups[1].Value) { FontFamily = (FontFamily)FindResource("Mono") });
+        if (!m.Success) { CfgResult.Text = text; CfgSyncLast.Text = text; return; }
+        var mono = (FontFamily)FindResource("Mono");
+        CfgResult.Inlines.Add(new System.Windows.Documents.Run(m.Groups[1].Value) { FontFamily = mono });
         CfgResult.Inlines.Add(new System.Windows.Documents.Run(" · " + m.Groups[2].Value));
+        CfgSyncLast.Inlines.Add(new System.Windows.Documents.Run(Loc.T("last run") + " "));
+        CfgSyncLast.Inlines.Add(new System.Windows.Documents.Run(m.Groups[1].Value) { FontFamily = mono, FontSize = 11.5 });
+        CfgSyncLast.Inlines.Add(new System.Windows.Documents.Run(" " + m.Groups[2].Value));
+    }
+
+    /// <summary>The mode on the Sync line (App v4): "from main account nightfall", "off".</summary>
+    public static string CfgSyncModeText(string mode, string mainName) => mode switch
+    {
+        CfgMode.Main => mainName != null ? Loc.F("from main account {0}", CfgAccountRow.ShownName(mainName)) : Loc.T("from a main account"),
+        CfgMode.Previous => Loc.T("from the previous account"),
+        CfgMode.Latest => Loc.T("from the account changed last"),
+        _ => Loc.T("off"),
+    };
+
+    /// <summary>
+    /// An account's Sync status column (App v4), from what the page already knows: the main account, a link, a copy waiting for CS2 to
+    /// close, Sync off for it, the mode, and (from a main account) how many settings differ from the main one. Level: "good", "warn",
+    /// "off", or "none" (no mark). <paramref name="diffs"/> is null when there is nothing to compare with.
+    /// </summary>
+    public static (string Text, string Level) CfgStatus(string mode, bool isMain, bool linked, bool empty, bool pending, bool sync, int? diffs, bool onLogin)
+    {
+        string Differ(int n) => (n == 1 ? Loc.T("1 setting differs.") : Loc.F("{0} settings differ.", n)).TrimEnd('.');
+        if (isMain) return (Loc.T("Main: the others copy it"), "none");
+        if (linked) return (Loc.T("Left out: CS2 folder is a link"), "off");
+        if (pending) return (Loc.T("Waiting for CS2 to close"), "warn");
+        if (!sync) return (mode == CfgMode.Main && diffs > 0 ? Loc.T("Left out") + " · " + Differ(diffs.Value) : Loc.T("Left out"), "off");
+        if (mode == CfgMode.Off) return (Loc.T("Sync is off"), "off");
+        if (empty) return (Loc.T("No CS2 config yet"), "off");
+        if (mode == CfgMode.Previous) return (Loc.T("Gets the previous account's config"), "off");
+        if (mode == CfgMode.Latest) return (Loc.T("Gets the config changed last"), "off");
+        if (diffs == null) return (Loc.T("Gets the main account's config"), "off");
+        if (diffs == 0) return (Loc.T("Synced"), "good");
+        return (onLogin ? Loc.T("Differs · syncs at next login") : Loc.T("Differs") + " · " + Differ(diffs.Value), "warn");
+    }
+
+    // ------------------------------------------------------------ The side panels and the Sync menu (App v4)
+
+    /// <summary>Opens Copy config… or Compare over the page (null closes both); the page behind is dimmed.</summary>
+    void ShowCfgPanel(FrameworkElement panel)
+    {
+        CfgSyncBtn.IsChecked = false;
+        CfgCopyPanel.Visibility = panel == CfgCopyPanel ? Visibility.Visible : Visibility.Collapsed;
+        CfgComparePanel.Visibility = panel == CfgComparePanel ? Visibility.Visible : Visibility.Collapsed;
+        CfgDim.Visibility = panel != null ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    void CfgCopyOpen_Click(object sender, RoutedEventArgs e) => ShowCfgPanel(CfgCopyPanel);
+    void CfgCompareOpen_Click(object sender, RoutedEventArgs e) => ShowCfgPanel(CfgComparePanel);
+    void CfgPanelClose_Click(object sender, RoutedEventArgs e) => ShowCfgPanel(null);
+    void CfgDim_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e) => ShowCfgPanel(null);
+
+    /// <summary>A row's More (…): its menu under the button.</summary>
+    void CfgMore_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button b || b.ContextMenu is not ContextMenu m) return;
+        m.DataContext = b.DataContext;
+        m.PlacementTarget = b;
+        m.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        m.IsOpen = true;
+    }
+
+    /// <summary>More > Copy config from this account…: Copy config… opens with it under From, nothing ticked.</summary>
+    void CfgRowCopy_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not CfgAccountRow r) return;
+        foreach (var x in _cfgRows) x.Selected = false;
+        CfgFromBox.SelectedItem = (CfgFromBox.ItemsSource as List<CfgSourceItem>)?.FirstOrDefault(i => i.SteamId == r.SteamId);
+        ShowCfgPanel(CfgCopyPanel);
+    }
+
+    /// <summary>More > Compare with another account: Compare opens with this account on the left.</summary>
+    void CfgRowCompare_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not CfgAccountRow r) return;
+        var items = CfgCmpA.ItemsSource as List<CfgSourceItem>;
+        CfgCmpA.SelectedItem = items?.FirstOrDefault(i => i.SteamId == r.SteamId);
+        if ((CfgCmpB.SelectedItem as CfgSourceItem)?.SteamId == r.SteamId) CfgCmpB.SelectedItem = items?.FirstOrDefault(i => i.SteamId != r.SteamId);
+        ShowCfgPanel(CfgComparePanel);
     }
 
     void ShowConfigs()
@@ -230,6 +313,7 @@ public partial class MainWindow
             CfgOnNewBox.IsChecked = _s.ConfigOnNewAccount;
             CfgOnLoginBox.IsChecked = _s.ConfigOnLogin;
             CfgMainBox.IsEnabled = _s.ConfigMode == CfgMode.Main;
+            CfgMainBox.Visibility = _s.ConfigMode == CfgMode.Main ? Visibility.Visible : Visibility.Collapsed;   // App v4: on its option's line, only when picked
             // Sync Off: the When boxes and Sync now do nothing, so they show as disabled. The ticks stay saved for the next mode.
             var syncOn = _s.ConfigMode != CfgMode.Off;
             CfgOnNewBox.IsEnabled = CfgOnLoginBox.IsEnabled = CfgSyncNowBtn.IsEnabled = syncOn;   // one primary on the page: Copy
@@ -253,6 +337,9 @@ public partial class MainWindow
 
             var selected = _cfgRows.Where(r => r.Selected).Select(r => r.SteamId).ToHashSet();
             _cfgRows.Clear();
+            // App v4's Sync status: from a main account, how many settings each account has that differ from it (read once)
+            var mainSet = _s.ConfigMode == CfgMode.Main && _s.ConfigMainId is string mid && accounts.Any(a => a.SteamId == mid) && !Cfg.IsLinked(mid) ? Cfg.Read(mid) : null;
+            if (mainSet?.Empty == true) mainSet = null;
             foreach (var a in accounts)
             {
                 var set = Cfg.Read(a.SteamId);
@@ -260,18 +347,27 @@ public partial class MainWindow
                 var xh = Cs2Config.ReadCrosshair(set);
                 var linked = Cfg.IsLinked(a.SteamId);
                 var (xhText, changedText) = CfgRowText(set, linked, changed);
+                var isMain = _s.ConfigMode == CfgMode.Main && a.SteamId == _s.ConfigMainId;
+                var sync = !_s.ConfigOptOut.Contains(a.SteamId);
+                var pending = Cfg.State.Pending.Any(j => j.Target == a.SteamId);
+                int? diffs = null;
+                if (mainSet != null && !isMain && !linked && !set.Empty) try { diffs = Cs2Config.Diff(mainSet, set).Count; } catch { }
+                var (status, level) = CfgStatus(_s.ConfigMode, isMain, linked, set.Empty, pending, sync, diffs, _s.ConfigOnLogin);
                 _cfgRows.Add(new CfgAccountRow
                 {
                     Acc = a,
-                    Sync = !_s.ConfigOptOut.Contains(a.SteamId),
+                    Sync = sync,
                     Selected = selected.Contains(a.SteamId),
-                    IsMain = _s.ConfigMode == CfgMode.Main &&a.SteamId == _s.ConfigMainId,
-                    Pending = Cfg.State.Pending.Any(j => j.Target == a.SteamId),
+                    IsMain = isMain,
+                    Pending = pending,
                     Linked = linked,
                     CrosshairText = xhText,
                     ChangedText = changedText,
-                    CrosshairImage = CrosshairImage(xh, 26),   // the Image in the Accounts rows is 26 px
+                    CrosshairImage = CrosshairImage(xh, 36),   // App v4: the list's box is 36 px
+                    CrosshairSmall = CrosshairImage(xh, 20),   // and 20 px in Copy config… > To
                     GroupKey = set.Empty ? CfgAccountRow.NoConfig : Cs2Config.CrosshairSummary(set) ?? "default",
+                    StatusText = status,
+                    StatusBrush = level switch { "good" => Ui.Good, "warn" => Ui.Warn, "off" => Ui.Faint, _ => null },
                 });
             }
             foreach (var r in _cfgRows) r.PropertyChanged += (_, ev) => { if (ev.PropertyName == nameof(CfgAccountRow.Selected)) ShowCfgToCount(); };
@@ -280,10 +376,12 @@ public partial class MainWindow
             _cfgToView.Filter = o => o is CfgAccountRow r && r.SteamId != (CfgFromBox.SelectedItem as CfgSourceItem)?.SteamId && CfgAccountRow.Matches(r, CfgToSearch.Text);
             CfgToList.ItemsSource = _cfgToView;
             ShowCfgToCount();
+            ShowCfgFrom();
             CfgAccountsEmpty.Visibility = _cfgRows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             // No accounts: nothing to copy to or save, so the buttons don't look like they'd do something.
             var any = _cfgRows.Count > 0;
             CfgCopyBtn.IsEnabled = CfgToAllBtn.IsEnabled = CfgToNoneBtn.IsEnabled = CfgSnapSaveBtn.IsEnabled = any;
+            // App v4 says "Never while CS2 is open." here; the text with Configs > Backups stays (RevisaoDTests D5)
             CfgCopyHint.Text = any ? Loc.T("Each account gets a backup first (Configs > Backups).") : Loc.T("No accounts to copy to yet.");
 
             CfgSnapList.ItemsSource = snaps.Select(s => new CfgSnapshotRow(s)).ToList();
@@ -295,6 +393,9 @@ public partial class MainWindow
             CfgBackupEmpty.Visibility = backups.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
             CfgUndoBtn.IsEnabled = Cfg.CanUndo;   // nothing to put back: greyed out like Sync now
             ShowCfgResult(CfgSyncLine(_s.ConfigMode, _s.ConfigCategories.Count > 0, Cfg.State.LastResult));
+            var mainName = _accounts.FirstOrDefault(a => a.SteamId == _s.ConfigMainId)?.Name;
+            CfgSummary.Text = CfgSummaryText(_cfgRows.Count, _s.ConfigMode, mainName);
+            CfgSyncMode.Text = CfgSyncModeText(_s.ConfigMode, mainName);
         }
         catch (Exception ex) { Log.Warn("Configs page: " + Cs2ConfigStore.Why(ex)); }
         finally { _cfgLoading = false; }
@@ -309,6 +410,15 @@ public partial class MainWindow
         linked ? (Loc.T("CS2 folder is a link"), Loc.T("The app doesn't read or write it"))
         : set.Empty ? (Loc.T("No CS2 config yet"), Loc.T("Opens with CS2's defaults (or gets the sync)"))
         : (Cs2Config.CrosshairSummary(set) ?? Loc.T("Default crosshair"), changed != null ? Loc.F("Changed in game {0}", Fmt.Ago(changed)) : Loc.T("Not changed in game since the last copy"));
+
+    /// <summary>The line under the page title (App v3): "8 accounts · sync from main account nightfall".</summary>
+    public static string CfgSummaryText(int accounts, string mode, string mainName) => Fmt.Count(accounts, "account") + " · " + mode switch
+    {
+        CfgMode.Main => mainName != null ? Loc.F("sync from main account {0}", CfgAccountRow.ShownName(mainName)) : Loc.T("sync from a main account"),
+        CfgMode.Previous => Loc.T("sync from the previous account"),
+        CfgMode.Latest => Loc.T("sync from the account changed last"),
+        _ => Loc.T("sync off"),
+    };
 
     /// <summary>The line under Sync now: the last result, unless the sync is on with nothing ticked to copy.</summary>
     public static string CfgSyncLine(string mode, bool anyTicked, string last) =>
@@ -381,7 +491,8 @@ public partial class MainWindow
         _s.ConfigOptOut.Remove(r.SteamId);
         if (!r.Sync) _s.ConfigOptOut.Add(r.SteamId);
         SaveSettings();
-        if (!r.Sync && Cfg.DropQueued(j => j.Target == r.SteamId) > 0 && PageConfigs.IsVisible) ShowConfigs();
+        if (!r.Sync) Cfg.DropQueued(j => j.Target == r.SteamId);
+        if (PageConfigs.IsVisible) ShowConfigs();   // App v4: the row's Sync status follows the switch
         Toast(r.Sync ? Loc.F("The sync copies to {0} again.", r.Name) : Loc.F("The sync won't touch {0}'s config.", r.Name), true);
     }
 
@@ -497,6 +608,7 @@ public partial class MainWindow
         var from = (CfgFromBox.SelectedItem as CfgSourceItem)?.SteamId;
         var n = _cfgRows.Count(r => r.Selected && r.SteamId != from);
         CfgToCount.Text = n == 0 ? Loc.T("None ticked") : Loc.F("{0} of {1} ticked", n, Fmt.Count(_cfgRows.Count(r => r.SteamId != from), "account"));
+        CfgCopyBtn.Content = n == 0 ? Loc.T("Copy") : Loc.F("Copy to {0}", Fmt.Count(n, "account"));   // App v4: "Copy to 2 accounts"
     }
 
     // ------------------------------------------------------------ Copy
@@ -516,6 +628,16 @@ public partial class MainWindow
         if (from != null) foreach (var r in _cfgRows) if (r.SteamId == from) r.Selected = false;   // a hidden tick must not stay on
         _cfgToView?.Refresh();
         if (CfgToCount != null) ShowCfgToCount();
+        ShowCfgFrom();
+    }
+
+    /// <summary>App v4: the crosshair of the account under From, beside it and in mono under it (none for a snapshot).</summary>
+    void ShowCfgFrom()
+    {
+        if (CfgFromXh == null) return;
+        var row = _cfgRows.FirstOrDefault(r => r.SteamId != null && r.SteamId == (CfgFromBox.SelectedItem as CfgSourceItem)?.SteamId);
+        CfgFromXh.Source = row?.CrosshairImage;
+        CfgFromXhText.Text = row?.CrosshairText ?? "";
     }
 
     void CfgCopy_Click(object sender, RoutedEventArgs e)
@@ -540,7 +662,7 @@ public partial class MainWindow
         NavConfigs.IsChecked = true;
         ShowConfigs();
         CfgFromBox.SelectedItem = (CfgFromBox.ItemsSource as List<CfgSourceItem>)?.FirstOrDefault(i => i.SteamId == a.SteamId);
-        Dispatcher.BeginInvoke(() => CfgCopyGroup.BringIntoView(), System.Windows.Threading.DispatcherPriority.Loaded);
+        ShowCfgPanel(CfgCopyPanel);   // App v4: Copy is a side panel (CfgCopyGroup is inside it)
         Toast(Loc.F("Copying from {0}: tick the accounts under To, then Copy.", a.Name), true);
     }
 
@@ -583,7 +705,7 @@ public partial class MainWindow
     {
         if ((sender as FrameworkElement)?.DataContext is not CfgSnapshotRow s) return;
         CfgFromBox.SelectedItem = (CfgFromBox.ItemsSource as List<CfgSourceItem>)?.FirstOrDefault(i => i.Snapshot == s.Name);
-        CfgCopyGroup.BringIntoView();
+        ShowCfgPanel(CfgCopyPanel);
         Toast(Loc.F("Copying snapshot \"{0}\": tick the accounts under To, then Copy.", s.Name), true);
     }
 
@@ -637,8 +759,8 @@ public partial class MainWindow
         var b = CfgCmpB.SelectedItem as CfgSourceItem;
         var sa = CfgRead(a);
         var sb = CfgRead(b);
-        CfgCmpImgA.Source = CrosshairImage(Cs2Config.ReadCrosshair(sa), 32);
-        CfgCmpImgB.Source = CrosshairImage(Cs2Config.ReadCrosshair(sb), 32);
+        CfgCmpImgA.Source = CrosshairImage(Cs2Config.ReadCrosshair(sa), 36);   // 36 px boxes, as in the list (App v4)
+        CfgCmpImgB.Source = CrosshairImage(Cs2Config.ReadCrosshair(sb), 36);
         string None(CfgSourceItem it) => it?.SteamId is string id && Cfg.IsLinked(id) ? Loc.T("CS2 folder is a link") : Loc.T("No CS2 config");
         CfgCmpXhA.Text = sa == null ? "" : sa.Empty ? None(a) : Cs2Config.CrosshairSummary(sa) ?? Loc.T("Default crosshair");
         CfgCmpXhB.Text = sb == null ? "" : sb.Empty ? None(b) : Cs2Config.CrosshairSummary(sb) ?? Loc.T("Default crosshair");
@@ -665,7 +787,7 @@ public partial class MainWindow
         catch (Exception ex) { CfgDiffCount.Text = Loc.T("Couldn't compare: ") + Cs2ConfigStore.WhyText(ex); CfgDiffList.ItemsSource = null; }
     }
 
-    /// <summary>The crosshair as CS2 draws it at 1080p, on a <paramref name="box"/> px square (26 in the lists, 32 in Compare).</summary>
+    /// <summary>The crosshair as CS2 draws it at 1080p, on a <paramref name="box"/> px square (26, in the lists and in Compare).</summary>
     static ImageSource CrosshairImage(Crosshair c, double box)
     {
         if (c == null) return null;
@@ -756,7 +878,13 @@ public sealed class CfgAccountRow : Observable
     public string CrosshairText { get; init; }
     public string ChangedText { get; init; }
     public ImageSource CrosshairImage { get; init; }
+    /// <summary>The same crosshair drawn for the 20 px boxes of Copy config… > To.</summary>
+    public ImageSource CrosshairSmall { get; init; }
     public bool HasCrosshair => CrosshairImage != null;
+    /// <summary>The Sync status column (App v4, <see cref="MainWindow.CfgStatus"/>): the line and its mark's colour (null: no mark).</summary>
+    public string StatusText { get; init; }
+    public Brush StatusBrush { get; init; }
+    public bool HasStatusMark => StatusBrush != null;
     /// <summary>Accounts with the same key share a crosshair (or have no config): the list folds them into one line.</summary>
     public string GroupKey { get; init; }
     public const string NoConfig = "\u0000none";

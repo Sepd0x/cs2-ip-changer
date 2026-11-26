@@ -44,8 +44,11 @@ static class Ronda2Tests
         check("Ronda 2: a lista junta as escondidas só com Show hidden", acc.Contains("IEnumerable<AccountItem> list = _showHidden ? _accounts.Concat(_accHiddenItems) : _accounts;"), "");
         check("Ronda 2: uma escondida à vista não aparece In rotation", !hiddenItems[0].InRotation && hiddenItems[0].QuickTip.StartsWith("Hidden:") && items[0].InRotation, "");
         check("Ronda 2: na largura mínima os filtros de Accounts passam a duas linhas (o Refresh e o Show hidden ficavam fora)",
-            Src("MainWindow.xaml").Contains("<WrapPanel Grid.Column=\"1\" Orientation=\"Horizontal\" Margin=\"12,0,0,0\" VerticalAlignment=\"Top\">\n                                        <RadioButton x:Name=\"FAll\"")
-            && Src("MainWindow.xaml").Contains("<TextBlock x:Name=\"AccCount\" Foreground=\"{StaticResource Faint}\" VerticalAlignment=\"Center\" Margin=\"12,0,12,0\"/>\n                                    </WrapPanel>"), "");
+            // 26 nov. (GUI Dial): Refresh e Show hidden encostados à direita da DockPanel, os filtros numa WrapPanel na cápsula, que é o
+            // último filho e fica com o resto; o "8 of 8" passou para debaixo do título
+            System.Text.RegularExpressions.Regex.IsMatch(Src("MainWindow.xaml"),
+                @"<DockPanel Grid\.Row=""1""[^>]*LastChildFill=""True"">[\s\S]*?<StackPanel DockPanel\.Dock=""Right""[\s\S]*?x:Name=""AccRefreshBtn""[\s\S]*?x:Name=""AccUnhideBtn""[\s\S]*?</StackPanel>\s*<Border[^>]*>\s*<WrapPanel Orientation=""Horizontal"">\s*<RadioButton x:Name=""FAll""")
+            && Src("MainWindow.xaml").Contains("<TextBlock x:Name=\"AccCount\"/>"), "");
         check("Ronda 2: as escondidas à vista não contam no \"7 of 7\"", acc.Contains("Loc.F(\"{0} of {1}\", _accShown.Count(a => !a.Meta.Hidden), _accounts.Count)"), "");
         var xaml = Src("MainWindow.xaml");
         check("Ronda 2: o menu e o cartão seguem a conta escondida", xaml.Contains("Header=\"{Binding HideMenuText}\"") && xaml.Contains("Opacity=\"{Binding ListOpacity}\""), "");

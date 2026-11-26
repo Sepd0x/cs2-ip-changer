@@ -31,7 +31,7 @@ static class Beta11Tests
 
         // ---------------- c) Toda a pergunta tem saída
         var xaml = Src("MainWindow.xaml");
-        check("Pergunta: não tapa a barra de cima (o Cancel)", xaml.Contains("<Grid x:Name=\"Dialog\" Grid.Row=\"1\" Margin=\"0,44,0,0\""), "");
+        check("Pergunta: não tapa a barra de cima (o Cancel)", xaml.Contains("<Grid x:Name=\"Dialog\" Grid.Row=\"1\" Margin=\"0,40,0,0\""), "");   // 26 nov.: a barra do topo do GUI Dial tem 40 px
         check("Pergunta: tem um X que fecha sem escolher", xaml.Contains("x:Name=\"DialogClose\"") && Src("Views", "MainWindow.Feedback.cs").Contains("void DialogClose_Click"), "");
         check("Pergunta: um clique fora da caixa também fecha", xaml.Contains("MouseLeftButtonDown=\"DialogBackdrop_MouseDown\""), "");
         check("Servidor cheio: fechar sem escolher não espera nem entra", Src("Views", "MainWindow.Servers.cs").Contains("if (!_dialogCancelClicked) return false;"), "");

@@ -192,7 +192,42 @@ public partial class MainWindow
     void SwitchSteps_Click(object sender, RoutedEventArgs e)
     {
         NavSettings.IsChecked = true;
-        Dispatcher.BeginInvoke(() => SwitchGroup.BringIntoView(), DispatcherPriority.Loaded);
+        Dispatcher.BeginInvoke(() => SettingsGo(SetGroups.Children.IndexOf(SwitchGroup)), DispatcherPriority.Loaded);
+    }
+
+    // ------------------------------------------------------------ Settings' list of groups (26 Nov, App v3): a click scrolls to the group,
+    // the scroll picks the group in the list. The list and the groups are in the same order (SetNav, SetGroups).
+
+    double? _setNavTarget;
+
+    void PageSettings_Loaded(object sender, RoutedEventArgs e) =>
+        SetCount.Text = Loc.F("{0} groups", SetGroups.Children.OfType<HeaderedContentControl>().Count());
+
+    void SetNav_Click(object sender, RoutedEventArgs e) => SettingsGo(SetNav.Children.IndexOf((UIElement)sender));
+
+    /// <summary>Where group <paramref name="i"/> starts in the scroll, 16 px above its name (the first group is at 0).</summary>
+    double SettingsGroupTop(int i) =>
+        Math.Max(0, ((FrameworkElement)SetGroups.Children[i]).TranslatePoint(new Point(0, 0), SetContent).Y - 16);
+
+    void SettingsGo(int i)
+    {
+        if (i < 0 || i >= SetGroups.Children.Count) return;
+        if (i < SetNav.Children.Count) ((RadioButton)SetNav.Children[i]).IsChecked = true;
+        _setNavTarget = SettingsGroupTop(i);
+        SetScroll.ScrollToVerticalOffset(_setNavTarget.Value);
+    }
+
+    void SetScroll_Changed(object sender, ScrollChangedEventArgs e)
+    {
+        if (SetGroups == null || SetNav == null) return;
+        var at = SetScroll.VerticalOffset;
+        // after a click the group clicked stays picked, also when the scroll can't bring it to the top (the last groups)
+        if (_setNavTarget is double t && Math.Abs(at - Math.Min(t, SetScroll.ScrollableHeight)) < 1) return;
+        _setNavTarget = null;
+        var cur = 0;
+        for (var i = 1; i < SetGroups.Children.Count; i++)
+            if (SettingsGroupTop(i) <= at + 40) cur = i;
+        if (cur < SetNav.Children.Count) ((RadioButton)SetNav.Children[cur]).IsChecked = true;
     }
 
     /// <summary>Settings > App > Language: saved as "auto" or a code of Loc.Codes; it applies the next time the window opens.</summary>

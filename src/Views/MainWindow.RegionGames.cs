@@ -53,6 +53,7 @@ public partial class MainWindow
         var cs2 = state == _cs2Regions;
         if (!cs2) RegionsPitch.Visibility = System.Windows.Visibility.Collapsed;
         RegionsWarning.Text = cs2 ? _cs2RegionWarning : Loc.F("Change regions between matches. If {0} keeps using the previous regions, restart it. Leaving too few regions on can make the queue longer.", game.Name);
+        RegionsWarningMore.Visibility = cs2 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;   // CS2's line opens to the rest of it
         RegionsWarningNote.ToolTip = cs2 ? _cs2RegionTip : Loc.F("Only {0}'s access to Valve's relays changes. Valve can still send a match to a blocked region through a relay you allow.", game.Name);
         RegionsAllowAllBtn.ToolTip = cs2 ? _cs2AllowAllTip : Loc.F("Turns every region back on and removes the Firewall rule for {0}.", game.Name);
         RegionsRefreshBtn.ToolTip = cs2 ? _cs2RefreshTip : Loc.T("Reads Valve's relay list again and measures the ping to every region.");
@@ -65,6 +66,9 @@ public partial class MainWindow
             state.View.SortDescriptions.Add(new SortDescription(nameof(RegionItem.City), ListSortDirection.Ascending));
         }
         RegionList.ItemsSource = state.View;
+        RegionDialView.ItemsSource = state.Rows;
+        RegionDialView.SpokeClicked -= RegionDial_SpokeClicked;
+        RegionDialView.SpokeClicked += RegionDial_SpokeClicked;
         RegionsMaxPing.Value = Math.Clamp(state.Settings.RegionsMaxPing, 20, 200);
         RegionsMaxPingText.Text = Loc.F("{0} ms", (int)RegionsMaxPing.Value);
         RefreshRegionPresets();

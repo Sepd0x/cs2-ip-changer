@@ -1,9 +1,9 @@
 /* Cores do src/Theme.xaml pelos tokens (node tools/design-tokens.mjs, docs/DESIGN.md). Nada de cor nova. */
 :root{
   /* tokens: tools/design-tokens.mjs, from src/Theme.xaml. Don't edit here: change Theme.xaml and run it again */
-  --t-bg: #0e0e0e; --t-side: #0b0b0b; --t-edge: #050505; --t-surface: #171717; --t-surface2: #1d1d1d; --t-surface3: #262626;
-  --t-line: #2a2a2a; --t-line-strong: #383838; --t-text: #dddddd; --t-muted: #adadad; --t-faint: #888888; --t-good: #7cc95a;
-  --t-warn: #e3bf4b; --t-bad: #f05a4f; --t-accent: #5ba8f0; --t-accent-light: #7ebcf5; --t-accent-dark: #3e87d0; --t-accent-deep: #2b74c2;
+  --t-bg: #0e0c14; --t-side: #08070c; --t-edge: #050408; --t-surface: #14121b; --t-surface2: #1c1a26; --t-surface3: #262333;
+  --t-line: #1f1d24; --t-line-strong: #302e35; --t-text: #eeecf3; --t-muted: #a8aebb; --t-faint: #8c92a0; --t-good: #46c58a;
+  --t-warn: #f0a948; --t-bad: #ef6461; --t-accent: #5ba8f0; --t-accent-light: #74b6f3; --t-accent-dark: #3e87d0; --t-accent-deep: #2b74c2;
   --t-top1: #3bb4e5; --t-top2: #c64fc6; --t-top3: #d8e03a; --t-accent-rgb: 91,168,240; --t-top: linear-gradient(90deg,#3bb4e5,#c64fc6 50%,#d8e03a);
   /* /tokens */
   --bg:var(--t-bg); --side:var(--t-side); --surface:var(--t-surface); --surface2:var(--t-surface2); --surface3:var(--t-surface3);

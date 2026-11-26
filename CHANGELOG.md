@@ -13,6 +13,15 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Phone setup: no USB data cable? "Use the hotspot" is there from the start. It opens the Wi-Fi list, and when the PC joins a new network it asks whether that is the phone's hotspot. A PC without Wi-Fi is told to use the cable.
 
 ### Changed
+- A new look for the whole app. Every page keeps all its buttons and options, laid out more calmly:
+  - The window has a thin route line at the top, a narrower page list on the left, your protection and the quick button at the top right, and a status line at the bottom (phone, mobile data, hotkey).
+  - Regions: all your regions on one dial. The length of a spoke is its ping, the ring is your ping limit, and the lit arc is where CS2 can play. The mouse on a spoke lights its row in the list, and the other way round. Continents fold, and presets are under the Preset button.
+  - Connection: the IP servers see in large type, and the route from this PC through the phone to the servers under it. Checks, Phone, Previous IPs and How it works are on the right.
+  - Servers is a plain table with one Join per row. Accounts shows 4 cards per row with Open CS2, Start Steam minimized and Offline mode next to Add.
+  - Configs: the list of your accounts is the page. Sync is one line under the title, with its modes in a menu. Copy config… and Compare open at the side.
+  - Profiles: three steps, top to bottom: the look, the accounts, then review and apply.
+  - Log: search and filters at the top, one filled button (Save bug report). Settings: the groups are listed on the left, and a click goes to that group.
+- The website, the guides and the stats dashboard use the app's new colours.
 - Until a phone has been set up on this PC, the app opens on Regions, and the top button on Connection says "Set up the phone" and only opens Phone setup (the notification area menu says and does the same). Before, it said "Turn on protection" and blocked your servers when there was no phone yet.
 - Phone setup: when everything is green and protection is off, it ends with "Turn on protection" next to "Close".
 - Regions: the line under the count says the block stays on after you close the app, and that "Allow all (block off)" removes it.

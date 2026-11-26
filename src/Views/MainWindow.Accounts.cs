@@ -188,11 +188,27 @@ public partial class MainWindow
 
     void AccountsPanel_SizeChanged(object sender, SizeChangedEventArgs e) => FitAccountColumns();
 
+    /// <summary>Cards of at least 236 px with the 12 px gap after each (26 Nov, App v3): four at the usual width, three at 1020.</summary>
     void FitAccountColumns()
     {
         if (_accGrid == null || AccountsPanel.ActualWidth <= 0) return;
-        _accGrid.Columns = Math.Max(1, (int)((AccountsPanel.ActualWidth + 10) / 260));
+        _accGrid.Columns = AccountColumns(AccountsPanel.ActualWidth);
     }
+
+    public static int AccountColumns(double width) => Math.Max(1, (int)(width / 248));
+
+    /// <summary>A pick in Add's arrow (New IP + next account, or what it does) closes the arrow's list.</summary>
+    void AccAddMore_Picked(object sender, RoutedEventArgs e) => AccAddMore.IsChecked = false;
+
+    /// <summary>The title's line ends with the account Steam is on: "8 of 8 · 2 banned · nightfall in use".</summary>
+    void ShowAccInUse()
+    {
+        var name = _accounts.FirstOrDefault(a => a.Active)?.Name;
+        AccInUse.Text = AccInUseText(name, AccCount.Text.Length > 0);
+    }
+
+    public static string AccInUseText(string name, bool after) =>
+        string.IsNullOrEmpty(name) ? "" : (after ? " · " : "") + Loc.F("{0} in use", name);
 
     /// <summary>Rows are offered from 12 accounts, until a view is picked (the button or the offer's own buttons).</summary>
     public static bool SuggestRows(int accounts, string view) => view == null && accounts >= 12;
@@ -314,6 +330,7 @@ public partial class MainWindow
               + "\n" + Loc.F("Pick the steps in Settings > New IP + next account. Shortcut anywhere, even in game: {0}.", _s.HotkeySwitch);
         QuickBtn.ToolTip = tip;
         SideQuick.ToolTip = tip;
+        ShowAccInUse();
 
         ApplyServerBans();   // the ban marks on Servers follow the account in use
     }
@@ -455,6 +472,7 @@ public partial class MainWindow
             {
                 var active = Steam.InUseSteamId();
                 if (active != null) foreach (var x in _accounts) x.Active = x.SteamId == active;
+                ShowAccInUse();
                 ApplyServerBans();
             }));
             return true;

@@ -690,6 +690,10 @@ CulturaTests.Run(Check);
 // 25 nov.: a revisão independente do primeiro arranque e do Phone setup: a página de arranque antes de a janela aparecer, o hotspot
 // guardado com o PC fora dele, a lista de Wi-Fi sem direitos de administrador, os contadores com nome próprio (Correcao25NovTests.cs)
 Correcao25NovTests.Run(Check);
+// 26 nov.: o GUI novo "Dial": o rato num raio do mostrador acende a linha da região (GuiDialTests.cs)
+GuiDialTests.Run(Check);
+// 26 nov.: Configs e Profiles na versão simplificada App v4 (GuiDialV4Tests.cs)
+GuiDialV4Tests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

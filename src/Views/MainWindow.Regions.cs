@@ -226,6 +226,25 @@ public partial class MainWindow
         _ = SetBlocked(set, keepUnknown: true);
     }
 
+    /// <summary>26 Nov: a click on a spoke of the dial does what that region's switch does.</summary>
+    void RegionDial_SpokeClicked(RegionItem r)
+    {
+        var set = _regionGame.Settings.BlockedRegions.ToHashSet();
+        if (r.Allowed) set.Add(r.Id); else set.Remove(r.Id);
+        r.Allowed = !r.Allowed;
+        _ = SetBlocked(set, keepUnknown: true);
+    }
+
+    // The row under the mouse lights its spoke in the dial, and the dial's spoke under the mouse does the same here.
+    void RegionRow_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e) =>
+        RegionDialView.HoverId = ((sender as FrameworkElement)?.DataContext as RegionItem)?.Id;
+
+    void RegionRow_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e) => RegionDialView.HoverId = null;
+
+    // A continent's line under the mouse lights all its spokes.
+    void RegionGroup_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e) =>
+        RegionDialView.HoverId = ((sender as FrameworkElement)?.DataContext as System.Windows.Data.CollectionViewGroup)?.Items.OfType<RegionItem>().FirstOrDefault()?.Continent;
+
     void RegionOnly_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is not RegionItem r || _regionInfos == null) return;
@@ -508,6 +527,12 @@ public partial class MainWindow
         RegionsEmpty.Visibility = _sdr == null || total == 0 ? Visibility.Visible : Visibility.Collapsed;
         RegionsRule.Visibility = RegionsSource.Visibility = _sdr == null ? Visibility.Collapsed : Visibility.Visible;
         RegionsEmptyTitle.Text = Loc.T("No regions yet");
+        // 26 Nov: the list's continents read their line again (RegionGroupNote), and its header counts the regions
+        RegionList.Tag = ++_regionListVersion;
+        RegionsCount.Text = Loc.F("{0} regions by continent", total);
+        // Until the list is here the title's line says why (RegionsStatus); after, the one-line summary takes its place
+        RegionsStatus.Visibility = _sdr == null ? Visibility.Visible : Visibility.Collapsed;
+        RegionsSummary.Visibility = _sdr == null ? Visibility.Collapsed : Visibility.Visible;
         if (_sdr == null)
         {
             var loading = state.Loading || !_regionRulesReady && !_demo;
@@ -532,6 +557,16 @@ public partial class MainWindow
             : fwOff != null ? Loc.F("{0}. The rule is in place, but Windows doesn't enforce it until the Firewall is back on.", fwOff)
             : state.RuleOn ? RuleOnText(state == _cs2Regions ? null : state.Game.Name, on < 3)
             : Loc.T("Putting the Firewall rule in place…"));
+        // The rule's line lives under the warning; when the rule failed or Windows doesn't enforce it, the warning opens by itself
+        if (state.Error != null || fwOff != null) RegionsWarningFold.IsExpanded = true;
+
+        // The summary under the title: "8 allowed · best 24 ms · block on"
+        var best = _regions.Where(r => r.Allowed && r.PingMs >= 0).Select(r => r.PingMs).DefaultIfEmpty(-1).Min();
+        RegionsSummaryCount.Text = Loc.F("{0} allowed", on);
+        RegionsSummaryCount.Foreground = RegionsStatus.Foreground;
+        RegionsSummaryRest.Text = (best >= 0 ? Loc.F(" · best {0} ms", best) : "")
+            + (off == 0 ? Loc.T(" · block off") : state.RuleOn && state.Error == null ? Loc.T(" · block on") : Loc.T(" · block not on"));
+        RegionsSummary.ToolTip = RegionsStatus.Text + "\n" + RegionsRule.Text;
 
         var src = Loc.F("Region list updated {0}", Fmt.Ago(_sdr.FetchedAt));
         if (_sdr.FromCache) src = Loc.F("Offline: using the list saved on {0}", Fmt.When(_sdr.FetchedAt));
@@ -552,8 +587,13 @@ public partial class MainWindow
         var worst = slowest?.PingMs ?? -1;
         RegionsMaxPingHint.Visibility = state == _cs2Regions && off > 0 && worst > 0 ? Visibility.Visible : Visibility.Collapsed;
         if (worst > 0 && state == _cs2Regions)
+        {
+            RegionsMaxPingHead.Text = Loc.F("In CS2, set Max Acceptable Matchmaking Ping to {0} or more.", worst);
             RegionsMaxPingHint.Text = Loc.F("Your slowest allowed region is {0} at {1} ms. In CS2, open Settings > Game and set Max Acceptable Matchmaking Ping to {1} or more, or CS2 won't use {0}.", slowest.City, worst);
+        }
     }
+
+    int _regionListVersion;
 }
 
 /// <summary>The name of a group in the language of the app (the continents of the Regions list: the header binds to the name, which Loc does not reach).</summary>
