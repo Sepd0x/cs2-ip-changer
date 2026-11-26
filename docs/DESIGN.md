@@ -172,7 +172,7 @@ there.
 - A 2 px line across the very top, over the sidebar and the top bar: `TopLine` in full (it was at 42 % until 26 Nov at night), no glow.
 - The sidebar, 168 px, `Side` with a 1 px `Line` on its right: the logo (26 px), then the eight pages by name only (32 px
   rows, 12 px in, rounded 8, 13 px `Muted`; the page picked in `Surface2`, white SemiBold, with the 3 x 14 px `NavMark`
-  before its name; the icon stays in `Tag` for the tray and the stats, it isn't drawn), and at the bottom Update and the
+  first; every row has its icon (`Tag`, Segoe Fluent 16 px, 10 px to the name; the picked page's in `Accent`), drawn again since 26 Nov at night, and the mark keeps its room on every row so icons and names line up), and at the bottom Update and the
   version on one line ("v0.1.0 beta.14").
 - The top bar, 40 px: "Pickroute / Page" in 13 px (`Muted`, the "/" in `Faint`, the page in `Text`), the activity pill
   while something runs, then on the right the state chip (24 px, rounded, a 10 % wash of the state's colour, its

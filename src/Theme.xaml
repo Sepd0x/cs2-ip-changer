@@ -635,8 +635,13 @@
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
                     <Border x:Name="b" Background="Transparent" CornerRadius="8" Padding="12,0,8,0">
+                        <!-- 26 Nov at night (the owner: the old sidebar had icons, the new one looked empty): the page's icon (its Tag,
+                             Segoe Fluent, 16 px) before the name, in the accent on the page picked. The mark keeps its room on every
+                             row so the icons and names line up -->
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border x:Name="bar" Width="3" Height="14" CornerRadius="2" Margin="0,0,9,0" Background="{StaticResource NavMark}" Visibility="Collapsed"/>
+                            <Border x:Name="bar" Width="3" Height="14" CornerRadius="2" Margin="0,0,9,0" Background="{StaticResource NavMark}" Visibility="Hidden"/>
+                            <TextBlock x:Name="icon" Text="{TemplateBinding Tag}" FontFamily="{StaticResource Icons}" FontSize="16" Width="18" Margin="0,0,10,0"
+                                       VerticalAlignment="Center" TextAlignment="Center"/>
                             <ContentPresenter VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
@@ -647,6 +652,7 @@
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="bar" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="icon" Property="Foreground" Value="{StaticResource Accent}"/>
                             <Setter TargetName="b" Property="Background" Value="{StaticResource Surface2}"/>
                             <Setter Property="Foreground" Value="White"/>
                             <Setter Property="FontWeight" Value="SemiBold"/>
