@@ -17,7 +17,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 ### Changed
 - CS2 IP Changer is now Pickroute. Nothing to do: your settings, regions, accounts and updates carry over, and the download is still CS2IPChanger.exe. Settings > App says the old name.
 - A new look for the whole app. Every page keeps all its buttons and options, laid out more calmly:
-  - The window has a thin route line at the top, a narrower page list on the left (each page with its icon, the open one in blue), your protection and the quick button at the top right, and a status line at the bottom (phone, mobile data, hotkey).
+  - The window has a thin route line at the top, a narrower page list on the left (the logo centred on top, each page's icon over its name with the open one in blue, Log and Settings at the foot over the version), your protection and the quick button at the top right, and a status line at the bottom (phone, mobile data, hotkey).
   - Regions: all your regions on one dial. The length of a spoke is its ping, the ring is your ping limit, and the lit arc is where CS2 can play. The mouse on a spoke lights its row in the list, and the other way round. Continents fold, and presets are under the Preset button.
   - Connection: the IP servers see in large type, and the route from this PC through the phone to the servers under it. Checks, Phone, Previous IPs and How it works are on the right.
   - Servers is a plain table with one Join per row. Accounts shows 4 cards per row with Open CS2, Start Steam minimized and Offline mode next to Add.

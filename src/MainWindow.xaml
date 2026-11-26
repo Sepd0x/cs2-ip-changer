@@ -536,16 +536,20 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- ============================================================ Pages (26 Nov: names only, 168 px) -->
+                <!-- ============================================================ Pages (26 Nov: 168 px; that night, the owner: the logo
+                     was weak in its corner, the pages all stuck under it and an empty black below them; he asked for the logo and the
+                     version centred, the icon over the name, the pages under the logo with a clean gap, and Log and Settings at the
+                     foot). The logo 40 px centred on top, 24 px of air, the six pages you use in 66 px rows; at the foot Log and
+                     Settings, then the version centred. At the 660 px minimum height everything still fits -->
                 <Border Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
-                    <Grid Margin="8,12,8,14">
+                    <Grid Margin="0,14,0,14">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <!-- the logo (publish/logo-2026-11-06, its 24 px drawing on a 32 grid), in the corner above Connection -->
-                        <Image x:Name="SideLogo" Width="26" Height="26" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12,0,0,0"
+                        <!-- the logo (publish/logo-2026-11-06, its 24 px drawing on a 32 grid), centred on top -->
+                        <Image x:Name="SideLogo" Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,6,0,0"
                                IsHitTestVisible="False" Focusable="False" AutomationProperties.Name="Pickroute">
                             <Image.Source>
                                 <DrawingImage>
@@ -569,7 +573,7 @@
                                 </DrawingImage>
                             </Image.Source>
                         </Image>
-                        <StackPanel Margin="0,42,0,0">
+                        <StackPanel Grid.Row="1" Margin="0,24,0,0">
                             <RadioButton x:Name="NavNet" Style="{StaticResource Nav}" Tag="&#xEA18;" Content="Connection" IsChecked="True" Checked="Nav_Checked"
                                          ToolTip="The IP servers see, Change IP and the phone"/>
                             <RadioButton x:Name="NavServers" Style="{StaticResource Nav}" Tag="&#xE968;" Content="Servers" Checked="Nav_Checked"
@@ -582,14 +586,15 @@
                                          ToolTip="CS2 config copied between your accounts"/>
                             <RadioButton x:Name="NavProfiles" Style="{StaticResource Nav}" Tag="&#xE77B;" Content="Profiles" Checked="Nav_Checked"
                                          ToolTip="Change the name, picture and details of your Steam accounts, or make them all look the same"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="2">
                             <RadioButton x:Name="NavLog" Style="{StaticResource Nav}" Tag="&#xE81C;" Content="Log" Checked="Nav_Checked"
                                          ToolTip="Everything the app did, with timestamps"/>
-                            <RadioButton x:Name="NavSettings" Style="{StaticResource Nav}" Tag="&#xE713;" Content="Settings" Checked="Nav_Checked"/>
-                        </StackPanel>
-                        <StackPanel Grid.Row="2" Margin="12,0,0,0">
+                            <RadioButton x:Name="NavSettings" Style="{StaticResource Nav}" Tag="&#xE713;" Content="Settings" Checked="Nav_Checked" Margin="0,0,0,10"/>
                             <Button x:Name="UpdateBtn" Style="{StaticResource RowPrimary}" Click="Update_Click" Content="Update" Padding="10,0" Margin="0,0,0,8" FontSize="11"
-                                    HorizontalAlignment="Left" Visibility="Collapsed"/>
-                            <TextBlock x:Name="VersionText" Foreground="{StaticResource Faint}" FontFamily="{StaticResource Mono}" FontSize="11" HorizontalAlignment="Left"/>
+                                    HorizontalAlignment="Center" Visibility="Collapsed"/>
+                            <TextBlock x:Name="VersionText" Foreground="{StaticResource Faint}" FontFamily="{StaticResource Mono}" FontSize="11" HorizontalAlignment="Center"
+                                       TextAlignment="Center"/>
                         </StackPanel>
                     </Grid>
                 </Border>

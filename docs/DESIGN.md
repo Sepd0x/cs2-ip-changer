@@ -170,10 +170,14 @@ there.
 ### The window
 
 - A 2 px line across the very top, over the sidebar and the top bar: `TopLine` in full (it was at 42 % until 26 Nov at night), no glow.
-- The sidebar, 168 px, `Side` with a 1 px `Line` on its right: the logo (26 px), then the eight pages by name only (32 px
-  rows, 12 px in, rounded 8, 13 px `Muted`; the page picked in `Surface2`, white SemiBold, with the 3 x 14 px `NavMark`
-  first; every row has its icon (`Tag`, Segoe Fluent 16 px, 10 px to the name; the picked page's in `Accent`), drawn again since 26 Nov at night, and the mark keeps its room on every row so icons and names line up), and at the bottom Update and the
-  version on one line ("v0.1.0 beta.14").
+- The sidebar, 168 px, `Side` with a 1 px `Line` on its right (26 Nov at night, the owner: the logo was weak in its corner,
+  the pages stuck under it and an empty black below; he asked for the logo and the version centred, the icon over the name, the
+  pages under the logo with a clean gap, and Log and Settings at the foot): the logo centred on top, 40 px; 24 px of air; the six
+  pages you use (Connection to Profiles); at the foot Log and Settings, then Update and the version, centred. Everything fits
+  at the 660 px minimum height. A page: a 66 px row with a 58 px tile 10 px in from each side, rounded 10, holding the icon
+  (`Tag`, Segoe Fluent 22 px) over the name (12 px, 6 px under), `Muted`; under the pointer the tile in `Surface` and the name
+  in `Text`; the page picked has the tile in `Surface2`, the icon in `Accent`, the name white SemiBold and a 3 x 32 px
+  `NavMark` on the sidebar's left edge.
 - The top bar, 40 px: "Pickroute / Page" in 13 px (`Muted`, the "/" in `Faint`, the page in `Text`), the activity pill
   while something runs, then on the right the state chip (24 px, rounded, a 10 % wash of the state's colour, its
   `StatusMark`, the state SemiBold and the IP in mono; a click goes to Connection), the quick switch (`TopPill`, 26 px:
