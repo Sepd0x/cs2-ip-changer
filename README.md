@@ -94,9 +94,11 @@ Click a picture for the details of that page.
   <a href="docs/FEATURES.md#cs2-config-manager"><picture><source srcset="docs/assets/shots/crop-configs.webp" type="image/webp"><img src="docs/assets/shots/crop-configs.png" alt="Configs: the accounts with their crosshairs, the settings of each and when it last changed" width="408"></picture></a>
 </p>
 
-**Regions (CS2 server picker).** Pick your matchmaking regions by their ping. One Windows Firewall rule blocks the others for `cs2.exe`, on the IPs of Valve's relays only. It works with or without the phone ([how to change your region in CS2, and the server pickers compared](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/)).
+**Regions (CS2 server picker).** Pick your matchmaking regions by their ping, on a dial of every region or in the list by continent, for CS2, Dota 2 or Deadlock, and save your picks as presets. One Windows Firewall rule blocks the others for `cs2.exe`, on the IPs of Valve's relays only. It works with or without the phone ([how to change your region in CS2, and the server pickers compared](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/)).
 
 **Configs.** Copy binds, crosshair, game settings and video between your accounts, with backups.
+
+The app is in English, Brazilian Portuguese, Spanish, Russian and Turkish, and follows the language of Windows the first time.
 
 <p align="center">
   <a href="docs/FEATURES.md#accounts"><picture><source media="(max-width: 600px)" srcset="docs/assets/shots/crop-accounts-mobile.webp" type="image/webp"><source srcset="docs/assets/shots/crop-accounts.webp" type="image/webp"><img src="docs/assets/shots/crop-accounts.png" alt="Accounts: Steam accounts with the one in use, a ban on one server, a cooldown and a VAC ban" width="838"></picture></a>
@@ -121,7 +123,7 @@ Click a picture for the details of that page.
 
 1. **Download** [`CS2IPChanger.exe`](https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe) (<!--rel:size-->63.7 MB<!--/rel-->, from the [latest release](https://github.com/Sepd0x/cs2-ip-changer/releases/latest)). Put it in a folder only admins can change, like `C:\Program Files\CS2 IP Changer`. Started from Downloads or the Desktop, it offers to install itself there in one click.
 2. **Connect the phone.** Plug it in by USB, turn on USB tethering (Personal Hotspot on an iPhone) and turn off the phone's Wi-Fi.
-3. **Open the app.** It asks for admin. Open **Phone setup** (under Phone): each step checks itself and turns green, and where the app can do a step it has a button. Paste the servers you play on into **Servers**. Then press **Turn on protection** (Status, on the Connection page). Protection starts off each time the app opens; Settings > Protection can turn it on by itself.
+3. **Open the app.** It asks for admin. Open **Phone setup** (under Phone): each step checks itself and turns green, and where the app can do a step it has a button. Paste the servers you play on into **Servers**. Then press **Turn on protection** on the Connection page. Protection starts off each time the app opens; Settings > Protection can turn it on by itself.
 4. **Check.** Open **Connection** with CS2 and Steam running. Every check should be green, and the IP servers see must not be your home IP.
 
 > [!NOTE]

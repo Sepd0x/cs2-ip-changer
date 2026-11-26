@@ -30,7 +30,7 @@ The short version is in the [README](../README.md#features). This page has the d
 
 **Phone setup.** Under Phone: a list of steps (the phone tool, the USB cable and its driver, USB debugging, allowing this PC, tethering, the phone's Wi-Fi, where other apps go) that check themselves every 2 seconds, green when done and red when next. Where the app can do the step, it has a button.
 
-**Turn on protection.** Protection starts off each time the app opens: CS2 and servers use your home connection, and the app still checks the phone. Turn on protection (in Status or the icon's menu) puts the block, the routes and the CS2 lock in place, and it stays on until you turn it off. Settings > Protection > Turn on protection when the app starts does it by itself. An update made with protection on keeps it on, and so does a start with CS2 still open and the block of the last run in place.
+**Turn on protection.** Protection starts off each time the app opens: CS2 and servers use your home connection, and the app still checks the phone. Turn on protection (on the Connection page or in the icon's menu) puts the block, the routes and the CS2 lock in place, and it stays on until you turn it off. Settings > Protection > Turn on protection when the app starts does it by itself. An update made with protection on keeps it on, and so does a start with CS2 still open and the block of the last run in place.
 
 ## Change IP
 
@@ -78,10 +78,10 @@ The short version is in the [README](../README.md#features). This page has the d
 
 <picture>
   <source srcset="assets/shots/regions.webp" type="image/webp">
-  <img src="assets/shots/regions.png" alt="The Regions page: Valve's matchmaking regions by continent, each with its ping through the phone, and the ones turned off blocked for cs2.exe" width="100%">
+  <img src="assets/shots/regions.png" alt="The Regions page: every matchmaking region on a dial (the length of a spoke is its ping, the ring is your limit) and in a list by continent, and the ones turned off blocked for cs2.exe" width="100%">
 </picture>
 
-Pick where CS2 matchmaking (Premier, Competitive, Casual, Deathmatch, Wingman) can put you. Each region shows its ping through the phone (your home connection in No phone mode), and you turn regions on or off, or use Only this region, Closest 3, your continent only (Europe only, North America only…, from your lowest ping or your home country), Allow all (block off) or Ping under X ms.
+Pick where CS2 matchmaking (Premier, Competitive, Casual, Deathmatch, Wingman) can put you. Every region is on a dial: the length of a spoke is its ping, the ring is your ping limit, and the lit arc is where CS2 can play; the same regions are in a list by continent next to it, and the mouse on one lights the other. Dota 2 and Deadlock have the same page, each game with its own regions, and a preset keeps a selection under a name (it can be applied when CS2 starts). Each region shows its ping through the phone (your home connection in No phone mode), and you turn regions on or off, or use Only this region, Closest 3, your continent only (Europe only, North America only…, from your lowest ping or your home country), Allow all (block off) or Ping under X ms.
 
 Turned-off regions are blocked with one Windows Firewall rule for `cs2.exe` only, on Valve's relay IPs only: Steam, friends and community servers aren't touched. The relay list comes from Valve and is saved for when you're offline, and the rule is rebuilt when Valve changes the list. Changes apply at once; CS2 re-measures the regions on its next start.
 
@@ -112,7 +112,7 @@ Nothing from your configs goes into Save bug report.
 
 <picture>
   <source srcset="assets/shots/profiles.webp" type="image/webp">
-  <img src="assets/shots/profiles.png" alt="The Profiles page: a template on the left, and each account now and after on the right, with its sign-in" width="100%">
+  <img src="assets/shots/profiles.png" alt="The Profiles page in three steps: the look every picked account gets, the accounts and their sign-in, then review and apply" width="100%">
 </picture>
 
 The Profiles page changes how your Steam accounts look to others. Make a template (name, picture, real name, bio, country, privacy, custom URL), pick the accounts, check the preview and click Apply. The accounts are changed one after another with a pause between them, and each result is shown next to the account in plain words.
