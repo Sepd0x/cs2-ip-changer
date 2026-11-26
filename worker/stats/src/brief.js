@@ -50,7 +50,7 @@ export const DEFINITIONS = {
   exe_downloads: 'Difference between two daily GitHub pictures (03:07 UTC) of the .exe download counts of every release: all origins, including the owner, the VirusTotal workflow and scanners. "yesterday" is the picture dated today minus the one dated yesterday (03:07 to 03:07 UTC). Today is not known until tomorrow\'s picture. app_updates_d7 (beta.13): of the same 7 complete days, how many times the app updated itself (upd_done), which is also a download of the exe; only on the days d7 has a picture for, the owner\'s PCs and dev builds left out.',
   site_visits: 'Pages opened on the website (no cookie, no ID, Do Not Track and Global Privacy Control respected): the same person on two pages counts 2.',
   site_download_clicks: 'Clicks on the Download buttons of the website.',
-  activation_7d: 'Closed cohort: new installs whose first day was 7 to 13 days ago (their first 7 days are over), that saw the phone and reached Protected within day 0 to day 6. prev: the cohort 14 to 20 days ago, at the same age. running: the last 7 days so far (still going, never compared).',
+  activation_7d: 'Closed cohort: new installs whose first day was 7 to 13 days ago (their first 7 days are over), that reached the end by either door within day 0 to day 6: the phone with Protected, or picking regions on the Regions page (regions_blocked above 0). prev: the cohort 14 to 20 days ago, at the same age. running: the last 7 days so far (still going, never compared).',
   retention_d1: 'New installs of the last 30 days whose day 1 is over that were open again on day 1 (the day after the first day).',
   retention_d7: 'New installs of the last 30 days whose day 13 is over that were open again on day 7 to 13 (a fixed window, so older cohorts get no extra days).',
   d7: 'The last 7 complete days (to yesterday, today left out); prev7 the 7 days before them. Today is compared with yesterday and last week at the same time.',
@@ -102,7 +102,7 @@ export const DEFINITIONS = {
   laggy_match_rate_d7: 'Matches with lag (jitter or late messages over the limit) as a share of the matches through the phone, last 7 days (since beta.13 a match on the home connection, m_home, is left out).',
   new_errors: 'Errors first seen in the last 7 days (looked up over 90 days), with installs hit and new installs hit on their first day.',
   old_cadence_share_today: 'Share of today\'s reports from builds before beta.10, which send only at start, at a UTC day change and at close: their minutes and matches arrive late or not at all.',
-  link_none_share_7d: 'Share of install-days in the last 7 days whose best link was none.',
+  link_none_share_7d: 'Share of install-days in the last 7 days whose best link was none. Information only: players who only use the Regions page have no phone link, so a high share is normal.',
   automated_7d: 'Install-days left out as automated scans in the last 7 days, and how many of them came from a hosting network.',
   exit_share_7d: 'Share of the last 7 days\' reports sent at close, sleep or sign-out (counter rep_exit, stored from the stats Worker deploy of Nov. 2026 on; 0 before).',
   budget: 'Rows written today against the daily caps (reports 40,000, live 12,000, site 3,000; installs with nothing before today may use at most 30,000 of the reports\' 40,000): at the cap the stats Worker answers 429 until the UTC day changes. Each sender IP also has a per-minute limit (20 app requests, 30 site hits).',
@@ -165,7 +165,9 @@ export function buildBrief({ S, L = null, G = null, GH = { days: [] }, tables = 
   add({ id: 'old_cadence_share_today', status: oc != null && oc > 0.3 ? 'warn' : 'ok', value: oc, num: T.usersOld, den: T.users, reports_old: T.oldReports, reports: T.reports, rule: `warn>0.3 with 5 installs or more today (builds before ${NEW_CADENCE})`, impact: 'minutes and matches undercounted', ...(oc == null ? { reason: 'low_n' } : {}) });
   const ln = sum(d7, 'users'), lnN = sum(d7, 'none');
   const lns = ln >= 5 ? r3(lnN / ln) : null;
-  add({ id: 'link_none_share_7d', status: lns != null && lns >= 0.8 ? 'warn' : 'ok', value: lns, num: lnN, den: ln, rule: 'warn>=0.8 with 5 install-days or more', ...(lns == null ? { reason: 'low_n' } : {}) });
+  // Information, not a warning (Nov. 2026): most players only use the Regions page and never plug the phone in, so a high share of
+  // link none is the normal case. It only says why phone_seen, ping and lag by link have little to show.
+  add({ id: 'link_none_share_7d', status: 'ok', value: lns, num: lnN, den: ln, rule: 'info only, never a warning (players who only use Regions have no phone link)', ...(lns == null ? { reason: 'low_n' } : {}) });
   add({ id: 'automated_7d', status: 'ok', value: sum(d7, 'automated'), datacenter: sum(d7, 'automatedDc') });
   const rep7 = sum(d7, 'reports');
   add({ id: 'exit_share_7d', status: 'ok', value: rep7 ? r3(sum(d7, 'exits') / rep7) : null, num: sum(d7, 'exits'), den: rep7, ...(rep7 ? {} : { reason: 'no_source_rows' }) });
@@ -194,9 +196,17 @@ export function buildBrief({ S, L = null, G = null, GH = { days: [] }, tables = 
   const c7 = cohIn(run7, today), cC = cohIn(fromC, toC), cCP = cohIn(fromCP, toCP), c30 = cohIn(addD(today, -29), today);
   const stepsOf = (list) => ACT_STEPS.map((_, k) => list.reduce((s, c) => s + c.steps[k], 0));
   const s7 = stepsOf(c7), sC = stepsOf(cC), sCP = stepsOf(cCP);
-  const act = { value: sC[0] ? r3(sC[2] / sC[0]) : null, num: sC[2], den: sC[0], window: [fromC, toC], ci95: sC[0] && sC[0] < 30 ? wilson(sC[2], sC[0]) : null, low_n: sC[0] < 30,
-    prev: { value: sCP[0] ? r3(sCP[2] / sCP[0]) : null, num: sCP[2], den: sCP[0], window: [fromCP, toCP] }, low_n_prev: sCP[0] < 30,
-    running: { value: s7[0] ? r3(s7[2] / s7[0]) : null, num: s7[2], den: s7[0], window: [run7, today] }, ...(sC[0] ? {} : { reason: 'no_source_rows' }) };
+  // Two doors (Nov. 2026): an install is activated when it reached Protected by the phone or picked regions. Cohort rows saved
+  // before the regions door have no such fields: they fall back to the phone's Protected step.
+  const door = (list, k, alt) => list.reduce((s, c) => s + (c[k] != null ? c[k] : alt(c)), 0);
+  const actOf = (list, st) => door(list, 'activated', (c) => c.steps[2]) || (list.some((c) => c.activated != null) ? 0 : st[2]);
+  const aC = actOf(cC, sC), aCP = actOf(cCP, sCP), a7 = actOf(c7, s7);
+  const act = { value: sC[0] ? r3(aC / sC[0]) : null, num: aC, den: sC[0], window: [fromC, toC], ci95: sC[0] && sC[0] < 30 ? wilson(aC, sC[0]) : null, low_n: sC[0] < 30,
+    prev: { value: sCP[0] ? r3(aCP / sCP[0]) : null, num: aCP, den: sCP[0], window: [fromCP, toCP] }, low_n_prev: sCP[0] < 30,
+    running: { value: s7[0] ? r3(a7 / s7[0]) : null, num: a7, den: s7[0], window: [run7, today] }, ...(sC[0] ? {} : { reason: 'no_source_rows' }) };
+  // The Regions door and the matches played by any door, per window (installs, not matches)
+  const doorOf = (list) => ({ regions: door(list, 'regions', () => 0), regions_match: door(list, 'regions_match', () => 0), played: door(list, 'played', (c) => c.steps[3]), activated: door(list, 'activated', (c) => c.steps[2]) });
+  const dC = doorOf(cC), dCP = doorOf(cCP), d7r = doorOf(c7);
   const retOf = (k) => { const l = c30.filter((c) => c[k]); const den = l.reduce((s, c) => s + c[k].n, 0), num = l.reduce((s, c) => s + c[k].back, 0);
     return { value: den ? r3(num / den) : null, num, den, mature_only: true, cohort_window_days: 30, low_n: den < 30, ...(den ? {} : { reason: 'not_mature' }) }; };
   const ses7 = sum(d7, 'sessions'), cr7 = sum(d7, 'crashes');
@@ -248,7 +258,13 @@ export function buildBrief({ S, L = null, G = null, GH = { days: [] }, tables = 
       { id: 'exe_downloads', n: kpis.exe_downloads.d7, note: 'all origins', ...(kpis.exe_downloads.d7 == null ? { reason: 'no_source_rows' } : {}) }], window: [from7, to7] },
     activation: { basis: 'closed cohort: installs whose first day was 7 to 13 days ago (their 7 days are over), each step within their first 7 days and inside the step before; prev_steps the cohort 14 to 20 days ago; running_steps the last 7 days, still going',
       window: [fromC, toC], steps: actSteps, prev_steps: ACT_STEPS.map((id, k) => ({ id, n: sCP[k] })), running_steps: stepRows(s7),
-      ip_changed: { n: cC.reduce((s, c) => s + c.ip_changed, 0), of: sC[1] }, biggest_drop: biggest },
+      ip_changed: { n: cC.reduce((s, c) => s + c.ip_changed, 0), of: sC[1] }, biggest_drop: biggest,
+      // The other door and the end by either door, installs of each window (closed, the one before, running)
+      regions: { n: dC.regions, match: dC.regions_match, of_first: sC[0] ? r3(dC.regions / sC[0]) : null, prev_n: dCP.regions, running_n: d7r.regions, running_match: d7r.regions_match },
+      played: { n: dC.played, of_first: sC[0] ? r3(dC.played / sC[0]) : null, prev_n: dCP.played, running_n: d7r.played },
+      activated: { n: dC.activated, of_first: sC[0] ? r3(dC.activated / sC[0]) : null, prev_n: dCP.activated, running_n: d7r.activated } },
+    // The first start's question and the door picked, among the new installs of the view (null until an install sends them)
+    doors: { basis: 'new installs of the period (not the closed cohort); the first start asks which door, each count is installs; measured is false until an install sends it', measured: !!(S.stuck && S.stuck.doors), ...{ shown: 0, regions: 0, phone: 0, tour: 0, later: 0 }, ...((S.stuck && S.stuck.doors) || {}) },
   };
 
   // ---------------- stuck
@@ -375,8 +391,8 @@ export function rules(b, { releases = [], now = Date.now(), byRelease = {} } = {
     message: `Reads cut (oldest days dropped): ${c.value.join(', ')}.`, text_pt: `Leituras cortadas (os dias mais antigos ficaram de fora): ${c.value.join(', ')}.` }); });
   rule(() => { const c = H.old_cadence_share_today; if (c.status === 'warn') A({ id: 'old_cadence', kind: 'data', severity: 'warn', metric: 'old_cadence_share_today', rule: '> 30% of today\'s installs on builds before beta.10 (5 installs or more)', observed: c.value, expected: 0.3, base: c.den, page: '#sistema',
     message: `${pct(c.value)} of today's installs run builds before beta.10 (${c.num} of ${c.den}): their minutes and matches arrive late or not at all.`, text_pt: `${pct(c.value)} das instalações de hoje estão em versões antes da beta.10 (${c.num} de ${c.den}): minutos e partidas chegam tarde ou não chegam.` }); });
-  rule(() => { const c = H.link_none_share_7d; if (c.status === 'warn') A({ id: 'link_none', kind: 'data', severity: 'warn', metric: 'link_none_share_7d', rule: '>= 80% link none over 7 days (5 install-days or more)', observed: c.value, expected: 0.8, base: c.den, page: '#sistema',
-    message: `${pct(c.value)} of install-days in 7 days have the link none (${c.num} of ${c.den}): phone_seen, ping and lag by link stay empty.`, text_pt: `${pct(c.value)} das instalações-dia em 7 dias chegam com a ligação none (${c.num} de ${c.den}): telemóvel visto, ping e lag por ligação ficam vazios.`,
+  rule(() => { const c = H.link_none_share_7d; if (c.value != null && c.value >= 0.8) A({ id: 'link_none', kind: 'product', severity: 'info', metric: 'link_none_share_7d', rule: '>= 80% link none over 7 days (5 install-days or more); information only', observed: c.value, expected: 0.8, base: c.den, page: '#sistema',
+    message: `${pct(c.value)} of install-days in 7 days have the link none (${c.num} of ${c.den}): normal for players who only use Regions; phone_seen, ping and lag by link stay empty.`, text_pt: `${pct(c.value)} das instalações-dia em 7 dias chegam sem telemóvel (${c.num} de ${c.den}): é o normal para quem só usa as regiões; telemóvel visto, ping e lag por ligação ficam vazios.`,
     action: 'Check the phone is connected on those PCs; if it is, the app reports the link wrong (beta.9 sent it before the phone was up).', action_pt: 'Vê se o telemóvel está ligado nesses PCs; se está, a app manda mal a ligação (a beta.9 mandava-a antes de o telemóvel estar pronto).' }); });
   // product
   rule(() => { for (const e of Q.new_errors) if (e.installs_d7 >= 3 || e.new_installs_day1 >= 1) A({ id: `new_error:${e.type}@${e.at}`, kind: 'product', severity: e.installs_d7 >= 3 ? 'high' : 'medium', metric: 'errors', rule: 'first seen within 7 days AND (3 installs or more, or any new install on its first day)', observed: e.times_d7, expected: 0, base: e.installs_d7, page: '#qualidade',

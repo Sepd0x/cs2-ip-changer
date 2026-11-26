@@ -174,7 +174,7 @@ function renderJourney() {
   $('#journey').innerHTML = `<h2>Depois de instalar</h2><p class="lead">${esc(j.text)}</p>
     <ol class="steps">${j.steps.map((s) => `<li><div class="st-top"><span class="st-l">${esc(s.label)}</span><span class="st-v"><b>${num(s.n)}</b> de ${num(j.base)}${j.base >= 10 ? ` <span class="st-p">${Math.round(100 * s.share)}%</span>` : ''}</span></div>
       <span class="st-t"><i style="width:${(100 * s.share).toFixed(1)}%"></i></span></li>`).join('')}</ol>
-    ${j.note ? `<p class="note">${esc(j.note)}</p>` : ''}`;
+    ${j.note ? `<p class="note">${esc(j.note)}</p>` : ''}${j.doors ? `<p class="note">${esc(j.doors)}</p>` : ''}`;
 }
 function renderEmpty() {
   $('#welcome').innerHTML = `<h2>Ainda não há números</h2><p>Quando alguém instalar e abrir a app, aparecem aqui:</p>

@@ -820,12 +820,18 @@ function v4Blocks({ now, today, since, prevSince, okAll, inWin, seen, errors, er
     // Protected needs a working phone connection (the egress), even when the link is reported as another adapter (critic)
     const phone = lk >= 2 || prot;
     const match = sum('m_valve') + sum('m_comm') > 0;
+    // The second door (Nov. 2026): the Regions page. regions_blocked is the size of the blocked list (a band, the highest of the day),
+    // so more than 0 on any of the first 7 days means the install picked regions. Most players only use this door.
+    const region = win.some((i) => (i.c.regions_blocked || 0) > 0);
     const ds = seen.get(id) || list.map((i) => i.day);
     const pressed = new Set(win.flatMap((i) => Object.keys(i.k).filter((n) => n.startsWith('Setup_')).map((n) => n.slice(6))));
     members.push({
-      d0, phone, prot, match,
+      d0, phone, prot, match, region,
+      // Reached the end by either door: the phone with Protected, or regions picked
+      activated: (phone && prot) || region,
       ipNew: sum('ip_changed') > 0, ipSame: sum('ip_same') + sum('ip_no_network') > 0,
-      bucket: !phone ? 0 : !prot ? 1 : !match ? 2 : 3,
+      // Someone who picked regions is not stuck before the phone: their last step is a match or the lack of one
+      bucket: (phone && prot) || region ? (match ? 3 : 2) : !phone ? 0 : 1,
       mature: end < today,
       d1: addD(d0, 1) < today ? ds.includes(addD(d0, 1)) : null,
       // D7: open again on day 7 to 13 (a fixed window, so an older cohort gets no extra days to come back); only when day 13 is over
@@ -833,6 +839,8 @@ function v4Blocks({ now, today, since, prevSince, okAll, inWin, seen, errors, er
       ret: RET_WIN.map(([a, b]) => (addD(d0, b) < today ? ds.some((x) => x >= addD(d0, a) && x <= addD(d0, b)) : null)),
       seg: { link: d0i.link, country: d0i.country, version: d0i.app, mode: d0i.mode },
       open: names('phone_setup_'), left: names('phone_left_'), pressed,
+      // The first start's question (tour_door_shown) and the door picked (tour_door_regions, _phone, _tour, _later)
+      doorShown: sum('tour_door_shown') > 0, doors: new Set([...names('tour_door_')].filter((x) => x !== 'shown')),
       tour: sum('tour_shown') > 0, tourDone: sum('tour_done') > 0, tourSetup: sum('tour_setup') > 0, tourSkip: names('tour_skip_'),
       adbOk: sum('adb_ok') > 0, adbFail: sum('adb_fail') > 0 && !(sum('adb_ok') > 0), pitch: sum('pitch_shown') > 0, pitchSetup: win.some((i) => i.k.RegionsPitchSetup_Click),
       help: win.some((i) => i.k.PhoneHelp_Click), cs2: sum('cs2_start') > 0, joined: sum('join') > 0,   // beta.13: CS2 joined a server
@@ -855,6 +863,10 @@ function v4Blocks({ now, today, since, prevSince, okAll, inWin, seen, errors, er
       n, steps,
       // Reached in any order (Protected without a report with the link, a match without Protected): only beside the steps
       any: { protected: ms.filter((m) => m.prot).length, first_match: ms.filter((m) => m.match).length },
+      // The two doors side by side: the phone's own steps are above; this is the Regions door, the installs that played a match
+      // by any door, and those that reached the end by either door (what the activation KPI counts)
+      regions: { n: ms.filter((m) => m.region).length, match: ms.filter((m) => m.region && m.match).length },
+      played: ms.filter((m) => m.match).length, activated: ms.filter((m) => m.activated).length,
       ip_changed: { n: ms.filter((m) => m.phone && m.ipNew).length, of: c[1], same_only: ms.filter((m) => m.phone && !m.ipNew && m.ipSame).length },
       d1: { n: d1.length, back: d1.filter((m) => m.d1).length }, d7: { n: d7.length, back: d7.filter((m) => m.d7).length },
       buckets: STUCK.map((_, b) => ms.filter((m) => m.bucket === b).length),
@@ -869,7 +881,7 @@ function v4Blocks({ now, today, since, prevSince, okAll, inWin, seen, errors, er
     // The Phone setup step at open of the installs that never got the phone up, per day (the brief's top step)
     const setup = {};
     for (const m of byD0[d0]) if (m.bucket === 0) for (const s of m.open) setup[s] = (setup[s] || 0) + 1;
-    return { day: d0, n: a.n, steps: a.steps.map((s) => s.n), ip_changed: a.ip_changed.n, d1: a.d1.n ? a.d1 : null, d7: a.d7.n ? a.d7 : null, buckets: a.buckets, immature: a.immature, setup };
+    return { day: d0, n: a.n, steps: a.steps.map((s) => s.n), ip_changed: a.ip_changed.n, regions: a.regions.n, regions_match: a.regions.match, played: a.played, activated: a.activated, d1: a.d1.n ? a.d1 : null, d7: a.d7.n ? a.d7 : null, buckets: a.buckets, immature: a.immature, setup };
   });
   const segOf = (k) => {
     const m = {};
@@ -878,7 +890,7 @@ function v4Blocks({ now, today, since, prevSince, okAll, inWin, seen, errors, er
   };
   const A = agg(cur), P = agg(prv);
   const activation = {
-    basis: 'installs whose first_start day is in the period; each step within its first 7 days (day 0 to day 6), inside the step before',
+    basis: 'installs whose first_start day is in the period; each step within its first 7 days (day 0 to day 6), inside the step before; regions is the other door (regions blocked), activated is either door',
     window_days: ACT_DAYS, ...A, prev: P, cohorts,
     segments: { link: segOf('link'), country: segOf('country'), version: segOf('version'), mode: segOf('mode') },
   };
@@ -910,6 +922,9 @@ function v4Blocks({ now, today, since, prevSince, okAll, inWin, seen, errors, er
     n: cur.length, prev_n: prv.length,
     buckets: STUCK.map((id, b) => ({ id, n: A.buckets[b], share: cur.length ? A.buckets[b] / cur.length : null, prev: P.buckets[b], prev_share: prv.length ? P.buckets[b] / prv.length : null })),
     setup, never_opened: never.filter((m) => !m.open.size && !m.help).length, left_measured: leftMeasured,
+    // The first start's question and the door each one picked, among the new installs (null until one install sends them)
+    doors: cur.some((m) => m.doorShown || m.doors.size) ? { shown: cur.filter((m) => m.doorShown).length, regions: cur.filter((m) => m.doors.has('regions')).length,
+      phone: cur.filter((m) => m.doors.has('phone')).length, tour: cur.filter((m) => m.doors.has('tour')).length, later: cur.filter((m) => m.doors.has('later')).length } : null,
     // beta.13: the first-run tour and the Regions note, among the new installs (null before any install sent them)
     onboarding: cur.some((m) => m.tour || m.pitch || m.adbOk || m.adbFail) ? {
       tour: cur.filter((m) => m.tour).length, tour_done: cur.filter((m) => m.tourDone).length, tour_setup: cur.filter((m) => m.tourSetup).length,
