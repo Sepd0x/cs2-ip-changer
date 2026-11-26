@@ -4,6 +4,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-26
+
 ### Added
 - The app and the website are now also in Turkish. The app follows the language of Windows the first time; change it in Settings > App > Language. The website is under /tr/.
 - Regions: choose CS2, Dota 2 or Deadlock. Each game keeps its own regions and presets.
@@ -27,8 +29,6 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Phone setup: when everything is green and protection is off, it ends with "Turn on protection" next to "Close".
 - Regions: the line under the count says the block stays on after you close the app, and that "Allow all (block off)" removes it.
 - Website: the 3D scenes ask less of a phone. Each frame is drawn in about a quarter fewer steps on the home page and over a third fewer on the region guides, and the picture is the same.
-
-### Changed
 - Usage stats are no longer required. They are on by default, and the notice at the first start has Accept and Turn off (Turn off opens the app and sends nothing). Settings > Send usage stats turns them off or on again any time, with the same random ID. Anyone who accepted in a beta sees the notice once after updating, with Accept and Turn off, and keeps what they choose. The app, the README, the privacy page and the website no longer say they are required.
 
 ### Fixed
