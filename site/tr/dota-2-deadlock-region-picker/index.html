@@ -412,7 +412,7 @@ h3{font:500 1.12rem/1.35 var(--disp);letter-spacing:-.01em;margin:0 0 .35rem}
 .win[data-pg=connection] .ring,.win:not([data-pg]) .ring{--rx:15%;--ry:26.0%;--rw:25.2%;--rh:5.4%}
 .win[data-pg=servers] .ring{--rx:63.3%;--ry:30.3%;--rw:8.3%;--rh:2.6%}
 .win[data-pg=accounts] .ring{--rx:16.5%;--ry:22.2%;--rw:13.6%;--rh:5.2%}
-.win[data-pg=regions] .ring{--rx:15.2%;--ry:10.6%;--rw:15.6%;--rh:2.4%}
+.win[data-pg=regions] .ring{--rx:15.2%;--ry:10.8%;--rw:15.6%;--rh:2.2%}
 .win[data-pg=configs] .ring{--rx:89.8%;--ry:16.0%;--rw:8.3%;--rh:3.8%}
 .win[data-pg=profiles] .ring{--rx:15.2%;--ry:15.6%;--rw:9.1%;--rh:3.6%}
 .p-bar{left:65.85%;top:1.6%;width:7.4%;height:2.2%;background:#111e19;font:400 .92cqw/1 "Cascadia Mono","Cascadia Code",Consolas,var(--mono);color:#cfcfcf}
@@ -548,17 +548,18 @@ a.zoom{display:block;cursor:zoom-in}
      never half a sentence; captions are in the text face, under their picture, never in a box */
   .shelf{display:flex!important;align-items:stretch;gap:.75rem;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;margin:2rem calc(-1*var(--gutter)) 0!important;padding:0 1.75rem 0 var(--gutter);border:0!important;scroll-padding-inline:var(--gutter);scrollbar-width:none}
   .shelf::-webkit-scrollbar{display:none}
-  .shelf>*{flex:0 0 calc(100% + var(--gutter) - 1.75rem);min-width:0;scroll-snap-align:start;scroll-snap-stop:always;margin:0!important}
+  .shelf>*{flex:0 0 100%;min-width:0;scroll-snap-align:start;scroll-snap-stop:always;margin:0!important}
   .shelf>.rv{opacity:1;transform:none;transition:none}
   .shelf>li,.shelf>div{display:flex!important;flex-direction:column;gap:1rem;padding:1.25rem!important;border:1px solid var(--line)!important;border-radius:16px;background:var(--t-surface)}
   .shelf-dots{display:flex;justify-content:center;gap:.5rem;margin:1rem 0 0}
   .shelf-dots i{width:.4rem;height:.4rem;border-radius:.2rem;background:var(--line2);transition:background-color .2s,width .2s}
   .shelf-dots i.on{width:1.25rem;background:var(--t-accent)}
   /* Is it safe?: the reading, then its picture, then the words, each on the same line in all four cards */
-  #safety .instr>li{display:grid!important;grid-template-rows:10.75rem auto;align-content:start;row-gap:1.25rem}
+  #safety .instr>li{display:grid!important;grid-template-columns:minmax(0,1fr);grid-template-rows:3.9rem 8.5rem auto;align-content:start;row-gap:1rem}
+  #safety .instr>li>*{grid-column:1}
   #safety .instr>li>.rd{grid-row:1;align-self:start}
-  #safety .instr>li>div{grid-row:1;align-self:end}
-  #safety .instr>li>p{grid-row:2}
+  #safety .instr>li>div{grid-row:2;align-self:center}
+  #safety .instr>li>p{grid-row:3}
   #safety .instr .rd{font-size:2.25rem;line-height:1;white-space:normal}
   #safety .instr .rd.sm{font-size:1.6rem;letter-spacing:-.04em}
   #safety .instr .rd small{margin-top:.5rem;font:400 .8125rem/1.3 var(--mono);letter-spacing:0;color:var(--ink3)}
