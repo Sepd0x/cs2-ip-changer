@@ -74,8 +74,8 @@ On an iPhone you get the new IP yourself, with Airplane Mode: only Android lets 
 Click a picture for the details of that page.
 
 <p align="center">
-  <a href="docs/FEATURES.md#protection"><picture><source srcset="docs/assets/shots/crop-protection.webp" type="image/webp"><img src="docs/assets/shots/crop-protection.png" alt="Protection: what goes through the phone, Game only, Whole PC while CS2 is open, Whole PC always, or No phone" width="408"></picture></a>
-  <a href="docs/FEATURES.md#change-ip"><picture><source srcset="docs/assets/shots/crop-change-ip.webp" type="image/webp"><img src="docs/assets/shots/crop-change-ip.png" alt="Change IP: Protected, the IP servers see, your masked home IP, and the Change IP and Change IP and rejoin buttons" width="408"></picture></a>
+  <a href="docs/FEATURES.md#protection"><picture><source srcset="docs/assets/shots/crop-protection.webp" type="image/webp"><img src="docs/assets/shots/crop-protection.png" alt="Protection: Turn off protection, and what goes through the phone: Game only, Whole PC while CS2 is open, or Whole PC always" width="408"></picture></a>
+  <a href="docs/FEATURES.md#change-ip"><picture><source srcset="docs/assets/shots/crop-change-ip.webp" type="image/webp"><img src="docs/assets/shots/crop-change-ip.png" alt="Change IP: Protected, the IP servers see, the route from this PC through the phone to the servers with your home IP hidden, and the Change IP and Change IP and rejoin buttons" width="408"></picture></a>
 </p>
 
 **Protection.** Game only or the whole PC. If the phone drops, a Windows Firewall rule blocks CS2 (the kill switch). Live checks, a leak test, connection quality every 30 seconds, and a No phone mode for days you play without the phone.
@@ -90,7 +90,7 @@ Click a picture for the details of that page.
 
 <p align="center">
   <a href="docs/FEATURES.md#regions"><picture><source srcset="docs/assets/shots/crop-regions.webp" type="image/webp"><img src="docs/assets/shots/crop-regions.png" alt="Regions: the European matchmaking regions, each with its ping through the phone" width="408"></picture></a>
-  <a href="docs/FEATURES.md#cs2-config-manager"><picture><source srcset="docs/assets/shots/crop-configs.webp" type="image/webp"><img src="docs/assets/shots/crop-configs.png" alt="Configs: two accounts compared, with both crosshairs and the settings that differ" width="408"></picture></a>
+  <a href="docs/FEATURES.md#cs2-config-manager"><picture><source srcset="docs/assets/shots/crop-configs.webp" type="image/webp"><img src="docs/assets/shots/crop-configs.png" alt="Configs: the accounts with their crosshairs, the settings of each and when it last changed" width="408"></picture></a>
 </p>
 
 **Regions (CS2 server picker).** Pick your matchmaking regions by their ping. One Windows Firewall rule blocks the others for `cs2.exe`, on the IPs of Valve's relays only. It works with or without the phone ([how to change your region in CS2, and the server pickers compared](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/)).

@@ -30,16 +30,17 @@ SIZE = (1240, 800)
 # The README shows Protection | Change IP and Regions | Configs side by side (the two of a pair keep the same shape,
 # bar included, so they are as tall at the same width) and Servers and Accounts as wide strips.
 CROPS = {
-    "protection": ("connection", (94, 500, 659, 736)),  # What goes through the phone, the four modes (beta.12: stops above the grey line to Settings > Mobile data)
-    "change-ip": ("connection", (94, 44, 659, 280)),  # Status: IP servers see, home IP, Change IP and rejoin    565x236, as protection
-    "servers": ("servers", (108, 186, 1210, 392)),  # an open server: all its players, Staff and Friend flags, the hint under them
-    "accounts": ("accounts", (112, 187, 1202, 381)),  # the first row of cards: in use, a server ban, VAC (beta.12: under Add and log in)
-    "regions": ("regions", (98, 254, 806, 614)),  # Europe with the ping of each region
-    "configs": ("configs", (660, 374, 1227, 657)),  # Compare: both crosshairs and the settings that differ   567x283 + bar, as regions
+    # 26 nov. (the Dial design): the page sits right of a 168 px page list, under a 40 px top bar
+    "protection": ("connection", (180, 404, 800, 742)),  # What goes through the phone under Turn off protection; the capture ends above No phone   620x338, as change-ip
+    "change-ip": ("connection", (180, 114, 800, 452)),  # Protected, IP servers see, the route PC > phone > servers, Change IP and Change IP and rejoin
+    "servers": ("servers", (188, 198, 1206, 421)),  # an open server: all its players, Staff and Friend flags, the hint under them
+    "accounts": ("accounts", (186, 158, 1222, 400)),  # the first row of cards: in use, a ban on one server and a cooldown, VAC
+    "regions": ("regions", (186, 204, 622, 452)),  # Europe with the ping of each region (the dial does not fit at this size)   436x248 + bar, as configs
+    "configs": ("configs", (226, 166, 772, 484)),  # the accounts with their crosshairs and when each changed   546x318 + bar, as regions
     # phone widths (the README swaps them in below 600 px): the wide strips shrink to a third on a 390 px screen, so these
     # keep about as much as the pairs show, at about the same size
-    "servers-mobile": ("servers", (108, 186, 668, 370)),  # the open server, its first two columns of players and the flags
-    "accounts-mobile": ("accounts", (660, 187, 1202, 381)),  # two cards: a ban on one server and a cooldown, VAC
+    "servers-mobile": ("servers", (188, 198, 697, 390)),  # the open server, its first two columns of players and the flags
+    "accounts-mobile": ("accounts", (702, 158, 1222, 400)),  # two cards: a ban on one server and a cooldown, VAC
 }
 NAMES = {"protection": "Protection", "change-ip": "Change IP", "servers": "Servers", "accounts": "Accounts",
          "regions": "Regions", "configs": "Configs", "servers-mobile": "Servers", "accounts-mobile": "Accounts"}
@@ -48,8 +49,9 @@ NAMES = {"protection": "Protection", "change-ip": "Change IP", "servers": "Serve
 BAR, LINE = 30, 2  # 1x pixels
 FONT = Path("C:/Windows/Fonts/seguisb.ttf")
 
-# the social preview's piece of the Connection page, in pixels of the 1x capture (its border and top line included)
-STATUS = (82, 0, 662, 296)
+# the social preview's piece of the Connection page, in pixels of the 1x capture (its border and top line included;
+# from the page list's edge to just before the protection pill, so the status line loses its full stop)
+STATUS = (169, 0, 744, 296)
 STATUS_OUT = ROOT / "docs" / "assets" / "src" / "social-preview-status.png"
 
 # frame for full screenshots, frame for crops

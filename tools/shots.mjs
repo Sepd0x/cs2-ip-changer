@@ -4,7 +4,8 @@
 //   docs/assets/shots/<page>.png|webp     the framed copies for README.md and docs/FEATURES.md (python tools/readme-shots.py)
 //   worker/stats/dashboard/ui/<page>.png  at 1x, 1240 wide and as tall as the whole page (beta.13: --mapa makes the demo's window
 //                                         tall enough that nothing on the page scrolls, because the app counts a click at its height
-//                                         in the page, scroll included; Accounts with 21 accounts, like a real list): the
+//                                         in the page, scroll included; Accounts with 21 accounts, like a real list; 26 nov.: taller
+//                                         than the screen too, and the run stops when a page still scrolls, cutShot): the
 //                                         dashboard's click map. 1x on purpose: the Worker carries them inside src/assets.js. The
 //                                         button map of each (.json, --mapa) goes to publish/ui-mapa/, to bring
 //                                         worker/stats/dashboard/ui-map.js up to date by hand
@@ -94,6 +95,19 @@ export function manifest(stampRenders = false, socialRendered = false) {
   };
 }
 
+/**
+ * 26 nov.: a dashboard capture that is not the whole page. The demo's --mapa writes <page>.left.txt next to the capture: the pixels
+ * of the page that still scroll after it made the window as tall as the page (0: whole). Until then a window taller than the
+ * screen's MaxWindowTrackSize (1534 px with two monitors) stopped there and Settings and Accounts came out cut, without a word.
+ * Returns why the capture is not whole, or null.
+ */
+export function cutShot(mapDir, name) {
+  const f = join(mapDir, `${name}.left.txt`);
+  if (!existsSync(f)) return `${name}: no ${name}.left.txt (a demo build from before 26 Nov.?)`;
+  const left = Number(readFileSync(f, 'utf8').trim());
+  return Number.isFinite(left) && left <= 0 ? null : `${name}: ${readFileSync(f, 'utf8').trim()} px of the page still scroll, the capture is cut`;
+}
+
 /** The buttons of worker/stats/dashboard/ui-map.js whose box is no longer where the new --mapa capture has it. */
 export function mapDrift(mapDir) {
   const UI = new Function(readFileSync(join(ROOT, 'worker/stats/dashboard/ui-map.js'), 'utf8') + ';return UI;')();
@@ -149,6 +163,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
   for (const [name, page] of Object.entries(PAGES)) {
     // 1x for the dashboard, with --mapa (the button boxes are in 1x pixels, as ui-map.js has them)
     run(EXE, ['--demo', '--shot', join(map, `${name}.png`), page, '--size', size, '--scale', '1', '--mapa', ...(MAP_EXTRA[name] || [])]);
+    const cut = cutShot(map, name);
+    if (cut) { console.error(`The dashboard's capture is not the whole page: ${cut}. Not copied to ${ui}.`); process.exit(1); }
     copyFileSync(join(map, `${name}.png`), join(ui, `${name}.png`));
     // 2x for the site and the README
     if (SITE.includes(name)) run(EXE, ['--demo', '--shot', join(shots, `${name}.png`), page, '--size', size, '--scale', String(SCALE)]);
