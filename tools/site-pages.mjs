@@ -209,7 +209,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
    grow with the type on big screens: the footer is two columns to 900 px (taller from 760, where the brand gets a row) and four after. With the old guesses
    (1250 px for the footer from 760 to 999 px, 120 for the last line everywhere) the page got shorter as the end came on
    screen, and on a tablet held upright or a phone in Desktop site the name at the end jumped */
-.gtext{content-visibility:auto;contain-intrinsic-size:auto 3400px}.gfaq{content-visibility:auto;contain-intrinsic-size:auto 19rem}.gmore{content-visibility:auto;contain-intrinsic-size:auto 45rem}footer .fgrid{content-visibility:auto;contain-intrinsic-size:auto 50.7rem}
+.gtext{content-visibility:auto;contain-intrinsic-size:auto 3400px}.gfaq{content-visibility:auto;contain-intrinsic-size:auto 19rem}.gmore{content-visibility:auto;contain-intrinsic-size:auto 45rem}footer .fgrid{content-visibility:auto;contain-intrinsic-size:auto 22.6rem}
 @media (min-width:600px){.gmore{contain-intrinsic-size:auto 34.5rem}}@media (min-width:760px){.gmore{contain-intrinsic-size:auto 31rem}footer .fgrid{contain-intrinsic-size:auto 68.9rem}}@media (min-width:901px){.gmore{contain-intrinsic-size:auto 19.5rem}footer .fgrid{contain-intrinsic-size:auto 37.8rem}}@media (min-width:1000px){.gtext{contain-intrinsic-size:auto 2100px}.gmore{contain-intrinsic-size:auto 20rem}}.gshot{content-visibility:auto;contain-intrinsic-size:auto 400px}.gtoc-m{content-visibility:auto;contain-intrinsic-size:auto 260px}footer .legal{content-visibility:auto;contain-intrinsic-size:auto 6rem}
 @media (min-width:600px){footer .legal{contain-intrinsic-size:auto 4.6rem}}@media (min-width:820px){footer .legal{contain-intrinsic-size:auto 3.3rem}}@media (min-width:1000px){footer .legal{contain-intrinsic-size:auto 1.3rem}}
 /* a touch screen: the links are 44 px rows, so the guides list and the footer are taller */
@@ -1025,6 +1025,7 @@ ${p.faq?.length ? `    <section class="gfaq" aria-labelledby="faq">
   </div>
 </main>
 ${footer}
+<script src="../assets/js/footer-fold.js" defer></script>
 <script>
 (function(){var b='../assets/js/',l=(document.documentElement.classList.contains('fx')?(matchMedia('(pointer: fine)').matches?['gsap.min.js','ScrollTrigger.min.js','lenis.min.js']:[]):[]).concat(['readout.js']);l.forEach(function(f){var s=document.createElement('script');s.src=b+f;s.async=false;document.body.appendChild(s)});
 /* the world's script on its own, its bytes counted by the loading screen */

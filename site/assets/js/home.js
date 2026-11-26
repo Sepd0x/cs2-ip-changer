@@ -589,3 +589,40 @@
   }
   set(); if (Q.addEventListener) Q.addEventListener('change', set); else if (Q.addListener) Q.addListener(set);
 })();
+
+/* 26 Nov. 2026, direction D (index.html, .shelf, .thumb): on a phone Is it safe?, And the rest, the two reasons of Phone or VPN
+   and Setup's four steps swipe sideways with the top of the next card peeking and a dot per card under them; "Send the link to
+   my PC" waits at the bottom from the app to the guides (not over the story's cards, not next to the final one). No new text:
+   the bar copies the cover's button. Without JS, or wider than 759 px, the page is as before */
+(function () {
+  var d = document, Q = matchMedia('(max-width:759px)');
+  var lists = ['#safety .instr', '.more-kit .kit', '#vpn .vs', '#setup .steps4'].map(function (s) { return d.querySelector(s); }).filter(Boolean);
+  var dots = lists.map(function (el) {
+    var row = d.createElement('div'); row.className = 'shelf-dots'; row.setAttribute('aria-hidden', 'true');
+    el.parentNode.insertBefore(row, el.nextSibling);
+    var paint = function () {
+      var kids = el.children.length;
+      if (row.children.length !== kids) { row.textContent = ''; for (var k = 0; k < kids; k++) row.appendChild(d.createElement('i')); }
+      var step = el.scrollWidth > el.clientWidth ? (el.scrollWidth - el.clientWidth) / Math.max(1, kids - 1) : 1;
+      var at = Math.min(kids - 1, Math.round(el.scrollLeft / step));
+      for (var j = 0; j < kids; j++) row.children[j].classList.toggle('on', j === at);
+    };
+    el.addEventListener('scroll', function () { requestAnimationFrame(paint); }, { passive: true });
+    return paint;
+  });
+  var cover = d.getElementById('send-link'), from = d.getElementById('features'), to = d.querySelector('section.cta [data-share]') || d.querySelector('section.cta');
+  if (cover && from && to) {
+    var bar = d.createElement('div'); bar.className = 'thumb';
+    var b = cover.cloneNode(true); b.removeAttribute('id'); b.removeAttribute('data-share'); bar.appendChild(b);
+    b.addEventListener('click', function () { cover.click(); });
+    d.body.appendChild(bar);
+    var place = function () {
+      var on = Q.matches && from.getBoundingClientRect().top < innerHeight * .5 && to.getBoundingClientRect().top > innerHeight - 8;
+      bar.classList.toggle('on', on); bar.setAttribute('aria-hidden', !on); b.tabIndex = on ? 0 : -1;
+    };
+    addEventListener('scroll', function () { requestAnimationFrame(place); }, { passive: true });
+    addEventListener('resize', place); place();
+  }
+  function set() { lists.forEach(function (el, i) { el.classList.toggle('shelf', Q.matches); if (Q.matches) dots[i](); }); }
+  set(); if (Q.addEventListener) Q.addEventListener('change', set); else if (Q.addListener) Q.addListener(set);
+})();

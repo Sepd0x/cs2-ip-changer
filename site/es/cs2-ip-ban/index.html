@@ -487,6 +487,53 @@ a.zoom{display:block;cursor:zoom-in}
 @media (max-width:440px){.top nav .btn-ghost span{display:none}.top nav .btn-ghost{padding-inline:.75rem}}
 @media (max-width:380px){.top .wrap{gap:.6rem}.top nav{gap:.7rem}.brand{font-size:.94rem}.top nav .btn-ghost{display:none}}
 @media (pointer:coarse){.top .btn-s{min-height:44px}.top .btn-ghost{min-width:44px}.brand{min-height:44px}}
+/* 26 Nov. 2026, direction D: the story stays a scroll with the 3D. On a phone, after it: Is it safe?, And the rest, the two
+   reasons of Phone or VPN and Setup's four steps swipe sideways, each card 82 % wide so the top of the next one peeks, with a
+   dot per card right under them; the two pictures of Phone or VPN sit side by side; the VPN table reads one row at a time,
+   Pickroute's answer first and the VPN's under it, both always there; the footer's lists open in place; the footer's name is
+   centred; and "Send the link to my PC" waits at the bottom, in thumb reach, from the app to the guides (the header's own
+   Send to PC steps aside meanwhile). Reviewed the same night by a designer and a critic (publish/plano-1-0-0/24-site-telemovel.md) */
+.shelf-dots,.thumb{display:none}
+/* the footer's name sits in the middle of its line, at every width (the owner, 26 Nov.: it was left of a line that spans the page) */
+.wordmark svg>use,.wordmark svg>g{transform:translateX(282px)}
+@media (max-width:759px){
+  .shelf{display:flex!important;align-items:flex-start;gap:.75rem;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;margin:0 calc(-1*var(--gutter))!important;padding:1.25rem var(--gutter) 0;border:0!important;scroll-padding-inline:var(--gutter);scrollbar-width:none}
+  .shelf::-webkit-scrollbar{display:none}
+  .shelf>*{flex:0 0 82%;min-width:0;scroll-snap-align:start;margin:0!important}
+  .shelf>.rv{opacity:1;transform:none;transition:none}
+  .shelf>li,.shelf>div{padding:1.1rem 1rem 1.2rem!important;border:1px solid var(--line)!important;border-radius:12px;background:var(--t-surface)}
+  .shelf-dots{display:flex;justify-content:center;gap:.45rem;margin:.75rem 0 2.25rem}
+  .shelf-dots i{width:.45rem;height:.45rem;border-radius:50%;background:var(--ink3);opacity:.55;transition:background-color .2s,width .2s,opacity .2s}
+  .shelf-dots i.on{width:1.2rem;border-radius:.25rem;background:var(--t-accent);opacity:1}
+  #vpn .pair{grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
+  #vpn .pair figcaption{font-size:.78rem}
+  #vpn .tbl thead{display:none}
+  #vpn .tbl tr{display:block;padding-block:1rem;border-bottom:1px solid var(--line)}
+  #vpn .tbl tbody tr:last-child{border-bottom:0}
+  #vpn .tbl th,#vpn .tbl td{display:block;padding:0!important;border:0!important;box-shadow:none!important;background:none}
+  #vpn .tbl tbody th{margin-bottom:.45rem;color:var(--ink3);font:500 .8rem/1.4 var(--sans)}
+  #vpn .tbl td.us{color:var(--ink)}
+  #vpn .tbl td:not(.us){margin-top:.35rem;color:var(--ink3)}
+  #vpn .tbl td[data-label]::before{display:inline;margin-right:.45rem;font:500 .75rem/1 var(--sans);color:var(--ink3)}
+  #vpn .tbl td.us[data-label]::before{color:var(--t-accent)}
+
+  .thumb{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;padding:.6rem var(--gutter) calc(.6rem + env(safe-area-inset-bottom,0px));background:var(--t-bg);border-top:1px solid var(--line);transform:translateY(110%);transition:transform .35s var(--ease-out),visibility 0s .35s;visibility:hidden}
+  .thumb.on{transform:none;visibility:visible;transition:transform .35s var(--ease-out)}
+  .thumb .btn{flex:1}
+  html:has(.thumb.on) .get-top{visibility:hidden}
+  footer nav.fold h3{margin:0}
+  footer nav.fold h3 button{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:56px;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+  footer nav.fold h3 button::after{content:"+";font:400 1.25rem/1 var(--sans);color:var(--ink3);transition:transform .2s}
+  footer nav.fold h3 button[aria-expanded=true]::after{transform:rotate(45deg)}
+  footer nav.fold ul[hidden]{display:none!important}
+  footer .fgrid:has(nav.fold){grid-template-columns:minmax(0,1fr);row-gap:0}
+  footer .fgrid nav.fold{border-top:1px solid var(--line);border-bottom:0;padding:0;margin:0}
+  footer .fgrid nav.fold:last-of-type{border-bottom:1px solid var(--line)}
+  footer .fgrid:has(nav.fold) nav[aria-labelledby=f2]{order:0}
+  footer .fgrid:has(nav.fold) .fbrand{margin-bottom:1.5rem}
+  footer .fstat{justify-self:start;width:max-content}
+}
+@media (max-width:759px) and (prefers-reduced-motion:reduce){html:not(.fx-opt) .thumb{transition:none}}
 /* guides */
 /* a fallback with Funnel Display's width, so the H1 breaks in the same place before the font arrives (no shift) */
 @font-face{font-family:"Funnel Display fb";src:local("Segoe UI Variable Display"),local("Segoe UI"),local("Arial");size-adjust:105.5%}
@@ -581,7 +628,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
    grow with the type on big screens: the footer is two columns to 900 px (taller from 760, where the brand gets a row) and four after. With the old guesses
    (1250 px for the footer from 760 to 999 px, 120 for the last line everywhere) the page got shorter as the end came on
    screen, and on a tablet held upright or a phone in Desktop site the name at the end jumped */
-.gtext{content-visibility:auto;contain-intrinsic-size:auto 3400px}.gfaq{content-visibility:auto;contain-intrinsic-size:auto 19rem}.gmore{content-visibility:auto;contain-intrinsic-size:auto 45rem}footer .fgrid{content-visibility:auto;contain-intrinsic-size:auto 50.7rem}
+.gtext{content-visibility:auto;contain-intrinsic-size:auto 3400px}.gfaq{content-visibility:auto;contain-intrinsic-size:auto 19rem}.gmore{content-visibility:auto;contain-intrinsic-size:auto 45rem}footer .fgrid{content-visibility:auto;contain-intrinsic-size:auto 22.6rem}
 @media (min-width:600px){.gmore{contain-intrinsic-size:auto 34.5rem}}@media (min-width:760px){.gmore{contain-intrinsic-size:auto 31rem}footer .fgrid{contain-intrinsic-size:auto 68.9rem}}@media (min-width:901px){.gmore{contain-intrinsic-size:auto 19.5rem}footer .fgrid{contain-intrinsic-size:auto 37.8rem}}@media (min-width:1000px){.gtext{contain-intrinsic-size:auto 2100px}.gmore{contain-intrinsic-size:auto 20rem}}.gshot{content-visibility:auto;contain-intrinsic-size:auto 400px}.gtoc-m{content-visibility:auto;contain-intrinsic-size:auto 260px}footer .legal{content-visibility:auto;contain-intrinsic-size:auto 6rem}
 @media (min-width:600px){footer .legal{contain-intrinsic-size:auto 4.6rem}}@media (min-width:820px){footer .legal{contain-intrinsic-size:auto 3.3rem}}@media (min-width:1000px){footer .legal{contain-intrinsic-size:auto 1.3rem}}
 /* a touch screen: the links are 44 px rows, so the guides list and the footer are taller */
@@ -847,6 +894,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
   </svg></div>
   <div class="wrap legal"><span>Pickroute por Sepd0x. Sin afiliación con Valve. Counter-Strike y Steam son marcas registradas de Valve Corporation.</span><span>Hecho para servidores de la comunidad.</span><!--i18n:foot--><nav class="lang-foot" aria-label="Idioma"><a href="../../cs2-ip-ban/" hreflang="en" lang="en" data-lang="en">English</a><a href="../../pt-br/cs2-ip-ban/" hreflang="pt-BR" lang="pt-BR" data-lang="pt-br">Português (Brasil)</a><a href="../../es/cs2-ip-ban/" hreflang="es" lang="es" data-lang="es" aria-current="true">Español</a><a href="../../ru/cs2-ip-ban/" hreflang="ru" lang="ru" data-lang="ru">Русский</a><a href="../../tr/cs2-ip-ban/" hreflang="tr" lang="tr" data-lang="tr">Türkçe</a></nav><!--/i18n:foot--></div>
 </footer>
+<script src="../../assets/js/footer-fold.js" defer></script>
 <script>
 (function(){var b='../../assets/js/',l=(document.documentElement.classList.contains('fx')?(matchMedia('(pointer: fine)').matches?['gsap.min.js','ScrollTrigger.min.js','lenis.min.js']:[]):[]).concat(['readout.js']);l.forEach(function(f){var s=document.createElement('script');s.src=b+f;s.async=false;document.body.appendChild(s)});
 /* the world's script on its own, its bytes counted by the loading screen */

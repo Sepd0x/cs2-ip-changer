@@ -79,15 +79,17 @@ test('Site: o nome do rodape acende com uma frente suave, sem corte a direito, e
   await page.evaluate(() => {
     const wm = document.querySelector('.wordmark'), g = wm.querySelector('g[mask="url(#wm-lit)"]');
     const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    r.setAttribute('x', '7'); r.setAttribute('y', '60'); r.setAttribute('width', '1433'); r.setAttribute('height', '40'); r.setAttribute('fill', 'white');
+    // the bar spans the name itself (26 Nov.: the name is centred on its line, so the lit group moved and the bar with it)
+    const t = document.getElementById('wm-t').getBBox();
+    r.setAttribute('x', String(t.x)); r.setAttribute('y', '60'); r.setAttribute('width', String(t.width)); r.setAttribute('height', '40'); r.setAttribute('fill', 'white');
     g.appendChild(r);
     const y = wm.getBoundingClientRect().top + scrollY - innerHeight / 2;
     if (window.__lenis) window.__lenis.scrollTo(y, { immediate: true, force: true }); else scrollTo(0, y);
   });
   await page.waitForTimeout(1500);   // the scroll-linked light settles (scrub) before it is set by hand
   const clip = await page.evaluate(() => {
-    const b = document.querySelector('.wordmark svg').getBoundingClientRect();
-    return { x: Math.round(b.left), y: Math.round(b.top), width: Math.round(b.width), height: Math.round(b.height) };
+    const b = document.querySelector('.wordmark svg').getBoundingClientRect(), n = document.querySelector('.wordmark .wm-base').getBoundingClientRect();
+    return { x: Math.round(n.left), y: Math.round(b.top), width: Math.round(n.width), height: Math.round(b.height) };
   });
   const y = Math.round(clip.height * 80 / 252);   // the middle of the bar
   // the name is mapped to the scroll by --wmp (0 to 1); --wm was the old percentage, set too so the old page is measured the same

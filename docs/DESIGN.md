@@ -426,6 +426,15 @@ serves the site and the lab to look at.
 Under 760 px, and on a phone held on its side (up to 999 px wide and 540 px tall), the home has its own parts: the menu
 button with every section, the app as six tabs with a close-up of each page and More details (`assets/js/mobile-tour.js`,
 `assets/mobile-tour.css`), Android | iPhone as a switch of two equal halves, and each guide opens with its contents.
+Since 26 Nov 2026 (direction D, the owner: keep the story in scroll with its 3D and effects, and take the best parts of the
+Claude Design proposals A, B and C; then reviewed by a designer and a critic): under 760 px Is it safe?, And the rest, the
+two reasons of Phone or VPN and Setup's four steps are shelves that swipe sideways, cards 82 % wide and top-aligned so the
+top of the next one peeks, with a dot per card right under them; the two pictures of Phone or VPN sit side by side; the VPN
+table reads one row at a time, Pickroute's answer first and the VPN's under it (both always shown, no switch); the guides
+stay a list; the footer's three lists open in place under their heading and its name is centred; and "Send the link to my
+PC" waits at the bottom, in thumb reach, from the app to the guides (never over the story's cards; the header's Send to PC
+steps aside meanwhile). No new text: the bar copies the cover's button (`assets/js/home.js`, `assets/js/footer-fold.js`).
+The 3D stills (`.still`) no longer carry the three-colour line: it is not the app's window.
 Rules, checked by `node --test tools/site-touch.test.mjs` with taps and flicks (10 Nov 2026):
 
 - every `:hover` style sits in `@media (hover:hover)`, so a phone, which keeps `:hover` on what was tapped, leaves nothing

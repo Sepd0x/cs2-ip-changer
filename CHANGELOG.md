@@ -9,6 +9,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ### Changed
 - Website: on a phone, and on every guide, the page shows at once instead of behind a loading screen. The 3D scene fades in over its picture when it is ready, and a thin line at the top shows how far it is. The home page on a PC keeps its loading screen.
+- Website on a phone: the story with the 3D scene stays as it is, and what comes after it is shorter. Is it safe?, And the rest, the reasons in Pickroute or a VPN and the setup steps swipe sideways, the VPN comparison reads one row at a time, the footer's lists open when you tap them, and "Send the link to my PC" stays at the bottom of the screen.
 - Website: only the thin line at the top keeps the three colours. Lines, marks, the footer's name and the open FAQ line are the plain blue, and nothing glows.
 
 ## [1.0.0] - 2026-11-26
