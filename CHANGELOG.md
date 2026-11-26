@@ -25,7 +25,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
   - Profiles: three steps, top to bottom: the look, the accounts, then review and apply.
   - Log: search and filters at the top, one filled button (Save bug report). Settings: the groups are listed on the left, and a click goes to that group.
 - The website, the guides and the stats dashboard use the app's new colours.
-- The app's black is a plain neutral black (it leaned to purple), and buttons, ticks, the page mark, the route on Connection and the arc of the Regions dial are flat colours instead of gradients. Only the thin line at the top of the window keeps its three colours. The website and the README pictures follow.
+- The app's black is a plain neutral black (it leaned to purple), and buttons, ticks, the page mark, the route on Connection and the arc of the Regions dial are flat colours instead of gradients. Only the thin line at the top of the window keeps its three colours, now in full instead of half faded. The website and the README pictures follow.
 - Until a phone has been set up on this PC, the app opens on Regions, and the top button on Connection says "Set up the phone" and only opens Phone setup (the notification area menu says and does the same). Before, it said "Turn on protection" and blocked your servers when there was no phone yet.
 - Phone setup: when everything is green and protection is off, it ends with "Turn on protection" next to "Close".
 - Regions: the line under the count says the block stays on after you close the app, and that "Allow all (block off)" removes it.

@@ -524,7 +524,7 @@
 
     <Border x:Name="RootBorder" Background="{StaticResource Bg}" BorderBrush="{StaticResource Edge}" BorderThickness="1">
         <Grid>
-            <!-- 26 Nov (App v3 design): the 2 px line on top lies over the frame (drawn after it, below), at 42 % -->
+            <!-- 26 Nov (App v3 design): the 2 px line on top lies over the frame (drawn after it, below), in full -->
             <Grid.RowDefinitions>
                 <RowDefinition Height="0"/>
                 <RowDefinition Height="*"/>
@@ -4255,8 +4255,9 @@
                 </Grid>
             </Grid>
 
-            <!-- the 2 px line at the top of the window, over the sidebar and the top bar, at 42 % -->
-            <Border Grid.RowSpan="2" Height="2" VerticalAlignment="Top" Background="{StaticResource TopLine}" Opacity="0.42" IsHitTestVisible="False"/>
+            <!-- the 2 px line at the top of the window, over the sidebar and the top bar, in its full colours (at 42 % until 26 Nov at
+                 night: the owner saw it half faded; with every other gradient gone it is the brand's one mark) -->
+            <Border Grid.RowSpan="2" Height="2" VerticalAlignment="Top" Background="{StaticResource TopLine}" IsHitTestVisible="False"/>
 
             <!-- Dialog -->
             <!-- beta.10: Phone setup as steps that check themselves (PhoneSetup.Steps), each with its button when the app can do it -->

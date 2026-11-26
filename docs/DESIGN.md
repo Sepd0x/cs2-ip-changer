@@ -42,7 +42,7 @@ The app also has keys with alpha (`AccentSoft`, `GoodSoft`, `WarnSoft`, `BadSoft
 | `RouteMid`, `RouteOff`, `RouteDash` | `AccentColor`, `#6c6c72`, `#37373b` | the route on Connection: its middle dot; the grey rings and dashes while not protected (`RouteOff` also rings a tick or a switch that is off) |
 | `Lift` | `#1d1d1f` | the row or card under the mouse or picked, the letter box, the tags, the Settings group in view |
 | `LineSoft` | `#171719` | white at 4 %: the line between the rows of a table (Log, Profiles, Compare) |
-| `TopLine` | `Top1`, `Top2` at 88 %, `Top3` | the window's 2 px top line, shown at 42 %; the toast's strip |
+| `TopLine` | `Top1`, `Top2` at 88 %, `Top3` | the window's 2 px top line, in full (42 % until 26 Nov at night); the toast's strip |
 | `NavMark` | `AccentColor` (`Top1` to `Top2` until 26 Nov at night) | the 3 x 14 px mark of the page picked in the sidebar |
 
 The web makes its soft colors with `color-mix(in srgb, var(--t-good) 12%, transparent)` or `rgba(var(--t-accent-rgb), …)`.
@@ -90,7 +90,7 @@ SEE", "START AND CLOSE") have none.
 | Dashboard v5 | `--r: 14px` cards, 10 px tabs, 999px chips | 1 px `--line` | `--gap: 20px` (14 px on phones) |
 | README pictures | 8 to 10 px frames around the captures, 8 px nodes | 1 px grey edge | |
 
-The line at the top (blue, magenta, yellow, `TopLine`) is the one shape all four share: 2 px at 42 % across the top of the
+The line at the top (blue, magenta, yellow, `TopLine`) is the one shape all four share: 2 px in full across the top of the
 app's window (and 2 px on its toasts), 3 to 5 px on the web. In the app it runs blue to magenta and the yellow only at its
 end (88 %); on the web the magenta is at 50 %.
 
@@ -169,7 +169,7 @@ there.
 
 ### The window
 
-- A 2 px line across the very top, over the sidebar and the top bar: `TopLine` at 42 %, no glow.
+- A 2 px line across the very top, over the sidebar and the top bar: `TopLine` in full (it was at 42 % until 26 Nov at night), no glow.
 - The sidebar, 168 px, `Side` with a 1 px `Line` on its right: the logo (26 px), then the eight pages by name only (32 px
   rows, 12 px in, rounded 8, 13 px `Muted`; the page picked in `Surface2`, white SemiBold, with the 3 x 14 px `NavMark`
   before its name; the icon stays in `Tag` for the tray and the stats, it isn't drawn), and at the bottom Update and the
