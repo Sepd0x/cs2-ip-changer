@@ -25,11 +25,11 @@ public partial class MainWindow
     partial void DiagTick();
     partial void UpdateDiagInfo();
 
-    /// <summary>Sidebar: the version on two lines (fits in 80 px); the full one goes in the tooltip.</summary>
+    /// <summary>Sidebar: the version on one line in mono at the bottom (26 Nov, 168 px wide); the full one goes in the tooltip.</summary>
     void ShowVersion()
     {
         var parts = AppInfo.Version.Split('+');
-        VersionText.Text = "v" + parts[0].Replace("-", "\n") + (parts.Length > 1 ? "\n" + parts[1] : "");
+        VersionText.Text = "v" + parts[0].Replace("-", " ") + (parts.Length > 1 ? "\n" + parts[1] : "");
         VersionText.ToolTip = "CS2 IP Changer " + AppInfo.Version
 ;
     }

@@ -10,27 +10,42 @@ something is left behind (see [Checks](#checks)).
 ### Colors (from `src/Theme.xaml`)
 
 `node tools/design-tokens.mjs` reads `Theme.xaml` and writes these between `/* tokens` and `/* /tokens */` in every file
-listed in `FILES` there. Values as of 5 Nov 2026:
+listed in `FILES` there. Values as of 26 Nov 2026 (the palette of the new GUI: a violet black base and one accent, the
+app blue; see [App layout](#app-layout)):
 
 | Token | Theme.xaml key | Value | What for |
 |---|---|---|---|
-| `--t-bg` | `BgColor` | `#0e0e0e` | the window, the page |
-| `--t-side` | `Side` | `#0b0b0b` | the app's sidebar |
-| `--t-edge` | `Edge` | `#050505` | the dark rim outside a group box |
-| `--t-surface` | `SurfaceColor` | `#171717` | group boxes, cards |
-| `--t-surface2`, `--t-surface3` | `Surface2`, `Surface3` | `#1d1d1d`, `#262626` | rows, fields, hover |
-| `--t-line`, `--t-line-strong` | `Line`, `LineStrong` | `#2a2a2a`, `#383838` | borders; button and input borders |
-| `--t-text`, `--t-muted`, `--t-faint` | `Text`, `Muted`, `Faint` | `#dddddd`, `#adadad`, `#888888` | body text, secondary, hints |
-| `--t-good`, `--t-warn`, `--t-bad` | `Good`, `Warn`, `Bad` | `#7cc95a`, `#e3bf4b`, `#f05a4f` | protected / attention / blocked, banned |
-| `--t-accent` | `AccentColor` | `#5ba8f0` | links, the selected page, Change IP and rejoin |
-| `--t-accent-light`, `--t-accent-dark` | `AccentLightColor`, `AccentDarkColor` | `#7ebcf5`, `#3e87d0` | hover, the accent gradient |
+| `--t-bg` | `BgColor` | `#0e0c14` | the window, the page |
+| `--t-side` | `Side` | `#08070c` | the app's sidebar and status bar |
+| `--t-edge` | `Edge` | `#050408` | the dark rim of a dialog and a toast |
+| `--t-surface` | `SurfaceColor` | `#14121b` | cards, panels, a row under the mouse |
+| `--t-surface2`, `--t-surface3` | `Surface2`, `Surface3` | `#1c1a26`, `#262333` | the page picked, the filter picked, hover |
+| `--t-line`, `--t-line-strong` | `Line`, `LineStrong` | `#1f1d24`, `#302e35` | the thin lines (white at 7 % on the page); pill outlines (14 %) |
+| `--t-text`, `--t-muted`, `--t-faint` | `Text`, `Muted`, `Faint` | `#eeecf3`, `#a8aebb`, `#8c92a0` | body text, secondary, hints |
+| `--t-good`, `--t-warn`, `--t-bad` | `Good`, `Warn`, `Bad` | `#46c58a`, `#f0a948`, `#ef6461` | protected / attention / blocked, banned |
+| `--t-accent` | `AccentColor` | `#5ba8f0` | the one accent: the filled button, links, ticks and switches, the allowed regions |
+| `--t-accent-light`, `--t-accent-dark` | `AccentLightColor`, `AccentDarkColor` | `#74b6f3`, `#3e87d0` | hover, the accent gradient |
 | `--t-accent-deep` | `AccentDeepColor` | `#2b74c2` | web only: filled buttons with white text, the accent on light pages |
-| `--t-top1`, `--t-top2`, `--t-top3` | `Top1`…`Top3` | `#3bb4e5`, `#c64fc6`, `#d8e03a` | the line at the top of the window: blue, magenta, yellow |
-| `--t-top` | | `linear-gradient(90deg, top1, top2 50%, top3)` | that line, ready to use |
+| `--t-top1`, `--t-top2`, `--t-top3` | `Top1`…`Top3` | `#3bb4e5`, `#c64fc6`, `#d8e03a` | the route's colours: blue, magenta, yellow |
+| `--t-top` | | `linear-gradient(90deg, top1, top2 50%, top3)` | the web's top line, ready to use |
 | `--t-accent-rgb` | `AccentColor` | `91,168,240` | `rgba(var(--t-accent-rgb), .1)` |
 
-The app also has keys with alpha (`AccentSoft`, `GoodSoft`, `BadSoft`, …) and the button fills (`BtnFill`…); the web makes
-its soft colors with `color-mix(in srgb, var(--t-good) 12%, transparent)` or `rgba(var(--t-accent-rgb), …)`.
+The app also has keys with alpha (`AccentSoft`, `GoodSoft`, `WarnSoft`, `BadSoft`, `BadDim`, …), the button fills (`BoxFill`,
+`BtnFill`, `BtnFillHover`, in violet greys) and keys of its own that the web doesn't take:
+
+| Theme.xaml key | Value | What for |
+|---|---|---|
+| `Info` | `#cdd1da` | IPs and numbers next to text, a plain word button (`LinkBtn`) |
+| `AccentText` | `#06111d` | the text on the filled accent button |
+| `Field` | `#17151f` | a field (`FieldBox`, `FieldCombo`, `FieldPwd`), the mode picked on Connection, a note |
+| `AccentLine` | `#595ba8f0` | the accent at 35 %: the outline of the mode picked and of the Servers bars |
+| `RouteMid`, `RouteOff`, `RouteDash` | `#8a82d8`, `#6d6980`, `#3a3648` | the route on Connection: its middle dot; the grey rings and dashes while not protected (`RouteOff` also rings a tick or a switch that is off) |
+| `Lift` | `#1f1c29` | the row or card under the mouse or picked, the letter box, the tags, the Settings group in view |
+| `LineSoft` | `#181620` | white at 4 %: the line between the rows of a table (Log, Profiles, Compare) |
+| `TopLine` | `Top1`, `Top2` at 88 %, `Top3` | the window's 2 px top line, shown at 42 %; the toast's strip |
+| `NavMark` | `Top1` to `Top2` | the 3 x 14 px mark of the page picked in the sidebar |
+
+The web makes its soft colors with `color-mix(in srgb, var(--t-good) 12%, transparent)` or `rgba(var(--t-accent-rgb), …)`.
 
 ### Each page's own names
 
@@ -47,8 +62,8 @@ Each page keeps short names of its own; the shared ones must be `var(--t-…)` (
 | `--t-good`, `warn`, `bad` | (used directly) | `--good`, `--warn` | `--good`, `--warn`, `--bad`, `--live` | `--good`, `--warn`, `--bad` |
 | `--t-top` | the page's top line | `--gradient` | the logo square (`.mark`) | `--top1`…`--top3` |
 
-Kept on purpose, page by page: the text white (site `#e8e8e8`, dashboards `#ededed`, README `#f2f2f2`: a little brighter
-than the app's `#dddddd` on large screens); the dashboard's charts, heat map and its other palettes (`quente`, `contraste`);
+Kept on purpose, page by page: the text white (site `#e8e8e8`, dashboards `#ededed` and `#e4e4e4`: neutral greys, where the
+app's `#eeecf3` leans to violet; the README card takes the app's); the dashboard's charts, heat map and its other palettes (`quente`, `contraste`);
 the v5 page's light "Papel" palette (its greys, green and red are made for a white page; only its blue is the app's
 `accent-deep`); the README SVGs' greys (`docs/assets/src/components.mjs`, tuned for GitHub's light and dark pages; their
 blue, green, red and top line come from `Theme.xaml`).
@@ -57,24 +72,27 @@ blue, green, red and top line come from `Theme.xaml`).
 
 | | Text | Titles | Numbers, IPs, code |
 |---|---|---|---|
-| App | Segoe UI Variable Text, Segoe UI; 12 px, buttons 12, small 11 | the same, 16 to 20 px | Cascadia Mono, Consolas |
+| App | Segoe UI Variable Text, Segoe UI (`UiFont`); 13 px on the pages, the line under a title 12.5, hints 12, buttons 12 SemiBold | Segoe UI Variable Display (`DisplayFont`), SemiBold: the page 22 px, a Settings group or a Profiles step 16, a section 14 | Cascadia Mono, Consolas (`Mono`): IPs, pings, times, keys; the IP servers see 40 px |
 | Site | Funnel Sans (`--sans`), then Segoe UI Variable | Funnel Display (`--disp`) | Fragment Mono (`--mono`); the copies of app text use Cascadia Mono |
 | Dashboards | Segoe UI Variable Text, system-ui (`--font`) | Segoe UI Variable Display (`--font-d`) | tabular numbers |
 | README pictures | Segoe UI Variable Text | Segoe UI Variable Display | Cascadia Mono |
 
-Icons: Segoe Fluent Icons in the app; the site and the dashboard draw their own SVGs.
+Icons: Segoe Fluent Icons in the app; the site and the dashboard draw their own SVGs. `Theme.xaml` also has `Numbers`
+(Bahnschrift) for big figures; no page uses it yet. WPF has no letter spacing, so the app's small capitals ("IP SERVERS
+SEE", "START AND CLOSE") have none.
 
 ### Shape and space
 
 | | Corners | Borders | Spacing |
 |---|---|---|---|
-| App | square (no `CornerRadius`; the window chrome is 0) | 1 px `Line`; group boxes 1 px `Edge` outside, 1 px `Line` inside, the title on the line | group padding 14,16,14,12, 12 between groups; buttons 28 px high, padding 14,0, 6 apart |
+| App | buttons are 28 px pills (26 in the top bar), fields 28 px rounded 6, rows and the sidebar's pages 8, cards, panels and menus 10, tags 4; the window and its dialogs square | no boxes: a section is its title and a 1 px `Line` (`LineSoft` between table rows); 1 px `LineStrong` round a pill | the page frame 24,16,24,18; 22 to 28 px between sections; buttons 8 apart |
 | Site | 999px pills (buttons, chips), 8 to 16 px cards, 2 to 6 px small parts | 1 px `--line` | `--gutter: clamp(1.25rem, .4rem + 4.2vw, 5rem)`, `--max: 88rem`, top bar `--top-h: 4rem` |
 | Dashboard v5 | `--r: 14px` cards, 10 px tabs, 999px chips | 1 px `--line` | `--gap: 20px` (14 px on phones) |
 | README pictures | 8 to 10 px frames around the captures, 8 px nodes | 1 px grey edge | |
 
-The line at the top (blue, magenta, yellow, `TopLine`) is the one shape all four share: 3 px in the app (2 px on its
-toasts), 3 to 5 px on the web.
+The line at the top (blue, magenta, yellow, `TopLine`) is the one shape all four share: 2 px at 42 % across the top of the
+app's window (and 2 px on its toasts), 3 to 5 px on the web. In the app it runs blue to magenta and the yellow only at its
+end (88 %); on the web the magenta is at 50 %.
 
 On the site (6 Nov 2026): where the line is drawn in SVG (the footer's name, its horizon and reflection), its middle stops
 are `color-mix(in oklch, top1, top2)` and `color-mix(in oklch, top2, top3)`, because SVG blends in sRGB and the plain
@@ -93,8 +111,9 @@ Aligned: the v5 dashboard typed the app's colors by hand, and its dark palette h
 (`social-preview.css`), `base.css` and `components.mjs` typed the same values by hand: they now read them too (no picture
 changed). The dashboard's click map (`ui-map.js`) had five buttons in the beta.10 places and no box for Show all and What the app changed.
 
-Different on purpose (bigger than a token, a design call): the site's fonts (Funnel) and its round buttons (pills, filled
-accent) against the app's Segoe and square buttons; the web's brighter text white. Change these only with the owner.
+Different on purpose (bigger than a token, a design call): the site's fonts (Funnel) against the app's Segoe; the site's
+filled buttons in `accent-deep` with white text against the app's in `accent` with dark text; the web's neutral text white.
+Since 26 Nov 2026 both have round buttons (pills). Change these only with the owner.
 
 ## Logo
 
@@ -125,8 +144,8 @@ paper.js 0.12.18, see the top of the script; `--out <folder>` is a trial):
 | `docs/assets/icon.png` (256) | the README header; the site's `img/icon.png` (header, loading screen, guide window bars) |
 | `docs/assets/favicon.svg`, `favicon.ico`, `apple-touch-icon.png` | the site's `<head>` (the Pages workflow copies them to `img/`) |
 
-The window draws the logo in the empty corner above Connection (`SideLogo` in `src/MainWindow.xaml`, 24 px, the paths of
-`logo-24.svg` with the theme's brushes): change both together. The README card (`docs/assets/src/social-preview.html`)
+The window draws the logo at the top of the sidebar, above Connection (`SideLogo` in `src/MainWindow.xaml`, 26 px, the
+paths of `logo-24.svg` with the theme's brushes): change both together. The README card (`docs/assets/src/social-preview.html`)
 signs with `logo.svg` in its lower left corner, and so does `banner.png` (`docs/assets/src/banner.html`, `render.cmd`). The
 README's animated demo (`demo.gif`, `demo-mobile.gif` and their `.png` stills) draws `logo-24.svg` (desktop) and `logo.svg`
 (phone) in its header; it is made outside git (`publish/readme-gif-2026-11-05/LEIA-ME.md`), so record it again when the logo
@@ -141,76 +160,160 @@ GitHub live; the VirusTotal badge sits in a `<!--rel:vtbadge-->` mark that `node
 
 ## App layout
 
-Where each thing goes in the app, so every page reads the same way. `tests/OrganizacaoTests.cs` reads the two tables
-below and fails when `src/MainWindow.xaml` leaves them: a group out of order or in the wrong column, a Settings option in
-another group, a name used twice, a column that ends short, a red button that is not last, or a text that points to a
-place that is not there.
+Where each thing goes in the app, so every page reads the same way. The look of the window and its eight pages (26 Nov
+2026) was drawn as HTML mock-ups first and ported to WPF page by page; the mock-ups and the steps are kept outside git. `tests/OrganizacaoTests.cs` reads the two tables
+below and fails when `src/MainWindow.xaml` leaves them: a section out of order or in the wrong column, a Settings option
+in another group, a name used twice, a section drawn as a box, a red button that is not last, a frame or a page title that
+is off, a list that is missing, a route colour on something that isn't live, or a text that points to a place that is not
+there.
+
+### The window
+
+- A 2 px line across the very top, over the sidebar and the top bar: `TopLine` at 42 %, no glow.
+- The sidebar, 168 px, `Side` with a 1 px `Line` on its right: the logo (26 px), then the eight pages by name only (32 px
+  rows, 12 px in, rounded 8, 13 px `Muted`; the page picked in `Surface2`, white SemiBold, with the 3 x 14 px `NavMark`
+  before its name; the icon stays in `Tag` for the tray and the stats, it isn't drawn), and at the bottom Update and the
+  version on one line ("v0.1.0 beta.14").
+- The top bar, 40 px: "CS2 IP Changer / Page" in 13 px (`Muted`, the "/" in `Faint`, the page in `Text`), the activity pill
+  while something runs, then on the right the state chip (24 px, rounded, a 10 % wash of the state's colour, its
+  `StatusMark`, the state SemiBold and the IP in mono; a click goes to Connection), the quick switch (`TopPill`, 26 px:
+  New IP + next account and the next account's name) and the window buttons (`Chrome`). A dialog covers the page, not this
+  bar (`Dialog`, 40 px from the top).
+- The status bar, 28 px, `Side` with a 1 px `Line` above it, 24 px in: the phone as Connection > Phone shows it (its mark,
+  the state SemiBold, the detail in `Muted`) and the mobile data, and on the right New IP + next account with its hotkey in
+  a key box (Settings > Hotkeys and sounds). It only repeats what the app already shows.
+
+### The page
+
+- The frame: 24 px at the sides, 16 on top, 18 under the last thing. A page that ends in a list scrolling to the window's
+  edge has 0 at the bottom (Regions, Accounts: the list keeps its own end clear). Profiles scrolls whole and ends 24 under
+  Apply. Settings: its group list has 24,16,12,16, the groups sit 20 px to its right with 32 at the right and the bottom.
+- The page's name first, 22 px Display SemiBold, and under it one line in 12.5 px `Muted` that says where things stand
+  (12 servers on 2 IPs · all protected; 8 of 8 · 2 banned · nightfall in use; 3 entries · no warnings or errors). The top
+  bar names the page too, so nothing else repeats it as a title.
+- A section is a title and a thin line, never a box: the title 14 px Display SemiBold on Connection and Configs, 16 px in
+  Settings and on the steps of Profiles; a 1 px `Line` above a section that follows another (22 px apart on Connection,
+  28 in Settings); the rows in it divided by `Line`, a table's rows by `LineSoft`. A list has no box round it: its head
+  (26 px, 12 px `Faint`, a line under it) and its rows (a row under the mouse or picked in `Lift`, rounded 8).
+- One filled button per page and state (`Primary`, `PrimaryFill`: the accent with dark text). On Connection: Turn on
+  protection while it is off, Change IP, or Change IP and rejoin when there is a last server, and Phone setup while no
+  phone is ready (see First run). Regions: Block slower. Servers: Join, on the row under the mouse or picked. Accounts:
+  Log in, on the card under the mouse. Configs: Copy config…, and Copy to N accounts in its panel. Profiles: Apply to N
+  accounts. Log: Save bug report. Settings has none. The rest are pills (`Pill`; `Btn` and `Primary` turn into pills on a
+  page with `Look.Round`), plain words (`LinkBtn`) or a red word (`DangerLink`).
+- The route's colours (`Top1` to `Top3`) only on what is live: the window's top line, the sidebar's mark, the route This
+  PC > phone > Servers on Connection while protected (`RouteOn`, with `RouteMid`; dashed and grey otherwise), the dial's
+  lit arc on Regions and the toast's strip. Everything else uses the one accent.
+- A state shows with `StatusMark` (a filled square when all is well, other shapes for the rest, so it reads without its
+  colour), not a dot. Green, amber and red only for a state, a ping against Regions > Ping under, or a ban.
+- Fields are `FieldBox`, `FieldCombo` and `FieldPwd` (28 px, `Field`, rounded 6), ticks `Check` (a 14 px square) or
+  `RoundCheck` (Regions), switches the Settings `Switch` (32 x 18), tabs `Tabs` (the game tabs on Regions), filters a capsule of
+  radio buttons (the one picked in `Surface3`, SemiBold).
 
 ### Four page shapes
 
-1. **List** (Servers, Regions, Accounts, Log): a group on top for what you do before the list (add, choose, the options
-   that only change this page), then the list group, named after the page, down to the bottom. The list's bar: search
-   first, then filters, the count, view and order, then the actions on the whole list. Log has nothing to add, so it is
-   the list alone.
-2. **Two columns** (Connection, Configs): left is what you do, right is what you look at and undo, with the history
-   (Previous IPs, Backups) last.
-3. **Options** (Settings): left is how you play (protection, mobile data, the IP, the commands and their keys); right is
-   what is around the game (programs, flags, Steam), then the app; Remove the app last. A new group goes next to the
-   group it changes.
-4. **Editor** (Profiles): a narrow column for the template (260 to 320 px), a wide one for what it changes, Apply at
-   the bottom right.
+1. **List** (Servers, Regions, Accounts, Configs, Log): the title, a bar, then the list down to the bottom. What you do
+   before the list sits on the title's line or in the bar (Add, Paste and Import on Servers; On login and Add on
+   Accounts; the game tabs, Preset and the quick picks on Regions; the Sync line on Configs). The bar: search first, then
+   filters, the count, view and order, then the actions on the whole list, the red one last. Regions has its dial on the
+   right (`RegionDialView`); Configs opens Copy config… and Compare as a panel from the right over the page dimmed
+   (`CfgCopyPanel`, 440 px; `CfgComparePanel`, 460), and keeps Backups and snapshots folded under the list. Log has nothing
+   to add: the list, and its buttons under it.
+2. **Two columns** (Connection): left is what you do (the state, the IP servers see, the route, the buttons, What goes
+   through the phone), right is what you look at and undo (Checks, Phone, Previous IPs), How it works last.
+3. **Steps** (Profiles): one page that scrolls, three numbered steps (a 26 px ring, a faint line down to the next), each
+   with its title and one line: The look, Accounts, Review and apply. Apply at the end of the last one.
+4. **Options** (Settings): the groups' names in a list on the left (`SetNav`, 196 px; the group in view lit in `Lift`, a
+   click goes to it), the groups one under the other on the right, at most 780 px wide: how you play first (protection,
+   mobile data, the IP, the commands and their keys), then what is around the game (programs, flags, Steam), then the
+   app; Remove the app last, in red. A new group goes next to the group it changes. Each option is a row with the line
+   above it: the name 13 px, the grey line in 12 px `Faint` under it, the switch or the field on the right.
 
-In two columns and options the columns are equal, 12 px apart, and end on one line: the last group of each column takes
-the rest of the height (since beta.9), so a list or a short group goes last, not a long text.
+### Page by page
+
+- **Connection:** under the title, the mode and how the PC reaches the phone ("Game only · USB cable"). Left: the state
+  (its mark, a 16 px title in the state's colour, one sentence), IP SERVERS SEE and the IP at 40 px mono with Copy, the
+  route This PC > phone > Servers (each with one or two short lines: the home IP hidden, the phone and its carrier, what
+  the servers see), the row of buttons with Turn off protection as a red word at its right end, then What goes through the
+  phone (the four modes, the one picked in `Field` with an `AccentLine` outline). Right: Checks (only the rows that need
+  you, unless Show all), Phone (its buttons on the title's line), Previous IPs, How it works (it folds).
+- **Servers:** the paste box with Default port, Add, Paste and Import on one line; the bar with the search, Refresh every
+  30 s, Refresh all, Copy IPs and Remove; the follow and slot bars when they show (`Field`, rounded 8, an `AccentLine`
+  outline); the table Server, Map, Players, Ping, Route (46 px rows, Protected with its mark, the ping in mono
+  coloured against Regions > Ping under).
+- **Regions:** the title's line counts (8 allowed · best 24 ms · block on), the list's source and Refresh on its right;
+  the bar with the game tabs, Preset (a pill that opens the presets) and the pills Closest 3, Europe only and Allow all
+  (block off); Ping under with Block slower; the regions by continent (a continent folds to one line), each with a round
+  tick, its ping and a short bar; Only this region on the row under the mouse; the warning and the tip as one line each
+  that opens; the dial on the right.
+- **Accounts:** the title's line counts and says the account in use; On login (Open CS2, Start Steam minimized, Offline
+  mode) and Add on its right (its arrow holds New IP + next account and Choose what New IP + next account does); the bar
+  with the search, the filters, the cards or rows switch, Most recent, Refresh and Show hidden; cards 236 px wide
+  (`Surface`, rounded 10, the account in use with an accent outline).
+- **Configs:** the Sync line ("Sync: from main account nightfall · last run …") opens its menu (the four modes, When,
+  What it copies, Sync now, Undo last sync); the bar with the search (from 8 accounts), the count, Compare and Copy
+  config…; the table Account, Last change, Sync status, Gets sync (54 px rows, the crosshair in a 36 px box, … for more);
+  Backups and snapshots folded under it (Backups, then Snapshots folded inside).
+- **Profiles:** 1 The look (the template and its fields, the picture, Privacy; Copy the look of an account…), 2 Accounts
+  (Pick All, Signed in, None and the count on the step's line; two columns of accounts with Sign in), 3 Review and apply
+  (Fields to change, Now, After and Status for the accounts picked, Use this template on new accounts, Apply; Restore
+  originals and Sign out of all as words under it).
+- **Log:** the search and the filters on the title's line; rows of time (mono), mark and text (the entry SemiBold, the
+  rest in `Info`); under a line, Copy all, What the app changed, Save bug report, Report a problem, and Clear screen as a
+  word at the right.
+- **Settings:** see Four page shapes and the table below.
 
 ### Settings, or the page?
 
-- An option that only changes one page lives on that page, in its top group (On login on Accounts, Refresh every 30 s on
-  Servers, Sync on Configs).
+- An option that only changes one page lives on that page, on its title's line or in its bar (On login on Accounts,
+  Refresh every 30 s on Servers, Sync on Configs).
 - An option that changes the app, or more than one page, lives in Settings. When it fits two groups, it goes in the
   group of the thing it changes.
-- One option, one place. A command can show in more than one place (New IP + next account in the top bar and on
-  Accounts); an option can't. Another page can point to it (the gear on Accounts opens Settings > New IP + next account,
-  the grey line under the mode on Connection names Settings > Mobile data).
+- One option, one place. A command can show in more than one place (New IP + next account in the top bar and under
+  Accounts' Add); an option can't. Another page can point to it (Choose what New IP + next account does, under Accounts'
+  Add, opens Settings > New IP + next account; the grey line under the modes on Connection names Settings > Mobile data).
 - A button that only makes sense sometimes shows only then (Show hidden, while some accounts are hidden).
 - A button that shows something switches back with the opposite name (Show hidden, then Hide hidden), never a one-way
   button that disappears.
 - A command's name says every step a click runs (New IP + atlas + rejoin), so it never does more than it says.
 - A state that exposes the home IP on purpose (Settings > Use the app with protection off, with protection off) is red
-  in the top bar and in Status for as long as it lasts: "Home IP: servers see it".
-- A group has something to do in it. Text that only explains goes under the option it explains (the grey line) or in its
-  tooltip. The one exception is How it works, on Connection.
+  in the top bar's chip and in Connection's state for as long as it lasts: "Home IP: servers see it".
+- A section has something to do in it. Text that only explains goes under the option it explains (the grey line) or in
+  its tooltip. The one exception is How it works, on Connection.
 
-### Inside a group
+### Inside a section
 
-- Most used first; a red (`Danger`) button last.
+- Most used first; a red button (`Danger`, `DangerLink`) last in its row.
 - In Settings, at most 7 things to click or fill in a group; with more, split it.
-- A group name is 1 to 5 words, no brackets, used once in the whole app. A group takes a page's name only when it is
-  that page's list.
-- Point with names, not places: `Page > Group`, `Page > Group > Option` or `Page > Option`, as they are on screen. Never
-  "above", "below" or "on the right" for another group (the columns move with the window). Outside the app (the phone,
-  Steam, CS2, Windows, GitHub) the texts only name these: `About phone`, `Developer options`, `System`,
+- A section's name is 1 to 5 words, no brackets, used once in the whole app. It takes another page's name only when it
+  holds this page's list of that page's things (Profiles > Accounts, the accounts the look goes to).
+- Point with names, not places: `Page > Section`, `Page > Section > Option` or `Page > Option`, as they are on screen.
+  Never "above", "below" or "on the right" for another section (the columns move with the window). Outside the app (the
+  phone, Steam, CS2, Windows, GitHub) the texts only name these: `About phone`, `Developer options`, `System`,
   `Network & internet`, `Additional settings`, `Connection & sharing`, `Connections`, `Personal Hotspot`, `Security`,
   `Game`, `Apps`, `Installed apps`, `General`. A new one goes here first.
-- The page frame: 16 px at the sides and 18 px under the last group (`16,0,16,6` plus the group's 12; `16,0,16,18` when
-  the page is one group or its groups have no margin).
-- A part of a group that opens and closes (Regions > Region presets) is an `Expander` with the theme's style: the
-  box's chevron (9 px, `Muted`, `Text` under the mouse), 8 px, the title in `Text` 12 px, the content 8 px under it.
-  No circle, no border. Every control type a window uses has a style in `Theme.xaml`: one without it makes WPF load
-  Windows' whole theme (Region presets cost about 250 ms at start, 19 Nov 2026; `tests/DesempenhoTests.cs`).
+- A part that opens and closes is an `Expander` with a style of its own: a section's title line with the chevron at its
+  right (Connection > How it works, Configs > Backups and snapshots), a note's one line (the warning and the tip on
+  Regions) or a pill that drops a panel (Regions > Preset). The chevron is 7 px, `Muted`, `Text` under the mouse; no
+  circle, no box. Every control type a window uses has a style in `Theme.xaml`: one without it makes WPF load Windows'
+  whole theme (the Expander cost about 250 ms at start, 19 Nov 2026; `tests/DesempenhoTests.cs`).
 
 ### Pages
 
-| Page | Element | Shape | Left (or only) column | Right column |
-|---|---|---|---|---|
-| Connection | `PageNet` | two columns | Status, Phone, What goes through the phone | Checks, How it works, Previous IPs |
-| Servers | `PageServers` | list | Add servers, Servers | |
-| Regions | `PageRegions` | list | Matchmaking regions, Regions | |
-| Accounts | `PageAccounts` | list | Add and log in, Accounts | |
-| Configs | `PageConfigs` | two columns | Copy, Sync, Snapshots | Account configs, Compare, Backups |
-| Profiles | `PageProfiles` | editor | Template | Apply to accounts |
-| Log | `PageLog` | list | Log | |
-| Settings | `PageSettings` | options | Protection, Mobile data, Change IP, New IP + next account, Hotkeys and sounds | Open with CS2, Player flags, Steam, Privacy, App, Maintenance, Remove the app |
+The test knows a section by its style: `NetSection` and `NetFold` (Connection), `CfgFold` (Configs), `ProfStepTitle`
+(Profiles, the whole step), `Group` (Settings; the box of the same name in `Theme.xaml` is only for what has no page of
+its own). Frame is the margin of what holds the page's title; List is the page's list, under its search.
+
+| Page | Element | Shape | Frame | List | Sections, left (or only) column | Right column |
+|---|---|---|---|---|---|---|
+| Connection | `PageNet` | two columns | `24,16,24,18` | | What goes through the phone | Checks, Phone, Previous IPs, How it works |
+| Servers | `PageServers` | list | `24,16,24,18` | `ServerList` | | |
+| Regions | `PageRegions` | list | `24,16,24,0` | `RegionList` | | |
+| Accounts | `PageAccounts` | list | `24,16,24,0` | `AccountsPanel` | | |
+| Configs | `PageConfigs` | list | `24,16,24,18` | `CfgAccountsList` | Backups and snapshots, Snapshots | |
+| Profiles | `PageProfiles` | steps | `24,16,24,24` | `ProfList` | The look, Accounts, Review and apply | |
+| Log | `PageLog` | list | `24,16,24,18` | `LogList` | | |
+| Settings | `PageSettings` | options | `24,16,12,16` | | Protection, Mobile data, Change IP, New IP + next account, Hotkeys and sounds, Open with CS2, Player flags, Steam, Privacy, App, Maintenance, Remove the app | |
 
 ### Settings, option by option
 
@@ -249,12 +352,13 @@ To move or add an option: change it here and in `MainWindow.xaml` in the same st
   a `DialogGroup` box 640 px wide over the same `#B0000000` shade, titled with the question. Two equal tiles in the `Door` style
   (`Surface2`, 1 px `LineStrong`, `Accent` border under the mouse or the keyboard, square), 12 px apart: a 112 px drawing of
   the page the door opens, made of the app's own parts (the Regions rows with real check boxes and green or red pings; the
-  phone as Phone setup draws it with the Status box's home IP and the carrier's IP), the title 16 px SemiBold, one line in
+  phone as Phone setup draws it with the home IP and the carrier's IP), the title 16 px SemiBold, one line in
   `Sub`, and the action in `Accent` with a chevron at the bottom. Show me around and Later on the right under them. One door
   = one page; nothing else is decided there.
 - **The page the window opens on:** Connection, but Regions while no phone was ever checked on this PC (unless the phone door
-  was picked). Until then Connection's top button is "Set up the phone" in grey, and Phone setup is the page's main button;
-  the notification area menu says "Set up the phone" on that line too.
+  was picked). Until then Connection's first button is "Set up the phone" in grey, and Phone setup (on the title's line of
+  Connection > Phone) is the page's filled button; the notification area menu says "Set up the phone" on that line too.
+  The same with the phone lost and protection on: Change IP greyed out, Phone setup filled.
 - **The page never changes by itself** (25 Nov 2026): the page the window opens on is picked before the window is on screen
   (`PickStartPage`, in the constructor), and after that only a click changes it. Later on the doors closes them and leaves
   the page as it is.
@@ -264,10 +368,12 @@ To move or add an option: change it here and in `MainWindow.xaml` in the same st
   the step that comes next. Nothing left to do with protection on, or in No phone mode: Done alone, `Primary`.
 - **A row of Phone setup never says done for something the PC can't see** (25 Nov 2026): a hotspot that is picked with the PC
   off it is the red step (Connection, with Wi-Fi list), so the summary can't say "ready" and Turn on protection isn't offered.
-- **A note inside a group** (the Regions note): `Surface2` with a 2 px left border, `Warn` for a warning, `Accent` for what
-  the app offers; buttons on its right. One note per group.
-- **Drawn phone screens** (Phone setup's USB debugging, `src/Views/PhoneGuide.cs`): square like the rest of the app,
-  132x150, `Bg` with a 1 px `LineStrong` border and a short `Line` bar for the earpiece. Only the line to tap has words
+- **A note on a page** (26 Nov 2026): a warning or a tip is one line with its sign and a chevron that opens the rest under
+  it (Regions' warning and tip, `FoldLine`; it opens by itself when the rule failed). What the app offers is `Surface2` with
+  a 2 px `Accent` left border, rounded 6 on the right (the phone's offer under the Regions list, `RegionsPitch`); a bar that
+  asks something now (Servers' follow and slot bars, Accounts' Show as rows) is `Field`, rounded 8. Buttons on its right.
+  One note per page part.
+- **Drawn phone screens** (Phone setup's USB debugging, `src/Views/PhoneGuide.cs`): square, 132x150, `Bg` with a 1 px `LineStrong` border and a short `Line` bar for the earpiece. Only the line to tap has words
   (`AccentSoft`, 2 px `Accent` left border, its mark in `Accent`: "tap 7×", a switch that is on, or Allow); the other
   lines are `Surface3` bars, since they differ from model to model. Three screens in a row, the step's text under each.
 
@@ -362,14 +468,15 @@ Same design, same `assets/`, same 3D script; only the words change.
   show an older Connection.
 - `node --test worker/stats/test/worker.test.mjs`: the same color checks for the site and the `/data` dashboard.
 - `node tools/design-tokens.mjs --check` only checks the colors.
-- `tests/OrganizacaoTests.cs`: fails when the app leaves [App layout](#app-layout) (a group's place, a Settings option's
-  group, a name, a column, a red button, a text that points to a place that is not there).
+- `tests/OrganizacaoTests.cs`: fails when the app leaves [App layout](#app-layout) (a section's place, a Settings option's
+  group, a name, a section drawn as a box, a red button, a page's frame, title or list, a route colour off the live
+  route, a text that points to a place that is not there).
 
 ## When
 
 Any visual change to the app (a color, a text, a layout, anything in a `.xaml`) goes out in the same step as:
 
-1. this file, if a token, a font, a size or a rule changed, and the App layout tables if a group or a Settings option moved;
+1. this file, if a token, a font, a size or a rule changed, and the App layout tables if a section, a frame or a Settings option moved;
 2. `node tools/design-tokens.mjs` (if `Theme.xaml` changed);
 3. `node tools/shots.mjs`, a look at the new captures, `ui-map.js` if it lists moved buttons, and `node tools/site-renders.mjs` (the 3D renders) if
    Connection changed;

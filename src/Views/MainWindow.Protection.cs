@@ -461,7 +461,7 @@ public partial class MainWindow
         UpdatePhoneCheck();
         PhoneNotInUse();
         UpdateProtectionButtons();
-        ServerCount.Text = _servers.Count == 0 ? "" : Loc.F("{0} on {1}", Fmt.Count(_servers.Count, "server"), Fmt.Count(n, "IP"));
+        ServerCount.Text = ServerCountText(_servers.Count, n, _servers.All(s => s.Protected == true));
         ServersEmpty.Visibility = _servers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         QueryBtn.IsEnabled = CopyBtn.IsEnabled = ServerSearch.IsEnabled = _servers.Count > 0;
         ServerHeader.Visibility = _servers.Count == 0 ? Visibility.Hidden : Visibility.Visible;
@@ -577,7 +577,7 @@ public partial class MainWindow
         UpdatePhoneCheck();
         PhoneNotInUse();
         UpdateProtectionButtons();
-        ServerCount.Text = _servers.Count == 0 ? "" : Loc.F("{0} on {1}", Fmt.Count(_servers.Count, "server"), Fmt.Count(n, "IP"));
+        ServerCount.Text = ServerCountText(_servers.Count, n, _servers.All(s => s.Protected == true));
         ServersEmpty.Visibility = _servers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         QueryBtn.IsEnabled = CopyBtn.IsEnabled = ServerSearch.IsEnabled = _servers.Count > 0;
         ServerHeader.Visibility = _servers.Count == 0 ? Visibility.Hidden : Visibility.Visible;
@@ -588,6 +588,13 @@ public partial class MainWindow
     /// the Status box say it in red and keep saying it: every server sees the home IP. Without it, a quiet grey "Protection off".
     /// </summary>
     public static string OffHeroKind(bool useWithOff) => useWithOff ? "bad" : "idle";
+
+    /// <summary>
+    /// The line under Servers' title (26 Nov, App v3): "12 servers on 2 IPs", and " · all protected" when every server's route is
+    /// confirmed through the phone. Empty with no servers.
+    /// </summary>
+    public static string ServerCountText(int servers, int ips, bool allProtected) => servers == 0 ? ""
+        : Loc.F("{0} on {1}", Fmt.Count(servers, "server"), Fmt.Count(ips, "IP")) + (allProtected ? " · " + Loc.T("all protected") : "");
     public static string OffHeroTitle(bool useWithOff) => useWithOff ? Loc.T("Home IP: servers see it") : Loc.T("Protection off");
 
     /// <summary>Whole PC mode: what isn't confirmed yet (routes, DNS or IPv6).</summary>
@@ -689,11 +696,41 @@ public partial class MainWindow
         HeroIcon.Text = glyph;
         HeroTitle.Text = title;
         HeroSub.Text = sub;
+        ShowRoute(kind);
         SideDot.Fill = fg;
         // The top bar repeats the page state (only "Protected · …" gets shortened).
         SideState.Text = kind == "good" ? side : title;
         if (_tray != null) _tray.Tip = TrayTip(SideState.Text);
     }
+
+    /// <summary>
+    /// Connection's route This PC > phone > servers (26 Nov, App v3): in the route colours only while protected, grey and dashed
+    /// otherwise; the servers' column says what they see in each state, never more than the state above it says.
+    /// </summary>
+    void ShowRoute(string kind)
+    {
+        var on = kind == "good";
+        RouteOn.Visibility = on ? Visibility.Visible : Visibility.Collapsed;
+        RouteOff.Visibility = on ? Visibility.Collapsed : Visibility.Visible;
+        var (see, never) = RouteServers(kind, _protOn && _s?.NoPhone != true);
+        RouteServersSee.Text = see;
+        RouteServersSee.Foreground = kind == "bad" ? Ui.Bad : (Brush)FindResource("Muted");
+        RouteServersNever.Text = never;
+        RouteServersNever.Visibility = never.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    /// <summary>The servers' column of the route: the carrier IP only when protected; "could see your home IP" in every red state
+    /// (no kill switch, the block not confirmed, protection off with the home option); otherwise not confirmed yet, or not protected.</summary>
+    public static (string See, string Never) RouteServers(string kind, bool protOn) => kind switch
+    {
+        "good" => (Loc.T("see the carrier IP"), Loc.T("never your home IP")),
+        "bad" => (Loc.T("could see your home IP"), ""),
+        _ => protOn ? (Loc.T("not confirmed yet"), "") : (Loc.T("not protected"), ""),
+    };
+
+    /// <summary>The line under the home IP on the route: "Home IP, hidden · " and its network (Deutsche Telekom AG · Hamburg).</summary>
+    public static string HomeLineText(bool known, bool reveal, string isp) =>
+        !known ? isp : (reveal ? Loc.T("Home IP") : Loc.T("Home IP, hidden")) + (string.IsNullOrEmpty(isp) ? "" : " · " + isp);
 
     void FillEgressCombo(List<Adapter> adapters)
     {
@@ -1099,6 +1136,7 @@ public partial class MainWindow
         HomeIp.Text = _homePublic == null ? "—" : _reveal ? _homePublic : Fmt.MaskIp(_homePublic);
         HomeIsp.Text = _homePublic == null ? Loc.T("No home network detected")
             : (_homeInfo?.Short ?? "") + (_homeCached ? "  ·  " + Loc.T("last confirmed") : "");
+        HomeLine.Text = HomeLineText(_homePublic != null, _reveal, HomeIsp.Text);
         SideIp.Text = inUse && _changingTitle == null ? _egressPublic ?? "" : "";
         if (_s.NoPhone && _last?.EffectiveMode == "home")
         {

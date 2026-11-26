@@ -37,6 +37,10 @@ public sealed class RegionItem : Observable
     /// <summary>On = CS2 can reach this region. Off = its relays are blocked for cs2.exe.</summary>
     public bool Allowed { get => _allowed; set => Set(ref _allowed, value); }
 
+    bool _hot;
+    /// <summary>The mouse is on this region's spoke on the dial: its row lights up as if the mouse were on it.</summary>
+    public bool Hot { get => _hot; set => Set(ref _hot, value); }
+
     public int PingMs
     {
         get => _pingMs;

@@ -37,6 +37,8 @@ public partial class MainWindow
     {
         if (RegionPresetApply == null || RegionPresetSave == null || RegionPresetRename == null || RegionPresetRemove == null) return;
         var selected = RegionPresetPicker.SelectedItem is RegionPreset;
+        // 26 Nov: the Preset pill shows the preset picked in its list (it opens the presets)
+        RegionPresetsPanel.Tag = (RegionPresetPicker.SelectedItem as RegionPreset)?.Name ?? Loc.T("No preset");
         var hasRegions = _regionInfos is { Count: > 0 };
         RegionPresetApply.IsEnabled = selected && hasRegions;
         RegionPresetSave.IsEnabled = hasRegions;

@@ -90,24 +90,14 @@ public partial class MainWindow
         ProfHeader.Visibility = _profRows.Count == 0 ? Visibility.Hidden : Visibility.Visible;
     }
 
-    // Narrow window: "Make all look like" moves under the picks instead of being cut.
-    void ProfBar_SizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        // The room is the column's, minus the group's padding and edge: ProfBar itself takes the width of what it holds when that
-        // doesn't fit (it is then cut off on the right, as Preview was at the smallest window size)
-        var room = PageProfiles.ColumnDefinitions[2].ActualWidth - 30;
-        var narrow = ProfBarLeft.DesiredSize.Width + ProfBarRight.DesiredSize.Width > room;
-        Grid.SetRow(ProfBarRight, narrow ? 1 : 0);
-        Grid.SetColumn(ProfBarRight, narrow ? 0 : 2);
-        Grid.SetColumnSpan(ProfBarRight, narrow ? 3 : 1);
-        ProfBarRight.HorizontalAlignment = narrow ? HorizontalAlignment.Left : HorizontalAlignment.Stretch;
-        ProfBarRight.Margin = new Thickness(0, narrow ? 6 : 0, 0, 0);
-    }
+    // App v3 moved "Make the others look like" under the picks in a narrow window. App v4 (26 Nov): the picks sit on step 2's title
+    // line and Make the others look like in step 3's quiet row, a WrapPanel that wraps on its own, so there is nothing left to move.
+    void ProfBar_SizeChanged(object sender, SizeChangedEventArgs e) { }
 
     // The column titles keep the rows' width, with or without the list's scrollbar.
     void ProfScroll_Changed(object sender, ScrollChangedEventArgs e)
     {
-        if (sender is ScrollViewer v) ProfHeader.Margin = new Thickness(9, 0, v.ComputedVerticalScrollBarVisibility == Visibility.Visible ? 15 : 9, 4);
+        if (sender is ScrollViewer v) ProfHeader.Margin = new Thickness(8, 0, v.ComputedVerticalScrollBarVisibility == Visibility.Visible ? 14 : 8, 0);
     }
 
     void RefreshSession(ProfileRow r)
@@ -391,6 +381,7 @@ public partial class MainWindow
         var picked = _profRows.Where(r => r.Selected).ToList();
         ProfCount.Text = _profRows.Count == 0 ? "" : Loc.F("{0} of {1} picked", picked.Count, _profRows.Count);
         var t = CurTemplate;
+        ProfSummary.Text = ProfSummaryText(t?.Title, picked.Count, _profRows.Count);
         var jobs = t == null ? new() : Plan(t, picked).ToDictionary(j => j.SteamId);
         foreach (var r in _profRows)
         {
@@ -404,8 +395,43 @@ public partial class MainWindow
             r.After = j.PersonaName ?? r.Name;
             r.AfterAvatar = j.Avatar != null ? _tplAvatarImg : r.Avatar;
             r.AfterDetail = Describe(j);
-            r.Problem = j.Problem ?? (r.SignedIn ? null : Loc.T("Sign in first."));
+            r.Problem = j.Problem ?? (r.SignedIn ? null : Loc.T("Sign in first (step 2)"));
         }
+        // App v4, step 3: who stays as is, who is skipped for want of a sign-in, and Apply says how many it changes
+        var left = _profRows.Where(r => !r.Selected).Select(r => r.Name).ToList();
+        ProfNotPicked.Text = NotPickedText(left);
+        ProfNotPicked.Visibility = left.Count > 0 && picked.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        ProfApplyNote.Text = SkippedText(picked.Where(r => !r.SignedIn && !(jobs.TryGetValue(r.SteamId, out var j2) && j2.Problem != null)).Select(r => r.Name).ToList());
+        if (!_profBusy) ProfApplyBtn.Content = ApplyText();
+    }
+
+    /// <summary>Apply's text (App v4): "Apply to 5 accounts", the picked ones it can change now.</summary>
+    string ApplyText()
+    {
+        var ready = CurTemplate is ProfileTemplate t ? Plan(t, _profRows.Where(r => r.Selected)).Count(j => j.Problem == null && SignedIn(j.SteamId)) : 0;
+        return ready == 0 ? Loc.T("Apply") : Loc.F("Apply to {0}", Fmt.Count(ready, "account"));
+    }
+
+    /// <summary>Under step 3's list: "Not picked, so they stay as they are: ember, vanta." (null with everyone picked).</summary>
+    public static string NotPickedText(IReadOnlyList<string> names) => names.Count == 0 ? null
+        : names.Count == 1 ? Loc.F("Not picked, so it stays as it is: {0}.", names[0])
+        : Loc.F("Not picked, so they stay as they are: {0}.", string.Join(", ", names.Take(8)) + (names.Count > 8 ? " " + Loc.F("and {0} more", names.Count - 8) : ""));
+
+    /// <summary>Beside Apply: "kestrel is skipped until it is signed in." (null when every picked account is signed in).</summary>
+    public static string SkippedText(IReadOnlyList<string> names) => names.Count switch
+    {
+        0 => null,
+        1 => Loc.F("{0} is skipped until it is signed in.", names[0]),
+        _ => Loc.F("{0} are skipped until they are signed in.", names.Count <= 3 ? string.Join(", ", names) : Fmt.Count(names.Count, "account")),
+    };
+
+    /// <summary>The line under the page title (App v3): "Template Team look · 6 of 8 accounts picked".</summary>
+    public static string ProfSummaryText(string template, int picked, int accounts)
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(template)) parts.Add(Loc.F("Template {0}", template.Trim()));
+        parts.Add(accounts == 0 ? Loc.T("No accounts yet") : Loc.F("{0} of {1} accounts picked", picked, accounts));
+        return string.Join(" · ", parts);
     }
 
     static string Describe(ProfileJob j)
@@ -574,7 +600,7 @@ public partial class MainWindow
         finally
         {
             _profBusy = false;
-            ProfApplyBtn.Content = Loc.T("Apply");
+            ProfApplyBtn.Content = ApplyText();
             ProfApplyBtn.IsEnabled = _profRows.Count > 0;
             _profCts.Dispose();
             _profCts = null;

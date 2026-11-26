@@ -67,6 +67,36 @@ public partial class MainWindow
         var q = LogSearch.Text;
         _logView.Filter = kind == "all" && string.IsNullOrWhiteSpace(q) ? null : o => o is LogEntry l && LogShows(l, kind, q);
         LogCount.Text = _logView.Filter == null ? "" : Loc.F("{0} of {1} lines", _logView.Cast<object>().Count(), _log.Count);
+        ShowLogSummary();
+    }
+
+    // ------------------------------------------------------------ The line under the Log's title (26 Nov, App v3): "3 entries · no warnings or errors"
+
+    bool _logSummaryHooked;
+
+    void PageLog_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (_logSummaryHooked) return;
+        _logSummaryHooked = true;
+        _log.CollectionChanged += (_, _) => ShowLogSummary();
+        ShowLogSummary();
+    }
+
+    void ShowLogSummary()
+    {
+        if (LogSummary == null) return;
+        LogSummary.Text = LogSummaryText(_log.Count, _log.Count(l => l.Level == LogLevel.Warn), _log.Count(l => l.Level == LogLevel.Error));
+        LogCountSep.Text = string.IsNullOrEmpty(LogCount.Text) ? "" : " · ";
+    }
+
+    /// <summary>"3 entries · no warnings or errors", or "40 entries · 1 error · 2 warnings".</summary>
+    public static string LogSummaryText(int entries, int warns, int errors)
+    {
+        var s = entries == 1 ? Loc.T("1 entry") : Loc.F("{0} entries", entries);
+        if (warns == 0 && errors == 0) return s + " · " + Loc.T("no warnings or errors");
+        if (errors > 0) s += " · " + (errors == 1 ? Loc.T("1 error") : Loc.F("{0} errors", errors));
+        if (warns > 0) s += " · " + (warns == 1 ? Loc.T("1 warning") : Loc.F("{0} warnings", warns));
+        return s;
     }
 
     // ------------------------------------------------------------ Hide logins also covers the Log on screen (the file keeps everything)

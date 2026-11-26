@@ -36,6 +36,11 @@ public partial class MainWindow
             var all = _s?.ChecksShowAll == true;
             foreach (var c in _checks) c.Shown = ChecksView.Shows(c.Attention, all);
             ChecksSummary.Text = ChecksView.Summary(_checks.Count, _checks.Count(c => c.Ok == true && !c.Waiting), _checks.Count(c => c.Attention), _protOn || _s?.NoPhone == true);
+            // the mark before the line (26 Nov, App v3): the colour of the first row that needs you (red before amber), green when
+            // nothing does, grey while protection is off
+            var need = _checks.Where(c => c.Attention).Select(c => c.Brush).ToList();
+            ChecksMark.Brush = need.FirstOrDefault(b => StatusMark.KindOf(b) == StatusMark.Kind.Bad) ?? need.FirstOrDefault()
+                ?? (_protOn || _s?.NoPhone == true ? Ui.Good : Ui.Faint);
             ChecksToggle.Content = ChecksView.Toggle(all);
             ChecksToggle.ToolTip = ChecksView.ToggleTip(all);
         }
