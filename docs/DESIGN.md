@@ -479,7 +479,7 @@ boxes, things cut, the spacing of the 01s, the borders, the guides). Since then,
   and Download the .exe anyway.
 - **The header** on a touch screen is the ground itself, without the blur (it redid an 18 px blur of the moving 3D on every
   frame, and text showed through it). Send to PC sits left of the menu, so the menu keeps its place when the button steps
-  aside, and it steps aside too while the close's own Send to my PC is on screen.
+  aside, and it steps aside too while the close's own Send to PC is on screen.
 - **The footer's languages** are two columns.
 - **The guides** show their own picture of the 3D band (`site/img/gp-<slug>.webp`, `node tools/guide-posters.mjs`) until
   the live scene fades in over it; a section's number sits with a 20 px accent line on one row over its heading (.8125rem
@@ -492,11 +492,15 @@ boxes, things cut, the spacing of the 01s, the borders, the guides). Since then,
 - **The same menu in every header** (`assets/site-menu.css`, `assets/js/site-navigation.js`): the home's lists its own
   parts; a guide's and the 404's list the home's eight (Overview, How it works, The app, Is it safe?, Phone or VPN, Setup,
   Guides, FAQ) under "Pickroute"; tools/site-i18n.mjs adds the five languages under them. The panel has 16 px corners.
-- **The 404:** Go to Pickroute and Send the link to my PC one under the other, full width, 48 px; the guides in a 16 px card
+- **The 404:** Go to Pickroute and Send to PC one under the other, full width, 48 px; the guides in a 16 px card
   with 20 px inside; no Send to PC in its header (the page's own button is on the first screen).
 - **The page's address** (`code.url`, to type on the PC) breaks only after a slash: each part is a `.nw` span.
 - **Mono** stays for addresses, code, numbers, the readouts' labels and the app's own words; sentences after the story
   (Android's Mobile data off and on, a guide's note under its IP) are in the text face.
+- **One name for the button that sends the page to the PC** (27 Nov 2026): "Send to PC" in the header, on the cover, in the
+  bar at the bottom, on the close, on the 404 and in the guides (it was Send to PC, Send the link to my PC and Send to my PC),
+  with the line "It's a Windows app: open this page on your PC." under the cover's. The old name, CS2 IP Changer, is shown
+  nowhere on the site but in the install folder's path; it stays for machines in the JSON-LD `alternateName` and `llms.txt`.
 - **Other languages:** nothing is cut or shortened for them; a long word may run past a heading's measure (the close's
   11ch), never past the screen (`overflow-wrap: normal` there). Checked at 360 px in the five languages by
   `tools/site-direcao-d.test.mjs`.

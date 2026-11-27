@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><script>window.__i18n={"IP servers see. Example, banned on this server":"IP que os servidores veem. Exemplo, banido neste servidor","Mobile data off, then on: getting a new IP":"Dados móveis desligados e ligados: pegando um IP novo","New IP, new /16 range. Example IP":"IP novo, faixa /16 nova. IP de exemplo","Play motion":"Ativar animação","The six pages":"As seis páginas","Your phone":"Seu celular","Example: IP servers see ":"Exemplo: IP que os servidores veem ","Your home IP":"Seu IP de casa","Protection off":"Proteção desligada","Turning on protection":"Ligando a proteção","IP servers see":"IP que os servidores veem","Android: mobile data off":"Android: dados móveis desligados","Mobile data off":"Dados móveis desligados","No connection":"Sem conexão","Android: mobile data on":"Android: dados móveis ligados","Mobile data on":"Dados móveis ligados","Getting a new IP":"Pegando um IP novo","New IP, checked: new /16 range":"IP novo, verificado: faixa /16 nova","New IP, new /16":"IP novo, /16 novo",", a new range. Was ":", uma faixa nova. Era ","your masked home IP":"seu IP de casa mascarado","one IP, example":"um IP, exemplo","many phones on one carrier":"vários celulares na mesma operadora","VPN, on the list: ban":"VPN, na lista: ban","a VPN provider's addresses, example":"endereços de um provedor de VPN, exemplo","See the IP servers see. Change it and rejoin from one place.":"Veja o IP que os servidores veem. Troque e volte ao servidor em um só lugar.","Find your server, check its players and ping, then join.":"Encontre seu servidor, veja os jogadores e o ping, e entre.","Switch saved Steam accounts. Keep bans and cooldowns in view.":"Troque entre contas Steam salvas. Veja bans e cooldowns à vista.","Choose where CS2 can match you, with ping through your phone.":"Escolha onde o CS2 pode te colocar em partida, com ping pelo celular.","Take your settings to another account. Keep a backup to undo.":"Leve suas configurações para outra conta. Mantenha um backup para desfazer.","One template for your Steam profiles. Preview before applying.":"Um modelo para seus perfis Steam. Veja a prévia antes de aplicar.","Explore the Windows app":"Conheça o app para Windows","Previous detail":"Detalhe anterior","Next detail":"Próximo detalhe","Full screenshot":"Captura completa","More details":"Mais detalhes","Windows app · Example IPs and names":"App para Windows · IPs e nomes de exemplo","Screenshot detail":"Detalhe da captura","Less detail":"Menos detalhes"};window.__root='../'</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pickroute (antes CS2 IP Changer): contornar ban de IP no CS2</title>
+<title>Pickroute: contornar ban de IP e escolher servidor no CS2</title>
 <meta name="description" content="App grátis para Windows: CS2 e Steam usam os dados móveis do celular, os servidores veem o IP da operadora, não o de casa. Ban de IP? IP novo em um clique.">
 <meta name="keywords" content="CS2 IP changer, trocar IP CS2, ban de IP CS2, contornar ban de IP, Counter-Strike 2 ban de IP, esconder IP CS2, kill switch CS2, trocador de contas Steam, contas alt CS2, sincronizar config CS2, seletor de região CS2, ancoragem USB">
 <meta name="google-site-verification" content="UGTE4l653P1j3Qx9pOtpi_gOCKCVqaSnbbUnVe8WL3s">
@@ -1084,7 +1084,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
    reasons of Phone or VPN and Setup's four steps swipe sideways, each card 82 % wide so the top of the next one peeks, with a
    dot per card right under them; the two pictures of Phone or VPN sit side by side; the VPN table reads one row at a time,
    Pickroute's answer first and the VPN's under it, both always there; the footer's lists open in place; the footer's name is
-   centred; and "Send the link to my PC" waits at the bottom, in thumb reach, from the app to the guides (the header's own
+   centred; and "Send to PC" waits at the bottom, in thumb reach, from the app to the guides (the header's own
    Send to PC steps aside meanwhile). Reviewed the same night by a designer and a critic (publish/plano-1-0-0/24-site-telemovel.md) */
 .shelf-dots,.thumb{display:none}
 /* the footer's name sits in the middle of its line, at every width (the owner, 26 Nov.: it was left of a line that spans the page) */
@@ -1239,7 +1239,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
         <p class="rel-ss">O Windows pode mostrar "O Windows protegeu seu computador": clique em Mais informações e depois em Executar assim mesmo. <a href="is-it-safe/">Por que é seguro</a></p>
       </div>
       <div class="get-phone">
-        <button class="btn" type="button" id="send-link" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/pt-br/">Enviar o link para o meu PC</button>
+        <button class="btn" type="button" id="send-link" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/pt-br/">Enviar ao PC</button>
         <p class="get-note">É um app para Windows: abra esta página no seu PC.</p>
         <p class="get-alt"><code>sepd0x.github.io/cs2-ip-changer</code><a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Baixar o .exe mesmo assim</a></p>
       </div>
@@ -1463,7 +1463,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
       <p class="sub rv" style="--i:1">Windows 10 ou 11 (64 bits), direitos de administrador, Windows Firewall ligado e um celular com dados móveis.</p>
       <figure class="still still-219 rv"><img src="../img/world-plug.webp" alt="" width="2100" height="900" loading="lazy" decoding="async"><figcaption>Um cabo USB do PC ao celular, com USB tethering ligado (Personal Hotspot no iPhone).</figcaption></figure>
       <ol class="steps4">
-        <li class="rv"><b>Baixe o <code>CS2IPChanger.exe</code></b> na <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">última release</a>. Aberto pela pasta Downloads, ele se oferece para se instalar em <code>C:\Program Files\CS2 IP Changer</code> com um clique. O arquivo e a pasta mantêm o nome antigo do app, CS2 IP Changer.</li>
+        <li class="rv"><b>Baixe o <code>CS2IPChanger.exe</code></b> na <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">última release</a>. Aberto pela pasta Downloads, ele se oferece para se instalar em <code>C:\Program Files\CS2 IP Changer</code> com um clique. O arquivo e a pasta mantêm o nome antigo.</li>
         <li class="rv" style="--i:1"><b>Conecte o celular por USB,</b> ligue o USB tethering (Personal Hotspot no iPhone) e desligue o Wi-Fi do celular. Usa VPN no PC? Desligue antes.</li>
         <li class="rv" style="--i:2"><b>Abra o app</b> como admin. O <b>Phone setup</b> mostra cada passo em verde ou vermelho e o que falta. Cole em Servers os servidores em que você joga (o <code>IP:port</code> do console do CS2, <code>status</code>), depois aperte <b>Turn on protection</b>: ela começa desligada toda vez que o app abre.</li>
         <li class="rv" style="--i:3"><b>Abra o Connection.</b> Com o CS2 e a Steam rodando, todas as verificações devem ficar verdes, inclusive Phone IP is not your home IP.</li>
@@ -1534,7 +1534,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
         <div class="get-phone">
           <div class="copyrow">
             <code class="url">sepd0x.github.io/<wbr>cs2-ip-changer/<wbr>pt-br</code>
-            <button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/pt-br/">Enviar para o meu PC</button>
+            <button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/pt-br/">Enviar ao PC</button>
           </div>
         </div>
         <div class="actions get-desk">

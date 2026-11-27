@@ -9,8 +9,7 @@
   "Find your way": "Encontre o caminho",
   "Browse all guides": "Ver todos os guias",
   "Set up the app": "Configurar o app",
-  "The route leaves your phone and your carrier and runs out with no server at the end: this link has no page.": "A rota sai do seu celular e da sua operadora e termina sem servidor no fim: este link não tem página.",
-  "Send to PC": "Ao PC"
+  "The route leaves your phone and your carrier and runs out with no server at the end: this link has no page.": "A rota sai do seu celular e da sua operadora e termina sem servidor no fim: este link não tem página."
  },
  "shared": {
   "Pickroute: pick where CS2 plays, on the app's dial of regions by ping": "Pickroute: escolha onde o CS2 joga, no mostrador de regiões por ping do app",
@@ -31,7 +30,6 @@
   "Download for Windows": "Baixar para Windows",
   "{version} · {size} · {date} · <a1>Release notes and checksums</a1>": "{version} · {size} · {date} · <a1>Notas da versão e checksums</a1>",
   "Windows may say \"Windows protected your PC\": click More info, then Run anyway. <a1>Why it's safe</a1>": "O Windows pode mostrar \"O Windows protegeu seu computador\": clique em Mais informações e depois em Executar assim mesmo. <a1>Por que é seguro</a1>",
-  "Send the link to my PC": "Enviar o link para o meu PC",
   "Kill switch": "Kill switch",
   "New IP": "IP novo",
   "Pause motion": "Pausar animação",
@@ -59,7 +57,6 @@
   "No passwords, ban marks per server.": "Sem senhas, com marcas de ban por servidor.",
   "Crosshair, binds and video on every account.": "Crosshair, binds e vídeo em todas as contas.",
   "Name, avatar and privacy on many accounts.": "Nome, avatar e privacidade em várias contas.",
-  "Send to my PC": "Enviar para o meu PC",
   "Site links": "Links do site",
   "Free Windows app that sends CS2 and Steam through your phone's mobile data.": "App grátis para Windows que envia o CS2 e a Steam pelos dados móveis do seu celular.",
   "<i1></i1>Latest: <c2/>{version}": "<i1></i1>Última versão: <c2/>{version}",
@@ -700,7 +697,7 @@
   "The server sees an ordinary mobile connection from your carrier, not a datacenter, so it usually gets past anti-VPN plugins. Playing on the phone's hotspot by hand gets you that much (<a1>ping, lag and data use on mobile data</a1>). It works with an Android phone or an iPhone (on an iPhone the new IP comes from Airplane Mode: <a2>CS2 with an iPhone</a2>). The app adds what is hard by hand: only the game uses the phone, a kill switch keeps it there if the cable comes out, live checks and a leak test show the IP servers see, and Change IP gets a new one. <a3>Set it up</a3>.": "O servidor vê uma conexão móvel comum da sua operadora, não um datacenter, então geralmente passa pelos plugins anti-VPN. Jogar pelo hotspot do celular na mão já te dá isso (<a1>ping, lag e uso de dados nos dados móveis</a1>). Funciona com um Android ou um iPhone (no iPhone o IP novo vem do Airplane Mode: <a2>CS2 com iPhone</a2>). O app acrescenta o que é difícil na mão: só o jogo usa o celular, um kill switch o mantém lá se o cabo sair, verificações ao vivo e um teste de vazamento mostram o IP que os servidores veem, e o Change IP pega um novo. <a3>Configurar</a3>."
  },
  "index": {
-  "Pickroute (formerly CS2 IP Changer): CS2 IP ban bypass": "Pickroute (antes CS2 IP Changer): contornar ban de IP no CS2",
+  "Pickroute: CS2 IP ban bypass and server picker": "Pickroute: contornar ban de IP e escolher servidor no CS2",
   "Free Windows app: CS2 and Steam go through your phone's mobile data, so servers see your carrier's IP, not your home IP. IP banned? New IP in one click.": "App grátis para Windows: CS2 e Steam usam os dados móveis do celular, os servidores veem o IP da operadora, não o de casa. Ban de IP? IP novo em um clique.",
   "CS2 IP changer, CS2 IP ban bypass, change IP CS2, Counter-Strike 2 IP ban, hide IP CS2, CS2 kill switch, Steam account switcher, CS2 alt accounts, CS2 config sync, CS2 region selector, USB tethering": "CS2 IP changer, trocar IP CS2, ban de IP CS2, contornar ban de IP, Counter-Strike 2 ban de IP, esconder IP CS2, kill switch CS2, trocador de contas Steam, contas alt CS2, sincronizar config CS2, seletor de região CS2, ancoragem USB",
   "Pickroute: change your CS2 IP with your phone": "Pickroute: troque o IP do CS2 com o celular",
@@ -923,7 +920,7 @@
   "The Profiles page in three steps: the look every picked account gets, the accounts, then review and apply": "A página Profiles em três passos: o visual que cada conta escolhida recebe, as contas, e depois revisar e aplicar",
   "games on the Regions page": "jogos na página Regions",
   "The same region picker for Dota 2 and Deadlock.": "O mesmo seletor de região para Dota 2 e Deadlock.",
-  "<b1>Download <code2/></b1> from the <a3>latest release</a3>. Started from Downloads, it offers to install itself in <code4/> in one click. The file and the folder keep the app's old name, CS2 IP Changer.": "<b1>Baixe o <code2/></b1> na <a3>última release</a3>. Aberto pela pasta Downloads, ele se oferece para se instalar em <code4/> com um clique. O arquivo e a pasta mantêm o nome antigo do app, CS2 IP Changer."
+  "<b1>Download <code2/></b1> from the <a3>latest release</a3>. Started from Downloads, it offers to install itself in <code4/> in one click. The file and the folder keep their old name.": "<b1>Baixe o <code2/></b1> na <a3>última release</a3>. Aberto pela pasta Downloads, ele se oferece para se instalar em <code4/> com um clique. O arquivo e a pasta mantêm o nome antigo."
  },
  "is-it-safe": {
   "Is Pickroute safe? What it changes and how to check it": "Pickroute é seguro? O que ele muda e como conferir",

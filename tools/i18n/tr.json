@@ -30,7 +30,6 @@
   "Download for Windows": "Windows için indir",
   "{version} · {size} · {date} · <a1>Release notes and checksums</a1>": "{version} · {size} · {date} · <a1>Sürüm notları ve checksum'lar</a1>",
   "Windows may say \"Windows protected your PC\": click More info, then Run anyway. <a1>Why it's safe</a1>": "Windows \"Windows bilgisayarınızı korudu\" diyebilir: Daha fazla bilgi'ye, sonra Yine de çalıştır'a tıkla. <a1>Neden güvenli</a1>",
-  "Send the link to my PC": "Bağlantıyı PC'me gönder",
   "Kill switch": "Kill switch",
   "New IP": "Yeni IP",
   "Pause motion": "Animasyonu durdur",
@@ -62,7 +61,6 @@
   "Name, avatar and privacy on many accounts.": "Ad, avatar ve gizlilik, birçok hesapta.",
   "CS2 ping test": "CS2 ping testi",
   "CS2 config file location": "CS2 config dosyasının yeri",
-  "Send to my PC": "PC'me gönder",
   "Site links": "Site bağlantıları",
   "Free Windows app that sends CS2 and Steam through your phone's mobile data.": "CS2 ve Steam'i telefonunun mobil verisi üzerinden geçiren ücretsiz Windows uygulaması.",
   "<i1></i1>Latest: <c2/>{version}": "<i1></i1>Son sürüm: <c2/>{version}",
@@ -690,7 +688,7 @@
   "It is a console setting for streamers: with <code1/>, CS2 hides the IP of the server you are on from your own screen (console and status), so viewers can't see it. It doesn't hide your IP: the server still sees your home IP. To hide that, the server has to see another connection, like <a2>your phone's mobile data</a2>.": "Yayıncılar için bir konsol ayarı: <code1/> ile CS2, bulunduğun sunucunun IP'sini kendi ekranından (konsol ve status) gizler, böylece izleyiciler göremez. Senin IP'ni gizlemez: sunucu yine ev IP'ni görür. Onu gizlemek için sunucunun başka bir bağlantı görmesi gerekir, örneğin <a2>telefonunun mobil verisi</a2>."
  },
  "index": {
-  "Pickroute (formerly CS2 IP Changer): CS2 IP ban bypass": "Pickroute (eski adı CS2 IP Changer): CS2 IP banını aş",
+  "Pickroute: CS2 IP ban bypass and server picker": "Pickroute: CS2 IP banını aş, sunucunu seç",
   "Free Windows app: CS2 and Steam go through your phone's mobile data, so servers see your carrier's IP, not your home IP. IP banned? New IP in one click.": "Ücretsiz Windows uygulaması: CS2 ve Steam telefonunun mobil verisinden çıkar, sunucu operatörünün IP'sini görür. IP banı mı yedin? Tek tıkla yeni IP.",
   "CS2 IP changer, CS2 IP ban bypass, change IP CS2, Counter-Strike 2 IP ban, hide IP CS2, CS2 kill switch, Steam account switcher, CS2 alt accounts, CS2 config sync, CS2 region selector, USB tethering": "CS2 IP changer, CS2 IP ban aşma, CS2 IP değiştirme, Counter-Strike 2 IP banı, CS2 IP gizleme, CS2 kill switch, Steam hesap değiştirici, CS2 alt hesap, CS2 config senkronizasyonu, CS2 region seçici, USB bağlantı paylaşımı",
   "Pickroute: change your CS2 IP with your phone": "Pickroute: CS2 IP'ni telefonunla değiştir",
@@ -912,7 +910,7 @@
   "The Profiles page in three steps: the look every picked account gets, the accounts, then review and apply": "Üç adımda Profiles sayfası: seçilen her hesabın alacağı görünüm, hesaplar, sonra gözden geçir ve uygula",
   "games on the Regions page": "Regions sayfasındaki oyunlar",
   "The same region picker for Dota 2 and Deadlock.": "Dota 2 ve Deadlock için aynı region seçici.",
-  "<b1>Download <code2/></b1> from the <a3>latest release</a3>. Started from Downloads, it offers to install itself in <code4/> in one click. The file and the folder keep the app's old name, CS2 IP Changer.": "<a3>Son sürümden</a3> <b1><code2/> dosyasını indir</b1>. İndirilenler klasöründen başlatırsan kendini <code4/> klasörüne tek tıkla kurmayı önerir. Dosya ve klasör uygulamanın eski adını taşır: CS2 IP Changer."
+  "<b1>Download <code2/></b1> from the <a3>latest release</a3>. Started from Downloads, it offers to install itself in <code4/> in one click. The file and the folder keep their old name.": "<a3>Son sürümden</a3> <b1><code2/> dosyasını indir</b1>. İndirilenler klasöründen başlatırsan kendini <code4/> klasörüne tek tıkla kurmayı önerir. Dosya ve klasör eski adını taşır."
  },
  "is-it-safe": {
   "Is Pickroute safe? What it changes and how to check it": "Pickroute güvenli mi? Ne değiştirir, nasıl doğrulanır",

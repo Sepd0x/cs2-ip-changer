@@ -4,31 +4,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
-### Added
-- Settings: Find a setting, over the list of groups. Type what you want ("startup", "tray", "sound", "update") and pick a result: the page scrolls to it and it blinks. Ctrl+F on the Settings page goes to the box. A notification that names a place in Settings now has an Open Settings button.
-- Settings for this page, next to the title of Connection, Servers, Regions, Accounts, Configs and Profiles: it opens Settings with the options that change that page listed by group, so you see what you can set without knowing where to look. All groups brings the full list back.
-- Install puts Pickroute in the Start menu (and so in Windows search) and on your desktop, so it is easy to open again after you close it. A copy installed before this gets the Start menu entry with the update. Remove the app takes both away.
-- Website: a guide for when a CS2 server picker doesn't work (blocked regions still show up, or no match at all), with what to check in order, and a guide for picking the regions of Dota 2 and Deadlock. Both are in every language of the site.
-
-### Changed
-- Pickroute no longer shows its old name: the "Formerly CS2 IP Changer" line is gone from Settings > App and from the top of the README. The download, the install folder and the startup task keep the old name until they move.
-- Website: on a phone, and on every guide, the page shows at once instead of behind a loading screen. The 3D scene fades in over its picture when it is ready, and a thin line at the top shows how far it is. The home page on a PC keeps its loading screen.
-- Website on a phone: the story with the 3D scene stays as it is, and what comes after it is shorter. Is it safe?, And the rest, the reasons in Pickroute or a VPN and the setup steps swipe sideways, the VPN comparison reads one row at a time, the footer's lists open when you tap them, and "Send the link to my PC" stays at the bottom of the screen.
-- Website: only the thin line at the top keeps the three colours. Lines, marks, the footer's name and the open FAQ line are the plain blue, and nothing glows.
-- Website on a phone, cleaner: the cards you swipe sideways are all the same height, with the same corners and border, and the next one only peeks with its edge. Setup's step numbers sit above their text. Picture captions are under the picture in plain text. The VPN comparison has a key with a dot for Pickroute and one for a VPN. The language notice has room for its text and a full-width button. The guides show a picture of their 3D scene until the live one is ready, and scrolling no longer blurs the scene under the header.
-- Website on a phone: every guide and the "page not found" page have the same menu as the home page, with its sections and the five languages. Lists of links look the same everywhere, without numbers in front. The "page not found" page has its two buttons one under the other and one Send button instead of two.
-
-### Fixed
-- Website on a phone: a page's address no longer breaks in the middle of a name, a long Turkish word in the last heading of the home page is no longer cut in two.
-- New IP + next account no longer looks stuck when Steam asks something before CS2 opens (a Cloud Conflict, an update, an agreement). After 20 seconds the app says so, with a sound and a Show Steam button, and waits for your answer in Steam; it never answers for you. Cancel at the top stops the wait. CS2 that opens late still gets the time to load its menu.
-- The blue rectangle that stayed around a page in the sidebar after Alt+Tab is gone. The keyboard ring shows only after Tab or an arrow key, and in the sidebar it follows the rounded tile.
-- Settings: scrolling to the end now lights the last group in the list (it stayed on Privacy).
-- Small screens: on a 1366x768 laptop at 125 %, or 1080p at 200 %, every page in the sidebar fits (Profiles went under Log), and Settings' list of groups scrolls.
-- Wide windows: Settings' list and options sit together in the middle instead of leaving the right side empty.
-- Updates: the app also accepts updates from the repository under the name Pickroute and a file named Pickroute.exe, so it keeps updating by itself if the project moves to the new name.
-- Website: the app tour, the app window on the home page and the screen in the 3D scene point at the right buttons and show the IP in the right place in the new app (they still used the places of the old look), and the close-ups no longer show text cut in half at their edges.
-
-## [1.0.0] - 2026-11-26
+## [1.0.0] - 2026-11-27
 
 ### Added
 - The app and the website are now also in Turkish. The app follows the language of Windows the first time; change it in Settings > App > Language. The website is under /tr/.
@@ -37,9 +13,13 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Website: clouds in the night sky of the 3D scenes, lit from below by the town and drifting slowly. They are drawn by the sky itself, so a phone draws the same as before.
 - First start: the app asks what you want to do first, "Pick my regions" or "Play through my phone". "Show me around" still opens the tour.
 - Phone setup: no USB data cable? "Use the hotspot" is there from the start. It opens the Wi-Fi list, and when the PC joins a new network it asks whether that is the phone's hotspot. A PC without Wi-Fi is told to use the cable.
+- Settings: Find a setting, over the list of groups. Type what you want ("startup", "tray", "sound", "update") and pick a result: the page scrolls to it and it blinks. Ctrl+F on the Settings page goes to the box. A notification that names a place in Settings now has an Open Settings button.
+- Settings for this page, next to the title of Connection, Servers, Regions, Accounts, Configs and Profiles: it opens Settings with the options that change that page listed by group, so you see what you can set without knowing where to look. All groups brings the full list back.
+- Install puts Pickroute in the Start menu (and so in Windows search) and on your desktop, so it is easy to open again after you close it. A copy installed before this gets the Start menu entry with the update. Remove the app takes both away.
+- Website: a guide for when a CS2 server picker doesn't work (blocked regions still show up, or no match at all), with what to check in order, and a guide for picking the regions of Dota 2 and Deadlock. Both are in every language of the site.
 
 ### Changed
-- CS2 IP Changer is now Pickroute. Nothing to do: your settings, regions, accounts and updates carry over, and the download is still CS2IPChanger.exe. Settings > App says the old name.
+- The app is now called Pickroute. Nothing to do: your settings, regions, accounts and updates carry over. The download, the install folder and the startup task keep their old names for now.
 - A new look for the whole app. Every page keeps all its buttons and options, laid out more calmly:
   - The window has a thin route line at the top, a narrower page list on the left (the logo centred on top, each page's icon over its name with the open one in blue, Log and Settings at the foot over the version), your protection and the quick button at the top right, and a status line at the bottom (phone, mobile data, hotkey).
   - Regions: all your regions on one dial. The length of a spoke is its ping, the ring is your ping limit, and the lit arc is where CS2 can play. The mouse on a spoke lights its row in the list, and the other way round. Continents fold, and presets are under the Preset button.
@@ -55,6 +35,11 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Regions: the line under the count says the block stays on after you close the app, and that "Allow all (block off)" removes it.
 - Website: the 3D scenes ask less of a phone. Each frame is drawn in about a quarter fewer steps on the home page and over a third fewer on the region guides, and the picture is the same.
 - Usage stats are no longer required. They are on by default, and the notice at the first start has Accept and Turn off (Turn off opens the app and sends nothing). Settings > Send usage stats turns them off or on again any time, with the same random ID. Anyone who accepted in a beta sees the notice once after updating, with Accept and Turn off, and keeps what they choose. The app, the README, the privacy page and the website no longer say they are required.
+- Website: on a phone, and on every guide, the page shows at once instead of behind a loading screen. The 3D scene fades in over its picture when it is ready, and a thin line at the top shows how far it is. The home page on a PC keeps its loading screen.
+- Website on a phone: the story with the 3D scene stays as it is, and what comes after it is shorter. Is it safe?, And the rest, the reasons in Pickroute or a VPN and the setup steps swipe sideways, the VPN comparison reads one row at a time, the footer's lists open when you tap them, and "Send the link to my PC" stays at the bottom of the screen.
+- Website: only the thin line at the top keeps the three colours. Lines, marks, the footer's name and the open FAQ line are the plain blue, and nothing glows.
+- Website on a phone, cleaner: the cards you swipe sideways are all the same height, with the same corners and border, and the next one only peeks with its edge. Setup's step numbers sit above their text. Picture captions are under the picture in plain text. The VPN comparison has a key with a dot for Pickroute and one for a VPN. The language notice has room for its text and a full-width button. The guides show a picture of their 3D scene until the live one is ready, and scrolling no longer blurs the scene under the header.
+- Website on a phone: every guide and the "page not found" page have the same menu as the home page, with its sections and the five languages. Lists of links look the same everywhere, without numbers in front. The "page not found" page has its two buttons one under the other and one Send button instead of two.
 
 ### Fixed
 - The last stop of the tour in Portuguese, Spanish and Russian: "5 of 5" was pushed out of the box and the main button was cut off. The count is now in the title and the buttons move to a second line when they don't fit.
@@ -114,6 +99,14 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Configs: the result of the last sync ("Sync now: 2 copied, 3 already the same") follows the app's language, also after you change it.
 - Profiles: the Country list is in the app's language and sorted by it.
 - Profiles: picking another template while "Copy look" was still reading Steam showed the old template's fields over the new one, and the next edit or Apply went into the new one. The fields now stay on the template you picked.
+- Website on a phone: a page's address no longer breaks in the middle of a name, a long Turkish word in the last heading of the home page is no longer cut in two.
+- New IP + next account no longer looks stuck when Steam asks something before CS2 opens (a Cloud Conflict, an update, an agreement). After 20 seconds the app says so, with a sound and a Show Steam button, and waits for your answer in Steam; it never answers for you. Cancel at the top stops the wait. CS2 that opens late still gets the time to load its menu.
+- The blue rectangle that stayed around a page in the sidebar after Alt+Tab is gone. The keyboard ring shows only after Tab or an arrow key, and in the sidebar it follows the rounded tile.
+- Settings: scrolling to the end now lights the last group in the list (it stayed on Privacy).
+- Small screens: on a 1366x768 laptop at 125 %, or 1080p at 200 %, every page in the sidebar fits (Profiles went under Log), and Settings' list of groups scrolls.
+- Wide windows: Settings' list and options sit together in the middle instead of leaving the right side empty.
+- Updates: the app also accepts updates from the repository under the name Pickroute and a file named Pickroute.exe, so it keeps updating by itself if the project moves to the new name.
+- Website: the app tour, the app window on the home page and the screen in the 3D scene point at the right buttons and show the IP in the right place in the new app (they still used the places of the old look), and the close-ups no longer show text cut in half at their edges.
 
 ## [0.1.0-beta.14] - 2026-11-19
 

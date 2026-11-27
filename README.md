@@ -313,6 +313,27 @@ While the app is open, every 5 minutes it also sends a short signal: this instal
 The server is a Cloudflare Worker whose code is in this repo ([`worker/stats`](worker/stats)). Cloudflare has to see your IP to deliver the request, like with any website, and gives the Worker only the country. The Worker reads the IP for one thing, a rate limit that slows down floods of requests: it turns the IP into a SHA-256 hash for Cloudflare's rate limiter and never writes or logs it, and the Worker's request logs are off. The stats are stored per day in a database with no IP column ([`schema.sql`](worker/stats/schema.sql)). The recording build sends nothing.
 </details>
 
+## Guides
+
+Step by step, on the website:
+
+- [Change IP with your phone](https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/): Setup, game-only routing and a new IP in one click.
+- [CS2 with an iPhone](https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/): Personal Hotspot, and a new IP by Airplane Mode.
+- [CS2 on mobile data](https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/): Ping, lag and how much data a match uses.
+- [CS2 IP ban](https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/): Which ban you have and how to get back in.
+- [Hide your IP without a VPN](https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/): Who sees your IP, and every method compared.
+- [Is it safe?](https://sepd0x.github.io/cs2-ip-changer/is-it-safe/): What it changes and how to check the download.
+- [Steam account switcher](https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/): No passwords, ban marks per server.
+- [Copy CS2 settings](https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/): Crosshair, binds and video on every account.
+- [CS2 region picker](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/): Choose where matchmaking puts you.
+- [Steam profile editor](https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/): Name, avatar and privacy on many accounts.
+- [CS2 ping test](https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/): Your ping to every region, and what to do about spikes.
+- [CS2 config file location](https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/): Where the cfg folder is, and what each file holds.
+- [Server picker not working](https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/): What to check when blocked regions still show up.
+- [Dota 2 and Deadlock regions](https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/): The same region picker for Dota 2 and Deadlock.
+
+The website is also in [Português](https://sepd0x.github.io/cs2-ip-changer/pt-br/), [Español](https://sepd0x.github.io/cs2-ip-changer/es/), [Русский](https://sepd0x.github.io/cs2-ip-changer/ru/) and [Türkçe](https://sepd0x.github.io/cs2-ip-changer/tr/).
+
 ## Support
 
 - **A bug:** [open a bug report](https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose) with the version and Log > Save bug report. Look through the .zip before you post it.

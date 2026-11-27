@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><script>window.__i18n={"IP servers see. Example, banned on this server":"Sunucuların gördüğü IP. Örnek, bu sunucuda banlı","Mobile data off, then on: getting a new IP":"Mobil veri kapat, sonra aç: yeni IP alınıyor","New IP, new /16 range. Example IP":"Yeni IP, yeni /16 aralığı. Örnek IP","Play motion":"Animasyonu oynat","The six pages":"Altı sayfa","Your phone":"Telefonun","Example: IP servers see ":"Örnek: sunucuların gördüğü IP ","Your home IP":"Ev IP'n","Protection off":"Koruma kapalı","Turning on protection":"Koruma açılıyor","IP servers see":"Sunucuların gördüğü IP","Android: mobile data off":"Android: mobil veri kapalı","Mobile data off":"Mobil veri kapalı","No connection":"Bağlantı yok","Android: mobile data on":"Android: mobil veri açık","Mobile data on":"Mobil veri açık","Getting a new IP":"Yeni IP alınıyor","New IP, checked: new /16 range":"Yeni IP, kontrol edildi: yeni /16 aralığı","New IP, new /16":"Yeni IP, yeni /16",", a new range. Was ":", yeni bir aralık. Önceki: ","your masked home IP":"gizlenmiş ev IP'n","one IP, example":"tek IP, örnek","many phones on one carrier":"tek operatörde birçok telefon","VPN, on the list: ban":"VPN, listede: ban","datacenter":"veri merkezi","a VPN provider's addresses, example":"bir VPN sağlayıcısının adresleri, örnek","See the IP servers see. Change it and rejoin from one place.":"Sunucuların gördüğü IP'yi gör. Tek yerden değiştir ve yeniden katıl.","Find your server, check its players and ping, then join.":"Sunucunu bul, oyuncularına ve ping'ine bak, sonra katıl.","Switch saved Steam accounts. Keep bans and cooldowns in view.":"Kayıtlı Steam hesaplarını değiştir. Banları ve cooldown'ları gözünün önünde tut.","Choose where CS2 can match you, with ping through your phone.":"CS2'nin seni nerede eşleştirebileceğini seç, ping telefonun üzerinden ölçülür.","Take your settings to another account. Keep a backup to undo.":"Ayarlarını başka bir hesaba taşı. Geri almak için yedek tutulur.","One template for your Steam profiles. Preview before applying.":"Steam profillerin için tek şablon. Uygulamadan önce önizle.","Explore the Windows app":"Windows uygulamasını keşfet","Previous detail":"Önceki detay","Next detail":"Sonraki detay","Full screenshot":"Tam ekran görüntüsü","More details":"Daha fazla detay","Windows app · Example IPs and names":"Windows uygulaması · Örnek IP'ler ve adlar","Screenshot detail":"Ekran görüntüsü detayı","Less detail":"Daha az detay"};window.__root='../'</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pickroute (eski adı CS2 IP Changer): CS2 IP banını aş</title>
+<title>Pickroute: CS2 IP banını aş, sunucunu seç</title>
 <meta name="description" content="Ücretsiz Windows uygulaması: CS2 ve Steam telefonunun mobil verisinden çıkar, sunucu operatörünün IP'sini görür. IP banı mı yedin? Tek tıkla yeni IP.">
 <meta name="keywords" content="CS2 IP changer, CS2 IP ban aşma, CS2 IP değiştirme, Counter-Strike 2 IP banı, CS2 IP gizleme, CS2 kill switch, Steam hesap değiştirici, CS2 alt hesap, CS2 config senkronizasyonu, CS2 region seçici, USB bağlantı paylaşımı">
 <meta name="google-site-verification" content="UGTE4l653P1j3Qx9pOtpi_gOCKCVqaSnbbUnVe8WL3s">
@@ -1084,7 +1084,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
    reasons of Phone or VPN and Setup's four steps swipe sideways, each card 82 % wide so the top of the next one peeks, with a
    dot per card right under them; the two pictures of Phone or VPN sit side by side; the VPN table reads one row at a time,
    Pickroute's answer first and the VPN's under it, both always there; the footer's lists open in place; the footer's name is
-   centred; and "Send the link to my PC" waits at the bottom, in thumb reach, from the app to the guides (the header's own
+   centred; and "Send to PC" waits at the bottom, in thumb reach, from the app to the guides (the header's own
    Send to PC steps aside meanwhile). Reviewed the same night by a designer and a critic (publish/plano-1-0-0/24-site-telemovel.md) */
 .shelf-dots,.thumb{display:none}
 /* the footer's name sits in the middle of its line, at every width (the owner, 26 Nov.: it was left of a line that spans the page) */
@@ -1239,7 +1239,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
         <p class="rel-ss">Windows "Windows bilgisayarınızı korudu" diyebilir: Daha fazla bilgi'ye, sonra Yine de çalıştır'a tıkla. <a href="is-it-safe/">Neden güvenli</a></p>
       </div>
       <div class="get-phone">
-        <button class="btn" type="button" id="send-link" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/tr/">Bağlantıyı PC'me gönder</button>
+        <button class="btn" type="button" id="send-link" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/tr/">PC'ye yolla</button>
         <p class="get-note">Bu bir Windows uygulaması: bu sayfayı PC'nde aç.</p>
         <p class="get-alt"><code>sepd0x.github.io/cs2-ip-changer</code><a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Yine de .exe'yi indir</a></p>
       </div>
@@ -1463,7 +1463,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
       <p class="sub rv" style="--i:1">Windows 10 veya 11 (64 bit), yönetici hakları, açık Windows Güvenlik Duvarı ve mobil verili bir telefon.</p>
       <figure class="still still-219 rv"><img src="../img/world-plug.webp" alt="" width="2100" height="900" loading="lazy" decoding="async"><figcaption>PC'den telefona bir USB kablo, USB bağlantı paylaşımı açık (iPhone'da Personal Hotspot).</figcaption></figure>
       <ol class="steps4">
-        <li class="rv"><a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Son sürümden</a> <b><code>CS2IPChanger.exe</code> dosyasını indir</b>. İndirilenler klasöründen başlatırsan kendini <code>C:\Program Files\CS2 IP Changer</code> klasörüne tek tıkla kurmayı önerir. Dosya ve klasör uygulamanın eski adını taşır: CS2 IP Changer.</li>
+        <li class="rv"><a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Son sürümden</a> <b><code>CS2IPChanger.exe</code> dosyasını indir</b>. İndirilenler klasöründen başlatırsan kendini <code>C:\Program Files\CS2 IP Changer</code> klasörüne tek tıkla kurmayı önerir. Dosya ve klasör eski adını taşır.</li>
         <li class="rv" style="--i:1"><b>Telefonu USB ile tak,</b> USB bağlantı paylaşımını aç (iPhone'da Personal Hotspot) ve telefonun Wi-Fi'sini kapat. PC'de VPN mi kullanıyorsun? Önce onu kapat.</li>
         <li class="rv" style="--i:2"><b>Uygulamayı yönetici olarak çalıştır.</b> <b>Phone setup</b> her adımı yeşil veya kırmızı gösterir ve neyin eksik olduğunu söyler. Oynadığın sunucuları Servers'a yapıştır (CS2 konsolundaki <code>IP:port</code>, <code>status</code>), sonra <b>Turn on protection</b>'a bas: uygulama her açıldığında kapalı başlar.</li>
         <li class="rv" style="--i:3"><b>Connection'ı aç.</b> CS2 ve Steam çalışırken tüm kontroller yeşil olmalı, Phone IP is not your home IP dahil.</li>
@@ -1534,7 +1534,7 @@ ul.guides li>span:not(.n){color:var(--ink3);font-size:.95rem;line-height:1.45}
         <div class="get-phone">
           <div class="copyrow">
             <code class="url">sepd0x.github.io/<wbr>cs2-ip-changer/<wbr>tr</code>
-            <button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/tr/">PC'me gönder</button>
+            <button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/tr/">PC'ye yolla</button>
           </div>
         </div>
         <div class="actions get-desk">
