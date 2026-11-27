@@ -183,7 +183,13 @@ there.
   at the 660 px minimum height. A page: a 66 px row with a 58 px tile 10 px in from each side, rounded 10, holding the icon
   (`Tag`, Segoe Fluent 22 px) over the name (12 px, 6 px under), `Muted`; under the pointer the tile in `Surface` and the name
   in `Text`; the page picked has the tile in `Surface2`, the icon in `Accent`, the name white SemiBold and a 3 x 32 px
-  `NavMark` on the sidebar's left edge.
+  `NavMark` on the sidebar's left edge. With the keyboard the tile gets a 1 px `Accent` ring rounded 10 (`NavFocusRing`).
+  The tile is the row less 4 px over and under. A window under 660 px (1366x768 at 125 % leaves 576, 1080p at 200 %
+  leaves 516) takes the gap under the logo to 8 and shares the rest between the eight rows, down to 48 px (`NavFit`), so
+  Profiles never goes under Log (27 Nov).
+- The keyboard focus ring (`FocusRing`, 1 px `Accent`, 2 px out) shows only after Tab or an arrow key, and goes at the next
+  click or when the window is activated again (27 Nov, the owner: a blue rectangle stayed on the sidebar after Alt+Tab; WPF
+  draws it whenever the last input was a key, Alt included). `FocusRingShown` in `Theme.xaml` holds it for every ring.
 - The top bar, 40 px: "Pickroute / Page" in 13 px (`Muted`, the "/" in `Faint`, the page in `Text`), the activity pill
   while something runs, then on the right the state chip (24 px, rounded, a 10 % wash of the state's colour, its
   `StatusMark`, the state SemiBold and the IP in mono; a click goes to Connection), the quick switch (`TopPill`, 26 px:
@@ -240,7 +246,15 @@ there.
 3. **Steps** (Profiles): one page that scrolls, three numbered steps (a 26 px ring, a faint line down to the next), each
    with its title and one line: The look, Accounts, Review and apply. Apply at the end of the last one.
 4. **Options** (Settings): the groups' names in a list on the left (`SetNav`, 196 px; the group in view lit in `Lift`, a
-   click goes to it), the groups one under the other on the right, at most 780 px wide: how you play first (protection,
+   click goes to it; over it, Find a setting, 28 px, whose results take the list's place while it has text: the name over
+   its group, a click scrolls to it and blinks it twice; Ctrl+F on the page; a notification that names a group or an option
+   gets Open Settings; each of the six pages has Settings for this page beside its title, `PageSettingsLink`: a 12 px gear
+   and the words in `LinkBtn`, 10 px after the title, which opens Settings with that page's groups listed in the list's
+   place, "Settings for Accounts" and All groups on top, then each group's name once in 11 px SemiBold capitals with its
+   options under it, `PageSettingsGroups` in `MainWindow.SettingsFind.cs`), the groups one under the other on the right, at most 900 px wide (780 until 27 Nov); on a wide
+   window the list and the groups sit together in the middle, the scroll bar at the window's edge (`SettingsPad`); the list
+   scrolls when the window is short. The list picks the group under a line 40 px from the top, and in the last screen of
+   scroll that line slides to the bottom, so the end picks the last group: how you play first (protection,
    mobile data, the IP, the commands and their keys), then what is around the game (programs, flags, Steam), then the
    app; Remove the app last, in red. A new group goes next to the group it changes. Each option is a row with the line
    above it: the name 13 px, the grey line in 12 px `Faint` under it, the switch or the field on the right.

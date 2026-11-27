@@ -541,7 +541,7 @@
                      version centred, the icon over the name, the pages under the logo with a clean gap, and Log and Settings at the
                      foot). The logo 40 px centred on top, 24 px of air, the six pages you use in 66 px rows; at the foot Log and
                      Settings, then the version centred. At the 660 px minimum height everything still fits -->
-                <Border Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
+                <Border x:Name="SideBar" Background="{StaticResource Side}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0" SizeChanged="SideBar_SizeChanged">
                     <Grid Margin="0,14,0,14">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -573,7 +573,7 @@
                                 </DrawingImage>
                             </Image.Source>
                         </Image>
-                        <StackPanel Grid.Row="1" Margin="0,24,0,0">
+                        <StackPanel x:Name="SideNavTop" Grid.Row="1" Margin="0,24,0,0">
                             <RadioButton x:Name="NavNet" Style="{StaticResource Nav}" Tag="&#xEA18;" Content="Connection" IsChecked="True" Checked="Nav_Checked"
                                          ToolTip="The IP servers see, Change IP and the phone"/>
                             <RadioButton x:Name="NavServers" Style="{StaticResource Nav}" Tag="&#xE968;" Content="Servers" Checked="Nav_Checked"
@@ -872,7 +872,11 @@
                         </ScrollViewer.Resources>
                         <StackPanel TextElement.FontSize="13">
                             <!-- the title and its line -->
-                            <TextBlock Text="Connection" FontFamily="{StaticResource DisplayFont}" FontSize="22" FontWeight="SemiBold" LineHeight="26.4" LineStackingStrategy="BlockLineHeight"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Connection" FontFamily="{StaticResource DisplayFont}" FontSize="22" FontWeight="SemiBold" LineHeight="26.4" LineStackingStrategy="BlockLineHeight"/>
+                                <Button Style="{StaticResource PageSettingsLink}" Tag="net" Content="Settings for this page" Click="PageSettingsLink_Click"
+                                        ToolTip="Protection, mobile data, Change IP and the hotkeys"/>
+                            </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="0,3,0,0" TextElement.FontSize="12.5" TextElement.Foreground="{StaticResource Muted}">
                                 <TextBlock Text="Game only" Visibility="{Binding IsChecked, ElementName=ModeServers, Converter={StaticResource Vis}}"/>
                                 <TextBlock Text="Whole PC while CS2 is open" Visibility="{Binding IsChecked, ElementName=ModeGame, Converter={StaticResource Vis}}"/>
@@ -1165,7 +1169,11 @@
                         </Grid.RowDefinitions>
 
                         <StackPanel>
-                            <TextBlock Text="Servers" FontFamily="{StaticResource DisplayFont}" FontSize="22" FontWeight="SemiBold" LineHeight="26.4" LineStackingStrategy="BlockLineHeight"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Servers" FontFamily="{StaticResource DisplayFont}" FontSize="22" FontWeight="SemiBold" LineHeight="26.4" LineStackingStrategy="BlockLineHeight"/>
+                                <Button Style="{StaticResource PageSettingsLink}" Tag="servers" Content="Settings for this page" Click="PageSettingsLink_Click"
+                                        ToolTip="Protection, player flags, the programs that open with CS2, and kicks and bans"/>
+                            </StackPanel>
                             <TextBlock x:Name="ServerCount" FontSize="12.5" Foreground="{StaticResource Muted}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
 
@@ -1548,7 +1556,11 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel>
-                                <TextBlock Text="Regions" FontSize="22" FontWeight="SemiBold" FontFamily="{StaticResource DisplayFont}" LineHeight="26.4" LineStackingStrategy="BlockLineHeight"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Regions" FontSize="22" FontWeight="SemiBold" FontFamily="{StaticResource DisplayFont}" LineHeight="26.4" LineStackingStrategy="BlockLineHeight"/>
+                                    <Button Style="{StaticResource PageSettingsLink}" Tag="regions" Content="Settings for this page" Click="PageSettingsLink_Click"
+                                            ToolTip="When the app starts and closes, and what stays blocked"/>
+                                </StackPanel>
                                 <TextBlock x:Name="RegionsSummary" FontSize="12.5" Foreground="{StaticResource Muted}" Margin="0,3,0,0" TextTrimming="CharacterEllipsis"
                                            ToolTipService.ShowDuration="30000"><Run x:Name="RegionsSummaryCount" FontWeight="SemiBold" Foreground="{StaticResource Text}"/><Run x:Name="RegionsSummaryRest"/></TextBlock>
                                 <!-- Before the list is here (loading, or Valve couldn't be reached): this line says so in place of the summary -->
@@ -1867,7 +1879,11 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel>
-                                <TextBlock Text="Accounts" FontFamily="{StaticResource DisplayFont}" FontSize="22" FontWeight="SemiBold" LineHeight="26.4" LineStackingStrategy="BlockLineHeight"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Accounts" FontFamily="{StaticResource DisplayFont}" FontSize="22" FontWeight="SemiBold" LineHeight="26.4" LineStackingStrategy="BlockLineHeight"/>
+                                    <Button Style="{StaticResource PageSettingsLink}" Tag="accounts" Content="Settings for this page" Click="PageSettingsLink_Click"
+                                            ToolTip="New IP + next account, its hotkey, the Steam API key and hiding usernames"/>
+                                </StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,3,0,0" TextElement.FontSize="12.5" TextElement.Foreground="{StaticResource Muted}">
                                     <TextBlock x:Name="AccCount"/>
                                     <TextBlock x:Name="AccInUse"/>
@@ -2303,7 +2319,11 @@
                         </Grid.Resources>
                         <ScrollViewer x:Name="CfgScroll" Padding="24,16,24,18" VerticalScrollBarVisibility="Auto">
                             <StackPanel TextElement.FontSize="13">
-                                <TextBlock Text="Configs" FontFamily="{StaticResource DisplayFont}" FontSize="22" FontWeight="SemiBold" LineHeight="26.4" LineStackingStrategy="BlockLineHeight"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Configs" FontFamily="{StaticResource DisplayFont}" FontSize="22" FontWeight="SemiBold" LineHeight="26.4" LineStackingStrategy="BlockLineHeight"/>
+                                    <Button Style="{StaticResource PageSettingsLink}" Tag="configs" Content="Settings for this page" Click="PageSettingsLink_Click"
+                                            ToolTip="CS2's launch options and the programs that open with CS2"/>
+                                </StackPanel>
                                 <!-- App v3's line under the title ("8 accounts · sync from main account nightfall"): the Sync line and the count
                                      above the list say both now, so it stays filled in but out of view -->
                                 <TextBlock x:Name="CfgSummary" Visibility="Collapsed"/>
@@ -2958,7 +2978,11 @@
                         </Grid.Resources>
                         <ScrollViewer x:Name="ProfPageScroll" Padding="24,16,24,24" VerticalScrollBarVisibility="Auto">
                             <StackPanel>
-                                <TextBlock Text="Profiles" FontFamily="{StaticResource DisplayFont}" FontSize="22" FontWeight="SemiBold" LineHeight="26.4" LineStackingStrategy="BlockLineHeight"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Profiles" FontFamily="{StaticResource DisplayFont}" FontSize="22" FontWeight="SemiBold" LineHeight="26.4" LineStackingStrategy="BlockLineHeight"/>
+                                    <Button Style="{StaticResource PageSettingsLink}" Tag="profiles" Content="Settings for this page" Click="PageSettingsLink_Click"
+                                            ToolTip="The Steam API key and hiding usernames"/>
+                                </StackPanel>
                                 <TextBlock Margin="0,3,0,0" FontSize="12.5" Foreground="{StaticResource Muted}" Text="Give your accounts one Steam look in three steps."/>
                                 <!-- App v3's line under the title ("Template Team look · 6 of 8 accounts picked"): the steps show both now -->
                                 <TextBlock x:Name="ProfSummary" Visibility="Collapsed"/>
@@ -3578,10 +3602,10 @@
                     <!-- ======================================== Page: Settings -->
                     <!-- Settings (26 Nov, App v3 design, p8; groups and options as in docs/DESIGN.md > App layout): the twelve groups
                          listed on the left (a click scrolls to the group, the list follows the scroll), the groups one under the other on the
-                         right, at most 780 px wide. Each option is a row under a thin line: the name and its line in Faint on the left, the
+                         right, at most 900 px wide; on a wide window the list and the groups sit together in the middle (SettingsPad). Each option is a row under a thin line: the name and its line in Faint on the left, the
                          switch (32 x 18) or the field on the right. The page's styles below keep the keys the code and the tests use
                          (Group, Switch, OptSub, Danger) and give them this look only here -->
-                    <Grid x:Name="PageSettings" Grid.Row="1" Visibility="Collapsed" local:Look.Round="True" TextElement.FontSize="13" Loaded="PageSettings_Loaded"
+                    <Grid x:Name="PageSettings" Grid.Row="1" Visibility="Collapsed" local:Look.Round="True" TextElement.FontSize="13" Loaded="PageSettings_Loaded" SizeChanged="PageSettings_SizeChanged" IsVisibleChanged="PageSettings_VisibleChanged"
                           TextBlock.LineHeight="18.2" TextBlock.LineStackingStrategy="BlockLineHeight">
                         <Grid.Resources>
                             <local:UpperText x:Key="SetUpper"/>
@@ -3742,6 +3766,32 @@
                                     </Setter.Value>
                                 </Setter>
                             </Style>
+                            <!-- 27 Nov, Find a setting: a result is the setting's name (12.5 px Text) over its group (11.5 px Muted), 10 px in,
+                                 rounded 6, Surface under the pointer, like the list of groups it takes the place of -->
+                            <Style x:Key="SetFoundItem" TargetType="Button">
+                                <Setter Property="Foreground" Value="{StaticResource Text}"/>
+                                <Setter Property="Margin" Value="0,0,0,1"/>
+                                <Setter Property="Cursor" Value="Hand"/>
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="b" Background="Transparent" CornerRadius="6" Padding="10,5,6,6">
+                                                <ContentPresenter/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="b" Property="Background" Value="{StaticResource Surface}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsKeyboardFocused" Value="True">
+                                                    <Setter TargetName="b" Property="Background" Value="{StaticResource Surface}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
                             <!-- the list of groups: 28 px, 10 px in, rounded 6, 12.5 px Muted; the group in view in Lift, Text, SemiBold -->
                             <Style x:Key="SetNavItem" TargetType="RadioButton">
                                 <Setter Property="Foreground" Value="{StaticResource Muted}"/>
@@ -3773,15 +3823,21 @@
                             </Style>
                         </Grid.Resources>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="196"/>
+                            <ColumnDefinition x:Name="SetNavCol" Width="196"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- the title, "12 groups" and the list of groups; Remove the app in red -->
+                        <!-- the title, "12 groups" and the list of groups; Remove the app in red. 27 Nov: it scrolls when the window is
+                             short (1080p at 200 % leaves 516 px, and Remove the app went under the status bar) -->
+                        <ScrollViewer x:Name="SetSide" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Margin="24,16,12,16">
                             <TextBlock Text="Settings" FontFamily="{StaticResource DisplayFont}" FontSize="22" FontWeight="SemiBold" LineHeight="26.4" LineStackingStrategy="BlockLineHeight"/>
                             <TextBlock x:Name="SetCount" FontSize="12.5" LineHeight="17.5" Foreground="{StaticResource Muted}" Margin="0,3,0,0"/>
-                            <StackPanel x:Name="SetNav" Margin="0,18,0,0">
+                            <!-- 27 Nov: Find a setting (Ctrl+F on this page). While it has text, the results take the list's place -->
+                            <TextBox x:Name="SetFind" Style="{StaticResource FieldBox}" Tag="Find a setting" Margin="0,14,0,0" AutomationProperties.Name="Find a setting"
+                                     TextChanged="SetFind_Changed" PreviewKeyDown="SetFind_Key" ToolTip="Words from a setting's name or what it does: sound, startup, tray, update, language…"/>
+                            <StackPanel x:Name="SetFound" Margin="0,10,0,0" Visibility="Collapsed"/>
+                            <StackPanel x:Name="SetNav" Margin="0,10,0,0">
                                 <RadioButton Style="{StaticResource SetNavItem}" Click="SetNav_Click" Content="Protection" IsChecked="True"/>
                                 <RadioButton Style="{StaticResource SetNavItem}" Click="SetNav_Click" Content="Mobile data"/>
                                 <RadioButton Style="{StaticResource SetNavItem}" Click="SetNav_Click" Content="Change IP"/>
@@ -3796,11 +3852,12 @@
                                 <RadioButton Style="{StaticResource SetNavItem}" Click="SetNav_Click" Content="Remove the app" Foreground="{StaticResource Bad}"/>
                             </StackPanel>
                         </StackPanel>
+                        </ScrollViewer>
 
                         <ScrollViewer x:Name="SetScroll" Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" ScrollChanged="SetScroll_Changed">
                         <Grid x:Name="SetContent" Margin="20,0,32,32">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" MaxWidth="780"/>
+                                <ColumnDefinition Width="*" MaxWidth="900"/>
                                 <ColumnDefinition Width="0"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel x:Name="SetGroups" Margin="0,-12,0,0">
@@ -4187,8 +4244,9 @@
                                         <Border Style="{StaticResource SetRow}">
                                             <Button Click="TourAgain_Click" Margin="0" HorizontalAlignment="Left" Content="{x:Static local:Texts.TourAgain}" ToolTip="{x:Static local:Texts.TourAgainTip}"/>
                                         </Border>
-                                        <!-- 1.0.0: the app's old name, for those who knew it by it -->
-                                        <TextBlock x:Name="FormerlyText" Style="{StaticResource OptSub}" Margin="0,10,0,0" Text="Formerly CS2 IP Changer"/>
+                                        <!-- 27 Nov (the owner): no "Formerly CS2 IP Changer" line any more. The old name stays only where
+                                             people don't read it (the site's JSON-LD alternateName and llms.txt, for search and AIs) and
+                                             where it is really the name on the PC (the exe, the folder, the task) -->
                                     </StackPanel>
                                 </HeaderedContentControl>
 

@@ -206,6 +206,9 @@ public static class Program
                 var left = old.Where(p => !Installer.Recycle(p)).ToList();
                 note += (left.Count == 0 ? Loc.T("The old SRT_Dados is in the Recycle Bin.") : Loc.F("Couldn't move {0} to the Recycle Bin: delete it yourself.", string.Join(", ", left))) + " ";
             }
+            // 27 nov.: the Start menu and the desktop, so the app is easy to open again after you close it
+            if (Shortcuts.KeepStartMenu(r.Exe, target: target) is string sm) note += Loc.F("Couldn't add it to the Start menu ({0}).", sm) + " ";
+            if (Shortcuts.AddDesktop(r.Exe) is string dk) note += Loc.F("Couldn't put a shortcut on the desktop ({0}).", dk) + " ";
             try { Installer.Start(r.Exe); }
             catch (Exception ex)
             {
@@ -232,7 +235,8 @@ public static class Program
                 : keepExe ? Loc.F("Version {0} is already in {1}, the same or newer than this one, so Install keeps it,", installed, target)
                 : Loc.F("Install replaces version {0} in {1} (only admins can change files there) with this one,", installed, target))
             + " " + (keepData ? Loc.T("keeps the SRT_Dados that is already there (the one in that folder isn't copied),") : Loc.T("copies your SRT_Dados folder too if there is one there,"))
-            + " " + Loc.T("and starts the app from there. Nothing in that folder is moved or deleted, so you can delete that copy afterwards.");
+            + " " + Loc.T("and starts the app from there. Nothing in that folder is moved or deleted, so you can delete that copy afterwards.")
+            + " " + Loc.T("Pickroute goes in the Start menu and on your desktop, so you can open it again after closing it.");
     }
 
     /// <summary>The old copy's protection is still in the Firewall: what that means, and how to lift it without installing.</summary>

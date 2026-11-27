@@ -9,11 +9,10 @@ using SRT.Core;
 // teste) são lidas e tiradas como as "ServerRouteTool v9".
 static class PickrouteTests
 {
-    // os únicos textos que se veem com o nome antigo: a linha "Formerly", e o que tem mesmo esse nome no PC (a tarefa, a pasta, os
-    // dispositivos da Steam feitos antes)
+    // os únicos textos que se veem com o nome antigo: o que tem mesmo esse nome no PC (a tarefa, a pasta, os dispositivos da Steam
+    // feitos antes). 27 nov. (o dono): a linha "Formerly CS2 IP Changer" das Settings saiu; o nome antigo fica só no que não se lê
     static readonly string[] Allowed =
     {
-        "Formerly CS2 IP Changer",
         "A scheduled task named 'CS2 IP Changer'",
         "task \"CS2 IP Changer\"",
         "C:\\Program Files\\CS2 IP Changer",
@@ -26,15 +25,15 @@ static class PickrouteTests
         var keys = LocTests.Keys(repo);
         // tirados os pedaços permitidos, o nome antigo não pode sobrar em lado nenhum
         var old = keys.Where(k => Allowed.Aggregate(k, (s, a) => s.Replace(a, "")).Contains("CS2 IP Changer")).ToList();
-        check("Pickroute: nenhum texto visível diz CS2 IP Changer, fora da linha Formerly e do que tem mesmo esse nome", old.Count == 0, string.Join(" | ", old.Take(4)));
-        check("Pickroute: a janela, o aviso e os textos dizem Pickroute",
-            keys.Contains("Pickroute is already running") && keys.Contains("Remove Pickroute") && keys.Contains("Formerly CS2 IP Changer")
+        check("Pickroute: nenhum texto visível diz CS2 IP Changer, fora do que tem mesmo esse nome no PC", old.Count == 0, string.Join(" | ", old.Take(4)));
+        check("Pickroute: a janela, o aviso e os textos dizem Pickroute, e já não há a linha Formerly",
+            keys.Contains("Pickroute is already running") && keys.Contains("Remove Pickroute") && !keys.Contains("Formerly CS2 IP Changer")
             && Src(repo, "MainWindow.xaml").Contains("Title=\"Pickroute\"") && Src(repo, "Views", "NoticeWindow.xaml").Contains("Title=\"Pickroute\""), "");
         foreach (var code in new[] { "es", "pt-BR", "ru", "tr" })
         {
             var t = Loc.Load(code);
             var bad = t.Where(kv => kv.Value.Contains("CS2 IP Changer") && !Allowed.Any(a => kv.Key.Contains(a))).Select(kv => kv.Key).ToList();
-            check($"Pickroute: {code} só diz CS2 IP Changer onde o inglês diz", bad.Count == 0 && t.TryGetValue("Formerly CS2 IP Changer", out var f) && f.Contains("CS2 IP Changer"),
+            check($"Pickroute: {code} só diz CS2 IP Changer onde o inglês diz, e já não tem a linha Formerly", bad.Count == 0 && !t.ContainsKey("Formerly CS2 IP Changer"),
                 string.Join(" | ", bad.Take(3)));
         }
         var tr = Loc.Load("tr");

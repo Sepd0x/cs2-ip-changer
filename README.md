@@ -14,8 +14,7 @@
 
 <p align="center">
   <b>CS2 IP ban bypass and home IP protection for community servers. Free, for Windows.</b><br>
-  CS2 plays through your phone's mobile data, so servers see your carrier's IP.<br>
-  <sub>Formerly CS2 IP Changer. Same app, same downloads, same updates.</sub>
+  CS2 plays through your phone's mobile data, so servers see your carrier's IP.
 </p>
 
 <p align="center">

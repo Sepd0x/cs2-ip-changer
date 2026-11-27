@@ -1,7 +1,7 @@
 {
  "note": "Made by tools/shots.mjs. Do not edit: tests/DesignSyncTests.cs checks it against the app and the files.",
  "app": "1.0.0",
- "ui": "370b346a0e1c41e3276eb6560ecd053b089d15d09737d13682f3da4e9ea196aa",
+ "ui": "238a7f949eeb6fe664ad5281e8a0b54baa5a091c558e270689f6f522066e2680",
  "uiFiles": [
   "src/App.xaml",
   "src/MainWindow.xaml",
@@ -9,7 +9,7 @@
   "src/Views/NoticeWindow.xaml",
   "src/Views/SteamLoginWindow.xaml"
  ],
- "made": "2026-11-26",
+ "made": "2026-11-27",
  "scale": 2,
  "base": [
   1240,
@@ -18,7 +18,7 @@
  "files": [
   {
    "file": "docs/screenshots/connection.png",
-   "sha256": "35ff9b0c3f40c8e34b63a8a1a812e1b4c8099afadf7b632239db13d707971788",
+   "sha256": "10a28f37bf49ded43d1ea36e4bbbd7b425e305301ba0c6bf1e6de6b9fdff9534",
    "size": [
     2480,
     1600
@@ -26,7 +26,7 @@
   },
   {
    "file": "docs/screenshots/servers.png",
-   "sha256": "3bfcdb0a0c29bf03d060ceccb2a36530dd3533f5e4138bff58847f0f26585edb",
+   "sha256": "fdf872670df236af13e97b87c87b3613937e49c70ff1438ee1e695136c6bad31",
    "size": [
     2480,
     1600
@@ -34,7 +34,7 @@
   },
   {
    "file": "docs/screenshots/regions.png",
-   "sha256": "bbe6bc7ff49ac3690be3d5f91ae99ffae3e02a347848ba2d1793db43b1d63aef",
+   "sha256": "7d5133897b489182fec8866caf550738c66f5f5d380a4f492042d18ed49831cf",
    "size": [
     2480,
     1600
@@ -42,7 +42,7 @@
   },
   {
    "file": "docs/screenshots/accounts.png",
-   "sha256": "8bbf3cbee7520bb7d6a594a265e2576f9b6b668ca4bb84731d28995f4f850293",
+   "sha256": "bc5da165ce49ce1f61a70935972cbc898bf799c2041e56c36b430437e8a65d95",
    "size": [
     2480,
     1600
@@ -50,7 +50,7 @@
   },
   {
    "file": "docs/screenshots/configs.png",
-   "sha256": "e02134a4816eb17046b772b2bf854b986ac71733687d3b26ddf280cc961ddefb",
+   "sha256": "93771fdeb23c7515753ff1c769c14fec103266f06e070cc91ab10a1b8e03dc34",
    "size": [
     2480,
     1600
@@ -58,7 +58,7 @@
   },
   {
    "file": "docs/screenshots/profiles.png",
-   "sha256": "77d83fe84fd3dc86969c33117afd34a65142dc45580d9c7b16add7ba8c91e559",
+   "sha256": "96f658899fd265aa943dec39f7eaf6938b84b55b46f7426976409f099b35d502",
    "size": [
     2480,
     1600
@@ -66,7 +66,7 @@
   },
   {
    "file": "docs/assets/shots/accounts.png",
-   "sha256": "1e345016a59887b0106327d36c8049f9055fc9f483bdb37d77358c656b42e110",
+   "sha256": "70c66273ab90e5dc2af44fdd46f568725cf82b334b188ab86d85ae163d5d5f33",
    "size": [
     2572,
     1692
@@ -74,11 +74,11 @@
   },
   {
    "file": "docs/assets/shots/accounts.webp",
-   "sha256": "b00e0396b73b00945a2715aa55d7e3bd09e0b32f076aba2e6c6bbc8ece42a36e"
+   "sha256": "daba2609eeae33d46687f8f27a11085e7eabd01ee5cbcbd3bda84d24986b3634"
   },
   {
    "file": "docs/assets/shots/configs.png",
-   "sha256": "fb48275c3c008b7fad13f247779e804395ab1d39afe8b013cf9ff78a98b5bd43",
+   "sha256": "8a359a31e022ed68d6d903f2b91dd580adc19059f5f2e81b4a6bcdfcc60a06e3",
    "size": [
     2572,
     1692
@@ -86,11 +86,11 @@
   },
   {
    "file": "docs/assets/shots/configs.webp",
-   "sha256": "4bff366f5d1df90414ec171005e3f55e2addfbd6e3f9877db19e6d862b47954b"
+   "sha256": "1ece1f4ec69acce94a378eada7f8479f0e35c8a8cc6ece34387fe69679e21120"
   },
   {
    "file": "docs/assets/shots/connection.png",
-   "sha256": "f228ba7b6358ad8477214fb68752b16524f18e40785545fac7f0ef17a24211c7",
+   "sha256": "ed675ce58ddafc0ea1366f84a9251c15a8b02867c47d4619381a61374e155da7",
    "size": [
     2572,
     1692
@@ -98,7 +98,7 @@
   },
   {
    "file": "docs/assets/shots/connection.webp",
-   "sha256": "7be950b0d60a5f85fb52557b4093445fcbdf624dfaa84306b2a95c597d643778"
+   "sha256": "8a7dfb1dbfe1d91e457bf44cae76e0d948b80154abdcabc487c780dccae98fc9"
   },
   {
    "file": "docs/assets/shots/crop-accounts-mobile.png",
@@ -198,7 +198,7 @@
   },
   {
    "file": "docs/assets/shots/profiles.png",
-   "sha256": "883ccb7f7b74726d6ab3fc9181b410891ae7cf9a87f50f5deb816d45c81b36ed",
+   "sha256": "09045016f9b88d08f524ea30fd3f797d064a60e4095449f18b7a4156c66c276f",
    "size": [
     2572,
     1692
@@ -206,11 +206,11 @@
   },
   {
    "file": "docs/assets/shots/profiles.webp",
-   "sha256": "f6bb763c29d2f220f7e0a68cb8e6cc454ff57b661edb50220cda77c48b6cdcbe"
+   "sha256": "1171415656706788f9210dbaab0e94fa83ae97789b17a787cac434d5a0073440"
   },
   {
    "file": "docs/assets/shots/regions.png",
-   "sha256": "e4b359b2c618e943b888d80651aee33743cec29e04a53158eeb034f04e46e7b6",
+   "sha256": "7509786a33e58eeea3b84c74b1370e593072b38e4f44e2e8aa4f27b00effa394",
    "size": [
     2572,
     1692
@@ -218,11 +218,11 @@
   },
   {
    "file": "docs/assets/shots/regions.webp",
-   "sha256": "922048b120060e9c2ef49d6d5c994c069e04297e7c513c1f523adad46dce36f1"
+   "sha256": "b6cbbe32e2f4d010d653d548c03b4e3af08f32456a9b8dac09efe39de39e6111"
   },
   {
    "file": "docs/assets/shots/servers.png",
-   "sha256": "14a03692533b5770507cb356e73c5cdbf65e8b25ee76733df1a733f3c4aee342",
+   "sha256": "523017972ed30eeb5dfdf080586e1513ccac4fc30764e6f5f5fba4d5c7dffbc7",
    "size": [
     2572,
     1692
@@ -230,11 +230,11 @@
   },
   {
    "file": "docs/assets/shots/servers.webp",
-   "sha256": "c5da0cac251119a75cd65662efca2a3bf85f9970e16a1493132cc3a809d9a41e"
+   "sha256": "251d407b79ac79f2ee99cacf2c561155f8a7dc301eafcf9f59b81b24a253c280"
   },
   {
    "file": "worker/stats/dashboard/ui/connection.png",
-   "sha256": "ca79bb68066ba1049c13fb69b52657b779688c28098cc5f282c42d4a393a8d05",
+   "sha256": "4361569f4b2e7d235b0b6fc6a187be7dd94152fc18cf2f3e4c2b7a309336242e",
    "size": [
     1240,
     882
@@ -242,7 +242,7 @@
   },
   {
    "file": "worker/stats/dashboard/ui/servers.png",
-   "sha256": "fe83a71777f2217338c2efd950f2d48224dd039889ffc401ebc2def8390dec09",
+   "sha256": "a0f34535240f99538733107f53b7b844261026ed9464b9f7fdeb3949c09d90f5",
    "size": [
     1240,
     1061
@@ -250,7 +250,7 @@
   },
   {
    "file": "worker/stats/dashboard/ui/regions.png",
-   "sha256": "a51b3d3ef2b2180818324ee2d3a8497e58a5bf82fd3d995ebf38343d01dc47b2",
+   "sha256": "54d0e3bf3395694ce8278b2bdc50cf1e74d47b7176a8f250dbc48e3411cd8de2",
    "size": [
     1240,
     800
@@ -258,7 +258,7 @@
   },
   {
    "file": "worker/stats/dashboard/ui/accounts.png",
-   "sha256": "d68a7ea78432f2596d1bc37e217a73df092aa11c3215cbc5fb2ac69e046efd51",
+   "sha256": "a96e861da4a0c58a49dc5ff245eea904c0dcc5fc41db3f767239ce413b2680a6",
    "size": [
     1240,
     1681
@@ -266,7 +266,7 @@
   },
   {
    "file": "worker/stats/dashboard/ui/configs.png",
-   "sha256": "9124f0bfe4c1950f8cc7bafb5f21b24dcba3b0046b679cb4c55925c9ba9d5183",
+   "sha256": "da9b147aca5b335ea11c42460cffaf20a2f93df1fa73d68517bc4504e7079025",
    "size": [
     1240,
     800
@@ -274,7 +274,7 @@
   },
   {
    "file": "worker/stats/dashboard/ui/profiles.png",
-   "sha256": "dcc1ea4c2fa8833d9c3fec1d53ad1d1570ba08f70d783003e07c92cf1ad2ed75",
+   "sha256": "01cb28aae3209d298eead34b970f99cc35874d880edd4f203d6b1eee8d0f0fa0",
    "size": [
     1240,
     1269
@@ -290,10 +290,10 @@
   },
   {
    "file": "worker/stats/dashboard/ui/settings.png",
-   "sha256": "a98064f501b2ff928e7df4d4aa446881d1aadda163105b42958ae6ff19f49a86",
+   "sha256": "6f276b0c855a04e14645e3c5573a3d845a5a49a1835a93e3b5377449954b90a8",
    "size": [
     1240,
-    3316
+    3249
    ]
   },
   {
@@ -314,35 +314,35 @@
   }
  ],
  "renders": {
-  "from": "35ff9b0c3f40c8e34b63a8a1a812e1b4c8099afadf7b632239db13d707971788",
+  "from": "10a28f37bf49ded43d1ea36e4bbbd7b425e305301ba0c6bf1e6de6b9fdff9534",
   "files": [
    {
     "file": "site/img/poster-1280.webp",
-    "sha256": "4cb6d3e3b691965531221c84e2fa61d64f48fc7612d1dad8231ae141982d047f"
+    "sha256": "e3cb37d35907382edd2550baa8d66e4f1951486e9faa6887e3c8952d080dba7e"
    },
    {
     "file": "site/img/poster-1366.webp",
-    "sha256": "756113b39a56abd2627aa30ce5717e8344deedbd6ac10acb90896ac18f845a51"
+    "sha256": "dfe72292c6cba4c48278420765be6a9922825668e8b29d6bc9914698df9003b3"
    },
    {
     "file": "site/img/poster-1440.webp",
-    "sha256": "c96d9e93863b4ffbfb80952084a5e5734244ddeac229f094ea5b3ecd8a0841cd"
+    "sha256": "70e05713754ea770e47783c6cb46831eae56815842d95fdb514f17f2e0bdff6e"
    },
    {
     "file": "site/img/poster-1536.webp",
-    "sha256": "dc3b4fdf05e3ea2a39a88267cdeee95170fdd43007975a26a9d1d3db98c81588"
+    "sha256": "e87fc899cb1bc0be82c6652c9efd520c75b25ea9808e09111048b6ff9cb0f9b3"
    },
    {
     "file": "site/img/poster-1920.webp",
-    "sha256": "ca4c2a76e4e6288c7f0c184e6c5d635a25dfbbd1c2b0ba39e517cb2b168c985a"
+    "sha256": "9dd0f59e335a7958bf75242770b4b1f53646d1a61a566d19affef8160cc5c8fc"
    },
    {
     "file": "site/img/poster-390.webp",
-    "sha256": "46a76dc2b880eeb1efc5523184cf03fb293638ac893fcd662479e96278728c8c"
+    "sha256": "da9f25743513c60afbca73cfc39e9fedc3b0784b343dd3ca95505139741c7914"
    },
    {
     "file": "site/img/world-tower.webp",
-    "sha256": "06ed0f41a5b3ea567dd98d5c6e6fc7ee672fec6632b6786a97f837802693042d"
+    "sha256": "5a97cfbf3976ebfbed70397ffb761c4b3f960ba2589f4e149b993ccf558c8cbc"
    },
    {
     "file": "site/img/world-plug.webp",

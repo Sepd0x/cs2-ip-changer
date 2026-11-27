@@ -205,6 +205,21 @@ public partial class MainWindow
 
     void SetNav_Click(object sender, RoutedEventArgs e) => SettingsGo(SetNav.Children.IndexOf((UIElement)sender));
 
+    /// <summary>
+    /// The space on each side of Settings' list and groups on a wide window (27 nov., the owner: "at some sizes things sit on the
+    /// left and the right stays empty"): the list (196) and the groups (900 + 52 of margins) sit together in the middle; the
+    /// scroll bar stays at the window's edge. 0 while they fill the page.
+    /// </summary>
+    public static double SettingsPad(double pageWidth) => Math.Max(0, Math.Floor((pageWidth - 196 - 952) / 2));
+
+    void PageSettings_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (!e.WidthChanged) return;
+        var pad = SettingsPad(PageSettings.ActualWidth);
+        SetNavCol.Width = new GridLength(196 + pad);
+        SetSide.Padding = new Thickness(pad, 0, 0, 0);
+    }
+
     /// <summary>Where group <paramref name="i"/> starts in the scroll, 16 px above its name (the first group is at 0).</summary>
     double SettingsGroupTop(int i) =>
         Math.Max(0, ((FrameworkElement)SetGroups.Children[i]).TranslatePoint(new Point(0, 0), SetContent).Y - 16);
@@ -224,10 +239,27 @@ public partial class MainWindow
         // after a click the group clicked stays picked, also when the scroll can't bring it to the top (the last groups)
         if (_setNavTarget is double t && Math.Abs(at - Math.Min(t, SetScroll.ScrollableHeight)) < 1) return;
         _setNavTarget = null;
-        var cur = 0;
-        for (var i = 1; i < SetGroups.Children.Count; i++)
-            if (SettingsGroupTop(i) <= at + 40) cur = i;
+        var tops = Enumerable.Range(0, SetGroups.Children.Count).Select(i => i == 0 ? 0 : SettingsGroupTop(i)).ToList();
+        var cur = SettingsGroupAt(at, SetScroll.ScrollableHeight, SetScroll.ViewportHeight, tops);
         if (cur < SetNav.Children.Count) ((RadioButton)SetNav.Children[cur]).IsChecked = true;
+    }
+
+    /// <summary>
+    /// The group picked on the left for a scroll at <paramref name="at"/>: the last one whose title is above a reading line 40 px
+    /// from the top. 27 nov. (the owner: "scroll to the end and the left stays the same"): the last groups never reach the top, so
+    /// Privacy stayed picked with App, Maintenance and Remove on screen. In the last screen of scroll the line slides down to the
+    /// bottom of the view, so each of them gets its turn and the end picks the last one.
+    /// </summary>
+    public static int SettingsGroupAt(double at, double scrollable, double viewport, IReadOnlyList<double> tops)
+    {
+        var line = at + 40;
+        var left = scrollable - at;
+        var span = Math.Min(viewport, scrollable);   // a short page starts with the line at the top too
+        if (viewport > 80 && span > 0 && left < span) line += (1 - Math.Max(0, left) / span) * (viewport - 64);
+        var cur = 0;
+        for (var i = 1; i < tops.Count; i++)
+            if (tops[i] <= line) cur = i;
+        return cur;
     }
 
     /// <summary>Settings > App > Language: saved as "auto" or a code of Loc.Codes; it applies the next time the window opens.</summary>

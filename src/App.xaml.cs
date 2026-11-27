@@ -55,6 +55,8 @@ public partial class App : Application
             Program.CleanOldUnpacked();
             Installer.CleanStage();
             if (Installer.KeepRegistered(Environment.ProcessPath, Updater.Clean(AppInfo.Version)) is string why) Log.Warn("The entry in Windows Settings > Installed apps couldn't be written: " + why);
+            // 27 nov.: in the Start menu (and Windows search), also for copies installed before Install made the link
+            if (Shortcuts.KeepStartMenu(Environment.ProcessPath) is string link) Log.Warn("The Start menu shortcut couldn't be made: " + link);
         });
         DispatcherUnhandledException += OnUiError;
         AppDomain.CurrentDomain.UnhandledException += (_, a) =>

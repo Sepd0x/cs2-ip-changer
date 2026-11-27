@@ -106,6 +106,7 @@ public static class Uninstall
             // its rules off at the start) or --restore run, and --restore still finds the servers and owned.json
             if (KeepsApp(network)) return new Outcome(network, task, null, new Files(false, false, false, new Leftovers()), true, everything);
             var registry = installed ? Installer.Unregister() : null;   // a copy elsewhere leaves the installed copy's entry alone
+            if (installed) Shortcuts.RemoveAll(exe);   // 27 nov.: the Start menu and desktop links that open it
             if (everything) Paths.ReadOnly = true;   // nothing writes to SRT_Dados again on the way out (log, settings, crash marker)
             var files = RemoveFiles(everything, exe, Paths.Data);
             return new Outcome(network, task, registry, files, AfterExit(files.Left), everything);
