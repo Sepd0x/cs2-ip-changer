@@ -2376,6 +2376,7 @@
  "{0} is open. Restart it between matches if it still uses the previous regions.": "{0} está abierto. Reinícialo entre partidas si sigue usando las regiones anteriores.",
  "{0} is out of the rotation now.": "{0} salió de la rotación.",
  "{0} is read-only: clear that in its Properties first": "{0} es de solo lectura: quítalo primero en sus Propiedades",
+ "{0} is missing from this backup, so nothing was restored": "Falta {0} en esta copia de seguridad, así que no se restauró nada",
  "{0} is skipped (the reason is in the list).": "{0} omitida (el motivo está en la lista).",
  "{0} is skipped until it is signed in.": "{0} se omite hasta que inicie sesión.",
  "{0} is the main config now.": "{0} es ahora la config principal.",

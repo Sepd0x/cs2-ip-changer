@@ -1084,9 +1084,10 @@ public partial class MainWindow
     public static bool MobileUnconfirmed(bool? hasHome, Adapter exit, bool iphone, bool adbReady, bool homeIpFromHome) =>
         hasHome == false && exit is { IsPhone: true, IsWifi: false } && !iphone && !PhoneUsb.IsIphone(exit) && !adbReady && !homeIpFromHome;
 
-    // The phone's adapter whether trusted or not (Exit): once blocked for this, the report has no Egress, only the Candidate
+    // The phone's adapter whether trusted or not (Exit): once blocked for this, the report has no Egress, only the Candidate.
+    // Only an iPhone on the cable now counts (_appleOnUsb), never the kind saved from an earlier session (second Codex pass, A1).
     bool MobileUnconfirmedNow(GuardReport rep) =>
-        MobileUnconfirmed(rep?.HasHome, PhoneLink.Exit(rep), _iphone || _s.PhoneIsIphone, _phone?.Ready == true, _s.LastHomeIp != null && _s.LastHomeIpFromHome);
+        MobileUnconfirmed(rep?.HasHome, PhoneLink.Exit(rep), _appleOnUsb, _phone?.Ready == true, _s.LastHomeIp != null && _s.LastHomeIpFromHome);
 
     /// <summary>The Status for <see cref="MobileUnconfirmed"/>.</summary>
     public static (string Title, string Sub) UnconfirmedHero() => (Loc.T("Mobile data not confirmed"),

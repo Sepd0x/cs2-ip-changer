@@ -15,7 +15,8 @@ public static class Shortcuts
     public const string Name = "Pickroute";
     /// <summary>The old name: a link with it that points at the app is taken away too (none was ever made, but one made by hand is ours).</summary>
     public const string OldName = "CS2 IP Changer";
-    public const string Description = "Pickroute (formerly CS2 IP Changer): CS2 through your phone's mobile data";
+    // The Start menu tooltip: no old name in sight (27 nov., the owner)
+    public const string Description = "Pickroute: CS2 through your phone's mobile data";
 
     public static string StartMenu(string programs = null) =>
         Path.Combine(programs ?? Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms), Name + ".lnk");
@@ -38,6 +39,7 @@ public static class Shortcuts
         {
             var link = StartMenu(programs);
             if (File.Exists(link) && SameFile(Target(link), exe)) return null;
+            if (!Ours(link, exe)) return null;
             Make(link, exe);
             return null;
         }
@@ -51,6 +53,7 @@ public static class Shortcuts
         {
             var link = Desktop(desktop);
             if (File.Exists(link) && SameFile(Target(link), exe)) return null;
+            if (!Ours(link, exe)) return null;
             Make(link, exe);
             return null;
         }
@@ -82,6 +85,20 @@ public static class Shortcuts
                 catch { }
             }
         return n;
+    }
+
+    /// <summary>
+    /// The link may be written: there is none yet, or it opens a program in the app's own folder (a link of ours to an older exe).
+    /// Second Codex pass, B3 (27 nov.): a Pickroute.lnk that opens another program, or one that can't be read, is someone else's and
+    /// stays as it is. It is never replaced, so Remove (which only takes links that open the app) never takes it either.
+    /// </summary>
+    public static bool Ours(string link, string exe)
+    {
+        if (!File.Exists(link)) return true;
+        var target = Target(link);
+        if (string.IsNullOrEmpty(target)) return false;
+        try { return Installer.SameDir(Path.GetDirectoryName(Path.GetFullPath(target))!, Path.GetDirectoryName(Path.GetFullPath(exe))!); }
+        catch { return false; }
     }
 
     public static bool SameFile(string a, string b) =>

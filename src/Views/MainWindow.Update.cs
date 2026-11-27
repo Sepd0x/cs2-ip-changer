@@ -70,6 +70,7 @@ public partial class MainWindow
         var show = _s.CheckUpdates && Updater.IsNewer(v, AppInfo.Version);
         UpdateBtn.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         if (show) UpdateBtn.ToolTip = UpdateTip(v, _s.UpdateLatestTest);
+        FitSideNav();   // B6: the sidebar's rows make room for the button (or take it back)
     }
 
     async void Update_Click(object sender, RoutedEventArgs e)

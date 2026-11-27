@@ -21,6 +21,15 @@ public static class Report
     /// <summary>The Wi-Fi names in the app's Log lines, as (hidden).</summary>
     public static string HideSsids(string text) => SsidInLine.Replace(text ?? "", "(hidden)");
 
+    // Second Codex pass, A14 (27 nov.): before 1.0.0 the Log wrote "The phone connection IP (x) is the same as your home IP" and
+    // "The phone's IP (x) is the same as your home IP" with x whole. That x was the home IP then; after the provider changes it, it is
+    // no longer among the IPs hidden at export, so every IPv4 address on a line that says it is the home IP is hidden too.
+    static readonly Regex HomeIpLine = new(@"^.*\bsame as your home IP\b.*$", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.Multiline | RegexOptions.IgnoreCase);
+    static readonly Regex Ipv4 = new(@"(?<![\d.])\d{1,3}(?:\.\d{1,3}){3}(?![\d])", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    /// <summary>The IPv4 addresses on Log lines that say they are the home IP, as home-ip (any of them, not only the IPs known now).</summary>
+    public static string HideHomeLines(string text) => HomeIpLine.Replace(text ?? "", m => Ipv4.Replace(m.Value, "home-ip"));
+
     /// <summary>
     /// Creates the zip on the Desktop (or in SRT_Dados if there's no Desktop) and returns its path.
     /// <paramref name="settingsJson"/> already comes without the key and the home IP; every IP in <paramref name="hide"/> becomes "home-ip".
@@ -37,7 +46,7 @@ public static class Report
         string Clean(string text)
         {
             foreach (var ip in secrets) text = Regex.Replace(text, @"(?<![\d.])" + Regex.Escape(ip) + @"(?![\d])", "home-ip");
-            return Rec.ScrubIds(HideSsids(text), words);
+            return Rec.ScrubIds(HideSsids(HideHomeLines(text)), words);
         }
 
         // Built in memory and written by handle (SafeFile): the Desktop is a folder other programs can change.

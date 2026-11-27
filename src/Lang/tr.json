@@ -2376,6 +2376,7 @@
  "{0} is open. Restart it between matches if it still uses the previous regions.": "{0} açık. Hâlâ önceki region'ları kullanıyorsa maçlar arasında yeniden başlat.",
  "{0} is out of the rotation now.": "{0} artık rotasyon dışında.",
  "{0} is read-only: clear that in its Properties first": "{0} salt okunur: önce Özellikler'den bunu kaldır",
+ "{0} is missing from this backup, so nothing was restored": "{0} bu yedekte yok, bu yüzden hiçbir şey geri yüklenmedi",
  "{0} is skipped (the reason is in the list).": "{0} atlanacak (neden listede yazıyor).",
  "{0} is skipped until it is signed in.": "{0} giriş yapılana kadar atlanır.",
  "{0} is the main config now.": "{0} artık ana config.",

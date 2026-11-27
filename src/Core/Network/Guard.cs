@@ -1007,12 +1007,18 @@ public sealed class Guard
             Firewall.RemoveAll(keepRegions);
             await RestoreMetric();
             var phones = adapters.Where(a => a.IsPhone).Select(a => a.Index).ToList();
+            var left = new List<string>();
+            // Second Codex pass, B5 (27 nov.): with owned.json lost, this is the only thing that gives the phone back its default route.
+            // When it fails the restore isn't done: without another network the PC still has no internet through the phone, so it
+            // is said instead of "Network restored".
             if (!keepRegions && phones.Count > 0 && await _powershell(ResetPhonesArgs(phones), 20000) is { Ok: false } reset)
+            {
                 Log.Warn("Couldn't give the phone adapters their default route back: " + PsError(reset.Output));
+                left.Add("the block on the phone adapter's default route");
+            }
             _fwSignature = null;
 
             // Reads everything back: the restore only counts if nothing of ours is left.
-            var left = new List<string>();
             adapters = Net.Scan();
             var exit = ExitIndex(_exit, adapters);
             // A table that couldn't be read isn't "no routes left" either

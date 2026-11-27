@@ -638,9 +638,12 @@ public partial class MainWindow
                     Toast(text, Tone.Warn, Loc.T("Show Steam"), () => { try { Steam.OpenUrl("steam://open/main"); } catch (Exception ex) { Log.Warn("Show Steam: " + ex.Message); } return Task.CompletedTask; });
                 }
             }
+            if (ready) await Task.Delay(2000);
+            // Second Codex pass, B2 (27 nov.): Cancel and protection are read again after the last wait, right before the join is sent
+            // (a Cancel in those 2 s still joined).
+            if (CommandCancelled) return false;
             if (!Steam.Cs2Running) { Log.Warn($"CS2 closed before its menu, so {s.Key} wasn't joined."); Toast(Loc.F("CS2 didn't open, so {0} wasn't joined.", s.Title), false); return false; }
             if (!OnHome && (!_protOn || _distrust)) { Log.Warn($"Not joining {s.Key}: protection changed while CS2 was opening."); Toast(Loc.F("Not joining {0}: protection changed while CS2 was opening.", s.Title), false); return false; }
-            if (ready) await Task.Delay(2000);
             Steam.OpenUrl($"steam://connect/{s.Key}");
             Log.Info($"CS2 menu {(ready ? "ready" : $"not seen {Cs2MenuWait} s after CS2 opened")}: joining {s.Key}.");
             return true;
@@ -704,6 +707,8 @@ public partial class MainWindow
         try
         {
             if (!await QueryOne(s, eg) || s.MaxPlayers == 0) return;
+            // B2: Cancel (or another wait) while the server was being asked: this answer no longer belongs to a wait, so nothing joins
+            if (!ReferenceEquals(_slotServer, s)) return;
             if (IsFull(s.PlayerCount, s.Bots, s.MaxPlayers)) { SlotText.Text = Loc.F("Waiting for a slot on {0} ({1}).", s.Title, s.PlayersText); return; }
             System.Media.SystemSounds.Asterisk.Play();
             var auto = SlotAutoBox.IsChecked == true;

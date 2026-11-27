@@ -16,6 +16,7 @@ public partial class MainWindow
         if (_demo) return (_iphone, _iphone && _last?.Egress != null);
         var adapter = _last?.Adapters?.FirstOrDefault(a => a.IsPhone && a.Up && PhoneUsb.IsIphone(a));
         var usb = adapter != null ? PhoneUsbState.None : await Task.Run(PhoneUsb.Scan);
+        _appleOnUsb = adapter != null || PhoneUsb.IsIphone(usb);
         _iphone = NotePhoneKind(PhoneUsb.IphoneSeen(false, usb, adapter, _s.EgressSsid));
         if (adapter != null) return (_iphone, true);
         var hotspot = PhoneLink.Exit(_last) is { } exit && PhoneLink.IsHotspot(_s.EgressSsid, exit.IsWifi);

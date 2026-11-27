@@ -916,7 +916,12 @@ public sealed class Cs2ConfigStore
         if (Redirected(dir)) throw new IOException(Linked);
         // Read first: the backup made just below can push this one out of the kept ones.
         // A saved file that is there but can't be read stops it here, before anything is written (it was left out, and the restore said it went fine).
-        var saved = b.Files.Where(Safe).Select(rel => (rel, text: ReadOwn(Path.Combine(b.Dir, rel), fail: true))).Where(x => x.text != null).ToList();
+        var read = b.Files.Where(Safe).Select(rel => (rel, text: ReadOwn(Path.Combine(b.Dir, rel), fail: true))).ToList();
+        // Second Codex pass, B7 (27 nov.): a file the backup lists that is gone from it (or is no longer the backup's own file) was
+        // left out, and Restore said it went fine with the account's current file still in its place. Now nothing is written.
+        if (read.FirstOrDefault(x => x.text == null).rel is string gone)
+            throw new IOException(Loc.F("{0} is missing from this backup, so nothing was restored", Path.GetFileName(gone)));
+        var saved = read;
         var rels = b.Files.Concat(b.Created).Where(Safe).ToList();
         // Before anything is written: a read-only file would stop the restore half-way (one the copy created too: it can't be deleted).
         if (saved.Select(x => x.rel).Concat(b.Created.Where(Safe)).FirstOrDefault(r => ReadOnly(Path.Combine(dir, r))) is string ro)

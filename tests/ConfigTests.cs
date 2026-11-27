@@ -207,8 +207,10 @@ static class ConfigTests
         if (Junction(bLink, prot, links))
         {
             var jb = new CfgBackup { SteamId = E, At = DateTime.Now, Files = new() { kL }, Dir = bLink };
-            var ok = store.Restore(jb, "j8b");
-            check("Configs: backup em junção não é lido", ok && Get(ud, E, kL) == eKeys, Get(ud, E, kL) ?? "null");
+            // 27 nov. (segunda passagem do Codex, B7): o ficheiro do outro lado não conta como do backup, e o restauro diz que não repôs
+            var refused = false;
+            try { store.Restore(jb, "j8b"); } catch (IOException) { refused = true; }
+            check("Configs: backup em junção não é lido (e o restauro diz que não repôs)", refused && Get(ud, E, kL) == eKeys, Get(ud, E, kL) ?? "null");
             Unlink(bLink, links);
         }
         else Console.WriteLine("SALTO Configs: backup em junção (mklink /J não correu)");

@@ -324,10 +324,7 @@ public static partial class Updater
     {
         var exe = Environment.ProcessPath!;
         if (Sha256Of(NewExe) != sha) throw new InvalidDataException(Loc.T("the downloaded file changed after the check"));
-        if (File.Exists(OldExe)) File.Delete(OldExe);
-        File.Move(exe, OldExe);   // Windows lets a running exe be renamed, not overwritten
-        try { File.Move(NewExe, exe); }
-        catch { File.Move(OldExe, exe); throw; }
+        Swap(exe, NewExe, OldExe, RestoreAtReboot);
         FileStream hold = null;
         try
         {
@@ -349,6 +346,35 @@ public static partial class Updater
             throw;
         }
         finally { hold?.Dispose(); }
+    }
+
+    /// <summary>
+    /// The two renames of an update: the running exe to .old (Windows lets a running exe be renamed, not overwritten), then the new
+    /// one to the usual name. Second Codex pass, A9 (27 nov.): a crash or a power cut between the two left no file at the usual name,
+    /// and the shortcuts and the sign-in task pointed to nothing. So before the first rename Windows is asked to put .old back at the
+    /// usual name on the next start of the PC (<paramref name="restoreAtReboot"/>). That rename never replaces a file: after an update
+    /// that went through, the usual name is taken (the new exe) or .old is already gone, and it does nothing. Nothing about the new exe
+    /// changes: it is still checked against the signed SHA-256 before and after it is in place.
+    /// </summary>
+    public static void Swap(string exe, string newExe, string oldExe, Func<string, string, bool> restoreAtReboot)
+    {
+        if (File.Exists(oldExe)) File.Delete(oldExe);
+        if (restoreAtReboot?.Invoke(oldExe, exe) != true) Log.Warn("Update: Windows couldn't be asked to put the app back if the PC stops during the update.");
+        File.Move(exe, oldExe);
+        try { File.Move(newExe, exe); }
+        catch { File.Move(oldExe, exe); throw; }
+    }
+
+    const uint MoveFileDelayUntilReboot = 0x4;   // and not MOVEFILE_REPLACE_EXISTING (0x1): the usual name is never replaced
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
+    static extern bool MoveFileEx(string existing, string target, uint flags);
+
+    /// <summary>Asks Windows to rename <paramref name="from"/> to <paramref name="to"/> when the PC starts, only if nothing is at <paramref name="to"/> then (admin only).</summary>
+    static bool RestoreAtReboot(string from, string to)
+    {
+        try { return MoveFileEx(from, to, MoveFileDelayUntilReboot); }
+        catch { return false; }
     }
 
     /// <summary>On start: removes the old exe and leftovers from an update (the old process may take a moment to exit).</summary>

@@ -706,6 +706,8 @@ CodexAuditTests.Run(Check);
 Auditoria26NovTests.Run(Check);
 // 27 nov.: o que o dono viu ao usar a 1.0.0 no PC dele (Uso27NovTests.cs)
 Uso27NovTests.Run(Check);
+// 27 nov.: a segunda passagem da auditoria do Codex, A1, A9, A14 e B2 a B7 (SegundaPassagem27Tests.cs; B1 no Worker)
+SegundaPassagem27Tests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

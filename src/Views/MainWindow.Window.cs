@@ -228,18 +228,30 @@ public partial class MainWindow
     /// The sidebar's rows for its height (27 nov.: on a 1366x768 laptop at 125 % the window is 576 tall, under the 660 the sidebar
     /// was drawn for, and Profiles went under Log). 66 px rows and 24 px under the logo while they fit; else the gap goes to 8 and
     /// the eight rows share what is left, down to 48 px. 74 = the margins and the logo, 25 = the space over the version and the version.
+    /// <paramref name="update"/>: the height the Update button takes over the version while it shows (second Codex pass, B6: at 574 it
+    /// pushed Profiles under Log again).
     /// </summary>
-    public static (double Row, double Gap) NavFit(double side)
+    public static (double Row, double Gap) NavFit(double side, double update = 0)
     {
-        var room = side - 74 - 25;
+        var room = side - 74 - 25 - Math.Max(0, update);
         if (room >= 8 * 66 + 24) return (66, 24);
         return (Math.Clamp(Math.Floor((room - 8) / 8), 48, 66), 8);
     }
 
+    /// <summary>The Update button's height with its 8 px under it, 0 while it is hidden (its RowPrimary minimum before it is measured).</summary>
+    double UpdateBtnRoom() => UpdateBtn.Visibility == Visibility.Visible
+        ? Math.Max(UpdateBtn.ActualHeight, UpdateBtn.MinHeight) + UpdateBtn.Margin.Top + UpdateBtn.Margin.Bottom : 0;
+
     void SideBar_SizeChanged(object sender, SizeChangedEventArgs e)
     {
         if (!e.HeightChanged) return;
-        var (row, gap) = NavFit(SideBar.ActualHeight);
+        FitSideNav();
+    }
+
+    void FitSideNav()
+    {
+        if (SideBar.ActualHeight <= 0) return;
+        var (row, gap) = NavFit(SideBar.ActualHeight, UpdateBtnRoom());
         foreach (var nav in new[] { NavNet, NavServers, NavRegions, NavAccounts, NavConfigs, NavProfiles, NavLog, NavSettings }) nav.Height = row;
         SideNavTop.Margin = new Thickness(0, gap, 0, 0);
     }

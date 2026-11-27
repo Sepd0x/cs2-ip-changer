@@ -2376,6 +2376,7 @@
  "{0} is open. Restart it between matches if it still uses the previous regions.": "Игра {0} запущена. Если она использует прежние регионы, перезапустите её между матчами.",
  "{0} is out of the rotation now.": "{0} убран из ротации.",
  "{0} is read-only: clear that in its Properties first": "{0} только для чтения: сначала снимите этот атрибут в Свойствах",
+ "{0} is missing from this backup, so nothing was restored": "В этой резервной копии нет {0}, поэтому ничего не восстановлено",
  "{0} is skipped (the reason is in the list).": "{0} пропущен (причина в списке).",
  "{0} is skipped until it is signed in.": "{0} пропускается, пока не выполнен вход.",
  "{0} is the main config now.": "{0} теперь основной конфиг.",

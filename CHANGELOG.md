@@ -107,6 +107,16 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Wide windows: Settings' list and options sit together in the middle instead of leaving the right side empty.
 - Updates: the app also accepts updates from the repository under the name Pickroute and a file named Pickroute.exe, so it keeps updating by itself if the project moves to the new name.
 - Website: the app tour, the app window on the home page and the screen in the 3D scene point at the right buttons and show the IP in the right place in the new app (they still used the places of the old look), and the close-ups no longer show text cut in half at their edges.
+- Protection: an Android plugged in by USB after you used an iPhone, that Windows can't name, no longer passes for the iPhone. Without USB debugging and a home network it stays blocked until its mobile data is confirmed, like any other Android.
+- Updates: if the PC stops in the very moment the new version takes the old one's place, Windows puts the app back at its usual name when the PC starts again, so the Start menu and desktop shortcuts keep working.
+- Bug report: older Log lines that said the phone's IP was the same as your home IP had that IP whole. The report now hides it, even after your provider gave you a new home IP.
+- Usage stats: Delete my stats could be undone by the daily summary if both ran at the same moment. Delete now always wins, and asking again removes anything left.
+- Join: Cancel in the last seconds before CS2's menu is ready, or while a full server is being checked for a free slot, now stops the join.
+- Install and the Start menu: a shortcut named Pickroute that opens another program is left alone, and Remove leaves it too. The Start menu tooltip says only Pickroute.
+- Accounts: a cooldown typed with Arabic-Indic digits ("٢h") no longer closes the dialog with an error; it is treated as input the app doesn't understand.
+- Network restore: when the phone's adapter can't get its default route back, the restore now says the network isn't fully restored instead of "Network restored", and what to do.
+- Small screens: with Update showing in the sidebar, Profiles stays above Log at a 1366x768 laptop's height.
+- Configs: Restore stops and says so when a file of the backup is missing, instead of saying the config is back while the current file stays.
 
 ## [0.1.0-beta.14] - 2026-11-19
 

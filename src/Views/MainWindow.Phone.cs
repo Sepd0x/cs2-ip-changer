@@ -27,6 +27,13 @@ public partial class MainWindow
     /// <summary>The phone is an iPhone (beta.11): no ADB, so the Phone box, Phone setup and Change IP have its own steps.</summary>
     bool _iphone;
 
+    /// <summary>
+    /// An iPhone is on the cable right now: Apple on USB or Apple's tethering adapter, seen in this session. The protection decision
+    /// (MobileUnconfirmedNow) uses this and not the saved kind (second Codex pass, A1, 27 nov.): an Android plugged in after an
+    /// iPhone, that the USB scan can't name, must not pass for the iPhone that was there before.
+    /// </summary>
+    bool _appleOnUsb;
+
     async Task RefreshPhoneCore()
     {
         _adb ??= Adb.Find();
@@ -732,6 +739,7 @@ public partial class MainWindow
         var hotspot = PhoneLink.IsHotspot(_s.EgressSsid, phone?.IsWifi);
         var other = phone != null && PhoneLink.HasHome(adapters, phone);
         var mode = PhoneLink.EffectiveMode(_protOn, _s.Mode, _s.GameMode, Steam.Cs2Running);
+        _appleOnUsb = info?.Ready != true && (PhoneUsb.IsIphone(usb) || PhoneUsb.IsIphone(phone));
         var iphone = NotePhoneKind(PhoneUsb.IphoneSeen(info?.Ready == true, usb, phone, _s.EgressSsid));
         return new PhoneSetupState
         {

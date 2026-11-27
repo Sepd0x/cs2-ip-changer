@@ -551,7 +551,9 @@ public static class Fmt
         // Counted in minutes as a double and checked before it becomes a TimeSpan (audit 26 nov., A13: "100000000d" threw OverflowException)
         var minutes = 0.0;
         var any = false;
-        foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(text ?? "", @"(\d+(?:[.,]\d+)?)\s*(d|h|m)", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant))
+        // ASCII digits only (second Codex pass, B4): \d also takes Arabic-Indic digits ("٢h"), which double.Parse then refused with an
+        // exception that closed the Cooldown dialog. Now "٢h" is just input it doesn't understand, like "abc".
+        foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(text ?? "", @"([0-9]+(?:[.,][0-9]+)?)\s*(d|h|m)", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant))
         {
             var n = double.Parse(m.Groups[1].Value.Replace(',', '.'), System.Globalization.CultureInfo.InvariantCulture);
             minutes += n * char.ToLowerInvariant(m.Groups[2].Value[0]) switch { 'd' => 1440, 'h' => 60, _ => 1 };
