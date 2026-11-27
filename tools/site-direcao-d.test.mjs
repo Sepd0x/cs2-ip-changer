@@ -202,3 +202,106 @@ test('Clean phone: every guide has the picture of its 3D band, shown under the l
   assert.deepEqual(r, { shown: true, same: true });
 });
 
+
+// 27 Nov. 2026, the 404 and the four other languages on a phone; the lists made one; the guides' and the 404's header with
+// the home's menu; the page's address that broke in the middle of a name. Measured at 360 px (the narrowest phone).
+const NARROW = { ...PHONE, viewport: { width: 360, height: 800 } };
+for (const lang of ['', 'ru/', 'tr/']) {
+  test(`Phone 404 (${lang || 'en'}): a menu with the home's parts and the languages over the page, one Send, the buttons one per row, the guides in a 16 px card`, async (t) => {
+    if (!browser) return t.skip(why);
+    const page = await open(t, NARROW, lang + '404.html');
+    await page.tap('.site-menu > summary'); await page.waitForTimeout(300);
+    const r = await page.evaluate(() => {
+      const links = [...document.querySelectorAll('.menu-links a')], first = links[0].getBoundingClientRect();
+      const top = document.elementFromPoint(first.left + first.width / 2, first.top + first.height / 2);
+      const sends = [...document.querySelectorAll('[data-share]')].filter((b) => getComputedStyle(b).display !== 'none' && b.getBoundingClientRect().width > 0);
+      const btns = [...document.querySelectorAll('.nf .acts .btn')].filter((b) => getComputedStyle(b).display !== 'none').map((b) => b.getBoundingClientRect());
+      const more = getComputedStyle(document.querySelector('.nf .more'));
+      return { parts: document.querySelectorAll('.menu-links > a').length, langs: document.querySelectorAll('.menu-langs a').length, onTop: links[0] === top || links[0].contains(top), sends: sends.length,
+        rows: btns.length === new Set(btns.map((b) => Math.round(b.top))).size, wide: btns.every((b) => Math.abs(b.width - btns[0].width) < 1), radius: more.borderTopLeftRadius, pad: more.paddingLeft, wider: document.documentElement.scrollWidth > innerWidth };
+    });
+    assert.deepEqual(r, { parts: 8, langs: 5, onTop: true, sends: 1, rows: true, wide: true, radius: '16px', pad: '20px', wider: false });
+  });
+}
+
+test('Phone: every guide in every language has the home\'s menu in its header (8 parts and 5 languages), and the header fits', async (t) => {
+  if (!browser) return t.skip(why);
+  const guides = readdirSync(SITE, { withFileTypes: true }).filter((d) => d.isDirectory() && existsSync(join(SITE, d.name, 'index.html')) && readFileSync(join(SITE, d.name, 'index.html'), 'utf8').includes('class="gmain"')).map((d) => d.name);
+  assert.ok(guides.length >= 14, `${guides.length} guides`);
+  for (const g of guides) for (const l of ['', 'pt-br/', 'es/', 'ru/', 'tr/']) {
+    const html = readFileSync(join(SITE, l, g, 'index.html'), 'utf8'), i = html.indexOf('<details class="site-menu">'), j = html.indexOf('</details>', i);
+    assert.ok(i > 0 && i < html.indexOf('</header>'), `${l}${g}: no menu in the header`);
+    assert.equal((html.slice(i, j).match(/<a href=/g) || []).length, 13, `${l}${g}: the menu's links`);
+    assert.ok(html.includes('assets/js/site-navigation.js"'), `${l}${g}: the menu's script`);
+  }
+  for (const l of ['', 'ru/', 'tr/']) {
+    const page = await open(t, NARROW, l + 'cs2-ip-ban/');
+    await page.tap('.site-menu > summary'); await page.waitForTimeout(300);
+    const r = await page.evaluate(() => { const n = document.querySelector('.top nav').getBoundingClientRect(), m = document.querySelector('.menu-links').getBoundingClientRect(), s = document.querySelector('.top .get-top').getBoundingClientRect(), b = document.querySelector('.site-menu > summary').getBoundingClientRect(); const parts = [...document.querySelectorAll('.menu-links > a')].map((a) => a.getBoundingClientRect()); return { fits: n.right <= innerWidth && m.right <= innerWidth && m.left >= 0, sendLeft: s.right <= b.left, oneLine: Math.round(s.height) <= 48, oneColumn: new Set(parts.map((p) => Math.round(p.left))).size === 1, sameRows: new Set(parts.map((p) => Math.round(p.height))).size === 1, label: getComputedStyle(document.querySelector('.menu-links p')).fontFamily.split(',')[0] }; });
+    // the parts one per row and all as tall (in two columns Как это работает went on two lines and its row grew); the labels in the text face
+    assert.deepEqual(r, { fits: true, sendLeft: true, oneLine: true, oneColumn: true, sameRows: true, label: '"Funnel Sans"' }, `${l || 'en/'}cs2-ip-ban`);
+  }
+});
+
+test('Phone: every list of links is the same row (the home\'s guides and more answers, a guide\'s related guides, the 404\'s guides), with no mono numbers', async (t) => {
+  if (!browser) return t.skip(why);
+  const row = (page, sel, titleSel) => page.evaluate(([s, ts]) => [...document.querySelectorAll(s)].slice(0, 3).map((e) => {
+    const c = getComputedStyle(e), tt = getComputedStyle(ts ? e.querySelector(ts) : e);
+    return [tt.fontFamily.split(',')[0].replace(/"/g, ''), tt.fontSize, c.paddingTop, c.paddingBottom, c.borderBottomWidth].join(' ');
+  }), [sel, titleSel]);
+  const title = 'Funnel Display 18px';
+  let page = await open(t, NARROW);
+  for (const x of await row(page, 'ul.guides li', 'a')) assert.equal(x, `${title} 16px 16px 1px`, 'home guides');
+  for (const x of await row(page, '.faq .more a')) assert.equal(x, `${title} 16px 16px 0px`, 'more answers');
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.faq .more li')).borderBottomWidth), '1px');
+  assert.equal(await page.evaluate(() => [...document.querySelectorAll('ul.guides .n')].filter((n) => getComputedStyle(n).display !== 'none').length + (getComputedStyle(document.querySelector('.faq details'), '::before').display !== 'none' ? 1 : 0)), 0, 'numbers before the rows');
+  page = await open(t, NARROW, 'cs2-ip-ban/');
+  for (const x of await row(page, '.gmore ul a', 'b')) assert.equal(x, `${title} 16px 16px 1px`, 'related guides');
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.gmore ul a svg')).display), 'none', 'the related guides still have their own arrow');
+  page = await open(t, NARROW, '404.html');
+  for (const x of await row(page, '.nf .more a')) assert.ok(x.startsWith(`${title} 16px 16px`), '404 guides: ' + x);
+});
+
+test('Phone: the page\'s address breaks only after a slash, in every language; the sentences after the story are in the text face', async (t) => {
+  if (!browser) return t.skip(why);
+  for (const l of ['', 'pt-br/', 'es/', 'ru/', 'tr/']) {
+    const urls = readFileSync(join(SITE, l, 'cs2-ip-ban', 'index.html'), 'utf8').match(/<code class="url">[\s\S]*?<\/code>/g) || [];
+    assert.ok(urls.length >= 1, `${l}: no address`);
+    for (const u of urls) assert.equal(u.replace(/<span class="nw">([^<]+)<\/span>/g, '$1').replace(/<\/?code[^>]*>/g, ''), `sepd0x.github.io/<wbr>cs2-ip-changer/<wbr>${l ? l + '<wbr>' : ''}cs2-ip-ban`, u);
+  }
+  const page = await open(t, NARROW, 'ru/cs2-ip-ban/');
+  const r = await page.evaluate(() => ({ broken: [...document.querySelectorAll('.copyrow .url .nw')].filter((s) => s.getClientRects().length > 1).map((s) => s.textContent), note: getComputedStyle(document.querySelector('.ghero .ro-foot')).fontFamily.split(',')[0] }));
+  assert.deepEqual(r, { broken: [], note: '"Funnel Sans"' });
+  const home = await open(t, NARROW, 'ru/');
+  assert.equal(await home.evaluate(() => getComputedStyle(document.querySelector('.duo .mini')).fontFamily.split(',')[0]), '"Funnel Sans"');
+});
+
+test('Phone, every language: on the home, the 404 and two guides no text runs past a 360 px screen, no heading cuts a word and no button wraps', async (t) => {
+  if (!browser) return t.skip(why);
+  const bad = [];
+  for (const l of ['', 'pt-br/', 'es/', 'ru/', 'tr/']) for (const p of ['', '404.html', 'cs2-ip-ban/', 'is-it-safe/']) {
+    const page = await open(t, NARROW, l + p);
+    bad.push(...(await page.evaluate(() => {
+      const o = [], W = innerWidth;
+      if (document.documentElement.scrollWidth > W) o.push('page ' + document.documentElement.scrollWidth + ' px wide');
+      const scrolls = (e) => { for (let q = e.parentElement; q; q = q.parentElement) { const s = getComputedStyle(q); if (/auto|scroll/.test(s.overflowX) && q.scrollWidth > q.clientWidth + 1) return true; } return false; };
+      for (const e of document.querySelectorAll('body *')) {
+        if (e.closest('[aria-hidden="true"],svg,.vh,.skip')) continue;
+        const own = [...e.childNodes].filter((n) => n.nodeType === 3 && n.textContent.trim());
+        if (!own.length) continue;
+        const r = e.getBoundingClientRect(), s = getComputedStyle(e);
+        if (!r.width || s.visibility === 'hidden') continue;
+        if ((r.right > W + 1 || r.left < -1) && !scrolls(e)) o.push('past the screen: ' + e.tagName + ' ' + e.textContent.trim().slice(0, 30));
+        // a heading's word cut in its middle (not at a hyphen): günlüklerinden in the close's 11ch heading in Turkish
+        if (e.closest('h1,h2,h3')) for (const n of own) { let off = 0; for (const wd of n.textContent.split(/(\s+)/)) { if (wd.trim().length > 3 && !/[-–\/\\]/.test(wd)) { const g = document.createRange(); g.setStart(n, off); g.setEnd(n, off + wd.length); if (new Set([...g.getClientRects()].filter((q) => q.width > 1).map((q) => Math.round(q.top / 4))).size > 1) o.push('word cut: ' + wd); } off += wd.length; } }
+        if (e.matches('.btn,.lang-hint a')) {
+          const tops = new Set(); for (const n of own) { const g = document.createRange(); g.selectNodeContents(n); for (const q of g.getClientRects()) if (q.width > 1) tops.add(Math.round(q.top / 4)); }
+          if (tops.size > 1) o.push('button on two lines: ' + e.textContent.trim());
+        }
+      }
+      return o;
+    })).map((x) => `${l || 'en/'}${p || 'home'}: ${x}`));
+    await page.context().close();
+  }
+  assert.deepEqual(bad, []);
+});

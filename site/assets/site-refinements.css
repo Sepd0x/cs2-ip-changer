@@ -1,5 +1,4 @@
 /* Session 3: page-wide reading and navigation. Keep the existing type and route. */
-.site-menu{display:none}
 main :is(h1,h2,h3){text-wrap:balance}
 .top .brand span{line-height:1.15}
 
@@ -10,20 +9,6 @@ main :is(h1,h2,h3){text-wrap:balance}
   .top .brand span{white-space:normal}
   .top nav .hide-s,.top nav>.btn-ghost{display:none}
   .top nav{gap:min(.5rem,8px);flex:none}
-  .site-menu{display:block;position:static;border:0!important;counter-increment:none}
-  .site-menu summary{display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid var(--line2);border-radius:50%;color:var(--ink);font:500 .85rem/1 var(--sans)}
-  .site-menu summary::before,.site-menu summary::after{display:none}
-  .site-menu summary svg{width:20px;height:20px}
-  .site-menu[open] summary{background:var(--t-surface3);color:var(--t-accent-light)}
-  .site-menu::details-content{transition:none;overflow:visible}
-  .site-menu:not([open]) .menu-links{display:none}
-  .site-menu .menu-links{position:absolute;top:calc(100% + .5rem);right:var(--gutter);left:var(--gutter);max-height:calc(100dvh - var(--top-h) - 1.5rem);overflow:auto;overscroll-behavior:contain;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.25rem;padding:1rem;border:1px solid var(--line2);border-radius:12px;background:var(--t-bg);box-shadow:0 18px 45px rgb(0 0 0/.5)}
-  /* the menu is a <details>: padding 0 so the FAQ's "details p" leaves no empty row under the title */
-  .menu-links p{grid-column:1/-1;margin:0 0 .5rem;padding:0;color:var(--ink3);font:.75rem/1.4 var(--mono)}
-  .top nav .menu-links a{display:flex;align-items:center;min-height:44px;padding:.6rem .75rem;border-radius:6px;white-space:normal;color:var(--ink2);font:500 1rem/1.3 var(--sans)}
-  @media (hover:hover){.top nav .menu-links a:hover{background:var(--t-surface);color:var(--ink)}}
-  .site-menu :is(a,summary):focus-visible{outline:2px solid var(--t-accent-light);outline-offset:2px}
-  body:has(.site-menu[open]) :is(.where,.pause){visibility:hidden}
 }
 @container (max-width:16rem){
   .top .brand span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
@@ -103,4 +88,34 @@ main :is(h1,h2,h3){text-wrap:balance}
   .duo h4{grid-column:2;grid-row:1;margin:0}
   .duo .mini{grid-column:2;grid-row:2;margin:0;flex-wrap:wrap;gap:.3rem}
   .duo>div>p:not(.mini){grid-column:2;grid-row:3}
+}
+
+/* 27 Nov., the phone: one kind of row for every list of links (the guides here, the FAQ's more answers, the related guides
+   at the end of a guide, the 404's guides): a hairline under it, 16 px above and below, the title in the display face at
+   18 px, a short grey line under it when there is one, the same small chevron at the end. The FAQ keeps its + and the same
+   lines. No 01 to 14 and 01 to 05 in mono before them: the guide pages had none, and on a phone the numbers took a column */
+@media (max-width:759px){
+  ul.guides li{grid-template-columns:minmax(0,1fr) 1rem;gap:.25rem 1rem;padding:1rem 0;align-items:start}
+  ul.guides .n{display:none}
+  ul.guides a{grid-column:1;grid-row:1;font-size:1.125rem;line-height:1.3;letter-spacing:-.015em}
+  ul.guides li>span:not(.n){grid-column:1;grid-row:2;font-size:.875rem;line-height:1.45}
+  ul.guides li::after{grid-column:2;grid-row:1/span 2;align-self:center;width:.5rem;height:.5rem}
+  .faq details::before{display:none}
+  .faq summary{padding-left:0}
+  .faq details p{padding-left:0}
+  .faq details[open] summary{background-position:0 100%;background-size:100% 1px}
+  .faq .more{border-top:0;padding-top:0;margin-top:2.5rem}
+  /* its heading is a label (as the 404's Guides), not one more row: it read as a link without its chevron */
+  .faq .more h3{margin-bottom:.5rem;color:var(--ink3);font:600 .8125rem/1.4 var(--sans);letter-spacing:0}
+  .faq .more ul{border-top:1px solid var(--line)}
+  .faq .more li{margin:0;border-bottom:1px solid var(--line)}
+  .faq .more a{display:flex;justify-content:space-between;align-items:center;gap:1rem;width:100%;min-height:44px;padding:1rem 0;color:var(--ink);text-decoration:none;font:500 1.125rem/1.3 var(--disp);letter-spacing:-.015em}
+  .faq .more a::after{content:"";flex:none;width:.5rem;height:.5rem;margin-right:.2rem;border-top:1.5px solid var(--ink3);border-right:1.5px solid var(--ink3);transform:rotate(45deg)}
+  /* less mono in the running text after the story: the phone pages' words (Mobile data off and on, from the PC / USB or
+     hotspot) read in the text face; mono stays for addresses, code, numbers and the app's own labels */
+  .duo h4 span,.duo .mini,.duo .mini *{font-family:var(--sans);letter-spacing:0}
+  /* the close's heading is 11ch wide: a long Turkish word (günlüklerinden) was cut in two; it may run past the 11ch, not
+     past the screen, and in Turkish the heading is a little smaller so the word stays inside the card's 20 px */
+  .cta h2{overflow-wrap:normal}
+  html[lang=tr] .cta h2{font-size:min(clamp(2.6rem,1rem + 8vw,3.6rem),11.5vw)}
 }

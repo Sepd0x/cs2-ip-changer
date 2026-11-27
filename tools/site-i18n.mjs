@@ -210,9 +210,10 @@ function tagOut(t, ctx) {
   }
   return tagString(t);
 }
-// the page's address as text (<code class="url">, to type on the PC): with the language folder in it
+// the page's address as text (<code class="url">, to type on the PC): with the language folder in it. Each part of the
+// address is in its own <span class="nw"> (it breaks only after a slash), the language's part too
 const atomOut = (x, ctx) => tagOut(x.open, ctx) + (x.name === 'code' && /\burl\b/.test(attr(x.open, 'class')?.v || '')
-  ? x.rest.replace(/cs2-ip-changer(\/<wbr>)?/, (m, sep) => `cs2-ip-changer/<wbr>${ctx.L.code}${sep ? '/<wbr>' : ''}`) : x.rest);
+  ? x.rest.replace(/cs2-ip-changer(<\/span>)?(\/<wbr>)?/, (m, sp, sep) => `cs2-ip-changer${sp || ''}/<wbr>${sp ? `<span class="nw">${ctx.L.code}</span>` : ctx.L.code}${sep ? '/<wbr>' : ''}`) : x.rest);
 
 // ------------------------------------------------------------ a run of text and inline tags
 function runOut(run, ctx) {

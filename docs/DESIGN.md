@@ -471,6 +471,21 @@ boxes, things cut, the spacing of the 01s, the borders, the guides). Since then,
   the live scene fades in over it; a section's number sits with a 20 px accent line on one row over its heading (.8125rem
   mono, `--ink3`); the header is as tall as the home's; one rule between the questions and the related guides; and their
   crop of the app has 16 px corners, no three-colour line, its caption in the text face.
+- **One row for every list of links** (27 Nov 2026: the home's guides, its FAQ's more answers, a guide's related guides and
+  the 404's guides were three kinds of line): a hairline under each, 16 px above and below, the title in the display face at
+  18 px (`--ink`), a short `--ink3` line under it in the text face (.875rem) when there is one, a .5rem chevron at the end. No
+  01 to 14 or 01 to 05 in mono before the rows (the guides had none). The FAQ's questions keep their + on the same lines.
+- **The same menu in every header** (`assets/site-menu.css`, `assets/js/site-navigation.js`): the home's lists its own
+  parts; a guide's and the 404's list the home's eight (Overview, How it works, The app, Is it safe?, Phone or VPN, Setup,
+  Guides, FAQ) under "Pickroute"; tools/site-i18n.mjs adds the five languages under them. The panel has 16 px corners.
+- **The 404:** Go to Pickroute and Send the link to my PC one under the other, full width, 48 px; the guides in a 16 px card
+  with 20 px inside; no Send to PC in its header (the page's own button is on the first screen).
+- **The page's address** (`code.url`, to type on the PC) breaks only after a slash: each part is a `.nw` span.
+- **Mono** stays for addresses, code, numbers, the readouts' labels and the app's own words; sentences after the story
+  (Android's Mobile data off and on, a guide's note under its IP) are in the text face.
+- **Other languages:** nothing is cut or shortened for them; a long word may run past a heading's measure (the close's
+  11ch), never past the screen (`overflow-wrap: normal` there). Checked at 360 px in the five languages by
+  `tools/site-direcao-d.test.mjs`.
 Rules, checked by `node --test tools/site-touch.test.mjs` with taps and flicks (10 Nov 2026):
 
 - every `:hover` style sits in `@media (hover:hover)`, so a phone, which keeps `:hover` on what was tapped, leaves nothing

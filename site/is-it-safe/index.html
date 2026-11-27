@@ -82,7 +82,7 @@ addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.docume
     "@id": "https://sepd0x.github.io/cs2-ip-changer/#author"
    },
    "datePublished": "2026-10-31",
-   "dateModified": "2026-11-26",
+   "dateModified": "2026-11-27",
    "breadcrumb": {
     "@id": "https://sepd0x.github.io/cs2-ip-changer/is-it-safe/#crumbs"
    },
@@ -779,6 +779,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
   .gmore{border-top:0;padding-top:0}
 }
 </style>
+<link rel="stylesheet" href="../assets/site-menu.css">
 <link rel="stylesheet" href="../assets/guide-reading.css">
 </head>
 <body>
@@ -788,6 +789,16 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
   <div class="wrap">
     <a class="brand" href="../"><img src="../img/icon.png" alt="" width="28" height="28"><span>Pickroute</span></a>
     <nav aria-label="Main">
+      <details class="site-menu">
+        <summary aria-label="Page navigation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
+        <div class="menu-links" role="navigation" aria-label="Pickroute">
+          <p>Pickroute</p>
+          <a href="../">Overview</a><a href="../#how">How it works</a>
+          <a href="../#features">The app</a><a href="../is-it-safe/">Is it safe?</a>
+          <a href="../#vpn">Phone or VPN</a><a href="../#setup">Setup</a>
+          <a href="../#guides">Guides</a><a href="../#faq">FAQ</a><!--i18n:menu--><div class="menu-langs" lang="en"><p>Language</p><a href="../is-it-safe/" hreflang="en" lang="en" data-lang="en" aria-current="true">English</a><a href="../pt-br/is-it-safe/" hreflang="pt-BR" lang="pt-BR" data-lang="pt-br">Português (Brasil)</a><a href="../es/is-it-safe/" hreflang="es" lang="es" data-lang="es">Español</a><a href="../ru/is-it-safe/" hreflang="ru" lang="ru" data-lang="ru">Русский</a><a href="../tr/is-it-safe/" hreflang="tr" lang="tr" data-lang="tr">Türkçe</a></div><!--/i18n:menu-->
+        </div>
+      </details>
       <a class="hide-s" href="../#features">Features</a>
       <a class="hide-s" href="../#how">How it works</a>
       <a class="hide-s" href="../is-it-safe/">Is it safe?</a>
@@ -830,7 +841,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
       <div class="rail-in">
         <div class="gcard">
           <div class="get-desk"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a><p class="rel">v0.1.0-beta.13 · 63.7 MB · 12 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Release notes and checksums</a></p><p class="rel-ss">Windows may say "Windows protected your PC": click More info, then Run anyway. <a href="../is-it-safe/">Why it's safe</a></p></div>
-          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">sepd0x.github.io/<wbr>cs2-ip-changer/<wbr>is-it-safe</code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/">Send to my PC</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div>
+          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url"><span class="nw">sepd0x.github.io</span>/<wbr><span class="nw">cs2-ip-changer</span>/<wbr><span class="nw">is-it-safe</span></code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/">Send to my PC</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div>
           <ul class="checks" aria-label="At a glance"><li>Free</li><li>Public source</li><li>No account</li><li>Doesn't touch cs2.exe</li><li><a href="https://www.virustotal.com/gui/file/cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b/detection">VirusTotal report</a></li></ul>
           <p class="safe">Windows warns once: the .exe isn't code-signed yet. Updates are checked with a signature. <a href="#check-your-download">Check your download</a></p>
           <p class="req">Beta · Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin</p>
@@ -860,7 +871,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
       <ul><li><b>Changes:</b> Windows routes and Windows Firewall rules (all named with the app's prefix), which saved Steam account logs in, and CS2's launch options on your Steam accounts: it adds <code>-condebug -conclearlog</code>, only while Steam is closed, so the app can read kicks and bans in CS2's console log (Settings > Steam turns it off). Only if you use those pages, it also changes CS2's config files (<a href="../cs2-config-file-location/">where CS2 saves your config</a>) and your Steam profiles. Phone setup downloads Google's ADB by itself, and checks that Google signed it.</li><li><b>Never touches:</b> the game process, its memory or its program files. It hides nothing from VAC or any anti-cheat.</li><li><b>Why admin:</b> routes and firewall rules are system settings, and Windows only lets admins change them. Steam, CS2, your browser and the programs it opens for you still run as you, not as admin.</li></ul>
       <aside class="gget gcard" aria-label="Download">
           <div class="get-desk"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a><p class="rel">v0.1.0-beta.13 · 63.7 MB · 12 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Release notes and checksums</a></p><p class="rel-ss">Windows may say "Windows protected your PC": click More info, then Run anyway. <a href="../is-it-safe/">Why it's safe</a></p></div>
-          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">sepd0x.github.io/<wbr>cs2-ip-changer/<wbr>is-it-safe</code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/">Send to my PC</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div>
+          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url"><span class="nw">sepd0x.github.io</span>/<wbr><span class="nw">cs2-ip-changer</span>/<wbr><span class="nw">is-it-safe</span></code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/">Send to my PC</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div>
           <ul class="checks" aria-label="At a glance"><li>Free</li><li>Public source</li><li>No account</li><li>Doesn't touch cs2.exe</li><li><a href="https://www.virustotal.com/gui/file/cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b/detection">VirusTotal report</a></li></ul>
           <p class="safe">Windows warns once: the .exe isn't code-signed yet. Updates are checked with a signature. <a href="#check-your-download">Check your download</a></p>
           <p class="req">Beta · Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin</p>
@@ -886,7 +897,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
         <li class="rv" style="--i:2"><a href="../steam-account-switcher/"><b>Steam account switcher</b><span>No passwords, ban marks per server.</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="m14 6 6 6-6 6"/></svg></a></li>
       </ul>
       <div class="end"><div class="get-desk"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a><p class="rel">v0.1.0-beta.13 · 63.7 MB · 12 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Release notes and checksums</a></p><p class="rel-ss">Windows may say "Windows protected your PC": click More info, then Run anyway. <a href="../is-it-safe/">Why it's safe</a></p></div>
-          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">sepd0x.github.io/<wbr>cs2-ip-changer/<wbr>is-it-safe</code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/">Send to my PC</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div><p class="req">Free beta · Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin</p></div>
+          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url"><span class="nw">sepd0x.github.io</span>/<wbr><span class="nw">cs2-ip-changer</span>/<wbr><span class="nw">is-it-safe</span></code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/">Send to my PC</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div><p class="req">Free beta · Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin</p></div>
       <p class="gstar">Useful? A <a href="https://github.com/Sepd0x/cs2-ip-changer">star on GitHub</a> helps other players find it.</p>
     </nav>
   </div>
@@ -1041,6 +1052,7 @@ __ldGet('../assets/guides/world.min.js',964648,function(){window.__gw&&window.__
   if(window.GuideWorld)window.__gw();
 })();
 </script>
+<script src="../assets/js/site-navigation.js" defer></script>
 <!--i18n:js--><script>(function(d){d.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[data-lang]');if(a){try{localStorage.setItem('cs2-lang',a.getAttribute('data-lang'))}catch(x){}}d.querySelectorAll('details.lang-pick[open]').forEach(function(p){if(!p.contains(e.target))p.open=false})});d.addEventListener('keydown',function(e){if(e.key==='Escape')d.querySelectorAll('details.lang-pick[open]').forEach(function(p){p.open=false;p.querySelector('summary').focus()})})})(document)</script><script>addEventListener('load',function(){try{if(localStorage.getItem('cs2-lang'))return}catch(x){return}var O=[{"m":"^pt","u":"../pt-br/is-it-safe/","l":"pt-BR","t":"Este site também está em português.","g":"Ver em português","c":"Fechar"},{"m":"^es","u":"../es/is-it-safe/","l":"es","t":"Este sitio también está en español.","g":"Ver en español","c":"Cerrar"},{"m":"^(ru|be|kk|ky)\\b","u":"../ru/is-it-safe/","l":"ru","t":"Этот сайт есть и на русском.","g":"Открыть на русском","c":"Закрыть"},{"m":"^tr\\b","u":"../tr/is-it-safe/","l":"tr","t":"Bu site Türkçe de var.","g":"Türkçe görüntüle","c":"Kapat"}],w=(navigator.languages&&navigator.languages[0]||navigator.language||'').toLowerCase(),o=null;if(/^en/.test(w))return;O.forEach(function(x){if(!o&&new RegExp(x.m).test(w))o=x});if(!o)return;var d=document,b=d.createElement('div');b.className='lang-hint';b.lang=o.l;b.setAttribute('role','note');b.innerHTML='<span></span><a data-lang></a><button type="button">\u00d7</button>';b.firstChild.textContent=o.t;var a=b.querySelector('a'),x=b.querySelector('button');a.href=o.u;a.textContent=o.g;a.setAttribute('data-lang',o.u.replace(/^.*?(pt-br|es|ru|tr)\/.*$/,'$1'));x.setAttribute('aria-label',o.c);x.addEventListener('click',function(){try{localStorage.setItem('cs2-lang','en')}catch(e){}b.remove()});setTimeout(function(){d.body.appendChild(b)},1500)})</script>
 <!--/i18n:js--></body>
 </html>

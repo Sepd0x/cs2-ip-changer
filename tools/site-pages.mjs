@@ -344,7 +344,7 @@ const icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 const star = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>';
 // On a PC: the exe itself, with what you get under it. On a phone (a Windows app is no use there): copy this page's link for the PC.
 const download = (url) => `<div class="get-desk"><a class="btn" href="${EXE}">${icon}Download for Windows</a><p class="rel">${relLine}</p><p class="rel-ss">Windows may say "Windows protected your PC": click More info, then Run anyway. <a href="../is-it-safe/">Why it's safe</a></p></div>
-          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">${url.replace(/^https:\/\//, '').replace(/\/$/, '').replace(/\//g, '/<wbr>')}</code><button class="btn" type="button" data-share data-copy="${url}">Send to my PC</button></div><a class="link" href="${EXE}">Download the .exe anyway</a></div>`;
+          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">${url.replace(/^https:\/\//, '').replace(/\/$/, '').split('/').map((p) => `<span class="nw">${p}</span>`).join('/<wbr>')}</code><button class="btn" type="button" data-share data-copy="${url}">Send to my PC</button></div><a class="link" href="${EXE}">Download the .exe anyway</a></div>`;
 const req = 'Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin';
 // The copy button and the screenshot viewer: the same code as the home page (between its /* shared */ marks).
 const shared = home.match(/\/\* shared \*\/([\s\S]*?)\/\* \/shared \*\//)[1];
@@ -956,6 +956,7 @@ addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.docume
 ${JSON.stringify(ld, null, 1)}
 </script>
 ${style}
+<link rel="stylesheet" href="../assets/site-menu.css">
 <link rel="stylesheet" href="../assets/guide-reading.css">
 </head>
 <body>
@@ -965,6 +966,16 @@ ${style}
   <div class="wrap">
     <a class="brand" href="../"><img src="../img/icon.png" alt="" width="28" height="28"><span>Pickroute</span></a>
     <nav aria-label="Main">
+      <details class="site-menu">
+        <summary aria-label="Page navigation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></summary>
+        <div class="menu-links" role="navigation" aria-label="Pickroute">
+          <p>Pickroute</p>
+          <a href="../">Overview</a><a href="../#how">How it works</a>
+          <a href="../#features">The app</a><a href="../is-it-safe/">Is it safe?</a>
+          <a href="../#vpn">Phone or VPN</a><a href="../#setup">Setup</a>
+          <a href="../#guides">Guides</a><a href="../#faq">FAQ</a>
+        </div>
+      </details>
       <a class="hide-s" href="../#features">Features</a>
       <a class="hide-s" href="../#how">How it works</a>
       <a class="hide-s" href="../is-it-safe/">Is it safe?</a>
@@ -1095,6 +1106,7 @@ __ldGet('../assets/guides/world.min.js',964648,function(){window.__gw&&window.__
   if(window.GuideWorld)window.__gw();
 })();
 </script>
+<script src="../assets/js/site-navigation.js" defer></script>
 </body>
 </html>
 `;

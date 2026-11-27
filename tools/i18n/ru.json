@@ -135,7 +135,11 @@
   "Pickroute (free, Windows 10 and 11)": "Pickroute (бесплатно, Windows 10 и 11)",
   "Get the app": "Скачайте приложение",
   "Turn off the regions you don't want": "Отключите ненужные регионы",
-  "Undo it": "Отмена"
+  "Undo it": "Отмена",
+  "Page navigation": "Навигация по странице",
+  "Overview": "Обзор",
+  "The app": "Приложение",
+  "Phone or VPN": "Телефон или VPN"
  },
  "js": {
   "IP servers see. Example, banned on this server": "IP, который видят серверы. Пример: забанен на этом сервере",
@@ -702,11 +706,7 @@
   "Pickroute: change your CS2 IP with your phone": "Pickroute: сменить IP в CS2 через телефон",
   "Route CS2 and Steam through your phone's mobile data. Community servers see your carrier's IP, not your home IP. Free for Windows 10 and 11.": "Пускайте CS2 и Steam через мобильный интернет телефона. Комьюнити-серверы видят IP оператора, а не ваш домашний. Бесплатно для Windows 10 и 11.",
   "Route CS2 and Steam through your phone's mobile data. Community servers see your carrier's IP, not your home IP.": "Пускайте CS2 и Steam через мобильный интернет телефона. Комьюнити-серверы видят IP оператора, а не ваш домашний.",
-  "Page navigation": "Навигация по странице",
-  "Overview": "Обзор",
-  "The app": "Приложение",
   "Safety checks": "Проверки безопасности",
-  "Phone or VPN": "Телефон или VPN",
   "Android / iPhone": "Android / iPhone",
   "Change your CS2 IP with your phone's mobile data": "Смена IP в CS2 через мобильный интернет телефона",
   "CS2 and Steam go through your phone, so community servers see your carrier's IP, not your home IP. IP banned? One click gets a new IP and puts you back on the server.": "CS2 и Steam идут через телефон, поэтому комьюнити-серверы видят IP оператора, а не ваш домашний. Бан по IP? Один клик даёт новый IP и возвращает вас на сервер.",

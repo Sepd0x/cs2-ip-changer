@@ -40,3 +40,25 @@
   .top nav>.btn-ghost{display:none}
   .top .brand span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 }
+
+/* the page's address to type on the PC: it breaks only after a slash (it broke in the middle of a name, "cs2-ip-" / "ban") */
+.copyrow .url .nw{white-space:nowrap}
+/* 27 Nov., the phone: the related guides as the same rows as every list of links (see site-refinements.css): a hairline, 16 px
+   above and below, the title at 18 px in the display face, the grey line under it, the small chevron in place of the arrow */
+@media (max-width:759px){
+  .gmore ul a{grid-template-columns:minmax(0,1fr) 1rem;gap:.25rem 1rem;padding:1rem 0;align-items:start}
+  .gmore ul a b{grid-column:1;grid-row:1;font-size:1.125rem;line-height:1.3;letter-spacing:-.015em}
+  .gmore ul a span{grid-column:1;grid-row:2;font-size:.875rem;line-height:1.45}
+  .gmore ul a svg{display:none}
+  .gmore ul a::after{content:"";grid-column:2;grid-row:1/span 2;align-self:center;justify-self:end;width:.5rem;height:.5rem;margin-right:.2rem;border-top:1.5px solid var(--ink3);border-right:1.5px solid var(--ink3);transform:rotate(45deg)}
+  /* the readout's note under the IP is a sentence: the text face (its label and the IP stay mono) */
+  .ghero .ro-foot{font-family:var(--sans);letter-spacing:0}
+}
+/* after the designer's and the critic's look (27 Nov.): the card's short facts (Free, Source published...) each had a line
+   under it as long as its words, five short dashes of different lengths: two equal columns, no lines; and a guide that ends
+   on a list drew its last line 60 px over the FAQ's own (two rules in a row) */
+@media (max-width:759px){
+  .gget .checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem 1rem}
+  .gget .checks li{border:0;padding:0;min-width:0}
+  .gtext > :last-child > li:last-child{border-bottom:0}
+}

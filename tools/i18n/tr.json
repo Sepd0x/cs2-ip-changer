@@ -134,7 +134,11 @@
   "Pickroute (free, Windows 10 and 11)": "Pickroute (ücretsiz, Windows 10 ve 11)",
   "Get the app": "Uygulamayı al",
   "Turn off the regions you don't want": "İstemediğin region'ları kapat",
-  "Undo it": "Geri al"
+  "Undo it": "Geri al",
+  "Page navigation": "Sayfa gezintisi",
+  "Overview": "Genel bakış",
+  "The app": "Uygulama",
+  "Phone or VPN": "Telefon mu VPN mi"
  },
  "js": {
   "IP servers see. Example, banned on this server": "Sunucuların gördüğü IP. Örnek, bu sunucuda banlı",
@@ -692,11 +696,7 @@
   "Pickroute: change your CS2 IP with your phone": "Pickroute: CS2 IP'ni telefonunla değiştir",
   "Route CS2 and Steam through your phone's mobile data. Community servers see your carrier's IP, not your home IP. Free for Windows 10 and 11.": "CS2 ve Steam'i telefonunun mobil verisinden geçir. Topluluk sunucuları ev IP'ni değil operatörünün IP'sini görür. Windows 10 ve 11 için ücretsiz.",
   "Route CS2 and Steam through your phone's mobile data. Community servers see your carrier's IP, not your home IP.": "CS2 ve Steam'i telefonunun mobil verisinden geçir. Topluluk sunucuları ev IP'ni değil operatörünün IP'sini görür.",
-  "Page navigation": "Sayfa gezintisi",
-  "Overview": "Genel bakış",
-  "The app": "Uygulama",
   "Safety checks": "Güvenlik kontrolleri",
-  "Phone or VPN": "Telefon mu VPN mi",
   "Android / iPhone": "Android / iPhone",
   "Change your CS2 IP with your phone's mobile data": "CS2 IP'ni telefonunun mobil verisiyle değiştir",
   "CS2 and Steam go through your phone, so community servers see your carrier's IP, not your home IP. IP banned? One click gets a new IP and puts you back on the server.": "CS2 ve Steam telefonundan çıkar, bu yüzden topluluk sunucuları ev IP'ni değil operatörünün IP'sini görür. IP banı mı yedin? Tek tıkla yeni IP al ve sunucuya geri dön.",

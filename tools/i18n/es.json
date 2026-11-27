@@ -135,7 +135,11 @@
   "Pickroute (free, Windows 10 and 11)": "Pickroute (gratis, Windows 10 y 11)",
   "Get the app": "Consigue la app",
   "Turn off the regions you don't want": "Apaga las regiones que no quieres",
-  "Undo it": "Deshazlo"
+  "Undo it": "Deshazlo",
+  "Page navigation": "Navegación de la página",
+  "Overview": "Resumen",
+  "The app": "La app",
+  "Phone or VPN": "Teléfono o VPN"
  },
  "js": {
   "IP servers see. Example, banned on this server": "IP que ven los servidores. Ejemplo, baneada en este servidor",
@@ -702,11 +706,7 @@
   "Pickroute: change your CS2 IP with your phone": "Pickroute: cambia tu IP en CS2 con tu teléfono",
   "Route CS2 and Steam through your phone's mobile data. Community servers see your carrier's IP, not your home IP. Free for Windows 10 and 11.": "Manda CS2 y Steam por los datos móviles de tu teléfono. Los servidores de la comunidad ven la IP de tu operador, no tu IP de casa. Gratis para Windows 10 y 11.",
   "Route CS2 and Steam through your phone's mobile data. Community servers see your carrier's IP, not your home IP.": "Manda CS2 y Steam por los datos móviles de tu teléfono. Los servidores de la comunidad ven la IP de tu operador, no tu IP de casa.",
-  "Page navigation": "Navegación de la página",
-  "Overview": "Resumen",
-  "The app": "La app",
   "Safety checks": "Verificaciones de seguridad",
-  "Phone or VPN": "Teléfono o VPN",
   "Android / iPhone": "Android / iPhone",
   "Change your CS2 IP with your phone's mobile data": "Cambia tu IP en CS2 con los datos móviles de tu teléfono",
   "CS2 and Steam go through your phone, so community servers see your carrier's IP, not your home IP. IP banned? One click gets a new IP and puts you back on the server.": "CS2 y Steam salen por tu teléfono, así que los servidores de la comunidad ven la IP de tu operador, no tu IP de casa. ¿IP baneada? Un clic consigue una IP nueva y te devuelve al servidor.",
