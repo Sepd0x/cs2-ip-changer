@@ -9,12 +9,12 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/connection.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/servers.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/accounts.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/regions.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/configs.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/profiles.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-community-servers.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/</loc>
@@ -25,6 +25,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/</loc>
@@ -35,6 +36,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/copy-cs2-config/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/copy-cs2-config/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/</loc>
@@ -45,6 +47,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-account-switcher/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-account-switcher/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/</loc>
@@ -55,6 +58,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-profile-editor/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-profile-editor/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/</loc>
@@ -65,6 +69,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/change-ip-with-phone/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/change-ip-with-phone/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/</loc>
@@ -75,6 +80,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-mobile-data/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-mobile-data/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/</loc>
@@ -85,6 +91,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ping-test/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ping-test/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/</loc>
@@ -95,6 +102,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-config-file-location/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-config-file-location/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/</loc>
@@ -105,6 +113,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-iphone-hotspot/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-iphone-hotspot/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/</loc>
@@ -115,6 +124,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ip-ban/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ip-ban/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/</loc>
@@ -125,6 +135,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/hide-ip-cs2/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/hide-ip-cs2/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/is-it-safe/</loc>
@@ -135,6 +146,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/is-it-safe/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/is-it-safe/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/</loc>
@@ -145,6 +157,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-server-picker-not-working/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-server-picker-not-working/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/</loc>
@@ -155,6 +168,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/dota-2-deadlock-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/dota-2-deadlock-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/</loc>
@@ -165,12 +179,12 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/connection.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/servers.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/accounts.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/regions.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/configs.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/profiles.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-community-servers.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-region-picker/</loc>
@@ -181,6 +195,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/copy-cs2-config/</loc>
@@ -191,6 +206,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/copy-cs2-config/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/copy-cs2-config/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/steam-account-switcher/</loc>
@@ -201,6 +217,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-account-switcher/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-account-switcher/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/steam-profile-editor/</loc>
@@ -211,6 +228,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-profile-editor/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-profile-editor/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/change-ip-with-phone/</loc>
@@ -221,6 +239,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/change-ip-with-phone/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/change-ip-with-phone/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-mobile-data/</loc>
@@ -231,6 +250,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-mobile-data/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-mobile-data/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-ping-test/</loc>
@@ -241,6 +261,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ping-test/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ping-test/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-config-file-location/</loc>
@@ -251,6 +272,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-config-file-location/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-config-file-location/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-iphone-hotspot/</loc>
@@ -261,6 +283,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-iphone-hotspot/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-iphone-hotspot/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-ip-ban/</loc>
@@ -271,6 +294,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ip-ban/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ip-ban/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/hide-ip-cs2/</loc>
@@ -281,6 +305,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/hide-ip-cs2/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/hide-ip-cs2/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/is-it-safe/</loc>
@@ -291,6 +316,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/is-it-safe/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/is-it-safe/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-server-picker-not-working/</loc>
@@ -301,6 +327,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-server-picker-not-working/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-server-picker-not-working/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/dota-2-deadlock-region-picker/</loc>
@@ -311,6 +338,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/dota-2-deadlock-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/dota-2-deadlock-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/es/</loc>
@@ -321,12 +349,12 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/connection.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/servers.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/accounts.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/regions.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/configs.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/profiles.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-community-servers.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/es/cs2-region-picker/</loc>
@@ -337,6 +365,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/es/copy-cs2-config/</loc>
@@ -347,6 +376,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/copy-cs2-config/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/copy-cs2-config/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/es/steam-account-switcher/</loc>
@@ -357,6 +387,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-account-switcher/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-account-switcher/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/es/steam-profile-editor/</loc>
@@ -367,6 +398,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-profile-editor/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-profile-editor/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/es/change-ip-with-phone/</loc>
@@ -377,6 +409,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/change-ip-with-phone/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/change-ip-with-phone/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/es/cs2-mobile-data/</loc>
@@ -387,6 +420,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-mobile-data/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-mobile-data/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/es/cs2-ping-test/</loc>
@@ -397,6 +431,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ping-test/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ping-test/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/es/cs2-config-file-location/</loc>
@@ -407,6 +442,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-config-file-location/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-config-file-location/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/es/cs2-iphone-hotspot/</loc>
@@ -417,6 +453,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-iphone-hotspot/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-iphone-hotspot/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/es/cs2-ip-ban/</loc>
@@ -427,6 +464,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ip-ban/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ip-ban/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/es/hide-ip-cs2/</loc>
@@ -437,6 +475,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/hide-ip-cs2/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/hide-ip-cs2/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/es/is-it-safe/</loc>
@@ -447,6 +486,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/is-it-safe/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/is-it-safe/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/es/cs2-server-picker-not-working/</loc>
@@ -457,6 +497,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-server-picker-not-working/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-server-picker-not-working/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/es/dota-2-deadlock-region-picker/</loc>
@@ -467,6 +508,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/dota-2-deadlock-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/dota-2-deadlock-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/ru/</loc>
@@ -477,12 +519,12 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/connection.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/servers.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/accounts.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/regions.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/configs.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/profiles.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-community-servers.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/ru/cs2-region-picker/</loc>
@@ -493,6 +535,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/ru/copy-cs2-config/</loc>
@@ -503,6 +546,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/copy-cs2-config/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/copy-cs2-config/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/ru/steam-account-switcher/</loc>
@@ -513,6 +557,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-account-switcher/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-account-switcher/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/ru/steam-profile-editor/</loc>
@@ -523,6 +568,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-profile-editor/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-profile-editor/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/ru/change-ip-with-phone/</loc>
@@ -533,6 +579,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/change-ip-with-phone/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/change-ip-with-phone/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/ru/cs2-mobile-data/</loc>
@@ -543,6 +590,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-mobile-data/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-mobile-data/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ping-test/</loc>
@@ -553,6 +601,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ping-test/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ping-test/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/ru/cs2-config-file-location/</loc>
@@ -563,6 +612,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-config-file-location/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-config-file-location/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/ru/cs2-iphone-hotspot/</loc>
@@ -573,6 +623,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-iphone-hotspot/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-iphone-hotspot/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ip-ban/</loc>
@@ -583,6 +634,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ip-ban/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ip-ban/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/ru/hide-ip-cs2/</loc>
@@ -593,6 +645,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/hide-ip-cs2/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/hide-ip-cs2/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/ru/is-it-safe/</loc>
@@ -603,6 +656,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/is-it-safe/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/is-it-safe/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/ru/cs2-server-picker-not-working/</loc>
@@ -613,6 +667,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-server-picker-not-working/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-server-picker-not-working/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/ru/dota-2-deadlock-region-picker/</loc>
@@ -623,6 +678,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/dota-2-deadlock-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/dota-2-deadlock-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/tr/</loc>
@@ -633,12 +689,12 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/connection.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/servers.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/accounts.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/regions.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/configs.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/profiles.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-community-servers.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/</loc>
@@ -649,6 +705,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/tr/copy-cs2-config/</loc>
@@ -659,6 +716,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/copy-cs2-config/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/copy-cs2-config/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/tr/steam-account-switcher/</loc>
@@ -669,6 +727,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-account-switcher/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-account-switcher/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/tr/steam-profile-editor/</loc>
@@ -679,6 +738,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-profile-editor/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-profile-editor/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/tr/change-ip-with-phone/</loc>
@@ -689,6 +749,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/change-ip-with-phone/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/change-ip-with-phone/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/tr/cs2-mobile-data/</loc>
@@ -699,6 +760,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-mobile-data/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-mobile-data/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ping-test/</loc>
@@ -709,6 +771,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ping-test/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ping-test/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/tr/cs2-config-file-location/</loc>
@@ -719,6 +782,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-config-file-location/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-config-file-location/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/tr/cs2-iphone-hotspot/</loc>
@@ -729,6 +793,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-iphone-hotspot/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-iphone-hotspot/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ip-ban/</loc>
@@ -739,6 +804,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ip-ban/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ip-ban/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/tr/hide-ip-cs2/</loc>
@@ -749,6 +815,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/hide-ip-cs2/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/hide-ip-cs2/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/tr/is-it-safe/</loc>
@@ -759,6 +826,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/is-it-safe/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/is-it-safe/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/tr/cs2-server-picker-not-working/</loc>
@@ -769,6 +837,7 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-server-picker-not-working/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-server-picker-not-working/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
     <loc>https://sepd0x.github.io/cs2-ip-changer/tr/dota-2-deadlock-region-picker/</loc>
@@ -779,5 +848,6 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/dota-2-deadlock-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/dota-2-deadlock-region-picker/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
 </urlset>

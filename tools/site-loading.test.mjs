@@ -15,6 +15,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { shotSource } from './shot-names.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = resolve(process.env.SITE_DIR || join(ROOT, 'site'));
@@ -79,7 +80,7 @@ before(async () => {
     let f = resolve(SITE, '.' + (p.slice(BASE.length) || '/'));
     if (f !== SITE && !f.startsWith(SITE + sep)) { s.writeHead(404); return s.end(); }
     if (existsSync(f) && statSync(f).isDirectory()) f = join(f, 'index.html');
-    if (!existsSync(f) && /\/img\/[\w-]+\.(png|webp)$/.test(p)) for (const d of ['docs/screenshots', 'docs/assets']) { const c = join(ROOT, d, p.split('/').pop().replace(/\.webp$/, '.png')); if (existsSync(c)) { f = c; break; } }
+    if (!existsSync(f) && /\/img\/[\w-]+\.(png|webp)$/.test(p)) for (const d of ['docs/screenshots', 'docs/assets']) { const c = join(ROOT, d, shotSource(p)); if (existsSync(c)) { f = c; break; } }
     if (!existsSync(f)) { s.writeHead(404); return s.end(); }
     s.writeHead(200, { 'content-type': TYPES[extname(f)] || 'application/octet-stream', 'cache-control': 'no-store' });
     s.end(readFileSync(f));

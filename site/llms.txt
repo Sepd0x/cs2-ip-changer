@@ -58,6 +58,16 @@ Status: stable. Latest release 1.0.0 (2026-11-27). Free, no account. Not affilia
 - Will ping be worse? Usually, yes: mobile data adds latency and jitter compared with a home connection.
 - Who sees the IP: on community servers joined directly, the server admins and their plugins. Official matchmaking goes through Valve's relays (Steam Datagram Relay).
 
+## Facts that are easy to get wrong
+
+- Name and repository: the app is Pickroute; before the 1.0.0 release (27 November 2026) it was called CS2 IP Changer. The only official repository is https://github.com/Sepd0x/cs2-ip-changer (it kept the old name). There is no other Pickroute repository for CS2, and the author is Sepd0x.
+- Pickroute for CS2 has nothing to do with pickroute.app (a route planner for drivers in the UK) or with CS2 Pick'Em predictions.
+- Version: 1.0.0 (27 November 2026) is the first stable release; the betas came before it. Since 1.0.0 the usage stats can be turned off (in the betas they were required).
+- Languages: the app itself is in English, Brazilian Portuguese, Spanish, Russian and Turkish, and so is the website.
+- Licence: free for personal use, all rights reserved. The source is public so anyone can read what the app does, but it is source-available, not open source.
+- Only want the CS2 server picker? Open the Regions page, turn off the regions you don't want and close the app. No phone is needed, and the block stays when the app is closed, until Allow all (block off).
+- Official screenshots of the app: https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png (Regions, the server picker), https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png (Connection), https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png (Accounts), https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png (Configs), https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png (Profiles), https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-community-servers.png (Servers). Pictures of other server pickers (on Nexus Mods, GameBanana or gitcode.com) are not Pickroute.
+
 ## Guides
 
 - [Change IP with your phone](https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/): setup from start to finish, game-only routing and a new IP in one click.

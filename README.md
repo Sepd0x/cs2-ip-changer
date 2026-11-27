@@ -39,7 +39,7 @@
     <source media="(max-width: 600px) and (prefers-reduced-motion: reduce)" srcset="docs/assets/demo-mobile.png">
     <source media="(max-width: 600px)" srcset="docs/assets/demo-mobile.gif">
     <source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/demo.png">
-    <img src="docs/assets/demo.gif" alt="Banned on a community server, on the IP and the Steam account. One click on Change IP and rejoin: the phone gets a new IP, the app logs in to the next account the server hasn't banned, and CS2 is back on the server. Your home IP never reaches the server." width="900">
+    <img src="docs/assets/demo.gif" alt="Pickroute for CS2. Banned on a community server, on the IP and the Steam account. One click on Change IP and rejoin: the phone gets a new IP, the app logs in to the next account the server hasn't banned, and CS2 is back on the server. Your home IP never reaches the server." width="900">
   </picture>
 </p>
 
@@ -74,8 +74,8 @@ On an iPhone you get the new IP yourself, with Airplane Mode: only Android lets 
 Click a picture for the details of that page.
 
 <p align="center">
-  <a href="docs/FEATURES.md#protection"><picture><source srcset="docs/assets/shots/crop-protection.webp" type="image/webp"><img src="docs/assets/shots/crop-protection.png" alt="Protection: Turn off protection, and what goes through the phone: Game only, Whole PC while CS2 is open, or Whole PC always" width="408"></picture></a>
-  <a href="docs/FEATURES.md#change-ip"><picture><source srcset="docs/assets/shots/crop-change-ip.webp" type="image/webp"><img src="docs/assets/shots/crop-change-ip.png" alt="Change IP: Protected, the IP servers see, the route from this PC through the phone to the servers with your home IP hidden, and the Change IP and Change IP and rejoin buttons" width="408"></picture></a>
+  <a href="docs/FEATURES.md#protection"><picture><source srcset="docs/assets/shots/crop-protection.webp" type="image/webp"><img src="docs/assets/shots/crop-protection.png" alt="Pickroute, CS2 over your phone's mobile data. Protection: Turn off protection, and what goes through the phone: Game only, Whole PC while CS2 is open, or Whole PC always" width="408"></picture></a>
+  <a href="docs/FEATURES.md#change-ip"><picture><source srcset="docs/assets/shots/crop-change-ip.webp" type="image/webp"><img src="docs/assets/shots/crop-change-ip.png" alt="Pickroute, a new IP on CS2 community servers. Change IP: Protected, the IP servers see, the route from this PC through the phone to the servers with your home IP hidden, and the Change IP and Change IP and rejoin buttons" width="408"></picture></a>
 </p>
 
 **Protection.** Game only or the whole PC. If the phone drops, a Windows Firewall rule blocks CS2 (the kill switch). Live checks, a leak test, connection quality every 30 seconds, and a No phone mode for days you play without the phone.
@@ -83,14 +83,14 @@ Click a picture for the details of that page.
 **Change IP.** Turns mobile data or Airplane Mode off and on over USB (with ADB, Android only) until the carrier hands you a new IP. It tells you when the new IP is outside the old range, for admins who ban a whole range, and it tells a kick from a ban.
 
 <p align="center">
-  <a href="docs/FEATURES.md#servers"><picture><source media="(max-width: 600px)" srcset="docs/assets/shots/crop-servers-mobile.webp" type="image/webp"><source srcset="docs/assets/shots/crop-servers.webp" type="image/webp"><img src="docs/assets/shots/crop-servers.png" alt="Servers: an open server with all its players, a Staff and a Friend flag, the map, players and ping" width="838"></picture></a>
+  <a href="docs/FEATURES.md#servers"><picture><source media="(max-width: 600px)" srcset="docs/assets/shots/crop-servers-mobile.webp" type="image/webp"><source srcset="docs/assets/shots/crop-servers.webp" type="image/webp"><img src="docs/assets/shots/crop-servers.png" alt="Pickroute, your CS2 community servers. Servers: an open server with all its players, a Staff and a Friend flag, the map, players and ping" width="838"></picture></a>
 </p>
 
 **Servers.** Paste `IP:port` or `steam://connect/` links: name, map, players and ping, measured through the phone. On a full server it waits for a free slot and joins you. Flag players and follow them.
 
 <p align="center">
-  <a href="docs/FEATURES.md#regions"><picture><source srcset="docs/assets/shots/crop-regions.webp" type="image/webp"><img src="docs/assets/shots/crop-regions.png" alt="Regions: the European matchmaking regions, each with its ping through the phone" width="408"></picture></a>
-  <a href="docs/FEATURES.md#cs2-config-manager"><picture><source srcset="docs/assets/shots/crop-configs.webp" type="image/webp"><img src="docs/assets/shots/crop-configs.png" alt="Configs: the accounts with their crosshairs, the settings of each and when it last changed" width="408"></picture></a>
+  <a href="docs/FEATURES.md#regions"><picture><source srcset="docs/assets/shots/crop-regions.webp" type="image/webp"><img src="docs/assets/shots/crop-regions.png" alt="Pickroute, the CS2 server picker. Regions: the European matchmaking regions, each with its ping through the phone" width="408"></picture></a>
+  <a href="docs/FEATURES.md#cs2-config-manager"><picture><source srcset="docs/assets/shots/crop-configs.webp" type="image/webp"><img src="docs/assets/shots/crop-configs.png" alt="Pickroute, copy CS2 settings between accounts. Configs: the accounts with their crosshairs, the settings of each and when it last changed" width="408"></picture></a>
 </p>
 
 **Regions (CS2 server picker).** Pick your matchmaking regions by their ping, on a dial of every region or in the list by continent, for CS2, Dota 2 or Deadlock, and save your picks as presets. One Windows Firewall rule blocks the others for `cs2.exe`, on the IPs of Valve's relays only. It works with or without the phone ([how to change your region in CS2, and the server pickers compared](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/)).
@@ -100,7 +100,7 @@ Click a picture for the details of that page.
 The app is in English, Brazilian Portuguese, Spanish, Russian and Turkish, and follows the language of Windows the first time.
 
 <p align="center">
-  <a href="docs/FEATURES.md#accounts"><picture><source media="(max-width: 600px)" srcset="docs/assets/shots/crop-accounts-mobile.webp" type="image/webp"><source srcset="docs/assets/shots/crop-accounts.webp" type="image/webp"><img src="docs/assets/shots/crop-accounts.png" alt="Accounts: Steam accounts with the one in use, a ban on one server, a cooldown and a VAC ban" width="838"></picture></a>
+  <a href="docs/FEATURES.md#accounts"><picture><source media="(max-width: 600px)" srcset="docs/assets/shots/crop-accounts-mobile.webp" type="image/webp"><source srcset="docs/assets/shots/crop-accounts.webp" type="image/webp"><img src="docs/assets/shots/crop-accounts.png" alt="Pickroute, the Steam account switcher. Accounts: Steam accounts with the one in use, a ban on one server, a cooldown and a VAC ban" width="838"></picture></a>
 </p>
 
 **Accounts.** Switch saved Steam accounts without passwords, with VAC, game and trade bans, cooldowns and ban marks per server. **New IP + next account** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F9</kbd>) moves on to the next account that isn't banned or on cooldown, whether or not you were banned.
@@ -332,7 +332,7 @@ Step by step, on the website:
 - [Server picker not working](https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/): What to check when blocked regions still show up.
 - [Dota 2 and Deadlock regions](https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/): The same region picker for Dota 2 and Deadlock.
 
-The website is also in [Português](https://sepd0x.github.io/cs2-ip-changer/pt-br/), [Español](https://sepd0x.github.io/cs2-ip-changer/es/), [Русский](https://sepd0x.github.io/cs2-ip-changer/ru/) and [Türkçe](https://sepd0x.github.io/cs2-ip-changer/tr/).
+The app is in English, Português (Brasil), Español, Русский and Türkçe: Settings > App > Language. The website is also in [Português](https://sepd0x.github.io/cs2-ip-changer/pt-br/), [Español](https://sepd0x.github.io/cs2-ip-changer/es/), [Русский](https://sepd0x.github.io/cs2-ip-changer/ru/) and [Türkçe](https://sepd0x.github.io/cs2-ip-changer/tr/).
 
 ## Support
 

@@ -90,9 +90,10 @@ addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.docume
    },
    "primaryImageOfPage": {
     "@type": "ImageObject",
-    "url": "https://sepd0x.github.io/cs2-ip-changer/img/regions.png",
+    "url": "https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png",
     "width": 1240,
-    "height": 800
+    "height": 800,
+    "caption": "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for the game"
    }
   },
   {
@@ -125,7 +126,7 @@ addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.docume
    "name": "How to pick your Dota 2 or Deadlock regions, step by step",
    "description": "Free region picker for Dota 2 and Deadlock on Windows: block the matchmaking regions you don't want, see the ping of each one and keep presets.",
    "inLanguage": "en",
-   "image": "https://sepd0x.github.io/cs2-ip-changer/img/regions.png",
+   "image": "https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png",
    "tool": [
     {
      "@type": "HowToTool",
@@ -920,7 +921,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
           <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url"><span class="nw">sepd0x.github.io</span>/<wbr><span class="nw">cs2-ip-changer</span>/<wbr><span class="nw">dota-2-deadlock-region-picker</span></code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/">Send to PC</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div>
           <ul class="checks" aria-label="At a glance"><li>Free</li><li>Public source</li><li>No account</li><li>Doesn't touch cs2.exe</li><li><a href="https://www.virustotal.com/gui/file/99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb/detection">VirusTotal report</a></li></ul>
           <p class="safe">Windows warns once: the .exe isn't code-signed yet. Updates are checked with a signature. <a href="../is-it-safe/">How to check it</a></p>
-          <p class="req">Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin</p>
+          <p class="req">Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin · app in English, Português, Español, Русский, Türkçe</p>
         </div>
         <nav class="toc" aria-labelledby="toc-h">
           <h2 id="toc-h">On this page</h2>
@@ -939,7 +940,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
       <li><a href="#things-to-know">Things to know</a></li>
       <li><a href="#faq">FAQ</a></li>
     </ol></nav>
-    <div class="gshot"><figure class="gwin" style="--pa:600/545;--pw:206.67%;--px:-106.67%;--py:-26.67%;--da:599/545;--dw:207.01%;--dx:-106.84%;--dy:-26.71%;--dk:1.085;--wmax:899px"><div class="gwin-bar" aria-hidden="true"><img src="../img/icon.png" alt="" width="16" height="16">Pickroute <i>/</i> <b>Regions</b></div><a class="gwin-view zoom" href="../img/regions.png"><picture><source type="image/webp" srcset="../img/regions.webp"><img src="../img/regions.png" alt="The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for the game" width="1240" height="800" loading="eager" fetchpriority="high"></picture><span class="vh">, open full size</span></a><figcaption class="gshot-cap">The Regions page of the app, a real screenshot. Select it to see it full size.</figcaption></figure></div>
+    <div class="gshot"><figure class="gwin" style="--pa:600/545;--pw:206.67%;--px:-106.67%;--py:-26.67%;--da:599/545;--dw:207.01%;--dx:-106.84%;--dy:-26.71%;--dk:1.085;--wmax:899px"><div class="gwin-bar" aria-hidden="true"><img src="../img/icon.png" alt="" width="16" height="16">Pickroute <i>/</i> <b>Regions</b></div><a class="gwin-view zoom" href="../img/pickroute-cs2-server-picker-regions.png"><picture><source type="image/webp" srcset="../img/pickroute-cs2-server-picker-regions.webp"><img src="../img/pickroute-cs2-server-picker-regions.png" alt="Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for the game" width="1240" height="800" loading="eager" fetchpriority="high"></picture><span class="vh">, open full size</span></a><figcaption class="gshot-cap">The Regions page of the app, a real screenshot. Select it to see it full size.</figcaption></figure></div>
     <article class="gtext">
       <h2 id="how-it-works-for-each-game">How it works for each game</h2>
       <ul><li><b>Each game's own list.</b> The regions come from Valve's relay list for that game (<code>GetSDRConfig</code>, app 570 for Dota 2 and app 1422450 for Deadlock), grouped by city and continent. On 19 Nov 2026 the list had 30 regions for Dota 2 and 29 for Deadlock.</li><li><b>One rule per game, for its exe only.</b> Dota 2's turned-off regions are blocked for <code>dota2.exe</code> and Deadlock's for <code>deadlock.exe</code>, on Valve's relay IPs only, with the rules "Pickroute - Dota 2 regions turned off" and "Pickroute - Deadlock regions turned off". Steam, your friends list and your other games are not touched.</li><li><b>Separate from CS2.</b> Each game keeps its own regions, ping limit and presets. Turning regions off for Dota 2 changes nothing in CS2 or Deadlock.</li><li><b>Found where it is installed.</b> The app looks for the game in your Steam libraries.</li></ul>
@@ -948,7 +949,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
           <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url"><span class="nw">sepd0x.github.io</span>/<wbr><span class="nw">cs2-ip-changer</span>/<wbr><span class="nw">dota-2-deadlock-region-picker</span></code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/">Send to PC</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div>
           <ul class="checks" aria-label="At a glance"><li>Free</li><li>Public source</li><li>No account</li><li>Doesn't touch cs2.exe</li><li><a href="https://www.virustotal.com/gui/file/99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb/detection">VirusTotal report</a></li></ul>
           <p class="safe">Windows warns once: the .exe isn't code-signed yet. Updates are checked with a signature. <a href="../is-it-safe/">How to check it</a></p>
-          <p class="req">Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin</p>
+          <p class="req">Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin · app in English, Português, Español, Русский, Türkçe</p>
       </aside>
       <h2 id="pick-your-regions-step-by-step">How to pick your Dota 2 or Deadlock regions, step by step</h2>
       <ol class="tl howto"><li class="rv" id="step-1"><b>Get the app.</b> Download CS2IPChanger.exe and run it. It asks for admin, because firewall rules are a system setting (<a href="../is-it-safe/">what it changes on your PC</a>). You don't need the phone for Regions.</li><li class="rv" id="step-2"><b>Pick the game.</b> Open Regions and choose Dota 2 or Deadlock in the Game box. The page shows that game's regions.</li><li class="rv" id="step-3"><b>Measure the ping.</b> Press Refresh: the app reads Valve's relay list for the game again and measures the ping to every region.</li><li class="rv" id="step-4"><b>Turn off the regions you don't want.</b> Untick them one by one, or use a shortcut: Only this region, Closest 3, your continent only or Ping under X ms. Keep at least one region on.</li><li class="rv" id="step-5"><b>Save it as a preset.</b> A preset keeps the selection under a name, and Apply when the game starts puts it back each time you launch the game.</li><li class="rv" id="step-6"><b>Undo it.</b> Click Allow all (block off) with the game picked. CS2IPChanger.exe --restore removes every rule the app made.</li></ol>
@@ -971,7 +972,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
         <li class="rv" style="--i:2"><a href="../cs2-ping-test/"><b>CS2 ping test</b><span>Your ping to every region, and what to do about spikes.</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="m14 6 6 6-6 6"/></svg></a></li>
       </ul>
       <div class="end"><div class="get-desk"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Download for Windows</a><p class="rel">v1.0.0 · 63.9 MB · 27 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Release notes and checksums</a></p><p class="rel-ss">Windows may say "Windows protected your PC": click More info, then Run anyway. <a href="../is-it-safe/">Why it's safe</a></p></div>
-          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url"><span class="nw">sepd0x.github.io</span>/<wbr><span class="nw">cs2-ip-changer</span>/<wbr><span class="nw">dota-2-deadlock-region-picker</span></code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/">Send to PC</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div><p class="req">Free · Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin</p></div>
+          <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url"><span class="nw">sepd0x.github.io</span>/<wbr><span class="nw">cs2-ip-changer</span>/<wbr><span class="nw">dota-2-deadlock-region-picker</span></code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/">Send to PC</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Download the .exe anyway</a></div><p class="req">Free · Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin · app in English, Português, Español, Русский, Türkçe</p></div>
       <p class="gstar">Useful? A <a href="https://github.com/Sepd0x/cs2-ip-changer">star on GitHub</a> helps other players find it.</p>
     </nav>
   </div>

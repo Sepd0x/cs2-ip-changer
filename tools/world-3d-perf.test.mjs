@@ -20,6 +20,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { shotSource } from './shot-names.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = readFileSync(join(ROOT, 'site/assets/src/world.js'), 'utf8').replace(/\r\n/g, '\n');
@@ -143,7 +144,7 @@ async function chrome() {
     if (f !== SITE && !f.startsWith(SITE + sep)) { s.writeHead(404); return s.end(); }
     if (existsSync(f) && statSync(f).isDirectory()) f = join(f, 'index.html');
     // like the Pages workflow: the app's captures sit in img/ (the png stands in for its webp)
-    if (!existsSync(f) && p.startsWith(BASE + '/img/')) { const n = p.slice((BASE + '/img/').length); for (const c of [join(SHOTS, n), join(SHOTS, n.replace(/\.webp$/, '.png'))]) if (existsSync(c)) { f = c; break; } }
+    if (!existsSync(f) && p.startsWith(BASE + '/img/')) { const n = p.slice((BASE + '/img/').length); for (const c of [join(SHOTS, n), join(SHOTS, shotSource(n))]) if (existsSync(c)) { f = c; break; } }
     if (!existsSync(f)) { s.writeHead(404); return s.end(); }
     s.writeHead(200, { 'content-type': TYPES[extname(f)] || 'application/octet-stream', 'cache-control': 'no-store' });
     s.end(readFileSync(f));

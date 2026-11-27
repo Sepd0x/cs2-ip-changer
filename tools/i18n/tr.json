@@ -36,7 +36,6 @@
   "Getting a new IP": "Yeni IP alınıyor",
   "IP servers see. Example, banned on this server": "Sunucuların gördüğü IP. Örnek, bu sunucuda banlı",
   "Which ban do you have?": "Hangi banın var?",
-  "The Accounts page: saved Steam accounts with ban status, cooldowns and the In rotation checkbox": "Accounts sayfası: kayıtlı Steam hesapları, ban durumu, cooldown'lar ve In rotation kutusu",
   ", open full size": ", tam boyutta aç",
   "Change IP with your phone": "Telefonunla IP değiştir",
   "Steam account switcher": "Steam hesap değiştirici",
@@ -104,8 +103,6 @@
   "Pickroute <i1>/</i1> <b2>Connection</b2>": "Pickroute <i1>/</i1> <b2>Connection</b2>",
   "The Connection page of the app, a real screenshot with example IPs. Select it to see it full size.": "Uygulamanın Connection sayfası, örnek IP'li gerçek bir ekran görüntüsü. Tam boyutta görmek için seç.",
   "Related guides": "İlgili rehberler",
-  "Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin": "Windows 10/11 · Android veya iPhone, USB kablo ya da hotspot ile · mobil veri kullanır · yönetici",
-  "Free · Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin": "Ücretsiz · Windows 10/11 · Android veya iPhone, USB kablo ya da hotspot ile · mobil veri kullanır · yönetici",
   "Useful? A <a1>star on GitHub</a1> helps other players find it.": "Işe yaradı mı? <a1>GitHub'da bir star</a1> diğer oyuncuların bulmasına yardım eder.",
   "Playing it again.": "Tekrar oynatılıyor.",
   "Example: binds, crosshair, settings, video and HUD go to another account, with a backup of each change.": "Örnek: tuş atamaları, nişangah, ayarlar, video ve HUD başka bir hesaba geçer, her değişikliğin yedeği alınır.",
@@ -118,15 +115,11 @@
   "Server sees": "Sunucunun gördüğü",
   "Pickroute <i1>/</i1> <b2>Regions</b2>": "Pickroute <i1>/</i1> <b2>Regions</b2>",
   "The Regions page of the app, a real screenshot. Select it to see it full size.": "Uygulamanın Regions sayfası, gerçek bir ekran görüntüsü. Tam boyutta görmek için seç.",
-  "The Connection page: protection on, the IP servers see, and the route from this PC through the phone to the servers": "Connection sayfası: koruma açık, sunucuların gördüğü IP ve bu PC'den telefona, oradan sunuculara giden yol",
-  "The Configs page: each account with its crosshair, when its config last changed and whether it gets the sync from the main account": "Configs sayfası: her hesap nişangahıyla, config'inin en son ne zaman değiştiği ve ana hesaptan senkron alıp almadığı",
-  "The Connection page: the IP servers see, and your home IP hidden under This PC": "Connection sayfası: sunucuların gördüğü IP ve This PC altında gizlenen ev IP'n",
   "Server picker not working": "Server picker çalışmıyor",
   "What to check when blocked regions still show up.": "Engellenen region'lar hâlâ çıkıyorsa neye bakmalı.",
   "Dota 2 and Deadlock regions": "Dota 2 ve Deadlock region'ları",
   "Example: the regions you turn off go dark, blocked for cs2.exe only; CS2 matches in the ones left on.": "Örnek: kapattığın region'lar kararır, sadece cs2.exe için engellenir; CS2 açık kalanlarda maç bulur.",
   "Regions CS2 can play in: 8 of 30 (example)": "CS2'nin oynayabildiği region: 8 / 30 (örnek)",
-  "The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for cs2.exe": "Regions sayfası: tüm matchmaking bölgeleri bir kadranda ve kıtalara göre bir listede, her birinin pingiyle; sınırı aşanlar cs2.exe için engelli",
   "Your ping to every region, and what to do about spikes.": "Her region'a ping'in ve ping sıçramalarında ne yapacağın.",
   "Things to know": "Bilmen gerekenler",
   "Pickroute (free, Windows 10 and 11)": "Pickroute (ücretsiz, Windows 10 ve 11)",
@@ -136,7 +129,14 @@
   "Page navigation": "Sayfa gezintisi",
   "Overview": "Genel bakış",
   "The app": "Uygulama",
-  "Phone or VPN": "Telefon mu VPN mi"
+  "Phone or VPN": "Telefon mu VPN mi",
+  "Pickroute, the Steam account switcher. The Accounts page: saved Steam accounts with ban status, cooldowns and the In rotation checkbox": "Pickroute, Steam hesap değiştirici. Accounts sayfası: kayıtlı Steam hesapları, ban durumu, cooldown'lar ve In rotation kutusu",
+  "Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin · app in English, Português, Español, Русский, Türkçe": "Windows 10/11 · Android veya iPhone, USB kablo ya da hotspot ile · mobil veri kullanır · yönetici · uygulama Türkçe (ayrıca English, Português, Español, Русский)",
+  "Pickroute, CS2 over your phone's mobile data. The Connection page: protection on, the IP servers see, and the route from this PC through the phone to the servers": "Pickroute, telefonun mobil verisiyle CS2. Connection sayfası: koruma açık, sunucuların gördüğü IP ve bu PC'den telefona, oradan sunuculara giden yol",
+  "Pickroute, copy CS2 settings between accounts. The Configs page: each account with its crosshair, when its config last changed and whether it gets the sync from the main account": "Pickroute, CS2 ayarlarını hesaplar arasında kopyala. Configs sayfası: her hesap nişangahıyla, config'inin en son ne zaman değiştiği ve ana hesaptan senkron alıp almadığı",
+  "Pickroute, CS2 over your phone's mobile data. The Connection page: the IP servers see, and your home IP hidden under This PC": "Pickroute, telefonun mobil verisiyle CS2. Connection sayfası: sunucuların gördüğü IP ve This PC altında gizlenen ev IP'n",
+  "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for cs2.exe": "Pickroute, CS2 sunucu seçici (server picker). Regions sayfası: tüm matchmaking bölgeleri bir kadranda ve kıtalara göre bir listede, her birinin pingiyle; sınırı aşanlar cs2.exe için engelli",
+  "Free · Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin · app in English, Português, Español, Русский, Türkçe": "Ücretsiz · Windows 10/11 · Android veya iPhone, USB kablo ya da hotspot ile · mobil veri kullanır · yönetici · uygulama Türkçe (ayrıca English, Português, Español, Русский)"
  },
  "js": {
   "IP servers see. Example, banned on this server": "Sunucuların gördüğü IP. Örnek, bu sunucuda banlı",
@@ -299,7 +299,6 @@
   "<i1></i1>Example IP, new range (was 198.51)": "<i1></i1>Örnek IP, yeni range (eskisi 198.51)",
   "New IP after a ban: 192.0.2.140 (example)": "Banın ardından yeni IP: 192.0.2.140 (örnek)",
   "From the log of Change IP and rejoin. Example IPs only.": "Change IP and rejoin günlüğünden. Sadece örnek IP'ler.",
-  "The Accounts page: one account banned on one server and on cooldown, another with a VAC ban": "Hesaplar sayfası: bir hesap bir sunucuda banlı ve cooldown'da, bir diğerinde VAC banı var",
   "What you see": "Ne görürsün",
   "The ban": "Ban",
   "What gets you back in": "Seni içeri sokan şey",
@@ -336,7 +335,8 @@
   "How long does a CS2 IP ban last?": "CS2'de IP banı ne kadar sürer?",
   "As long as the server's admin set it: minutes, days or forever. Each community has its own rules and only its admins can lift the ban. A ban on one community doesn't count on another.": "Sunucunun admini ne kadar koyduysa: dakikalar, günler ya da sonsuza kadar. Her community'nin kendi kuralları var ve banı sadece adminleri kaldırabilir. Bir community'deki ban bir diğerinde geçmez.",
   "Some admins ban a whole IP range. Does that matter?": "Bazı adminler bir IP range'inin tamamını banlıyor. Önemli mi?",
-  "After each change the app tells you whether the new IP is in a new /16 or in the same one as before. If you want it to keep going until the range changes, turn on Settings &gt; Keep changing until the IP is in a new range.": "Her değişiklikten sonra uygulama yeni IP'nin yeni bir /16'da mı yoksa öncekiyle aynı /16'da mı olduğunu söyler. Range değişene kadar devam etmesini istiyorsan Settings &gt; Keep changing until the IP is in a new range seçeneğini aç."
+  "After each change the app tells you whether the new IP is in a new /16 or in the same one as before. If you want it to keep going until the range changes, turn on Settings &gt; Keep changing until the IP is in a new range.": "Her değişiklikten sonra uygulama yeni IP'nin yeni bir /16'da mı yoksa öncekiyle aynı /16'da mı olduğunu söyler. Range değişene kadar devam etmesini istiyorsan Settings &gt; Keep changing until the IP is in a new range seçeneğini aç.",
+  "Pickroute, the Steam account switcher. The Accounts page: one account banned on one server and on cooldown, another with a VAC ban": "Pickroute, Steam hesap değiştirici. Hesaplar sayfası: bir hesap bir sunucuda banlı ve cooldown'da, bir diğerinde VAC banı var"
  },
  "cs2-iphone-hotspot": {
   "Play CS2 on your iPhone's Personal Hotspot, not your home IP": "CS2'yi iPhone'unun Personal Hotspot'undan oyna",
@@ -456,7 +456,7 @@
   "Valve publishes its relay list (Steam Datagram Relay) for the game, with one site per city. The Regions page reads that list and shows each region by continent and city, with its ping, so you see where you can play and how far each one is.": "Valve oyun için relay listesini (Steam Datagram Relay) yayınlar, şehir başına bir site ile. Regions sayfası o listeyi okur ve her region'ı kıtaya ve şehre göre ping'iyle gösterir; böylece nerede oynayabileceğini ve her birinin ne kadar uzak olduğunu görürsün.",
   "Does the ping test change my ping?": "Ping testi ping'imi değiştirir mi?",
   "No. It only measures. To get a lower ping you keep matchmaking away from the far regions: turn them off on the Regions page and CS2 only looks for a match in the ones you left on.": "Hayır. Sadece ölçer. Daha düşük ping için matchmaking'i uzak region'lardan uzak tutarsın: Regions sayfasında kapat, CS2 de sadece açık bıraktıklarında maç arar.",
-  "The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping": "Regions sayfası: tüm matchmaking bölgeleri bir kadranda ve kıtalara göre bir listede, her birinin pingiyle"
+  "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping": "Pickroute, CS2 sunucu seçici (server picker). Regions sayfası: tüm matchmaking bölgeleri bir kadranda ve kıtalara göre bir listede, her birinin pingiyle"
  },
  "cs2-region-picker": {
   "CS2 server picker and region picker: change your region": "CS2 server picker ve region picker: region'ını değiştir",
@@ -506,7 +506,6 @@
   "Open source (GPL-3.0). You pick the regions on a world map.": "Açık kaynak (GPL-3.0). Region'ları dünya haritasından seçersin.",
   "<a1>CS2 MM Server Picker</a1>, by Jyben": "<a1>CS2 MM Server Picker</a1>, Jyben'den",
   "Source on GitHub, with builds for Windows and Linux.": "Kaynak kodu GitHub'da, Windows ve Linux için derlemeleri var.",
-  "If all you want is to pick regions, or you play on Linux, Server Picker X is a good choice. Pickroute makes sense when you also want what comes with it: a block that only touches cs2.exe, the ping of each region before you choose, and the rest of the app (the Steam account switcher, the config manager, and your phone's IP on community servers).": "Tek istediğin region seçmekse ya da Linux'ta oynuyorsan Server Picker X iyi bir seçim. Pickroute, yanında gelenleri de istiyorsan mantıklı: sadece cs2.exe'ye dokunan bir engel, seçmeden önce her region'ın ping'i ve uygulamanın geri kalanı (Steam hesap değiştirici, config yöneticisi ve community sunucularında telefonunun IP'si).",
   "You can build the same block yourself with Windows Firewall:": "Aynı engeli Windows Güvenlik Duvarı ile kendin de kurabilirsin:",
   "Open Valve's relay list for CS2: <code1/>. Each site (a \"pop\", like <code2/> for Frankfurt) lists the IPs of its relays.": "Valve'ın CS2 relay listesini aç: <code1/>. Her nokta (Frankfurt için <code2/> gibi bir \"pop\") relay'lerinin IP'lerini listeler.",
   "Open Windows Defender Firewall with Advanced Security and add an Outbound rule: Program, the path to <code1/> (in <code2/>), Block the connection.": "Gelişmiş Güvenlik özellikli Windows Defender Güvenlik Duvarı'nı aç ve bir Giden kuralı ekle: Program, <code1/> yolu (<code2/> içinde), Bağlantıyı engelle.",
@@ -552,8 +551,9 @@
   "CS2 measures the regions when it starts, so start it after the change. If your slowest region left on is above CS2's Max Acceptable Matchmaking Ping, the page tells you which number to set in Settings > Game.": "CS2 region'ları açılırken ölçer, bu yüzden değişiklikten sonra başlat. Açık bıraktığın en yavaş region CS2'nin Max Acceptable Matchmaking Ping değerinin üstündeyse sayfa, Settings > Game içinde hangi sayıyı girmen gerektiğini söyler.",
   "Undo it": "Geri al",
   "Click Allow all (block off) on Regions. CS2IPChanger.exe --restore also removes the rule.": "Regions'ta Allow all (block off)'a tıkla. CS2IPChanger.exe --restore da kuralı kaldırır.",
-  "The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for cs2.exe": "Regions sayfası: tüm matchmaking bölgeleri bir kadranda ve kıtalara göre bir listede, her birinin pingiyle; sınırı aşanlar cs2.exe için engelli",
-  "Still landing in a region you turned off? <a1>What to check when a server picker doesn't work</a1>. The same page works for <a2>Dota 2 and Deadlock</a2>.": "Kapattığın bir region'a hâlâ mı düşüyorsun? <a1>Server picker çalışmadığında neye bakmalı</a1>. Aynı sayfa <a2>Dota 2 ve Deadlock</a2> için de çalışır."
+  "Still landing in a region you turned off? <a1>What to check when a server picker doesn't work</a1>. The same page works for <a2>Dota 2 and Deadlock</a2>.": "Kapattığın bir region'a hâlâ mı düşüyorsun? <a1>Server picker çalışmadığında neye bakmalı</a1>. Aynı sayfa <a2>Dota 2 ve Deadlock</a2> için de çalışır.",
+  "On Linux, use Server Picker X. On Windows, Pickroute's Regions page is the quick way: open it, turn off the regions you don't want and close the app; the rule stays without the app open, and you don't need a phone for it. The block only touches cs2.exe, you see the ping of each region before you choose, and the rest of the app (the Steam account switcher, the config manager and your phone's IP on community servers) is there if you want it.": "Linux'ta Server Picker X'i kullan. Windows'ta en hızlı yol Pickroute'un Regions sayfası: aç, istemediğin region'ları kapat ve uygulamayı kapat; kural uygulama açık olmadan da kalır ve bunun için telefona gerek yok. Engel sadece cs2.exe'ye dokunur, seçmeden önce her region'ın ping'ini görürsün, uygulamanın geri kalanı da (Steam hesap değiştirici, config yöneticisi ve community sunucularında telefonunun IP'si) istersen orada.",
+  "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for cs2.exe": "Pickroute, CS2 sunucu seçici (server picker). Regions sayfası: tüm matchmaking bölgeleri bir kadranda ve kıtalara göre bir listede, her birinin pingiyle; sınırı aşanlar cs2.exe için engelli"
  },
  "cs2-server-picker-not-working": {
   "CS2 server picker not working? What to check, in order": "CS2 server picker çalışmıyor mu? Sırayla neye bakmalı",
@@ -601,7 +601,6 @@
   "<i1></i1>CS2, Dota 2, Deadlock": "<i1></i1>CS2, Dota 2, Deadlock",
   "Games on the Regions page: 3": "Regions sayfasındaki oyunlar: 3",
   "Each game with its own regions and its own rule.": "Her oyunun kendi region'ları ve kendi kuralı var.",
-  "The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for the game": "Regions sayfası: tüm matchmaking bölgeleri bir kadranda ve kıtalara göre bir listede, her birinin pingiyle; sınırı aşanlar oyun için engelli",
   "<b1>Each game's own list.</b1> The regions come from Valve's relay list for that game (<code2/>, app 570 for Dota 2 and app 1422450 for Deadlock), grouped by city and continent. On {date} the list had 30 regions for Dota 2 and 29 for Deadlock.": "<b1>Her oyunun kendi listesi.</b1> Region'lar Valve'ın o oyuna ait relay listesinden gelir (<code2/>, Dota 2 için app 570, Deadlock için app 1422450), şehre ve kıtaya göre gruplanır. {date} tarihinde listede Dota 2 için 30, Deadlock için 29 region vardı.",
   "<b1>One rule per game, for its exe only.</b1> Dota 2's turned-off regions are blocked for <code2/> and Deadlock's for <code3/>, on Valve's relay IPs only, with the rules \"Pickroute - Dota 2 regions turned off\" and \"Pickroute - Deadlock regions turned off\". Steam, your friends list and your other games are not touched.": "<b1>Oyun başına tek kural, sadece o oyunun exe'si için.</b1> Dota 2'de kapatılan region'lar <code2/> için, Deadlock'takiler <code3/> için, yalnızca Valve'ın relay IP'lerinde engellenir; kuralların adı \"Pickroute - Dota 2 regions turned off\" ve \"Pickroute - Deadlock regions turned off\". Steam, arkadaş listen ve diğer oyunların etkilenmez.",
   "<b1>Separate from CS2.</b1> Each game keeps its own regions, ping limit and presets. Turning regions off for Dota 2 changes nothing in CS2 or Deadlock.": "<b1>CS2'den ayrı.</b1> Her oyun kendi region'larını, ping sınırını ve hazır ayarlarını tutar. Dota 2'de region kapatmak CS2'de ya da Deadlock'ta hiçbir şeyi değiştirmez.",
@@ -635,7 +634,8 @@
   "Untick them one by one, or use a shortcut: Only this region, Closest 3, your continent only or Ping under X ms. Keep at least one region on.": "Tek tek işaretini kaldır ya da bir kısayol kullan: Only this region, Closest 3, sadece kendi kıtan veya Ping under X ms. En az bir region açık kalsın.",
   "Save it as a preset": "Hazır ayar olarak kaydet",
   "A preset keeps the selection under a name, and Apply when the game starts puts it back each time you launch the game.": "Hazır ayar seçimi bir adla saklar; Apply when the game starts de oyunu her başlattığında onu geri uygular.",
-  "Click Allow all (block off) with the game picked. CS2IPChanger.exe --restore removes every rule the app made.": "Oyun seçiliyken Allow all (block off)'a tıkla. CS2IPChanger.exe --restore uygulamanın yaptığı tüm kuralları kaldırır."
+  "Click Allow all (block off) with the game picked. CS2IPChanger.exe --restore removes every rule the app made.": "Oyun seçiliyken Allow all (block off)'a tıkla. CS2IPChanger.exe --restore uygulamanın yaptığı tüm kuralları kaldırır.",
+  "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for the game": "Pickroute, CS2 sunucu seçici (server picker). Regions sayfası: tüm matchmaking bölgeleri bir kadranda ve kıtalara göre bir listede, her birinin pingiyle; sınırı aşanlar oyun için engelli"
  },
  "hide-ip-cs2": {
   "Hide your home IP from CS2 community servers without a VPN": "Ev IP'ni CS2 community sunucularından VPN'siz gizle",
@@ -735,9 +735,6 @@
   "The app sees the ban in CS2's console, marks that account as banned on that server and its community, and logs into the next account that server hasn't banned. <kbd1/>+<kbd2/>+<kbd3/> works from inside the game.": "Uygulama banı CS2 konsolunda görür, o hesabı o sunucuda ve topluluğunda banlı olarak işaretler ve sunucunun banlamadığı bir sonraki hesaba giriş yapar. <kbd1/>+<kbd2/>+<kbd3/> oyunun içinden de çalışır.",
   "What it does. <span1>One window, six pages.</span1>": "Ne yapar. <span1>Tek pencere, altı sayfa.</span1>",
   "The route you just followed shows on the Connection page: the IP servers see, the phone, the live checks and Change IP. Example IPs and names. Five more pages look after your servers, Steam accounts, regions, configs and profiles.": "Az önce takip ettiğin rota Connection sayfasında görünür: sunucuların gördüğü IP, telefon, canlı kontroller ve Change IP. IP'ler ve isimler örnektir. Beş sayfa daha sunucularını, Steam hesaplarını, region'ları, config'leri ve profilleri yönetir.",
-  "The Connection page: Protected, the IP servers see is the phone carrier's, next to your masked home IP, the Change IP buttons and the live checks": "Connection sayfası: Protected, sunucuların gördüğü IP telefon operatörünün IP'si, yanında gizlenmiş ev IP'n, Change IP düğmeleri ve canlı kontroller",
-  "The Servers page: your server list with name, map, players and ping, and the players on one server": "Servers sayfası: ad, harita, oyuncular ve ping ile sunucu listen, bir sunucudaki oyuncular",
-  "The Configs page: copy, sync mode, Backups, snapshots and compare": "Configs sayfası: kopyalama, senkronizasyon modu, Backups, anlık görüntüler ve karşılaştırma",
   "The real app, with example IPs and names. <span1>Tap the picture to open it full size.</span1>": "Gerçek uygulama, IP'ler ve isimler örnektir. <span1>Tam boyutta açmak için resme dokun.</span1>",
   "<span1>01</span1> Connection": "<span1>01</span1> Connection",
   "IP servers see after Change IP, example": "Change IP sonrası sunucuların gördüğü IP, örnek",
@@ -881,7 +878,6 @@
   "How to change your region in CS2": "CS2'de region nasıl değiştirilir",
   "Keep your home IP <span1>out of their logs.</span1>": "Ev IP'ni <span1>onların günlüklerinden uzak tut.</span1>",
   "Free, one .exe. Every release is built by GitHub Actions from the public source, and updates are checked with a signature.": "Ücretsiz, tek .exe. Her sürüm GitHub Actions ile herkesin görebildiği kaynak koddan derlenir ve güncellemeler imzayla doğrulanır.",
-  "Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin": "Windows 10/11 · Android veya iPhone, USB kablo veya hotspot ile · mobil veri kullanır · yönetici",
   "Star on GitHub": "GitHub'da yıldızla",
   "CS2 IP Changer": "CS2 IP Changer",
   "CS2IPChanger": "CS2IPChanger",
@@ -902,15 +898,19 @@
   "No account. Usage stats are on by default and you can turn them off: the first start shows what is sent, with Accept and Turn off. Never IPs, servers or accounts. <a1>What is sent</a1>": "Hesap yok. Kullanım istatistikleri varsayılan olarak açıktır, istersen kapatabilirsin: ilk açılışta nelerin gönderildiği Accept ve Turn off ile gösterilir. IP'ler, sunucular veya hesaplar asla gönderilmez. <a1>Neler gönderiliyor</a1>",
   "Usage stats are on by default: a random ID made for this install, with no name, never IPs, servers or accounts. <a1>What is sent</a1>": "Kullanım istatistikleri varsayılan olarak açık: bu kurulum için üretilmiş, isimsiz rastgele bir ID; IP'ler, sunucular veya hesaplar asla gönderilmez. <a1>Neler gönderiliyor</a1>",
   "It sends usage stats, on by default: the first start shows what is sent, with Accept and Turn off, and Settings > Send usage stats turns them off any time (nothing is sent then, and the app works the same). It sends them when the app has been open for 20 seconds, every 30 minutes while it stays open and when it closes, with a short signal every 5 minutes of what is on: a random ID made for this install, with no name (never from your PC or from you; Settings > Delete my stats deletes it all), versions, your country, the mode, how the phone is connected, minutes open, how often each button is used, a few counters, how long your lists are and errors. Never IPs, servers, accounts, names or anything you typed, and the server keeps no IP. The full list is in the <a1>README</a1>.": "Uygulama kullanım istatistikleri gönderir, varsayılan olarak açık: ilk açılışta nelerin gönderildiği Accept ve Turn off ile gösterilir, Settings > Send usage stats ise onları istediğin zaman kapatır (o zaman hiçbir şey gönderilmez ve uygulama aynı şekilde çalışır). Uygulama 20 saniye açık kaldığında, açık kaldığı sürece her 30 dakikada bir ve kapanırken gönderir; ayrıca her 5 dakikada neyin açık olduğuna dair kısa bir sinyal gider: bu kurulum için üretilmiş, isimsiz rastgele bir ID (PC'nden veya senden türetilmez; Settings > Delete my stats hepsini siler), sürümler, ülken, mod, telefonun nasıl bağlı olduğu, açık kalınan dakikalar, her düğmenin ne sıklıkla kullanıldığı, birkaç sayaç, listelerinin uzunluğu ve hatalar. IP'ler, sunucular, hesaplar, isimler veya yazdığın hiçbir şey asla gönderilmez, sunucu da IP tutmaz. Tam liste <a1>README</a1>'de.",
-  "The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones turned off blocked for cs2.exe": "Regions sayfası: tüm matchmaking bölgeleri bir kadranda ve kıtalara göre bir listede, her birinin pingiyle; kapatılanlar cs2.exe için engelli",
-  "The Profiles page in three steps: the look every picked account gets, the accounts, then review and apply": "Üç adımda Profiles sayfası: seçilen her hesabın alacağı görünüm, hesaplar, sonra gözden geçir ve uygula",
   "games on the Regions page": "Regions sayfasındaki oyunlar",
   "The same region picker for Dota 2 and Deadlock.": "Dota 2 ve Deadlock için aynı region seçici.",
   "<b1>Download <code2/></b1> from the <a3>latest release</a3>. Started from Downloads, it offers to install itself in <code4/> in one click. The file and the folder keep their old name.": "<a3>Son sürümden</a3> <b1><code2/> dosyasını indir</b1>. İndirilenler klasöründen başlatırsan kendini <code4/> klasörüne tek tıkla kurmayı önerir. Dosya ve klasör eski adını taşır.",
   "1 of 67": "1 / 67",
   "<b1>VirusTotal: flagged by <c2/>1 of 67<c3/> engines.</b1> The latest release, scanned when it comes out. <a4>See the report</a4>": "<b1>VirusTotal: işaretleyen motor <c2/>1 / 67<c3/>.</b1> Son sürüm, çıktığında taranır. <a4>Raporu gör</a4>",
   "built by <b1>GitHub Actions</b1> · source Sepd0x/cs2-ip-changer · sha256 <c2/>99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb": "<b1>GitHub Actions</b1> ile derlendi · kaynak Sepd0x/cs2-ip-changer · sha256 <c2/>99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb",
-  "<b1>Built in public.</b1> <span2><c3/>{version}<c4/>, sha256 <c5/>99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb<c6/>. </span2>GitHub Actions builds every release from the public source, with an attestation you can check.": "<b1>Herkesin gözü önünde derlenir.</b1> <span2><c3/>{version}<c4/>, sha256 <c5/>99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb<c6/>. </span2>GitHub Actions her sürümü herkesin görebildiği kaynak koddan derler, kontrol edebileceğin bir doğrulama (attestation) ile."
+  "<b1>Built in public.</b1> <span2><c3/>{version}<c4/>, sha256 <c5/>99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb<c6/>. </span2>GitHub Actions builds every release from the public source, with an attestation you can check.": "<b1>Herkesin gözü önünde derlenir.</b1> <span2><c3/>{version}<c4/>, sha256 <c5/>99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb<c6/>. </span2>GitHub Actions her sürümü herkesin görebildiği kaynak koddan derler, kontrol edebileceğin bir doğrulama (attestation) ile.",
+  "Pickroute, CS2 over your phone's mobile data. The Connection page: Protected, the IP servers see is the phone carrier's, next to your masked home IP, the Change IP buttons and the live checks": "Pickroute, telefonun mobil verisiyle CS2. Connection sayfası: Protected, sunucuların gördüğü IP telefon operatörünün IP'si, yanında gizlenmiş ev IP'n, Change IP düğmeleri ve canlı kontroller",
+  "Pickroute, your CS2 community servers. The Servers page: your server list with name, map, players and ping, and the players on one server": "Pickroute, CS2 topluluk sunucuların. Servers sayfası: ad, harita, oyuncular ve ping ile sunucu listen, bir sunucudaki oyuncular",
+  "Pickroute, copy CS2 settings between accounts. The Configs page: copy, sync mode, Backups, snapshots and compare": "Pickroute, CS2 ayarlarını hesaplar arasında kopyala. Configs sayfası: kopyalama, senkronizasyon modu, Backups, anlık görüntüler ve karşılaştırma",
+  "Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin · app in English, Português, Español, Русский, Türkçe": "Windows 10/11 · Android veya iPhone, USB kablo veya hotspot ile · mobil veri kullanır · yönetici · uygulama Türkçe (ayrıca English, Português, Español, Русский)",
+  "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones turned off blocked for cs2.exe": "Pickroute, CS2 sunucu seçici (server picker). Regions sayfası: tüm matchmaking bölgeleri bir kadranda ve kıtalara göre bir listede, her birinin pingiyle; kapatılanlar cs2.exe için engelli",
+  "Pickroute, the Steam profile editor. The Profiles page in three steps: the look every picked account gets, the accounts, then review and apply": "Pickroute, Steam profil düzenleyici. Üç adımda Profiles sayfası: seçilen her hesabın alacağı görünüm, hesaplar, sonra gözden geçir ve uygula"
  },
  "is-it-safe": {
   "Is Pickroute safe? What it changes and how to check it": "Pickroute güvenli mi? Ne değiştirir, nasıl doğrulanır",
@@ -948,8 +948,8 @@
   "Why does my antivirus complain?": "Antivirüsüm neden şikayet ediyor?",
   "The exe is not code-signed and it changes firewall rules and runs ADB, which some antivirus engines flag on heuristics alone. Check the attestation and SHA-256 above; if a detection looks wrong, open an issue.": "Exe kod imzalı değil, güvenlik duvarı kurallarını değiştiriyor ve ADB çalıştırıyor; bazı antivirüs motorları bunu sırf sezgisel analizle işaretler. Yukarıdaki attestation'ı ve SHA-256'yı kontrol et; bir tespit yanlış görünüyorsa issue aç.",
   "Usage stats, on by default: the first start shows what is sent, with Accept and Turn off, and Settings > Send usage stats turns them off any time (nothing is sent then, and the app works the same). It sends them when the app has been open for 20 seconds, every 30 minutes while it stays open and when it closes, with a short signal every 5 minutes of what is on (protection, CS2 open, the screen): a random ID made for this install, with no name (Settings > Delete my stats deletes everything kept under it), versions, your country, the mode, how the phone is connected, minutes open, button counts, where on each screen people click (a coarse grid, added up with everyone, with no ID), a few counters, list sizes and errors, and in rough bands how long ago the app was set up, each CS2 match's ping, jitter and lag (never the server), session length and crashes. Once a day a separate report with no ID and no country says the Windows language, window and screen scale, the Windows build, the phone's brand (never the model), Android version and 4G or 5G, and is only added into counts. Never IPs, servers, accounts or names. The server code is public (<a1>worker/stats</a1>).": "Kullanım istatistikleri, varsayılan olarak açık: ilk açılışta nelerin gönderildiği Accept ve Turn off ile gösterilir, Settings > Send usage stats ise onları istediğin zaman kapatır (o zaman hiçbir şey gönderilmez ve uygulama aynı şekilde çalışır). Uygulama 20 saniye açık kaldığında, açık kaldığı sürece her 30 dakikada bir ve kapanırken gönderir; ayrıca her 5 dakikada bir nelerin açık olduğunu (koruma, CS2 açık mı, ekran) bildiren kısa bir sinyal gider: bu kuruluma özel rastgele bir ID, isimsiz (Settings > Delete my stats, onun altında tutulan her şeyi siler), sürümler, ülken, mod, telefonun nasıl bağlandığı, açık kalma dakikaları, düğme sayıları, her ekranda insanların nereye tıkladığı (kaba bir ızgara, herkesle toplanır, ID olmadan), birkaç sayaç, liste boyutları ve hatalar, ayrıca kabaca aralıklarla uygulamanın ne kadar önce kurulduğu, her CS2 maçının ping'i, jitter'ı ve lag'i (sunucu asla), oturum süresi ve çökmeler. Günde bir kez, ID'siz ve ülkesiz ayrı bir rapor Windows dilini, pencere ve ekran ölçeğini, Windows derlemesini, telefonun markasını (modeli asla), Android sürümünü ve 4G ya da 5G bilgisini bildirir ve sadece sayımlara eklenir. IP, sunucu, hesap ya da isim asla. Sunucu kodu açık (<a1>worker/stats</a1>).",
-  "The Connection page: the checks, the phone and how the PC connects to it, and the previous IPs": "Connection sayfası: kontroller, telefon ve PC'nin ona nasıl bağlandığı, ve önceki IP'ler",
-  "VirusTotal engines that flag it: 1 of 67": "Onu işaretleyen VirusTotal motorları: 67 üzerinden 1"
+  "VirusTotal engines that flag it: 1 of 67": "Onu işaretleyen VirusTotal motorları: 67 üzerinden 1",
+  "Pickroute, CS2 over your phone's mobile data. The Connection page: the checks, the phone and how the PC connects to it, and the previous IPs": "Pickroute, telefonun mobil verisiyle CS2. Connection sayfası: kontroller, telefon ve PC'nin ona nasıl bağlandığı, ve önceki IP'ler"
  },
  "steam-account-switcher": {
   "Steam account switcher for CS2, with ban marks per server": "CS2 için Steam hesap değiştirici, sunucuya göre ban işaretli",
@@ -974,8 +974,8 @@
   "No. It uses the logins Steam already saved on your PC, and switching never asks for your password or your Steam Guard codes. The only place you type a password is Sign in on the Profiles page: it's used once and never saved, and only Steam's sign-in token is kept, encrypted with Windows.": "Hayır. Steam'in PC'nde zaten kaydettiği girişleri kullanır ve geçiş yaparken parolanı ya da Steam Guard kodlarını hiç istemez. Parola yazdığın tek yer Profiles sayfasındaki Sign in: bir kez kullanılır ve asla kaydedilmez, sadece Steam'in giriş token'ı Windows ile şifrelenerek tutulur.",
   "Will switching get my account banned?": "Hesap değiştirmek hesabımın banlanmasına yol açar mı?",
   "Switching only changes which saved account Steam logs in to, the same as picking it in Steam yourself.": "Geçiş sadece Steam'in hangi kayıtlı hesaba gireceğini değiştirir, Steam'de kendin seçmenle aynı şey.",
-  "The Accounts page: saved Steam accounts as cards, with ban status, cooldowns, In rotation and Log in": "Accounts sayfası: kayıtlı Steam hesapları kartlar halinde; ban durumu, cooldown'lar, In rotation ve Log in ile",
-  "<b1>Bans and cooldowns at a glance:</b1> VAC, game and trade bans and the competitive cooldown of each account, with filters for No bans, Banned, Cooldown and Not in rotation.": "<b1>Ban'ler ve cooldown'lar tek bakışta:</b1> her hesabın VAC, oyun ve takas banları ile competitive cooldown'ı; No bans, Banned, Cooldown ve Not in rotation filtreleriyle."
+  "<b1>Bans and cooldowns at a glance:</b1> VAC, game and trade bans and the competitive cooldown of each account, with filters for No bans, Banned, Cooldown and Not in rotation.": "<b1>Ban'ler ve cooldown'lar tek bakışta:</b1> her hesabın VAC, oyun ve takas banları ile competitive cooldown'ı; No bans, Banned, Cooldown ve Not in rotation filtreleriyle.",
+  "Pickroute, the Steam account switcher. The Accounts page: saved Steam accounts as cards, with ban status, cooldowns, In rotation and Log in": "Pickroute, Steam hesap değiştirici. Accounts sayfası: kayıtlı Steam hesapları kartlar halinde; ban durumu, cooldown'lar, In rotation ve Log in ile"
  },
  "steam-profile-editor": {
   "Change name and avatar on all your Steam accounts at once": "Tüm Steam hesaplarında isim ve avatarı tek seferde değiştir",
@@ -1004,6 +1004,6 @@
   "Yes, with Clear name history, which is off unless you tick it. That one is permanent: Steam has no way back.": "Evet, Clear name history ile; sen işaretlemedikçe kapalıdır. Bu kalıcıdır: Steam'de geri dönüş yok.",
   "Where are my templates kept?": "Şablonlarım nerede tutuluyor?",
   "On your PC only, in SRT_Dados/profiles. Nothing leaves your PC except what you apply to Steam.": "Sadece PC'nde, SRT_Dados/profiles içinde. Steam'e uyguladığın dışında hiçbir şey PC'nden çıkmaz.",
-  "The Profiles page: step 1, the look every picked account gets, with its name, picture, country, bio and privacy": "Profiles sayfası: 1. adım, seçilen her hesabın alacağı görünüm; adı, resmi, ülkesi, biyografisi ve gizliliğiyle"
+  "Pickroute, the Steam profile editor. The Profiles page: step 1, the look every picked account gets, with its name, picture, country, bio and privacy": "Pickroute, Steam profil düzenleyici. Profiles sayfası: 1. adım, seçilen her hesabın alacağı görünüm; adı, resmi, ülkesi, biyografisi ve gizliliğiyle"
  }
 }

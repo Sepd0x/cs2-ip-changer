@@ -36,7 +36,6 @@
   "Getting a new IP": "Pegando um IP novo",
   "IP servers see. Example, banned on this server": "IP que os servidores veem. Exemplo, banido neste servidor",
   "Which ban do you have?": "Qual ban você levou?",
-  "The Accounts page: saved Steam accounts with ban status, cooldowns and the In rotation checkbox": "A página Accounts: contas Steam salvas com status de ban, cooldowns e a caixa In rotation",
   ", open full size": ", abrir em tamanho real",
   "Change IP with your phone": "Trocar o IP com o celular",
   "Steam account switcher": "Trocador de contas Steam",
@@ -97,8 +96,6 @@
   "Pickroute <i1>/</i1> <b2>Connection</b2>": "Pickroute <i1>/</i1> <b2>Connection</b2>",
   "The Connection page of the app, a real screenshot with example IPs. Select it to see it full size.": "A página Connection do app, uma captura de tela real com IPs de exemplo. Clique para ver em tamanho real.",
   "Related guides": "Guias relacionados",
-  "Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin": "Windows 10/11 · Android ou iPhone, por cabo USB ou hotspot · usa dados móveis · admin",
-  "Free · Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin": "Grátis · Windows 10/11 · Android ou iPhone, por cabo USB ou hotspot · usa dados móveis · admin",
   "Useful? A <a1>star on GitHub</a1> helps other players find it.": "Ajudou? Uma <a1>estrela no GitHub</a1> ajuda outros jogadores a encontrar.",
   "Playing it again.": "Reproduzindo de novo.",
   "<i1></i1>Example": "<i1></i1>Exemplo",
@@ -118,15 +115,11 @@
   "Pickroute <i1>/</i1> <b2>Regions</b2>": "Pickroute <i1>/</i1> <b2>Regions</b2>",
   "The Regions page of the app, a real screenshot. Select it to see it full size.": "A página Regions do app, uma captura de tela real. Clique para ver em tamanho real.",
   "Ping, lag and how much data a match uses.": "Ping, lag e quantos dados uma partida gasta.",
-  "The Connection page: protection on, the IP servers see, and the route from this PC through the phone to the servers": "A página Connection: a proteção ligada, o IP que os servidores veem e a rota deste PC pelo celular até os servidores",
-  "The Configs page: each account with its crosshair, when its config last changed and whether it gets the sync from the main account": "A página Configs: cada conta com sua mira, quando a config mudou pela última vez e se ela recebe a sincronização da conta principal",
-  "The Connection page: the IP servers see, and your home IP hidden under This PC": "A página Connection: o IP que os servidores veem e o IP da sua casa escondido em This PC",
   "Server picker not working": "Seletor de servidor não funciona",
   "What to check when blocked regions still show up.": "O que conferir quando regiões bloqueadas ainda aparecem.",
   "Dota 2 and Deadlock regions": "Regiões do Dota 2 e do Deadlock",
   "Example: the regions you turn off go dark, blocked for cs2.exe only; CS2 matches in the ones left on.": "Exemplo: as regiões que você desliga ficam escuras, bloqueadas só para o cs2.exe; o CS2 faz partidas nas que sobraram.",
   "Regions CS2 can play in: 8 of 30 (example)": "Regiões em que o CS2 pode jogar: 8 de 30 (exemplo)",
-  "The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for cs2.exe": "A página Regions: cada região de matchmaking num mostrador e numa lista por continente, cada uma com seu ping, e as acima do limite bloqueadas para o cs2.exe",
   "Your ping to every region, and what to do about spikes.": "Seu ping para cada região e o que fazer com os picos.",
   "Things to know": "O que você precisa saber",
   "Pickroute (free, Windows 10 and 11)": "Pickroute (grátis, Windows 10 e 11)",
@@ -136,7 +129,14 @@
   "Page navigation": "Navegação da página",
   "Overview": "Visão geral",
   "The app": "O app",
-  "Phone or VPN": "Celular ou VPN"
+  "Phone or VPN": "Celular ou VPN",
+  "Pickroute, the Steam account switcher. The Accounts page: saved Steam accounts with ban status, cooldowns and the In rotation checkbox": "Pickroute, o trocador de contas Steam. A página Accounts: contas Steam salvas com status de ban, cooldowns e a caixa In rotation",
+  "Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin · app in English, Português, Español, Русский, Türkçe": "Windows 10/11 · Android ou iPhone, por cabo USB ou hotspot · usa dados móveis · admin · app em português (e em English, Español, Русский, Türkçe)",
+  "Pickroute, CS2 over your phone's mobile data. The Connection page: protection on, the IP servers see, and the route from this PC through the phone to the servers": "Pickroute, o CS2 pelos dados móveis do celular. A página Connection: a proteção ligada, o IP que os servidores veem e a rota deste PC pelo celular até os servidores",
+  "Pickroute, copy CS2 settings between accounts. The Configs page: each account with its crosshair, when its config last changed and whether it gets the sync from the main account": "Pickroute, copiar as configurações do CS2 entre contas. A página Configs: cada conta com sua mira, quando a config mudou pela última vez e se ela recebe a sincronização da conta principal",
+  "Pickroute, CS2 over your phone's mobile data. The Connection page: the IP servers see, and your home IP hidden under This PC": "Pickroute, o CS2 pelos dados móveis do celular. A página Connection: o IP que os servidores veem e o IP da sua casa escondido em This PC",
+  "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for cs2.exe": "Pickroute, o seletor de servidor (server picker) do CS2. A página Regions: cada região de matchmaking num mostrador e numa lista por continente, cada uma com seu ping, e as acima do limite bloqueadas para o cs2.exe",
+  "Free · Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin · app in English, Português, Español, Русский, Türkçe": "Grátis · Windows 10/11 · Android ou iPhone, por cabo USB ou hotspot · usa dados móveis · admin · app em português (e em English, Español, Русский, Türkçe)"
  },
  "js": {
   "IP servers see. Example, banned on this server": "IP que os servidores veem. Exemplo, banido neste servidor",
@@ -306,7 +306,6 @@
   "<i1></i1>Example IP, new range (was 198.51)": "<i1></i1>IP de exemplo, faixa nova (era 198.51)",
   "New IP after a ban: 192.0.2.140 (example)": "IP novo depois de um ban: 192.0.2.140 (exemplo)",
   "From the log of Change IP and rejoin. Example IPs only.": "Do log do Change IP and rejoin. Só IPs de exemplo.",
-  "The Accounts page: one account banned on one server and on cooldown, another with a VAC ban": "A página Accounts: uma conta banida em um servidor e em cooldown, outra com VAC ban",
   "What you see": "O que você vê",
   "The ban": "O ban",
   "What gets you back in": "O que te põe de volta",
@@ -343,7 +342,8 @@
   "Try another Steam account from the same connection. If the server refuses it too, the ban is on your IP. If the same account is refused from another connection as well, like your phone's hotspot, the ban is on the account.": "Tente outra conta Steam na mesma conexão. Se o servidor recusar essa também, o ban é no seu IP. Se a mesma conta também for recusada em outra conexão, como o hotspot do celular, o ban é na conta.",
   "How long does a CS2 IP ban last?": "Quanto tempo dura um ban de IP no CS2?",
   "As long as the server's admin set it: minutes, days or forever. Each community has its own rules and only its admins can lift the ban. A ban on one community doesn't count on another.": "O tempo que o admin do servidor definir: minutos, dias ou para sempre. Cada comunidade tem suas regras e só os admins dela podem tirar o ban. O ban de uma comunidade não vale em outra.",
-  "With protection on, your home IP never reaches the server, so it never lands on a ban list (<a1>every way to hide your IP from CS2 servers, compared</a1>). Protection starts off unless you set it to start on (Settings > Protection), so turn it on before you join. No app can stop an admin from banning you; this keeps the ban off your house.": "Com a proteção ligada, seu IP de casa nunca chega ao servidor, então nunca cai em uma lista de ban (<a1>todas as formas de esconder seu IP dos servidores de CS2, comparadas</a1>). A proteção começa desligada, a menos que você a configure para ligar sozinha (Settings > Protection), então ligue antes de entrar. Nenhum app impede um admin de te banir; isto mantém o ban longe da sua casa."
+  "With protection on, your home IP never reaches the server, so it never lands on a ban list (<a1>every way to hide your IP from CS2 servers, compared</a1>). Protection starts off unless you set it to start on (Settings > Protection), so turn it on before you join. No app can stop an admin from banning you; this keeps the ban off your house.": "Com a proteção ligada, seu IP de casa nunca chega ao servidor, então nunca cai em uma lista de ban (<a1>todas as formas de esconder seu IP dos servidores de CS2, comparadas</a1>). A proteção começa desligada, a menos que você a configure para ligar sozinha (Settings > Protection), então ligue antes de entrar. Nenhum app impede um admin de te banir; isto mantém o ban longe da sua casa.",
+  "Pickroute, the Steam account switcher. The Accounts page: one account banned on one server and on cooldown, another with a VAC ban": "Pickroute, o trocador de contas Steam. A página Accounts: uma conta banida em um servidor e em cooldown, outra com VAC ban"
  },
  "cs2-iphone-hotspot": {
   "Play CS2 on your iPhone's Personal Hotspot, not your home IP": "Jogue CS2 no Personal Hotspot do iPhone, sem o IP de casa",
@@ -463,7 +463,7 @@
   "Valve publishes its relay list (Steam Datagram Relay) for the game, with one site per city. The Regions page reads that list and shows each region by continent and city, with its ping, so you see where you can play and how far each one is.": "A Valve publica a lista de relays (Steam Datagram Relay) do jogo, com um site por cidade. A página Regions lê essa lista e mostra cada região por continente e cidade, com seu ping, para você ver onde pode jogar e a que distância fica cada uma.",
   "Does the ping test change my ping?": "O ping test muda meu ping?",
   "No. It only measures. To get a lower ping you keep matchmaking away from the far regions: turn them off on the Regions page and CS2 only looks for a match in the ones you left on.": "Não. Ele só mede. Para ter um ping menor, você mantém o matchmaking longe das regiões distantes: desligue-as na página Regions e o CS2 só procura partida nas que você deixou ligadas.",
-  "The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping": "A página Regions: cada região de matchmaking num mostrador e numa lista por continente, cada uma com seu ping"
+  "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping": "Pickroute, o seletor de servidor (server picker) do CS2. A página Regions: cada região de matchmaking num mostrador e numa lista por continente, cada uma com seu ping"
  },
  "cs2-region-picker": {
   "CS2 server picker and region picker: change your region": "CS2 server picker: como escolher a região e o servidor",
@@ -549,7 +549,6 @@
   "Open source (GPL-3.0). You pick the regions on a world map.": "Código aberto (GPL-3.0). Você escolhe as regiões num mapa-múndi.",
   "<a1>CS2 MM Server Picker</a1>, by Jyben": "<a1>CS2 MM Server Picker</a1>, de Jyben",
   "Source on GitHub, with builds for Windows and Linux.": "Código no GitHub, com versões para Windows e Linux.",
-  "If all you want is to pick regions, or you play on Linux, Server Picker X is a good choice. Pickroute makes sense when you also want what comes with it: a block that only touches cs2.exe, the ping of each region before you choose, and the rest of the app (the Steam account switcher, the config manager, and your phone's IP on community servers).": "Se você só quer escolher regiões, ou joga no Linux, o Server Picker X é uma boa escolha. O Pickroute faz sentido quando você também quer o que vem junto: um bloqueio que só mexe no cs2.exe, o ping de cada região antes de escolher, e o resto do app (o trocador de contas Steam, o gerenciador de configs e o IP do seu celular em servidores comunitários).",
   "What is a CS2 server picker?": "O que é um seletor de servidor do CS2?",
   "A Windows tool that chooses which regions CS2 matchmaking can put you in. CS2 has no region setting, so a server picker blocks Valve's relays in the regions you don't want with Windows Firewall, and matchmaking only finds matches in the regions left on. In Pickroute it is the Regions page.": "Uma ferramenta para Windows que escolhe em quais regiões o matchmaking do CS2 pode te colocar. O CS2 não tem configuração de região, então um seletor de servidor bloqueia os relays da Valve nas regiões que você não quer com o Windows Firewall, e o matchmaking só acha partidas nas regiões que sobraram. No Pickroute, é a página Regions.",
   "Is a CS2 server picker safe? Can it get you VAC banned?": "Um seletor de servidor do CS2 é seguro? Pode dar VAC ban?",
@@ -561,8 +560,9 @@
   "Every CS2 server picker works the same way underneath: Windows Firewall rules that stop the game from reaching Valve's relays (Steam Datagram Relay) in the regions you don't want. None of them changes the game. They differ in where they run, how they keep the relay list up to date and what else they do. Checked on {date} (Steam Route Tool on {date2}), on each project's own page:": "Todo seletor de servidor do CS2 funciona do mesmo jeito por baixo: regras do Windows Firewall que impedem o jogo de alcançar os relays da Valve (Steam Datagram Relay) nas regiões que você não quer. Nenhum deles muda o jogo. A diferença está em onde rodam, como mantêm a lista de relays atualizada e o que mais fazem. Conferido em {date} (Steam Route Tool em {date2}), na página de cada projeto:",
   "<a1>Steam Route Tool</a1>, by eyyMinda": "<a1>Steam Route Tool</a1>, de eyyMinda",
   "Open source (GPL-3.0). Also for Dota 2 and Deadlock.": "Código aberto (GPL-3.0). Também serve para Dota 2 e Deadlock.",
-  "The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for cs2.exe": "A página Regions: cada região de matchmaking num mostrador e numa lista por continente, cada uma com seu ping, e as acima do limite bloqueadas para o cs2.exe",
-  "Still landing in a region you turned off? <a1>What to check when a server picker doesn't work</a1>. The same page works for <a2>Dota 2 and Deadlock</a2>.": "Ainda caindo numa região que você desligou? <a1>O que conferir quando um seletor de servidor não funciona</a1>. A mesma página funciona para <a2>Dota 2 e Deadlock</a2>."
+  "Still landing in a region you turned off? <a1>What to check when a server picker doesn't work</a1>. The same page works for <a2>Dota 2 and Deadlock</a2>.": "Ainda caindo numa região que você desligou? <a1>O que conferir quando um seletor de servidor não funciona</a1>. A mesma página funciona para <a2>Dota 2 e Deadlock</a2>.",
+  "On Linux, use Server Picker X. On Windows, Pickroute's Regions page is the quick way: open it, turn off the regions you don't want and close the app; the rule stays without the app open, and you don't need a phone for it. The block only touches cs2.exe, you see the ping of each region before you choose, and the rest of the app (the Steam account switcher, the config manager and your phone's IP on community servers) is there if you want it.": "No Linux, use o Server Picker X. No Windows, a página Regions do Pickroute é o jeito rápido: abra, desligue as regiões que não quer e feche o app; a regra continua sem o app aberto, e não precisa de celular para isso. O bloqueio só mexe no cs2.exe, você vê o ping de cada região antes de escolher, e o resto do app (o trocador de contas Steam, o gerenciador de configs e o IP do seu celular em servidores comunitários) está lá se você quiser.",
+  "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for cs2.exe": "Pickroute, o seletor de servidor (server picker) do CS2. A página Regions: cada região de matchmaking num mostrador e numa lista por continente, cada uma com seu ping, e as acima do limite bloqueadas para o cs2.exe"
  },
  "cs2-server-picker-not-working": {
   "CS2 server picker not working? What to check, in order": "CS2 server picker não funciona? O que conferir, em ordem",
@@ -610,7 +610,6 @@
   "<i1></i1>CS2, Dota 2, Deadlock": "<i1></i1>CS2, Dota 2, Deadlock",
   "Games on the Regions page: 3": "Jogos na página Regions: 3",
   "Each game with its own regions and its own rule.": "Cada jogo com suas próprias regiões e sua própria regra.",
-  "The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for the game": "A página Regions: cada região de matchmaking num mostrador e numa lista por continente, cada uma com seu ping, e as acima do limite bloqueadas para o jogo",
   "<b1>Each game's own list.</b1> The regions come from Valve's relay list for that game (<code2/>, app 570 for Dota 2 and app 1422450 for Deadlock), grouped by city and continent. On {date} the list had 30 regions for Dota 2 and 29 for Deadlock.": "<b1>A lista de cada jogo.</b1> As regiões vêm da lista de relays da Valve para aquele jogo (<code2/>, app 570 para o Dota 2 e app 1422450 para o Deadlock), agrupadas por cidade e continente. Em {date} a lista tinha 30 regiões para o Dota 2 e 29 para o Deadlock.",
   "<b1>One rule per game, for its exe only.</b1> Dota 2's turned-off regions are blocked for <code2/> and Deadlock's for <code3/>, on Valve's relay IPs only, with the rules \"Pickroute - Dota 2 regions turned off\" and \"Pickroute - Deadlock regions turned off\". Steam, your friends list and your other games are not touched.": "<b1>Uma regra por jogo, só para o exe dele.</b1> As regiões desligadas do Dota 2 são bloqueadas para o <code2/> e as do Deadlock para o <code3/>, só nos IPs de relay da Valve, com as regras \"Pickroute - Dota 2 regions turned off\" e \"Pickroute - Deadlock regions turned off\". A Steam, sua lista de amigos e seus outros jogos não são tocados.",
   "<b1>Separate from CS2.</b1> Each game keeps its own regions, ping limit and presets. Turning regions off for Dota 2 changes nothing in CS2 or Deadlock.": "<b1>Separado do CS2.</b1> Cada jogo guarda suas próprias regiões, limite de ping e predefinições. Desligar regiões no Dota 2 não muda nada no CS2 nem no Deadlock.",
@@ -644,7 +643,8 @@
   "Untick them one by one, or use a shortcut: Only this region, Closest 3, your continent only or Ping under X ms. Keep at least one region on.": "Desmarque uma a uma, ou use um atalho: Only this region, Closest 3, só o seu continente ou Ping under X ms. Deixe pelo menos uma região ligada.",
   "Save it as a preset": "Salve como predefinição",
   "A preset keeps the selection under a name, and Apply when the game starts puts it back each time you launch the game.": "Uma predefinição guarda a seleção com um nome, e Apply when the game starts aplica ela de novo cada vez que você abre o jogo.",
-  "Click Allow all (block off) with the game picked. CS2IPChanger.exe --restore removes every rule the app made.": "Clique em Allow all (block off) com o jogo escolhido. O CS2IPChanger.exe --restore remove todas as regras que o app criou."
+  "Click Allow all (block off) with the game picked. CS2IPChanger.exe --restore removes every rule the app made.": "Clique em Allow all (block off) com o jogo escolhido. O CS2IPChanger.exe --restore remove todas as regras que o app criou.",
+  "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for the game": "Pickroute, o seletor de servidor (server picker) do CS2. A página Regions: cada região de matchmaking num mostrador e numa lista por continente, cada uma com seu ping, e as acima do limite bloqueadas para o jogo"
  },
  "hide-ip-cs2": {
   "Hide your home IP from CS2 community servers without a VPN": "Esconda seu IP de casa dos servidores de CS2 sem VPN",
@@ -744,9 +744,6 @@
   "The app sees the ban in CS2's console, marks that account as banned on that server and its community, and logs into the next account that server hasn't banned. <kbd1/>+<kbd2/>+<kbd3/> works from inside the game.": "O app vê o ban no console do CS2, marca aquela conta como banida naquele servidor e na comunidade dele, e entra na próxima conta que o servidor não baniu. <kbd1/>+<kbd2/>+<kbd3/> funciona dentro do jogo.",
   "What it does. <span1>One window, six pages.</span1>": "O que ele faz. <span1>Uma janela, seis páginas.</span1>",
   "The route you just followed shows on the Connection page: the IP servers see, the phone, the live checks and Change IP. Example IPs and names. Five more pages look after your servers, Steam accounts, regions, configs and profiles.": "A rota que você acabou de seguir aparece na página Connection: o IP que os servidores veem, o celular, as verificações ao vivo e o Change IP. IPs e nomes de exemplo. Outras cinco páginas cuidam dos seus servidores, contas Steam, regiões, configs e perfis.",
-  "The Connection page: Protected, the IP servers see is the phone carrier's, next to your masked home IP, the Change IP buttons and the live checks": "A página Connection: Protected, o IP que os servidores veem é o da operadora do celular, ao lado do seu IP de casa mascarado, os botões Change IP e as verificações ao vivo",
-  "The Servers page: your server list with name, map, players and ping, and the players on one server": "A página Servers: sua lista de servidores com nome, mapa, jogadores e ping, e os jogadores de um servidor",
-  "The Configs page: copy, sync mode, Backups, snapshots and compare": "A página Configs: cópia, modo de sincronização, Backups, snapshots e comparação",
   "The real app, with example IPs and names. <span1>Tap the picture to open it full size.</span1>": "O app real, com IPs e nomes de exemplo. <span1>Toque na imagem para abrir em tamanho real.</span1>",
   "<span1>01</span1> Connection": "<span1>01</span1> Connection",
   "IP servers see after Change IP, example": "IP que os servidores veem depois do Change IP, exemplo",
@@ -888,7 +885,6 @@
   "How to change your region in CS2": "Como trocar a região no CS2",
   "Keep your home IP <span1>out of their logs.</span1>": "Mantenha seu IP de casa <span1>fora dos logs deles.</span1>",
   "Free, one .exe. Every release is built by GitHub Actions from the public source, and updates are checked with a signature.": "Grátis, um .exe só. Cada release é compilada pelo GitHub Actions a partir do código público, e as atualizações são verificadas por assinatura.",
-  "Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin": "Windows 10/11 · Android ou iPhone, por cabo USB ou hotspot · usa dados móveis · admin",
   "Star on GitHub": "Estrela no GitHub",
   "CS2 IP Changer": "CS2 IP Changer",
   "CS2IPChanger": "CS2IPChanger",
@@ -912,15 +908,19 @@
   "Where the cfg folder is, and what each file holds.": "Onde fica a pasta cfg e o que cada arquivo guarda.",
   "Windows 10 or 11 (64-bit), admin rights, Windows Firewall turned on, and an Android phone or iPhone with mobile data, connected by USB cable (USB tethering, or Personal Hotspot on an iPhone) or its Wi-Fi hotspot. Change IP from the PC needs an Android phone with USB debugging on; on an iPhone you switch Airplane Mode on and off yourself. CS2 and Steam then use the phone's data plan (<a1>how much data CS2 uses and what ping to expect</a1>; <a2>test your ping to each region</a2>).": "Windows 10 ou 11 (64 bits), direitos de administrador, Windows Firewall ligado e um celular Android ou iPhone com dados móveis, conectado por cabo USB (USB tethering, ou Personal Hotspot no iPhone) ou pelo hotspot Wi-Fi dele. O Change IP pelo PC precisa de um Android com USB debugging ligado; no iPhone você liga e desliga o Airplane Mode por conta própria. CS2 e Steam passam a usar o plano de dados do celular (<a1>quantos dados o CS2 usa e que ping esperar</a1>; <a2>teste seu ping para cada região</a2>).",
   "Usage stats are on by default: a random ID made for this install, with no name, never IPs, servers or accounts. <a1>What is sent</a1>": "As estatísticas de uso vêm ligadas: um ID aleatório criado para esta instalação, sem nome, nunca IPs, servidores ou contas. <a1>O que é enviado</a1>",
-  "The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones turned off blocked for cs2.exe": "A página Regions: cada região de matchmaking num mostrador e numa lista por continente, cada uma com seu ping, e as desligadas bloqueadas para o cs2.exe",
-  "The Profiles page in three steps: the look every picked account gets, the accounts, then review and apply": "A página Profiles em três passos: o visual que cada conta escolhida recebe, as contas, e depois revisar e aplicar",
   "games on the Regions page": "jogos na página Regions",
   "The same region picker for Dota 2 and Deadlock.": "O mesmo seletor de região para Dota 2 e Deadlock.",
   "<b1>Download <code2/></b1> from the <a3>latest release</a3>. Started from Downloads, it offers to install itself in <code4/> in one click. The file and the folder keep their old name.": "<b1>Baixe o <code2/></b1> na <a3>última release</a3>. Aberto pela pasta Downloads, ele se oferece para se instalar em <code4/> com um clique. O arquivo e a pasta mantêm o nome antigo.",
   "1 of 67": "1 de 67",
   "<b1>VirusTotal: flagged by <c2/>1 of 67<c3/> engines.</b1> The latest release, scanned when it comes out. <a4>See the report</a4>": "<b1>VirusTotal: sinalizado por <c2/>1 de 67<c3/> engines.</b1> A versão mais recente, analisada quando sai. <a4>Ver o relatório</a4>",
   "built by <b1>GitHub Actions</b1> · source Sepd0x/cs2-ip-changer · sha256 <c2/>99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb": "feito pelo <b1>GitHub Actions</b1> · código Sepd0x/cs2-ip-changer · sha256 <c2/>99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb",
-  "<b1>Built in public.</b1> <span2><c3/>{version}<c4/>, sha256 <c5/>99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb<c6/>. </span2>GitHub Actions builds every release from the public source, with an attestation you can check.": "<b1>Feito em público.</b1> <span2><c3/>{version}<c4/>, sha256 <c5/>99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb<c6/>. </span2>O GitHub Actions compila cada release a partir do código público, com uma atestação que você pode conferir."
+  "<b1>Built in public.</b1> <span2><c3/>{version}<c4/>, sha256 <c5/>99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb<c6/>. </span2>GitHub Actions builds every release from the public source, with an attestation you can check.": "<b1>Feito em público.</b1> <span2><c3/>{version}<c4/>, sha256 <c5/>99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb<c6/>. </span2>O GitHub Actions compila cada release a partir do código público, com uma atestação que você pode conferir.",
+  "Pickroute, CS2 over your phone's mobile data. The Connection page: Protected, the IP servers see is the phone carrier's, next to your masked home IP, the Change IP buttons and the live checks": "Pickroute, o CS2 pelos dados móveis do celular. A página Connection: Protected, o IP que os servidores veem é o da operadora do celular, ao lado do seu IP de casa mascarado, os botões Change IP e as verificações ao vivo",
+  "Pickroute, your CS2 community servers. The Servers page: your server list with name, map, players and ping, and the players on one server": "Pickroute, seus servidores comunitários do CS2. A página Servers: sua lista de servidores com nome, mapa, jogadores e ping, e os jogadores de um servidor",
+  "Pickroute, copy CS2 settings between accounts. The Configs page: copy, sync mode, Backups, snapshots and compare": "Pickroute, copiar as configurações do CS2 entre contas. A página Configs: cópia, modo de sincronização, Backups, snapshots e comparação",
+  "Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin · app in English, Português, Español, Русский, Türkçe": "Windows 10/11 · Android ou iPhone, por cabo USB ou hotspot · usa dados móveis · admin · app em português (e em English, Español, Русский, Türkçe)",
+  "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones turned off blocked for cs2.exe": "Pickroute, o seletor de servidor (server picker) do CS2. A página Regions: cada região de matchmaking num mostrador e numa lista por continente, cada uma com seu ping, e as desligadas bloqueadas para o cs2.exe",
+  "Pickroute, the Steam profile editor. The Profiles page in three steps: the look every picked account gets, the accounts, then review and apply": "Pickroute, o editor de perfis Steam. A página Profiles em três passos: o visual que cada conta escolhida recebe, as contas, e depois revisar e aplicar"
  },
  "is-it-safe": {
   "Is Pickroute safe? What it changes and how to check it": "Pickroute é seguro? O que ele muda e como conferir",
@@ -958,8 +958,8 @@
   "<b1>Changes:</b1> Windows routes and Windows Firewall rules (all named with the app's prefix), which saved Steam account logs in, and CS2's launch options on your Steam accounts: it adds <code2/>, only while Steam is closed, so the app can read kicks and bans in CS2's console log (Settings > Steam turns it off). Only if you use those pages, it also changes CS2's config files (<a3>where CS2 saves your config</a3>) and your Steam profiles. Phone setup downloads Google's ADB by itself, and checks that Google signed it.": "<b1>Muda:</b1> rotas do Windows e regras do Windows Firewall (todas com o prefixo do app), qual conta Steam salva entra e as opções de inicialização do CS2 nas suas contas Steam: ele acrescenta <code2/>, só com a Steam fechada, para o app ler kicks e bans no console log do CS2 (Settings > Steam desliga isso). Só se você usar essas páginas, ele também muda os arquivos de config do CS2 (<a3>onde o CS2 guarda sua config</a3>) e seus perfis Steam. O Phone setup baixa o ADB do Google por conta própria e confere que o Google o assinou.",
   "More of what the stats hold, by name or in bands, never a text, a path or a list: how far down each screen you scroll (in quarters), which on and off settings you changed from how they come, the regions you turned off (Valve's public codes, like <code1/>), which rows of the Checks panel are red, whether you saw, accepted or declined an update notice, on how many of the last 7 days the app was open, and, as yes or no, whether the report came from a hosting network.": "Mais do que as estatísticas guardam, por nome ou em faixas, nunca um texto, um caminho ou uma lista: até onde você rola cada tela (em quartos), quais configurações de ligar e desligar você mudou em relação ao padrão, as regiões que você desligou (os códigos públicos da Valve, como <code1/>), quais linhas do painel Checks estão em vermelho, se você viu, aceitou ou recusou um aviso de atualização, em quantos dos últimos 7 dias o app esteve aberto e, só como sim ou não, se o relatório veio de uma rede de hospedagem.",
   "No. The source is public on GitHub so anyone can read it, but the license is All rights reserved: you can download and run the official releases, not copy, modify or redistribute the code or the exe.": "Não. O código é público no GitHub para qualquer um ler, mas a licença é All rights reserved: você pode baixar e usar as releases oficiais, não copiar, modificar nem redistribuir o código ou o exe.",
-  "The Connection page: the checks, the phone and how the PC connects to it, and the previous IPs": "A página Connection: as verificações, o celular e como o PC se conecta a ele, e os IPs anteriores",
-  "VirusTotal engines that flag it: 1 of 67": "Engines do VirusTotal que sinalizam: 1 de 67"
+  "VirusTotal engines that flag it: 1 of 67": "Engines do VirusTotal que sinalizam: 1 de 67",
+  "Pickroute, CS2 over your phone's mobile data. The Connection page: the checks, the phone and how the PC connects to it, and the previous IPs": "Pickroute, o CS2 pelos dados móveis do celular. A página Connection: as verificações, o celular e como o PC se conecta a ele, e os IPs anteriores"
  },
  "steam-account-switcher": {
   "Steam account switcher for CS2, with ban marks per server": "Trocador de contas Steam para CS2, com ban por servidor",
@@ -984,8 +984,8 @@
   "Will switching get my account banned?": "Trocar de conta me dá ban?",
   "Switching only changes which saved account Steam logs in to, the same as picking it in Steam yourself.": "Trocar só muda qual conta salva a Steam usa para entrar, igual a escolher você mesmo na Steam.",
   "A ban on a community server is usually on your Steam account, your IP, or both. The switcher pairs with the rest of the app: after a ban, a new IP from your phone's mobile data and the next account that server hasn't banned, in one step. Your crosshair, binds and video settings can follow you to every account (<a1>copy your CS2 config between accounts</a1>; <a2>where CS2 saves your config</a2>), and so can a name and avatar (<a3>Steam profile editor</a3>). <a4>How to tell which ban you have</a4>.": "Um ban em servidor comunitário costuma estar na sua conta Steam, no seu IP, ou nos dois. O trocador funciona junto com o resto do app: depois de um ban, um IP novo dos dados móveis do celular e a próxima conta que o servidor não baniu, em um passo. Sua crosshair, binds e configurações de vídeo podem ir com você para todas as contas (<a1>copie sua config do CS2 entre contas</a1>; <a2>onde o CS2 guarda sua config</a2>), e um nome e avatar também (<a3>editor de perfil Steam</a3>). <a4>Como saber qual ban você tem</a4>.",
-  "The Accounts page: saved Steam accounts as cards, with ban status, cooldowns, In rotation and Log in": "A página Accounts: as contas Steam salvas em cartões, com bans, cooldowns, In rotation e Log in",
-  "<b1>Bans and cooldowns at a glance:</b1> VAC, game and trade bans and the competitive cooldown of each account, with filters for No bans, Banned, Cooldown and Not in rotation.": "<b1>Bans e cooldowns num relance:</b1> VAC, game e trade bans e o cooldown do competitivo de cada conta, com filtros para No bans, Banned, Cooldown e Not in rotation."
+  "<b1>Bans and cooldowns at a glance:</b1> VAC, game and trade bans and the competitive cooldown of each account, with filters for No bans, Banned, Cooldown and Not in rotation.": "<b1>Bans e cooldowns num relance:</b1> VAC, game e trade bans e o cooldown do competitivo de cada conta, com filtros para No bans, Banned, Cooldown e Not in rotation.",
+  "Pickroute, the Steam account switcher. The Accounts page: saved Steam accounts as cards, with ban status, cooldowns, In rotation and Log in": "Pickroute, o trocador de contas Steam. A página Accounts: as contas Steam salvas em cartões, com bans, cooldowns, In rotation e Log in"
  },
  "steam-profile-editor": {
   "Change name and avatar on all your Steam accounts at once": "Troque nome e avatar em todas as contas Steam de uma vez",
@@ -1014,6 +1014,6 @@
   "Yes, with Clear name history, which is off unless you tick it. That one is permanent: Steam has no way back.": "Sim, com Clear name history, que fica desligado a menos que você marque. Esse é permanente: a Steam não tem volta.",
   "Where are my templates kept?": "Onde ficam meus modelos?",
   "On your PC only, in SRT_Dados/profiles. Nothing leaves your PC except what you apply to Steam.": "Só no seu PC, em SRT_Dados/profiles. Nada sai do seu PC além do que você aplica na Steam.",
-  "The Profiles page: step 1, the look every picked account gets, with its name, picture, country, bio and privacy": "A página Profiles: passo 1, o visual que cada conta escolhida recebe, com nome, foto, país, bio e privacidade"
+  "Pickroute, the Steam profile editor. The Profiles page: step 1, the look every picked account gets, with its name, picture, country, bio and privacy": "Pickroute, o editor de perfis Steam. A página Profiles: passo 1, o visual que cada conta escolhida recebe, com nome, foto, país, bio e privacidade"
  }
 }

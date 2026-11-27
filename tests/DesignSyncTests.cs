@@ -150,7 +150,8 @@ static class DesignSyncTests
             foreach (Match m in Regex.Matches(Txt(md), @"(?:docs/)?assets/shots/([a-z0-9-]+\.(?:png|webp))")) shown.Add("docs/assets/shots/" + m.Groups[1].Value);
         var outside = shown.Distinct().Where(f => !listed.ContainsKey(f)).ToList();
         check("Capturas: as do site, do README e da dashboard estão todas no manifesto", outside.Count == 0, string.Join(", ", outside) + (outside.Count > 0 ? redo : ""));
-        check("Capturas: o site mostra as de 2x no tamanho de 1x", Regex.Matches(Txt("site/index.html"), @"<img src=""img/(connection|servers|accounts|regions|configs|profiles)\.png""[^>]*width=""1240"" height=""800""").Count == 6, "");
+        // 27 nov.: a home mostra-as pelos nomes que dizem o que são (tools/shot-names.mjs), para a pesquisa de imagens e as AIs
+        check("Capturas: o site mostra as de 2x no tamanho de 1x", Regex.Matches(Txt("site/index.html"), @"<img src=""img/pickroute-(cs2-mobile-data-hide-ip|cs2-community-servers|steam-account-switcher|cs2-server-picker-regions|copy-cs2-config|steam-profile-editor)\.png""[^>]*width=""1240"" height=""800""").Count == 6, "");
 
         // o cartão social (og:image) mostra o Status de agora: sem Chrome o shots.mjs deixava o antigo e o manifesto dava-o como atual.
         // Um manifesto de antes deste registo (6 nov.) ainda não o tem: passa até à próxima corrida do shots.mjs.

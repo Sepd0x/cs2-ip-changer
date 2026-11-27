@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { readTheme } from './design-tokens.mjs';
 import { stamp, pagesOf, LANGS, same, write as writeLanguages } from './site-i18n.mjs';
+import { shotFile, shotAlt } from './shot-names.mjs';
 
 const arg = (name) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : null; };
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -345,7 +346,9 @@ const star = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 // On a PC: the exe itself, with what you get under it. On a phone (a Windows app is no use there): copy this page's link for the PC.
 const download = (url) => `<div class="get-desk"><a class="btn" href="${EXE}">${icon}Download for Windows</a><p class="rel">${relLine}</p><p class="rel-ss">Windows may say "Windows protected your PC": click More info, then Run anyway. <a href="../is-it-safe/">Why it's safe</a></p></div>
           <div class="get-phone"><p class="get-note">It's a Windows app. Open this page on your PC:</p><div class="copyrow"><code class="url">${url.replace(/^https:\/\//, '').replace(/\/$/, '').split('/').map((p) => `<span class="nw">${p}</span>`).join('/<wbr>')}</code><button class="btn" type="button" data-share data-copy="${url}">Send to PC</button></div><a class="link" href="${EXE}">Download the .exe anyway</a></div>`;
-const req = 'Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin';
+// 27 Nov. 2026: the app's languages are said here, in each page's own language, because the AIs could not tell (ChatGPT in
+// Turkish: "I could not confirm the app itself is in Turkish").
+const req = 'Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin · app in English, Português, Español, Русский, Türkçe';
 // The copy button and the screenshot viewer: the same code as the home page (between its /* shared */ marks).
 const shared = home.match(/\/\* shared \*\/([\s\S]*?)\/\* \/shared \*\//)[1];
 // The footer is the home page's, with its links pointing one folder up.
@@ -399,7 +402,7 @@ export const pages = [
 <tr><th scope="row"><a href="https://github.com/FN-FAL113/cs2-server-picker">CS2 Server Picker</a>, by FN-FAL113</th><td>Windows</td><td>14 Mar 2026</td><td>Open source (GPL-3.0), and the one with the most stars on GitHub. Its author now marks it as legacy and points to Server Picker X.</td></tr>
 <tr><th scope="row"><a href="https://github.com/oqyh/cs2-Region-Picker">CS2 Region Picker</a>, by oqyh</th><td>Windows</td><td>9 Aug 2026</td><td>Open source (GPL-3.0). You pick the regions on a world map.</td></tr>
 <tr><th scope="row"><a href="https://github.com/Jyben/cs2-mm-server-picker">CS2 MM Server Picker</a>, by Jyben</th><td>Windows and Linux</td><td>3 Oct 2024</td><td>Source on GitHub, with builds for Windows and Linux.</td></tr>
-</tbody></table></div><p>If all you want is to pick regions, or you play on Linux, Server Picker X is a good choice. Pickroute makes sense when you also want what comes with it: a block that only touches cs2.exe, the ping of each region before you choose, and the rest of the app (the Steam account switcher, the config manager, and your phone's IP on community servers).</p>`],
+</tbody></table></div><p>On Linux, use Server Picker X. On Windows, Pickroute's Regions page is the quick way: open it, turn off the regions you don't want and close the app; the rule stays without the app open, and you don't need a phone for it. The block only touches cs2.exe, you see the ping of each region before you choose, and the rest of the app (the Steam account switcher, the config manager and your phone's IP on community servers) is there if you want it.</p>`],
       ['Do it by hand, without the app', `<p>You can build the same block yourself with Windows Firewall:</p><ol><li>Open Valve's relay list for CS2: <code>https://api.steampowered.com/ISteamApps/GetSDRConfig/v1/?appid=730</code>. Each site (a "pop", like <code>fra</code> for Frankfurt) lists the IPs of its relays.</li><li>Open Windows Defender Firewall with Advanced Security and add an Outbound rule: Program, the path to <code>cs2.exe</code> (in <code>steamapps\\common\\Counter-Strike Global Offensive\\game\\bin\\win64</code>), Block the connection.</li><li>In the rule's Scope, add the relay IPs of every region you don't want as remote IP addresses.</li></ol><p>It works, but it's dozens of IPs, some cities have more than one pop (Stockholm has two; Frankfurt, Vienna and London also have a partner's relays), and Valve changes the list from time to time, so a rule made by hand goes out of date. You also don't see the ping of each region. The app reads the list, groups the pops by city, shows the ping and rebuilds the rule when Valve changes it.</p>`],
       ['Things to know', `<ul><li>Changes apply at once, and CS2 measures the regions again on its next start. Don't change them during a match.</li><li>Blocking too much means long queues or no match at all, and Premier can take longer. Leave a few regions on; the app won't let you turn them all off.</li><li>CS2's Max Acceptable Matchmaking Ping still counts. If it's lower than the ping of your slowest region left on, CS2 never uses that region, and the page tells you which number to set.</li><li>Windows Firewall has to be on. If it's off, the page says the rule is in place but not enforced until the Firewall is back on.</li><li>It works with or without the phone. Regions don't depend on protection: they stay off until you click Allow all (block off).</li><li>Still landing in a region you turned off? <a href="../cs2-server-picker-not-working/">What to check when a server picker doesn't work</a>. The same page works for <a href="../dota-2-deadlock-region-picker/">Dota 2 and Deadlock</a>.</li></ul>`],
     ],
@@ -847,14 +850,15 @@ const capOf = (p) => `The ${p.crop[0][0].toUpperCase() + p.crop[0].slice(1)} pag
 const CARD = `${BASE}img/social-preview.png?v=${rel.version}`, CARD_ALT = "Pickroute: pick where CS2 plays, on the app's dial of regions by ping";
 function render(p, modified) {
   const url = `${BASE}${p.slug}/`;
-  const image = `${BASE}img/${p.crop[0]}.png`;
+  // the screenshot under the name that says what it shows (tools/shot-names.mjs), and its alt with the app's name first
+  const image = `${BASE}img/${shotFile(p.crop[0])}.png`, imageAlt = shotAlt(p.crop[0], p.crop[5]);
   const ld = {
     '@context': 'https://schema.org',
     '@graph': [
       { '@type': 'WebPage', '@id': `${url}#page`, url, name: p.title, description: p.desc, inLanguage: 'en',
         isPartOf: { '@id': `${BASE}#website` }, about: { '@id': `${BASE}#app` }, author: { '@id': `${BASE}#author` },
         datePublished: firstAdded(`site/${p.slug}/index.html`), dateModified: modified,
-        breadcrumb: { '@id': `${url}#crumbs` }, primaryImageOfPage: { '@type': 'ImageObject', url: image, width: 1240, height: 800 } },
+        breadcrumb: { '@id': `${url}#crumbs` }, primaryImageOfPage: { '@type': 'ImageObject', url: image, width: 1240, height: 800, caption: imageAlt } },
       // The author once more here, so the page's own JSON-LD says who wrote it (a search engine doesn't follow an @id to another page).
       { '@type': 'Person', '@id': `${BASE}#author`, name: 'Sepd0x', url: 'https://github.com/Sepd0x' },
       { '@type': 'BreadcrumbList', '@id': `${url}#crumbs`, itemListElement: [
@@ -881,7 +885,7 @@ function render(p, modified) {
     `--da:${vw}/${ch}`, `--dw:${pc(1240 / vw)}`, `--dx:${pc(-vx / vw)}`, `--dy:${pc(-cy / vw)}`,
     `--dk:${(vw / (cx + cw - vx) / 0.92).toFixed(3)}`, `--wmax:${Math.round(vw * 1.5)}px`].join(';');
   const page = cn[0].toUpperCase() + cn.slice(1);
-  const shot = `<figure class="gwin" style="${shotVars}"><div class="gwin-bar" aria-hidden="true"><img src="../img/icon.png" alt="" width="16" height="16">Pickroute <i>/</i> <b>${esc(page)}</b></div><a class="gwin-view zoom" href="../img/${cn}.png"><picture><source type="image/webp" srcset="../img/${cn}.webp"><img src="../img/${cn}.png" alt="${esc(calt)}" width="1240" height="800" loading="eager" fetchpriority="high"></picture><span class="vh">, open full size</span></a><figcaption class="gshot-cap">${esc(capOf(p))}</figcaption></figure>`;
+  const shot = `<figure class="gwin" style="${shotVars}"><div class="gwin-bar" aria-hidden="true"><img src="../img/icon.png" alt="" width="16" height="16">Pickroute <i>/</i> <b>${esc(page)}</b></div><a class="gwin-view zoom" href="../img/${shotFile(cn)}.png"><picture><source type="image/webp" srcset="../img/${shotFile(cn)}.webp"><img src="../img/${shotFile(cn)}.png" alt="${esc(imageAlt)}" width="1240" height="800" loading="eager" fetchpriority="high"></picture><span class="vh">, open full size</span></a><figcaption class="gshot-cap">${esc(capOf(p))}</figcaption></figure>`;
   // Steps (every ordered list in the text) become a timeline: each step comes in, and the line to the next one fills.
   const steps = (html) => html.replace(/<ol( class="howto")?>([\s\S]*?)<\/ol>/g, (m, howto, inner) => `<ol class="tl${howto ? ' howto' : ''}">${inner.replace(/<li( |>)/g, '<li class="rv"$1')}</ol>`);
   const getBlock = `${download(url)}
@@ -1130,19 +1134,22 @@ for (const p of pages) {
   put(file, html);
 }
 
-// Sitemap: the home page with its screenshots, then every guide page. The home page's date is its last change in git
-// (today while it has changes that aren't committed yet).
+// Sitemap: the home page with its screenshots, then every guide page with the screenshot it shows. The home page's date is
+// its last change in git (today while it has changes that aren't committed yet). The images go by the names that say what
+// they show (tools/shot-names.mjs): 27 Nov. 2026, image search had none of ours.
 const shots = ['connection', 'servers', 'accounts', 'regions', 'configs', 'profiles'];
+const imageTag = (s) => `    <image:image><image:loc>${BASE}img/${shotFile(s)}.png</image:loc></image:image>`;
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>${BASE}</loc>
     <lastmod>${lastChanged('site/index.html')}</lastmod>
-${shots.map((s) => `    <image:image><image:loc>${BASE}img/${s}.png</image:loc></image:image>`).join('\n')}
+${shots.map(imageTag).join('\n')}
   </url>
 ${pages.map((p) => `  <url>
     <loc>${BASE}${p.slug}/</loc>
     <lastmod>${p.modified}</lastmod>
+${imageTag(p.crop[0])}
   </url>`).join('\n')}
 </urlset>
 `;

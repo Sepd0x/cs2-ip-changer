@@ -13,6 +13,7 @@ import { createRequire } from 'node:module';
 import { dirname, extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { build, loadDicts, LANGS, BASE, same } from './site-i18n.mjs';
+import { SHOT_NAMES, shotSource } from './shot-names.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = join(ROOT, 'site');
@@ -94,7 +95,7 @@ test('i18n: the line that offers a language shows for a browser in that language
   }
 });
 
-const PAGES_IMG = (n) => [join(ROOT, 'docs/screenshots', n), join(ROOT, 'docs/assets', n), join(ROOT, 'docs/screenshots', n.replace(/\.webp$/, '.png'))];
+const PAGES_IMG = (n) => [join(ROOT, 'docs/screenshots', n), join(ROOT, 'docs/assets', n), join(ROOT, 'docs/screenshots', shotSource(n))];
 const served = (rel) => {
   const f = join(SITE, rel);
   if (existsSync(f) && (!statSync(f).isDirectory() || existsSync(join(f, 'index.html')))) return true;
