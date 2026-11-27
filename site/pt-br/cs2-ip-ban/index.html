@@ -37,15 +37,17 @@
    hold the page (input passes, at most 1.2 s) and the still world takes the poster's place without a fade.
    26 Nov.: the screen is only for the home on a PC. On a touch screen, and on every guide and the 404, there is no screen
    (ldp): the page shows at once over the poster, input is free, the same line fills at the very top, and the live scene
-   fades in over the poster when it is ready (on a phone the screen held the page 4 to 9 s) */
-(function(h){var w=window,d=document;
+   fades in over the poster when it is ready (on a phone the screen held the page 4 to 9 s).
+   27 Nov.: search engine and AI crawlers (__bot) get no world and no loading screen, only the page and its poster: the same
+   words. Google's live test failed on every page with the world for months (it worked on the plain root page and on llms.txt) */
+(function(h){var w=window,d=document;w.__bot=/Googlebot|Google-InspectionTool|Storebot-Google|bingbot|BingPreview|YandexBot|YandexRenderResourcesBot|Applebot|DuckDuckBot|Baiduspider|AhrefsBot|GPTBot|OAI-SearchBot|ChatGPT-User|ClaudeBot|Claude-SearchBot|PerplexityBot|Bravebot/i.test(navigator.userAgent||'');
 /* the 3D script, read as its bytes come in so the line can follow them (size: its length in bytes, checked by tools/site.test.mjs),
    then run from those bytes. A browser without streams, a failed read or a blocked blob: a plain <script> */
-w.__ldGet=function(src,size,ok,ko){var go=function(u,b){var s=d.createElement('script');s.src=u;s.onload=function(){if(b)URL.revokeObjectURL(u);w.__ldStep&&__ldStep(.5);ok&&ok()};s.onerror=function(){if(b){URL.revokeObjectURL(u);go(src)}else ko&&ko()};(d.body||d.head).appendChild(s)};
+w.__ldGet=function(src,size,ok,ko){if(w.__bot)return ko&&ko();var go=function(u,b){var s=d.createElement('script');s.src=u;s.onload=function(){if(b)URL.revokeObjectURL(u);w.__ldStep&&__ldStep(.5);ok&&ok()};s.onerror=function(){if(b){URL.revokeObjectURL(u);go(src)}else ko&&ko()};(d.body||d.head).appendChild(s)};
 if(!(w.fetch&&w.ReadableStream&&w.Blob&&w.URL&&URL.createObjectURL))return go(src);
 fetch(src).then(function(r){if(!r.ok||!r.body)throw r.status;var rd=r.body.getReader(),bits=[],n=0,pump=function(){return rd.read().then(function(x){if(x.done)return;bits.push(x.value);n+=x.value.length;w.__ldStep&&__ldStep(.15+.32*Math.min(1,n/size));return pump()})};
 return pump().then(function(){go(URL.createObjectURL(new Blob(bits,{type:'text/javascript'})),1)})}).catch(function(){go(src)})};
-try{var c=d.createElement('canvas');if(!(c.getContext('webgl2')||c.getContext('webgl')))return}catch(x){return}
+if(w.__bot)return;try{var c=d.createElement('canvas');if(!(c.getContext('webgl2')||c.getContext('webgl')))return}catch(x){return}
 var q=location.pathname.replace(/index[.]html$/,'').split('/').filter(Boolean),lt=matchMedia('(pointer:coarse)').matches||!(q.length===1||q.length===2&&/^(pt-br|es|ru|tr)$/.test(q[1]));h.classList.add(lt?'ldp':'ld','ldu');var rm=matchMedia('(prefers-reduced-motion: reduce)').matches&&(function(){try{return localStorage.getItem('cs2-fx')!=='on'}catch(x){return true}})(),t0=performance.now(),seen=t0,p=0,done=false,K={32:1,33:1,34:1,35:1,36:1,37:1,38:1,39:1,40:1},O={capture:true,passive:false},EV=rm||lt?[]:['wheel','touchmove','keydown'],
 hold=function(e){if(e.type!=='keydown'||K[e.keyCode]){e.preventDefault();e.stopImmediatePropagation()}},
 set=function(v){if(v>p){p=v;seen=performance.now();var e=d.querySelector('.ld-bar b');if(e)e.style.transform='scaleX('+v+')'}},
@@ -494,7 +496,7 @@ a.zoom{display:block;cursor:zoom-in}
    reasons of Phone or VPN and Setup's four steps swipe sideways, each card 82 % wide so the top of the next one peeks, with a
    dot per card right under them; the two pictures of Phone or VPN sit side by side; the VPN table reads one row at a time,
    Pickroute's answer first and the VPN's under it, both always there; the footer's lists open in place; the footer's name is
-   centred; and "Send the link to my PC" waits at the bottom, in thumb reach, from the app to the guides (the header's own
+   centred; and "Send to PC" waits at the bottom, in thumb reach, from the app to the guides (the header's own
    Send to PC steps aside meanwhile). Reviewed the same night by a designer and a critic (publish/plano-1-0-0/24-site-telemovel.md) */
 .shelf-dots,.thumb{display:none}
 /* the footer's name sits in the middle of its line, at every width (the owner, 26 Nov.: it was left of a line that spans the page) */

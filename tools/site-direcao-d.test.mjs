@@ -305,3 +305,25 @@ test('Phone, every language: on the home, the 404 and two guides no text runs pa
   }
   assert.deepEqual(bad, []);
 });
+
+// 27 Nov. 2026: Google's live test ("Something went wrong") failed for months on every page with the 3D world and worked on
+// the plain root page and on llms.txt. Crawlers now get the page without the world and without the loading screen: the same
+// words and the poster. A person's browser still loads the world.
+test('Crawlers: Googlebot and the AI crawlers get no 3D world and no loading screen, on the home, a guide and the 404; a person still gets the world', async (t) => {
+  if (!browser) return t.skip(why);
+  const UA = 'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36 (compatible; Google-InspectionTool/1.0;)';
+  for (const p of ['', 'ru/cs2-ip-ban/', '404.html']) {
+    const ctx = await browser.newContext({ ...PHONE, userAgent: UA }); t.after(() => ctx.close());
+    const page = await ctx.newPage(), worlds = [];
+    page.on('request', (r) => { if (/scenes\.min\.js|world\.min\.js/.test(r.url())) worlds.push(r.url()); });
+    await page.goto(origin + p, { waitUntil: 'load' }); await page.waitForTimeout(1500);
+    const r = await page.evaluate(() => ({ bot: window.__bot === true, noGl: document.documentElement.classList.contains('no-gl'), ld: document.documentElement.classList.contains('ld'), h1: !!document.querySelector('h1')?.textContent.trim() }));
+    assert.deepEqual({ ...r, worlds: worlds.length }, { bot: true, noGl: true, ld: false, h1: true, worlds: 0 }, p || 'home');
+  }
+  const ctx = await browser.newContext(PHONE); t.after(() => ctx.close());
+  const page = await ctx.newPage(); let world = 0;
+  page.on('request', (r) => { if (/scenes\.min\.js/.test(r.url())) world++; });
+  await page.goto(origin, { waitUntil: 'load' }); await page.waitForTimeout(1500);
+  assert.equal(await page.evaluate(() => window.__bot), false);
+  assert.ok(world >= 1, 'a person\'s phone no longer loads the world');
+});

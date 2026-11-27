@@ -42,6 +42,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Website on a phone: every guide and the "page not found" page have the same menu as the home page, with its sections and the five languages. Lists of links look the same everywhere, without numbers in front. The "page not found" page has its two buttons one under the other and one Send button instead of two.
 
 ### Fixed
+- Website: search engines and AI search tools get the pages without the 3D scene (the same text and pictures), so they can read and list them. Google's page test failed on every page with the scene.
 - The last stop of the tour in Portuguese, Spanish and Russian: "5 of 5" was pushed out of the box and the main button was cut off. The count is now in the title and the buttons move to a second line when they don't fit.
 - Phone setup on the phone's hotspot no longer stays at "3 of 6 done": the USB debugging steps are only needed for Change IP, and it says so.
 - Phone setup: with the phone's hotspot picked and the PC not connected to it (the phone turned its hotspot off, or the PC went back to the home Wi-Fi), the Connection step stayed green. It is now the red step: it says which network the PC is on and has a button that opens the Wi-Fi list. Android and iPhone.
