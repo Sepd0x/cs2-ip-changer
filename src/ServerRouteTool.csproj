@@ -12,6 +12,14 @@
     <Version>1.0.0</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <Product>Pickroute</Product>
+    <!-- The exe's version resource (Properties > Details, and what antivirus engines read): without these it said
+         "CS2IPChanger" as its description and had no company or copyright -->
+    <AssemblyTitle>Pickroute</AssemblyTitle>
+    <Company>Sepd0x</Company>
+    <Authors>Sepd0x</Authors>
+    <Copyright>Copyright (c) 2026 Sepd0x</Copyright>
+    <Description>Pickroute: picks CS2 matchmaking regions and routes CS2 through a phone's mobile data</Description>
+    <NeutralLanguage>en</NeutralLanguage>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>app.ico</ApplicationIcon>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>

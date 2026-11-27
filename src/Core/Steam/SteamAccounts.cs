@@ -52,11 +52,17 @@ public static partial class Steam
             // Only real SteamID64s: the ID becomes a file name (avatars) and part of URLs, and loginusers.vdf is in a folder any program
             // of yours can change.
             if (v is not VdfNode n || !SteamIds.IsId64(id)) continue;
-            long.TryParse(n.Get("timestamp"), out var ts);
-            list.Add(new LocalAccount(id, n.Get("AccountName"), n.Get("PersonaName"), n.Get("MostRecent") == "1" || n.Get("AutoLogin") == "1", ts));
+            list.Add(new LocalAccount(id, n.Get("AccountName"), n.Get("PersonaName"), n.Get("MostRecent") == "1" || n.Get("AutoLogin") == "1", UnixSeconds(n.Get("timestamp"))));
         }
         return list;
     }
+
+    /// <summary>
+    /// loginusers.vdf's "timestamp", in seconds since 1970: 0 (unknown) when it isn't a number DateTimeOffset can hold (27 nov., Codex
+    /// C24: one in milliseconds, 1700000000000, made Accounts' default sort throw before the list showed).
+    /// </summary>
+    public static long UnixSeconds(string text) =>
+        long.TryParse(text, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var ts) && ts <= 253402300799 ? ts : 0;
 
     /// <summary>
     /// The list on screen no longer matches loginusers.vdf: an account there that isn't shown (and wasn't hidden), or one shown that

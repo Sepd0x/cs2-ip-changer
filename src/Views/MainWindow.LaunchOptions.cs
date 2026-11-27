@@ -41,6 +41,15 @@ public partial class MainWindow
     static List<Cs2LaunchOptions.AccountResult> ApplyLaunchOptions() =>
         Cs2LaunchOptions.ApplyAll(SteamUserData, Paths.File("launch-options"), () => !Steam.Closed);
 
+    /// <summary>
+    /// What Add to CS2's launch options now says. 27 nov. (Codex C21): with no account in Steam's userdata it said "Every account already
+    /// has them" while the Log said there was none.
+    /// </summary>
+    public static string LaunchOptsToast(int accounts, int added, int left) =>
+        accounts == 0 ? Loc.T("No Steam account on this PC yet. Log in to Steam once, then try again.")
+        : added > 0 ? Loc.F("Added on {0}. CS2 now writes its console log however it is opened.", Fmt.Count(added, "account")) + (left > 0 ? " " + Loc.F("{0} left as they were (see Log).", left) : "")
+        : left > 0 ? Loc.T("Nothing was added: see the Log for why.") : Loc.T("Every account already has them.");
+
     /// <summary>One Log line for what changed; quiet = nothing when nothing changed (it runs every time Steam is closed).</summary>
     static void LogLaunchOptions(List<Cs2LaunchOptions.AccountResult> r, bool quiet)
     {
@@ -105,8 +114,7 @@ public partial class MainWindow
             LogLaunchOptions(r, quiet: false);
             var added = r.Count(x => x.Changed);
             var left = r.Count(x => x.Left);
-            Toast(added > 0 ? Loc.F("Added on {0}. CS2 now writes its console log however it is opened.", Fmt.Count(added, "account")) + (left > 0 ? " " + Loc.F("{0} left as they were (see Log).", left) : "")
-                : left > 0 ? Loc.T("Nothing was added: see the Log for why.") : Loc.T("Every account already has them."), left == 0);
+            Toast(LaunchOptsToast(r.Count, added, left), left == 0 && r.Count > 0);
         }
         catch (Exception ex) { Log.Error("CS2 launch options: " + Loc.En(ex.Message)); Toast(Loc.T("Couldn't add the launch options: ") + ex.Message, Tone.Error); }
         finally

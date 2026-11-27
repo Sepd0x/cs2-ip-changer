@@ -216,7 +216,23 @@ public partial class MainWindow
     async void ImportServers_Click(object sender, RoutedEventArgs e)
     {
         var dlg = new Microsoft.Win32.OpenFileDialog { Filter = Loc.T("Lists (*.txt;*.csv;*.cfg;*.log)") + "|*.txt;*.csv;*.cfg;*.log|" + Loc.T("All (*.*)") + "|*.*", Title = Loc.T("Choose a server list") };
-        if (dlg.ShowDialog(this) == true) await AddFromText(await File.ReadAllTextAsync(dlg.FileName));
+        if (dlg.ShowDialog(this) != true) return;
+        if (await ReadListFile(dlg.FileName) is string text) await AddFromText(text);
+        else Toast(Loc.T("Couldn't read that file. Choose it again with Import."), false);
+    }
+
+    /// <summary>
+    /// The chosen list's text, or null when it can't be read (27 nov., Codex C27: a file gone or locked between the dialog and the read
+    /// reached the app's last-resort error handler).
+    /// </summary>
+    public static async Task<string> ReadListFile(string path)
+    {
+        try { return await File.ReadAllTextAsync(path); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or ArgumentException or NotSupportedException)
+        {
+            Log.Warn("Import: couldn't read the list: " + ex.Message);
+            return null;
+        }
     }
 
     void ImportStartupFile()

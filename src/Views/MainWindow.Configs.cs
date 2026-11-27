@@ -17,11 +17,16 @@ public partial class MainWindow
     System.ComponentModel.ICollectionView _cfgToView;
     bool _cfgLoading;
 
+    /// <summary>The store was made without Steam's userdata and Steam is installed now.</summary>
+    public static bool CfgStale(string userData, bool demo, Func<string> steamDir) => !demo && userData == null && steamDir() != null;
+
     Cs2ConfigStore Cfg
     {
         get
         {
-            if (_cfg != null) return _cfg;
+            // 27 nov. (Codex C19): made before Steam was installed, the store had no userdata, so an account found later showed with no
+            // config until the app restarted; it is made again once Steam is there
+            if (_cfg != null && !CfgStale(_cfg.UserData, _demo, () => Steam.InstallDir())) return _cfg;
             var userData = _demo ? _cfgDemoUserData : Steam.InstallDir() is string d ? Path.Combine(d, "userdata") : null;
             var root = _demo ? _cfgDemoStore ?? Path.Combine(Path.GetTempPath(), "CS2IPChanger-demo", "configs") : Paths.File("configs");
             _cfg = new Cs2ConfigStore(userData, root);
@@ -203,7 +208,7 @@ public partial class MainWindow
 
     // ------------------------------------------------------------ The page
 
-    static readonly System.Text.RegularExpressions.Regex CfgResultTime = new(@"^(\d{1,2} [A-Za-z]{3} \d{2}:\d{2}) · (.+)$", System.Text.RegularExpressions.RegexOptions.Compiled);
+    static readonly System.Text.RegularExpressions.Regex CfgResultTime = new(@"^(\d{1,2} \S+ \d{2}:\d{2}) · (.+)$", System.Text.RegularExpressions.RegexOptions.Compiled);
 
     /// <summary>
     /// The last sync line, with its time in mono like every other absolute time on the page: under Sync now in the Sync menu, and
@@ -227,13 +232,19 @@ public partial class MainWindow
     public static string CfgLastResultText(DateTime at, string why, int[] c)
     {
         var parts = new List<string>();
-        if (c[0] > 0) parts.Add(Loc.F("{0} copied", c[0]));
-        if (c[1] > 0) parts.Add(Loc.F("{0} already the same", c[1]));
+        if (c[0] > 0) parts.Add(CfgCounted(c[0], "{0} copied", "copied"));
+        if (c[1] > 0) parts.Add(CfgCounted(c[1], "{0} already the same", "already the same"));
         if (c[2] > 0) parts.Add(Loc.F("{0} waiting for CS2 to close", c[2]));
-        if (c[3] > 0) parts.Add(Loc.F("{0} not changed (see Log)", c[3]));
+        if (c[3] > 0) parts.Add(CfgCounted(c[3], "{0} not changed (see Log)", "not changed (see Log)"));
         var reason = CfgReasonText(why);
         return $"{Fmt.When(at)} · {char.ToUpper(reason[0]) + reason[1..]}: {string.Join(", ", parts)}.";
     }
+
+    /// <summary>
+    /// "2 copiadas, 3 já estão iguais" (27 nov.: pt-BR and es said "2 copiada, 3 já está igual"): the forms by the number where the
+    /// language has them ("one|other" under <paramref name="key"/>), else the sentence with the number (ru and tr write "2: ...").
+    /// </summary>
+    public static string CfgCounted(int n, string sentence, string key) => Loc.Lang != "en" && Loc.Plural(n, key) is string p ? p : Loc.F(sentence, n);
 
     /// <summary>The last result's line: from its data when the state has it, else the text an older version saved.</summary>
     static string CfgLastResult(CfgState st) =>

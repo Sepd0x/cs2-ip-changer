@@ -158,6 +158,8 @@ public partial class MainWindow : Window
         {
             RootBorder.Margin = WindowState == WindowState.Maximized ? new Thickness(7) : new Thickness(0);
             MaxBtn.Content = WindowState == WindowState.Maximized ? "" : "";
+            // 27 nov. (Codex C12): the tip, and the name screen readers read from it (IconNames), follow the button
+            MaxBtn.ToolTip = MaxTip(WindowState == WindowState.Maximized);
         };
         Closing += OnClosing;
         if (!_startHidden) ContentRendered += async (_, _) => await Startup();   // hidden (--tray): Startup runs when it's loaded

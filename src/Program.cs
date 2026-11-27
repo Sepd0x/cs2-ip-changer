@@ -26,6 +26,7 @@ public static class Program
         var locked = LockDllSearch();
         // Loads WPF types (a class handler on FrameworkElement): only after the DLL search is locked (A-13). Nothing makes a window before this.
         Loc.Hook();
+        IconNames.Hook();
         // As admin, a search Windows wouldn't lock is the same hole as the folder below: the app doesn't start. --restore still works.
         // No Log line here: it would write as admin into SRT_Dados before the folder check below.
         if (DllSearchProblem(locked, Adb.Elevated, args) is string dllWhy)

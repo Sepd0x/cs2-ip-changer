@@ -511,7 +511,8 @@ public static class Streaming
 public static class Fmt
 {
     /// <summary>"27 Oct 21:05": the same on every Windows language, never month/day mix-ups.</summary>
-    public static string When(DateTime? t) => t?.ToString("d MMM HH:mm", System.Globalization.CultureInfo.InvariantCulture) ?? "";
+    // 27 nov.: the month in the app's language (it was "6 Nov" in every language)
+    public static string When(DateTime? t) => t?.ToString("d MMM HH:mm", Loc.Culture) ?? "";
 
     /// <summary>"1 account", "3 accounts": the right word for the number, never "account(s)".</summary>
     /// <summary>Older than <paramref name="age"/>, or in the future (the clock was ahead when it was saved): due again.</summary>
@@ -538,6 +539,13 @@ public static class Fmt
         return d.Seconds == 0 && d.Minutes > 0 ? Loc.F("{0} min", d.Minutes) : Loc.F("{0} min {1} s", d.Minutes, d.Seconds.ToString("00"));
     }
 
+    /// <summary>
+    /// A name's letter for its avatar: the whole first character as it shows, upper case ("?" for none). 27 nov. (Codex C20): the first
+    /// UTF-16 unit of "🎮Teste" was half of the emoji, which draws as a broken character.
+    /// </summary>
+    public static string Initial(string name) =>
+        string.IsNullOrEmpty(name) ? "?" : System.Globalization.StringInfo.GetNextTextElement(name).ToUpperInvariant();
+
     public static string MaskIp(string ip)
     {
         if (string.IsNullOrEmpty(ip)) return "—";
@@ -551,6 +559,12 @@ public static class Fmt
         // Counted in minutes as a double and checked before it becomes a TimeSpan (audit 26 nov., A13: "100000000d" threw OverflowException)
         var minutes = 0.0;
         var any = false;
+        // 27 nov. (Codex C7): with units, the whole text has to be units ("-2h" was two hours, "1h 30" one hour); anything left over is
+        // input it doesn't understand
+        const System.Text.RegularExpressions.RegexOptions Opts = System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant;
+        var trimmed = (text ?? "").Trim();
+        if (System.Text.RegularExpressions.Regex.IsMatch(trimmed, "[dhm]", Opts)
+            && !System.Text.RegularExpressions.Regex.IsMatch(trimmed, @"^(?:[0-9]+(?:[.,][0-9]+)?\s*[dhm]\s*)+$", Opts)) return null;
         // ASCII digits only (second Codex pass, B4): \d also takes Arabic-Indic digits ("٢h"), which double.Parse then refused with an
         // exception that closed the Cooldown dialog. Now "٢h" is just input it doesn't understand, like "abc".
         foreach (System.Text.RegularExpressions.Match m in System.Text.RegularExpressions.Regex.Matches(text ?? "", @"([0-9]+(?:[.,][0-9]+)?)\s*(d|h|m)", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant))

@@ -105,7 +105,7 @@ static class Textos15NovTests
         var loc = Repo("src", "Loc.cs");
         check("Idiomas: o hook também ouve SizeChanged (o Loaded não chega aos templates)", loc.Contains("FrameworkElement.SizeChangedEvent") && loc.Contains("FrameworkElement.LoadedEvent"), "");
         check("Idiomas: o texto cinzento de uma caixa (Tag de TextBox e PasswordBox) passa por T", loc.Contains("d is TextBox or PasswordBox") && loc.Contains("T(hint)"), "");
-        Todas(check, "Idiomas: textos cinzentos das caixas", "Search name, IP or map", "Search accounts", "Filter accounts", "Search the Log", "Empty = no bio", "Paste server IPs here, e.g. 1.2.3.4:27015 (Ctrl+Enter adds)", "Works without a key too");
+        Todas(check, "Idiomas: textos cinzentos das caixas", "Search name, IP or map", "Search accounts", "Filter accounts", "Search the Log", "Empty = no bio", "Ctrl+Enter adds · e.g. 1.2.3.4:27015", "Works without a key too");
     }
 
     // E-06: com "Close to the notification area" o X só esconde a janela e o idioma não muda.

@@ -61,6 +61,16 @@ public partial class MainWindow
         await OpenRegionGame(_regionGame);
     }
 
+    /// <summary>
+    /// The line saying where the list and the pings come from gets only the room the header has left, so Refresh stays in the window
+    /// (27 nov., Codex C25: in Spanish at 1080p and 200 % Refresh ended 126 px past the window's edge).
+    /// </summary>
+    void RegionsHead_SizeChanged(object sender, SizeChangedEventArgs e) =>
+        RegionsSource.MaxWidth = RegionsSourceRoom(RegionsHead.ActualWidth, RegionsRefreshBtn.ActualWidth);
+
+    /// <summary>The header's width less the title's 240, the 16 between them, Refresh and its 10 px gap; 560 at most.</summary>
+    public static double RegionsSourceRoom(double header, double refresh) => Math.Clamp(header - 240 - 16 - 10 - refresh + 8, 0, 560);
+
     async void RegionsRefresh_Click(object sender, RoutedEventArgs e)
     {
         if (!_regionRulesReady) return;

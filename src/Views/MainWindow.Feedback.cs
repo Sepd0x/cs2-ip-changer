@@ -254,7 +254,13 @@ public partial class MainWindow
         }
         if (Dialog.Visibility != Visibility.Visible && (DoorsKey(e.Key) || TourKey(e.Key))) e.Handled = true;
         else if (Dialog.Visibility == Visibility.Visible && e.Key == Key.Escape) { DialogCancel_Click(this, null); e.Handled = true; }
-        else if (Dialog.Visibility == Visibility.Visible && e.Key == Key.Enter && Keyboard.FocusedElement != DialogCancel) { DialogOk_Click(this, null); e.Handled = true; }
+        else if (Dialog.Visibility == Visibility.Visible && e.Key == Key.Enter && EnterConfirms(Keyboard.FocusedElement, DialogCancel, DialogClose)) { DialogOk_Click(this, null); e.Handled = true; }
         base.OnPreviewKeyDown(e);
     }
+
+    /// <summary>
+    /// Enter in a question answers yes, except on Cancel and on the X: there the button itself takes the key (27 nov., Codex C1:
+    /// Configs > Snapshots > Delete, Tab to the X and Enter deleted the snapshot).
+    /// </summary>
+    public static bool EnterConfirms(object focused, object cancel, object close) => focused != cancel && focused != close;
 }

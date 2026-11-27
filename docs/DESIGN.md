@@ -176,16 +176,16 @@ there.
 ### The window
 
 - A 2 px line across the very top, over the sidebar and the top bar: `TopLine` in full (it was at 42 % until 26 Nov at night), no glow.
-- The sidebar, 168 px, `Side` with a 1 px `Line` on its right (26 Nov at night, the owner: the logo was weak in its corner,
+- The sidebar, 104 px (168 px until 27 Nov at night, when the owner found it wide to the left and right of the icons), `Side` with a 1 px `Line` on its right (26 Nov at night, the owner: the logo was weak in its corner,
   the pages stuck under it and an empty black below; he asked for the logo and the version centred, the icon over the name, the
   pages under the logo with a clean gap, and Log and Settings at the foot): the logo centred on top, 40 px; 24 px of air; the six
   pages you use (Connection to Profiles); at the foot Log and Settings, then Update and the version, centred. Everything fits
-  at the 660 px minimum height. A page: a 66 px row with a 58 px tile 10 px in from each side, rounded 10, holding the icon
+  at the 660 px minimum height. A page: a 66 px row with a 58 px tile 8 px in from each side (`NavTile`), rounded 10, holding the icon
   (`Tag`, Segoe Fluent 22 px) over the name (12 px, 6 px under), `Muted`; under the pointer the tile in `Surface` and the name
   in `Text`; the page picked has the tile in `Surface2`, the icon in `Accent`, the name white SemiBold and a 3 x 32 px
   `NavMark` on the sidebar's left edge. With the keyboard the tile gets a 1 px `Accent` ring rounded 10 (`NavFocusRing`).
   The tile is the row less 4 px over and under. A window under 660 px (1366x768 at 125 % leaves 576, 1080p at 200 %
-  leaves 516) takes the gap under the logo to 8 and shares the rest between the eight rows, down to 48 px (`NavFit`), so
+  leaves 516) takes the gap under the logo to 8 and shares the rest between the eight rows, down to 44 px (`NavFit`; 48 until 27 Nov, when Update showing at 1080p and 200 % still pushed Profiles under Log); under 56 px the tile keeps 2 px over and under and the name sits 2 px under the icon (`NavTileFit`, `NavNameGap`), so the icon never touches the tile, and
   Profiles never goes under Log (27 Nov).
 - The keyboard focus ring (`FocusRing`, 1 px `Accent`, 2 px out) shows only after Tab or an arrow key, and goes at the next
   click or when the window is activated again (27 Nov, the owner: a blue rectangle stayed on the sidebar after Alt+Tab; WPF
@@ -202,7 +202,7 @@ there.
   on the border and the square OK read as a Windows group box).
 - The status bar, 28 px, `Side` with a 1 px `Line` above it, 24 px in: the phone as Connection > Phone shows it (its mark,
   the state SemiBold, the detail in `Muted`) and the mobile data, and on the right New IP + next account with its hotkey in
-  a key box (Settings > Hotkeys and sounds). It only repeats what the app already shows.
+  a key box (Settings > Hotkeys and sounds). It only repeats what the app already shows. Its left part is a `DockPanel`: in a narrow window the phone's detail and the mobile data end in "..." (27 Nov; a `StackPanel` cut them in the middle of a word).
 
 ### The page
 
@@ -401,7 +401,7 @@ To move or add an option: change it here and in `MainWindow.xaml` in the same st
 - **A row of Phone setup never says done for something the PC can't see** (25 Nov 2026): a hotspot that is picked with the PC
   off it is the red step (Connection, with Wi-Fi list), so the summary can't say "ready" and Turn on protection isn't offered.
 - **A note on a page** (26 Nov 2026): a warning or a tip is one line with its sign and a chevron that opens the rest under
-  it (Regions' warning and tip, `FoldLine`; it opens by itself when the rule failed). What the app offers is `Surface2` with
+  it (Regions' warning and tip, `FoldLine`; it opens by itself when the rule failed). The sign is drawn, 16 px: a 1.5 px ring in `Warn` or `Accent` with a 1.75 px stroke and a dot inside (27 Nov: a 10 px "!" of text sat low with its dot on the stem). What the app offers is `Surface2` with
   a 2 px `Accent` left border, rounded 6 on the right (the phone's offer under the Regions list, `RegionsPitch`); a bar that
   asks something now (Servers' follow and slot bars, Accounts' Show as rows) is `Field`, rounded 8. Buttons on its right.
   One note per page part.
@@ -588,5 +588,11 @@ At every release the version changes, so the captures (the sidebar shows it) are
 - Spanish and Russian run about 40% longer (Turkish about 20%, with long words that cannot break): size a box for the longest language, never for English. `SRT_PSEUDO=1` stretches every
   text 40% to check the layout.
 - Menu names of Windows and Android that a text quotes are the ones the user sees on screen in that language.
+- Dates the app shows go through `Fmt.When` ("6 Nov 16:40", "6 нояб. 16:40"): the month in the app's language (`Loc.Culture`), never
+  the culture of Windows and never English in another language (27 Nov). A text on one line that can run out of room (a list of
+  names, a status line) ends in "..." (`TextTrimming`) inside a panel that gives it a width (`DockPanel`, `Grid`), never a horizontal
+  `StackPanel`.
+- A button that shows only an icon has a name for screen readers: its tooltip (`IconNames`, 27 Nov), or its own
+  `AutomationProperties.Name`.
 - `tools/loc-keys.mjs` lists the keys, `tools/loc-merge.mjs` folds translations in, `tests/LocTests.cs` fails when a key is missing
   in a language or a Toast carries a raw literal.

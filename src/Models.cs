@@ -513,7 +513,7 @@ public sealed class AccountItem : Observable
     /// else the login. A bare SteamID64 is skipped: a profile that was never set up shows that instead of a name.
     /// </summary>
     public string Name => Steam.ShownName(Steam.WebText(Meta.Profile?.Persona)) ?? Steam.ShownName(Local.PersonaName) ?? Login;
-    public string Initial => Rec.On || string.IsNullOrEmpty(Name) ? "?" : Name.Substring(0, 1).ToUpperInvariant();
+    public string Initial => Rec.On ? "?" : Fmt.Initial(Name);
 
     public bool Active { get => _active; set { if (Set(ref _active, value)) { Raise(nameof(CardBorder)); Raise(nameof(LoginText)); } } }
     /// <summary>The card's button: "In use" on the account Steam is on, "Log in" on the others (audit 26 nov., X2).</summary>
@@ -612,7 +612,7 @@ public sealed class AccountItem : Observable
         return null;
     }
     public string ServerBansTip => !HasServerBans ? null
-        : Loc.T("Banned by these servers (not a Steam ban):") + "\n" + string.Join("\n", Meta.ServerBans.OrderByDescending(b => b.Value?.At).Select(b => $"• {b.Value?.Name ?? b.Key} ({b.Key}), {Fmt.When(b.Value?.At)}" + (b.Value?.Until is DateTime u ? ", " + Loc.F("until {0}", u.ToString("g")) : "")))
+        : Loc.T("Banned by these servers (not a Steam ban):") + "\n" + string.Join("\n", Meta.ServerBans.OrderByDescending(b => b.Value?.At).Select(b => $"• {b.Value?.Name ?? b.Key} ({b.Key}), {Fmt.When(b.Value?.At)}" + (b.Value?.Until is DateTime u ? ", " + Loc.F("until {0}", Fmt.When(u)) : "")))
           + "\n" + Loc.T("It also counts on servers of the same community (same name tag, or the community name you set on Servers). New IP + next account skips this account there. Right-click > Clear server bans to undo.");
 
     public Brush CardBorder => Active ? Ui.Accent : Ui.Line;

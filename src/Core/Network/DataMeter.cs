@@ -43,11 +43,12 @@ public sealed class DataMeter
 
     public static long Bytes(double gb) => (long)(gb * 1_000_000_000);
 
-    /// <summary>"85 MB", "1.24 GB" (decimal, like carriers and phones count).</summary>
+    /// <summary>"85 MB", "1.24 GB" (decimal, like carriers and phones count), with the app language's decimal sign ("1,24 GB" in pt-BR;
+    /// 27 nov., Codex C14: it was a point in every language). Never the culture of Windows.</summary>
     public static string Text(long bytes) =>
         bytes < 1_000_000_000
-            ? (bytes / 1_000_000.0).ToString(bytes < 10_000_000 ? "0.0" : "0", System.Globalization.CultureInfo.InvariantCulture) + " MB"
-            : (bytes / 1_000_000_000.0).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " GB";
+            ? (bytes / 1_000_000.0).ToString(bytes < 10_000_000 ? "0.0" : "0", Loc.Culture) + " MB"
+            : (bytes / 1_000_000_000.0).ToString("0.00", Loc.Culture) + " GB";
 
     /// <summary>Windows' byte counters for an adapter (in + out), -1 if it isn't there.</summary>
     public static long Read(string adapterId)

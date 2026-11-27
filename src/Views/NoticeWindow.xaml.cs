@@ -110,9 +110,18 @@ public partial class NoticeWindow : Window
     void More_Click(object sender, RoutedEventArgs e)
     {
         var open = MoreBox.Visibility != Visibility.Visible;
+        var wa = SystemParameters.WorkArea;
+        // 27 nov. (Codex C4): on 1366x768 at 125 % the list pushed Accept and Turn off under the bottom of the screen; it gets only the
+        // room the screen has left, and the window moves up to keep its buttons in view
+        if (open) MoreBox.MaxHeight = MoreRoom(wa.Height, ActualHeight);
         MoreBox.Visibility = open ? Visibility.Visible : Visibility.Collapsed;
         MoreBtn.Content = open ? Loc.T("Hide the full list") : Loc.T("See the full list");
+        UpdateLayout();
+        if (Top + ActualHeight > wa.Bottom) Top = Math.Max(wa.Top, wa.Bottom - ActualHeight);
     }
+
+    /// <summary>The full list's height: up to 300, within the screen's work area less the window without it and 24 of air.</summary>
+    public static double MoreRoom(double workHeight, double windowHeight) => Math.Clamp(workHeight - windowHeight - 12 - 24, 80, 300);
 
     void Drag(object sender, MouseButtonEventArgs e) { if (e.ButtonState == MouseButtonState.Pressed) try { DragMove(); } catch { } }
 }

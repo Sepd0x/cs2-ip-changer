@@ -147,7 +147,8 @@ static class Auditoria26NovTests
             l.Add(("Barra de estado: o mês na língua da app (era \"em November\")", MainWindow.MonthName(nov) == "novembro" && data.Contains("novembro") && !data.Contains("November"), data));
             var sync = MainWindow.CfgLastResultText(nov, CfgTrigger.Manual, new[] { 2, 3, 0, 0 });
             l.Add(("Configs: o resultado da Sync faz-se na língua de agora, a partir dos números guardados",
-                sync.Contains(Loc.F("{0} copied", 2)) && sync.Contains(Loc.F("{0} already the same", 3)) && Loc.F("{0} copied", 2) != "2 copied", sync));
+                // 27 nov. à noite: com o plural de pt-BR ("2 copiadas, 3 já estão iguais", MainWindow.CfgCounted)
+                sync.Contains(MainWindow.CfgCounted(2, "{0} copied", "copied")) && sync.Contains(MainWindow.CfgCounted(3, "{0} already the same", "already the same")) && !sync.Contains("2 copied"), sync));
             var pt = Countries.InLanguage("pt-BR");
             string Name(string code) => pt.First(c => c.Code == code).Name;
             l.Add(("Auditoria X7: Profiles > País na língua da app, ordenado por ela",

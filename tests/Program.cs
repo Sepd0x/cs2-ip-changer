@@ -708,6 +708,8 @@ Auditoria26NovTests.Run(Check);
 Uso27NovTests.Run(Check);
 // 27 nov.: a segunda passagem da auditoria do Codex, A1, A9, A14 e B2 a B7 (SegundaPassagem27Tests.cs; B1 no Worker)
 SegundaPassagem27Tests.Run(Check);
+// 27 nov., à noite: pequenos defeitos do GUI nas cinco línguas e em ecrãs pequenos, a barra lateral e os metadados do exe (Correcoes27NoiteTests.cs)
+Correcoes27NoiteTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;

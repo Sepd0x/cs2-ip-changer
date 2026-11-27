@@ -477,7 +477,7 @@ public partial class MainWindow
 
     /// <summary>What Join says when the IP the server would see was banned there, and what fixes it.</summary>
     public static string IpBanText(string server, string ip, string account, DateTime at, bool onHome, bool noPhone) =>
-        Loc.F("Your current IP ({0}) was banned on {1} on {2} (account {3}). Going back in with the same IP can get this account banned too, so the app blocks this server until the IP changes.", ip, server, at.ToString("g"), account)
+        Loc.F("Your current IP ({0}) was banned on {1} on {2} (account {3}). Going back in with the same IP can get this account banned too, so the app blocks this server until the IP changes.", ip, server, Fmt.When(at), account)
         + (noPhone ? "\n\n" + Loc.T("No phone mode uses your home IP: switch to the phone to play there.")
             : onHome ? "\n\n" + Loc.T("The server sees your home IP: turn on protection to play through the phone.")
             : "\n\n" + Loc.T("Change IP gives you a new one."));
@@ -529,7 +529,7 @@ public partial class MainWindow
     {
         if (server == null || !_bannedIpTargets.Contains(server)) return;
         var ib = _servers.FirstOrDefault(x => x.Key == server) is ServerItem si ? IpBanOn(si) : null;
-        var text = Loc.F("{0} banned the IP you have now{1}. The app blocks it until the IP changes", server, ib is { } b ? Loc.F(" on {0} ({1})", b.Ban.At.ToString("g"), b.Account) : "")
+        var text = Loc.F("{0} banned the IP you have now{1}. The app blocks it until the IP changes", server, ib is { } b ? Loc.F(" on {0} ({1})", Fmt.When(b.Ban.At), b.Account) : "")
             + (PingedOnHome ? Loc.T(": turn on protection to play through the phone.") : Loc.T(": press Change IP."));
         Log.Warn($"{server} banned the IP you have now{(ib is { } b2 ? $" on {b2.Ban.At:g} ({b2.Account})" : "")}. The app blocks it until the IP changes"
             + (PingedOnHome ? ": turn on protection to play through the phone." : ": press Change IP."));

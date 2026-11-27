@@ -167,8 +167,8 @@ test('Clean phone: the app tour shows only the marked part of the real window, w
         document.querySelector('.tour-next').click(); await wait();
       }
     }
-    // the captures since 26 Nov. have the sidebar to 13.6 % of the width: a mark there points at the old app
-    for (const mk of document.querySelectorAll('.marks .mk')) { const x = parseFloat(mk.style.getPropertyValue('--x')); if (x < 14) out.push(`${mk.dataset.pg} mark at x ${x}% is on the sidebar`); }
+    // the captures since 27 Nov. at night have the sidebar to 8.4 % of the width (104 of 1240; 13.6 % before): a mark there points at the old app
+    for (const mk of document.querySelectorAll('.marks .mk')) { const x = parseFloat(mk.style.getPropertyValue('--x')); if (x < 8.4) out.push(`${mk.dataset.pg} mark at x ${x}% is on the sidebar`); }
     return out;
   });
   assert.deepEqual(r, []);

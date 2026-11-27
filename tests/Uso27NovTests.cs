@@ -38,8 +38,9 @@ static class Uso27NovTests
             theme.Contains("<Visibility x:Key=\"FocusRingShown\">Visible</Visibility>") && Count(theme, "Visibility=\"{DynamicResource FocusRingShown}\"") == 2
             && feedback.Contains("override void OnActivated") && feedback.Contains("override void OnPreviewMouseDown") && feedback.Contains("if (MovesFocus(e.Key)) FocusRingShown(true);"), "");
         var nav = theme.Substring(theme.IndexOf("<Style x:Key=\"Nav\" TargetType=\"RadioButton\">"), 200);
-        check("Uso 2: na barra o anel é o do mosaico (10 px dos lados, cantos de 10), não um retângulo da linha toda",
-            nav.Contains("{StaticResource NavFocusRing}") && theme.Contains("<Border Margin=\"10,4\" CornerRadius=\"10\" BorderBrush=\"{StaticResource Accent}\""), "");
+        // 27 nov. à noite: a barra passou a 104 px e o mosaico a 8 px dos lados (NavTile), o anel segue o mesmo recurso
+        check("Uso 2: na barra o anel é o do mosaico (o mesmo NavTile, cantos de 10), não um retângulo da linha toda",
+            nav.Contains("{StaticResource NavFocusRing}") && theme.Contains("<Border Margin=\"{DynamicResource NavTile}\" CornerRadius=\"10\" BorderBrush=\"{StaticResource Accent}\""), "");
 
         // 3. Settings: no fim do scroll a lista da esquerda ficava em Privacy com App, Maintenance e Remove à vista (captura 3)
         var tops = new double[] { 0, 400, 800, 1200, 1600, 2000, 2300, 2700, 2950, 3060 };   // os 4 últimos nunca chegam ao topo
@@ -160,7 +161,7 @@ static class Uso27NovTests
             check($"Uso 7: em {label} as oito linhas cabem (Profiles não fica por baixo de Log)", 74 + gap + 8 * row + 25 <= h && row >= 48, $"{row} {gap}");
         }
         check("Uso 7: o mosaico segue a linha (4 px em cima e em baixo), não 58 fixos",
-            Src("Theme.xaml").Contains("<Border x:Name=\"b\" Margin=\"10,4\" Background=\"Transparent\" CornerRadius=\"10\"/>") && Src("MainWindow.xaml").Contains("SizeChanged=\"SideBar_SizeChanged\""), "");
+            Src("Theme.xaml").Contains("<Border x:Name=\"b\" Margin=\"{DynamicResource NavTile}\" Background=\"Transparent\" CornerRadius=\"10\"/>") && Src("Theme.xaml").Contains("<Thickness x:Key=\"NavTile\">8,4</Thickness>") && Src("MainWindow.xaml").Contains("SizeChanged=\"SideBar_SizeChanged\""), "");
         check("Uso 7: a lista das Settings faz scroll numa janela baixa", Src("MainWindow.xaml").Contains("<ScrollViewer x:Name=\"SetSide\" VerticalScrollBarVisibility=\"Auto\""), "");
         check("Uso 7: numa janela larga a lista e os grupos ficam juntos ao meio; enquanto enchem a página, nada muda",
             MainWindow.SettingsPad(1072) == 0 && MainWindow.SettingsPad(1148) == 0 && MainWindow.SettingsPad(1538) == 195 && MainWindow.SettingsPad(2392) == 622, MainWindow.SettingsPad(1538).ToString());

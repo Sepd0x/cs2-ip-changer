@@ -68,7 +68,7 @@ public sealed class ProfileRow : Observable
     public string AfterDetail { get => _afterDetail; set => Set(ref _afterDetail, value); }
     public ImageSource AfterAvatar { get => _afterAvatar; set { if (Set(ref _afterAvatar, value)) Raise(nameof(HasAfterAvatar)); } }
     public bool HasAfterAvatar => AfterAvatar != null;
-    public string AfterInitial => Rec.On || string.IsNullOrEmpty(After) ? "?" : After.Substring(0, 1).ToUpperInvariant();
+    public string AfterInitial => Rec.On ? "?" : Fmt.Initial(After);
 
     /// <summary>Why this account would not be changed (shown in red instead of the preview).</summary>
     public string Problem { get => _problem; set { if (Set(ref _problem, value)) { Raise(nameof(HasProblem)); Raise(nameof(StatusText)); Raise(nameof(StatusBrush)); } } }

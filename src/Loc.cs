@@ -39,6 +39,16 @@ public static class Loc
         return CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToLowerInvariant() switch { "pt" => "pt-BR", "es" => "es", "ru" => "ru", "tr" => "tr", _ => "en" };
     }
 
+    /// <summary>The app language's culture for dates ("6 Nov", "6 нояб.", "6 Kas"); invariant in English or when Windows lacks it.</summary>
+    public static System.Globalization.CultureInfo Culture
+    {
+        get
+        {
+            if (Lang == "en") return CultureInfo.InvariantCulture;
+            try { return CultureInfo.GetCultureInfo(Lang); } catch (CultureNotFoundException) { return CultureInfo.InvariantCulture; }
+        }
+    }
+
     public static void Init(string saved)
     {
         Lang = Resolve(saved);
@@ -170,6 +180,9 @@ public static class Loc
         if (d is HeaderedContentControl h && h.Header is string hs && !Bound(h, HeaderedContentControl.HeaderProperty)) { if (Changes(hs, out var ht)) h.Header = ht; }
         else if (d is HeaderedItemsControl hi && hi.Header is string his && !Bound(hi, HeaderedItemsControl.HeaderProperty) && Changes(his, out var hit)) hi.Header = hit;
         if (d is FrameworkElement fe && fe.ToolTip is string tt && !Bound(fe, FrameworkElement.ToolTipProperty) && Changes(tt, out var ttt)) fe.ToolTip = ttt;
+        // 27 nov. (Codex C13): the name a screen reader reads, when the XAML writes it ("Find a setting" stayed English)
+        if (d is UIElement && System.Windows.Automation.AutomationProperties.GetName(d) is { Length: > 0 } an
+            && !Bound(d, System.Windows.Automation.AutomationProperties.NameProperty) && Changes(an, out var ant)) System.Windows.Automation.AutomationProperties.SetName(d, ant);
         // the grey hint inside an empty box is its Tag (the style draws it)
         if (d is TextBox or PasswordBox && ((FrameworkElement)d).Tag is string hint && hint.Length > 0) ((FrameworkElement)d).Tag = T(hint);
     }

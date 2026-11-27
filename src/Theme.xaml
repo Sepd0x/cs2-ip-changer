@@ -221,12 +221,16 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <!-- The sidebar tile's margin in its row and the gap between a page's icon and its name; MainWindow.FitSideNav makes both smaller in a short window -->
+    <Thickness x:Key="NavTile">8,4</Thickness>
+    <Thickness x:Key="NavNameGap">0,6,0,0</Thickness>
+
     <!-- The pages on the left: the ring follows the 58 px tile, rounded 10, not the whole 66 px row -->
     <Style x:Key="NavFocusRing">
         <Setter Property="Control.Template">
             <Setter.Value>
                 <ControlTemplate>
-                    <Border Margin="10,4" CornerRadius="10" BorderBrush="{StaticResource Accent}" BorderThickness="1" SnapsToDevicePixels="True" Visibility="{DynamicResource FocusRingShown}"/>
+                    <Border Margin="{DynamicResource NavTile}" CornerRadius="10" BorderBrush="{StaticResource Accent}" BorderThickness="1" SnapsToDevicePixels="True" Visibility="{DynamicResource FocusRingShown}"/>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -669,14 +673,14 @@
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
                     <Grid Background="Transparent">
-                        <!-- 4 px over and under: 58 px in the 66 px row, less when a short window makes the rows shorter (NavFit) -->
-                        <Border x:Name="b" Margin="10,4" Background="Transparent" CornerRadius="10"/>
+                        <!-- 4 px over and under: 58 px in the 66 px row; a short window makes the rows shorter (NavFit) and FitSideNav then takes this to 2 px and the gap under the icon to 2 (NavTile, NavNameGap), so the icon never touches the tile -->
+                        <Border x:Name="b" Margin="{DynamicResource NavTile}" Background="Transparent" CornerRadius="10"/>
                         <Border x:Name="bar" Width="3" Height="32" HorizontalAlignment="Left" VerticalAlignment="Center" CornerRadius="0,2,2,0"
                                 Background="{StaticResource NavMark}" Visibility="Hidden"/>
-                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="12,0">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10,0">
                             <TextBlock x:Name="icon" Text="{TemplateBinding Tag}" FontFamily="{StaticResource Icons}" FontSize="22" HorizontalAlignment="Center"
                                        FontWeight="Normal"/>
-                            <ContentPresenter HorizontalAlignment="Center" Margin="0,6,0,0" TextBlock.TextAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center" Margin="{DynamicResource NavNameGap}" TextBlock.TextAlignment="Center"/>
                         </StackPanel>
                     </Grid>
                     <ControlTemplate.Triggers>

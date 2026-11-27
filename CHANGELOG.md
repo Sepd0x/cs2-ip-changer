@@ -9,6 +9,33 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Website, README and release notes: the VirusTotal result reads right with any number of engines ("flagged by 1 of 67 engines").
 - Website: the app's screenshots have names and descriptions that say Pickroute and what each page does, in every language, so image search and AI answers can show the real app. Every page says which languages the app is in.
 - Website: the CS2 server picker comparison says how quick the Regions page is: pick your regions and close the app; the block stays, and no phone is needed.
+- The sidebar is narrower (104 px instead of 168), so the pages get more room. On short screens (1080p at 200 %) a page's icon no longer touches the top of its highlight.
+- The exe now says Pickroute as its description, with the publisher and copyright, in Properties > Details.
+
+### Fixed
+- Dates show in your language (Configs' last sync, cooldowns, bans, saved snapshots). They were in English in every language.
+- The status line at the bottom ends in "..." when the window is narrow instead of cutting a word in half. The same for the Sync line in Configs and long names in the Settings list.
+- Regions: the warning sign next to "If CS2 is open, restart it after changing regions" is centred in its circle.
+- Screen readers (Narrator) now read a name for buttons that show only an icon, such as Minimize, Close, Copy IP and Delete, and the names written for them are translated.
+- In a question, pressing Enter on the X or on Cancel no longer answers yes (Tab to the X and Enter could delete a Configs snapshot).
+- Settings > Mobile data: typing "NaN" in Warn me after no longer stops the settings from being saved.
+- The usage stats notice: with the full list open on a small screen, Accept and Turn off stay on screen.
+- On short screens with an update waiting, Profiles no longer goes under Log in the sidebar.
+- Accounts > Cooldown: "-2h" or "1h 30" are no longer taken as 2 hours and 1 hour.
+- Log: the filtered count follows Clear and new lines.
+- Accounts: a Steam sign-in date saved in milliseconds no longer stops the list from showing.
+- Configs finds your accounts' configs when Steam is installed after the app opened.
+- An avatar's letter shows a whole emoji instead of half of one.
+- Accounts: with your only account hidden and Show hidden on, the account no longer shows under "No accounts yet".
+- Settings > Steam: with no Steam account on the PC, adding the launch options says so instead of "Every account already has them".
+- Configs: "2 copied, 3 already the same" agrees with the number in Portuguese and Spanish.
+- Mobile data uses your language's decimal sign ("1,24 GB").
+- The maximize button says Restore down while the window is maximized.
+- Phone setup: on short screens the steps and the drawn guide scroll, and Close stays at the bottom.
+- Regions: Refresh stays inside the window when the line about where the pings come from is long.
+- Servers > Import: a list that can't be read says so, and you can choose it again.
+- After a weak connection, the message says which Whole PC mode came back.
+- Shorter hints that fit on small screens: Servers' paste box starts with Ctrl+Enter, and Settings' search in Portuguese. Configs' note on backups wraps instead of hiding that the Original is kept for good.
 
 ## [1.0.0] - 2026-11-27
 

@@ -116,9 +116,17 @@ public partial class MainWindow
         SaveSettings();
         ApplySettingsToUi();
         Log.Info(back == "all" ? "Connection fine again: back to Whole PC, always." : "Connection fine again: back to Whole PC while CS2 is open.");
-        Toast(Loc.T("Mobile connection is fine again: Whole PC is back on."), true);
+        Toast(WholePcBackText(back), true);
         _ = SyncNow(force: true);
     }
+
+    /// <summary>
+    /// What the toast says when the mode comes back (27 nov., Codex C28: it said "Whole PC is back on" for Whole PC while CS2 is open,
+    /// which with CS2 closed still sends only the game's servers through the phone until CS2 opens).
+    /// </summary>
+    public static string WholePcBackText(string back) => back == "all"
+        ? Loc.T("Mobile connection is fine again: Whole PC is back on.")
+        : Loc.T("Mobile connection is fine again: Whole PC while CS2 is open is back on. The whole PC uses the phone when CS2 opens.");
 
     /// <summary>CS2 just closed: if Whole PC was waiting for that, it comes back now.</summary>
     void QualityOnCs2Closed()

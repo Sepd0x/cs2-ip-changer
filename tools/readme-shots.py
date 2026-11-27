@@ -30,17 +30,18 @@ SIZE = (1240, 800)
 # The README shows Protection | Change IP and Regions | Configs side by side (the two of a pair keep the same shape,
 # bar included, so they are as tall at the same width) and Servers and Accounts as wide strips.
 CROPS = {
-    # 26 nov. (the Dial design): the page sits right of a 168 px page list, under a 40 px top bar
-    "protection": ("connection", (180, 404, 800, 742)),  # What goes through the phone under Turn off protection; the capture ends above No phone   620x338, as change-ip
-    "change-ip": ("connection", (180, 114, 800, 452)),  # Protected, IP servers see, the route PC > phone > servers, Change IP and Change IP and rejoin
-    "servers": ("servers", (188, 198, 1206, 421)),  # an open server: all its players, Staff and Friend flags, the hint under them
-    "accounts": ("accounts", (186, 158, 1222, 400)),  # the first row of cards: in use, a ban on one server and a cooldown, VAC
-    "regions": ("regions", (186, 204, 622, 452)),  # Europe with the ping of each region (the dial does not fit at this size)   436x248 + bar, as configs
-    "configs": ("configs", (226, 166, 772, 484)),  # the accounts with their crosshairs and when each changed   546x318 + bar, as regions
+    # 26 nov. (the Dial design): the page sits right of the page list, under a 40 px top bar; 27 nov.: the list went from 168 to
+    # 104 px, so the crops moved 64 px left, and the Connection pair grew to 660 wide (its left column is wider now)
+    "protection": ("connection", (117, 404, 777, 742)),  # What goes through the phone under Turn off protection; the capture ends above No phone   660x338, as change-ip
+    "change-ip": ("connection", (117, 114, 777, 452)),  # Protected, IP servers see, the route PC > phone > servers, Change IP and Change IP and rejoin
+    "servers": ("servers", (124, 198, 1206, 421)),  # an open server: all its players, Staff and Friend flags, the hint under them
+    "accounts": ("accounts", (122, 158, 1222, 400)),  # the first row of cards: in use, a ban on one server and a cooldown, VAC
+    "regions": ("regions", (122, 228, 558, 447)),  # Europe with the ping of each region (the dial does not fit at this size)   436x219 + bar, as configs
+    "configs": ("configs", (162, 166, 772, 484)),  # the accounts with their crosshairs and when each changed   610x318 + bar, as regions
     # phone widths (the README swaps them in below 600 px): the wide strips shrink to a third on a 390 px screen, so these
     # keep about as much as the pairs show, at about the same size
-    "servers-mobile": ("servers", (188, 198, 697, 390)),  # the open server, its first two columns of players and the flags
-    "accounts-mobile": ("accounts", (702, 158, 1222, 400)),  # two cards: a ban on one server and a cooldown, VAC
+    "servers-mobile": ("servers", (124, 198, 668, 390)),  # the open server, its first two columns of players and the flags
+    "accounts-mobile": ("accounts", (666, 158, 1222, 400)),  # two cards: a ban on one server and a cooldown, VAC
 }
 NAMES = {"protection": "Protection", "change-ip": "Change IP", "servers": "Servers", "accounts": "Accounts",
          "regions": "Regions", "configs": "Configs", "servers-mobile": "Servers", "accounts-mobile": "Accounts"}
@@ -51,7 +52,7 @@ FONT = Path("C:/Windows/Fonts/seguisb.ttf")
 
 # the social preview's piece (26 Nov: the dial of the Regions page, publish/plano-1-0-0/21-social-preview), in pixels of
 # the 1x capture: the dial with its labels, from the end of the region list to the window's right edge
-DIAL = (628, 170, 1230, 736)
+DIAL = (566, 162, 1238, 754)  # 27 nov.: the dial grew when the page list went to 104 px
 # before 26 Nov: the piece of the Connection page, in pixels of the 1x capture (its border and top line included;
 # from the page list's edge to just before the protection pill, so the status line loses its full stop)
 STATUS = (169, 0, 744, 296)

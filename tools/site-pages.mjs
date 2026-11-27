@@ -373,6 +373,7 @@ const labelTables = (html) => html.replace(/<table>([\s\S]*?)<\/table>/g, (table
 });
 
 // A crop of a 1240x800 screenshot: [name, x, y, width, height, alt]. The box keeps the crop's shape; the image is scaled and moved inside it.
+// 27 Nov. at night: the app's sidebar went from 168 to 104 px, so the crops moved 64 px left (and the dial and the Connection column, wider now, grew).
 // It is the biggest picture on a phone (the LCP), so it loads at once and first.
 const crop = ([name, x, y, w, h, alt]) => `<a class="crop zoom" href="../img/${name}.png" style="aspect-ratio:${w}/${h}" aria-label="${esc(alt)} (full screenshot)"><picture><source type="image/webp" srcset="../img/${name}.webp"><img src="../img/${name}.png" alt="${esc(alt)}" width="1240" height="800" loading="eager" fetchpriority="high" style="width:${(1240 / w * 100).toFixed(2)}%;margin:${(-y / w * 100).toFixed(2)}% 0 0 ${(-x / w * 100).toFixed(2)}%"></picture></a>`;
 
@@ -388,7 +389,7 @@ export const pages = [
     eyebrow: 'CS2 server picker',
     h1: 'CS2 server picker: how to change your region in CS2, free',
     lead: 'CS2 has no region setting: matchmaking picks the region for you, by ping. The Regions page of Pickroute lists Valve\'s matchmaking regions with the ping of each one, and blocks the ones you turn off. Premier, Competitive, Casual, Deathmatch and Wingman then only find matches in the regions you left on.',
-    crop: ['regions', 640, 160, 600, 545, 'The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for cs2.exe'],
+    crop: ['regions', 566, 160, 672, 594, 'The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for cs2.exe'],
     related: ['copy-cs2-config', 'steam-account-switcher', 'is-it-safe'],
     sections: [
       ['How CS2 picks your region', `<p>When you queue, the game measures your ping to Valve's relays (Steam Datagram Relay) in each region and looks for a match where the ping is good. Max Acceptable Matchmaking Ping, in Settings &gt; Game, only sets the highest ping you accept; it doesn't choose a region.</p><p>So the only way to choose is to make the regions you don't want unreachable. If <code>cs2.exe</code> can't reach a region's relays, CS2 treats that region as unavailable and looks elsewhere. That's what a CS2 region picker or server picker does (people also call it a region changer, region selector, region blocker or region lock: it is the same tool), and it's what the Regions page does, with one Windows Firewall rule.</p>`],
@@ -443,7 +444,7 @@ export const pages = [
     eyebrow: 'CS2 config manager',
     h1: 'Copy your CS2 settings and crosshair to another account',
     lead: 'Want to copy all CS2 settings from one account to another? Binds, crosshair, sensitivity and video, on a new account in one click. The Configs page of Pickroute copies your CS2 config between the accounts on your PC, one part at a time or all of it, keeps a backup of everything it changes, and can export CS2 settings as a .zip for another PC.',
-    crop: ['configs', 180, 160, 640, 330, 'The Configs page: each account with its crosshair, when its config last changed and whether it gets the sync from the main account'],
+    crop: ['configs', 116, 160, 660, 330, 'The Configs page: each account with its crosshair, when its config last changed and whether it gets the sync from the main account'],
     related: ['steam-account-switcher', 'steam-profile-editor', 'cs2-region-picker'],
     sections: [
       ['Where CS2 keeps each account\'s config', `<p>CS2 saves settings per Steam account in <code>Steam\\userdata\\&lt;id&gt;\\730\\local\\cfg</code>:</p><ul><li>binds in <code>cs2_user_keys_0_slot0.vcfg</code></li><li>crosshair and game settings in <code>cs2_user_convars_0_slot0.vcfg</code></li><li>video in <code>cs2_video.txt</code></li><li>HUD, radar and audio in <code>cs2_machine_convars.vcfg</code></li></ul><p>Copying these by hand works, but it's easy to copy the wrong folder, and Steam Cloud can bring the old files back. The app writes the same files CS2 writes when you change a setting, and never the game itself (<a href="../is-it-safe/">what it changes</a>). The folder, file by file, is in <a href="../cs2-config-file-location/">where CS2 saves your config</a>.</p>`],
@@ -467,7 +468,7 @@ export const pages = [
     eyebrow: 'Alt accounts for CS2',
     h1: 'Steam account switcher for CS2, with ban marks per server',
     lead: 'Pickroute switches between the Steam accounts saved on your PC without asking for passwords, and knows which account is banned where. One hotkey gets a new IP, logs into the next clean account and joins the server again.',
-    crop: ['accounts', 180, 40, 530, 600, 'The Accounts page: saved Steam accounts as cards, with ban status, cooldowns, In rotation and Log in'],
+    crop: ['accounts', 116, 40, 530, 600, 'The Accounts page: saved Steam accounts as cards, with ban status, cooldowns, In rotation and Log in'],
     related: ['cs2-ip-ban', 'copy-cs2-config', 'steam-profile-editor'],
     sections: [
       ['What it does', `<ul><li><b>No passwords.</b> It uses the logins Steam already saved (the accounts where you ticked Remember me). Switching never asks for or stores a password.</li><li><b>Bans and cooldowns at a glance:</b> VAC, game and trade bans and the competitive cooldown of each account, with filters for No bans, Banned, Cooldown and Not in rotation.</li><li><b>Server ban marks.</b> When CS2's console shows a ban, the account in use is marked for that server and for the rest of the same community. New IP + next account skips accounts on cooldown or marked on that server, and joining there with a marked account asks first.</li><li><b>In rotation.</b> Untick In rotation on an account's card and New IP + next account never picks it. The Not in rotation tab lists those accounts.</li><li><b>New IP + next account.</b> The button names the account it will use, like New IP + atlas, and gets a new IP, logs into that account and joins the last server again. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F9</kbd> (you can change it) does it from inside the game. In Settings &gt; New IP + next account you pick which of those steps it does.</li><li><b>Checks the result.</b> CS2 only opens once Steam is really on the new account; if Steam logs in to another one, the app tells you.</li><li><b>Backups of Steam's account list.</b> Before each switch the app keeps a copy of <code>loginusers.vdf</code>, and a failed switch puts Steam's previous account back.</li></ul>`],
@@ -488,7 +489,7 @@ export const pages = [
     eyebrow: 'Steam profile editor',
     h1: 'Change the name and avatar on all your Steam accounts at once',
     lead: 'The Profiles page of Pickroute changes the name, picture, real name, bio, country, privacy and custom URL of the Steam accounts you pick, from templates you save. You see each account now and after before anything is sent.',
-    crop: ['profiles', 180, 40, 560, 430, 'The Profiles page: step 1, the look every picked account gets, with its name, picture, country, bio and privacy'],
+    crop: ['profiles', 116, 40, 560, 430, 'The Profiles page: step 1, the look every picked account gets, with its name, picture, country, bio and privacy'],
     related: ['steam-account-switcher', 'copy-cs2-config', 'is-it-safe'],
     sections: [
       ['What you can do', `<ul><li><b>Templates.</b> Save a look (name, picture, real name, bio, country, privacy, custom URL) and apply it to any accounts.</li><li><b>Make the others look like</b> one account in one click, or copy the look of any public Steam profile from its link.</li><li><b>Numbers and names:</b> <code>nightfall {n}</code> gives nightfall 1, nightfall 2 and so on; <code>{name}</code> keeps each account's current name, so <code>{name} | NV</code> adds a tag.</li><li><b>Preview first.</b> Each account is shown now and after. Apply changes them one after another with a pause, and each result is shown in plain words.</li><li><b>Undo.</b> A copy of each profile, picture included, is kept before the first change. Restore original puts it back.</li><li><b>New accounts</b> can get a template on their own the first time they show up.</li></ul>`],
@@ -509,7 +510,7 @@ export const pages = [
     eyebrow: 'Setup guide',
     h1: 'Set up an Android phone for CS2: USB tethering, and a new IP in one click',
     lead: 'The whole setup, start to finish: the phone shares its mobile data over USB, only CS2, Steam and your servers use it, and Change IP gets a new carrier IP from the PC.',
-    crop: ['connection', 168, 40, 640, 440, 'The Connection page: protection on, the IP servers see, and the route from this PC through the phone to the servers'],
+    crop: ['connection', 104, 40, 672, 440, 'The Connection page: protection on, the IP servers see, and the route from this PC through the phone to the servers'],
     related: ['cs2-iphone-hotspot', 'cs2-ip-ban', 'is-it-safe'],
     sections: [
       ['What you need', `<ul><li>Windows 10 or 11 (64-bit) and admin rights: routes and firewall rules are system settings.</li><li>Windows Firewall turned on. Third-party firewalls that turn it off (some antivirus suites) leave the app without a kill switch, and it says so.</li><li>An Android phone or iPhone with mobile data, and a USB cable or the phone's Wi-Fi hotspot (<a href="../cs2-mobile-data/">what ping and how much data to expect</a>).</li><li>USB debugging on the phone, only if you want to change IP from the PC.</li></ul>`],
@@ -536,7 +537,7 @@ export const pages = [
     eyebrow: 'Mobile data',
     h1: 'Play CS2 on mobile data: ping, lag and how much data it uses',
     lead: "Yes, you can play CS2 on your phone's mobile data, by USB tethering or its hotspot. The server then sees your carrier's IP, not your home IP. The price is a higher ping and a connection that changes with the signal. Here is what to expect and how to keep it steady.",
-    crop: ['connection', 168, 40, 640, 440, 'The Connection page: protection on, the IP servers see, and the route from this PC through the phone to the servers'],
+    crop: ['connection', 104, 40, 672, 440, 'The Connection page: protection on, the IP servers see, and the route from this PC through the phone to the servers'],
     related: ['change-ip-with-phone', 'cs2-iphone-hotspot', 'hide-ip-cs2'],
     sections: [
       ['What ping to expect', `<p>Usually a higher one than at home. Mobile data adds latency and jitter, and a busy cell can drop packets, so the game can feel less smooth even when the ping looks fine. Your carrier, the signal and the time of day count for more than the phone itself.</p><ul><li><b>A good 5G or 4G signal</b> helps a lot. Put the phone near a window and keep it charging.</li><li><b>A weak signal, 3G or a crowded cell</b> means spikes, and no setting on the PC fixes that.</li></ul><p>The app measures it for you. The ping column in Servers goes through the phone, so you see what you'll get before you join (<a href="../cs2-ping-test/">test your ping to each region</a>). Connection quality in Checks pings through the phone every 30 seconds and says Good, Fair or Weak. Weak means a ping of 150 ms or more, jitter of 40 ms or more, or 2 of 8 pings lost, twice in a row.</p>`],
@@ -563,7 +564,7 @@ export const pages = [
     eyebrow: 'CS2 ping test',
     h1: 'CS2 ping test: see your ping to every Valve region',
     lead: "CS2 puts you in the matchmaking region where your ping to Valve's relays is good, and the game never shows you that list. The Regions page of Pickroute does: every region by continent with its ping, measured the way the game will reach it, before you queue.",
-    crop: ['regions', 168, 40, 640, 470, 'The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping'],
+    crop: ['regions', 104, 40, 640, 470, 'The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping'],
     related: ['cs2-region-picker', 'cs2-mobile-data', 'copy-cs2-config'],
     sections: [
       ['Test your ping before you queue', `<ol><li>Run <code>CS2IPChanger.exe</code> (it asks for admin) and open Regions. You don't need the phone or protection for this (<a href="../is-it-safe/">what the app changes on your PC</a>).</li><li>Press Refresh. The list comes from Valve's own relay list, grouped by continent and city, and the app pings each region.</li><li>Read the ping next to each region. With protection on, it is measured through the phone; with protection off, or in No phone mode, through your home connection.</li><li>If a region you don't want is the closest, turn it off, or use a shortcut such as Closest 3 or Ping under X ms (<a href="../cs2-region-picker/">how the CS2 region picker works</a>).</li></ol><p>A ping test is a snapshot: press Refresh again at the time of day you play, because the number moves.</p>`],
@@ -596,7 +597,7 @@ export const pages = [
     eyebrow: 'CS2 config manager',
     h1: 'Where is the CS2 config file? The cfg folder, file by file',
     lead: 'CS2 keeps your binds, crosshair, video and other settings in a cfg folder inside your Steam folder, one folder for each Steam account. Here is how to open it, what each file holds, where autoexec.cfg goes and how to back it all up.',
-    crop: ['configs', 180, 160, 640, 330, 'The Configs page: each account with its crosshair, when its config last changed and whether it gets the sync from the main account'],
+    crop: ['configs', 116, 160, 660, 330, 'The Configs page: each account with its crosshair, when its config last changed and whether it gets the sync from the main account'],
     related: ['copy-cs2-config', 'steam-account-switcher', 'cs2-region-picker'],
     sections: [
       ['Open the cfg folder', `<p>CS2 saves your settings per Steam account, in:</p><p><code>Steam\\userdata\\&lt;account ID&gt;\\730\\local\\cfg</code></p><ol><li>Open your Steam folder. On most PCs it is <code>C:\\Program Files (x86)\\Steam</code>; if you installed it somewhere else, right-click the Steam shortcut and pick Open file location.</li><li>Open <code>userdata</code>. It has one folder for each account that has signed in on this PC, named with the account ID (a number).</li><li>Open the folder of your account, then <code>730</code> (CS2's app number), then <code>local</code>, then <code>cfg</code>.</li></ol><p>If you can't tell which number is yours, the folder that changed last is the account you played most recently. The Steam account switcher shows each account saved on your PC (<a href="../steam-account-switcher/">Steam account switcher</a>).</p>`],
@@ -627,7 +628,7 @@ export const pages = [
     blurb: 'Personal Hotspot, and a new IP by Airplane Mode.',
     h1: "Play CS2 on your iPhone's mobile data, not your home IP",
     lead: "Yes, it works with an iPhone. The iPhone's USB tethering (Personal Hotspot) shows up in Windows like an Android phone, and so does its Wi-Fi hotspot, so community servers see your carrier's IP and not your home IP. One thing is different: for a new IP you switch Airplane Mode on and off on the iPhone yourself.",
-    crop: ['connection', 168, 40, 640, 240, 'The Connection page: the IP servers see, and your home IP hidden under This PC'],
+    crop: ['connection', 104, 40, 672, 240, 'The Connection page: the IP servers see, and your home IP hidden under This PC'],
     related: ['change-ip-with-phone', 'cs2-ip-ban', 'is-it-safe'],
     sections: [
       ['What works with an iPhone', `<ul><li><b>The protection, the same as on Android.</b> CS2, Steam and your servers go through the iPhone's mobile data (or the whole PC if you pick it), and Windows Firewall blocks them on your home connection, so those servers only see the carrier's IP. Expect a higher ping than at home: <a href="../cs2-mobile-data/">what to expect on mobile data</a>, and <a href="../cs2-ping-test/">how to test your ping to each region</a>.</li><li><b>The kill switch.</b> If the iPhone drops, CS2 loses the connection instead of using your home IP.</li><li><b>Live checks and the leak test</b> on the Connection page show the IP servers see.</li><li><b>Everything that doesn't need a phone:</b> Servers, Accounts, Configs, Profiles and Regions work the same.</li></ul>`],
@@ -656,7 +657,7 @@ export const pages = [
     h1: 'Does CS2 IP ban? VAC no, community servers yes',
     lead: 'Valve doesn\'t IP ban: VAC bans, game bans and cooldowns are on your Steam account, not your IP. Community servers can: their admins and plugins ban your account, your IP or a whole range. Find out which one you have first; when it\'s the IP, a new one gets you back in, for example by changing your IP with your phone.',
     leadHtml: 'Valve doesn\'t IP ban: VAC bans, game bans and cooldowns are on your Steam account, not your IP. Community servers can: their admins and plugins ban your account, your IP or a whole range. Find out which one you have first; when it\'s the IP, a new one gets you back in, for example by <a href="../change-ip-with-phone/">changing your IP with your phone</a>.',
-    crop: ['accounts', 705, 160, 515, 240, 'The Accounts page: one account banned on one server and on cooldown, another with a VAC ban'],
+    crop: ['accounts', 673, 160, 547, 240, 'The Accounts page: one account banned on one server and on cooldown, another with a VAC ban'],
     related: ['change-ip-with-phone', 'steam-account-switcher', 'hide-ip-cs2'],
     sections: [
       ['Which ban do you have?', `<div class="tbl fit"><table><thead><tr><th scope="col">What you see</th><th scope="col">The ban</th><th scope="col">What gets you back in</th></tr></thead><tbody>
@@ -688,7 +689,7 @@ export const pages = [
     eyebrow: 'Home IP protection',
     h1: 'Hide your home IP from CS2 community servers, without a VPN',
     lead: 'On a community server you join directly, the server admins and their plugins see your IP. You can\'t hide that an IP is there; you can choose which one it is.',
-    crop: ['connection', 168, 40, 640, 240, 'The Connection page: the IP servers see, and your home IP hidden under This PC'],
+    crop: ['connection', 104, 40, 672, 240, 'The Connection page: the IP servers see, and your home IP hidden under This PC'],
     related: ['change-ip-with-phone', 'cs2-ip-ban', 'is-it-safe'],
     sections: [
       ['Who sees your IP', `<ul><li><b>Community server admins and their plugins.</b> CS2 game traffic is UDP, sent straight between your PC and the server, and the server needs an address to send packets back. Whoever runs it can see and log that address, and their admin tools act on it.</li><li><b>Not official matchmaking.</b> Valve's matchmaking goes through Steam Datagram Relay, so other players there don't get your IP.</li></ul>`],
@@ -721,7 +722,7 @@ export const pages = [
     eyebrow: 'Built to be checked',
     h1: 'Is Pickroute safe?',
     lead: 'A tool that asks for admin and changes your network should explain itself. Here is what Pickroute changes on your PC, what it never touches, and how you can check every release yourself.',
-    crop: ['connection', 800, 110, 430, 360, 'The Connection page: the checks, the phone and how the PC connects to it, and the previous IPs'],
+    crop: ['connection', 775, 110, 455, 360, 'The Connection page: the checks, the phone and how the PC connects to it, and the previous IPs'],
     related: ['change-ip-with-phone', 'hide-ip-cs2', 'steam-account-switcher'],
     sections: [
       ['What it changes, and what it never touches', `<ul><li><b>Changes:</b> Windows routes and Windows Firewall rules (all named with the app's prefix), which saved Steam account logs in, and CS2's launch options on your Steam accounts: it adds <code>-condebug -conclearlog</code>, only while Steam is closed, so the app can read kicks and bans in CS2's console log (Settings > Steam turns it off). Only if you use those pages, it also changes CS2's config files (<a href="../cs2-config-file-location/">where CS2 saves your config</a>) and your Steam profiles. Phone setup downloads Google's ADB by itself, and checks that Google signed it.</li><li><b>Never touches:</b> the game process, its memory or its program files. It hides nothing from VAC or any anti-cheat.</li><li><b>Why admin:</b> routes and firewall rules are system settings, and Windows only lets admins change them. Steam, CS2, your browser and the programs it opens for you still run as you, not as admin.</li></ul>`],
@@ -747,7 +748,7 @@ export const pages = [
     eyebrow: 'CS2 server picker not working',
     h1: 'CS2 server picker not working? What to check, in order',
     lead: "Every CS2 server picker blocks Valve's relays in the regions you don't want with Windows Firewall rules. When you still land in a region you blocked, or the queue never finds a match, something is in the way of those rules. Go through this page in order: the first three checks fix most cases.",
-    crop: ['regions', 640, 160, 600, 545, 'The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for cs2.exe'],
+    crop: ['regions', 566, 160, 672, 594, 'The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for cs2.exe'],
     related: ['cs2-region-picker', 'cs2-ping-test', 'is-it-safe'],
     sections: [
       ['Check these three first', `<ol><li><b>Windows Firewall is on.</b> Block rules only count while Windows Firewall is on for the network you are on (Windows calls it a profile: Domain, Private or Public). Open Windows Security &gt; Firewall &amp; network protection: the profile marked active has to say the firewall is on. Some antivirus suites turn it off and use a firewall of their own; then Windows' rules do nothing. The Regions page of Pickroute reads the firewall's state and says "Windows Firewall is off" when the block is in place but not enforced.</li><li><b>CS2 started after the change.</b> CS2 measures the regions when it starts, so a CS2 that was already open keeps the ones it measured. Close it completely and start it again, between matches.</li><li><b>Max Acceptable Matchmaking Ping.</b> In CS2, Settings &gt; Game. If it is lower than the ping of the slowest region you left on, CS2 never uses that region, and with few regions left that can mean no match at all. The Regions page tells you the number to set: "Your slowest allowed region is ... In CS2, open Settings &gt; Game and set Max Acceptable Matchmaking Ping to ... or more."</li></ol>`],
@@ -775,7 +776,7 @@ export const pages = [
     eyebrow: 'Dota 2 and Deadlock server picker',
     h1: 'Dota 2 and Deadlock region picker: choose where you play',
     lead: "Dota 2 and Deadlock find matches over Valve's relays (Steam Datagram Relay), like CS2. The Regions page of Pickroute has a Game box: pick Dota 2 or Deadlock and you get that game's own regions, with the ping of each one, and the ones you turn off are blocked for that game only.",
-    crop: ['regions', 640, 160, 600, 545, 'The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for the game'],
+    crop: ['regions', 566, 160, 672, 594, 'The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for the game'],
     related: ['cs2-region-picker', 'cs2-server-picker-not-working', 'cs2-ping-test'],
     sections: [
       ['How it works for each game', `<ul><li><b>Each game's own list.</b> The regions come from Valve's relay list for that game (<code>GetSDRConfig</code>, app 570 for Dota 2 and app 1422450 for Deadlock), grouped by city and continent. On 19 Nov 2026 the list had 30 regions for Dota 2 and 29 for Deadlock.</li><li><b>One rule per game, for its exe only.</b> Dota 2's turned-off regions are blocked for <code>dota2.exe</code> and Deadlock's for <code>deadlock.exe</code>, on Valve's relay IPs only, with the rules "Pickroute - Dota 2 regions turned off" and "Pickroute - Deadlock regions turned off". Steam, your friends list and your other games are not touched.</li><li><b>Separate from CS2.</b> Each game keeps its own regions, ping limit and presets. Turning regions off for Dota 2 changes nothing in CS2 or Deadlock.</li><li><b>Found where it is installed.</b> The app looks for the game in your Steam libraries.</li></ul>`],

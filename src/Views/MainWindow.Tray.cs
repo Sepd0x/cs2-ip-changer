@@ -265,11 +265,18 @@ public partial class MainWindow
         return culture.DateTimeFormat.GetMonthName(now.Month);
     }
 
+    /// <summary>
+    /// Settings > Mobile data > Warn me after, in GB: 0 to 10000, "1,5" as "1.5", anything else 0 (27 nov., Codex C2: "NaN" was kept
+    /// as NaN, which settings.json can't hold, so every later save of the settings failed).
+    /// </summary>
+    public static double DataWarnGbOf(string text) =>
+        double.TryParse((text ?? "").Trim().Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var gb)
+        && double.IsFinite(gb) ? Math.Clamp(gb, 0, 10000) : 0;
+
     void DataWarn_Changed(object sender, RoutedEventArgs e)
     {
         if (_uiLock) return;
-        var t = DataWarnBox.Text.Trim().Replace(',', '.');
-        _s.DataWarnGb = double.TryParse(t, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var gb) ? Math.Clamp(gb, 0, 10000) : 0;
+        _s.DataWarnGb = DataWarnGbOf(DataWarnBox.Text);
         DataWarnBox.Text = _s.DataWarnGb > 0 ? _s.DataWarnGb.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) : "0";
         SaveSettings();
     }

@@ -234,6 +234,12 @@ public partial class MainWindow
     /// <summary>"Ready first" (many accounts, 3 nov.): ready now, then in cooldown (the one ending first on top), then out of rotation, then banned.</summary>
     public static int ReadyRank(AccountItem a) => a.HasVac || a.HasGameBan ? 3 : !a.InRotation ? 2 : a.InCooldown ? 1 : 0;
 
+    /// <summary>
+    /// "No accounts yet" shows only when the list has nothing to show (27 nov., Codex C23: with the only account hidden and Show hidden
+    /// on, the account came back under the empty panel and its Add account button).
+    /// </summary>
+    public static bool AccEmptyShows(int accounts, bool showHidden, int hiddenShown) => accounts == 0 && !(showHidden && hiddenShown > 0);
+
     void ApplyAccountFilter()
     {
         var q = AccSearch.Text.Trim();
@@ -274,7 +280,7 @@ public partial class MainWindow
         AccUnhideBtn.Visibility = ShowUnhide(_accHidden) ? Visibility.Visible : Visibility.Collapsed;
         AccUnhideBtn.Content = HiddenBtnText(_showHidden);
         AccUnhideBtn.ToolTip = HiddenBtnTip(_showHidden);
-        AccountsEmpty.Visibility = _accounts.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        AccountsEmpty.Visibility = AccEmptyShows(_accounts.Count, _showHidden, _accHiddenItems.Count) ? Visibility.Visible : Visibility.Collapsed;
         AccRowsHint.Visibility = SuggestRows(_accounts.Count, _s.AccountsView) ? Visibility.Visible : Visibility.Collapsed;
         UpdateQuickInfo();
     }

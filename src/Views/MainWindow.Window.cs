@@ -70,9 +70,11 @@ public partial class MainWindow
         var kind = LogErr.IsChecked == true ? "error" : LogWarn.IsChecked == true ? "warn" : "all";
         var q = LogSearch.Text;
         _logView.Filter = kind == "all" && string.IsNullOrWhiteSpace(q) ? null : o => o is LogEntry l && LogShows(l, kind, q);
-        LogCount.Text = _logView.Filter == null ? "" : Loc.F("{0} of {1} lines", _logView.Cast<object>().Count(), _log.Count);
         ShowLogSummary();
     }
+
+    /// <summary>"3 of 40 lines" while a filter is on, else nothing.</summary>
+    public static string LogCountText(bool filtered, int shown, int total) => filtered ? Loc.F("{0} of {1} lines", shown, total) : "";
 
     // ------------------------------------------------------------ The line under the Log's title (26 Nov, App v3): "3 entries · no warnings or errors"
 
@@ -89,6 +91,9 @@ public partial class MainWindow
     void ShowLogSummary()
     {
         if (LogSummary == null) return;
+        // 27 nov. (Codex C8): the filtered count follows every change of the Log (Clear, new lines), not only a change of the filter
+        var filtered = _logView?.Filter != null;
+        LogCount.Text = LogCountText(filtered, filtered ? _logView.Cast<object>().Count() : 0, _log.Count);
         LogSummary.Text = LogSummaryText(_log.Count, _log.Count(l => l.Level == LogLevel.Warn), _log.Count(l => l.Level == LogLevel.Error));
         LogCountSep.Text = string.IsNullOrEmpty(LogCount.Text) ? "" : " · ";
     }
@@ -122,6 +127,9 @@ public partial class MainWindow
 
     void SideStatus_Click(object sender, MouseButtonEventArgs e) => NavNet.IsChecked = true;
     void Min_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+    /// <summary>The maximize button's tip: what a click does now.</summary>
+    public static string MaxTip(bool maximized) => Loc.T(maximized ? "Restore down" : "Maximize");
+
     void Max_Click(object sender, RoutedEventArgs e) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
     void Close_Click(object sender, RoutedEventArgs e) => Close();
 
@@ -227,7 +235,9 @@ public partial class MainWindow
     /// <summary>
     /// The sidebar's rows for its height (27 nov.: on a 1366x768 laptop at 125 % the window is 576 tall, under the 660 the sidebar
     /// was drawn for, and Profiles went under Log). 66 px rows and 24 px under the logo while they fit; else the gap goes to 8 and
-    /// the eight rows share what is left, down to 48 px. 74 = the margins and the logo, 25 = the space over the version and the version.
+    /// the eight rows share what is left, down to 44 px (27 nov., Codex C5: 48 left Profiles 9 px under Log at 1080p and 200 % with
+    /// Update showing; NavTileFit keeps the icon and the name inside a 44 px row). 74 = the margins and the logo, 25 = the space over
+    /// the version and the version.
     /// <paramref name="update"/>: the height the Update button takes over the version while it shows (second Codex pass, B6: at 574 it
     /// pushed Profiles under Log again).
     /// </summary>
@@ -235,7 +245,7 @@ public partial class MainWindow
     {
         var room = side - 74 - 25 - Math.Max(0, update);
         if (room >= 8 * 66 + 24) return (66, 24);
-        return (Math.Clamp(Math.Floor((room - 8) / 8), 48, 66), 8);
+        return (Math.Clamp(Math.Floor((room - 8) / 8), 44, 66), 8);
     }
 
     /// <summary>The Update button's height with its 8 px under it, 0 while it is hidden (its RowPrimary minimum before it is measured).</summary>
@@ -254,7 +264,17 @@ public partial class MainWindow
         var (row, gap) = NavFit(SideBar.ActualHeight, UpdateBtnRoom());
         foreach (var nav in new[] { NavNet, NavServers, NavRegions, NavAccounts, NavConfigs, NavProfiles, NavLog, NavSettings }) nav.Height = row;
         SideNavTop.Margin = new Thickness(0, gap, 0, 0);
+        var (tile, nameGap) = NavTileFit(row);
+        SideBar.Resources["NavTile"] = new Thickness(8, tile, 8, tile);
+        SideBar.Resources["NavNameGap"] = new Thickness(0, nameGap, 0, 0);
     }
+
+    /// <summary>
+    /// The tile's space over and under it in its row, and the gap between the icon and the name (27 nov.: at 1080p and 200 % the rows
+    /// are 50 px, and the 22 px icon, the 6 px gap and the 16 px name in a 42 px tile touched its top): 4 and 6 while the row is 56 or
+    /// more, else 2 and 2.
+    /// </summary>
+    public static (double Tile, double NameGap) NavTileFit(double row) => row >= 56 ? (4, 6) : (2, 2);
 
     public static (double MinW, double MinH, double W, double H) FitWorkArea(double minW, double minH, double w, double h, double areaW, double areaH) =>
         (Math.Min(minW, areaW), Math.Min(minH, areaH), Math.Min(w, areaW), Math.Min(h, areaH));

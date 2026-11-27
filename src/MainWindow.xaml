@@ -532,7 +532,7 @@
 
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="168"/>
+                    <ColumnDefinition x:Name="SideColumn" Width="104"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
@@ -1185,7 +1185,7 @@
                             </Grid.ColumnDefinitions>
                             <TextBox x:Name="BulkInput" Style="{StaticResource FieldBox}" AcceptsReturn="True" TextWrapping="NoWrap" VerticalScrollBarVisibility="Disabled"
                                      FontFamily="{StaticResource Mono}" FontSize="12" PreviewKeyDown="BulkInput_KeyDown"
-                                     Tag="Paste server IPs here, e.g. 1.2.3.4:27015 (Ctrl+Enter adds)"
+                                     Tag="Ctrl+Enter adds · e.g. 1.2.3.4:27015"
                                      ToolTip="Accepts IP:port, 'IP port', 'connect IP:port', steam://connect links and whole lists. Duplicates are ignored."/>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0" VerticalAlignment="Center"
                                         ToolTip="Port used when you paste only the IP (CS2 uses 27015)">
@@ -1550,7 +1550,7 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Title, the state in one line, and on the right where the list and the pings come from -->
-                        <Grid Grid.ColumnSpan="3">
+                        <Grid x:Name="RegionsHead" Grid.ColumnSpan="3" SizeChanged="RegionsHead_SizeChanged">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" MinWidth="240"/>
                                 <ColumnDefinition Width="Auto"/>
@@ -1753,9 +1753,12 @@
                                         <Expander x:Name="RegionsWarningFold" Style="{StaticResource FoldLine}">
                                             <Expander.Header>
                                                 <DockPanel>
-                                                    <Border Width="16" Height="16" CornerRadius="8" BorderBrush="{StaticResource Warn}" BorderThickness="1.5" VerticalAlignment="Top" Margin="0,0,10,0">
-                                                        <TextBlock Text="!" FontSize="10" FontWeight="Bold" Foreground="{StaticResource Warn}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
+                                                    <!-- 27 Nov: drawn, not a 10 px "!" (it sat low, its dot ran into the stem) -->
+                                                    <Grid x:Name="RegionsWarningMark" Width="16" Height="16" VerticalAlignment="Top" Margin="0,0,10,0">
+                                                        <Ellipse Stroke="{StaticResource Warn}" StrokeThickness="1.5"/>
+                                                        <Path Data="M8,4.5 L8,8.75" Stroke="{StaticResource Warn}" StrokeThickness="1.75" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                                        <Path Fill="{StaticResource Warn}"><Path.Data><EllipseGeometry Center="8,11.4" RadiusX="1.05" RadiusY="1.05"/></Path.Data></Path>
+                                                    </Grid>
                                                     <TextBlock x:Name="RegionsWarning" TextWrapping="Wrap" Text="If CS2 is open, restart it after changing regions."/>
                                                 </DockPanel>
                                             </Expander.Header>
@@ -1770,9 +1773,11 @@
                                     <Expander x:Name="RegionsTipFold" Style="{StaticResource FoldLine}" Margin="0,2,0,0" Visibility="{Binding Visibility, ElementName=RegionsMaxPingHint}">
                                         <Expander.Header>
                                             <DockPanel>
-                                                <Border Width="16" Height="16" CornerRadius="8" BorderBrush="{StaticResource Accent}" BorderThickness="1.5" VerticalAlignment="Top" Margin="0,0,10,0">
-                                                    <TextBlock Text="i" FontSize="10" FontWeight="Bold" Foreground="{StaticResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
+                                                <Grid x:Name="RegionsTipMark" Width="16" Height="16" VerticalAlignment="Top" Margin="0,0,10,0">
+                                                    <Ellipse Stroke="{StaticResource Accent}" StrokeThickness="1.5"/>
+                                                    <Path Fill="{StaticResource Accent}"><Path.Data><EllipseGeometry Center="8,4.6" RadiusX="1.05" RadiusY="1.05"/></Path.Data></Path>
+                                                    <Path Data="M8,7.25 L8,11.5" Stroke="{StaticResource Accent}" StrokeThickness="1.75" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                                </Grid>
                                                 <TextBlock x:Name="RegionsMaxPingHead" TextWrapping="Wrap" Foreground="{StaticResource Muted}"/>
                                             </DockPanel>
                                         </Expander.Header>
@@ -2333,15 +2338,15 @@
                                 <Grid HorizontalAlignment="Left" Margin="0,4,0,0">
                                     <ToggleButton x:Name="CfgSyncBtn" Style="{StaticResource CfgSyncToggle}" AutomationProperties.Name="Sync"
                                                   ToolTip="How the app copies configs between your accounts on its own">
-                                        <StackPanel Orientation="Horizontal" TextElement.FontSize="12.5">
+                                        <DockPanel LastChildFill="True" TextElement.FontSize="12.5">
                                             <!-- "Sync" on its own: the texts that say Configs > Sync > When point here (OrganizacaoTests 7) -->
-                                            <TextBlock Text="Sync" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
-                                            <TextBlock Text=":" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
-                                            <TextBlock x:Name="CfgSyncMode" FontWeight="SemiBold" Foreground="{StaticResource Text}" Margin="6,0,0,0" VerticalAlignment="Center"/>
-                                            <Path Data="M 0,0 L 3.5,3.5 L 7,0" Stroke="{StaticResource Muted}" StrokeThickness="1.5" VerticalAlignment="Center" Margin="8,1,6,0"/>
-                                            <TextBlock Text="·" Foreground="{StaticResource CfgSep}" VerticalAlignment="Center"/>
-                                            <TextBlock x:Name="CfgSyncLast" Foreground="{StaticResource Faint}" Margin="6,0,0,0" VerticalAlignment="Center"/>
-                                        </StackPanel>
+                                            <TextBlock DockPanel.Dock="Left" Text="Sync" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+                                            <TextBlock DockPanel.Dock="Left" Text=":" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+                                            <TextBlock DockPanel.Dock="Left" x:Name="CfgSyncMode" FontWeight="SemiBold" Foreground="{StaticResource Text}" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                                            <Path DockPanel.Dock="Left" Data="M 0,0 L 3.5,3.5 L 7,0" Stroke="{StaticResource Muted}" StrokeThickness="1.5" VerticalAlignment="Center" Margin="8,1,6,0"/>
+                                            <TextBlock DockPanel.Dock="Left" Text="·" Foreground="{StaticResource CfgSep}" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="CfgSyncLast" Foreground="{StaticResource Faint}" Margin="6,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                        </DockPanel>
                                     </ToggleButton>
                                     <Popup x:Name="CfgSyncMenu" IsOpen="{Binding IsChecked, ElementName=CfgSyncBtn, Mode=TwoWay}" PlacementTarget="{Binding ElementName=CfgSyncBtn}"
                                            Placement="Bottom" HorizontalOffset="-24" VerticalOffset="6" StaysOpen="False" AllowsTransparency="True">
@@ -2614,7 +2619,7 @@
                                         <Expander.Header>
                                             <DockPanel>
                                                 <TextBlock Text="Backups and snapshots" FontFamily="{StaticResource DisplayFont}" FontSize="14" FontWeight="SemiBold" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                                                <TextBlock FontFamily="{StaticResource UiFont}" FontSize="12" FontWeight="Normal" Foreground="{StaticResource Faint}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                                <TextBlock x:Name="CfgBackupsNote" FontFamily="{StaticResource UiFont}" FontSize="12" FontWeight="Normal" Foreground="{StaticResource Faint}" TextWrapping="Wrap" VerticalAlignment="Center"
                                                            Text="Saved before the app changes an account's files. The 20 newest per account are kept, and the first one (Original) for good."/>
                                             </DockPanel>
                                         </Expander.Header>
@@ -3805,7 +3810,12 @@
                                     <Setter.Value>
                                         <ControlTemplate TargetType="RadioButton">
                                             <Border x:Name="b" Background="Transparent" CornerRadius="6" Padding="10,0,6,0">
-                                                <ContentPresenter VerticalAlignment="Center"/>
+                                                <!-- 27 Nov: a long name ends in "..." (Russian's "Горячие клавиши и звук" was cut through a letter) -->
+                                                <ContentPresenter VerticalAlignment="Center">
+                                                    <ContentPresenter.Resources>
+                                                        <Style TargetType="TextBlock"><Setter Property="TextTrimming" Value="CharacterEllipsis"/></Style>
+                                                    </ContentPresenter.Resources>
+                                                </ContentPresenter>
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
@@ -4285,14 +4295,16 @@
                                     <TextBlock Text="{Binding Text, ElementName=HotkeySwitchBox}" FontFamily="{StaticResource Mono}" FontSize="11.5" Foreground="{StaticResource Muted}"/>
                                 </Border>
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal" ClipToBounds="True">
-                                <local:StatusMark Brush="{Binding Fill, ElementName=PhoneDot}"/>
-                                <TextBlock Text="{Binding Text, ElementName=PhoneState}" Margin="8,0,0,0" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding Text, ElementName=PhoneDetail}" Margin="8,0,0,0" Foreground="{StaticResource Muted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="440"/>
-                                <TextBlock Text="·" Margin="8,0,0,0" Foreground="{StaticResource Faint}" Opacity="0.55" VerticalAlignment="Center" Visibility="{Binding Visibility, ElementName=DataUsage}"/>
+                            <!-- 27 Nov: a DockPanel, not a horizontal StackPanel (that gave the text endless room, so a narrow window cut
+                                 the mobile data line in the middle of a word instead of ending it in "...") -->
+                            <DockPanel x:Name="StatusLeft" LastChildFill="True" ClipToBounds="True">
+                                <local:StatusMark DockPanel.Dock="Left" Brush="{Binding Fill, ElementName=PhoneDot}"/>
+                                <TextBlock DockPanel.Dock="Left" Text="{Binding Text, ElementName=PhoneState}" Margin="8,0,0,0" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <TextBlock DockPanel.Dock="Left" Text="{Binding Text, ElementName=PhoneDetail}" Margin="8,0,0,0" Foreground="{StaticResource Muted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="440"/>
+                                <TextBlock DockPanel.Dock="Left" Text="·" Margin="8,0,0,0" Foreground="{StaticResource Faint}" Opacity="0.55" VerticalAlignment="Center" Visibility="{Binding Visibility, ElementName=DataUsage}"/>
                                 <TextBlock Text="{Binding Text, ElementName=DataUsage}" Margin="8,0,0,0" Foreground="{StaticResource Muted}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                            Visibility="{Binding Visibility, ElementName=DataUsage}"/>
-                            </StackPanel>
+                            </DockPanel>
                         </DockPanel>
                     </Border>
 
@@ -4325,13 +4337,29 @@
             <!-- Dialog -->
             <!-- beta.10: Phone setup as steps that check themselves (PhoneSetup.Steps), each with its button when the app can do it -->
             <Grid x:Name="SetupPane" Grid.Row="1" Margin="0,40,0,0" Background="#B0000000" Visibility="Collapsed" local:Look.Round="True">
-                <HeaderedContentControl Style="{StaticResource DialogGroup}" Width="580" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="18,10,18,8">
+                <HeaderedContentControl Style="{StaticResource DialogGroup}" Width="580" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="18,10,18,8" Margin="0,12">
                     <HeaderedContentControl.Header>
                         <TextBlock Text="Phone setup" Style="{StaticResource DialogTitle}"/>
                     </HeaderedContentControl.Header>
-                    <StackPanel>
-                        <TextBlock x:Name="SetupSummary" Style="{StaticResource Sub}" TextWrapping="Wrap" Margin="0,0,0,8"
+                    <!-- 27 Nov (Codex C18): Close stays at the bottom and the steps and the drawn guide scroll, so at 1080p and 200 % the
+                         panel never runs past the window -->
+                    <DockPanel LastChildFill="True">
+                        <TextBlock x:Name="SetupSummary" DockPanel.Dock="Top" Style="{StaticResource Sub}" TextWrapping="Wrap" Margin="0,0,0,8"
                                    Text="Updates by itself. Do the red step and it turns green."/>
+                        <Grid DockPanel.Dock="Bottom" Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="SetupFoot" Style="{StaticResource OptSub}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <!-- 24 Nov: ready with protection off ends on Turn on protection, with Close next to it (SetupEnd) -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                <Button x:Name="SetupCloseBtn" Content="Close" Click="SetupClose_Click" Margin="0"/>
+                                <Button x:Name="SetupTurnOnBtn" Style="{StaticResource Primary}" Content="Turn on protection" Click="SetupTurnOn_Click" Margin="6,0,0,0" Visibility="Collapsed"/>
+                            </StackPanel>
+                        </Grid>
+                        <ScrollViewer x:Name="SetupScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+                        <StackPanel>
                         <ItemsControl x:Name="SetupSteps">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -4365,19 +4393,9 @@
                         </ItemsControl>
                         <!-- 10 Nov: USB debugging drawn step by step for the phone's brand (Texts.Guides, built in PhoneGuide.cs) -->
                         <ContentControl x:Name="SetupGuide" Margin="0,12,0,0" Focusable="False" Visibility="Collapsed"/>
-                        <Grid Margin="0,16,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock x:Name="SetupFoot" Style="{StaticResource OptSub}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <!-- 24 Nov: ready with protection off ends on Turn on protection, with Close next to it (SetupEnd) -->
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
-                                <Button x:Name="SetupCloseBtn" Content="Close" Click="SetupClose_Click" Margin="0"/>
-                                <Button x:Name="SetupTurnOnBtn" Style="{StaticResource Primary}" Content="Turn on protection" Click="SetupTurnOn_Click" Margin="6,0,0,0" Visibility="Collapsed"/>
-                            </StackPanel>
-                        </Grid>
-                    </StackPanel>
+                        </StackPanel>
+                        </ScrollViewer>
+                    </DockPanel>
                 </HeaderedContentControl>
             </Grid>
             <!-- 24 Nov: the first start's two doors (MainWindow.Start.cs). 46 of 57 never plugged a phone in and Regions is the most used
