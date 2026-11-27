@@ -7,7 +7,7 @@
   <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest"><img src="https://img.shields.io/github/v/release/Sepd0x/cs2-ip-changer?label=stable&color=2b74c2" alt="Latest release"></a>
   <a href="https://github.com/Sepd0x/cs2-ip-changer/releases"><img src="https://img.shields.io/github/downloads/Sepd0x/cs2-ip-changer/total?label=downloads&color=2b74c2" alt="Total downloads"></a>
   <a href="#quick-start"><img src="https://img.shields.io/badge/Windows-10%20%7C%2011-2b74c2" alt="Windows 10 and 11"></a>
-  <!--rel:vtbadge--><a href="https://www.virustotal.com/gui/file/99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb/detection"><img src="https://img.shields.io/badge/VirusTotal-1%2F67-2b74c2" alt="VirusTotal: 1 of 67 engines flag it"></a><!--/rel-->
+  <!--rel:vtbadge--><a href="https://www.virustotal.com/gui/file/99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb/detection"><img src="https://img.shields.io/badge/VirusTotal-1%2F67-2b74c2" alt="VirusTotal: flagged by 1 of 67 engines"></a><!--/rel-->
   <a href="https://github.com/Sepd0x/cs2-ip-changer/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Sepd0x/cs2-ip-changer/ci.yml?branch=main&label=build" alt="Build and tests"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-personal%20use-2b74c2" alt="License: free for personal use, all rights reserved"></a>
 </p>
@@ -129,7 +129,7 @@ The app is in English, Brazilian Portuguese, Spanish, Russian and Turkish, and f
 > Windows warns once: the exe isn't code-signed yet, so SmartScreen may stop it the first time. Click **More info > Run anyway**, or [check your download](#check-your-download) first. Updates are different: the app checks them with a signature ([Is it safe?](#is-it-safe)).
 
 > [!WARNING]
-> This is a beta, so expect bugs. If something breaks your connection, **Turn off protection** (on Connection, or in the icon's menu next to the clock) removes the routes and firewall rules. More in [If something goes wrong](#if-something-goes-wrong).
+> If something breaks your connection, **Turn off protection** (on Connection, or in the icon's menu next to the clock) removes the routes and firewall rules. More in [If something goes wrong](#if-something-goes-wrong).
 
 Every detail of the setup (where the exe can run, the phone, ADB, launch options, hotkeys, uninstalling) is in [docs/SETUP.md](docs/SETUP.md).
 
@@ -167,7 +167,7 @@ To check only the hash, put the `.sha256` file next to the exe and run this in P
 ```
 </details>
 
-Each release is also scanned on VirusTotal. <!--rel:vt-->1.0.0: [1 of 67 engines](https://www.virustotal.com/gui/file/99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb/detection) flag it<!--/rel-->.
+Each release is also scanned on VirusTotal. <!--rel:vt-->1.0.0: flagged by [1 of 67 engines](https://www.virustotal.com/gui/file/99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb/detection)<!--/rel-->.
 
 <details>
 <summary><b>Why some engines flag it</b></summary>
