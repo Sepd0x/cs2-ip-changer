@@ -4,6 +4,10 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Changed
+- Website and README: the app is no longer called a beta.
+- Website, README and release notes: the VirusTotal result reads right with any number of engines ("flagged by 1 of 67 engines").
+
 ## [1.0.0] - 2026-11-27
 
 ### Added

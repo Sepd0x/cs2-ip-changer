@@ -67,3 +67,5 @@ This is **Pickroute**'s first stable version: a new look for the whole app, Regi
 **If you go back to an older version, run `CS2IPChanger.exe --restore` first:** the app's Windows Firewall rules are now named "Pickroute - ...", and older versions don't know that name.
 
 The full list is in the [CHANGELOG](https://github.com/Sepd0x/cs2-ip-changer/blob/main/CHANGELOG.md).
+
+VirusTotal: flagged by [1 of 67 engines](https://www.virustotal.com/gui/file/99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb/detection).
