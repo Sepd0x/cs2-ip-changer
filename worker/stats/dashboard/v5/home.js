@@ -1,7 +1,7 @@
 // Dashboard v5 (5 nov. 2026): desenha a página do dono a partir do model.js. Três pedidos (/api/brief, /api/github, /api/live),
 // o ao vivo outra vez a cada minuto e o resto a cada 5. Gráficos em SVG feitos aqui (sem bibliotecas: a CSP só deixa 'self').
 // Os números contam até ao valor ao aparecer (menos com "reduzir movimento"). Nada de jargão: o detalhe está em /data.
-import { buildHome, num, dayPt } from './model.js';
+import { buildHome, num, dayPt, NO_REF } from './model.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -166,15 +166,44 @@ function renderArrive() {
       ${H.arrive.map(group).join('')}
       ${r ? `<p class="note">Cerca de 1 em cada ${num(r)} visitas ao site acaba num clique em Download.</p>` : ''}</div>
     <div class="col"><h2>De onde vêm as visitas</h2><p class="lead">Últimos 7 dias, em percentagem</p>
-      ${H.refs.length ? `<div class="bars refs">${H.refs.map((x) => bar(x.name, x.n, 100 * x.share, `${Math.round(100 * x.share)}%`)).join('')}</div>` : '<p class="none">Ainda sem visitas com origem.</p>'}</div>`;
+      ${H.refs.length ? `<div class="bars refs">${H.refs.map((x) => bar(x.name, x.n, 100 * x.share, `${Math.round(100 * x.share)}%`)).join('')}</div>` : '<p class="none">Ainda sem visitas com origem.</p>'}
+      ${H.refs.some((x) => x.name === NO_REF) ? `<p class="note">${esc(NO_REF)} junta quem escreveu o endereço, quem veio de uma app que não diz de onde, e quem passou de uma página do site para outra.</p>` : ''}</div>`;
 }
 function renderJourney() {
   const j = H.journey;
   if (!j) { $('#journey').innerHTML = '<h2>Depois de instalar</h2><p class="none">Aparece quando houver pessoas com uma semana de uso. Volta daqui a uns dias.</p>'; return; }
-  $('#journey').innerHTML = `<h2>Depois de instalar</h2><p class="lead">${esc(j.text)}</p>
-    <ol class="steps">${j.steps.map((s) => `<li><div class="st-top"><span class="st-l">${esc(s.label)}</span><span class="st-v"><b>${num(s.n)}</b> de ${num(j.base)}${j.base >= 10 ? ` <span class="st-p">${Math.round(100 * s.share)}%</span>` : ''}</span></div>
-      <span class="st-t"><i style="width:${(100 * s.share).toFixed(1)}%"></i></span></li>`).join('')}</ol>
+  const step = (s) => `<li><div class="st-top"><span class="st-l">${esc(s.label)}</span><span class="st-v">${s.n == null ? '<span class="na">sem dados</span>' : `<b>${num(s.n)}</b> de ${num(j.base)}${j.base >= 10 ? ` <span class="st-p">${Math.round(100 * s.share)}%</span>` : ''}`}</span></div>
+      <span class="st-t"><i style="width:${(100 * (s.share || 0)).toFixed(1)}%"></i></span></li>`;
+  // 27 Nov. 2026: the two doors side by side (the same numbers, grouped); an older brief without them keeps the one list
+  const body = j.groups ? `<ol class="steps">${step(j.opened)}</ol>
+      <div class="doors">${j.groups.map((g) => `<div class="door"><h3 class="grp">${esc(g.title)}</h3><ol class="steps">${g.rows.map(step).join('')}</ol></div>`).join('')}</div>
+      ${j.end.length ? `<ol class="steps end">${j.end.map(step).join('')}</ol>` : ''}`
+    : `<ol class="steps">${j.steps.map(step).join('')}</ol>`;
+  $('#journey').innerHTML = `<h2>Depois de instalar</h2><p class="lead">${esc(j.text)}</p>${body}
     ${j.note ? `<p class="note">${esc(j.note)}</p>` : ''}${j.doors ? `<p class="note">${esc(j.doors)}</p>` : ''}`;
+}
+// 27 Nov. 2026: the whole way, from the site to coming back, in three blocks that are never divided by each other (different bases)
+function renderPath() {
+  const p = H.path;
+  const cell = (x, i, all) => `<div class="ps"><span class="ps-n">${x.n == null ? '—' : num(x.n)}</span><span class="ps-l">${esc(x.label)}</span>${x.n == null ? '<span class="ps-s">sem dados</span>' : ''}${x.note ? `<span class="ps-s">${esc(x.note)}</span>` : ''}${x.rate != null ? `<span class="ps-s">${Math.round(100 * x.rate)}% das visitas</span>` : ''}${x.of != null ? `<span class="ps-s">de ${num(x.of)}${x.of >= 10 ? ` · ${Math.round(100 * x.share)}%` : ''}</span>` : ''}</div>${i < all.length - 1 ? '<span class="ps-a" aria-hidden="true"></span>' : ''}`;
+  const block = (title, sub, list) => `<div class="pb"><h3 class="grp">${esc(title)}</h3><p class="pb-s">${esc(sub)}</p><div class="pr">${list.map(cell).join('')}</div></div>`;
+  $('#path').innerHTML = `<h2>O caminho, do site a voltar</h2><p class="lead">Cada bloco tem a sua base: não se dividem uns pelos outros (o site não sabe quem instala).</p>
+    <div class="pbs">${block('Antes de instalar', 'Últimos 7 dias completos', p.before)}
+    ${p.after ? block('Depois de instalar', p.after.text, p.after.steps) : ''}
+    ${p.back ? block('Voltar', 'Quem instalou nos últimos 30 dias e já teve esse dia', p.back) : ''}</div>
+    ${p.lines.length ? `<ul class="plines">${p.lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}`;
+}
+// 27 Nov. 2026: which pages of the site bring the visits and the Download clicks, in which language, from which countries
+function renderPages() {
+  const el = $('#pages');
+  if (!H.pages || !H.pages.length) { el.innerHTML = '<div class="col"><h2>Páginas do site que trazem gente</h2><p class="none">Ainda sem visitas nos últimos 7 dias.</p></div>'; return; }
+  const max = Math.max(1, ...H.pages.map((x) => x.views));
+  const share = (l) => `<div class="bars refs">${l.map((x) => `<div class="br"><span class="br-l">${esc(x.name)}</span><span class="br-t"><i style="width:${(100 * x.share).toFixed(1)}%"></i></span><span class="br-n">${Math.round(100 * x.share)}%</span></div>`).join('')}</div>`;
+  el.innerHTML = `<div class="col"><h2>Páginas do site que trazem gente</h2><p class="lead">Últimos 7 dias completos</p>
+      <div class="pg" role="table" aria-label="Páginas do site"><div class="pg-h" role="row"><span role="columnheader">Página</span><span role="columnheader">Visitas</span><span role="columnheader">Cliques em Download</span></div>
+      ${H.pages.map((x) => `<div class="pg-r" role="row"><span class="pg-l" role="cell"><span class="pg-name">${esc(x.name)}</span><span class="pg-lang">${esc(x.lang)}</span><span class="pg-t"><i style="width:${Math.max(1.5, (100 * x.views) / max).toFixed(1)}%"></i></span></span><span class="pg-n" role="cell">${num(x.views)}</span><span class="pg-n" role="cell">${num(x.clicks)}</span></div>`).join('')}</div></div>
+    <div class="col">${H.langs && H.langs.length ? `<h2>Em que língua</h2><p class="lead">Visitas por língua do site</p>${share(H.langs)}` : ''}
+      ${H.countries && H.countries.length ? `<h2 class="h2b">De que países</h2><p class="lead">Visitas por país</p>${share(H.countries)}` : ''}</div>`;
 }
 function renderEmpty() {
   $('#welcome').innerHTML = `<h2>Ainda não há números</h2><p>Quando alguém instalar e abrir a app, aparecem aqui:</p>
@@ -186,7 +215,7 @@ function render() {
   document.body.classList.toggle('empty', H.empty);
   renderHero(); pill(); renderChanges();
   const cap = document.querySelector('.b-cap'); if (cap && H.cap) cap.textContent = H.cap;   // beta.13: the cards' days, said with their dates
-  if (H.empty) renderEmpty(); else { renderBoard(); renderArrive(); renderJourney(); }
+  if (H.empty) renderEmpty(); else { renderBoard(); renderPath(); renderArrive(); renderJourney(); renderPages(); }
   document.body.classList.add('ready');
   first = false;
 }

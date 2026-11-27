@@ -111,7 +111,7 @@ test('v5 model: where visits come from is a share of the visits with an origin, 
   const B = clone(await briefOf(launch()));
   B.acquisition.top_site_refs_d7 = [{ host: 'youtube.com', n: 30 }, { host: 'www.youtube.com', n: 10 }, { host: 'direct', n: 40 }, { host: 'example.org', n: 20 }];
   const H = buildHome({ B, G: GH_OK });
-  assert.deepEqual(H.refs.map((r) => [r.name, r.n]), [['YouTube', 40], ['Direto (sem link)', 40], ['example.org', 20]]);
+  assert.deepEqual(H.refs.map((r) => [r.name, r.n]), [['YouTube', 40], ['Sem link de origem', 40], ['example.org', 20]]);   // 27 Nov.: no referrer is not only "direct" (moves inside the site too)
   assert.equal(Math.round(100 * H.refs.reduce((a, r) => a + r.share, 0)), 100);
   assert.equal(hostName('www.reddit.com'), 'Reddit');
 });

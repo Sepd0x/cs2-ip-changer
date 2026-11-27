@@ -16,6 +16,8 @@ export const num = (v) => (v == null ? '—' : NF.format(Math.round(v)));
 /** "2026-10-31" -> "31 out." */
 export const dayPt = (d) => { const [, m, x] = String(d).split('-'); return `${+x} ${MES[+m - 1]}`; };
 const pct = (x) => `${Math.round(100 * x)}%`;
+/** "v0.1.0-beta.15" -> "beta.15", "v1.0.0" -> "1.0.0" (27 nov.: a 1.0.0 dizia "a v1.0.0"). */
+export const relName = (t) => String(t).replace(/^v/, '').replace(/^0\.1\.0-/, '');
 const plural = (n, a, b) => `${num(n)} ${n === 1 ? a : b}`;
 /** Minutos em texto: "40 min", "16 horas", "3 dias". */
 export const span = (m) => (m < 60 ? `${m} min` : m < 2880 ? plural(Math.round(m / 60), 'hora', 'horas') : plural(Math.round(m / 1440), 'dia', 'dias'));
@@ -43,9 +45,37 @@ export function weeks(list) {
   return { d7: a.some((x) => x != null) ? sum(a) : null, prev7: b.length === 7 && b.some((x) => x != null) ? sum(b) : null };
 }
 
-const HOSTS = { 'youtube.com': 'YouTube', 'm.youtube.com': 'YouTube', 'google.com': 'Google', 'github.com': 'GitHub', 'reddit.com': 'Reddit', 'discord.com': 'Discord',
-  'twitter.com': 'X (Twitter)', 'x.com': 'X (Twitter)', 't.co': 'X (Twitter)', 'tiktok.com': 'TikTok', 'bing.com': 'Bing', 'duckduckgo.com': 'DuckDuckGo', direct: 'Direto (sem link)', '': 'Direto (sem link)' };
-export const hostName = (h) => HOSTS[String(h || '').replace(/^www\./, '')] || String(h).replace(/^www\./, '');
+// 27 Nov. 2026: "" (and the brief's "direct") is a visit with no referrer: someone who typed or pasted the address, an app that
+// sends none, and every move from one page of the site to another (the site sends its own host as "", index.js siteHit). So it
+// is not "direct": it says both. The search engines and networks the stats have seen get their names.
+export const NO_REF = 'Sem link de origem';
+const HOSTS = { 'youtube.com': 'YouTube', 'm.youtube.com': 'YouTube', 'google.com': 'Google', 'github.com': 'GitHub', 'reddit.com': 'Reddit', 'old.reddit.com': 'Reddit', 'discord.com': 'Discord',
+  'twitter.com': 'X (Twitter)', 'x.com': 'X (Twitter)', 't.co': 'X (Twitter)', 'tiktok.com': 'TikTok', 'bing.com': 'Bing', 'duckduckgo.com': 'DuckDuckGo',
+  'yandex.ru': 'Yandex', 'yandex.com': 'Yandex', 'yandex.com.tr': 'Yandex', 'ya.ru': 'Yandex', 'search.brave.com': 'Brave', 'facebook.com': 'Facebook', 'm.facebook.com': 'Facebook', 'l.facebook.com': 'Facebook', 'lm.facebook.com': 'Facebook',
+  'chatgpt.com': 'ChatGPT', 'perplexity.ai': 'Perplexity', 'steamcommunity.com': 'Steam', 'nexusmods.com': 'Nexus Mods', other: 'Outros', direct: NO_REF, '': NO_REF };
+export const hostName = (h) => {
+  const x = String(h || '').replace(/^www\./, '');
+  // Google from any country (google.com.tr, google.pt) is Google
+  return HOSTS[x] || (/^google\.[a-z.]+$/.test(x) ? 'Google' : /^ref:/.test(x) ? `Link marcado: ${x.slice(4)}` : x);
+};
+
+// 27 Nov. 2026: the site's pages by name (tools/site-pages.mjs; the same list as the stats Worker's SITE_PAGES) and their language
+const PAGE = { '/': 'Página inicial', '/cs2-region-picker/': 'Guia: escolher a região no CS2', '/cs2-server-picker-not-working/': 'Guia: server picker não funciona',
+  '/dota-2-deadlock-region-picker/': 'Guia: regiões no Dota 2 e Deadlock', '/cs2-ip-ban/': 'Guia: ban de IP no CS2', '/change-ip-with-phone/': 'Guia: mudar o IP com o telemóvel',
+  '/copy-cs2-config/': 'Guia: copiar a config do CS2', '/cs2-iphone-hotspot/': 'Guia: hotspot do iPhone', '/cs2-mobile-data/': 'Guia: CS2 com dados móveis',
+  '/cs2-ping-test/': 'Guia: teste de ping', '/cs2-config-file-location/': 'Guia: onde está a config', '/hide-ip-cs2/': 'Guia: esconder o IP', '/is-it-safe/': 'É seguro?',
+  '/steam-account-switcher/': 'Guia: trocar de conta Steam', '/steam-profile-editor/': 'Guia: editar o perfil Steam' };
+const LANG = { 'pt-br': 'Português', es: 'Espanhol', ru: 'Russo', tr: 'Turco' };
+/** "/tr/cs2-region-picker/" -> { name: "Guia: escolher a região no CS2", lang: "Turco" }; a page not in the list keeps its path. */
+export function pageName(p) {
+  const m = /^\/(pt-br|es|ru|tr)(\/.*)$/.exec(String(p || ''));
+  const path = m ? m[2] : String(p || '');
+  return { name: PAGE[path] || path, lang: m ? LANG[m[1]] : 'Inglês' };
+}
+let REGION = null;
+try { REGION = new Intl.DisplayNames(['pt-PT'], { type: 'region' }); } catch { /* sem nomes: fica o código */ }
+/** "TR" -> "Turquia"; "?" -> "Desconhecido". */
+export const countryName = (c) => (!c || c === '?' ? 'Desconhecido' : (() => { try { return REGION ? REGION.of(c) : c; } catch { return c; } })());
 
 // Two doors (Nov. 2026): the phone (phone_seen, protected) and the Regions page (regions). "played" is people who played a match by
 // either door; the card "Partidas jogadas" counts matches, so the two never share a name.
@@ -127,7 +157,7 @@ export function buildHome({ B, G = null, L = null }) {
   // Só se o GitHub disser 0 nas duas fontes (a resposta pública e os retratos diários): a 4 nov. a pública dizia 0 e os retratos 2
   const byRel = (G && G.history && G.history.byRelease) || {};
   const rel = AN.find((a) => /^release_no_downloads:/.test(a.id) && !(byRel[a.id.split(':')[1]] || []).some((x) => x && x.n > 0));
-  if (rel) cand.push({ p: 2, tone: 'warn', text: `A ${String(rel.id.split(':')[1]).replace(/^v?0\.1\.0-/, '')} ainda não tem downloads. Vê se o botão de download do site leva a esta versão.` });
+  if (rel) cand.push({ p: 2, tone: 'warn', text: `A ${relName(rel.id.split(':')[1])} ainda não tem downloads. Vê se o botão de download do site leva a esta versão.` });
   const N7 = tiles[1];
   if (N7.value && N7.prev != null && N7.prev !== N7.value) {
     const r = N7.prev ? N7.value / N7.prev : null;
@@ -163,12 +193,63 @@ export function buildHome({ B, G = null, L = null }) {
         doors: dr && dr.measured && dr.shown > 0 ? `Na pergunta do primeiro arranque: ${plural(dr.shown, 'pessoa viu', 'pessoas viram')}; ${num(dr.regions)} escolheram as regiões, ${num(dr.phone)} o telemóvel, ${num(dr.tour)} a visita e ${num(dr.later)} ficaram para depois.` : null,
         // Beta.13 (the owner: "os dados estão confusos"): the running week has today in it, so it is not the cards' "últimos 7 dias"
         // (the 7 complete days); its dates are said, so 1 new on the cards and 2 here don't read as a contradiction
-        text: closed ? `${plural(st[0].n, 'pessoa instalou', 'pessoas instalaram')} a app entre ${dayPt(w[0])} e ${dayPt(w[1])}. Na primeira semana de uso:`
+        text: closed ? `${plural(st[0].n, 'pessoa instalou', 'pessoas instalaram')} a app entre ${dayPt(w[0])} e ${dayPt(w[1])} Na primeira semana de uso:`
           : `${plural(st[0].n, 'pessoa instalou', 'pessoas instalaram')} a app de ${dayPt(w[0])} até hoje, ainda a meio da primeira semana. Até agora:` };
+      // 27 Nov. 2026: the two doors side by side, each with its own steps (the same numbers as steps, grouped). Before, the phone's
+      // steps came first, so "0 de 19 ligaram o telemóvel" read as the app failing when 15 of 19 had picked regions.
+      const stepN = (id) => { const x = st.find((s) => s.id === id); return x ? x.n : null; };
+      const regMatch = act.regions ? (closed ? act.regions.match : act.regions.running_match) : null;
+      const activated = act.activated ? (closed ? act.activated.n : act.activated.running_n) : null;
+      const row = (label, n) => ({ label, n, share: n == null ? null : n / st[0].n });
+      journey.opened = row('Abriram a app', st[0].n);
+      journey.groups = [
+        ...(reg != null ? [{ id: 'regions', title: 'Pelas regiões', rows: [row('Escolheram regiões', reg), ...(regMatch != null ? [row('e jogaram com a app aberta', regMatch)] : [])] }] : []),
+        { id: 'phone', title: 'Pelo telemóvel', rows: [row('Ligaram o telemóvel', stepN('phone_seen')), row('Ligaram a proteção', stepN('protected')), row('e jogaram uma partida', stepN('first_match'))] },
+      ];
+      journey.end = [...(activated != null ? [row('Usaram uma das portas', activated)] : []), ...(played != null ? [row(STEP.played, played)] : [])];
+      // The biggest bucket, said for what it is. With the Regions door, "reached the end but no match" is mostly people who picked
+      // regions: the block stays in the firewall with the app closed, so they can play without it open (no match is counted then).
       const stk = B.stuck && closed ? B.stuck.buckets.filter((x) => x.id !== 'reached_match' && x.n).sort((a, b) => b.n - a.n)[0] : null;
-      if (stk) journey.note = { never_phone: 'Quem desiste, desiste sobretudo antes de ligar o telemóvel ou de escolher regiões', phone_not_protected: 'Quem desiste, desiste sobretudo depois de ligar o telemóvel e antes de ligar a proteção', protected_no_match: 'Quem desiste, desiste sobretudo depois de ligar a proteção e antes de jogar' }[stk.id] + ` (${num(stk.n)} de ${num(st[0].n)}).`;
+      const twoDoors = reg != null;
+      if (stk) journey.note = ({ never_phone: twoDoors ? 'Quem fica pelo caminho fica sobretudo logo no início: abriu a app e não escolheu regiões nem ligou o telemóvel' : 'Quem desiste, desiste sobretudo antes de ligar o telemóvel',
+        phone_not_protected: 'Quem fica pelo caminho fica sobretudo depois de ligar o telemóvel e antes de ligar a proteção',
+        protected_no_match: twoDoors ? 'A maior parte escolheu regiões ou ligou a proteção e não jogou com a app aberta. As regiões ficam bloqueadas com a app fechada, por isso muitos jogam sem a app aberta e essa partida não se conta'
+          : 'Quem desiste, desiste sobretudo depois de ligar a proteção e antes de jogar' }[stk.id] || '') + ` (${num(stk.n)} de ${num(st[0].n)}).`;
     }
   }
+
+  // ---------------- o caminho todo, do site a voltar (27 nov.: "mais utilizadores": onde se perde gente). Três blocos com bases
+  // diferentes, nunca somados nem divididos entre si: o site e o GitHub não sabem quem instala (sem ID, por escolha).
+  const ret = (k) => { const r = K[k]; return r && r.den ? { n: r.num, of: r.den, share: r.value } : null; };
+  const d1 = ret('retention_d1'), d7r = ret('retention_d7');
+  const clk = K.site_download_clicks ? K.site_download_clicks.d7 ?? null : null;
+  const path = { before: [
+    { label: 'Visitas ao site', n: sv.d7 ?? null },
+    { label: 'Cliques em Download', n: clk, rate: sv.d7 >= 20 && clk != null ? clk / sv.d7 : null },
+    { label: 'Downloads da app', n: dl.d7 ?? null, note: 'todas as origens' },
+    { label: 'Instalações novas', n: K.new_installs.d7 ?? null }] };
+  if (journey) path.after = { text: journey.text.replace(/ Na primeira semana de uso:| Até agora:/, ''), base: journey.base,
+    steps: [journey.opened, ...journey.end].filter((x) => x && x.n != null) };
+  if (d1 || d7r) path.back = [...(d1 ? [{ label: 'Voltaram no dia seguinte', ...d1 }] : []), ...(d7r ? [{ label: 'Voltaram na segunda semana', ...d7r }] : [])];
+  // One plain sentence per block, only with enough people to mean something
+  path.lines = [];
+  if (sv.d7 >= 20 && clk != null) path.lines.push(clk ? `Das visitas ao site, 1 em cada ${num(Math.max(1, Math.round(sv.d7 / clk)))} acaba num clique em Download.` : 'Nenhuma visita ao site acabou num clique em Download.');
+  if (journey && journey.base >= 5 && journey.end.length) { const u = journey.end[0]; if (u.n < journey.base) path.lines.push(`${num(journey.base - u.n)} de ${num(journey.base)} abriram a app e não escolheram regiões nem ligaram o telemóvel.`); }
+  if (d1 && d1.of >= 5) path.lines.push(`${num(d1.n)} de ${num(d1.of)} voltaram a abrir a app no dia seguinte.`);
+
+  // ---------------- as páginas do site que trazem gente, as línguas e os países (últimos 7 dias completos)
+  const P7 = (B.acquisition && B.acquisition.top_site_pages_d7) || null;
+  const pages = P7 ? P7.filter((r) => r.views || r.download_clicks).slice(0, 6).map((r) => ({ ...pageName(r.page), page: r.page, views: r.views, clicks: r.download_clicks })) : null;
+  let langs = null;
+  if (P7 && P7.length) {
+    const by = {};
+    for (const r of P7) { const l = pageName(r.page).lang; by[l] = (by[l] || 0) + r.views; }
+    const tot = sum(Object.values(by));
+    langs = Object.entries(by).filter(([, n]) => n > 0).map(([name, n]) => ({ name, n, share: tot ? n / tot : 0 })).sort((a, b) => b.n - a.n);
+  }
+  const C7 = (B.acquisition && B.acquisition.top_site_countries_d7) || null;
+  const ctot = C7 ? sum(C7.map((x) => x.n)) : 0;
+  const countries = C7 && ctot ? C7.slice(0, 6).map((x) => ({ name: countryName(x.country), n: x.n, share: x.n / ctot })) : null;
 
   // ---------------- como chegam (contagens dos últimos 7 dias; o site não sabe quem instala, por isso não se ligam entre si)
   // Beta.13 (the owner's 3.png: 33 visits, 0 clicks, 6 downloads): two groups, never one funnel. The downloads come from every
@@ -201,11 +282,11 @@ export function buildHome({ B, G = null, L = null }) {
     peakToday: lv.peak_today != null || now != null ? Math.max(lv.peak_today || 0, now || 0) : null };
 
   // ---------------- versões e vídeos no gráfico (só os dos dias mostrados)
-  const markers = (G && Array.isArray(G.releases) ? G.releases.map((r) => ({ date: r.date, kind: 'release', label: `Saiu a ${String(r.tag).replace(/^v?0\.1\.0-/, '')}` })) : [])
+  const markers = (G && Array.isArray(G.releases) ? G.releases.map((r) => ({ date: r.date, kind: 'release', label: `Saiu a ${relName(r.tag)}` })) : [])
     .concat((G && Array.isArray(G.annotations) ? G.annotations : []).filter((a) => a.kind !== 'release').map((a) => ({ date: a.date, kind: a.kind, label: a.label })))
     .filter((m) => m.date && days.includes(m.date));
 
   const at = B.generated_at ? new Date(B.generated_at) : null;
   const updated = at ? new Intl.DateTimeFormat('pt-PT', { timeZone: 'Europe/Lisbon', hour: '2-digit', minute: '2-digit' }).format(at) : null;
-  return { empty: !anyData, status, headline, tiles, changes, journey, arrive, cap, rate, refs: refs.slice(0, 5), live, markers, updated };
+  return { empty: !anyData, status, headline, tiles, changes, journey, arrive, cap, rate, refs: refs.slice(0, 5), live, markers, updated, path, pages, langs, countries };
 }

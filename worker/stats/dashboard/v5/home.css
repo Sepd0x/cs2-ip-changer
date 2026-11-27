@@ -56,8 +56,9 @@ h1, h2 { margin: 0; font-family: var(--font-d); }
 /* ------------------------------------------------ grelha */
 main { max-width: 1160px; margin: 0 auto; padding: 36px max(20px, env(safe-area-inset-left)) 48px; display: grid; gap: var(--gap); grid-template-columns: repeat(12, minmax(0, 1fr)); }
 .hero, .changes, .board, .welcome, .foot { grid-column: 1 / -1; }
-.arrive { grid-column: span 7; } .journey { grid-column: span 5; }
-body:not(.empty) .welcome, body.empty .board, body.empty .arrive, body.empty .journey { display: none; }
+.arrive { grid-column: span 6; } .journey { grid-column: span 6; }
+.path, .pages { grid-column: 1 / -1; }
+body:not(.empty) .welcome, body.empty .board, body.empty .arrive, body.empty .journey, body.empty .path, body.empty .pages { display: none; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 24px; min-width: 0; box-shadow: var(--shadow); }
 .card h2 { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
 .lead { margin: 2px 0 18px; color: var(--ink3); font-size: 13px; }
@@ -138,7 +139,8 @@ svg { display: block; }
 .t-d { opacity: .7; font-size: 11.5px; } .t-v b { font-size: 15px; font-variant-numeric: tabular-nums; } .t-m { font-size: 12px; margin-top: 2px; }
 
 /* ------------------------------------------------ como chegam / de onde vêm / depois de instalar */
-.arrive { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; }
+/* 27 nov.: half the width beside the two doors, so its two lists one under the other (side by side again from 641 to 1020 px) */
+.arrive { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; align-content: start; }
 .bars { display: grid; gap: 12px; }
 .br { display: grid; grid-template-columns: minmax(0, 10.5em) minmax(40px, 1fr) minmax(3em, auto); align-items: center; gap: 12px; font-size: 13.5px; }
 .br-l { color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -161,6 +163,36 @@ svg { display: block; }
 .st-t i { display: block; height: 100%; border-radius: 5px; background: var(--acc-bar); transform-origin: left; animation: grow 1s cubic-bezier(.3,.7,.2,1) both; }
 .steps li:nth-child(2) i { animation-delay: .08s; } .steps li:nth-child(3) i { animation-delay: .16s; } .steps li:nth-child(4) i { animation-delay: .24s; }
 
+/* ------------------------------------------------ 27 nov.: as duas portas, o caminho do site a voltar, as páginas do site */
+.journey h3.grp, .path h3.grp { margin: 0 0 8px; font-size: 12px; font-weight: 600; color: var(--ink3); }
+.doors { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; margin: 18px 0; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.doors .steps { gap: 12px; }
+.steps.end { margin-top: 0; }
+.pbs { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 3fr) minmax(0, 2fr); gap: 0; }
+.pb { min-width: 0; padding: 0 24px; border-left: 1px solid var(--line); }
+.pb:first-child { padding-left: 0; border-left: 0; }
+.pb:last-child { padding-right: 0; }
+.pb-s { margin: -4px 0 14px; color: var(--ink3); font-size: 12.5px; }
+.pr { display: flex; align-items: flex-start; gap: 10px; }
+.ps { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 0; }
+.ps-n { font-family: var(--font-d); font-size: 26px; line-height: 1.1; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.ps-l { color: var(--ink2); font-size: 13px; line-height: 1.3; }
+.ps-s { color: var(--ink3); font-size: 12px; line-height: 1.3; }
+.ps-a { flex: none; width: 8px; height: 8px; margin-top: 12px; border-top: 1.5px solid var(--line2); border-right: 1.5px solid var(--line2); transform: rotate(45deg); }
+.plines { list-style: none; margin: 20px 0 0; padding: 14px 0 0; border-top: 1px solid var(--line); display: grid; gap: 6px; color: var(--ink2); font-size: 13.5px; }
+.plines li::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--acc); margin: 0 10px 2px 0; }
+.pages { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 32px; }
+.pages .h2b { margin-top: 22px; }
+.pg { display: grid; gap: 10px; }
+.pg-h, .pg-r { display: grid; grid-template-columns: minmax(0, 1fr) 4.5em 6.5em; gap: 12px; align-items: center; }
+.pg-h { color: var(--ink3); font-size: 12px; } .pg-h span:not(:first-child) { text-align: right; }
+.pg-l { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; align-items: baseline; min-width: 0; font-size: 13.5px; }
+.pg-name { color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pg-lang { color: var(--ink3); font-size: 12px; }
+.pg-t { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--card2); overflow: hidden; }
+.pg-t i { display: block; height: 100%; border-radius: 3px; background: var(--acc-bar); transform-origin: left; animation: grow .9s cubic-bezier(.3,.7,.2,1) both; }
+.pg-n { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; font-size: 13.5px; }
+
 /* ------------------------------------------------ base vazia */
 .welcome { max-width: 640px; }
 .welcome h2 { font-size: 17px; }
@@ -180,6 +212,10 @@ body.ready .changes { animation-delay: .04s; } body.ready .board { animation-del
   .tile:nth-child(3n) { border-right: 0; }
   .tile:nth-child(n+4) { border-top: 1px solid var(--line); }
   .arrive, .journey { grid-column: 1 / -1; }
+  .arrive { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; }
+  .pbs { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .pb, .pb:first-child { padding: 0; border-left: 0; }
+  .pb + .pb { padding-top: 18px; border-top: 1px solid var(--line); }
 }
 @media (max-width: 640px) {
   :root { --gap: 14px; }
@@ -204,6 +240,16 @@ body.ready .changes { animation-delay: .04s; } body.ready .board { animation-del
   .card { padding: 18px 16px; }
   .board { padding: 0; }
   .arrive { grid-template-columns: 1fr; gap: 26px; }
+  .doors { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .pr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 16px; }
+  .ps-a { display: none; }
+  .ps-n { font-size: 23px; }
+  .pages { grid-template-columns: 1fr; gap: 26px; }
+  .pg-h, .pg-r { grid-template-columns: minmax(0, 1fr) 3.6em 4.6em; gap: 8px; }
+  .pg-h span:last-child { white-space: normal; line-height: 1.2; }
+  .pg-l { grid-template-columns: minmax(0, 1fr); }
+  .pg-name { white-space: normal; line-height: 1.3; }
+  .pg-lang { margin-top: -2px; }
   .br { grid-template-columns: minmax(0, 10.6em) minmax(30px, 1fr) minmax(2.6em, auto); gap: 10px; font-size: 13px; }
 }
 @media (max-width: 380px) { .bn { display: none; } }
