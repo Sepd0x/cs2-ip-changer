@@ -6,6 +6,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ### Added
 - Website: a Screenshots page with every page of the app, whole and with a caption, in every language of the site. Connection and Regions come first.
+- Pickroute is now on GameBanana (CS2 > Tools) with the same 1.0.0 exe. The README and the website list it as an official download, next to GitHub and the website.
 
 ### Changed
 - Website: some guide titles in Russian, Spanish and Turkish now end with "Pickroute", where it fits.

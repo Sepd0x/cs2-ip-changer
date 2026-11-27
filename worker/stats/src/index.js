@@ -39,7 +39,7 @@ export const SITE_ROWS = 20000;
 // in English and, since Nov. 2026, under /pt-br/, /es/, /ru/ and /tr/ (tools/site-i18n.mjs): the same pages, one folder down
 export const SITE_ORIGIN = 'https://sepd0x.github.io';
 const SITE_EN = ['/', '/change-ip-with-phone/', '/copy-cs2-config/', '/cs2-ip-ban/', '/cs2-iphone-hotspot/', '/cs2-mobile-data/', '/cs2-ping-test/', '/cs2-config-file-location/', '/cs2-region-picker/', '/hide-ip-cs2/', '/is-it-safe/',
-  '/steam-account-switcher/', '/steam-profile-editor/', '/cs2-server-picker-not-working/', '/dota-2-deadlock-region-picker/'];
+  '/steam-account-switcher/', '/steam-profile-editor/', '/cs2-server-picker-not-working/', '/dota-2-deadlock-region-picker/', '/screenshots/'];
 export const SITE_PAGES = ['', '/pt-br', '/es', '/ru', '/tr'].flatMap((l) => SITE_EN.map((p) => l + p));
 const SITE_TABLE = 'CREATE TABLE IF NOT EXISTS site (day TEXT NOT NULL, page TEXT NOT NULL, ref TEXT NOT NULL, country TEXT NOT NULL, event TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (day, page, ref, country, event))';
 const HOSTNAME = /^(?=.{3,80}$)[a-z0-9-]+(\.[a-z0-9-]+)+$/;

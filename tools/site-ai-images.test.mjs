@@ -138,3 +138,16 @@ test('AI images: guide titles end with the name where it fits in 60 characters',
     assert.ok(t.endsWith(' · Pickroute') && t.length <= 60, `${l}${g}: ${t}`);
   }
 });
+
+// 27 Nov. 2026, night: the app went up on GameBanana (the same 1.0.0 exe). The AIs said "no download page anywhere" and "fake,
+// don't install"; the listing is one more official place they can find, so the homes, llms.txt and the README name it.
+const GAMEBANANA = 'https://gamebanana.com/tools/25148';
+test('AI images: the homes, llms.txt and the README name GameBanana as an official download', () => {
+  for (const l of LANGS) {
+    const ld = read(l + 'index.html').match(/"sameAs":\s*\[([^\]]*)\]/);
+    assert.ok(ld && ld[1].includes(GAMEBANANA), `${l || 'en'}: sameAs has no GameBanana`);
+  }
+  assert.match(read('llms.txt'), new RegExp(`${GAMEBANANA}.*\n?.*only official places`));
+  const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
+  assert.ok((readme.match(/gamebanana\.com\/tools\/25148/g) || []).length >= 2, 'README: GameBanana in both official-download lines');
+});

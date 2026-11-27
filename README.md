@@ -27,7 +27,7 @@
   <br>
   <sub><!--rel:line--><a href="https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe">CS2IPChanger.exe</a> · v1.0.0 · 63.9 MB · 27 Nov 2026 · <a href="https://github.com/Sepd0x/pickroute/releases/latest">release notes and checksums</a><!--/rel--></sub>
   <br>
-  <sub>Official downloads only here and on the website. <a href="#check-your-download">Check your download</a>.</sub>
+  <sub>Official downloads only here, on the website and on <a href="https://gamebanana.com/tools/25148">GameBanana</a>. <a href="#check-your-download">Check your download</a>.</sub>
 </p>
 
 <p align="center">
@@ -149,7 +149,7 @@ Every detail of the setup (where the exe can run, the phone, ADB, launch options
 
 ### Check your download
 
-Official downloads are only on this page's [Releases](https://github.com/Sepd0x/pickroute/releases) and on the [website](https://sepd0x.github.io/pickroute/). Releases built by GitHub Actions come with a `CS2IPChanger.exe.sha256` file and a [build attestation](https://github.com/Sepd0x/pickroute/attestations), which shows the exe was built from this repository's code.
+Official downloads are only on this page's [Releases](https://github.com/Sepd0x/pickroute/releases), on the [website](https://sepd0x.github.io/pickroute/) and on [GameBanana](https://gamebanana.com/tools/25148), where the file is the same 1.0.0 exe. Releases built by GitHub Actions come with a `CS2IPChanger.exe.sha256` file and a [build attestation](https://github.com/Sepd0x/pickroute/attestations), which shows the exe was built from this repository's code.
 
 <details>
 <summary><b>How to check them</b></summary>
