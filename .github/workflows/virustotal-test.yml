@@ -1,0 +1,73 @@
+# Test builds on VirusTotal before a release: a push to a vt-teste/... branch builds the exe from that branch in each variant
+# below and sends it to VirusTotal, then writes how many engines flag it (and which) in the run's summary. Nothing is released
+# and main is not touched. Needs the repository secret VT_API_KEY, like virustotal.yml; the key is never printed.
+# The test exes become visible on VirusTotal like any upload.
+
+name: VirusTotal test build
+
+on:
+  push:
+    branches: ['vt-teste/**']
+
+permissions: {}
+
+jobs:
+  scan:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      max-parallel: 1   # the free key allows 4 requests a minute
+      matrix:
+        variant:
+          - { name: compressed, args: '' }
+          - { name: uncompressed, args: '-p:EnableCompressionInSingleFile=false' }
+    env:
+      VT_KEY: ${{ secrets.VT_API_KEY }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: '8.0.x'
+      - name: Build the exe
+        run: |
+          dotnet publish src/ServerRouteTool.csproj -c Release ${{ matrix.variant.args }} -o out
+          echo "SHA=$(sha256sum out/CS2IPChanger.exe | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          ls -l out/CS2IPChanger.exe
+      - name: Send it to VirusTotal and wait for the result
+        run: |
+          [ -n "$VT_KEY" ] || { echo "The VT_API_KEY secret is missing."; exit 1; }
+          api=https://www.virustotal.com/api/v3
+          vt() { curl -sS --fail-with-body -H "x-apikey: $VT_KEY" "$@"; }
+          if ! vt "$api/files/$SHA" -o known.json 2>/dev/null; then
+            url=$(vt "$api/files/upload_url" | jq -r .data)
+            id=$(vt -F "file=@out/CS2IPChanger.exe" "$url" | jq -r .data.id)
+            for i in $(seq 1 60); do
+              sleep 30
+              status=$(vt "$api/analyses/$id" | jq -r .data.attributes.status)
+              echo "Analysis: $status"
+              [ "$status" = completed ] && break
+            done
+            [ "$status" = completed ] || { echo "VirusTotal didn't finish in time."; exit 1; }
+            sleep 20
+          fi
+          vt "$api/files/$SHA" -o file.json
+          flagged=$(jq '.data.attributes.last_analysis_stats | .malicious + .suspicious' file.json)
+          engines=$(jq '[.data.attributes.last_analysis_results[] | select(.category | IN("malicious","suspicious","undetected","harmless"))] | length' file.json)
+          link="https://www.virustotal.com/gui/file/$SHA/detection"
+          echo "VirusTotal, ${{ matrix.variant.name }}: $flagged of $engines engines flag it. $link"
+          {
+            echo "### VirusTotal: ${{ matrix.variant.name }} ($GITHUB_SHA)"
+            echo "[$flagged of $engines engines]($link) flag it."
+            echo
+            echo '```'
+            jq -r '.data.attributes.last_analysis_results | to_entries[] | select(.value.category == "malicious" or .value.category == "suspicious") | "\(.key): \(.value.result)"' file.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
