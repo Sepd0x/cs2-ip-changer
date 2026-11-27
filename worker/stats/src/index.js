@@ -298,7 +298,15 @@ async function forget(request, env) {
   try { liveRow = await env.DB.prepare('SELECT 1 AS y FROM live WHERE id = ?').bind(b.id).first(); } catch (e) {
     if (!/no such table/i.test(String(e && e.message))) throw e;
   }
-  if (!kept && !liveRow) return new Response(null, { status: 204 });
+  // 27 Nov. 2026 (second Codex pass, B1): a summary row left with no reports behind it (one written by a roll-up while an older
+  // delete ran) still counts as kept, so asking again removes it instead of answering at once
+  let idayRow = null;
+  if (!kept && !liveRow) {
+    try { idayRow = await env.DB.prepare('SELECT 1 AS y FROM iday WHERE id = ? LIMIT 1').bind(b.id).first(); } catch (e) {
+      if (!/no such table/i.test(String(e && e.message))) throw e;
+    }
+  }
+  if (!kept && !liveRow && !idayRow) return new Response(null, { status: 204 });
   const days = 'SELECT DISTINCT day FROM pings WHERE id = ?';
   const stmts = ['clicks', 'counts', 'errors'].map((t) => env.DB.prepare(`DELETE FROM ${t} WHERE day IN (${days}) AND id = ?`).bind(b.id, b.id));
   stmts.push(env.DB.prepare('DELETE FROM pings WHERE id = ?').bind(b.id));

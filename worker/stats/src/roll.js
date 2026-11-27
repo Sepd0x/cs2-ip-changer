@@ -61,9 +61,13 @@ export async function rollDay(db, d) {
   for (const r of ck) { const x = rec(r); if (x) x.k[r.name] = r.n; }
   for (const r of er) { const x = rec(r); if (x) x.e.push([r.type, r.at, r.app, r.n]); }
   for (const r of hr) { const x = rec(r); if (x) x.h.push(r.h); }
-  const ins = 'INSERT OR REPLACE INTO iday (day, id, dev, ms, ta, tm, country, lk, os, r, kept, j) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+  // 27 Nov. 2026 (second Codex pass, B1): a Delete my stats that lands between the reads above and the writes below must win.
+  // Each row is written only while the day's reports of that install are still there, checked in the same statement: after the
+  // delete there is nothing to write, and a delete after the write takes the row with it (src/index.js forget).
+  const ins = 'INSERT OR REPLACE INTO iday (day, id, dev, ms, ta, tm, country, lk, os, r, kept, j) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? '
+    + 'WHERE EXISTS (SELECT 1 FROM pings WHERE day = ? AND id = ? AND dev = ?)';
   const stmts = [...recs.values()].map(({ p, c, k, e, h, kept }) => db.prepare(ins)
-    .bind(d, p.id, p.dev, p.ms ?? null, p.ta, p.tm, p.country ?? null, p.lk ?? null, p.os ?? null, p.r, kept, JSON.stringify({ c, k, e, h })));
+    .bind(d, p.id, p.dev, p.ms ?? null, p.ta, p.tm, p.country ?? null, p.lk ?? null, p.os ?? null, p.r, kept, JSON.stringify({ c, k, e, h }), d, p.id, p.dev));
   stmts.unshift(db.prepare('DELETE FROM iday WHERE day = ?').bind(d));
   for (let i = 0; i < stmts.length; i += 150) await db.batch(stmts.slice(i, i + 150));
   await db.prepare('INSERT OR REPLACE INTO iday_done (day) VALUES (?)').bind(d).run();
