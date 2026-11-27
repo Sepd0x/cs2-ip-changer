@@ -224,6 +224,26 @@ public partial class MainWindow
         (MinWidth, MinHeight, Width, Height) = FitWorkArea(MinWidth, MinHeight, Width, Height, wa.Width, wa.Height);
     }
 
+    /// <summary>
+    /// The sidebar's rows for its height (27 nov.: on a 1366x768 laptop at 125 % the window is 576 tall, under the 660 the sidebar
+    /// was drawn for, and Profiles went under Log). 66 px rows and 24 px under the logo while they fit; else the gap goes to 8 and
+    /// the eight rows share what is left, down to 48 px. 74 = the margins and the logo, 25 = the space over the version and the version.
+    /// </summary>
+    public static (double Row, double Gap) NavFit(double side)
+    {
+        var room = side - 74 - 25;
+        if (room >= 8 * 66 + 24) return (66, 24);
+        return (Math.Clamp(Math.Floor((room - 8) / 8), 48, 66), 8);
+    }
+
+    void SideBar_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (!e.HeightChanged) return;
+        var (row, gap) = NavFit(SideBar.ActualHeight);
+        foreach (var nav in new[] { NavNet, NavServers, NavRegions, NavAccounts, NavConfigs, NavProfiles, NavLog, NavSettings }) nav.Height = row;
+        SideNavTop.Margin = new Thickness(0, gap, 0, 0);
+    }
+
     public static (double MinW, double MinH, double W, double H) FitWorkArea(double minW, double minH, double w, double h, double areaW, double areaH) =>
         (Math.Min(minW, areaW), Math.Min(minH, areaH), Math.Min(w, areaW), Math.Min(h, areaH));
 

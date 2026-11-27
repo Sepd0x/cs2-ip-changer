@@ -124,7 +124,8 @@ static class OrganizacaoTests
             if (!listed.SequenceEqual(headers)) bad.Add($"grupos da tabela ({string.Join(", ", listed)}) não são os da página ({string.Join(", ", headers)})");
             var nav = ById("SetNav")?.Elements().Where(e => e.Name.LocalName == "RadioButton").Select(e => Resolve((string?)e.Attribute("Content")) ?? "").ToList() ?? new();
             if (!nav.SequenceEqual(headers)) bad.Add($"a lista de grupos (SetNav: {string.Join(", ", nav)}) não é a dos grupos da página");
-            foreach (var e in settings.Descendants().Where(e => Inputs.Contains(e.Name.LocalName) && e.Attribute(X + "Name") != null && !InTemplate(e)))
+            // 27 nov.: Find a setting (SetFind) procura nas opções, não é uma delas
+            foreach (var e in settings.Descendants().Where(e => Inputs.Contains(e.Name.LocalName) && e.Attribute(X + "Name") != null && (string?)e.Attribute(X + "Name") != "SetFind" && !InTemplate(e)))
             {
                 var n = (string)e.Attribute(X + "Name")!;
                 var g = e.Ancestors().FirstOrDefault(IsSection) is { } s ? Header(s) : "(sem grupo)";

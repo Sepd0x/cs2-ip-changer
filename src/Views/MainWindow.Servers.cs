@@ -574,7 +574,33 @@ public partial class MainWindow
         rep.PcDefaultIsEgress || rep.Adapters.FirstOrDefault(a => a.Index == rep.PcDefaultIndex)?.IsPhone == true
         || (rep.PhoneIndex >= 0 && rep.PcDefaultIndex == rep.PhoneIndex);
 
-    /// <summary>After opening CS2: waits for its main menu (the console shows the menu's "loopback" map), then joins. Up to 2 min.</summary>
+    public enum Cs2OpenStep { Wait, SteamAsks, GiveUp, Join }
+
+    /// <summary>Seconds without cs2.exe before the app says Steam may be asking something (Cloud Conflict, an update, a EULA).</summary>
+    public const int Cs2SteamAsksAfter = 20;
+    /// <summary>Seconds without cs2.exe before the join gives up. Room to answer Steam's question first.</summary>
+    public const int Cs2OpenGiveUp = 150;
+    /// <summary>Seconds for the main menu once cs2.exe runs, however late it opened.</summary>
+    public const int Cs2MenuWait = 90;
+
+    /// <summary>
+    /// What the wait after opening CS2 does at second <paramref name="sec"/> (27 nov.: Steam's "Cloud Conflict" kept CS2 from
+    /// opening, and New IP + next account showed "Opening CS2…" for 2 min with no word of why). Steam's question shows inside
+    /// Steam's own window, so the app can't see it: after 20 s without CS2 it says Steam may be asking, once, and never answers
+    /// for you. Once CS2 runs, its menu gets 90 s from then.
+    /// </summary>
+    public static Cs2OpenStep Cs2OpenNext(int sec, int? cs2SeenAt, bool menuReady) =>
+        menuReady ? Cs2OpenStep.Join
+        : cs2SeenAt is int seen ? (sec - seen >= Cs2MenuWait ? Cs2OpenStep.Join : Cs2OpenStep.Wait)
+        : sec >= Cs2OpenGiveUp ? Cs2OpenStep.GiveUp
+        : sec == Cs2SteamAsksAfter ? Cs2OpenStep.SteamAsks
+        : Cs2OpenStep.Wait;
+
+    /// <summary>The words when CS2 hasn't opened after 20 s: Steam is likely waiting for an answer only you can give.</summary>
+    public static string Cs2NotOpenText(string server) =>
+        Loc.F("CS2 hasn't opened yet. Steam may be waiting for you: a Cloud Conflict (Cloud Save or Local Save), an update or an agreement. Answer it in Steam and the app joins {0} when CS2 opens. Cancel at the top stops the join.", server);
+
+    /// <summary>After opening CS2: waits for its main menu (the console shows the menu's "loopback" map), then joins.</summary>
     async Task<bool> ConnectWhenMenuReady(ServerItem s, string log, ConsoleTail menu)
     {
         ShowProgress(Loc.F("Opening CS2. It joins {0} when the main menu is ready. Cancel at the top stops the join…", s.Title));
@@ -582,21 +608,41 @@ public partial class MainWindow
         try
         {
             var ready = false;
-            for (var i = 0; i < 120 && !ready; i++)
+            int? seen = null;
+            for (var sec = 1; ; sec++)
             {
                 await Task.Delay(1000);
                 if (CommandCancelled) return false;
-                if (!Steam.Cs2Running) continue;
-                // cs2.exe wasn't found before it opened (review C18: the join then waited the whole 2 min): the running CS2 says where it is
-                if (log == null && (log = Cs2ConsoleLog()) != null) menu.StartAt(log);
-                if (log == null) continue;
-                ready = menu.ReadNew(log).Any(Cs2Console.IsMenu);   // a new console.log (-conclearlog) is read from its start
+                if (Steam.Cs2Running)
+                {
+                    if (seen == null && sec > Cs2SteamAsksAfter) ShowProgress(Loc.F("Opening CS2. It joins {0} when the main menu is ready. Cancel at the top stops the join…", s.Title));
+                    seen ??= sec;
+                    // cs2.exe wasn't found before it opened (review C18: the join then waited the whole 2 min): the running CS2 says where it is
+                    if (log == null && (log = Cs2ConsoleLog()) != null) menu.StartAt(log);
+                    if (log != null) ready = menu.ReadNew(log).Any(Cs2Console.IsMenu);   // a new console.log (-conclearlog) is read from its start
+                }
+                var step = Cs2OpenNext(sec, seen, ready);
+                if (step == Cs2OpenStep.Join) break;
+                if (step == Cs2OpenStep.GiveUp)
+                {
+                    Log.Warn($"CS2 didn't open in {Cs2OpenGiveUp} s, so {s.Key} wasn't joined.");
+                    Toast(Loc.F("CS2 didn't open, so {0} wasn't joined. If Steam asked you something, answer it there and join again.", s.Title), false);
+                    return false;
+                }
+                if (step == Cs2OpenStep.SteamAsks)
+                {
+                    Log.Warn($"CS2 hasn't opened {Cs2SteamAsksAfter} s after Steam was asked to open it: Steam may be waiting for an answer (Cloud Conflict, an update, an agreement).");
+                    var text = Cs2NotOpenText(s.Title);
+                    ShowProgress(text);
+                    Sound(Tones.Kind.Ask);
+                    Toast(text, Tone.Warn, Loc.T("Show Steam"), () => { try { Steam.OpenUrl("steam://open/main"); } catch (Exception ex) { Log.Warn("Show Steam: " + ex.Message); } return Task.CompletedTask; });
+                }
             }
-            if (!Steam.Cs2Running) { Log.Warn($"CS2 didn't open, so {s.Key} wasn't joined."); Toast(Loc.F("CS2 didn't open, so {0} wasn't joined.", s.Title), false); return false; }
+            if (!Steam.Cs2Running) { Log.Warn($"CS2 closed before its menu, so {s.Key} wasn't joined."); Toast(Loc.F("CS2 didn't open, so {0} wasn't joined.", s.Title), false); return false; }
             if (!OnHome && (!_protOn || _distrust)) { Log.Warn($"Not joining {s.Key}: protection changed while CS2 was opening."); Toast(Loc.F("Not joining {0}: protection changed while CS2 was opening.", s.Title), false); return false; }
             if (ready) await Task.Delay(2000);
             Steam.OpenUrl($"steam://connect/{s.Key}");
-            Log.Info($"CS2 menu {(ready ? "ready" : "not seen after 2 min")}: joining {s.Key}.");
+            Log.Info($"CS2 menu {(ready ? "ready" : $"not seen {Cs2MenuWait} s after CS2 opened")}: joining {s.Key}.");
             return true;
         }
         catch (Exception ex) { Log.Error("Join after opening CS2: " + ex.Message); return false; }

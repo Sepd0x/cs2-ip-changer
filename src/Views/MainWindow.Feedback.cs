@@ -39,6 +39,7 @@ public partial class MainWindow
         _toastTimer.Stop();
         _toastTimer.Interval = TimeSpan.FromSeconds(Math.Clamp(text.Length / 14.0, 3.5, 9));
         _toastTimer.Start();
+        LinkToSettings(text);   // "… Settings > Privacy …" gets Open Settings (27 nov.)
     }
 
     Func<Task> _toastAction;
@@ -220,8 +221,37 @@ public partial class MainWindow
         DialogCancel_Click(this, null);
     }
 
+    /// <summary>Keys that move the keyboard focus: after one of them the focus ring shows (27 nov.: not after Alt+Tab or a click).</summary>
+    public static bool MovesFocus(Key key) => key is Key.Tab or Key.Left or Key.Right or Key.Up or Key.Down;
+
+    /// <summary>Shows or hides every focus ring at once (FocusRingShown in Theme.xaml).</summary>
+    static void FocusRingShown(bool shown)
+    {
+        var v = shown ? Visibility.Visible : Visibility.Collapsed;
+        if (Application.Current is { } app && !Equals(app.Resources["FocusRingShown"], v)) app.Resources["FocusRingShown"] = v;
+    }
+
+    protected override void OnActivated(EventArgs e)
+    {
+        FocusRingShown(false);   // Alt+Tab back: WPF brings back the focus and would draw the ring for it
+        base.OnActivated(e);
+    }
+
+    protected override void OnPreviewMouseDown(MouseButtonEventArgs e)
+    {
+        FocusRingShown(false);
+        base.OnPreviewMouseDown(e);
+    }
+
     protected override void OnPreviewKeyDown(KeyEventArgs e)
     {
+        if (MovesFocus(e.Key)) FocusRingShown(true);
+        if (e.Key == Key.F && Keyboard.Modifiers == ModifierKeys.Control && PageSettings.Visibility == Visibility.Visible && Dialog.Visibility != Visibility.Visible)
+        {
+            SetFind.Focus();
+            SetFind.SelectAll();
+            e.Handled = true;
+        }
         if (Dialog.Visibility != Visibility.Visible && (DoorsKey(e.Key) || TourKey(e.Key))) e.Handled = true;
         else if (Dialog.Visibility == Visibility.Visible && e.Key == Key.Escape) { DialogCancel_Click(this, null); e.Handled = true; }
         else if (Dialog.Visibility == Visibility.Visible && e.Key == Key.Enter && Keyboard.FocusedElement != DialogCancel) { DialogOk_Click(this, null); e.Handled = true; }

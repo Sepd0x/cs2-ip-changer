@@ -5,6 +5,8 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 ## [Unreleased]
 
 ### Added
+- Settings: Find a setting, over the list of groups. Type what you want ("startup", "tray", "sound", "update") and pick a result: the page scrolls to it and it blinks. Ctrl+F on the Settings page goes to the box. A notification that names a place in Settings now has an Open Settings button.
+- Install puts Pickroute in the Start menu (and so in Windows search) and on your desktop, so it is easy to open again after you close it. A copy installed before this gets the Start menu entry with the update. Remove the app takes both away.
 - Website: a guide for when a CS2 server picker doesn't work (blocked regions still show up, or no match at all), with what to check in order, and a guide for picking the regions of Dota 2 and Deadlock. Both are in every language of the site.
 
 ### Changed
@@ -14,6 +16,12 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Website on a phone, cleaner: the cards you swipe sideways are all the same height, with the same corners and border, and the next one only peeks with its edge. Setup's step numbers sit above their text. Picture captions are under the picture in plain text. The VPN comparison has a key with a dot for Pickroute and one for a VPN. The language notice has room for its text and a full-width button. The guides show a picture of their 3D scene until the live one is ready, and scrolling no longer blurs the scene under the header.
 
 ### Fixed
+- New IP + next account no longer looks stuck when Steam asks something before CS2 opens (a Cloud Conflict, an update, an agreement). After 20 seconds the app says so, with a sound and a Show Steam button, and waits for your answer in Steam; it never answers for you. Cancel at the top stops the wait. CS2 that opens late still gets the time to load its menu.
+- The blue rectangle that stayed around a page in the sidebar after Alt+Tab is gone. The keyboard ring shows only after Tab or an arrow key, and in the sidebar it follows the rounded tile.
+- Settings: scrolling to the end now lights the last group in the list (it stayed on Privacy).
+- Small screens: on a 1366x768 laptop at 125 %, or 1080p at 200 %, every page in the sidebar fits (Profiles went under Log), and Settings' list of groups scrolls.
+- Wide windows: Settings' list and options sit together in the middle instead of leaving the right side empty.
+- Updates: the app also accepts updates from the repository under the name Pickroute and a file named Pickroute.exe, so it keeps updating by itself if the project moves to the new name.
 - Website: the app tour, the app window on the home page and the screen in the 3D scene point at the right buttons and show the IP in the right place in the new app (they still used the places of the old look), and the close-ups no longer show text cut in half at their edges.
 
 ## [1.0.0] - 2026-11-26

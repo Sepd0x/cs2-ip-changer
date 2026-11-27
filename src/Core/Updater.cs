@@ -19,9 +19,19 @@ public static partial class Updater
     public const string ReleasesPage = "https://github.com/" + Repo + "/releases";
     const string ExeName = AppIds.ExeName;
 
+    /// <summary>
+    /// 27 nov., ready for the move to the name Pickroute (publish/plano-1-0-0/26-app-uso-e-rename.md): the repo may be renamed to
+    /// Sepd0x/pickroute (GitHub then answers the old address with links under the new one) and a release may carry Pickroute.exe.
+    /// Both are accepted from now on, so a copy that has this version keeps updating by itself after the rename.
+    /// </summary>
+    public static readonly string[] Repos = [Repo, "Sepd0x/pickroute"];
+
+    /// <summary>The exe names a release may carry, the new one first: with both, Pickroute.exe (with its .sha256 and .sig) is taken.</summary>
+    public static readonly string[] AssetNames = ["Pickroute.exe", ExeName];
+
     /// <summary>A release on GitHub. <see cref="Size"/> is the exe's size in bytes (0 = not known). <see cref="Test"/>: marked
-    /// pre-release, a test version (Settings > App > Get test versions).</summary>
-    public sealed record Release(string Version, string Tag, string PageUrl, string ExeUrl, string ShaUrl, long Size = 0, string SigUrl = null, bool Test = false);
+    /// pre-release, a test version (Settings > App > Get test versions). <see cref="Asset"/>: the exe's name in the release.</summary>
+    public sealed record Release(string Version, string Tag, string PageUrl, string ExeUrl, string ShaUrl, long Size = 0, string SigUrl = null, bool Test = false, string Asset = ExeName);
 
     // ------------------------------------------------------------ Versions (SemVer 2.0)
 
@@ -92,24 +102,33 @@ public static partial class Updater
             if (isTest && !test) continue;
             var tag = Str(r, "tag_name");
             if (!IsValid(tag)) continue;
-            string exe = null, sha = null, sig = null;
-            long size = 0;
+            // per exe name: its link, size, .sha256 and .sig; the first name with all three wins (or the first with an exe)
+            var found = AssetNames.ToDictionary(n => n, _ => (Exe: (string)null, Sha: (string)null, Sig: (string)null, Size: 0L));
             if (r.TryGetProperty("assets", out var assets) && assets.ValueKind == JsonValueKind.Array)
                 foreach (var a in assets.EnumerateArray())
                 {
                     var name = Str(a, "name");
                     var url = Str(a, "browser_download_url");
-                    if (!IsRepoUrl(url, "/releases/download/")) continue;
-                    if (name == ExeName)
+                    if (name == null || !IsRepoUrl(url, "/releases/download/")) continue;
+                    foreach (var n in AssetNames)
                     {
-                        exe = url;
-                        if (a.TryGetProperty("size", out var sz) && sz.ValueKind == JsonValueKind.Number && sz.TryGetInt64(out var n)) size = n;
+                        var f = found[n];
+                        if (name == n)
+                        {
+                            f.Exe = url;
+                            if (a.TryGetProperty("size", out var sz) && sz.ValueKind == JsonValueKind.Number && sz.TryGetInt64(out var len)) f.Size = len;
+                        }
+                        else if (name == n + ".sha256") f.Sha = url;
+                        else if (name == n + ".sha256.sig") f.Sig = url;
+                        else continue;
+                        found[n] = f;
                     }
-                    else if (name == ExeName + ".sha256") sha = url;
-                    else if (name == ExeName + ".sha256.sig") sig = url;
                 }
+            var asset = AssetNames.FirstOrDefault(n => found[n] is { Exe: not null, Sha: not null, Sig: not null })
+                ?? AssetNames.FirstOrDefault(n => found[n].Exe != null) ?? ExeName;
+            var (exe, sha, sig, size) = found[asset];
             var page = Str(r, "html_url");
-            var rel = new Release(Clean(tag), tag, IsRepoUrl(page, "/releases/") ? page : ReleasesPage, exe, sha, size, sig, isTest);
+            var rel = new Release(Clean(tag), tag, IsRepoUrl(page, "/releases/") ? page : ReleasesPage, exe, sha, size, sig, isTest, asset);
             if (best == null || Compare(rel.Version, best.Version) > 0) best = rel;
         }
         return best;
@@ -118,9 +137,9 @@ public static partial class Updater
     static string Str(JsonElement e, string name) =>
         e.ValueKind == JsonValueKind.Object && e.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
 
-    static bool IsRepoUrl(string url, string under) =>
+    public static bool IsRepoUrl(string url, string under) =>
         Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme == Uri.UriSchemeHttps && u.Host == "github.com"
-        && u.AbsolutePath.StartsWith("/" + Repo + under, StringComparison.OrdinalIgnoreCase);
+        && Repos.Any(repo => u.AbsolutePath.StartsWith("/" + repo + under, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// "&lt;sha256&gt;  CS2IPChanger.exe" (sha256sum format, also with "*"), and nothing else in the file. Null otherwise.
@@ -182,12 +201,15 @@ public static partial class Updater
     public static Release FromLatestRedirect(Uri location)
     {
         if (location == null || !location.IsAbsoluteUri || location.Scheme != Uri.UriSchemeHttps || location.Host != "github.com") return null;
-        var prefix = "/" + Repo + "/releases/tag/";
-        if (!location.AbsolutePath.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) return null;
+        // after a rename the redirect names the new repo: the links stay under the repo it named
+        var repo = Repos.FirstOrDefault(r => location.AbsolutePath.StartsWith("/" + r + "/releases/tag/", StringComparison.OrdinalIgnoreCase));
+        if (repo == null) return null;
+        var prefix = "/" + repo + "/releases/tag/";
         var tag = Uri.UnescapeDataString(location.AbsolutePath[prefix.Length..]);
         if (!IsValid(tag) || tag.Contains('/') || tag.Contains('+')) return null;
-        var dl = $"https://github.com/{Repo}/releases/download/{tag}/{ExeName}";
-        return new Release(Clean(tag), tag, $"https://github.com/{Repo}/releases/tag/{tag}", dl, dl + ".sha256", 0, dl + ".sha256.sig");
+        // every release up to the rename's has CS2IPChanger.exe; one after it carries both names for 12 months (the plan, phase 2)
+        var dl = $"https://github.com/{repo}/releases/download/{tag}/{ExeName}";
+        return new Release(Clean(tag), tag, $"https://github.com/{repo}/releases/tag/{tag}", dl, dl + ".sha256", 0, dl + ".sha256.sig");
     }
 
     // ------------------------------------------------------------ The release signature
@@ -263,8 +285,8 @@ public static partial class Updater
         var shaFile = await http.GetByteArrayAsync(r.ShaUrl, ct);
         if (!SignedByProject(r.Version, shaFile, await http.GetStringAsync(r.SigUrl, ct)))
             throw new InvalidDataException(Loc.T("the release isn't signed with the project's key, so nothing was installed"));
-        var want = ParseSha256(Encoding.UTF8.GetString(shaFile))
-            ?? throw new InvalidDataException(Loc.F("the release's .sha256 file has no hash for {0}", ExeName));
+        var want = ParseSha256(Encoding.UTF8.GetString(shaFile), r.Asset ?? ExeName)
+            ?? throw new InvalidDataException(Loc.F("the release's .sha256 file has no hash for {0}", r.Asset ?? ExeName));
         var part = NewExe + ".part";
         using (var resp = await http.GetAsync(r.ExeUrl, HttpCompletionOption.ResponseHeadersRead, ct))
         {

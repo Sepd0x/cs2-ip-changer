@@ -208,12 +208,25 @@
     </Style>
 
     <!-- ============================================================ Buttons -->
-    <!-- Keyboard focus (Tab): a thin accent outline; the mouse doesn't show it -->
+    <!-- Keyboard focus (Tab): a thin accent outline; the mouse doesn't show it. 27 Nov (the owner: "a blue rectangle after
+         alt-tab"): WPF also drew it when the window came back with Alt+Tab, so it shows only after Tab or an arrow key, and goes
+         at the next click or when the window is activated again (MainWindow sets FocusRingShown) -->
+    <Visibility x:Key="FocusRingShown">Visible</Visibility>
     <Style x:Key="FocusRing">
         <Setter Property="Control.Template">
             <Setter.Value>
                 <ControlTemplate>
-                    <Rectangle Margin="-2" Stroke="{StaticResource Accent}" StrokeThickness="1" SnapsToDevicePixels="True"/>
+                    <Rectangle Margin="-2" Stroke="{StaticResource Accent}" StrokeThickness="1" SnapsToDevicePixels="True" Visibility="{DynamicResource FocusRingShown}"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <!-- The pages on the left: the ring follows the 58 px tile, rounded 10, not the whole 66 px row -->
+    <Style x:Key="NavFocusRing">
+        <Setter Property="Control.Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Border Margin="10,4" CornerRadius="10" BorderBrush="{StaticResource Accent}" BorderThickness="1" SnapsToDevicePixels="True" Visibility="{DynamicResource FocusRingShown}"/>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -624,7 +637,7 @@
          Fluent, 22 px) over the name (12 px, 6 px under). The page picked: the tile in Surface2, the icon in the accent, the name
          white SemiBold, and a 3 x 32 px NavMark on the sidebar's left edge. Under the pointer: the tile in Surface, the name in Text -->
     <Style x:Key="Nav" TargetType="RadioButton">
-        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource NavFocusRing}"/>
         <Setter Property="Foreground" Value="{StaticResource Muted}"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Cursor" Value="Hand"/>
@@ -636,7 +649,8 @@
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
                     <Grid Background="Transparent">
-                        <Border x:Name="b" Height="58" Margin="10,0" VerticalAlignment="Center" Background="Transparent" CornerRadius="10"/>
+                        <!-- 4 px over and under: 58 px in the 66 px row, less when a short window makes the rows shorter (NavFit) -->
+                        <Border x:Name="b" Margin="10,4" Background="Transparent" CornerRadius="10"/>
                         <Border x:Name="bar" Width="3" Height="32" HorizontalAlignment="Left" VerticalAlignment="Center" CornerRadius="0,2,2,0"
                                 Background="{StaticResource NavMark}" Visibility="Hidden"/>
                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="12,0">

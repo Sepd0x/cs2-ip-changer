@@ -704,6 +704,8 @@ Criticos26NovTests.Run(Check);
 CodexAuditTests.Run(Check);
 // 26 nov.: a continuação da auditoria, áreas 7 a 11 (Auditoria26NovTests.cs)
 Auditoria26NovTests.Run(Check);
+// 27 nov.: o que o dono viu ao usar a 1.0.0 no PC dele (Uso27NovTests.cs)
+Uso27NovTests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;
