@@ -12,6 +12,11 @@ public static class AppIds
     /// CS2IPChanger-Recording on purpose and never updates itself (<see cref="Updater.CanSelfUpdate"/>).</summary>
     public const string Name = "CS2IPChanger";
     public const string ExeName = Name + ".exe";
+    /// <summary>From 1.0.1 the download is Pickroute.exe (the same file; Install still copies it as <see cref="ExeName"/>).</summary>
+    public const string DownloadName = "Pickroute";
+    /// <summary>The process names a running copy of the app may have: this one's, the installed file's and the download's, so a
+    /// Pickroute.exe from Downloads still finds the installed CS2IPChanger.exe that is open (and the other way round).</summary>
+    public static string[] ProcessNames(string me) => [.. new[] { me, Name, DownloadName }.Where(n => !string.IsNullOrEmpty(n)).Distinct(StringComparer.OrdinalIgnoreCase)];
     /// <summary>The update's download, next to the app until it is swapped in.</summary>
     public const string NewExeName = Name + ".new.exe";
     /// <summary>The exe an update replaced, until the next start removes it.</summary>

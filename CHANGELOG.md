@@ -11,6 +11,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Pickroute is now on GameBanana (CS2 > Tools) with the same 1.0.0 exe. The README and the website list it as an official download, next to GitHub and the website.
 
 ### Changed
+- The download is now called `Pickroute.exe`. It is the same file as `CS2IPChanger.exe`, which the release still has (with its own `.sha256` and signature) so older copies keep updating. Installed, the app keeps its file and folder names (`CS2IPChanger.exe` in `C:\Program Files\CS2 IP Changer`), and 1.0.0 updates from `Pickroute.exe` by itself.
 - Website: some guide titles in Russian, Spanish and Turkish now end with "Pickroute", where it fits.
 - Website and README: the app is no longer called a beta.
 - Website, README and release notes: the VirusTotal result reads right with any number of engines ("flagged by 1 of 67 engines").
@@ -38,6 +39,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 - Configs: "2 copied, 3 already the same" agrees with the number in Portuguese and Spanish.
 - Mobile data uses your language's decimal sign ("1,24 GB").
 - The maximize button says Restore down while the window is maximized.
+- Opening `Pickroute.exe` while the installed app is already open brings the open window to the front, the same as with `CS2IPChanger.exe`.
 - Phone setup: on short screens the steps and the drawn guide scroll, and Close stays at the bottom.
 - Regions: Refresh stays inside the window when the line about where the pings come from is long.
 - Servers > Import: a list that can't be read says so, and you can choose it again.

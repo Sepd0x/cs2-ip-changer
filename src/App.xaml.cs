@@ -92,7 +92,7 @@ public partial class App : Application
             {
                 // Only the running copy may come to the front (not any process).
                 var me = System.Diagnostics.Process.GetCurrentProcess();
-                foreach (var p in System.Diagnostics.Process.GetProcessesByName(me.ProcessName))
+                foreach (var p in AppIds.ProcessNames(me.ProcessName).SelectMany(n => System.Diagnostics.Process.GetProcessesByName(n)))
                     using (p) if (p.Id != me.Id) AllowSetForegroundWindow(p.Id);
                 return ev.Set();
             }
@@ -276,7 +276,7 @@ public partial class App : Application
         try
         {
             using var me = System.Diagnostics.Process.GetCurrentProcess();
-            var others = System.Diagnostics.Process.GetProcessesByName(me.ProcessName);
+            var others = AppIds.ProcessNames(me.ProcessName).SelectMany(n => System.Diagnostics.Process.GetProcessesByName(n)).ToArray();
             try { return others.Any(p => p.Id != me.Id && p.SessionId != me.SessionId); }
             finally { foreach (var p in others) p.Dispose(); }
         }

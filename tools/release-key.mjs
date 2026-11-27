@@ -3,9 +3,10 @@
 //
 //   node tools/release-key.mjs new [--out <file>]     once: makes the key (asks for a passphrase), writes its public half to src/Core/UpdateKey.cs
 //   node tools/release-key.mjs sign <tag> [--key <file>] [--no-publish]
-//                                                      per release, after the workflow made the draft: checks the exe against its .sha256
-//                                                      and its build attestation, signs, uploads CS2IPChanger.exe.sha256.sig, publishes
-//                                                      it as a pre-release (the test channel)
+//                                                      per release, after the workflow made the draft: checks each exe (Pickroute.exe
+//                                                      and CS2IPChanger.exe, the same file) against its .sha256 and its build
+//                                                      attestation, signs both .sha256, uploads Pickroute.exe.sha256.sig and
+//                                                      CS2IPChanger.exe.sha256.sig, publishes it as a pre-release (the test channel)
 //
 // The private key never goes in the repo or on GitHub (the tool refuses a path inside the repo, and *.pem is in .gitignore).
 // Keep a copy somewhere offline: losing it means the installed apps can't update by themselves any more.
@@ -20,7 +21,9 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const REPO = 'Sepd0x/pickroute';
-const EXE = 'CS2IPChanger.exe';
+// From 1.0.1 a release carries the exe under both names (.github/workflows/release.yml): 1.0.0 and newer update from Pickroute.exe,
+// older copies from CS2IPChanger.exe (Updater.AssetNames). Each name has its own .sha256 and .sig.
+const EXES = ['Pickroute.exe', 'CS2IPChanger.exe'];
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const KEY_CS = path.join(ROOT, 'src', 'Core', 'UpdateKey.cs');
 const DEFAULT_KEY = path.join(os.homedir(), 'cs2ipchanger-release-key.pem');
@@ -95,33 +98,42 @@ async function sign() {
   const { isDraft } = JSON.parse(view.stdout);
 
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cs2ipc-sign-'));
-  console.log(`Downloading ${EXE} and its .sha256 from ${tag}…`);
-  if (gh(['release', 'download', tag, '-p', EXE, '-p', `${EXE}.sha256`, '-D', dir], { quiet: true }).status !== 0) fail('download failed');
-  const exe = path.join(dir, EXE);
-  const shaFile = fs.readFileSync(path.join(dir, `${EXE}.sha256`));
-  const actual = crypto.createHash('sha256').update(fs.readFileSync(exe)).digest('hex');
-  // Only the exact line the Release workflow writes is signed. A file with more lines (or another name) could carry a second
-  // hash that this check never looked at and the app would use.
-  if (shaFile.toString('utf8') !== `${actual}  ${EXE}\n`) fail(`the .sha256 is not exactly "${actual}  ${EXE}" (the exe's SHA-256) on one line:\n${shaFile.toString('utf8')}`);
+  console.log(`Downloading ${EXES.join(' and ')} and their .sha256 from ${tag}…`);
+  if (gh(['release', 'download', tag, ...EXES.flatMap((e) => ['-p', e, '-p', `${e}.sha256`]), '-D', dir], { quiet: true }).status !== 0) fail('download failed');
+  const files = EXES.map((name) => {
+    const exe = path.join(dir, name);
+    if (!fs.existsSync(exe) || !fs.existsSync(`${exe}.sha256`)) fail(`the release has no ${name} or no ${name}.sha256`);
+    const shaFile = fs.readFileSync(`${exe}.sha256`);
+    const actual = crypto.createHash('sha256').update(fs.readFileSync(exe)).digest('hex');
+    // Only the exact line the Release workflow writes is signed. A file with more lines (or another name) could carry a second
+    // hash that this check never looked at and the app would use.
+    if (shaFile.toString('utf8') !== `${actual}  ${name}\n`) fail(`the .sha256 is not exactly "${actual}  ${name}" (the exe's SHA-256) on one line:\n${shaFile.toString('utf8')}`);
+    return { name, exe, shaFile, actual };
+  });
+  if (new Set(files.map((f) => f.actual)).size !== 1) fail(`${EXES.join(' and ')} are not the same file`);
 
   console.log('Checking that the exe was built by this repo\'s Release workflow, from this tag (attestation)…');
-  const att = gh(['attestation', 'verify', exe, '--signer-workflow', `${REPO}/.github/workflows/release.yml`, '--source-ref', `refs/tags/${tag}`], { quiet: true });
-  if (att.status !== 0) fail('the attestation does not check out:\n' + (att.stderr || att.stdout));
+  for (const { name, exe } of files) {
+    const att = gh(['attestation', 'verify', exe, '--signer-workflow', `${REPO}/.github/workflows/release.yml`, '--source-ref', `refs/tags/${tag}`], { quiet: true });
+    if (att.status !== 0) fail(`the attestation of ${name} does not check out:\n` + (att.stderr || att.stdout));
+  }
 
   const keyFile = path.resolve(opt('--key') ?? DEFAULT_KEY);
   if (!fs.existsSync(keyFile)) fail(`no key at ${keyFile} (use --key <file>)`);
   let key;
   try { key = crypto.createPrivateKey({ key: fs.readFileSync(keyFile), passphrase: await ask('Passphrase: ', true) }); }
   catch { fail('wrong passphrase or not a key file'); }
-  const msg = message(tag, shaFile);
-  const sig = crypto.sign('sha256', msg, key).toString('base64');
-  const ok = crypto.verify('sha256', msg, { key: Buffer.from(pub, 'base64'), format: 'der', type: 'spki' }, Buffer.from(sig, 'base64'));
-  if (!ok) fail('this key is not the one whose public half is in src/Core/UpdateKey.cs');
-
-  const sigPath = path.join(dir, `${EXE}.sha256.sig`);
-  fs.writeFileSync(sigPath, sig + '\n');
-  if (gh(['release', 'upload', tag, sigPath, '--clobber']).status !== 0) fail('upload failed');
-  console.log(`Signed: ${EXE}.sha256.sig uploaded to ${tag} (SHA-256 ${actual}).`);
+  const sigs = files.map(({ name, shaFile }) => {
+    const msg = message(tag, shaFile);
+    const sig = crypto.sign('sha256', msg, key).toString('base64');
+    const ok = crypto.verify('sha256', msg, { key: Buffer.from(pub, 'base64'), format: 'der', type: 'spki' }, Buffer.from(sig, 'base64'));
+    if (!ok) fail('this key is not the one whose public half is in src/Core/UpdateKey.cs');
+    const sigPath = path.join(dir, `${name}.sha256.sig`);
+    fs.writeFileSync(sigPath, sig + '\n');
+    return sigPath;
+  });
+  if (gh(['release', 'upload', tag, ...sigs, '--clobber']).status !== 0) fail('upload failed');
+  console.log(`Signed: ${sigs.map((f) => path.basename(f)).join(' and ')} uploaded to ${tag} (SHA-256 ${files[0].actual}).`);
   if (isDraft && !flag('--no-publish')) {
     // Published as a pre-release, the test channel (docs/RELEASING.md): only copies with Get test versions on see it. It becomes
     // stable (Latest) after the test rounds, with gh release edit <tag> --prerelease=false --latest.

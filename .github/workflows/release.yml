@@ -1,7 +1,9 @@
 ﻿# Builds CS2IPChanger.exe when a v* tag is pushed, signs a build provenance attestation for it
-# and attaches the exe and its SHA-256 to a DRAFT release of that tag. The app only installs an update whose
+# and attaches the exe and its SHA-256 to a DRAFT release of that tag. From 1.0.1 the same file also goes up as Pickroute.exe,
+# with its own .sha256 (the download links use it; 1.0.0 and newer update from it, older copies keep taking CS2IPChanger.exe,
+# so both names stay for 12 months). The app only installs an update whose
 # .sha256 is signed with the project's key, which never enters GitHub: on your PC, "node tools/release-key.mjs sign <tag>"
-# checks the exe and its attestation, signs, uploads the .sig and publishes the draft (docs/RELEASING.md).
+# checks both exes and their attestation, signs both .sha256, uploads the two .sig and publishes the draft (docs/RELEASING.md).
 #
 # The tag has to match <Version> in src/ServerRouteTool.csproj (tag v0.1.0-alpha.3 for 0.1.0-alpha.3).
 # If the release already exists (drafted by hand with notes), the files are added to it. If not, it is
@@ -62,16 +64,22 @@ jobs:
       - name: Publish
         run: dotnet publish src/ServerRouteTool.csproj -c Release -o out
 
-      - name: Compute SHA-256
+      - name: Copy as Pickroute.exe and compute SHA-256
         run: |
+          Copy-Item out/CS2IPChanger.exe out/Pickroute.exe
           $hash = (Get-FileHash out/CS2IPChanger.exe -Algorithm SHA256).Hash.ToLowerInvariant()
-          [IO.File]::WriteAllText("$PWD/out/CS2IPChanger.exe.sha256", "$hash  CS2IPChanger.exe`n")
-          "SHA-256: $hash" >> $env:GITHUB_STEP_SUMMARY
+          if ((Get-FileHash out/Pickroute.exe -Algorithm SHA256).Hash.ToLowerInvariant() -ne $hash) { throw 'Pickroute.exe is not the same file as CS2IPChanger.exe' }
+          foreach ($name in 'CS2IPChanger.exe', 'Pickroute.exe') {
+            [IO.File]::WriteAllText("$PWD/out/$name.sha256", "$hash  $name`n")
+          }
+          "SHA-256 (CS2IPChanger.exe and Pickroute.exe, the same file): $hash" >> $env:GITHUB_STEP_SUMMARY
 
       - name: Attest build provenance
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
-          subject-path: out/CS2IPChanger.exe
+          subject-path: |
+            out/CS2IPChanger.exe
+            out/Pickroute.exe
 
       - name: Upload to the release
         env:
@@ -80,7 +88,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           $tag = $env:GITHUB_REF_NAME
-          $files = 'out/CS2IPChanger.exe', 'out/CS2IPChanger.exe.sha256'
+          $files = 'out/Pickroute.exe', 'out/Pickroute.exe.sha256', 'out/CS2IPChanger.exe', 'out/CS2IPChanger.exe.sha256'
           $existing = gh release list --limit 100 --json tagName --jq '.[].tagName'
           if ($existing -contains $tag) {
             # Only a draft gets new files: a published exe is never replaced (people may have downloaded it already).

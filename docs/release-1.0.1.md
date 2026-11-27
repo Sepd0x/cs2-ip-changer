@@ -1,6 +1,11 @@
 ## Pickroute 1.0.1
 
-Small fixes after 1.0.0: a narrower sidebar, texts that fit on small screens in every language, a safer Enter key in questions, and a few rare cases that could stop a page from showing. Nothing to do when you update: your settings, regions, accounts and updates carry over, and the download is still `CS2IPChanger.exe`.
+Small fixes after 1.0.0: a narrower sidebar, texts that fit on small screens in every language, a safer Enter key in questions, and a few rare cases that could stop a page from showing. Nothing to do when you update: your settings, regions, accounts and updates carry over.
+
+### The download is now Pickroute.exe
+- New downloads are called `Pickroute.exe`. It is the same file as `CS2IPChanger.exe`, which stays in this release (with its own `.sha256` and signature) for copies older than 1.0.0. Both are below, under Assets.
+- Started from Downloads, it installs itself as before. Installed, the file and folder keep their old names (`CS2IPChanger.exe` in `C:\Program Files\CS2 IP Changer`), so shortcuts, Start with Windows and `CS2IPChanger.exe --restore` work the same.
+- To check the download: `gh attestation verify Pickroute.exe -R Sepd0x/pickroute`, or compare `Get-FileHash .\Pickroute.exe` with `Pickroute.exe.sha256`.
 
 ### Looks
 - The sidebar is narrower (104 px instead of 168), so every page has more room. On short screens (1080p at 200 %) a page's icon no longer touches its highlight, and with an update waiting Profiles stays above Log.

@@ -32,20 +32,21 @@ if (arg('--release')) {
   // Read from GitHub's public API, so the size, the date and the SHA-256 are the release's own.
   const tag = arg('--release'), vt = arg('--vt'), was = JSON.parse(readFileSync(RELEASE, 'utf8'));
   const r = await (await fetch(`https://api.github.com/repos/Sepd0x/pickroute/releases/tags/${encodeURIComponent(tag)}`, { headers: { accept: 'application/vnd.github+json' } })).json();
-  const exe = r.assets?.find((a) => a.name === was.asset);
-  if (!exe) throw new Error(`${tag}: no ${was.asset} in the release (is it published?)`);
+  // From 1.0.1 a release has the exe as Pickroute.exe too (.github/workflows/release.yml): the links take that name when it is there
+  const exe = ['Pickroute.exe', was.asset].map((n) => r.assets?.find((a) => a.name === n)).find(Boolean);
+  if (!exe) throw new Error(`${tag}: no Pickroute.exe or ${was.asset} in the release (is it published?)`);
   let sha = exe.digest?.startsWith('sha256:') ? exe.digest.slice(7) : null;
-  if (!sha) { const s = r.assets.find((a) => a.name === `${was.asset}.sha256`); sha = s && (await (await fetch(s.browser_download_url)).text()).split(/\s/)[0]; }
+  if (!sha) { const s = r.assets.find((a) => a.name === `${exe.name}.sha256`); sha = s && (await (await fetch(s.browser_download_url)).text()).split(/\s/)[0]; }
   if (!/^[0-9a-f]{64}$/.test(sha || '')) throw new Error(`${tag}: no SHA-256 found`);
   const m = /^(\d+)\/(\d+)$/.exec(vt || '');
   if (!m && sha !== was.sha256) throw new Error('--vt <flagged>/<engines> is needed for a new exe (from the VirusTotal run of this release)');
-  const next = { ...was, tag, version: tag.replace(/^v/, ''), published: r.published_at.slice(0, 10), size: exe.size, sha256: sha,
+  const next = { ...was, asset: exe.name, tag, version: tag.replace(/^v/, ''), published: r.published_at.slice(0, 10), size: exe.size, sha256: sha,
     virustotal: m ? { flagged: +m[1], engines: +m[2] } : was.virustotal };
   writeFileSync(RELEASE, JSON.stringify(next, null, 1) + '\n');
   console.log(`site/release.json: ${next.tag}, ${next.size} bytes, ${next.sha256.slice(0, 12)}…, VirusTotal ${next.virustotal.flagged}/${next.virustotal.engines}`);
 }
 const rel = JSON.parse(readFileSync(RELEASE, 'utf8'));
-const EXE = `${REPO}/releases/latest/download/${rel.asset}`;   // GitHub sends it to the newest release's exe (the name never changes, .github/workflows/release.yml)
+const EXE = `${REPO}/releases/latest/download/${rel.asset}`;   // GitHub sends it to the newest release's exe (Pickroute.exe from 1.0.1, .github/workflows/release.yml)
 const VT = `https://www.virustotal.com/gui/file/${rel.sha256}/detection`;
 const size = `${(rel.size / 1048576).toFixed(1)} MB`;   // counted like GitHub's release page and the browsers (1 MB = 1024 KB)
 const day = (iso) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
@@ -98,6 +99,8 @@ const vtLinks = (s) => s.replace(/https:\/\/www\.virustotal\.com\/gui\/file\/[0-
   // the VirusTotal badge in the row under the title (the other badges read GitHub live, through shields.io)
   const deep = readTheme().AccentDeepColor.slice(1);
   s = fill(s, 'vtbadge', `<a href="${VT}"><img src="https://img.shields.io/badge/VirusTotal-${rel.virustotal.flagged}%2F${rel.virustotal.engines}-${deep}" alt="VirusTotal: flagged by ${vtText}"></a>`, 'README.md');
+  // the Download buttons and the Quick start link (written by hand) follow the same exe
+  s = s.replaceAll(/https:\/\/github\.com\/Sepd0x\/(?:cs2-ip-changer|pickroute)\/releases\/latest\/download\/[^")<\s]+/g, EXE);
   put(file, vtLinks(s));
 }
 // site/llms.txt: the status line and the direct download.

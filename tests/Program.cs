@@ -710,6 +710,8 @@ Uso27NovTests.Run(Check);
 SegundaPassagem27Tests.Run(Check);
 // 27 nov., à noite: pequenos defeitos do GUI nas cinco línguas e em ecrãs pequenos, a barra lateral e os metadados do exe (Correcoes27NoiteTests.cs)
 Correcoes27NoiteTests.Run(Check);
+// 27 nov.: fase 1 do rename, a 1.0.1 sai como Pickroute.exe com CS2IPChanger.exe ao lado (Rename1Tests.cs)
+Rename1Tests.Run(Check);
 
 Console.WriteLine(fails == 0 ? "\nTUDO OK" : $"\n{fails} FALHA(S)");
 return fails;
