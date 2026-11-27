@@ -186,10 +186,10 @@ const UI = {
         { id: 'AutoStreamer', label: 'AutoStreamer', r: [385,2403,822,58] },
         { id: 'CheckUpdates', label: 'CheckUpdates', r: [385,2807,822,58] },
         { id: 'DeleteStats', label: 'Delete my stats', r: [385,2536,114,28] },
-        { id: 'OpenData', label: 'OpenData', r: [385,3069,123,28] },
-        { id: 'OpenFirewall', label: 'OpenFirewall', r: [516,3069,158,28] },
+        { id: 'OpenData', label: 'OpenData', r: [385,3042,123,28] },
+        { id: 'OpenFirewall', label: 'OpenFirewall', r: [516,3042,158,28] },
         { id: 'DeleteLogs', label: 'DeleteLogs', r: [507,2536,111,28] },
-        { id: 'RemoveAll', label: 'RemoveAll', r: [1081,3177,126,28] },
+        { id: 'RemoveAll', label: 'RemoveAll', r: [1081,3150,126,28] },
       ] },
   ],
 };

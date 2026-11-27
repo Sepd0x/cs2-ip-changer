@@ -1,7 +1,7 @@
 {
  "note": "Made by tools/shots.mjs. Do not edit: tests/DesignSyncTests.cs checks it against the app and the files.",
  "app": "1.0.0",
- "ui": "34fce31aff28e603a5bcf05df1c8b230619be6213196f39d1cbb94620af5c8dc",
+ "ui": "238a7f949eeb6fe664ad5281e8a0b54baa5a091c558e270689f6f522066e2680",
  "uiFiles": [
   "src/App.xaml",
   "src/MainWindow.xaml",
@@ -290,10 +290,10 @@
   },
   {
    "file": "worker/stats/dashboard/ui/settings.png",
-   "sha256": "45784cbd4fdcb011c5f5712a4c3ed393aa28c744733fcd8276e5fdda0f33e5cb",
+   "sha256": "6f276b0c855a04e14645e3c5573a3d845a5a49a1835a93e3b5377449954b90a8",
    "size": [
     1240,
-    3276
+    3249
    ]
   },
   {

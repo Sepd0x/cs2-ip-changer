@@ -4244,8 +4244,9 @@
                                         <Border Style="{StaticResource SetRow}">
                                             <Button Click="TourAgain_Click" Margin="0" HorizontalAlignment="Left" Content="{x:Static local:Texts.TourAgain}" ToolTip="{x:Static local:Texts.TourAgainTip}"/>
                                         </Border>
-                                        <!-- 1.0.0: the app's old name, for those who knew it by it -->
-                                        <TextBlock x:Name="FormerlyText" Style="{StaticResource OptSub}" Margin="0,10,0,0" Text="Formerly CS2 IP Changer"/>
+                                        <!-- 27 Nov (the owner): no "Formerly CS2 IP Changer" line any more. The old name stays only where
+                                             people don't read it (the site's JSON-LD alternateName and llms.txt, for search and AIs) and
+                                             where it is really the name on the PC (the exe, the folder, the task) -->
                                     </StackPanel>
                                 </HeaderedContentControl>
 
