@@ -74,6 +74,28 @@ test('owner page: the pages that bring people, their language, and the countries
   assert.equal(Math.round(100 * H.countries.reduce((a, x) => a + x.share, 0)), 100);
 });
 
+test('owner page: languages and country shares come from every visit of the 7 days, not only the 10 biggest pages and countries', async () => {
+  const DB = regionsOnly();
+  const S = DB.raw.prepare('INSERT INTO site (day, page, ref, country, event, n) VALUES (?, ?, ?, ?, ?, ?)');
+  // 12 English pages with 20 visits each from 12 countries, then 5 Turkish and 3 Russian pages with 2 visits each from Turkey
+  const en = ['/', '/cs2-region-picker/', '/cs2-ip-ban/', '/change-ip-with-phone/', '/copy-cs2-config/', '/cs2-iphone-hotspot/', '/cs2-mobile-data/', '/cs2-ping-test/', '/cs2-config-file-location/', '/hide-ip-cs2/', '/is-it-safe/', '/steam-account-switcher/'];
+  const cc = ['PT', 'BR', 'US', 'DE', 'PL', 'ES', 'GB', 'FR', 'IT', 'NL', 'SE', 'CZ'];
+  en.forEach((p, i) => S.run(day(2), p, 'google.com', cc[i], 'view', 20));
+  for (const p of ['/tr/', '/tr/cs2-region-picker/', '/tr/cs2-ip-ban/', '/tr/is-it-safe/', '/tr/cs2-ping-test/']) S.run(day(3), p, '', 'TR', 'view', 2);
+  for (const p of ['/ru/', '/ru/cs2-region-picker/', '/ru/cs2-ip-ban/']) S.run(day(3), p, '', 'TR', 'view', 2);
+  const B = await brief(DB);
+  assert.equal(B.kpis.site_visits.d7, 256);
+  const H = buildHome({ B, G: null, L: null });
+  const L = Object.fromEntries(H.langs.map((x) => [x.name, x.n]));
+  assert.deepEqual(L, { 'Inglês': 240, 'Turco': 10, 'Russo': 6 });
+  assert.equal(Math.round(100 * H.langs.reduce((a, x) => a + x.share, 0)), 100);
+  // Turkey has 16 visits of 256, about 6%, not a share of the first 10 countries only
+  const tr = H.countries.find((x) => x.name === countryName('TR'));
+  assert.equal(Math.round(100 * (H.countries[0].share)), 8);   // 20 of 256
+  assert.ok(!tr || Math.round(100 * tr.share) === 6);
+  assert.ok(H.countries.reduce((a, x) => a + x.share, 0) < 1, 'six countries of thirteen are not 100%');
+});
+
 test('owner page: no site table means no pages block and no made-up zeros', async () => {
   const B = await brief(regionsOnly());
   B.acquisition.top_site_pages_d7 = null; B.acquisition.top_site_countries_d7 = null;

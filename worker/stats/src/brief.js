@@ -72,7 +72,8 @@ export const DEFINITIONS = {
   share_today: 'Today\'s installs on each version (n of the installs active today).',
   top_site_refs_d7: 'Website visits by referrer host in the last 7 days; direct means no referrer was sent.',
   top_site_pages_d7: 'Website pages by visits in the 7 complete days (to yesterday), with the Download clicks made on each page. A visit is a page opened, so one person on two pages counts on both.',
-  top_site_countries_d7: 'Website visits by country (from Cloudflare, never stored with anything else) in the 7 complete days.',
+  top_site_countries_d7: 'Website visits by country (from Cloudflare, never stored with anything else) in the 7 complete days, the 10 biggest. A share is of kpis.site_visits.d7 (every visit of the same days), not of these 10.',
+  site_langs_d7: 'Website visits by the language of the page (en, pt-br, es, ru, tr: the folder the page is in) in the 7 complete days, from every visit, not only the top pages.',
   top_github_refs_14d: 'GitHub repository visits by referrer over GitHub\'s own 14 days (live with the token, or the newest stored snapshot).',
   github_views_d7: 'GitHub repository views in the last 7 days, from the daily traffic snapshots the cron keeps (needs the token).',
   top_setup_step: 'The Phone setup step (PhoneSetup key, like nousbdebugging = USB debugging off) the pane was on when opened, most common among the installs that never saw the phone.',
@@ -307,6 +308,8 @@ export function buildBrief({ S, L = null, G = null, GH = { days: [] }, tables = 
     // 27 Nov. 2026: the pages that bring the visits and the Download clicks, and the visits' countries (7 complete days)
     top_site_pages_d7: siteMissing || !S.site.pages7 ? null : S.site.pages7.slice(0, 10).map((r) => ({ page: r.k, views: r.views, download_clicks: r.downloads })),
     top_site_countries_d7: siteMissing || !S.site.countries7 ? null : S.site.countries7.slice(0, 10).map((r) => ({ country: r.k, n: r.n })),
+    // Every language of the site (at most five) from every visit; shares of countries use kpis.site_visits.d7, the same 7 days
+    site_langs_d7: siteMissing || !S.site.langs7 ? null : S.site.langs7.map((r) => ({ lang: r.k, n: r.n })),
     top_github_refs_14d: G && Array.isArray(G.referrers) ? G.referrers.slice(0, 10).map((r) => ({ host: r.name, n: r.n, uniques: r.u })) : (TR && TR.refs && TR.refs.length ? TR.refs.slice(0, 10).map((r) => ({ host: r.name, n: r.n, uniques: r.u, as_of: TR.refsDay })) : null),
     ...(G && Array.isArray(G.referrers) ? {} : TR && TR.refs && TR.refs.length ? { github_refs_source: 'stored_snapshot' } : { github_refs_reason: tok.status === 'ok' ? 'no_source_rows' : `token_${tok.value}` }),
     github_views_d7: TR && TR.days && TR.days.length ? (() => { const l = TR.days.filter((x) => x.day >= from7); return { views: sum(l, 'views'), uniques_sum: sum(l, 'uniques'), days_covered: l.length }; })() : null,

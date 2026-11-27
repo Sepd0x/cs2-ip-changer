@@ -685,15 +685,18 @@ export async function summary(db, { period, f, dev, now, exclude = [], sums = 's
     site.refs7 = list(r7).slice(0, 20);
     // 27 Nov. 2026 (the owner's page, "more users"): which pages bring the visits and the Download clicks, and the visits' countries,
     // over the brief's 7 complete days (to yesterday, today left out)
-    const a7 = day(now - 7 * 864e5), b7 = day(now - 864e5), p7 = {}, c7 = {};
+    const a7 = day(now - 7 * 864e5), b7 = day(now - 864e5), p7 = {}, c7 = {}, l7 = {};
     for (const r of siteR) {
       if (r.day < a7 || r.day > b7) continue;
       const v = r.event === 'view', n = r.n || 0;
       const p = p7[r.page] || (p7[r.page] = { k: r.page, views: 0, downloads: 0 }); p[v ? 'views' : 'downloads'] += n;
       if (v) c7[r.country || '?'] = (c7[r.country || '?'] || 0) + n;
+      // The site's language by the page's folder (en has none), from every row, so a language with many small pages is whole
+      if (v) { const lg = (/^\/(pt-br|es|ru|tr)\//.exec(r.page) || [, 'en'])[1]; l7[lg] = (l7[lg] || 0) + n; }
     }
     site.pages7 = Object.values(p7).sort((a, b) => b.views - a.views || b.downloads - a.downloads || (a.k < b.k ? -1 : 1)).slice(0, 20);
     site.countries7 = list(c7).slice(0, 20);
+    site.langs7 = list(l7);
   }
 
   const v4 = v4Blocks({ now, today, since, prevSince, period, okAll, inWin, seen, firstDay, errors, errFirstR, heat, f });

@@ -240,15 +240,18 @@ export function buildHome({ B, G = null, L = null }) {
   // ---------------- as páginas do site que trazem gente, as línguas e os países (últimos 7 dias completos)
   const P7 = (B.acquisition && B.acquisition.top_site_pages_d7) || null;
   const pages = P7 ? P7.filter((r) => r.views || r.download_clicks).slice(0, 6).map((r) => ({ ...pageName(r.page), page: r.page, views: r.views, clicks: r.download_clicks })) : null;
+  // The languages from every visit of the 7 days (site_langs_d7), never from the 10 biggest pages: a language with many small
+  // pages (Turkish, Russian) was left short or out. A brief without it shows no languages rather than wrong ones.
+  const LG = (B.acquisition && B.acquisition.site_langs_d7) || null;
   let langs = null;
-  if (P7 && P7.length) {
-    const by = {};
-    for (const r of P7) { const l = pageName(r.page).lang; by[l] = (by[l] || 0) + r.views; }
-    const tot = sum(Object.values(by));
-    langs = Object.entries(by).filter(([, n]) => n > 0).map(([name, n]) => ({ name, n, share: tot ? n / tot : 0 })).sort((a, b) => b.n - a.n);
+  if (LG && LG.length) {
+    const LN = { en: 'Inglês', 'pt-br': 'Português', es: 'Espanhol', ru: 'Russo', tr: 'Turco' };
+    const tot = sum(LG.map((x) => x.n));
+    langs = LG.filter((x) => x.n > 0).map((x) => ({ name: LN[x.lang] || x.lang, n: x.n, share: tot ? x.n / tot : 0 })).sort((a, b) => b.n - a.n);
   }
+  // Country shares are of every visit of the same 7 days (kpis.site_visits.d7), not of the 10 countries the brief lists
   const C7 = (B.acquisition && B.acquisition.top_site_countries_d7) || null;
-  const ctot = C7 ? sum(C7.map((x) => x.n)) : 0;
+  const ctot = C7 ? Math.max(sum(C7.map((x) => x.n)), sv.d7 || 0) : 0;
   const countries = C7 && ctot ? C7.slice(0, 6).map((x) => ({ name: countryName(x.country), n: x.n, share: x.n / ctot })) : null;
 
   // ---------------- como chegam (contagens dos últimos 7 dias; o site não sabe quem instala, por isso não se ligam entre si)
