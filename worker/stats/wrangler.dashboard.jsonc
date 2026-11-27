@@ -4,7 +4,7 @@
 // Secrets (wrangler secret put NAME -c wrangler.dashboard.jsonc): TEAM_DOMAIN, POLICY_AUD, DASHBOARD_EMAIL, GITHUB_TOKEN,
 // and optionally EXCLUDE_IDS (old fixed install IDs of your own PCs) and SERVICE_TOKEN_IDS (v4: the Client IDs of the Access
 // service tokens allowed to read /api/brief, and nothing else). Beta.13, optional: GSC_KEY (the JSON key of a Google service account
-// added as a read-only user of the site's Search Console property) and GSC_SITE (that property, e.g. https://sepd0x.github.io/cs2-ip-changer/):
+// added as a read-only user of the site's Search Console property) and GSC_SITE (that property, e.g. https://sepd0x.github.io/pickroute/):
 // the daily cron then keeps Google's search impressions and clicks per day (src/dashboard.js snapshotSearch).
 {
   "name": "stats-dashboard",
@@ -15,7 +15,7 @@
   "preview_urls": false,
   // No request logs
   "observability": { "enabled": false, "logs": { "enabled": false, "invocation_logs": false } },
-  "vars": { "GITHUB_REPO": "Sepd0x/cs2-ip-changer" },
+  "vars": { "GITHUB_REPO": "Sepd0x/pickroute" },
   // Nov. 2026, src/dashboard.js scheduled: every 10 minutes the live signal is counted (live_hourly); at 03:07 UTC a picture of
   // GitHub's public numbers (gh_daily) and rows with an install ID older than 12 months deleted. Cron Triggers are free.
   "triggers": { "crons": ["*/10 * * * *", "7 3 * * *"] },

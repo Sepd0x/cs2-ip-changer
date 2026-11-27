@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        If the problem is your connection, try Turn off protection first (on the Connection page, or in the icon's menu next to the clock). If the window won't open, run `CS2IPChanger.exe --restore`. More in [If something goes wrong](https://github.com/Sepd0x/cs2-ip-changer/blob/main/docs/SETUP.md#if-something-goes-wrong).
+        If the problem is your connection, try Turn off protection first (on the Connection page, or in the icon's menu next to the clock). If the window won't open, run `CS2IPChanger.exe --restore`. More in [If something goes wrong](https://github.com/Sepd0x/pickroute/blob/main/docs/SETUP.md#if-something-goes-wrong).
 
   - type: input
     id: version

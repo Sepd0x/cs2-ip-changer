@@ -1,6 +1,6 @@
 name: Pages
 
-# The project site (site/ plus the screenshots and pictures from docs/) on https://sepd0x.github.io/cs2-ip-changer/.
+# The project site (site/ plus the screenshots and pictures from docs/) on https://sepd0x.github.io/pickroute/.
 on:
   push:
     branches: [main]
@@ -63,7 +63,7 @@ jobs:
         continue-on-error: true
         run: |
           key=963725f7892f193e231f4827652ff39d
-          urls=$(curl -fsS https://sepd0x.github.io/cs2-ip-changer/sitemap.xml | grep -o '<loc>[^<]*</loc>' | sed -e 's/<loc>//' -e 's/<\/loc>//' | grep -v '/img/' | sed 's/.*/"&"/' | paste -sd, -)
+          urls=$(curl -fsS https://sepd0x.github.io/pickroute/sitemap.xml | grep -o '<loc>[^<]*</loc>' | sed -e 's/<loc>//' -e 's/<\/loc>//' | grep -v '/img/' | sed 's/.*/"&"/' | paste -sd, -)
           test -n "$urls"
           curl -sS -o /dev/null -w 'IndexNow: %{http_code}\n' -X POST https://api.indexnow.org/indexnow \
             -H 'Content-Type: application/json; charset=utf-8' \

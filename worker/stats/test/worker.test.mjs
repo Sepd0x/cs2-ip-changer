@@ -1110,7 +1110,7 @@ test('medir: the daily cron keeps a picture of GitHub (no token), and downloads 
   assert.equal(DB.raw.prepare("SELECT COUNT(*) n FROM gh_daily WHERE name LIKE '%beta.9%'").get().n, 0, 'drafts are not counted');
   // The picture of the public numbers never sends the token (v4: only the traffic reads, which need it, do)
   const auth = {};
-  await snapshotGithub(DB, { GITHUB_TOKEN: 'secret' }, async (url, init) => { auth[String(url).replace(/^.*cs2-ip-changer/, '')] = init.headers.authorization; return ghPublic(1, 1)(url, init); }, t0);
+  await snapshotGithub(DB, { GITHUB_TOKEN: 'secret' }, async (url, init) => { auth[String(url).replace(/^.*pickroute/, '')] = init.headers.authorization; return ghPublic(1, 1)(url, init); }, t0);
   assert.equal(auth[''], undefined);
   assert.equal(auth['/releases?per_page=100'], undefined);
   assert.equal(auth['/traffic/views'], 'Bearer secret');
@@ -1388,7 +1388,7 @@ test('v4: the daily cron keeps the GitHub traffic with the token (views per day,
       if (path === '/traffic/views') return Response.json({ views: [{ timestamp: '2026-10-22T00:00:00Z', count: 5, uniques: 3 }, { timestamp: '2026-11-04T00:00:00Z', count: 9, uniques: 4 }] });
       if (path === '/traffic/clones') return Response.json({ clones: [{ timestamp: '2026-11-03T00:00:00Z', count: 2, uniques: 1 }] });
       if (path === '/traffic/popular/referrers') return Response.json([{ referrer: 'youtube.com', count: 40, uniques: 22 }, { referrer: 'reddit.com', count: 3, uniques: 2 }]);
-      if (path === '/traffic/popular/paths') return Response.json([{ path: '/Sepd0x/cs2-ip-changer', title: 'x', count: 50, uniques: 30 }]);
+      if (path === '/traffic/popular/paths') return Response.json([{ path: '/Sepd0x/pickroute', title: 'x', count: 50, uniques: 30 }]);
       return new Response('{}', { status: 404 });
     }
     return ghPublic(5, 100)(url, init);
@@ -1399,7 +1399,7 @@ test('v4: the daily cron keeps the GitHub traffic with the token (views per day,
   assert.deepEqual(h.traffic.days, [{ day: '2026-10-22', views: 5, uniques: 3, clones: 0, clones_u: 0 }, { day: '2026-11-03', views: 0, uniques: 0, clones: 2, clones_u: 1 }, { day: '2026-11-04', views: 9, uniques: 4, clones: 0, clones_u: 0 }]);
   assert.deepEqual(h.traffic.refs, [{ name: 'youtube.com', n: 40, u: 22 }, { name: 'reddit.com', n: 3, u: 2 }]);
   assert.equal(h.traffic.refsDay, '2026-11-04');
-  assert.equal(h.traffic.paths[0].name, '/Sepd0x/cs2-ip-changer');
+  assert.equal(h.traffic.paths[0].name, '/Sepd0x/pickroute');
   assert.deepEqual(h.byRelease['v0.1.0-beta.10'], [{ day: '2026-11-04', n: 100 }]);
   // Without the token, or refused: the picture as before and no traffic rows (never an error)
   const DB2 = fakeD1();

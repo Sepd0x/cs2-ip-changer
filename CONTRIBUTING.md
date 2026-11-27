@@ -3,7 +3,7 @@
 Thanks for wanting to help. Pickroute is in beta, and the most useful thing right now is a good bug report.
 
 ## Reporting a bug
-[Open an issue](https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose) with the bug template and add:
+[Open an issue](https://github.com/Sepd0x/pickroute/issues/new/choose) with the bug template and add:
 - the version (bottom left of the window);
 - what you did, what you expected and what happened;
 - the diagnostics: Log tab > Save bug report saves a .zip on your Desktop. Your home IP, logins and API key are left out, but look through it before you post.

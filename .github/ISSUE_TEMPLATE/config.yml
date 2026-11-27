@@ -1,14 +1,14 @@
 blank_issues_enabled: false
 contact_links:
   - name: Report a security problem (private)
-    url: https://github.com/Sepd0x/cs2-ip-changer/security/advisories/new
+    url: https://github.com/Sepd0x/pickroute/security/advisories/new
     about: A way your home IP could leak, or a problem in something that runs as admin. Please don't open a public issue for these.
   - name: Connection broken or setup help
-    url: https://github.com/Sepd0x/cs2-ip-changer#if-something-goes-wrong
+    url: https://github.com/Sepd0x/pickroute#if-something-goes-wrong
     about: How to undo the routes and firewall rules, and what to check when the phone or the game won't connect.
   - name: Questions (FAQ)
-    url: https://github.com/Sepd0x/cs2-ip-changer/blob/main/docs/FAQ.md
+    url: https://github.com/Sepd0x/pickroute/blob/main/docs/FAQ.md
     about: VPNs, VAC, bans, ping, CGNAT, hotspots, regions and the phone.
   - name: Guides on the website
-    url: https://sepd0x.github.io/cs2-ip-changer/#guides
+    url: https://sepd0x.github.io/pickroute/#guides
     about: IP bans, how to change your region in CS2, setup with your phone, and how to check the download.

@@ -22,8 +22,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = join(root, 'site');
 const I18N = join(root, 'tools', 'i18n');
-export const BASE = 'https://sepd0x.github.io/cs2-ip-changer/';
-const PATH = '/cs2-ip-changer/';
+export const BASE = 'https://sepd0x.github.io/pickroute/';
+const PATH = '/pickroute/';
 // every page and script is read with LF, so what is written is the same from a Windows checkout (CRLF) and from any other
 const text = (file) => readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
 
@@ -213,7 +213,7 @@ function tagOut(t, ctx) {
 // the page's address as text (<code class="url">, to type on the PC): with the language folder in it. Each part of the
 // address is in its own <span class="nw"> (it breaks only after a slash), the language's part too
 const atomOut = (x, ctx) => tagOut(x.open, ctx) + (x.name === 'code' && /\burl\b/.test(attr(x.open, 'class')?.v || '')
-  ? x.rest.replace(/cs2-ip-changer(<\/span>)?(\/<wbr>)?/, (m, sp, sep) => `cs2-ip-changer${sp || ''}/<wbr>${sp ? `<span class="nw">${ctx.L.code}</span>` : ctx.L.code}${sep ? '/<wbr>' : ''}`) : x.rest);
+  ? x.rest.replace(/pickroute(<\/span>)?(\/<wbr>)?/, (m, sp, sep) => `pickroute${sp || ''}/<wbr>${sp ? `<span class="nw">${ctx.L.code}</span>` : ctx.L.code}${sep ? '/<wbr>' : ''}`) : x.rest);
 
 // ------------------------------------------------------------ a run of text and inline tags
 function runOut(run, ctx) {
@@ -389,8 +389,8 @@ function hintJs(page, home) {
 }
 // the 404: GitHub Pages serves the English one for every missing address, so under /pt-br/, /es/, /ru/ or /tr/ it opens that
 // language's 404 and puts the address that was asked for back in the address bar
-const NF_JS = `<script>(function(l){var m=/^\\/cs2-ip-changer\\/(pt-br|es|ru|tr)\\//.exec(l.pathname);if(m&&!/\\/404\\.html$/.test(l.pathname))l.replace('/cs2-ip-changer/'+m[1]+'/404.html#from='+encodeURIComponent(l.pathname+l.search))})(location)</script>`;
-const NF_BACK = (code) => `<script>(function(l){var m=/^#from=(.+)$/.exec(l.hash);if(m){var p=decodeURIComponent(m[1]);if(p.indexOf('/cs2-ip-changer/${code}/')===0)history.replaceState(null,'',p)}})(location)</script>`;
+const NF_JS = `<script>(function(l){var m=/^\\/pickroute\\/(pt-br|es|ru|tr)\\//.exec(l.pathname);if(m&&!/\\/404\\.html$/.test(l.pathname))l.replace('/pickroute/'+m[1]+'/404.html#from='+encodeURIComponent(l.pathname+l.search))})(location)</script>`;
+const NF_BACK = (code) => `<script>(function(l){var m=/^#from=(.+)$/.exec(l.hash);if(m){var p=decodeURIComponent(m[1]);if(p.indexOf('/pickroute/${code}/')===0)history.replaceState(null,'',p)}})(location)</script>`;
 
 /** Puts this script's parts on a page (English or translated): hreflang, the picker, the footer names, the hint. */
 export function stamp(html, F, page, all) {
@@ -474,7 +474,7 @@ export function build({ site = SITE, dicts = loadDicts() } = {}) {
   }
   const map = text(join(site, 'sitemap.xml'));
   // the English sitemap as tools/site-pages.mjs writes it is the list; written again with every language
-  const enOnly = map.includes('xmlns:xhtml') ? map.replace(/<url>\s*<loc>https:\/\/sepd0x\.github\.io\/cs2-ip-changer\/(pt-br|es|ru|tr)\/[\s\S]*?<\/url>\s*/g, '').replace(/\s*<xhtml:link[^>]*\/>/g, '') : map;
+  const enOnly = map.includes('xmlns:xhtml') ? map.replace(/<url>\s*<loc>https:\/\/sepd0x\.github\.io\/pickroute\/(pt-br|es|ru|tr)\/[\s\S]*?<\/url>\s*/g, '').replace(/\s*<xhtml:link[^>]*\/>/g, '') : map;
   files['sitemap.xml'] = sitemap(enOnly, all);
   // the same addresses as plain text, one per line (12 Nov. 2026: Search Console kept saying "Couldn't fetch" for the XML
   // of this github.io project site; a text sitemap is the simplest thing a crawler can read, and robots.txt names both)

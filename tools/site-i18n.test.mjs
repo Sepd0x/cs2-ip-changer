@@ -110,8 +110,8 @@ test('i18n: every address on a translated page leads to a file, and its links st
     const refsOf = (s) => [...s.matchAll(/\s(?:href|src|poster|srcset)="([^"]+)"/g)].flatMap((m) => m[1].split(',').map((x) => x.trim().split(/\s+/)[0]))
       .concat([...s.matchAll(/url\(['"]?([^'")]+)['"]?\)/g)].map((m) => m[1]));
     const where = (r) => {
-      if (/^(https?:|data:|mailto:|#|javascript:)/.test(r) || r.startsWith('/') && !r.startsWith('/cs2-ip-changer/')) return null;
-      const path = r.startsWith('/cs2-ip-changer/') ? r.slice('/cs2-ip-changer'.length) : new URL(r, `http://x${p.abs ? `/${L.code}/` : from}`).pathname;
+      if (/^(https?:|data:|mailto:|#|javascript:)/.test(r) || r.startsWith('/') && !r.startsWith('/pickroute/')) return null;
+      const path = r.startsWith('/pickroute/') ? r.slice('/pickroute'.length) : new URL(r, `http://x${p.abs ? `/${L.code}/` : from}`).pathname;
       return decodeURIComponent(path.split(/[?#]/)[0]).replace(/^\//, '');
     };
     for (const r of refsOf(h)) { const rel = where(r); if (rel != null) assert.ok(served(rel), `${f}: ${r} leads to /${rel}, which isn't there`); }
@@ -196,11 +196,11 @@ before(async () => {
   if (!chromium) { why = 'no Playwright (PLAYWRIGHT=<folder with it>)'; return; }
   for (const o of [{ channel: 'chrome' }, {}]) { try { browser = await chromium.launch(o); break; } catch (e) { why = `Chromium did not start: ${e.message.split('\n')[0]}`; } }
   if (!browser) return;
-  // like GitHub Pages: site/ under /cs2-ip-changer/, the Pages workflow's img/ from docs/, and 404.html for a missing address
+  // like GitHub Pages: site/ under /pickroute/, the Pages workflow's img/ from docs/, and 404.html for a missing address
   server = createServer((q, s) => {
     const p = decodeURIComponent(q.url.split('?')[0]);
-    if (!p.startsWith('/cs2-ip-changer/')) { s.writeHead(404); return s.end(); }
-    const rel = p.slice('/cs2-ip-changer/'.length);
+    if (!p.startsWith('/pickroute/')) { s.writeHead(404); return s.end(); }
+    const rel = p.slice('/pickroute/'.length);
     let f = resolve(SITE, rel || '.');
     if (f !== SITE && !f.startsWith(SITE + sep)) { s.writeHead(404); return s.end(); }
     if (existsSync(f) && statSync(f).isDirectory()) f = join(f, 'index.html');
@@ -210,7 +210,7 @@ before(async () => {
     s.end(readFileSync(f));
   });
   await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
-  origin = `http://127.0.0.1:${server.address().port}/cs2-ip-changer/`;
+  origin = `http://127.0.0.1:${server.address().port}/pickroute/`;
 });
 after(async () => { await browser?.close(); server?.close(); });
 
@@ -288,11 +288,11 @@ test('i18n browser: a missing address under /es/ shows the Spanish 404 and keeps
   if (!browser) return t.skip(why);
   const { ctx, page } = await open('es/no-such-page/', 1440);
   await page.waitForFunction(() => document.documentElement.lang === 'es', null, { timeout: 10000 });
-  assert.equal(new URL(page.url()).pathname, '/cs2-ip-changer/es/no-such-page/');
+  assert.equal(new URL(page.url()).pathname, '/pickroute/es/no-such-page/');
   await ctx.close();
   const g = await open('ru/cs2-ip-ban/', 1440);
   const hrefs = await g.page.$$eval('.top .lang-pick a', (as) => as.map((a) => new URL(a.href).pathname));
-  assert.deepEqual(hrefs, ['/cs2-ip-changer/cs2-ip-ban/', '/cs2-ip-changer/pt-br/cs2-ip-ban/', '/cs2-ip-changer/es/cs2-ip-ban/', '/cs2-ip-changer/ru/cs2-ip-ban/', '/cs2-ip-changer/tr/cs2-ip-ban/']);
+  assert.deepEqual(hrefs, ['/pickroute/cs2-ip-ban/', '/pickroute/pt-br/cs2-ip-ban/', '/pickroute/es/cs2-ip-ban/', '/pickroute/ru/cs2-ip-ban/', '/pickroute/tr/cs2-ip-ban/']);
   await g.ctx.close();
 });
 
@@ -300,8 +300,8 @@ test('i18n browser: an English page offers the version in the browser\'s languag
   if (!browser) return t.skip(why);
   const { ctx, page } = await open('cs2-ip-ban/', 1440, 'pt-BR');
   await page.waitForSelector('.lang-hint', { timeout: 6000 });
-  assert.equal(new URL(page.url()).pathname, '/cs2-ip-changer/cs2-ip-ban/', 'no redirect');
-  assert.equal(await page.$eval('.lang-hint a', (a) => new URL(a.href).pathname), '/cs2-ip-changer/pt-br/cs2-ip-ban/');
+  assert.equal(new URL(page.url()).pathname, '/pickroute/cs2-ip-ban/', 'no redirect');
+  assert.equal(await page.$eval('.lang-hint a', (a) => new URL(a.href).pathname), '/pickroute/pt-br/cs2-ip-ban/');
   await page.click('.lang-hint button');
   await page.reload({ waitUntil: 'load' });
   await page.waitForTimeout(2500);

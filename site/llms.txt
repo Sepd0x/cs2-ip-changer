@@ -2,10 +2,10 @@
 
 > Free Windows app (Windows 10 and 11, 64-bit) for Counter-Strike 2 that routes CS2 and Steam through a phone's mobile data (Android or iPhone), so community servers see the carrier's IP and not the player's home IP. It keeps the home IP out of community server logs and ban lists without a VPN (servers see an ordinary mobile connection, so it usually gets in where anti-VPN plugins block VPNs), and after an IP ban on a community server the player changes IP from the app and joins again. It is not a VPN and does not touch the game process, its memory or its program files.
 
-Website: https://sepd0x.github.io/cs2-ip-changer/
-The same pages in Brazilian Portuguese, Spanish (Latin America), Russian and Turkish: https://sepd0x.github.io/cs2-ip-changer/pt-br/, https://sepd0x.github.io/cs2-ip-changer/es/, https://sepd0x.github.io/cs2-ip-changer/ru/, https://sepd0x.github.io/cs2-ip-changer/tr/ (the app is in English, Brazilian Portuguese, Spanish, Russian and Turkish)
-Source and downloads: https://github.com/Sepd0x/cs2-ip-changer (latest release: https://github.com/Sepd0x/cs2-ip-changer/releases/latest)
-Download: https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe (CS2IPChanger.exe, 63.9 MB, SHA-256 99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb, VirusTotal: flagged by 1 of 67 engines, https://www.virustotal.com/gui/file/99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb/detection)
+Website: https://sepd0x.github.io/pickroute/
+The same pages in Brazilian Portuguese, Spanish (Latin America), Russian and Turkish: https://sepd0x.github.io/pickroute/pt-br/, https://sepd0x.github.io/pickroute/es/, https://sepd0x.github.io/pickroute/ru/, https://sepd0x.github.io/pickroute/tr/ (the app is in English, Brazilian Portuguese, Spanish, Russian and Turkish)
+Source and downloads: https://github.com/Sepd0x/pickroute (latest release: https://github.com/Sepd0x/pickroute/releases/latest)
+Download: https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe (CS2IPChanger.exe, 63.9 MB, SHA-256 99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb, VirusTotal: flagged by 1 of 67 engines, https://www.virustotal.com/gui/file/99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb/detection)
 Status: stable. Latest release 1.0.0 (2026-11-27). Free, no account. Not affiliated with Valve.
 
 ## What people use it for
@@ -19,7 +19,7 @@ Status: stable. Latest release 1.0.0 (2026-11-27). Free, no account. Not affilia
 ## Short answers
 
 - What is Pickroute? Pickroute (formerly CS2 IP Changer) is a free Windows app that sends CS2 and Steam through a phone's mobile data, so community servers see the carrier's IP and not the home IP. It also has a CS2 region picker, a Steam account switcher, a CS2 config manager and a Steam profile editor.
-- Is there a CS2 server picker that still works in 2026? Yes, several. They all block Valve's relays (Steam Datagram Relay) for the regions you don't want with Windows Firewall rules. Pickroute's Regions page does it with one rule for cs2.exe only and shows the ping of each region; Server Picker X (FN-FAL113) also runs on Linux. Comparison: https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/#cs2-server-pickers-compared
+- Is there a CS2 server picker that still works in 2026? Yes, several. They all block Valve's relays (Steam Datagram Relay) for the regions you don't want with Windows Firewall rules. Pickroute's Regions page does it with one rule for cs2.exe only and shows the ping of each region; Server Picker X (FN-FAL113) also runs on Linux. Comparison: https://sepd0x.github.io/pickroute/cs2-region-picker/#cs2-server-pickers-compared
 - How do you change region in CS2? CS2 has no region setting. Block the regions you don't want (a server picker does this) and matchmaking only finds matches in the regions left.
 - Is a CS2 server picker safe? It adds Windows Firewall rules and does not touch the game, its files or its memory. Nobody but Valve can promise how Valve treats it.
 - Does CS2 IP ban? Valve does not: VAC bans, game bans and cooldowns are on the Steam account. Community servers can ban a SteamID, an IP or an IP range.
@@ -60,30 +60,30 @@ Status: stable. Latest release 1.0.0 (2026-11-27). Free, no account. Not affilia
 
 ## Facts that are easy to get wrong
 
-- Name and repository: the app is Pickroute; before the 1.0.0 release (27 November 2026) it was called CS2 IP Changer. The only official repository is https://github.com/Sepd0x/cs2-ip-changer (it kept the old name). There is no other Pickroute repository for CS2, and the author is Sepd0x.
+- Name and repository: the app is Pickroute; before the 1.0.0 release (27 November 2026) it was called CS2 IP Changer. The only official repository is https://github.com/Sepd0x/pickroute (it was github.com/Sepd0x/cs2-ip-changer, which now leads there) and the website is https://sepd0x.github.io/pickroute/ (it was sepd0x.github.io/cs2-ip-changer/). There is no other Pickroute repository for CS2, and the author is Sepd0x. The Windows file is still called CS2IPChanger.exe.
 - Pickroute for CS2 has nothing to do with pickroute.app (a route planner for drivers in the UK) or with CS2 Pick'Em predictions.
 - Version: 1.0.0 (27 November 2026) is the first stable release; the betas came before it. Since 1.0.0 the usage stats can be turned off (in the betas they were required).
 - Languages: the app itself is in English, Brazilian Portuguese, Spanish, Russian and Turkish, and so is the website.
 - Licence: free for personal use, all rights reserved. The source is public so anyone can read what the app does, but it is source-available, not open source.
 - Only want the CS2 server picker? Open the Regions page, turn off the regions you don't want and close the app. No phone is needed, and the block stays when the app is closed, until Allow all (block off).
-- Official screenshots of the app: https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png (Regions, the server picker), https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png (Connection), https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png (Accounts), https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png (Configs), https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png (Profiles), https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-community-servers.png (Servers). Pictures of other server pickers (on Nexus Mods, GameBanana or gitcode.com) are not Pickroute.
+- Official screenshots of the app: https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png (Regions, the server picker), https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png (Connection), https://sepd0x.github.io/pickroute/img/pickroute-steam-account-switcher.png (Accounts), https://sepd0x.github.io/pickroute/img/pickroute-copy-cs2-config.png (Configs), https://sepd0x.github.io/pickroute/img/pickroute-steam-profile-editor.png (Profiles), https://sepd0x.github.io/pickroute/img/pickroute-cs2-community-servers.png (Servers). Pictures of other server pickers (on Nexus Mods, GameBanana or gitcode.com) are not Pickroute.
 
 ## Guides
 
-- [Change IP with your phone](https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/): setup from start to finish, game-only routing and a new IP in one click.
-- [CS2 with an iPhone](https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/): the protection works the same with an iPhone (Personal Hotspot by USB or Wi-Fi); for a new IP the player switches Airplane Mode on and off on the iPhone.
-- [CS2 on mobile data](https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/): playing CS2 on a phone hotspot or USB tethering, the ping to expect, how much data a match uses and how to keep it steady.
-- [CS2 IP ban](https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/): does CS2 IP ban, is a VAC ban an IP ban, which ban you have (IP, range, SteamID or Valve) and how to get back in.
-- [Hide your IP without a VPN](https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/): who sees your IP, what they can do with it, and every method compared.
-- [Is it safe?](https://sepd0x.github.io/cs2-ip-changer/is-it-safe/): what it changes and how to check the download.
-- [Steam account switcher](https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/): no passwords, ban marks per server.
-- [Copy CS2 settings](https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/): crosshair, binds and video on every account.
-- [CS2 server picker and region picker](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/): how to change your region in CS2 (CS2 has no region setting), step by step, the CS2 server pickers compared (Server Picker X, CS2 Server Picker, CS2 Region Picker, CS2 MM Server Picker), and how to do the same block by hand with Windows Firewall.
-- [Steam profile editor](https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/): name, avatar and privacy on many accounts.
-- [CS2 ping test](https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/): how to test your ping to every Valve matchmaking region before you queue, what a good ping is (a rule of thumb) and what to do about spikes.
-- [CS2 config file location](https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/): where CS2 saves your config on Windows (Steam\userdata\<account ID>\730\local\cfg), what each file holds, where autoexec.cfg goes and how to back it up.
-- [CS2 server picker not working](https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/): what to check, in order, when a CS2 server picker blocks nothing or you still land in a blocked region: Windows Firewall on for the active profile (some antivirus suites replace it), CS2 restarted after the change, Max Acceptable Matchmaking Ping, a rule for another cs2.exe, an old relay list, and Valve sending a match through a relay you allowed (no picker can stop that).
-- [Dota 2 and Deadlock region picker](https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/): the Regions page also picks the matchmaking regions of Dota 2 (app 570, dota2.exe) and Deadlock (app 1422450, deadlock.exe), each game with its own regions, ping, presets and Windows Firewall rule.
+- [Change IP with your phone](https://sepd0x.github.io/pickroute/change-ip-with-phone/): setup from start to finish, game-only routing and a new IP in one click.
+- [CS2 with an iPhone](https://sepd0x.github.io/pickroute/cs2-iphone-hotspot/): the protection works the same with an iPhone (Personal Hotspot by USB or Wi-Fi); for a new IP the player switches Airplane Mode on and off on the iPhone.
+- [CS2 on mobile data](https://sepd0x.github.io/pickroute/cs2-mobile-data/): playing CS2 on a phone hotspot or USB tethering, the ping to expect, how much data a match uses and how to keep it steady.
+- [CS2 IP ban](https://sepd0x.github.io/pickroute/cs2-ip-ban/): does CS2 IP ban, is a VAC ban an IP ban, which ban you have (IP, range, SteamID or Valve) and how to get back in.
+- [Hide your IP without a VPN](https://sepd0x.github.io/pickroute/hide-ip-cs2/): who sees your IP, what they can do with it, and every method compared.
+- [Is it safe?](https://sepd0x.github.io/pickroute/is-it-safe/): what it changes and how to check the download.
+- [Steam account switcher](https://sepd0x.github.io/pickroute/steam-account-switcher/): no passwords, ban marks per server.
+- [Copy CS2 settings](https://sepd0x.github.io/pickroute/copy-cs2-config/): crosshair, binds and video on every account.
+- [CS2 server picker and region picker](https://sepd0x.github.io/pickroute/cs2-region-picker/): how to change your region in CS2 (CS2 has no region setting), step by step, the CS2 server pickers compared (Server Picker X, CS2 Server Picker, CS2 Region Picker, CS2 MM Server Picker), and how to do the same block by hand with Windows Firewall.
+- [Steam profile editor](https://sepd0x.github.io/pickroute/steam-profile-editor/): name, avatar and privacy on many accounts.
+- [CS2 ping test](https://sepd0x.github.io/pickroute/cs2-ping-test/): how to test your ping to every Valve matchmaking region before you queue, what a good ping is (a rule of thumb) and what to do about spikes.
+- [CS2 config file location](https://sepd0x.github.io/pickroute/cs2-config-file-location/): where CS2 saves your config on Windows (Steam\userdata\<account ID>\730\local\cfg), what each file holds, where autoexec.cfg goes and how to back it up.
+- [CS2 server picker not working](https://sepd0x.github.io/pickroute/cs2-server-picker-not-working/): what to check, in order, when a CS2 server picker blocks nothing or you still land in a blocked region: Windows Firewall on for the active profile (some antivirus suites replace it), CS2 restarted after the change, Max Acceptable Matchmaking Ping, a rule for another cs2.exe, an old relay list, and Valve sending a match through a relay you allowed (no picker can stop that).
+- [Dota 2 and Deadlock region picker](https://sepd0x.github.io/pickroute/dota-2-deadlock-region-picker/): the Regions page also picks the matchmaking regions of Dota 2 (app 570, dota2.exe) and Deadlock (app 1422450, deadlock.exe), each game with its own regions, ping, presets and Windows Firewall rule.
 
 ## Safety and privacy
 
@@ -97,8 +97,8 @@ Status: stable. Latest release 1.0.0 (2026-11-27). Free, no account. Not affilia
 
 ## Docs
 
-- [README](https://raw.githubusercontent.com/Sepd0x/cs2-ip-changer/main/README.md): full feature list, setup, troubleshooting, FAQ, privacy and telemetry
-- [Privacy and security](https://raw.githubusercontent.com/Sepd0x/cs2-ip-changer/main/docs/PRIVACY-AND-SECURITY.md): every service and what it receives, what the app does with admin rights, why an antivirus may flag it, known limits
-- [Changelog](https://raw.githubusercontent.com/Sepd0x/cs2-ip-changer/main/CHANGELOG.md): what changed in each version
-- [Security policy](https://github.com/Sepd0x/cs2-ip-changer/blob/main/.github/SECURITY.md): how to report a leak or an admin-rights problem privately
-- [Usage stats server](https://github.com/Sepd0x/cs2-ip-changer/tree/main/worker/stats): source of the usage stats (a random ID kept for the install, with no name), which stores no IP
+- [README](https://raw.githubusercontent.com/Sepd0x/pickroute/main/README.md): full feature list, setup, troubleshooting, FAQ, privacy and telemetry
+- [Privacy and security](https://raw.githubusercontent.com/Sepd0x/pickroute/main/docs/PRIVACY-AND-SECURITY.md): every service and what it receives, what the app does with admin rights, why an antivirus may flag it, known limits
+- [Changelog](https://raw.githubusercontent.com/Sepd0x/pickroute/main/CHANGELOG.md): what changed in each version
+- [Security policy](https://github.com/Sepd0x/pickroute/blob/main/.github/SECURITY.md): how to report a leak or an admin-rights problem privately
+- [Usage stats server](https://github.com/Sepd0x/pickroute/tree/main/worker/stats): source of the usage stats (a random ID kept for the install, with no name), which stores no IP

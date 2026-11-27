@@ -22,13 +22,13 @@ try {
   await page.route('**/*', r => {
     const u = new URL(r.request().url());
     if (u.hostname !== '127.0.0.1') return r.abort();
-    const rel = u.pathname.replace('/cs2-ip-changer/', '');
+    const rel = u.pathname.replace('/pickroute/', '');
     if (rel === '__contacts.html') return r.fulfill({ body: HARNESS, contentType: 'text/html' });
     const f = path.join(siteDir, rel);
     if (fs.existsSync(f) && fs.statSync(f).isFile()) return r.fulfill({ path: f });
     return r.continue();
   });
-  await page.goto('http://127.0.0.1:7947/cs2-ip-changer/__contacts.html');
+  await page.goto('http://127.0.0.1:7947/pickroute/__contacts.html');
   await page.waitForFunction(() => window.__ready === 1 && window.__wd && window.__wd.contact, null, { timeout: 60000 });
   report = await page.evaluate(() => {
     const K = window.__wd.contact, fails = [], notes = {};

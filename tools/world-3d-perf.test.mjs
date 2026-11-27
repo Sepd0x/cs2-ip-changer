@@ -135,7 +135,7 @@ async function chrome() {
     try { dcBrowser = await pw.chromium.launch({ ...o, args: ['--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] }); break; } catch (e) { why = `Chromium did not start: ${e.message.split('\n')[0]}`; }
   }
   if (!dcBrowser) return { why };
-  const SITE = join(ROOT, 'site'), SHOTS = join(ROOT, 'docs', 'screenshots'), BASE = '/cs2-ip-changer';
+  const SITE = join(ROOT, 'site'), SHOTS = join(ROOT, 'docs', 'screenshots'), BASE = '/pickroute';
   const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2', '.json': 'application/json', '.txt': 'text/plain' };
   dcServer = createServer((q, s) => {
     const p = decodeURIComponent(q.url.split('?')[0]);

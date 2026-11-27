@@ -266,8 +266,8 @@ static class DesignSyncTests
         var offColor = badges.Where(b => !b.Contains("/actions/workflow/status/") && !b.EndsWith("-" + deepHex) && !b.Contains("color=" + deepHex)).ToList();
         check("README: os emblemas usam o AccentDeepColor do Theme.xaml (o do build fica com a cor do estado)", deepHex.Length == 6 && offColor.Count == 0, string.Join(", ", offColor));
         check("README: a versão e os downloads vêm do GitHub ao vivo, e o build é o ci.yml",
-            badges.Any(b => b.StartsWith("https://img.shields.io/github/v/release/Sepd0x/cs2-ip-changer")) && badges.Any(b => b.StartsWith("https://img.shields.io/github/downloads/Sepd0x/cs2-ip-changer/total"))
-            && badges.Any(b => b.StartsWith("https://img.shields.io/github/actions/workflow/status/Sepd0x/cs2-ip-changer/ci.yml")), "");
+            badges.Any(b => b.StartsWith("https://img.shields.io/github/v/release/Sepd0x/pickroute")) && badges.Any(b => b.StartsWith("https://img.shields.io/github/downloads/Sepd0x/pickroute/total"))
+            && badges.Any(b => b.StartsWith("https://img.shields.io/github/actions/workflow/status/Sepd0x/pickroute/ci.yml")), "");
         var relJson = JsonDocument.Parse(Txt("site/release.json")).RootElement;
         var vt = relJson.GetProperty("virustotal");
         var vtWant = $"VirusTotal-{vt.GetProperty("flagged").GetInt32()}%2F{vt.GetProperty("engines").GetInt32()}-{deepHex}";

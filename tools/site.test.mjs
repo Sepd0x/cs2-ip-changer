@@ -12,7 +12,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = resolve(process.env.SITE_DIR || join(ROOT, 'site'));   // SITE_DIR=<folder>: an older copy, to see a test fail before a fix
-const BASE = '/cs2-ip-changer';
+const BASE = '/pickroute';
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2', '.json': 'application/json' };
 
 async function findChromium() {

@@ -167,7 +167,7 @@ test('point 8: with GSC_KEY and GSC_SITE the daily cron keeps Google\'s search i
   // a key made just now for the test, in the PEM shape of a Google key file (the armour lines put together, so no key is in the file)
   const armour = (w) => `-----${w} ${['PRIVATE', 'KEY'].join(' ')}-----`;
   const pem = `${armour('BEGIN')}\n${b64.match(/.{1,64}/g).join('\n')}\n${armour('END')}\n`;
-  const env = { GSC_KEY: JSON.stringify({ client_email: 'stats@example.iam.gserviceaccount.com', private_key: pem }), GSC_SITE: 'https://sepd0x.github.io/cs2-ip-changer/' };
+  const env = { GSC_KEY: JSON.stringify({ client_email: 'stats@example.iam.gserviceaccount.com', private_key: pem }), GSC_SITE: 'https://sepd0x.github.io/pickroute/' };
   const asked = [];
   const fetchFn = async (url, init) => {
     asked.push(url);

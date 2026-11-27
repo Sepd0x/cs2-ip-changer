@@ -20,7 +20,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i > 0 ? process.argv[i + 1] : d; };
 const SITE = resolve(arg('site', join(ROOT, 'site')));
 const SHOTS = join(ROOT, 'docs', 'screenshots');
-const BASE = '/cs2-ip-changer';
+const BASE = '/pickroute';
 const LABEL = arg('label', 'run'), RUNS = +arg('runs', 3);
 const PAGES = arg('pages', 'home,cs2-ip-ban,cs2-region-picker').split(',');
 const PROFILES = {

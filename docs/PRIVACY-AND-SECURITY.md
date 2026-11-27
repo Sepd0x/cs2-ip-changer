@@ -1,6 +1,6 @@
 # Privacy and security
 
-What Pickroute sends where, what it does with admin rights, and what it can't protect you from. This page describes the code in this repo; if they ever disagree, the code is right and this page is a bug ([open an issue](https://github.com/Sepd0x/cs2-ip-changer/issues)).
+What Pickroute sends where, what it does with admin rights, and what it can't protect you from. This page describes the code in this repo; if they ever disagree, the code is right and this page is a bug ([open an issue](https://github.com/Sepd0x/pickroute/issues)).
 
 No software is risk-free, and this app runs as admin. Read this, [check your download](../README.md#check-your-download), and decide for yourself.
 
@@ -26,7 +26,7 @@ DNS: names like `ipwho.is` are looked up by Windows' normal DNS, which is your h
 
 ## Usage stats: who, why, for how long
 
-- **Who keeps them:** the author of this project (Sepd0x on GitHub). Contact: [GitHub issues](https://github.com/Sepd0x/cs2-ip-changer/issues) (don't paste your install ID there).
+- **Who keeps them:** the author of this project (Sepd0x on GitHub). Contact: [GitHub issues](https://github.com/Sepd0x/pickroute/issues) (don't paste your install ID there).
 - **What for:** finding and fixing bugs and making the app better. Never sold, shared or used for ads.
 - **Legal basis:** the author's legitimate interest in finding and fixing bugs (GDPR art. 6(1)(f)). You can object at any time: Turn off at the first start, or Settings > Send usage stats. Off, nothing is sent and nothing is counted.
 - **Where:** Cloudflare (Workers and D1) processes and stores them for the project.
@@ -85,7 +85,7 @@ Not used anywhere: `WriteProcessMemory`, `ReadProcessMemory`, `CreateRemoteThrea
 
 ## Updates
 
-The app installs an update only if the exe matches the release's SHA-256 and that `.sha256` file is signed with the project's own key, which never goes to GitHub. The signed message includes the version, so an older release can't come back under a newer tag. Every release exe is built by GitHub Actions from this source and has a [build attestation](https://github.com/Sepd0x/cs2-ip-changer/attestations).
+The app installs an update only if the exe matches the release's SHA-256 and that `.sha256` file is signed with the project's own key, which never goes to GitHub. The signed message includes the version, so an older release can't come back under a newer tag. Every release exe is built by GitHub Actions from this source and has a [build attestation](https://github.com/Sepd0x/pickroute/attestations).
 
 ## Known limits
 

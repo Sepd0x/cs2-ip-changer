@@ -387,7 +387,7 @@ export async function prune(db, now, { slice = 5000, maxRows = 20000 } = {}) {
 }
 
 const GH_HEADERS = { accept: 'application/vnd.github+json', 'user-agent': 'cs2ipc-stats-dashboard', 'x-github-api-version': '2022-11-28' };
-const repoOf = (env) => (REPO.test(env.GITHUB_REPO || '') ? env.GITHUB_REPO : 'Sepd0x/cs2-ip-changer');
+const repoOf = (env) => (REPO.test(env.GITHUB_REPO || '') ? env.GITHUB_REPO : 'Sepd0x/pickroute');
 
 /** Once a day, from GitHub's public API (no token): stars, forks, watchers, open issues and every release file's download count. */
 export async function snapshotGithub(db, env, fetchFn, now) {
@@ -415,7 +415,7 @@ export async function snapshotGithub(db, env, fetchFn, now) {
  * Beta.13 (the owner, point 8: what says "n\u00E3o medido" should be measured): Google's search impressions and clicks of the site, per
  * day, from the Search Console API, in the daily cron, kept in gh_daily as kind "search" (name impressions or clicks, day = the
  * day Google counted, written over while Google still updates it). Two secrets: GSC_KEY, the JSON key of a Google service account
- * that is a user (read only) of the site's Search Console property, and GSC_SITE, that property (https://sepd0x.github.io/cs2-ip-changer/).
+ * that is a user (read only) of the site's Search Console property, and GSC_SITE, that property (https://sepd0x.github.io/pickroute/).
  * Without them nothing is asked and the funnel still says "n\u00E3o medido". Only Google's daily totals for the whole site (dimension
  * date): no search terms, pages, countries or anything about a visitor.
  */

@@ -1,6 +1,6 @@
 # Pickroute: setup in detail
 
-The [Quick start](../README.md#quick-start) covers the usual case. This page has the details, and what to do when something goes wrong. A full walkthrough with pictures is on the website: [Change IP with your phone](https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/).
+The [Quick start](../README.md#quick-start) covers the usual case. This page has the details, and what to do when something goes wrong. A full walkthrough with pictures is on the website: [Change IP with your phone](https://sepd0x.github.io/pickroute/change-ip-with-phone/).
 
 - [Where to put the exe](#where-to-put-the-exe)
 - [The phone, the firewall, ADB, launch options, hotkeys and uninstalling](#the-phone-the-firewall-adb-launch-options-hotkeys-and-uninstalling)
@@ -39,7 +39,7 @@ The firewall rules stay in place when you close the app, on purpose, so your IP 
 
 Lag, or programs opened with CS2 losing their connection? Look at Connection quality in Checks. If it says Weak, the phone connection is the problem: see [Will my ping be worse?](FAQ.md#the-basics). In Whole PC mode, programs opened with CS2 go through the phone too, so a new IP cuts their connections: use Game only for them.
 
-Found a bug? [Open an issue](https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose) with the version (bottom left of the window) and the diagnostics (Log page > Save bug report).
+Found a bug? [Open an issue](https://github.com/Sepd0x/pickroute/issues/new/choose) with the version (bottom left of the window) and the diagnostics (Log page > Save bug report).
 
 ### What is in the bug report
 

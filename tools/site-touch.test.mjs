@@ -23,7 +23,7 @@ import { shotSource } from './shot-names.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = resolve(process.env.SITE_DIR || join(ROOT, 'site'));
-const BASE = '/cs2-ip-changer';
+const BASE = '/pickroute';
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2', '.json': 'application/json' };
 const GUIDES = readdirSync(SITE).filter((n) => existsSync(join(SITE, n, 'index.html')));
 const PAGES = ['index.html', '404.html', ...GUIDES.map((g) => `${g}/index.html`)];

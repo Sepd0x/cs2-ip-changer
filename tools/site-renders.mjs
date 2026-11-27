@@ -9,7 +9,7 @@
 //   node tools/site-renders.mjs --all           also the stills without the monitor (mast, racks, iphone, android)
 //   node tools/site-renders.mjs world-plug ...  only those (no --renders unless they are all of RENDERS)
 //   node tools/site-renders.mjs --out <folder>  a trial: the WebP go to <folder>, nothing in the repo changes
-//   node tools/site-renders.mjs --serve         only the server, to look at the home and the lab (/cs2-ip-changer/__lab.html)
+//   node tools/site-renders.mjs --serve         only the server, to look at the home and the lab (/pickroute/__lab.html)
 // The PNG it shot first stay in %TEMP%/cs2-site-renders (or --png <folder>).
 // Needs: Playwright with its Chromium (npm i playwright && npx playwright install chromium, in the repo or in any folder;
 // PLAYWRIGHT=<that folder> when it is not the repo or the global npm), and ffmpeg on the PATH.
@@ -23,7 +23,7 @@ import { pathToFileURL } from 'node:url';
 import { ROOT, RENDERS } from './shots.mjs';
 
 const SITE = join(ROOT, 'site');
-const BASE = '/cs2-ip-changer';
+const BASE = '/pickroute';
 
 // The home at each size the cover's <picture> picks: [width, height, device scale, phone]
 const POSTERS = {

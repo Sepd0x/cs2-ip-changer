@@ -1,6 +1,6 @@
 # Pickroute: FAQ
 
-Every question and answer in one place. The most common ones are also in the [README](../README.md#faq), and the guides on the [website](https://sepd0x.github.io/cs2-ip-changer/#guides) go deeper on each topic.
+Every question and answer in one place. The most common ones are also in the [README](../README.md#faq), and the guides on the [website](https://sepd0x.github.io/pickroute/#guides) go deeper on each topic.
 
 - [The basics](#the-basics)
 - [Bans](#bans)
@@ -54,7 +54,7 @@ After each change the app tells you whether the new IP is in a new /16 or in the
 No app can stop an admin from banning you. What it does is keep your home IP out of every server's ban list, so a ban never sticks to your house and getting back in takes a few seconds.
 
 **Does forcing a region get me banned?**<br>
-The Regions page doesn't touch the game, its files or its memory. It adds one outbound Windows Firewall rule that stops `cs2.exe` from reaching Valve's relays in the regions you turned off, so CS2 sees those regions as unreachable and matchmaking plays elsewhere. To the game it looks the same as a bad connection to those relays. Still, we can't speak for Valve and can't promise anything about how they treat it. Allow all (block off) removes the rule, and so does `--restore`. Turn off protection and No phone mode leave it on. More in the [region picker guide](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/).
+The Regions page doesn't touch the game, its files or its memory. It adds one outbound Windows Firewall rule that stops `cs2.exe` from reaching Valve's relays in the regions you turned off, so CS2 sees those regions as unreachable and matchmaking plays elsewhere. To the game it looks the same as a bad connection to those relays. Still, we can't speak for Valve and can't promise anything about how they treat it. Allow all (block off) removes the rule, and so does `--restore`. Turn off protection and No phone mode leave it on. More in the [region picker guide](https://sepd0x.github.io/pickroute/cs2-region-picker/).
 
 ## Your IP
 

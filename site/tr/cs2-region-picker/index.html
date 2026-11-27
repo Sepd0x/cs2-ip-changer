@@ -6,7 +6,7 @@
 <title>CS2 server picker ve region picker: region'ını değiştir</title>
 <meta name="description" content="Windows için ücretsiz CS2, Dota 2 ve Deadlock server picker: istemediğin matchmaking region'larını engelle, her birinin ping'ini gör. Kolayca geri alınır.">
 <meta name="robots" content="index, follow, max-image-preview:large">
-<link rel="canonical" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/"><!--i18n--><link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/"><link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-region-picker/"><link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-region-picker/"><link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-region-picker/"><link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/"><link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/"><meta property="og:locale:alternate" content="en_US"><meta property="og:locale:alternate" content="pt_BR"><meta property="og:locale:alternate" content="es_LA"><meta property="og:locale:alternate" content="ru_RU"><style>/* the language picker (tools/site-i18n.mjs): a quiet link in the header, the four names in the footer */.lang-pick{position:relative;display:inline-flex;margin:0;counter-increment:none}details.lang-pick{border:0!important}.lang-pick::details-content{block-size:auto;overflow:visible;transition:none}.lang-pick>summary::before,.lang-pick>summary::after{content:none}.lang-pick>summary{position:relative;list-style:none;display:inline-flex;transition:color .2s;align-items:center;gap:.35rem;min-height:44px;min-width:44px;justify-content:center;padding:0 .5rem;border-radius:999px;color:var(--ink2);font:500 .8125rem/1 var(--mono,ui-monospace,monospace);letter-spacing:.04em;cursor:pointer;-webkit-user-select:none;user-select:none}.lang-pick>summary::-webkit-details-marker{display:none}.lang-pick>summary svg{width:1rem;height:1rem;flex:none}.lang-pick[open]>summary{color:var(--ink)}.lang-pick>summary:focus-visible{outline:2px solid var(--t-accent);outline-offset:2px}.lang-pick ul{position:absolute;top:calc(100% + .35rem);right:0;z-index:60;margin:0;padding:.35rem;list-style:none;min-width:12.5rem;background:var(--bg2,var(--t-surface));border:1px solid var(--line,var(--t-line));border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.45)}.lang-pick li a{display:flex;align-items:center;min-height:44px;padding:0 .75rem;border-radius:8px;color:var(--ink2);text-decoration:none;font:400 .9375rem/1.2 var(--sans,system-ui,sans-serif);white-space:nowrap}.lang-pick li a[aria-current]{color:var(--ink)}.lang-pick li a[aria-current]::after{content:"";width:.375rem;height:.375rem;margin-left:auto;border-radius:50%;background:var(--t-accent)}.lang-pick li a:focus-visible{outline:2px solid var(--t-accent);outline-offset:-2px}.lang-foot{display:flex;flex-wrap:wrap;gap:.25rem 1.25rem}.lang-foot a{display:inline-flex;align-items:center;min-height:44px;color:inherit;text-decoration:none}.lang-foot a[aria-current]{color:var(--ink)}.lang-foot a:focus-visible{outline:2px solid var(--t-accent);outline-offset:2px}.lang-hint{position:fixed;left:50%;bottom:calc(1rem + env(safe-area-inset-bottom,0px));z-index:70;transform:translateX(-50%);display:flex;align-items:center;gap:.5rem;width:max-content;max-width:calc(100vw - 2rem);padding:.375rem .375rem .375rem 1rem;background:var(--bg2,var(--t-surface));border:1px solid var(--line,var(--t-line));border-radius:999px;box-shadow:0 12px 32px rgba(0,0,0,.45);color:var(--ink2);font:400 .875rem/1.3 var(--sans,system-ui,sans-serif)}.lang-hint a{display:inline-flex;align-items:center;min-height:44px;padding:0 .875rem;border-radius:999px;background:var(--t-accent-deep);color:#fff;text-decoration:none;font-weight:600;white-space:nowrap}.lang-hint button{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;flex:none;border:0;border-radius:50%;background:none;color:inherit;font-size:1.25rem;cursor:pointer}.lang-hint a:focus-visible,.lang-hint button:focus-visible{outline:2px solid var(--t-accent);outline-offset:2px}@media (hover:hover){.lang-pick>summary:hover,.lang-pick li a:hover,.lang-foot a:hover{color:var(--ink)}.lang-pick li a:hover{background:var(--bg3,var(--t-surface2))}.lang-hint button:hover{color:var(--ink)}}@media (max-width:560px){.lang-hint{left:1rem;right:1rem;transform:none;width:auto;display:grid;grid-template-columns:minmax(0,1fr) 44px;align-items:center;gap:.25rem .5rem;padding:.875rem .5rem .75rem 1rem;border-radius:16px;font-size:.9375rem;line-height:1.4}.lang-hint>span{color:var(--ink)}.lang-hint a{grid-column:1/-1;grid-row:2;justify-content:center;min-height:48px;margin-right:.5rem;font-size:.9375rem;background:var(--t-accent);color:var(--t-bg)}.lang-hint button{grid-column:2;grid-row:1;align-self:start;margin-top:-.6rem}}html:has(.thumb.on) .lang-hint{bottom:calc(5.25rem + env(safe-area-inset-bottom,0px))}.menu-langs{display:none}@media (max-width:759px),(max-height:540px) and (orientation:landscape){.top .lang-pick{display:none}.menu-langs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.25rem;grid-column:1/-1;margin-top:.5rem;padding-top:.75rem;border-top:1px solid var(--line,var(--t-line))}.menu-langs a[aria-current]{color:var(--ink)}}</style><!--/i18n-->
+<link rel="canonical" href="https://sepd0x.github.io/pickroute/tr/cs2-region-picker/"><!--i18n--><link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-region-picker/"><link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-region-picker/"><link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-region-picker/"><link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-region-picker/"><link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-region-picker/"><link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-region-picker/"><meta property="og:locale:alternate" content="en_US"><meta property="og:locale:alternate" content="pt_BR"><meta property="og:locale:alternate" content="es_LA"><meta property="og:locale:alternate" content="ru_RU"><style>/* the language picker (tools/site-i18n.mjs): a quiet link in the header, the four names in the footer */.lang-pick{position:relative;display:inline-flex;margin:0;counter-increment:none}details.lang-pick{border:0!important}.lang-pick::details-content{block-size:auto;overflow:visible;transition:none}.lang-pick>summary::before,.lang-pick>summary::after{content:none}.lang-pick>summary{position:relative;list-style:none;display:inline-flex;transition:color .2s;align-items:center;gap:.35rem;min-height:44px;min-width:44px;justify-content:center;padding:0 .5rem;border-radius:999px;color:var(--ink2);font:500 .8125rem/1 var(--mono,ui-monospace,monospace);letter-spacing:.04em;cursor:pointer;-webkit-user-select:none;user-select:none}.lang-pick>summary::-webkit-details-marker{display:none}.lang-pick>summary svg{width:1rem;height:1rem;flex:none}.lang-pick[open]>summary{color:var(--ink)}.lang-pick>summary:focus-visible{outline:2px solid var(--t-accent);outline-offset:2px}.lang-pick ul{position:absolute;top:calc(100% + .35rem);right:0;z-index:60;margin:0;padding:.35rem;list-style:none;min-width:12.5rem;background:var(--bg2,var(--t-surface));border:1px solid var(--line,var(--t-line));border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.45)}.lang-pick li a{display:flex;align-items:center;min-height:44px;padding:0 .75rem;border-radius:8px;color:var(--ink2);text-decoration:none;font:400 .9375rem/1.2 var(--sans,system-ui,sans-serif);white-space:nowrap}.lang-pick li a[aria-current]{color:var(--ink)}.lang-pick li a[aria-current]::after{content:"";width:.375rem;height:.375rem;margin-left:auto;border-radius:50%;background:var(--t-accent)}.lang-pick li a:focus-visible{outline:2px solid var(--t-accent);outline-offset:-2px}.lang-foot{display:flex;flex-wrap:wrap;gap:.25rem 1.25rem}.lang-foot a{display:inline-flex;align-items:center;min-height:44px;color:inherit;text-decoration:none}.lang-foot a[aria-current]{color:var(--ink)}.lang-foot a:focus-visible{outline:2px solid var(--t-accent);outline-offset:2px}.lang-hint{position:fixed;left:50%;bottom:calc(1rem + env(safe-area-inset-bottom,0px));z-index:70;transform:translateX(-50%);display:flex;align-items:center;gap:.5rem;width:max-content;max-width:calc(100vw - 2rem);padding:.375rem .375rem .375rem 1rem;background:var(--bg2,var(--t-surface));border:1px solid var(--line,var(--t-line));border-radius:999px;box-shadow:0 12px 32px rgba(0,0,0,.45);color:var(--ink2);font:400 .875rem/1.3 var(--sans,system-ui,sans-serif)}.lang-hint a{display:inline-flex;align-items:center;min-height:44px;padding:0 .875rem;border-radius:999px;background:var(--t-accent-deep);color:#fff;text-decoration:none;font-weight:600;white-space:nowrap}.lang-hint button{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;flex:none;border:0;border-radius:50%;background:none;color:inherit;font-size:1.25rem;cursor:pointer}.lang-hint a:focus-visible,.lang-hint button:focus-visible{outline:2px solid var(--t-accent);outline-offset:2px}@media (hover:hover){.lang-pick>summary:hover,.lang-pick li a:hover,.lang-foot a:hover{color:var(--ink)}.lang-pick li a:hover{background:var(--bg3,var(--t-surface2))}.lang-hint button:hover{color:var(--ink)}}@media (max-width:560px){.lang-hint{left:1rem;right:1rem;transform:none;width:auto;display:grid;grid-template-columns:minmax(0,1fr) 44px;align-items:center;gap:.25rem .5rem;padding:.875rem .5rem .75rem 1rem;border-radius:16px;font-size:.9375rem;line-height:1.4}.lang-hint>span{color:var(--ink)}.lang-hint a{grid-column:1/-1;grid-row:2;justify-content:center;min-height:48px;margin-right:.5rem;font-size:.9375rem;background:var(--t-accent);color:var(--t-bg)}.lang-hint button{grid-column:2;grid-row:1;align-self:start;margin-top:-.6rem}}html:has(.thumb.on) .lang-hint{bottom:calc(5.25rem + env(safe-area-inset-bottom,0px))}.menu-langs{display:none}@media (max-width:759px),(max-height:540px) and (orientation:landscape){.top .lang-pick{display:none}.menu-langs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.25rem;grid-column:1/-1;margin-top:.5rem;padding-top:.75rem;border-top:1px solid var(--line,var(--t-line))}.menu-langs a[aria-current]{color:var(--ink)}}</style><!--/i18n-->
 <link rel="icon" href="../../img/favicon.ico" sizes="32x32"><link rel="icon" href="../../img/favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="../../img/apple-touch-icon.png">
 <meta name="theme-color" content="#0b0b0c">
 <meta property="og:type" content="article">
@@ -14,13 +14,13 @@
 <meta property="og:locale" content="tr_TR">
 <meta property="og:title" content="CS2 server picker ve region picker: region'ını değiştir">
 <meta property="og:description" content="Windows için ücretsiz CS2, Dota 2 ve Deadlock server picker: istemediğin matchmaking region'larını engelle, her birinin ping'ini gör. Kolayca geri alınır.">
-<meta property="og:url" content="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/">
-<meta property="og:image" content="https://sepd0x.github.io/cs2-ip-changer/img/social-preview.png?v=1.0.0">
+<meta property="og:url" content="https://sepd0x.github.io/pickroute/tr/cs2-region-picker/">
+<meta property="og:image" content="https://sepd0x.github.io/pickroute/img/social-preview.png?v=1.0.0">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="640">
 <meta property="og:image:alt" content="Pickroute: CS2'nin nerede oynayacağını seç, uygulamanın pinge göre bölge kadranında">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://sepd0x.github.io/cs2-ip-changer/img/social-preview.png?v=1.0.0">
+<meta name="twitter:image" content="https://sepd0x.github.io/pickroute/img/social-preview.png?v=1.0.0">
 <meta name="twitter:image:alt" content="Pickroute: CS2'nin nerede oynayacağını seç, uygulamanın pinge göre bölge kadranında">
 <link rel="preload" href="../../fonts/funnel-sans.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../../fonts/funnel-display.woff2" as="font" type="font/woff2" crossorigin>
@@ -69,28 +69,28 @@ addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.docume
  "@graph": [
   {
    "@type": "WebPage",
-   "@id": "https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/#page",
-   "url": "https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/",
+   "@id": "https://sepd0x.github.io/pickroute/tr/cs2-region-picker/#page",
+   "url": "https://sepd0x.github.io/pickroute/tr/cs2-region-picker/",
    "name": "CS2 server picker ve region picker: region'ını değiştir",
    "description": "Windows için ücretsiz CS2, Dota 2 ve Deadlock server picker: istemediğin matchmaking region'larını engelle, her birinin ping'ini gör. Kolayca geri alınır.",
    "inLanguage": "tr",
    "isPartOf": {
-    "@id": "https://sepd0x.github.io/cs2-ip-changer/tr/#website"
+    "@id": "https://sepd0x.github.io/pickroute/tr/#website"
    },
    "about": {
-    "@id": "https://sepd0x.github.io/cs2-ip-changer/tr/#app"
+    "@id": "https://sepd0x.github.io/pickroute/tr/#app"
    },
    "author": {
-    "@id": "https://sepd0x.github.io/cs2-ip-changer/tr/#author"
+    "@id": "https://sepd0x.github.io/pickroute/tr/#author"
    },
    "datePublished": "2026-10-31",
    "dateModified": "2026-11-27",
    "breadcrumb": {
-    "@id": "https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/#crumbs"
+    "@id": "https://sepd0x.github.io/pickroute/tr/cs2-region-picker/#crumbs"
    },
    "primaryImageOfPage": {
     "@type": "ImageObject",
-    "url": "https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png",
+    "url": "https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png",
     "width": 1240,
     "height": 800,
     "caption": "Pickroute, CS2 sunucu seçici (server picker). Regions sayfası: tüm matchmaking bölgeleri bir kadranda ve kıtalara göre bir listede, her birinin pingiyle; sınırı aşanlar cs2.exe için engelli"
@@ -98,35 +98,35 @@ addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.docume
   },
   {
    "@type": "Person",
-   "@id": "https://sepd0x.github.io/cs2-ip-changer/tr/#author",
+   "@id": "https://sepd0x.github.io/pickroute/tr/#author",
    "name": "Sepd0x",
    "url": "https://github.com/Sepd0x"
   },
   {
    "@type": "BreadcrumbList",
-   "@id": "https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/#crumbs",
+   "@id": "https://sepd0x.github.io/pickroute/tr/cs2-region-picker/#crumbs",
    "itemListElement": [
     {
      "@type": "ListItem",
      "position": 1,
      "name": "Pickroute",
-     "item": "https://sepd0x.github.io/cs2-ip-changer/tr/"
+     "item": "https://sepd0x.github.io/pickroute/tr/"
     },
     {
      "@type": "ListItem",
      "position": 2,
      "name": "CS2 region seçici",
-     "item": "https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/"
+     "item": "https://sepd0x.github.io/pickroute/tr/cs2-region-picker/"
     }
    ]
   },
   {
    "@type": "HowTo",
-   "@id": "https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/#howto",
+   "@id": "https://sepd0x.github.io/pickroute/tr/cs2-region-picker/#howto",
    "name": "CS2 server picker nasıl kullanılır, adım adım",
    "description": "Windows için ücretsiz CS2, Dota 2 ve Deadlock server picker: istemediğin matchmaking region'larını engelle, her birinin ping'ini gör. Kolayca geri alınır.",
    "inLanguage": "tr",
-   "image": "https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png",
+   "image": "https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png",
    "tool": [
     {
      "@type": "HowToTool",
@@ -139,48 +139,48 @@ addEventListener('pageshow',function(e){if(e.persisted)end()})})(document.docume
      "position": 1,
      "name": "Uygulamayı al",
      "text": "CS2IPChanger.exe'yi indir ve çalıştır. Admin ister, çünkü güvenlik duvarı kuralları bir sistem ayarıdır. Regions için telefona ya da korumaya gerek yok.",
-     "url": "https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/#step-1"
+     "url": "https://sepd0x.github.io/pickroute/tr/cs2-region-picker/#step-1"
     },
     {
      "@type": "HowToStep",
      "position": 2,
      "name": "Regions'ı aç ve ping'i ölç",
      "text": "Liste Valve'ın kendi relay listesinden gelir, kıta ve şehre göre. Refresh'e bas: uygulama her region'ın ping'ini oyunun ulaşacağı yoldan ölçer.",
-     "url": "https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/#step-2"
+     "url": "https://sepd0x.github.io/pickroute/tr/cs2-region-picker/#step-2"
     },
     {
      "@type": "HowToStep",
      "position": 3,
      "name": "İstemediğin region'ları kapat",
      "text": "Tek tek işaretini kaldır ya da bir kısayol kullan: Only this region, Closest 3, sadece kendi kıtan (Europe only gibi) veya Ping under X ms. En az bir region açık kalsın.",
-     "url": "https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/#step-3"
+     "url": "https://sepd0x.github.io/pickroute/tr/cs2-region-picker/#step-3"
     },
     {
      "@type": "HowToStep",
      "position": 4,
      "name": "Engeli kontrol et",
      "text": "Listenin altında sayfa, CS2'nin kaç region'da oynayabildiğini ve \"Block is on. Only CS2 is affected.\" yazısını gösterir.",
-     "url": "https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/#step-4"
+     "url": "https://sepd0x.github.io/pickroute/tr/cs2-region-picker/#step-4"
     },
     {
      "@type": "HowToStep",
      "position": 5,
      "name": "CS2'yi başlat ve kuyruğa gir",
      "text": "CS2 region'ları açılırken ölçer, bu yüzden değişiklikten sonra başlat. Açık bıraktığın en yavaş region CS2'nin Max Acceptable Matchmaking Ping değerinin üstündeyse sayfa, Settings > Game içinde hangi sayıyı girmen gerektiğini söyler.",
-     "url": "https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/#step-5"
+     "url": "https://sepd0x.github.io/pickroute/tr/cs2-region-picker/#step-5"
     },
     {
      "@type": "HowToStep",
      "position": 6,
      "name": "Geri al",
      "text": "Regions'ta Allow all (block off)'a tıkla. CS2IPChanger.exe --restore da kuralı kaldırır.",
-     "url": "https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/#step-6"
+     "url": "https://sepd0x.github.io/pickroute/tr/cs2-region-picker/#step-6"
     }
    ]
   },
   {
    "@type": "FAQPage",
-   "@id": "https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/#faq",
+   "@id": "https://sepd0x.github.io/pickroute/tr/cs2-region-picker/#faq",
    "mainEntity": [
     {
      "@type": "Question",
@@ -929,9 +929,9 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
       <a class="hide-s" href="../is-it-safe/">Güvenli mi?</a>
       <a class="hide-s" href="../#guides">Rehberler</a><!--i18n:pick-->
       <details class="lang-pick"><summary aria-label="Dil: Türkçe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.3 3.6 5.2 3.6 8.5s-1.2 6.2-3.6 8.5c-2.4-2.3-3.6-5.2-3.6-8.5s1.2-6.2 3.6-8.5z"/></svg><span>TR</span></summary><ul><li><a href="../../cs2-region-picker/" hreflang="en" lang="en" data-lang="en">English</a></li><li><a href="../../pt-br/cs2-region-picker/" hreflang="pt-BR" lang="pt-BR" data-lang="pt-br">Português (Brasil)</a></li><li><a href="../../es/cs2-region-picker/" hreflang="es" lang="es" data-lang="es">Español</a></li><li><a href="../../ru/cs2-region-picker/" hreflang="ru" lang="ru" data-lang="ru">Русский</a></li><li><a href="../../tr/cs2-region-picker/" hreflang="tr" lang="tr" data-lang="tr" aria-current="true">Türkçe</a></li></ul></details><!--/i18n:pick-->
-      <a class="btn btn-s btn-ghost" href="https://github.com/Sepd0x/cs2-ip-changer" title="Pickroute'a GitHub'da yıldız ver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg><span>Star<span class="hide-s"> GitHub'da</span></span></a>
-      <a class="btn btn-s get-desk" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">İndir</a>
-      <button class="btn btn-s get-top" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/">PC'ye yolla</button>
+      <a class="btn btn-s btn-ghost" href="https://github.com/Sepd0x/pickroute" title="Pickroute'a GitHub'da yıldız ver"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg><span>Star<span class="hide-s"> GitHub'da</span></span></a>
+      <a class="btn btn-s get-desk" href="https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe">İndir</a>
+      <button class="btn btn-s get-top" type="button" data-share data-copy="https://sepd0x.github.io/pickroute/tr/cs2-region-picker/">PC'ye yolla</button>
     </nav>
   </div>
   <span class="prog" aria-hidden="true"></span>
@@ -965,8 +965,8 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
     <aside class="rail" aria-label="İndirme ve içerik">
       <div class="rail-in">
         <div class="gcard">
-          <div class="get-desk"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Windows için indir</a><p class="rel">v1.0.0 · 63,9 MB · 27 Kas 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Sürüm notları ve checksum'lar</a></p><p class="rel-ss">Windows "Windows bilgisayarınızı korudu" diyebilir: Daha fazla bilgi'ye, sonra Yine de çalıştır'a tıkla. <a href="../is-it-safe/">Neden güvenli</a></p></div>
-          <div class="get-phone"><p class="get-note">Bu bir Windows uygulaması. Bu sayfayı PC'nde aç:</p><div class="copyrow"><code class="url"><span class="nw">sepd0x.github.io</span>/<wbr><span class="nw">cs2-ip-changer</span>/<wbr><span class="nw">tr</span>/<wbr><span class="nw">cs2-region-picker</span></code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/">PC'ye yolla</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Yine de .exe'yi indir</a></div>
+          <div class="get-desk"><a class="btn" href="https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Windows için indir</a><p class="rel">v1.0.0 · 63,9 MB · 27 Kas 2026 · <a href="https://github.com/Sepd0x/pickroute/releases/latest">Sürüm notları ve checksum'lar</a></p><p class="rel-ss">Windows "Windows bilgisayarınızı korudu" diyebilir: Daha fazla bilgi'ye, sonra Yine de çalıştır'a tıkla. <a href="../is-it-safe/">Neden güvenli</a></p></div>
+          <div class="get-phone"><p class="get-note">Bu bir Windows uygulaması. Bu sayfayı PC'nde aç:</p><div class="copyrow"><code class="url"><span class="nw">sepd0x.github.io</span>/<wbr><span class="nw">pickroute</span>/<wbr><span class="nw">tr</span>/<wbr><span class="nw">cs2-region-picker</span></code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/pickroute/tr/cs2-region-picker/">PC'ye yolla</button></div><a class="link" href="https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe">Yine de .exe'yi indir</a></div>
           <ul class="checks" aria-label="Bir bakışta"><li>Ücretsiz</li><li>Kaynak kodu GitHub'da</li><li>Hesap yok</li><li>cs2.exe'ye dokunmaz</li><li><a href="https://www.virustotal.com/gui/file/99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb/detection">VirusTotal raporu</a></li></ul>
           <p class="safe">Windows bir kez uyarır: .exe henüz kod imzalı değil. Güncellemeler imzayla doğrulanır. <a href="../is-it-safe/">Nasıl kontrol edilir</a></p>
           <p class="req">Windows 10/11 · Android veya iPhone, USB kablo ya da hotspot ile · mobil veri kullanır · yönetici · uygulama Türkçe (ayrıca English, Português, Español, Русский)</p>
@@ -999,8 +999,8 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
       <h2 id="how-cs2-picks-your-region">CS2 region'ını nasıl seçer</h2>
       <p>Kuyruğa girdiğinde oyun, her region'daki Valve relay'lerine (Steam Datagram Relay) ping'ini ölçer ve ping'in iyi olduğu yerde maç arar. Settings &gt; Game içindeki Max Acceptable Matchmaking Ping sadece kabul ettiğin en yüksek ping'i belirler; region seçmez.</p><p>Yani seçmenin tek yolu, istemediğin region'ları ulaşılamaz yapmak. <code>cs2.exe</code> bir region'ın relay'lerine ulaşamazsa CS2 o region'ı yok sayar ve başka yerde arar. CS2 region picker ya da server picker tam olarak bunu yapar (region changer, region selector, region blocker, region lock da denir: hepsi aynı araç), Regions sayfası da tek bir Windows Güvenlik Duvarı kuralıyla bunu yapar.</p>
       <aside class="gget gcard" aria-label="İndir">
-          <div class="get-desk"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Windows için indir</a><p class="rel">v1.0.0 · 63,9 MB · 27 Kas 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Sürüm notları ve checksum'lar</a></p><p class="rel-ss">Windows "Windows bilgisayarınızı korudu" diyebilir: Daha fazla bilgi'ye, sonra Yine de çalıştır'a tıkla. <a href="../is-it-safe/">Neden güvenli</a></p></div>
-          <div class="get-phone"><p class="get-note">Bu bir Windows uygulaması. Bu sayfayı PC'nde aç:</p><div class="copyrow"><code class="url"><span class="nw">sepd0x.github.io</span>/<wbr><span class="nw">cs2-ip-changer</span>/<wbr><span class="nw">tr</span>/<wbr><span class="nw">cs2-region-picker</span></code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/">PC'ye yolla</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Yine de .exe'yi indir</a></div>
+          <div class="get-desk"><a class="btn" href="https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Windows için indir</a><p class="rel">v1.0.0 · 63,9 MB · 27 Kas 2026 · <a href="https://github.com/Sepd0x/pickroute/releases/latest">Sürüm notları ve checksum'lar</a></p><p class="rel-ss">Windows "Windows bilgisayarınızı korudu" diyebilir: Daha fazla bilgi'ye, sonra Yine de çalıştır'a tıkla. <a href="../is-it-safe/">Neden güvenli</a></p></div>
+          <div class="get-phone"><p class="get-note">Bu bir Windows uygulaması. Bu sayfayı PC'nde aç:</p><div class="copyrow"><code class="url"><span class="nw">sepd0x.github.io</span>/<wbr><span class="nw">pickroute</span>/<wbr><span class="nw">tr</span>/<wbr><span class="nw">cs2-region-picker</span></code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/pickroute/tr/cs2-region-picker/">PC'ye yolla</button></div><a class="link" href="https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe">Yine de .exe'yi indir</a></div>
           <ul class="checks" aria-label="Bir bakışta"><li>Ücretsiz</li><li>Kaynak kodu GitHub'da</li><li>Hesap yok</li><li>cs2.exe'ye dokunmaz</li><li><a href="https://www.virustotal.com/gui/file/99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb/detection">VirusTotal raporu</a></li></ul>
           <p class="safe">Windows bir kez uyarır: .exe henüz kod imzalı değil. Güncellemeler imzayla doğrulanır. <a href="../is-it-safe/">Nasıl kontrol edilir</a></p>
           <p class="req">Windows 10/11 · Android veya iPhone, USB kablo ya da hotspot ile · mobil veri kullanır · yönetici · uygulama Türkçe (ayrıca English, Português, Español, Русский)</p>
@@ -1044,9 +1044,9 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
         <li class="rv" style="--i:1"><a href="../steam-account-switcher/"><b>Steam hesap değiştirici</b><span>Şifre yok, sunucu başına ban işareti.</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="m14 6 6 6-6 6"/></svg></a></li>
         <li class="rv" style="--i:2"><a href="../is-it-safe/"><b>Güvenli mi?</b><span>Neyi değiştirir ve indirmeyi nasıl doğrularsın.</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16"/><path d="m14 6 6 6-6 6"/></svg></a></li>
       </ul>
-      <div class="end"><div class="get-desk"><a class="btn" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Windows için indir</a><p class="rel">v1.0.0 · 63,9 MB · 27 Kas 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">Sürüm notları ve checksum'lar</a></p><p class="rel-ss">Windows "Windows bilgisayarınızı korudu" diyebilir: Daha fazla bilgi'ye, sonra Yine de çalıştır'a tıkla. <a href="../is-it-safe/">Neden güvenli</a></p></div>
-          <div class="get-phone"><p class="get-note">Bu bir Windows uygulaması. Bu sayfayı PC'nde aç:</p><div class="copyrow"><code class="url"><span class="nw">sepd0x.github.io</span>/<wbr><span class="nw">cs2-ip-changer</span>/<wbr><span class="nw">tr</span>/<wbr><span class="nw">cs2-region-picker</span></code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/">PC'ye yolla</button></div><a class="link" href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">Yine de .exe'yi indir</a></div><p class="req">Ücretsiz · Windows 10/11 · Android veya iPhone, USB kablo ya da hotspot ile · mobil veri kullanır · yönetici · uygulama Türkçe (ayrıca English, Português, Español, Русский)</p></div>
-      <p class="gstar">Işe yaradı mı? <a href="https://github.com/Sepd0x/cs2-ip-changer">GitHub'da bir star</a> diğer oyuncuların bulmasına yardım eder.</p>
+      <div class="end"><div class="get-desk"><a class="btn" href="https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Windows için indir</a><p class="rel">v1.0.0 · 63,9 MB · 27 Kas 2026 · <a href="https://github.com/Sepd0x/pickroute/releases/latest">Sürüm notları ve checksum'lar</a></p><p class="rel-ss">Windows "Windows bilgisayarınızı korudu" diyebilir: Daha fazla bilgi'ye, sonra Yine de çalıştır'a tıkla. <a href="../is-it-safe/">Neden güvenli</a></p></div>
+          <div class="get-phone"><p class="get-note">Bu bir Windows uygulaması. Bu sayfayı PC'nde aç:</p><div class="copyrow"><code class="url"><span class="nw">sepd0x.github.io</span>/<wbr><span class="nw">pickroute</span>/<wbr><span class="nw">tr</span>/<wbr><span class="nw">cs2-region-picker</span></code><button class="btn" type="button" data-share data-copy="https://sepd0x.github.io/pickroute/tr/cs2-region-picker/">PC'ye yolla</button></div><a class="link" href="https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe">Yine de .exe'yi indir</a></div><p class="req">Ücretsiz · Windows 10/11 · Android veya iPhone, USB kablo ya da hotspot ile · mobil veri kullanır · yönetici · uygulama Türkçe (ayrıca English, Português, Español, Русский)</p></div>
+      <p class="gstar">Işe yaradı mı? <a href="https://github.com/Sepd0x/pickroute">GitHub'da bir star</a> diğer oyuncuların bulmasına yardım eder.</p>
     </nav>
   </div>
   </div>
@@ -1061,7 +1061,7 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
     </div>
     <nav aria-labelledby="f1"><h3 id="f1">Ürün</h3><ul><li><a href="../#features">Özellikler</a></li><li><a href="../#how">Nasıl çalışır</a></li><li><a href="../#vpn">Pickroute mı, VPN mi?</a></li><li><a href="../#setup">Kurulum</a></li><li><a href="../#faq">SSS</a></li></ul></nav>
     <nav aria-labelledby="f2"><h3 id="f2">Rehberler</h3><ul><li><a href="../change-ip-with-phone/">Telefonunla IP değiştir</a></li><li><a href="../cs2-iphone-hotspot/">iPhone ile CS2</a></li><li><a href="../cs2-mobile-data/">Mobil veride CS2</a></li><li><a href="../cs2-ip-ban/">CS2 IP banı</a></li><li><a href="../hide-ip-cs2/">VPN olmadan IP'ni gizle</a></li><li><a href="../is-it-safe/">Güvenli mi?</a></li><li><a href="../steam-account-switcher/">Steam hesap değiştirici</a></li><li><a href="../copy-cs2-config/">CS2 ayarlarını kopyala</a></li><li><a href="../cs2-region-picker/">CS2 region seçici</a></li><li><a href="../steam-profile-editor/">Steam profil düzenleyici</a></li><li><a href="../cs2-ping-test/">CS2 ping testi</a></li><li><a href="../cs2-config-file-location/">CS2 config dosyasının yeri</a></li><li><a href="../cs2-server-picker-not-working/">Server picker çalışmıyor</a></li><li><a href="../dota-2-deadlock-region-picker/">Dota 2 ve Deadlock region'ları</a></li></ul></nav>
-    <nav aria-labelledby="f3"><h3 id="f3">Proje</h3><ul><li><a href="https://github.com/Sepd0x/cs2-ip-changer">GitHub'da kaynak kod</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/releases">Releases</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/blob/main/CHANGELOG.md">Changelog</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer#privacy">Gizlilik</a></li><li><a href="https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose">Hata bildir</a></li></ul></nav>
+    <nav aria-labelledby="f3"><h3 id="f3">Proje</h3><ul><li><a href="https://github.com/Sepd0x/pickroute">GitHub'da kaynak kod</a></li><li><a href="https://github.com/Sepd0x/pickroute/releases">Releases</a></li><li><a href="https://github.com/Sepd0x/pickroute/blob/main/CHANGELOG.md">Changelog</a></li><li><a href="https://github.com/Sepd0x/pickroute#privacy">Gizlilik</a></li><li><a href="https://github.com/Sepd0x/pickroute/issues/new/choose">Hata bildir</a></li></ul></nav>
   </div>
   <div class="wordmark" aria-hidden="true"><svg viewBox="7 0 1433 252" focusable="false">
     <defs>
@@ -1145,7 +1145,7 @@ __ldGet('../../assets/guides/world.min.js',964648,function(){window.__gw&&window
      digits and dashes only, 20 at most, sent as ref:<name> so it never reads as a site; the parameter leaves the address bar at once, so a shared link doesn't carry it */
   var rq='';try{var sp=new URLSearchParams(location.search);if(sp.has('ref')){rq=(sp.get('ref')||'').toLowerCase();if(!/^[a-z0-9-]{1,20}$/.test(rq))rq='';sp.delete('ref');var qs=sp.toString();history.replaceState(history.state,'',location.pathname+(qs?'?'+qs:'')+location.hash)}}catch(x){}
   if(nv.sendBeacon&&location.hostname==='sepd0x.github.io'&&nv.doNotTrack!=='1'&&window.doNotTrack!=='1'&&nv.globalPrivacyControl!==true){
-    var pg=location.pathname.replace(/^\/cs2-ip-changer/,'').replace(/index\.html$/,'')||'/';
+    var pg=location.pathname.replace(/^\/pickroute/,'').replace(/index\.html$/,'')||'/';
     if(pg.slice(-1)!=='/')pg+='/';
     var rf='';try{if(d.referrer){var u=new URL(d.referrer);if(u.hostname!==location.hostname)rf=u.hostname}}catch(x){}
     if(!rf&&rq)rf='ref:'+rq;

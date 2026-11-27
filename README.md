@@ -4,11 +4,11 @@
 </h1>
 
 <p align="center">
-  <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest"><img src="https://img.shields.io/github/v/release/Sepd0x/cs2-ip-changer?label=stable&color=2b74c2" alt="Latest release"></a>
-  <a href="https://github.com/Sepd0x/cs2-ip-changer/releases"><img src="https://img.shields.io/github/downloads/Sepd0x/cs2-ip-changer/total?label=downloads&color=2b74c2" alt="Total downloads"></a>
+  <a href="https://github.com/Sepd0x/pickroute/releases/latest"><img src="https://img.shields.io/github/v/release/Sepd0x/pickroute?label=stable&color=2b74c2" alt="Latest release"></a>
+  <a href="https://github.com/Sepd0x/pickroute/releases"><img src="https://img.shields.io/github/downloads/Sepd0x/pickroute/total?label=downloads&color=2b74c2" alt="Total downloads"></a>
   <a href="#quick-start"><img src="https://img.shields.io/badge/Windows-10%20%7C%2011-2b74c2" alt="Windows 10 and 11"></a>
   <!--rel:vtbadge--><a href="https://www.virustotal.com/gui/file/99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb/detection"><img src="https://img.shields.io/badge/VirusTotal-1%2F67-2b74c2" alt="VirusTotal: flagged by 1 of 67 engines"></a><!--/rel-->
-  <a href="https://github.com/Sepd0x/cs2-ip-changer/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Sepd0x/cs2-ip-changer/ci.yml?branch=main&label=build" alt="Build and tests"></a>
+  <a href="https://github.com/Sepd0x/pickroute/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Sepd0x/pickroute/ci.yml?branch=main&label=build" alt="Build and tests"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-personal%20use-2b74c2" alt="License: free for personal use, all rights reserved"></a>
 </p>
 
@@ -18,20 +18,20 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">
+  <a href="https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/assets/download-button-dark.svg">
       <img src="docs/assets/download-button-light.svg" alt="Download for Windows" width="284" height="56">
     </picture>
   </a>
   <br>
-  <sub><!--rel:line--><a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">CS2IPChanger.exe</a> · v1.0.0 · 63.9 MB · 27 Nov 2026 · <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest">release notes and checksums</a><!--/rel--></sub>
+  <sub><!--rel:line--><a href="https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe">CS2IPChanger.exe</a> · v1.0.0 · 63.9 MB · 27 Nov 2026 · <a href="https://github.com/Sepd0x/pickroute/releases/latest">release notes and checksums</a><!--/rel--></sub>
   <br>
   <sub>Official downloads only here and on the website. <a href="#check-your-download">Check your download</a>.</sub>
 </p>
 
 <p align="center">
-  <a href="#quick-start">Quick start</a> &nbsp;·&nbsp; <a href="#is-it-safe">Is it safe?</a> &nbsp;·&nbsp; <a href="#faq">FAQ</a> &nbsp;·&nbsp; <a href="https://sepd0x.github.io/cs2-ip-changer/">Website</a>
+  <a href="#quick-start">Quick start</a> &nbsp;·&nbsp; <a href="#is-it-safe">Is it safe?</a> &nbsp;·&nbsp; <a href="#faq">FAQ</a> &nbsp;·&nbsp; <a href="https://sepd0x.github.io/pickroute/">Website</a>
 </p>
 
 <p align="center">
@@ -43,7 +43,7 @@
   </picture>
 </p>
 
-It isn't a VPN: servers see an ordinary mobile connection, so it usually gets in on servers that block VPNs and datacenter IPs. It works with an Android phone or an iPhone. In the same app: a [CS2 server picker](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/) (matchmaking region picker, works without the phone), a [Steam account switcher](https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/), a [CS2 config manager](https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/) and a Steam profile editor.
+It isn't a VPN: servers see an ordinary mobile connection, so it usually gets in on servers that block VPNs and datacenter IPs. It works with an Android phone or an iPhone. In the same app: a [CS2 server picker](https://sepd0x.github.io/pickroute/cs2-region-picker/) (matchmaking region picker, works without the phone), a [Steam account switcher](https://sepd0x.github.io/pickroute/steam-account-switcher/), a [CS2 config manager](https://sepd0x.github.io/pickroute/copy-cs2-config/) and a Steam profile editor.
 
 ## How it works
 
@@ -66,7 +66,7 @@ So those servers only see the carrier's IP. Your home IP stays out of their logs
 On an iPhone you get the new IP yourself, with Airplane Mode: only Android lets a PC do it.
 
 > [!IMPORTANT]
-> This is for a community server's own ban. A new IP doesn't change a VAC or game ban ([does CS2 IP ban?](https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/)).
+> This is for a community server's own ban. A new IP doesn't change a VAC or game ban ([does CS2 IP ban?](https://sepd0x.github.io/pickroute/cs2-ip-ban/)).
 
 <a id="what-it-does"></a>
 ## Features
@@ -93,7 +93,7 @@ Click a picture for the details of that page.
   <a href="docs/FEATURES.md#cs2-config-manager"><picture><source srcset="docs/assets/shots/crop-configs.webp" type="image/webp"><img src="docs/assets/shots/crop-configs.png" alt="Pickroute, copy CS2 settings between accounts. Configs: the accounts with their crosshairs, the settings of each and when it last changed" width="408"></picture></a>
 </p>
 
-**Regions (CS2 server picker).** Pick your matchmaking regions by their ping, on a dial of every region or in the list by continent, for CS2, Dota 2 or Deadlock, and save your picks as presets. One Windows Firewall rule blocks the others for `cs2.exe`, on the IPs of Valve's relays only. It works with or without the phone ([how to change your region in CS2, and the server pickers compared](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/)).
+**Regions (CS2 server picker).** Pick your matchmaking regions by their ping, on a dial of every region or in the list by continent, for CS2, Dota 2 or Deadlock, and save your picks as presets. One Windows Firewall rule blocks the others for `cs2.exe`, on the IPs of Valve's relays only. It works with or without the phone ([how to change your region in CS2, and the server pickers compared](https://sepd0x.github.io/pickroute/cs2-region-picker/)).
 
 **Configs.** Copy binds, crosshair, game settings and video between your accounts, with backups.
 
@@ -120,7 +120,7 @@ The app is in English, Brazilian Portuguese, Spanish, Russian and Turkish, and f
 
 **Steps**
 
-1. **Download** [`CS2IPChanger.exe`](https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe) (<!--rel:size-->63.9 MB<!--/rel-->, from the [latest release](https://github.com/Sepd0x/cs2-ip-changer/releases/latest)). Put it in a folder only admins can change, like `C:\Program Files\CS2 IP Changer`. Started from Downloads or the Desktop, it offers to install itself there in one click.
+1. **Download** [`CS2IPChanger.exe`](https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe) (<!--rel:size-->63.9 MB<!--/rel-->, from the [latest release](https://github.com/Sepd0x/pickroute/releases/latest)). Put it in a folder only admins can change, like `C:\Program Files\CS2 IP Changer`. Started from Downloads or the Desktop, it offers to install itself there in one click.
 2. **Connect the phone.** Plug it in by USB, turn on USB tethering (Personal Hotspot on an iPhone) and turn off the phone's Wi-Fi.
 3. **Open the app.** It asks for admin. Open **Phone setup** (under Phone): each step checks itself and turns green, and where the app can do a step it has a button. Paste the servers you play on into **Servers**. Then press **Turn on protection** on the Connection page. Protection starts off each time the app opens; Settings > Protection can turn it on by itself.
 4. **Check.** Open **Connection** with CS2 and Steam running. Every check should be green, and the IP servers see must not be your home IP.
@@ -149,7 +149,7 @@ Every detail of the setup (where the exe can run, the phone, ADB, launch options
 
 ### Check your download
 
-Official downloads are only on this page's [Releases](https://github.com/Sepd0x/cs2-ip-changer/releases) and on the [website](https://sepd0x.github.io/cs2-ip-changer/). Releases built by GitHub Actions come with a `CS2IPChanger.exe.sha256` file and a [build attestation](https://github.com/Sepd0x/cs2-ip-changer/attestations), which shows the exe was built from this repository's code.
+Official downloads are only on this page's [Releases](https://github.com/Sepd0x/pickroute/releases) and on the [website](https://sepd0x.github.io/pickroute/). Releases built by GitHub Actions come with a `CS2IPChanger.exe.sha256` file and a [build attestation](https://github.com/Sepd0x/pickroute/attestations), which shows the exe was built from this repository's code.
 
 <details>
 <summary><b>How to check them</b></summary>
@@ -157,7 +157,7 @@ Official downloads are only on this page's [Releases](https://github.com/Sepd0x/
 To check the attestation, install the [GitHub CLI](https://cli.github.com/), sign in once with `gh auth login` and run:
 
 ```powershell
-gh attestation verify CS2IPChanger.exe -R Sepd0x/cs2-ip-changer
+gh attestation verify CS2IPChanger.exe -R Sepd0x/pickroute
 ```
 
 To check only the hash, put the `.sha256` file next to the exe and run this in PowerShell. It prints `True` if they match:
@@ -213,7 +213,7 @@ Yes, the protection does: an iPhone's USB tethering (Personal Hotspot) shows up 
 **Is it malware? Why does my antivirus flag it?**<br>
 It runs as admin, changes network settings and isn't code-signed, which is what some heuristics look for. Every release is built by GitHub Actions from this source and attested. [Check your download](#check-your-download) before you run it.
 
-More answers (bans and range bans, CGNAT, hotspots and dongles, root, mobile data, Whole PC and DNS, closing the app) are in [docs/FAQ.md](docs/FAQ.md), and the [guides on the website](https://sepd0x.github.io/cs2-ip-changer/#guides) go deeper on each topic.
+More answers (bans and range bans, CGNAT, hotspots and dongles, root, mobile data, Whole PC and DNS, closing the app) are in [docs/FAQ.md](docs/FAQ.md), and the [guides on the website](https://sepd0x.github.io/pickroute/#guides) go deeper on each topic.
 
 <a id="setup"></a>
 ## If something goes wrong
@@ -224,7 +224,7 @@ The firewall rules stay in place when you close the app, on purpose, so your IP 
 - **The window won't open:** run `CS2IPChanger.exe --restore`. It removes everything, the region block too.
 - **You already deleted the app:** run [tools/restore.cmd](tools/restore.cmd) as administrator, then restart the PC.
 
-Found a bug? [Open an issue](https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose) with the version (bottom left of the window) and the diagnostics (Log page > Save bug report). Lag, the bug report and the rest: [docs/SETUP.md](docs/SETUP.md#if-something-goes-wrong).
+Found a bug? [Open an issue](https://github.com/Sepd0x/pickroute/issues/new/choose) with the version (bottom left of the window) and the diagnostics (Log page > Save bug report). Lag, the bug report and the rest: [docs/SETUP.md](docs/SETUP.md#if-something-goes-wrong).
 
 ## Privacy
 
@@ -268,7 +268,7 @@ The ID says nothing about who you are. Because it is kept, the usage report is p
 <details>
 <summary><b>Who keeps the stats, and your rights</b></summary>
 
-The stats are kept by the author of this project (Sepd0x on GitHub), who decides what is collected and why. They are used only to find and fix bugs and to make the app better: never sold, never shared, never used for ads. The legal basis is the author's legitimate interest in finding and fixing bugs (GDPR art. 6(1)(f)); you can object at any time by turning the stats off, at the first start or in Settings. They are stored on Cloudflare (Workers and D1), which processes them for the project and nothing else. Rows with an install ID are deleted after 12 months; counts added up for everyone, with no ID, stay. Settings > Delete my stats deletes everything kept under your ID at once, with no account and no email. For anything else (what is kept, a correction, a question), open an [issue on GitHub](https://github.com/Sepd0x/cs2-ip-changer/issues) and don't paste your install ID there. You can also complain to your data protection authority (in Portugal, the CNPD).
+The stats are kept by the author of this project (Sepd0x on GitHub), who decides what is collected and why. They are used only to find and fix bugs and to make the app better: never sold, never shared, never used for ads. The legal basis is the author's legitimate interest in finding and fixing bugs (GDPR art. 6(1)(f)); you can object at any time by turning the stats off, at the first start or in Settings. They are stored on Cloudflare (Workers and D1), which processes them for the project and nothing else. Rows with an install ID are deleted after 12 months; counts added up for everyone, with no ID, stay. Settings > Delete my stats deletes everything kept under your ID at once, with no account and no email. For anything else (what is kept, a correction, a question), open an [issue on GitHub](https://github.com/Sepd0x/pickroute/issues) and don't paste your install ID there. You can also complain to your data protection authority (in Portugal, the CNPD).
 </details>
 
 <details>
@@ -317,29 +317,29 @@ The server is a Cloudflare Worker whose code is in this repo ([`worker/stats`](w
 
 Step by step, on the website:
 
-- [Change IP with your phone](https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/): Setup, game-only routing and a new IP in one click.
-- [CS2 with an iPhone](https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/): Personal Hotspot, and a new IP by Airplane Mode.
-- [CS2 on mobile data](https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/): Ping, lag and how much data a match uses.
-- [CS2 IP ban](https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/): Which ban you have and how to get back in.
-- [Hide your IP without a VPN](https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/): Who sees your IP, and every method compared.
-- [Is it safe?](https://sepd0x.github.io/cs2-ip-changer/is-it-safe/): What it changes and how to check the download.
-- [Steam account switcher](https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/): No passwords, ban marks per server.
-- [Copy CS2 settings](https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/): Crosshair, binds and video on every account.
-- [CS2 region picker](https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/): Choose where matchmaking puts you.
-- [Steam profile editor](https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/): Name, avatar and privacy on many accounts.
-- [CS2 ping test](https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/): Your ping to every region, and what to do about spikes.
-- [CS2 config file location](https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/): Where the cfg folder is, and what each file holds.
-- [Server picker not working](https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/): What to check when blocked regions still show up.
-- [Dota 2 and Deadlock regions](https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/): The same region picker for Dota 2 and Deadlock.
+- [Change IP with your phone](https://sepd0x.github.io/pickroute/change-ip-with-phone/): Setup, game-only routing and a new IP in one click.
+- [CS2 with an iPhone](https://sepd0x.github.io/pickroute/cs2-iphone-hotspot/): Personal Hotspot, and a new IP by Airplane Mode.
+- [CS2 on mobile data](https://sepd0x.github.io/pickroute/cs2-mobile-data/): Ping, lag and how much data a match uses.
+- [CS2 IP ban](https://sepd0x.github.io/pickroute/cs2-ip-ban/): Which ban you have and how to get back in.
+- [Hide your IP without a VPN](https://sepd0x.github.io/pickroute/hide-ip-cs2/): Who sees your IP, and every method compared.
+- [Is it safe?](https://sepd0x.github.io/pickroute/is-it-safe/): What it changes and how to check the download.
+- [Steam account switcher](https://sepd0x.github.io/pickroute/steam-account-switcher/): No passwords, ban marks per server.
+- [Copy CS2 settings](https://sepd0x.github.io/pickroute/copy-cs2-config/): Crosshair, binds and video on every account.
+- [CS2 region picker](https://sepd0x.github.io/pickroute/cs2-region-picker/): Choose where matchmaking puts you.
+- [Steam profile editor](https://sepd0x.github.io/pickroute/steam-profile-editor/): Name, avatar and privacy on many accounts.
+- [CS2 ping test](https://sepd0x.github.io/pickroute/cs2-ping-test/): Your ping to every region, and what to do about spikes.
+- [CS2 config file location](https://sepd0x.github.io/pickroute/cs2-config-file-location/): Where the cfg folder is, and what each file holds.
+- [Server picker not working](https://sepd0x.github.io/pickroute/cs2-server-picker-not-working/): What to check when blocked regions still show up.
+- [Dota 2 and Deadlock regions](https://sepd0x.github.io/pickroute/dota-2-deadlock-region-picker/): The same region picker for Dota 2 and Deadlock.
 
-The app is in English, Português (Brasil), Español, Русский and Türkçe: Settings > App > Language. The website is also in [Português](https://sepd0x.github.io/cs2-ip-changer/pt-br/), [Español](https://sepd0x.github.io/cs2-ip-changer/es/), [Русский](https://sepd0x.github.io/cs2-ip-changer/ru/) and [Türkçe](https://sepd0x.github.io/cs2-ip-changer/tr/).
+The app is in English, Português (Brasil), Español, Русский and Türkçe: Settings > App > Language. The website is also in [Português](https://sepd0x.github.io/pickroute/pt-br/), [Español](https://sepd0x.github.io/pickroute/es/), [Русский](https://sepd0x.github.io/pickroute/ru/) and [Türkçe](https://sepd0x.github.io/pickroute/tr/).
 
 ## Support
 
-- **A bug:** [open a bug report](https://github.com/Sepd0x/cs2-ip-changer/issues/new/choose) with the version and Log > Save bug report. Look through the .zip before you post it.
-- **An idea:** [suggest a feature](https://github.com/Sepd0x/cs2-ip-changer/issues/new?template=feature_request.yml), and say what you want to do in the game.
-- **A way your home IP could leak:** [report it privately](https://github.com/Sepd0x/cs2-ip-changer/security/advisories/new), not in a public issue ([SECURITY.md](.github/SECURITY.md)).
-- **A question:** most answers are in the [FAQ](docs/FAQ.md) and the [guides on the website](https://sepd0x.github.io/cs2-ip-changer/#guides).
+- **A bug:** [open a bug report](https://github.com/Sepd0x/pickroute/issues/new/choose) with the version and Log > Save bug report. Look through the .zip before you post it.
+- **An idea:** [suggest a feature](https://github.com/Sepd0x/pickroute/issues/new?template=feature_request.yml), and say what you want to do in the game.
+- **A way your home IP could leak:** [report it privately](https://github.com/Sepd0x/pickroute/security/advisories/new), not in a public issue ([SECURITY.md](.github/SECURITY.md)).
+- **A question:** most answers are in the [FAQ](docs/FAQ.md) and the [guides on the website](https://sepd0x.github.io/pickroute/#guides).
 
 Pull requests aren't accepted for now. If you found a fix, describe it in an issue ([CONTRIBUTING.md](CONTRIBUTING.md)).
 
@@ -358,7 +358,7 @@ Not affiliated with Valve. Counter-Strike and Steam are trademarks of Valve Corp
 </p>
 
 <p align="center">
-  <a href="https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe">
+  <a href="https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/assets/download-button-dark.svg">
       <img src="docs/assets/download-button-light.svg" alt="Download for Windows" width="284" height="56">

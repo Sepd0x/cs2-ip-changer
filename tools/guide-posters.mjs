@@ -14,7 +14,7 @@ import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SITE = join(ROOT, 'site'), SHOTS = join(ROOT, 'docs', 'screenshots'), BASE = '/cs2-ip-changer';
+const SITE = join(ROOT, 'site'), SHOTS = join(ROOT, 'docs', 'screenshots'), BASE = '/pickroute';
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2', '.json': 'application/json' };
 const LANGS = new Set(['pt-br', 'es', 'ru', 'tr']);
 const want = process.argv.slice(2);

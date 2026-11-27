@@ -13,7 +13,7 @@ import { SHOT_NAMES, SHOT_TOPIC, shotFile, shotSource, shotAlt } from './shot-na
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = join(ROOT, 'site');
-const BASE = 'https://sepd0x.github.io/cs2-ip-changer/';
+const BASE = 'https://sepd0x.github.io/pickroute/';
 const LANGS = ['', 'pt-br/', 'es/', 'ru/', 'tr/'];
 const read = (f) => readFileSync(join(SITE, f), 'utf8');
 const guides = readdirSync(SITE, { withFileTypes: true })
@@ -85,7 +85,7 @@ test('AI images: every page in the sitemap, in every language, lists the screens
   const map = read('sitemap.xml');
   const urls = [...map.matchAll(/<url>([\s\S]*?)<\/url>/g)].map((m) => m[1]);
   assert.equal(urls.length, pages.length, 'one entry per page');
-  const bad = urls.filter((u) => !/<image:loc>https:\/\/sepd0x\.github\.io\/cs2-ip-changer\/img\/pickroute-[a-z0-9-]+\.png<\/image:loc>/.test(u))
+  const bad = urls.filter((u) => !/<image:loc>https:\/\/sepd0x\.github\.io\/pickroute\/img\/pickroute-[a-z0-9-]+\.png<\/image:loc>/.test(u))
     .map((u) => /<loc>([^<]+)/.exec(u)[1]);
   assert.deepEqual(bad, []);
   assert.ok(!/img\/(connection|servers|accounts|regions|configs|profiles)\.png/.test(map), 'no bare names in the sitemap');
@@ -100,7 +100,7 @@ test('AI images: every page says which languages the app is in, in its own langu
 
 test('AI images: llms.txt keeps the facts the AIs got wrong on 27 Nov. 2026', () => {
   const llms = read('llms.txt');
-  for (const s of ['https://github.com/Sepd0x/cs2-ip-changer (it kept the old name', 'pickroute.app', 'source-available, not open source',
+  for (const s of ['https://github.com/Sepd0x/pickroute (it was github.com/Sepd0x/cs2-ip-changer', 'pickroute.app', 'source-available, not open source',
     'the app itself is in English, Brazilian Portuguese, Spanish, Russian and Turkish', 'No phone is needed, and the block stays when the app is closed',
     'first stable release']) assert.ok(llms.includes(s), `llms.txt: ${s}`);
   for (const p of PAGES) assert.ok(llms.includes(`${BASE}img/${shotFile(p)}.png`), `llms.txt names the ${p} screenshot`);

@@ -19,7 +19,7 @@ import readline from 'node:readline';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-const REPO = 'Sepd0x/cs2-ip-changer';
+const REPO = 'Sepd0x/pickroute';
 const EXE = 'CS2IPChanger.exe';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const KEY_CS = path.join(ROOT, 'src', 'Core', 'UpdateKey.cs');

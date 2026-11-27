@@ -1,853 +1,853 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/</loc>
-    <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-community-servers.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
+    <loc>https://sepd0x.github.io/pickroute/</loc>
+    <lastmod>2026-11-27</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-community-servers.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/</loc>
+    <loc>https://sepd0x.github.io/pickroute/cs2-region-picker/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/</loc>
+    <loc>https://sepd0x.github.io/pickroute/copy-cs2-config/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/copy-cs2-config/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/</loc>
+    <loc>https://sepd0x.github.io/pickroute/steam-account-switcher/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/steam-account-switcher/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/</loc>
+    <loc>https://sepd0x.github.io/pickroute/steam-profile-editor/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/steam-profile-editor/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/</loc>
+    <loc>https://sepd0x.github.io/pickroute/change-ip-with-phone/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/change-ip-with-phone/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/</loc>
+    <loc>https://sepd0x.github.io/pickroute/cs2-mobile-data/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-mobile-data/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/</loc>
+    <loc>https://sepd0x.github.io/pickroute/cs2-ping-test/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-ping-test/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/</loc>
+    <loc>https://sepd0x.github.io/pickroute/cs2-config-file-location/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-config-file-location/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/</loc>
+    <loc>https://sepd0x.github.io/pickroute/cs2-iphone-hotspot/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-iphone-hotspot/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/</loc>
+    <loc>https://sepd0x.github.io/pickroute/cs2-ip-ban/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-ip-ban/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/</loc>
+    <loc>https://sepd0x.github.io/pickroute/hide-ip-cs2/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/hide-ip-cs2/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/is-it-safe/</loc>
+    <loc>https://sepd0x.github.io/pickroute/is-it-safe/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/is-it-safe/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/</loc>
+    <loc>https://sepd0x.github.io/pickroute/cs2-server-picker-not-working/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-server-picker-not-working/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/</loc>
+    <loc>https://sepd0x.github.io/pickroute/dota-2-deadlock-region-picker/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/dota-2-deadlock-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/</loc>
+    <loc>https://sepd0x.github.io/pickroute/pt-br/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-community-servers.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-community-servers.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-region-picker/</loc>
+    <loc>https://sepd0x.github.io/pickroute/pt-br/cs2-region-picker/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/copy-cs2-config/</loc>
+    <loc>https://sepd0x.github.io/pickroute/pt-br/copy-cs2-config/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/copy-cs2-config/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/steam-account-switcher/</loc>
+    <loc>https://sepd0x.github.io/pickroute/pt-br/steam-account-switcher/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/steam-account-switcher/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/steam-profile-editor/</loc>
+    <loc>https://sepd0x.github.io/pickroute/pt-br/steam-profile-editor/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/steam-profile-editor/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/change-ip-with-phone/</loc>
+    <loc>https://sepd0x.github.io/pickroute/pt-br/change-ip-with-phone/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/change-ip-with-phone/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-mobile-data/</loc>
+    <loc>https://sepd0x.github.io/pickroute/pt-br/cs2-mobile-data/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-mobile-data/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-ping-test/</loc>
+    <loc>https://sepd0x.github.io/pickroute/pt-br/cs2-ping-test/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-ping-test/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-config-file-location/</loc>
+    <loc>https://sepd0x.github.io/pickroute/pt-br/cs2-config-file-location/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-config-file-location/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-iphone-hotspot/</loc>
+    <loc>https://sepd0x.github.io/pickroute/pt-br/cs2-iphone-hotspot/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-iphone-hotspot/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-ip-ban/</loc>
+    <loc>https://sepd0x.github.io/pickroute/pt-br/cs2-ip-ban/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-ip-ban/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/hide-ip-cs2/</loc>
+    <loc>https://sepd0x.github.io/pickroute/pt-br/hide-ip-cs2/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/hide-ip-cs2/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/is-it-safe/</loc>
+    <loc>https://sepd0x.github.io/pickroute/pt-br/is-it-safe/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/is-it-safe/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-server-picker-not-working/</loc>
+    <loc>https://sepd0x.github.io/pickroute/pt-br/cs2-server-picker-not-working/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-server-picker-not-working/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/pt-br/dota-2-deadlock-region-picker/</loc>
+    <loc>https://sepd0x.github.io/pickroute/pt-br/dota-2-deadlock-region-picker/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/dota-2-deadlock-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/es/</loc>
+    <loc>https://sepd0x.github.io/pickroute/es/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-community-servers.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-community-servers.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/es/cs2-region-picker/</loc>
+    <loc>https://sepd0x.github.io/pickroute/es/cs2-region-picker/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/es/copy-cs2-config/</loc>
+    <loc>https://sepd0x.github.io/pickroute/es/copy-cs2-config/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/copy-cs2-config/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/es/steam-account-switcher/</loc>
+    <loc>https://sepd0x.github.io/pickroute/es/steam-account-switcher/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/steam-account-switcher/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/es/steam-profile-editor/</loc>
+    <loc>https://sepd0x.github.io/pickroute/es/steam-profile-editor/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/steam-profile-editor/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/es/change-ip-with-phone/</loc>
+    <loc>https://sepd0x.github.io/pickroute/es/change-ip-with-phone/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/change-ip-with-phone/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/es/cs2-mobile-data/</loc>
+    <loc>https://sepd0x.github.io/pickroute/es/cs2-mobile-data/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-mobile-data/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/es/cs2-ping-test/</loc>
+    <loc>https://sepd0x.github.io/pickroute/es/cs2-ping-test/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-ping-test/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/es/cs2-config-file-location/</loc>
+    <loc>https://sepd0x.github.io/pickroute/es/cs2-config-file-location/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-config-file-location/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/es/cs2-iphone-hotspot/</loc>
+    <loc>https://sepd0x.github.io/pickroute/es/cs2-iphone-hotspot/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-iphone-hotspot/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/es/cs2-ip-ban/</loc>
+    <loc>https://sepd0x.github.io/pickroute/es/cs2-ip-ban/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-ip-ban/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/es/hide-ip-cs2/</loc>
+    <loc>https://sepd0x.github.io/pickroute/es/hide-ip-cs2/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/hide-ip-cs2/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/es/is-it-safe/</loc>
+    <loc>https://sepd0x.github.io/pickroute/es/is-it-safe/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/is-it-safe/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/es/cs2-server-picker-not-working/</loc>
+    <loc>https://sepd0x.github.io/pickroute/es/cs2-server-picker-not-working/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-server-picker-not-working/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/es/dota-2-deadlock-region-picker/</loc>
+    <loc>https://sepd0x.github.io/pickroute/es/dota-2-deadlock-region-picker/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/dota-2-deadlock-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/ru/</loc>
+    <loc>https://sepd0x.github.io/pickroute/ru/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-community-servers.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-community-servers.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/ru/cs2-region-picker/</loc>
+    <loc>https://sepd0x.github.io/pickroute/ru/cs2-region-picker/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/ru/copy-cs2-config/</loc>
+    <loc>https://sepd0x.github.io/pickroute/ru/copy-cs2-config/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/copy-cs2-config/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/ru/steam-account-switcher/</loc>
+    <loc>https://sepd0x.github.io/pickroute/ru/steam-account-switcher/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/steam-account-switcher/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/ru/steam-profile-editor/</loc>
+    <loc>https://sepd0x.github.io/pickroute/ru/steam-profile-editor/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/steam-profile-editor/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/ru/change-ip-with-phone/</loc>
+    <loc>https://sepd0x.github.io/pickroute/ru/change-ip-with-phone/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/change-ip-with-phone/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/ru/cs2-mobile-data/</loc>
+    <loc>https://sepd0x.github.io/pickroute/ru/cs2-mobile-data/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-mobile-data/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ping-test/</loc>
+    <loc>https://sepd0x.github.io/pickroute/ru/cs2-ping-test/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-ping-test/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/ru/cs2-config-file-location/</loc>
+    <loc>https://sepd0x.github.io/pickroute/ru/cs2-config-file-location/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-config-file-location/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/ru/cs2-iphone-hotspot/</loc>
+    <loc>https://sepd0x.github.io/pickroute/ru/cs2-iphone-hotspot/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-iphone-hotspot/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ip-ban/</loc>
+    <loc>https://sepd0x.github.io/pickroute/ru/cs2-ip-ban/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-ip-ban/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/ru/hide-ip-cs2/</loc>
+    <loc>https://sepd0x.github.io/pickroute/ru/hide-ip-cs2/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/hide-ip-cs2/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/ru/is-it-safe/</loc>
+    <loc>https://sepd0x.github.io/pickroute/ru/is-it-safe/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/is-it-safe/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/ru/cs2-server-picker-not-working/</loc>
+    <loc>https://sepd0x.github.io/pickroute/ru/cs2-server-picker-not-working/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-server-picker-not-working/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/ru/dota-2-deadlock-region-picker/</loc>
+    <loc>https://sepd0x.github.io/pickroute/ru/dota-2-deadlock-region-picker/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/dota-2-deadlock-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/tr/</loc>
+    <loc>https://sepd0x.github.io/pickroute/tr/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-community-servers.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-community-servers.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/</loc>
+    <loc>https://sepd0x.github.io/pickroute/tr/cs2-region-picker/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-region-picker/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/tr/copy-cs2-config/</loc>
+    <loc>https://sepd0x.github.io/pickroute/tr/copy-cs2-config/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/copy-cs2-config/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/copy-cs2-config/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/copy-cs2-config/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/copy-cs2-config/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/tr/steam-account-switcher/</loc>
+    <loc>https://sepd0x.github.io/pickroute/tr/steam-account-switcher/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-account-switcher/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-account-switcher/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/steam-account-switcher/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/steam-account-switcher/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/tr/steam-profile-editor/</loc>
+    <loc>https://sepd0x.github.io/pickroute/tr/steam-profile-editor/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/steam-profile-editor/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/steam-profile-editor/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-profile-editor.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/steam-profile-editor/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/steam-profile-editor/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-profile-editor.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/tr/change-ip-with-phone/</loc>
+    <loc>https://sepd0x.github.io/pickroute/tr/change-ip-with-phone/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/change-ip-with-phone/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/change-ip-with-phone/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/change-ip-with-phone/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/change-ip-with-phone/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/tr/cs2-mobile-data/</loc>
+    <loc>https://sepd0x.github.io/pickroute/tr/cs2-mobile-data/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-mobile-data/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-mobile-data/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-mobile-data/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-mobile-data/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ping-test/</loc>
+    <loc>https://sepd0x.github.io/pickroute/tr/cs2-ping-test/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ping-test/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ping-test/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-ping-test/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-ping-test/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/tr/cs2-config-file-location/</loc>
+    <loc>https://sepd0x.github.io/pickroute/tr/cs2-config-file-location/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-config-file-location/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-config-file-location/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-copy-cs2-config.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-config-file-location/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-config-file-location/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-copy-cs2-config.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/tr/cs2-iphone-hotspot/</loc>
+    <loc>https://sepd0x.github.io/pickroute/tr/cs2-iphone-hotspot/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-iphone-hotspot/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-iphone-hotspot/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-iphone-hotspot/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-iphone-hotspot/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ip-ban/</loc>
+    <loc>https://sepd0x.github.io/pickroute/tr/cs2-ip-ban/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-ip-ban/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-ip-ban/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-steam-account-switcher.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-ip-ban/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-ip-ban/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-steam-account-switcher.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/tr/hide-ip-cs2/</loc>
+    <loc>https://sepd0x.github.io/pickroute/tr/hide-ip-cs2/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/hide-ip-cs2/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/hide-ip-cs2/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/hide-ip-cs2/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/hide-ip-cs2/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/tr/is-it-safe/</loc>
+    <loc>https://sepd0x.github.io/pickroute/tr/is-it-safe/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/is-it-safe/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/is-it-safe/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/is-it-safe/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/is-it-safe/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/tr/cs2-server-picker-not-working/</loc>
+    <loc>https://sepd0x.github.io/pickroute/tr/cs2-server-picker-not-working/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/cs2-server-picker-not-working/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/cs2-server-picker-not-working/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/cs2-server-picker-not-working/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/cs2-server-picker-not-working/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
   <url>
-    <loc>https://sepd0x.github.io/cs2-ip-changer/tr/dota-2-deadlock-region-picker/</loc>
+    <loc>https://sepd0x.github.io/pickroute/tr/dota-2-deadlock-region-picker/</loc>
     <lastmod>2026-11-27</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/cs2-ip-changer/pt-br/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/cs2-ip-changer/es/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/cs2-ip-changer/ru/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/cs2-ip-changer/tr/dota-2-deadlock-region-picker/"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/cs2-ip-changer/dota-2-deadlock-region-picker/"/>
-    <image:image><image:loc>https://sepd0x.github.io/cs2-ip-changer/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
+    <xhtml:link rel="alternate" hreflang="en" href="https://sepd0x.github.io/pickroute/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://sepd0x.github.io/pickroute/pt-br/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="es" href="https://sepd0x.github.io/pickroute/es/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://sepd0x.github.io/pickroute/ru/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="tr" href="https://sepd0x.github.io/pickroute/tr/dota-2-deadlock-region-picker/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://sepd0x.github.io/pickroute/dota-2-deadlock-region-picker/"/>
+    <image:image><image:loc>https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png</image:loc></image:image>
   </url>
 </urlset>

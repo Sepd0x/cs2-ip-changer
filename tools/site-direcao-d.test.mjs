@@ -15,7 +15,7 @@ import { shotSource } from './shot-names.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = resolve(process.env.SITE_DIR || join(ROOT, 'site'));
-const BASE = '/cs2-ip-changer';
+const BASE = '/pickroute';
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.woff2': 'font/woff2', '.json': 'application/json' };
 const PHONE = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true };
 const PC = { viewport: { width: 1440, height: 900 } };
@@ -268,7 +268,7 @@ test('Phone: the page\'s address breaks only after a slash, in every language; t
   for (const l of ['', 'pt-br/', 'es/', 'ru/', 'tr/']) {
     const urls = readFileSync(join(SITE, l, 'cs2-ip-ban', 'index.html'), 'utf8').match(/<code class="url">[\s\S]*?<\/code>/g) || [];
     assert.ok(urls.length >= 1, `${l}: no address`);
-    for (const u of urls) assert.equal(u.replace(/<span class="nw">([^<]+)<\/span>/g, '$1').replace(/<\/?code[^>]*>/g, ''), `sepd0x.github.io/<wbr>cs2-ip-changer/<wbr>${l ? l + '<wbr>' : ''}cs2-ip-ban`, u);
+    for (const u of urls) assert.equal(u.replace(/<span class="nw">([^<]+)<\/span>/g, '$1').replace(/<\/?code[^>]*>/g, ''), `sepd0x.github.io/<wbr>pickroute/<wbr>${l ? l + '<wbr>' : ''}cs2-ip-ban`, u);
   }
   const page = await open(t, NARROW, 'ru/cs2-ip-ban/');
   const r = await page.evaluate(() => ({ broken: [...document.querySelectorAll('.copyrow .url .nw')].filter((s) => s.getClientRects().length > 1).map((s) => s.textContent), note: getComputedStyle(document.querySelector('.ghero .ro-foot')).fontFamily.split(',')[0] }));
