@@ -13,6 +13,7 @@ https://sepd0x.github.io/pickroute/hide-ip-cs2/
 https://sepd0x.github.io/pickroute/is-it-safe/
 https://sepd0x.github.io/pickroute/cs2-server-picker-not-working/
 https://sepd0x.github.io/pickroute/dota-2-deadlock-region-picker/
+https://sepd0x.github.io/pickroute/screenshots/
 https://sepd0x.github.io/pickroute/pt-br/
 https://sepd0x.github.io/pickroute/pt-br/cs2-region-picker/
 https://sepd0x.github.io/pickroute/pt-br/copy-cs2-config/
@@ -28,6 +29,7 @@ https://sepd0x.github.io/pickroute/pt-br/hide-ip-cs2/
 https://sepd0x.github.io/pickroute/pt-br/is-it-safe/
 https://sepd0x.github.io/pickroute/pt-br/cs2-server-picker-not-working/
 https://sepd0x.github.io/pickroute/pt-br/dota-2-deadlock-region-picker/
+https://sepd0x.github.io/pickroute/pt-br/screenshots/
 https://sepd0x.github.io/pickroute/es/
 https://sepd0x.github.io/pickroute/es/cs2-region-picker/
 https://sepd0x.github.io/pickroute/es/copy-cs2-config/
@@ -43,6 +45,7 @@ https://sepd0x.github.io/pickroute/es/hide-ip-cs2/
 https://sepd0x.github.io/pickroute/es/is-it-safe/
 https://sepd0x.github.io/pickroute/es/cs2-server-picker-not-working/
 https://sepd0x.github.io/pickroute/es/dota-2-deadlock-region-picker/
+https://sepd0x.github.io/pickroute/es/screenshots/
 https://sepd0x.github.io/pickroute/ru/
 https://sepd0x.github.io/pickroute/ru/cs2-region-picker/
 https://sepd0x.github.io/pickroute/ru/copy-cs2-config/
@@ -58,6 +61,7 @@ https://sepd0x.github.io/pickroute/ru/hide-ip-cs2/
 https://sepd0x.github.io/pickroute/ru/is-it-safe/
 https://sepd0x.github.io/pickroute/ru/cs2-server-picker-not-working/
 https://sepd0x.github.io/pickroute/ru/dota-2-deadlock-region-picker/
+https://sepd0x.github.io/pickroute/ru/screenshots/
 https://sepd0x.github.io/pickroute/tr/
 https://sepd0x.github.io/pickroute/tr/cs2-region-picker/
 https://sepd0x.github.io/pickroute/tr/copy-cs2-config/
@@ -73,3 +77,4 @@ https://sepd0x.github.io/pickroute/tr/hide-ip-cs2/
 https://sepd0x.github.io/pickroute/tr/is-it-safe/
 https://sepd0x.github.io/pickroute/tr/cs2-server-picker-not-working/
 https://sepd0x.github.io/pickroute/tr/dota-2-deadlock-region-picker/
+https://sepd0x.github.io/pickroute/tr/screenshots/

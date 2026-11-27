@@ -4,7 +4,11 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Added
+- Website: a Screenshots page with every page of the app, whole and with a caption, in every language of the site. Connection and Regions come first.
+
 ### Changed
+- Website: some guide titles in Russian, Spanish and Turkish now end with "Pickroute", where it fits.
 - Website and README: the app is no longer called a beta.
 - Website, README and release notes: the VirusTotal result reads right with any number of engines ("flagged by 1 of 67 engines").
 - Website: the app's screenshots have names and descriptions that say Pickroute and what each page does, in every language, so image search and AI answers can show the real app. Every page says which languages the app is in.

@@ -331,6 +331,7 @@ Step by step, on the website:
 - [CS2 config file location](https://sepd0x.github.io/pickroute/cs2-config-file-location/): Where the cfg folder is, and what each file holds.
 - [Server picker not working](https://sepd0x.github.io/pickroute/cs2-server-picker-not-working/): What to check when blocked regions still show up.
 - [Dota 2 and Deadlock regions](https://sepd0x.github.io/pickroute/dota-2-deadlock-region-picker/): The same region picker for Dota 2 and Deadlock.
+- [Screenshots](https://sepd0x.github.io/pickroute/screenshots/): Every page of the app, as it really looks.
 
 The app is in English, Português (Brasil), Español, Русский and Türkçe: Settings > App > Language. The website is also in [Português](https://sepd0x.github.io/pickroute/pt-br/), [Español](https://sepd0x.github.io/pickroute/es/), [Русский](https://sepd0x.github.io/pickroute/ru/) and [Türkçe](https://sepd0x.github.io/pickroute/tr/).
 

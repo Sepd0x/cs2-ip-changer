@@ -215,10 +215,10 @@ html.fx .gw-ctl button[hidden]{display:inline-flex!important;visibility:hidden}
    (1250 px for the footer from 760 to 999 px, 120 for the last line everywhere) the page got shorter as the end came on
    screen, and on a tablet held upright or a phone in Desktop site the name at the end jumped */
 .gtext{content-visibility:auto;contain-intrinsic-size:auto 3400px}.gfaq{content-visibility:auto;contain-intrinsic-size:auto 19rem}.gmore{content-visibility:auto;contain-intrinsic-size:auto 45rem}footer .fgrid{content-visibility:auto;contain-intrinsic-size:auto 22.6rem}
-@media (min-width:600px){.gmore{contain-intrinsic-size:auto 34.5rem}}@media (min-width:760px){.gmore{contain-intrinsic-size:auto 31rem}footer .fgrid{contain-intrinsic-size:auto 68.9rem}}@media (min-width:901px){.gmore{contain-intrinsic-size:auto 19.5rem}footer .fgrid{contain-intrinsic-size:auto 37.8rem}}@media (min-width:1000px){.gtext{contain-intrinsic-size:auto 2100px}.gmore{contain-intrinsic-size:auto 20rem}}.gshot{content-visibility:auto;contain-intrinsic-size:auto 400px}.gtoc-m{content-visibility:auto;contain-intrinsic-size:auto 260px}footer .legal{content-visibility:auto;contain-intrinsic-size:auto 6rem}
+@media (min-width:600px){.gmore{contain-intrinsic-size:auto 34.5rem}}@media (min-width:760px){.gmore{contain-intrinsic-size:auto 31rem}footer .fgrid{contain-intrinsic-size:auto 68.9rem}}@media (min-width:901px){.gmore{contain-intrinsic-size:auto 19.5rem}footer .fgrid{contain-intrinsic-size:auto 40.4rem}}@media (min-width:1000px){.gtext{contain-intrinsic-size:auto 2100px}.gmore{contain-intrinsic-size:auto 20rem}}.gshot{content-visibility:auto;contain-intrinsic-size:auto 400px}.gtoc-m{content-visibility:auto;contain-intrinsic-size:auto 260px}footer .legal{content-visibility:auto;contain-intrinsic-size:auto 6rem}
 @media (min-width:600px){footer .legal{contain-intrinsic-size:auto 4.6rem}}@media (min-width:820px){footer .legal{contain-intrinsic-size:auto 3.3rem}}@media (min-width:1000px){footer .legal{contain-intrinsic-size:auto 1.3rem}}
 /* a touch screen: the links are 44 px rows, so the guides list and the footer are taller */
-@media (pointer:coarse){.gmore{contain-intrinsic-size:auto 50rem}}@media (pointer:coarse) and (min-width:600px){.gmore{contain-intrinsic-size:auto 37rem}}@media (pointer:coarse) and (min-width:760px){.gmore{contain-intrinsic-size:auto 32.5rem}footer .fgrid{contain-intrinsic-size:auto 72.9rem}}@media (pointer:coarse) and (min-width:901px){.gmore{contain-intrinsic-size:auto 19.5rem}footer .fgrid{contain-intrinsic-size:auto 40.7rem}}
+@media (pointer:coarse){.gmore{contain-intrinsic-size:auto 50rem}}@media (pointer:coarse) and (min-width:600px){.gmore{contain-intrinsic-size:auto 37rem}}@media (pointer:coarse) and (min-width:760px){.gmore{contain-intrinsic-size:auto 32.5rem}footer .fgrid{contain-intrinsic-size:auto 72.9rem}}@media (pointer:coarse) and (min-width:901px){.gmore{contain-intrinsic-size:auto 19.5rem}footer .fgrid{contain-intrinsic-size:auto 43.5rem}}
 .gtext h2::before{content:counter(sec,decimal-leading-zero);content:counter(sec,decimal-leading-zero) / "";display:inline-block;width:3.2rem;font:400 .8rem/1 var(--mono);letter-spacing:0;color:var(--ink3);vertical-align:.55em}
 .gtext h2{background:linear-gradient(var(--t-accent),var(--t-accent)) 0 0/3rem 2px no-repeat;counter-increment:sec;color:var(--ink);font:500 clamp(1.7rem,1.1rem + 1.7vw,2.8rem)/1.06 var(--disp);letter-spacing:-.035em;margin:clamp(3.25rem,2.4rem + 2.6vw,5rem) 0 1.2rem;padding-top:clamp(1rem,.8rem + .6vw,1.4rem);border-top:0}
 .gtext h2:first-child{margin-top:0;padding-top:clamp(1rem,.8rem + .6vw,1.4rem)}
@@ -375,6 +375,28 @@ const labelTables = (html) => html.replace(/<table>([\s\S]*?)<\/table>/g, (table
 // A crop of a 1240x800 screenshot: [name, x, y, width, height, alt]. The box keeps the crop's shape; the image is scaled and moved inside it.
 // It is the biggest picture on a phone (the LCP), so it loads at once and first.
 const crop = ([name, x, y, w, h, alt]) => `<a class="crop zoom" href="../img/${name}.png" style="aspect-ratio:${w}/${h}" aria-label="${esc(alt)} (full screenshot)"><picture><source type="image/webp" srcset="../img/${name}.webp"><img src="../img/${name}.png" alt="${esc(alt)}" width="1240" height="800" loading="eager" fetchpriority="high" style="width:${(1240 / w * 100).toFixed(2)}%;margin:${(-y / w * 100).toFixed(2)}% 0 0 ${(-x / w * 100).toFixed(2)}%"></picture></a>`;
+
+// The screenshots page (27 Nov. 2026: image search had none of ours, so the AIs showed other apps under our name): each
+// screenshot whole, under its published name, with the home page's alt and a caption that starts with the app's name.
+const SHOT_ALT = {
+  connection: "The Connection page: Protected, the IP servers see is the phone carrier's, next to your masked home IP, the Change IP buttons and the live checks",
+  servers: 'The Servers page: your server list with name, map, players and ping, and the players on one server',
+  accounts: 'The Accounts page: saved Steam accounts with ban status, cooldowns and the In rotation checkbox',
+  regions: 'The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones turned off blocked for cs2.exe',
+  configs: 'The Configs page: copy, sync mode, Backups, snapshots and compare',
+  profiles: 'The Profiles page in three steps: the look every picked account gets, the accounts, then review and apply',
+};
+// Its captions, the two main pages first; the same words go into its ImageGallery (structured data).
+const GALLERY = [
+  ['connection', "Pickroute, the Connection page: protected, the IP servers see is the phone carrier's and your home IP is masked. Example IPs."],
+  ['regions', 'Pickroute, the Regions page: the CS2 server picker, each region with its ping, and the ones turned off blocked for cs2.exe.'],
+  ['servers', 'Pickroute, Servers: your community servers with map, players and ping.'],
+  ['accounts', 'Pickroute, Accounts: the Steam account switcher, with ban marks per server.'],
+  ['configs', 'Pickroute, Configs: copy CS2 settings between accounts, with backups.'],
+  ['profiles', 'Pickroute, Profiles: name and avatar on many Steam accounts at once.'],
+];
+const capFor = (s) => GALLERY.find(([n]) => n === s)[1];
+const shotFig = (s, cap = esc(capFor(s))) => `<figure class="shotfig"><a class="zoom" href="../img/${shotFile(s)}.png"><picture><source type="image/webp" srcset="../img/${shotFile(s)}.webp"><img src="../img/${shotFile(s)}.png" alt="${esc(shotAlt(s, SHOT_ALT[s]))}" width="1240" height="800" loading="lazy" decoding="async"></picture></a><figcaption>${cap}</figcaption></figure>`;
 
 // Each page answers one search and has one job. Facts come from the README and CHANGELOG; keep them in step when the app changes.
 // A question lives on one page only; the home FAQ links here.
@@ -798,6 +820,31 @@ export const pages = [
       ['Do I need the phone for this?', 'No. Regions works with or without the phone, for all three games.'],
     ],
   },
+  {
+    // 27 Nov. 2026: one page with every screenshot of the app, whole, each with a caption that starts with the name, so image
+    // search has a page whose title and captions say Pickroute and what people look for. The two main pages first.
+    slug: 'screenshots',
+    title: 'Pickroute screenshots: CS2 server picker and mobile data',
+    desc: "Real screenshots of Pickroute for Windows: CS2 over your phone's mobile data with your home IP hidden, the CS2 server picker and the other pages.",
+    nav: 'Screenshots',
+    blurb: 'Every page of the app, as it really looks.',
+    eyebrow: 'Pickroute screenshots',
+    h1: 'Pickroute screenshots: every page of the app',
+    lead: "Real screenshots of Pickroute on Windows. Two pages do the main work: Connection plays CS2 community servers over your phone's mobile data with your home IP hidden, and Regions is the server picker for CS2, Dota 2 and Deadlock. Select a screenshot to see it full size.",
+    crop: ['connection', 168, 40, 640, 440, 'The Connection page: protection on, the IP servers see, and the route from this PC through the phone to the servers'],
+    related: ['cs2-region-picker', 'change-ip-with-phone', 'is-it-safe'],
+    gallery: GALLERY,
+    sections: [
+      ['Connection: community servers over mobile data', `<p>This is where you turn protection on. CS2, Steam and your community servers go through your phone's mobile data, so a server sees the carrier's IP and never your home IP. Banned by IP on a server? Change IP gets you a new one in one click (on an iPhone, Airplane Mode on and off). The kill switch blocks the game if the phone drops, so your home IP doesn't leak.</p>${shotFig('connection')}`],
+      ['Regions: the server picker for CS2, Dota 2 and Deadlock', `<p>Every matchmaking region with its ping, on a dial and in a list. Turn off the ones you don't want and the game only finds matches in the rest. It is one Windows Firewall rule for the game's exe, so the block stays when the app is closed. You don't need the phone for this page.</p>${shotFig('regions')}`],
+      ['The other pages', `<p>The rest of the app, for the things that come up around a match. Example names on every screenshot.</p><div class="shotgrid">${shotFig('servers')}${shotFig('accounts')}${shotFig('configs')}${shotFig('profiles')}</div>`],
+    ],
+    faq: [
+      ['Are these real screenshots of Pickroute?', 'Yes. They are taken from the app itself on Windows, with example IPs and account names, and they are taken again when the app changes.'],
+      ['What are the two main pages of Pickroute?', "Connection, which plays CS2 community servers over your phone's mobile data with your home IP hidden, and Regions, the server picker for CS2, Dota 2 and Deadlock. You can use either one on its own."],
+      ['Is Pickroute free?', 'Yes. It is free for Windows 10 and 11, with no account, and the app is in English, Portuguese, Spanish, Russian and Turkish.'],
+    ],
+  },
 ];
 
 const bySlug = Object.fromEntries(pages.map((p) => [p.slug, p]));
@@ -823,6 +870,7 @@ const SIG = {
   'steam-profile-editor': ['6/8', 'Accounts picked for one template', 'Example', 'From the Profiles page of the app, with example names.'],
   'cs2-server-picker-not-working': ['8/30', 'Regions CS2 can play in', 'Example', 'From the Regions page of the app, with the block on.'],
   'dota-2-deadlock-region-picker': ['3', 'Games on the Regions page', 'CS2, Dota 2, Deadlock', 'Each game with its own regions and its own rule.'],
+  'screenshots': ['6', 'Pages of the app on this page', 'Real screenshots', 'Taken from the app, with example IPs and names.'],
 };
 
 // Each guide's piece of proposal A's world (site/assets/guides/src/world.js): the scene, what it shows in words (on screen
@@ -842,6 +890,7 @@ const WORLD = {
   'steam-profile-editor': ['profiles', "Example: one template goes onto the accounts you pick, one after another, after a preview.", 'Play it again'],
   'cs2-server-picker-not-working': ['regions', "Example: the regions you turn off go dark, blocked for cs2.exe only; CS2 matches in the ones left on.", 'Play it again'],
   'dota-2-deadlock-region-picker': ['regions', "Example: the regions you turn off go dark, blocked for the game's exe only; it matches in the ones left on.", 'Play it again'],
+  'screenshots': ['phone', "Only CS2, Steam and your servers take the phone; the browser, Discord and downloads stay home. Example IP.", 'Play it again'],
 };
 
 // The caption under the app's own screen in the text: which page of the app it is, and that it is the real one.
@@ -867,6 +916,9 @@ function render(p, modified) {
       ...(p.howto ? [{ '@type': 'HowTo', '@id': `${url}#howto`, name: p.howto.h, description: p.desc, inLanguage: 'en', image,
         tool: [{ '@type': 'HowToTool', name: 'Pickroute (free, Windows 10 and 11)' }],
         step: p.howto.steps.map(([n, t], i) => ({ '@type': 'HowToStep', position: i + 1, name: n, text: t, url: `${url}#step-${i + 1}` })) }] : []),
+      // the screenshots page: every screenshot with its name and caption, so search engines and AIs read them as the app's
+      ...(p.gallery ? [{ '@type': 'ImageGallery', '@id': `${url}#gallery`, name: p.title, description: p.desc, inLanguage: 'en', about: { '@id': `${BASE}#app` },
+        image: p.gallery.map(([s, cap]) => ({ '@type': 'ImageObject', url: `${BASE}img/${shotFile(s)}.png`, contentUrl: `${BASE}img/${shotFile(s)}.png`, width: 1240, height: 800, name: shotAlt(s, SHOT_ALT[s]), caption: cap })) }] : []),
       ...(p.faq?.length ? [{ '@type': 'FAQPage', '@id': `${url}#faq`, mainEntity: p.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }] : []),
     ],
   };
@@ -1149,7 +1201,7 @@ ${shots.map(imageTag).join('\n')}
 ${pages.map((p) => `  <url>
     <loc>${BASE}${p.slug}/</loc>
     <lastmod>${p.modified}</lastmod>
-${imageTag(p.crop[0])}
+${p.gallery ? p.gallery.map(([s]) => imageTag(s)).join('\n') : imageTag(p.crop[0])}
   </url>`).join('\n')}
 </urlset>
 `;

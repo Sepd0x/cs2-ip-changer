@@ -105,3 +105,36 @@ test('AI images: llms.txt keeps the facts the AIs got wrong on 27 Nov. 2026', ()
     'first stable release']) assert.ok(llms.includes(s), `llms.txt: ${s}`);
   for (const p of PAGES) assert.ok(llms.includes(`${BASE}img/${shotFile(p)}.png`), `llms.txt names the ${p} screenshot`);
 });
+
+// 27 Nov. 2026, later: a page with only the screenshots, so image search has a page whose title and captions say Pickroute and
+// what people look for (ChatGPT and Perplexity show pictures from Bing Images with the title of the page they come from).
+test('AI images: the screenshots page shows all six, the two main pages first, with captions and a gallery that start with Pickroute', () => {
+  const order = ['connection', 'regions', 'servers', 'accounts', 'configs', 'profiles'];
+  for (const l of LANGS) {
+    const html = read(`${l}screenshots/index.html`);
+    const title = html.match(/<title>([^<]*)<\/title>/)[1];
+    assert.ok(title.includes('Pickroute') && title.length <= 60, `${l}: the title says Pickroute and fits (${title})`);
+    const figs = [...html.matchAll(/<figure class="shotfig">([\s\S]*?)<\/figure>/g)].map((m) => m[1]);
+    assert.deepEqual(figs.map((f) => (f.match(/<img src="[^"]*img\/(pickroute-[a-z0-9-]+)\.png"/) || [])[1]), order.map(shotFile), `${l}: the six screenshots, Connection and Regions first`);
+    for (const f of figs) assert.match(f, /<figcaption>Pickroute, /, `${l}: every caption starts with Pickroute`);
+    const g = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => JSON.parse(m[1]))
+      .flatMap((d) => d['@graph'] || [d]).find((n) => n['@type'] === 'ImageGallery');
+    assert.ok(g, `${l}: an ImageGallery`);
+    assert.deepEqual(g.image.map((i) => i.url), order.map((p) => `${BASE}img/${shotFile(p)}.png`));
+    for (const i of g.image) { assert.match(i.caption, /^Pickroute, /); assert.match(i.name, /^Pickroute, /); }
+    assert.ok(read(`${l}index.html`).includes('href="screenshots/"'), `${l}: the home links to it`);
+  }
+  const map = read('sitemap.xml'), entry = map.match(new RegExp(`<url>\\s*<loc>${BASE}screenshots/</loc>[\\s\\S]*?</url>`))[0];
+  for (const p of order) assert.ok(entry.includes(`${BASE}img/${shotFile(p)}.png`), `sitemap: the screenshots page lists ${p}`);
+  assert.ok(read('llms.txt').includes(`${BASE}screenshots/`), 'llms.txt points to it');
+});
+
+// A9: a guide title ends with " · Pickroute" in the languages where it still fits in 60 characters, so the label under an image
+// or a citation carries the name; where it doesn't fit, the title stays as it was.
+test('AI images: guide titles end with the name where it fits in 60 characters', () => {
+  const tagged = { 'ru/': ['change-ip-with-phone', 'cs2-config-file-location', 'cs2-ping-test', 'cs2-region-picker', 'hide-ip-cs2'], 'tr/': ['cs2-iphone-hotspot', 'cs2-mobile-data'], 'es/': ['cs2-ping-test'] };
+  for (const [l, gs] of Object.entries(tagged)) for (const g of gs) {
+    const t = read(`${l}${g}/index.html`).match(/<title>([^<]*)<\/title>/)[1].replace(/&#39;|&apos;/g, "'").replace(/&amp;/g, '&');
+    assert.ok(t.endsWith(' · Pickroute') && t.length <= 60, `${l}${g}: ${t}`);
+  }
+});

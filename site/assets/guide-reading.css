@@ -62,3 +62,11 @@
   .gget .checks li{border:0;padding:0;min-width:0}
   .gtext > :last-child > li:last-child{border-bottom:0}
 }
+/* the screenshots page (27 Nov.): each screenshot of the app whole, with its caption under it; the two main pages wide,
+   the four others in a grid of two */
+.shotfig{margin:1.25rem 0 0;border-radius:12px;overflow:hidden;background:var(--t-surface);box-shadow:0 0 0 1px rgba(255,255,255,.08)}
+.shotfig img{display:block;width:100%;height:auto}
+.shotfig figcaption{padding:.75rem .9rem .8rem;background:var(--t-side);border-top:1px solid var(--line);font:400 .875rem/1.5 var(--sans);color:var(--ink2)}
+.shotgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:1rem;margin-top:1.25rem}
+.shotgrid .shotfig{margin:0}
+.shotgrid figcaption{font-size:.8125rem}
