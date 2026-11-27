@@ -120,7 +120,7 @@ The app is in English, Brazilian Portuguese, Spanish, Russian and Turkish, and f
 
 **Steps**
 
-1. **Download** [`CS2IPChanger.exe`](https://github.com/Sepd0x/pickroute/releases/latest/download/Pickroute.exe) (<!--rel:size-->63.9 MB<!--/rel-->, from the [latest release](https://github.com/Sepd0x/pickroute/releases/latest)). Put it in a folder only admins can change, like `C:\Program Files\CS2 IP Changer`. Started from Downloads or the Desktop, it offers to install itself there in one click.
+1. **Download** [`Pickroute.exe`](https://github.com/Sepd0x/pickroute/releases/latest/download/Pickroute.exe) (<!--rel:size-->63.9 MB<!--/rel-->, from the [latest release](https://github.com/Sepd0x/pickroute/releases/latest)). Put it in a folder only admins can change, like `C:\Program Files\CS2 IP Changer`. Started from Downloads or the Desktop, it offers to install itself there in one click.
 2. **Connect the phone.** Plug it in by USB, turn on USB tethering (Personal Hotspot on an iPhone) and turn off the phone's Wi-Fi.
 3. **Open the app.** It asks for admin. Open **Phone setup** (under Phone): each step checks itself and turns green, and where the app can do a step it has a button. Paste the servers you play on into **Servers**. Then press **Turn on protection** on the Connection page. Protection starts off each time the app opens; Settings > Protection can turn it on by itself.
 4. **Check.** Open **Connection** with CS2 and Steam running. Every check should be green, and the IP servers see must not be your home IP.
@@ -143,13 +143,13 @@ Every detail of the setup (where the exe can run, the phone, ADB, launch options
 
 **No account. Usage stats, on by default and easy to turn off.** At the first start the app shows what it sends when it opens, every 30 minutes and when it closes, with Accept and Turn off: a random ID made for this install, with no name, versions, your country as two letters, the mode and counters. Never IPs, accounts, names or server addresses. Nothing is sent before you answer, Turn off keeps the app working the same, and Settings > Send usage stats changes it any time. [What is sent](#telemetry).
 
-**Easy to undo.** The **Turn off protection** button removes the routes and firewall rules and checks that they're gone. `CS2IPChanger.exe --restore` removes everything, the region block too. More in [If something goes wrong](#if-something-goes-wrong).
+**Easy to undo.** The **Turn off protection** button removes the routes and firewall rules and checks that they're gone. `Pickroute.exe --restore` removes everything, the region block too. More in [If something goes wrong](#if-something-goes-wrong).
 
 **Everything it does with admin rights, and why an antivirus may flag it,** is in [Privacy and security](docs/PRIVACY-AND-SECURITY.md): each Windows function it calls, each service it talks to and what each one gets, and the known limits.
 
 ### Check your download
 
-Official downloads are only on this page's [Releases](https://github.com/Sepd0x/pickroute/releases), on the [website](https://sepd0x.github.io/pickroute/) and on [GameBanana](https://gamebanana.com/tools/25148), where the file is the same 1.0.0 exe. Releases built by GitHub Actions come with a `CS2IPChanger.exe.sha256` file and a [build attestation](https://github.com/Sepd0x/pickroute/attestations), which shows the exe was built from this repository's code.
+Official downloads are only on this page's [Releases](https://github.com/Sepd0x/pickroute/releases), on the [website](https://sepd0x.github.io/pickroute/) and on [GameBanana](https://gamebanana.com/tools/25148), where the file is the same exe. Releases built by GitHub Actions come with a `Pickroute.exe.sha256` file and a [build attestation](https://github.com/Sepd0x/pickroute/attestations), which shows the exe was built from this repository's code.
 
 <details>
 <summary><b>How to check them</b></summary>
@@ -157,13 +157,13 @@ Official downloads are only on this page's [Releases](https://github.com/Sepd0x/
 To check the attestation, install the [GitHub CLI](https://cli.github.com/), sign in once with `gh auth login` and run:
 
 ```powershell
-gh attestation verify CS2IPChanger.exe -R Sepd0x/pickroute
+gh attestation verify Pickroute.exe -R Sepd0x/pickroute
 ```
 
 To check only the hash, put the `.sha256` file next to the exe and run this in PowerShell. It prints `True` if they match:
 
 ```powershell
-(Get-FileHash .\CS2IPChanger.exe).Hash -eq (Get-Content .\CS2IPChanger.exe.sha256).Split()[0]
+(Get-FileHash .\Pickroute.exe).Hash -eq (Get-Content .\Pickroute.exe.sha256).Split()[0]
 ```
 </details>
 
@@ -221,7 +221,7 @@ More answers (bans and range bans, CGNAT, hotspots and dongles, root, mobile dat
 The firewall rules stay in place when you close the app, on purpose, so your IP can't leak while it's closed. To undo everything:
 
 - **The app is open:** press **Turn off protection**, on Connection or in the icon's menu next to the clock. Regions you turned off stay off: **Allow all (block off)** on Regions lifts them.
-- **The window won't open:** run `CS2IPChanger.exe --restore`. It removes everything, the region block too.
+- **The window won't open:** run `Pickroute.exe --restore`. It removes everything, the region block too.
 - **You already deleted the app:** run [tools/restore.cmd](tools/restore.cmd) as administrator, then restart the PC.
 
 Found a bug? [Open an issue](https://github.com/Sepd0x/pickroute/issues/new/choose) with the version (bottom left of the window) and the diagnostics (Log page > Save bug report). Lag, the bug report and the rest: [docs/SETUP.md](docs/SETUP.md#if-something-goes-wrong).

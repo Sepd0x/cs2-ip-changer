@@ -174,7 +174,7 @@ const PAGES = {
       const L = c.LAB;
       L.src = lab(V3(-15.4, 0.7, 4.6), T('Public source', 'on GitHub'), { beats: [1], dn: 1 });
       L.build = lab(V3(-12.6, 2.05, 5.2), T('GitHub Actions', 'builds it, with an attestation'), { beats: [1] });
-      L.exe = lab(V3(-10.2, 1.05, 3.9), T('CS2IPChanger.exe', 'and its .sha256 file'), { beats: [1], dn: 1 });
+      L.exe = lab(V3(-10.2, 1.05, 3.9), T('Pickroute.exe', 'and its .sha256 file'), { beats: [1], dn: 1 });
       L.vt = lab(V3(-11, 3.9, -1.2), T('VirusTotal', `flagged by <em>${vt.flagged} of ${vt.engines}</em> engines`, 'the latest release'), { beats: [1] });
       L.game = lab(V3(-2.2, 1.35, 1.0), T('cs2.exe', 'never touched', 'not its process, memory or program files'), { beats: [1], r: 1 });
     },

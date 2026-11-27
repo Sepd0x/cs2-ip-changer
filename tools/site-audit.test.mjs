@@ -127,7 +127,7 @@ test('SEO measurement 15 Nov.: the three newest guides are linked from the text 
 test('SEO measurement 15 Nov.: the region guide names what people call a server picker and the tool most AIs list first, and has a Download button in its text', () => {
   const h = plain(read('cs2-region-picker/index.html'));
   for (const w of ['region changer', 'region selector', 'region blocker', 'region lock', 'Steam Route Tool']) assert.ok(h.includes(w), `cs2-region-picker: "${w}"`);
-  assert.ok(/<a class="btn[^"]*"[^>]*href="https:\/\/github\.com\/Sepd0x\/pickroute\/releases\/latest\/download\/CS2IPChanger\.exe"/.test(article(read('cs2-region-picker/index.html'))), 'no Download button in the text of the guide');
+  assert.ok(/<a class="btn[^"]*"[^>]*href="https:\/\/github\.com\/Sepd0x\/pickroute\/releases\/latest\/download\/Pickroute\.exe"/.test(article(read('cs2-region-picker/index.html'))), 'no Download button in the text of the guide');
 });
 
 test('Final audit: the notices of the libraries are also served as a text file next to the scripts, the same as THIRD-PARTY-NOTICES', () => {
