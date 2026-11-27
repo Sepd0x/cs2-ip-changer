@@ -27,7 +27,7 @@
   <br>
   <sub><!--rel:line--><a href="https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe">CS2IPChanger.exe</a> · v1.0.0 · 63.9 MB · 27 Nov 2026 · <a href="https://github.com/Sepd0x/pickroute/releases/latest">release notes and checksums</a><!--/rel--></sub>
   <br>
-  <sub>Official downloads only here and on the website. <a href="#check-your-download">Check your download</a>.</sub>
+  <sub>Official downloads only here, on the website and on <a href="https://gamebanana.com/tools/25148">GameBanana</a>. <a href="#check-your-download">Check your download</a>.</sub>
 </p>
 
 <p align="center">
@@ -149,7 +149,7 @@ Every detail of the setup (where the exe can run, the phone, ADB, launch options
 
 ### Check your download
 
-Official downloads are only on this page's [Releases](https://github.com/Sepd0x/pickroute/releases) and on the [website](https://sepd0x.github.io/pickroute/). Releases built by GitHub Actions come with a `CS2IPChanger.exe.sha256` file and a [build attestation](https://github.com/Sepd0x/pickroute/attestations), which shows the exe was built from this repository's code.
+Official downloads are only on this page's [Releases](https://github.com/Sepd0x/pickroute/releases), on the [website](https://sepd0x.github.io/pickroute/) and on [GameBanana](https://gamebanana.com/tools/25148), where the file is the same 1.0.0 exe. Releases built by GitHub Actions come with a `CS2IPChanger.exe.sha256` file and a [build attestation](https://github.com/Sepd0x/pickroute/attestations), which shows the exe was built from this repository's code.
 
 <details>
 <summary><b>How to check them</b></summary>
@@ -331,6 +331,7 @@ Step by step, on the website:
 - [CS2 config file location](https://sepd0x.github.io/pickroute/cs2-config-file-location/): Where the cfg folder is, and what each file holds.
 - [Server picker not working](https://sepd0x.github.io/pickroute/cs2-server-picker-not-working/): What to check when blocked regions still show up.
 - [Dota 2 and Deadlock regions](https://sepd0x.github.io/pickroute/dota-2-deadlock-region-picker/): The same region picker for Dota 2 and Deadlock.
+- [Screenshots](https://sepd0x.github.io/pickroute/screenshots/): Every page of the app, as it really looks.
 
 The app is in English, Português (Brasil), Español, Русский and Türkçe: Settings > App > Language. The website is also in [Português](https://sepd0x.github.io/pickroute/pt-br/), [Español](https://sepd0x.github.io/pickroute/es/), [Русский](https://sepd0x.github.io/pickroute/ru/) and [Türkçe](https://sepd0x.github.io/pickroute/tr/).
 

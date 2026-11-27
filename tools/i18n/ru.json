@@ -136,7 +136,13 @@
   "Pickroute, copy CS2 settings between accounts. The Configs page: each account with its crosshair, when its config last changed and whether it gets the sync from the main account": "Pickroute, перенос настроек CS2 между аккаунтами. Страница Configs: каждый аккаунт со своим прицелом, когда его конфиг менялся последний раз и получает ли он синхронизацию с основного аккаунта",
   "Pickroute, CS2 over your phone's mobile data. The Connection page: the IP servers see, and your home IP hidden under This PC": "Pickroute, CS2 через мобильный интернет телефона. Страница Connection: IP, который видят серверы, и ваш домашний IP, скрытый под This PC",
   "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for cs2.exe": "Pickroute, сервер пикер (выбор региона) для CS2. Страница Regions: все регионы матчмейкинга на круговой шкале и в списке по континентам, у каждого свой пинг, а те, что выше лимита, заблокированы для cs2.exe",
-  "Free · Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin · app in English, Português, Español, Русский, Türkçe": "Бесплатно · Windows 10/11 · Android или iPhone, по USB-кабелю или через точку доступа · мобильный интернет · права администратора · приложение на русском (и на English, Português, Español, Türkçe)"
+  "Free · Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin · app in English, Português, Español, Русский, Türkçe": "Бесплатно · Windows 10/11 · Android или iPhone, по USB-кабелю или через точку доступа · мобильный интернет · права администратора · приложение на русском (и на English, Português, Español, Türkçe)",
+  "Screenshots": "Скриншоты",
+  "Pickroute, CS2 over your phone's mobile data. The Connection page: Protected, the IP servers see is the phone carrier's, next to your masked home IP, the Change IP buttons and the live checks": "Pickroute, CS2 через мобильный интернет телефона. Страница Connection: Protected, IP, который видят серверы, это IP оператора, рядом со скрытым домашним IP, кнопки Change IP и живые проверки",
+  "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones turned off blocked for cs2.exe": "Pickroute, сервер пикер (выбор региона) для CS2. Страница Regions: все регионы матчмейкинга на круговой шкале и в списке по континентам, у каждого свой пинг, а отключённые заблокированы для cs2.exe",
+  "Pickroute, your CS2 community servers. The Servers page: your server list with name, map, players and ping, and the players on one server": "Pickroute, ваши комьюнити-серверы CS2. Страница Servers: список ваших серверов с названием, картой, игроками и пингом, и игроки на одном сервере",
+  "Pickroute, copy CS2 settings between accounts. The Configs page: copy, sync mode, Backups, snapshots and compare": "Pickroute, перенос настроек CS2 между аккаунтами. Страница Configs: копирование, режим синхронизации, Backups, снимки и сравнение",
+  "Pickroute, the Steam profile editor. The Profiles page in three steps: the look every picked account gets, the accounts, then review and apply": "Pickroute, редактор профилей Steam. Страница Profiles в три шага: оформление для выбранных аккаунтов, сами аккаунты, затем проверка и применение"
  },
  "js": {
   "IP servers see. Example, banned on this server": "IP, который видят серверы. Пример: забанен на этом сервере",
@@ -181,7 +187,7 @@
   "Less detail": "Меньше"
  },
  "change-ip-with-phone": {
-  "Change your CS2 IP with an Android phone (USB tethering)": "Сменить IP в CS2 через Android (USB tethering)",
+  "Change your CS2 IP with an Android phone (USB tethering)": "Сменить IP в CS2 через Android (USB tethering) · Pickroute",
   "Set up your Android phone's mobile data for CS2 only: USB tethering, game-only routing, a kill switch and a new IP in one click over ADB. Free for Windows.": "Мобильный интернет Android только для CS2: USB tethering, маршрут только для игры, kill switch и новый IP в один клик через ADB. Бесплатно для Windows.",
   "Set up an Android phone for CS2: USB tethering, and a new IP in one click": "Настройка Android для CS2: USB tethering и новый IP в один клик",
   "The whole setup, start to finish: the phone shares its mobile data over USB, only CS2, Steam and your servers use it, and Change IP gets a new carrier IP from the PC.": "Вся настройка от начала до конца: телефон раздаёт мобильный интернет по USB, его используют только CS2, Steam и ваши серверы, а Change IP берёт с ПК новый IP оператора.",
@@ -255,7 +261,7 @@
   "Copying these by hand works, but it's easy to copy the wrong folder, and Steam Cloud can bring the old files back. The app writes the same files CS2 writes when you change a setting, and never the game itself (<a1>what it changes</a1>). The folder, file by file, is in <a2>where CS2 saves your config</a2>.": "Копировать это вручную можно, но легко скопировать не ту папку, а Steam Cloud может вернуть старые файлы. Приложение записывает те же файлы, что CS2 записывает при смене настройки, и никогда не трогает саму игру (<a1>что оно меняет</a1>). Папка и каждый файл описаны здесь: <a2>где CS2 хранит конфиг</a2>."
  },
  "cs2-config-file-location": {
-  "CS2 config file location: where your settings are saved": "Где лежит конфиг CS2: где сохраняются настройки",
+  "CS2 config file location: where your settings are saved": "Где лежит конфиг CS2: где сохраняются настройки · Pickroute",
   "Where CS2 saves your config on Windows: the cfg folder per Steam account, what each file holds, autoexec.cfg, and how to back it up or move it.": "Где CS2 хранит конфиг в Windows: папка cfg каждого аккаунта Steam, что лежит в каждом файле, autoexec.cfg, как сделать бэкап или перенести.",
   "Where is the CS2 config file? The cfg folder, file by file": "Где лежит конфиг CS2? Папка cfg, файл за файлом",
   "CS2 keeps your binds, crosshair, video and other settings in a cfg folder inside your Steam folder, one folder for each Steam account. Here is how to open it, what each file holds, where autoexec.cfg goes and how to back it all up.": "CS2 хранит бинды, прицел, видео и другие настройки в папке cfg внутри папки Steam, по одной папке на каждый аккаунт Steam. Вот как её открыть, что лежит в каждом файле, куда класть autoexec.cfg и как сделать бэкап.",
@@ -415,7 +421,7 @@
   "The app measures it for you. The ping column in Servers goes through the phone, so you see what you'll get before you join (<a1>test your ping to each region</a1>). Connection quality in Checks pings through the phone every 30 seconds and says Good, Fair or Weak. Weak means a ping of 150 ms or more, jitter of 40 ms or more, or 2 of 8 pings lost, twice in a row.": "Приложение измеряет его за вас. Колонка с пингом в Servers считается через телефон, так что вы видите, что получите, ещё до входа на сервер (<a1>проверьте пинг до каждого региона</a1>). Connection quality в Checks каждые 30 секунд пингует через телефон и показывает Good, Fair или Weak. Weak значит пинг от 150 мс, джиттер от 40 мс или потеря 2 из 8 пингов, два раза подряд."
  },
  "cs2-ping-test": {
-  "CS2 ping test: your ping to every Valve region, free": "CS2 ping test: пинг до каждого региона Valve",
+  "CS2 ping test: your ping to every Valve region, free": "CS2 ping test: пинг до каждого региона Valve · Pickroute",
   "Test your CS2 ping to each Valve matchmaking region before you queue, learn what a good ping is and what to do about spikes. Free for Windows.": "Проверьте пинг CS2 до каждого региона матчмейкинга Valve до поиска матча, узнайте, какой пинг хороший и что делать со скачками. Бесплатно для Windows.",
   "CS2 ping test: see your ping to every Valve region": "CS2 ping test: смотрите пинг до каждого региона Valve",
   "CS2 puts you in the matchmaking region where your ping to Valve's relays is good, and the game never shows you that list. The Regions page of Pickroute does: every region by continent with its ping, measured the way the game will reach it, before you queue.": "CS2 ставит вас в регион матчмейкинга, где пинг до релеев Valve хороший, а игра никогда не показывает этот список. Страница Regions в Pickroute показывает: каждый регион по континентам с пингом, измеренным так, как до него дойдёт игра, ещё до поиска матча.",
@@ -466,7 +472,7 @@
   "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping": "Pickroute, сервер пикер (выбор региона) для CS2. Страница Regions: все регионы матчмейкинга на круговой шкале и в списке по континентам, у каждого свой пинг"
  },
  "cs2-region-picker": {
-  "CS2 server picker and region picker: change your region": "CS2 server picker: выбор сервера и региона в ММ",
+  "CS2 server picker and region picker: change your region": "CS2 server picker: выбор сервера и региона в ММ · Pickroute",
   "CS2 server picker: how to change your region in CS2, free": "Выбор сервера CS2: как сменить регион в CS2, бесплатно",
   "CS2 has no region setting: matchmaking picks the region for you, by ping. The Regions page of Pickroute lists Valve's matchmaking regions with the ping of each one, and blocks the ones you turn off. Premier, Competitive, Casual, Deathmatch and Wingman then only find matches in the regions you left on.": "В CS2 нет настройки региона: матчмейкинг выбирает его сам, по пингу. Страница Regions в Pickroute показывает регионы матчмейкинга Valve с пингом каждого и блокирует те, что вы отключили. Режимы «Премьер», «Соревновательный», «Обычный», «Бой насмерть» и «Напарники» тогда ищут матчи только в регионах, которые вы оставили.",
   "How CS2 picks your region": "Как CS2 выбирает ваш регион",
@@ -647,7 +653,7 @@
   "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for the game": "Pickroute, сервер пикер (выбор региона) для CS2. Страница Regions: все регионы матчмейкинга на круговой шкале и в списке по континентам, у каждого свой пинг, а те, что выше лимита, заблокированы для игры"
  },
  "hide-ip-cs2": {
-  "Hide your home IP from CS2 community servers without a VPN": "Скрыть домашний IP от серверов CS2 без VPN",
+  "Hide your home IP from CS2 community servers without a VPN": "Скрыть домашний IP от серверов CS2 без VPN · Pickroute",
   "Who sees your IP on CS2 community servers, what they can do with it, and every way to hide it compared: VPN, gaming networks, proxies and mobile data.": "Кто видит ваш IP на комьюнити-серверах CS2, что с ним можно сделать и все способы скрыть его: VPN, игровые сети, прокси и мобильный интернет.",
   "Hide your home IP from CS2 community servers, without a VPN": "Скрыть домашний IP от комьюнити-серверов CS2 без VPN",
   "On a community server you join directly, the server admins and their plugins see your IP. You can't hide that an IP is there; you can choose which one it is.": "На комьюнити-сервере, куда вы заходите напрямую, админы и их плагины видят ваш IP. Скрыть, что IP вообще есть, нельзя; можно выбрать, какой это IP.",
@@ -920,7 +926,9 @@
   "Pickroute, copy CS2 settings between accounts. The Configs page: copy, sync mode, Backups, snapshots and compare": "Pickroute, перенос настроек CS2 между аккаунтами. Страница Configs: копирование, режим синхронизации, Backups, снимки и сравнение",
   "Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin · app in English, Português, Español, Русский, Türkçe": "Windows 10/11 · Android или iPhone, по USB-кабелю или через точку доступа · мобильный интернет · права администратора · приложение на русском (и на English, Português, Español, Türkçe)",
   "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones turned off blocked for cs2.exe": "Pickroute, сервер пикер (выбор региона) для CS2. Страница Regions: все регионы матчмейкинга на круговой шкале и в списке по континентам, у каждого свой пинг, а отключённые заблокированы для cs2.exe",
-  "Pickroute, the Steam profile editor. The Profiles page in three steps: the look every picked account gets, the accounts, then review and apply": "Pickroute, редактор профилей Steam. Страница Profiles в три шага: оформление для выбранных аккаунтов, сами аккаунты, затем проверка и применение"
+  "Pickroute, the Steam profile editor. The Profiles page in three steps: the look every picked account gets, the accounts, then review and apply": "Pickroute, редактор профилей Steam. Страница Profiles в три шага: оформление для выбранных аккаунтов, сами аккаунты, затем проверка и применение",
+  "pages of the app, real screenshots": "страниц приложения, настоящие скриншоты",
+  "Every page of the app, as it really looks.": "Все страницы приложения, как они выглядят на самом деле."
  },
  "is-it-safe": {
   "Is Pickroute safe? What it changes and how to check it": "Безопасен ли Pickroute? Что меняет и как проверить",
@@ -960,6 +968,34 @@
   "No. The source is public on GitHub so anyone can read it, but the license is All rights reserved: you can download and run the official releases, not copy, modify or redistribute the code or the exe.": "Нет. Исходный код публичен на GitHub, его может прочитать любой, но лицензия All rights reserved: официальные релизы можно скачивать и запускать, а копировать, изменять и распространять код или exe нельзя.",
   "VirusTotal engines that flag it: 1 of 67": "Антивирусы на VirusTotal, которые его помечают: 1 из 67",
   "Pickroute, CS2 over your phone's mobile data. The Connection page: the checks, the phone and how the PC connects to it, and the previous IPs": "Pickroute, CS2 через мобильный интернет телефона. Страница Connection: проверки, телефон и способ подключения ПК к нему, и прошлые IP"
+ },
+ "screenshots": {
+  "Pickroute screenshots: CS2 server picker and mobile data": "Скриншоты Pickroute: server picker CS2 и мобильный интернет",
+  "Real screenshots of Pickroute for Windows: CS2 over your phone's mobile data with your home IP hidden, the CS2 server picker and the other pages.": "Настоящие скриншоты Pickroute для Windows: CS2 через мобильный интернет телефона со скрытым домашним IP, server picker CS2 и остальные страницы.",
+  "Pickroute screenshots: every page of the app": "Скриншоты Pickroute: все страницы приложения",
+  "Real screenshots of Pickroute on Windows. Two pages do the main work: Connection plays CS2 community servers over your phone's mobile data with your home IP hidden, and Regions is the server picker for CS2, Dota 2 and Deadlock. Select a screenshot to see it full size.": "Настоящие скриншоты Pickroute в Windows. Главную работу делают две страницы: Connection пускает CS2 на комьюнити-серверы через мобильный интернет телефона со скрытым домашним IP, а Regions это server picker для CS2, Dota 2 и Deadlock. Нажмите на скриншот, чтобы открыть его в полном размере.",
+  "Connection: community servers over mobile data": "Connection: комьюнити-серверы через мобильный интернет",
+  "Regions: the server picker for CS2, Dota 2 and Deadlock": "Regions: server picker для CS2, Dota 2 и Deadlock",
+  "The other pages": "Остальные страницы",
+  "Pages of the app on this page": "Страниц приложения на этой странице",
+  "<i1></i1>Real screenshots": "<i1></i1>Настоящие скриншоты",
+  "Pages of the app on this page: 6": "Страниц приложения на этой странице: 6",
+  "Taken from the app, with example IPs and names.": "Сняты в приложении, с примерами IP и имён.",
+  "This is where you turn protection on. CS2, Steam and your community servers go through your phone's mobile data, so a server sees the carrier's IP and never your home IP. Banned by IP on a server? Change IP gets you a new one in one click (on an iPhone, Airplane Mode on and off). The kill switch blocks the game if the phone drops, so your home IP doesn't leak.": "Здесь включается защита. CS2, Steam и ваши комьюнити-серверы идут через мобильный интернет телефона, поэтому сервер видит IP оператора и никогда не видит ваш домашний IP. Забанили по IP на сервере? Change IP даёт новый IP в один клик (на iPhone: Airplane Mode включить и выключить). Kill switch блокирует игру, если телефон отключится, так что домашний IP не утечёт.",
+  "Pickroute, the Connection page: protected, the IP servers see is the phone carrier's and your home IP is masked. Example IPs.": "Pickroute, страница Connection: защита включена, серверы видят IP оператора телефона, домашний IP скрыт. Примеры IP.",
+  "Every matchmaking region with its ping, on a dial and in a list. Turn off the ones you don't want and the game only finds matches in the rest. It is one Windows Firewall rule for the game's exe, so the block stays when the app is closed. You don't need the phone for this page.": "Каждый регион матчмейкинга со своим пингом, на круговой шкале и в списке. Выключите ненужные, и игра будет искать матчи только в остальных. Это одно правило Windows Firewall для exe игры, поэтому блок остаётся и при закрытом приложении. Телефон для этой страницы не нужен.",
+  "Pickroute, the Regions page: the CS2 server picker, each region with its ping, and the ones turned off blocked for cs2.exe.": "Pickroute, страница Regions: server picker CS2, каждый регион со своим пингом, выключенные заблокированы для cs2.exe.",
+  "The rest of the app, for the things that come up around a match. Example names on every screenshot.": "Остальное приложение, для всего, что бывает вокруг матча. На всех скриншотах примеры имён.",
+  "Pickroute, Servers: your community servers with map, players and ping.": "Pickroute, Servers: ваши комьюнити-серверы с картой, игроками и пингом.",
+  "Pickroute, Accounts: the Steam account switcher, with ban marks per server.": "Pickroute, Accounts: переключатель аккаунтов Steam с отметками банов по серверам.",
+  "Pickroute, Configs: copy CS2 settings between accounts, with backups.": "Pickroute, Configs: копирование настроек CS2 между аккаунтами, с резервными копиями.",
+  "Pickroute, Profiles: name and avatar on many Steam accounts at once.": "Pickroute, Profiles: имя и аватар сразу на многих аккаунтах Steam.",
+  "Are these real screenshots of Pickroute?": "Это настоящие скриншоты Pickroute?",
+  "Yes. They are taken from the app itself on Windows, with example IPs and account names, and they are taken again when the app changes.": "Да. Они сняты в самом приложении в Windows, с примерами IP и имён аккаунтов, и снимаются заново, когда приложение меняется.",
+  "What are the two main pages of Pickroute?": "Какие две главные страницы в Pickroute?",
+  "Connection, which plays CS2 community servers over your phone's mobile data with your home IP hidden, and Regions, the server picker for CS2, Dota 2 and Deadlock. You can use either one on its own.": "Connection, которая пускает CS2 на комьюнити-серверы через мобильный интернет телефона со скрытым домашним IP, и Regions, server picker для CS2, Dota 2 и Deadlock. Каждой можно пользоваться отдельно.",
+  "Is Pickroute free?": "Pickroute бесплатный?",
+  "Yes. It is free for Windows 10 and 11, with no account, and the app is in English, Portuguese, Spanish, Russian and Turkish.": "Да. Бесплатно для Windows 10 и 11, без аккаунта, и приложение на английском, португальском, испанском, русском и турецком."
  },
  "steam-account-switcher": {
   "Steam account switcher for CS2, with ban marks per server": "Переключатель аккаунтов Steam для CS2 с отметками банов",

@@ -136,7 +136,13 @@
   "Pickroute, copy CS2 settings between accounts. The Configs page: each account with its crosshair, when its config last changed and whether it gets the sync from the main account": "Pickroute, copiar as configurações do CS2 entre contas. A página Configs: cada conta com sua mira, quando a config mudou pela última vez e se ela recebe a sincronização da conta principal",
   "Pickroute, CS2 over your phone's mobile data. The Connection page: the IP servers see, and your home IP hidden under This PC": "Pickroute, o CS2 pelos dados móveis do celular. A página Connection: o IP que os servidores veem e o IP da sua casa escondido em This PC",
   "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones over the limit blocked for cs2.exe": "Pickroute, o seletor de servidor (server picker) do CS2. A página Regions: cada região de matchmaking num mostrador e numa lista por continente, cada uma com seu ping, e as acima do limite bloqueadas para o cs2.exe",
-  "Free · Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin · app in English, Português, Español, Русский, Türkçe": "Grátis · Windows 10/11 · Android ou iPhone, por cabo USB ou hotspot · usa dados móveis · admin · app em português (e em English, Español, Русский, Türkçe)"
+  "Free · Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin · app in English, Português, Español, Русский, Türkçe": "Grátis · Windows 10/11 · Android ou iPhone, por cabo USB ou hotspot · usa dados móveis · admin · app em português (e em English, Español, Русский, Türkçe)",
+  "Screenshots": "Capturas de tela",
+  "Pickroute, CS2 over your phone's mobile data. The Connection page: Protected, the IP servers see is the phone carrier's, next to your masked home IP, the Change IP buttons and the live checks": "Pickroute, o CS2 pelos dados móveis do celular. A página Connection: Protected, o IP que os servidores veem é o da operadora do celular, ao lado do seu IP de casa mascarado, os botões Change IP e as verificações ao vivo",
+  "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones turned off blocked for cs2.exe": "Pickroute, o seletor de servidor (server picker) do CS2. A página Regions: cada região de matchmaking num mostrador e numa lista por continente, cada uma com seu ping, e as desligadas bloqueadas para o cs2.exe",
+  "Pickroute, your CS2 community servers. The Servers page: your server list with name, map, players and ping, and the players on one server": "Pickroute, seus servidores comunitários do CS2. A página Servers: sua lista de servidores com nome, mapa, jogadores e ping, e os jogadores de um servidor",
+  "Pickroute, copy CS2 settings between accounts. The Configs page: copy, sync mode, Backups, snapshots and compare": "Pickroute, copiar as configurações do CS2 entre contas. A página Configs: cópia, modo de sincronização, Backups, snapshots e comparação",
+  "Pickroute, the Steam profile editor. The Profiles page in three steps: the look every picked account gets, the accounts, then review and apply": "Pickroute, o editor de perfis Steam. A página Profiles em três passos: o visual que cada conta escolhida recebe, as contas, e depois revisar e aplicar"
  },
  "js": {
   "IP servers see. Example, banned on this server": "IP que os servidores veem. Exemplo, banido neste servidor",
@@ -920,7 +926,9 @@
   "Pickroute, copy CS2 settings between accounts. The Configs page: copy, sync mode, Backups, snapshots and compare": "Pickroute, copiar as configurações do CS2 entre contas. A página Configs: cópia, modo de sincronização, Backups, snapshots e comparação",
   "Windows 10/11 · Android or iPhone, by USB cable or hotspot · uses mobile data · admin · app in English, Português, Español, Русский, Türkçe": "Windows 10/11 · Android ou iPhone, por cabo USB ou hotspot · usa dados móveis · admin · app em português (e em English, Español, Русский, Türkçe)",
   "Pickroute, the CS2 server picker. The Regions page: every matchmaking region on a dial and in a list by continent, each with its ping, and the ones turned off blocked for cs2.exe": "Pickroute, o seletor de servidor (server picker) do CS2. A página Regions: cada região de matchmaking num mostrador e numa lista por continente, cada uma com seu ping, e as desligadas bloqueadas para o cs2.exe",
-  "Pickroute, the Steam profile editor. The Profiles page in three steps: the look every picked account gets, the accounts, then review and apply": "Pickroute, o editor de perfis Steam. A página Profiles em três passos: o visual que cada conta escolhida recebe, as contas, e depois revisar e aplicar"
+  "Pickroute, the Steam profile editor. The Profiles page in three steps: the look every picked account gets, the accounts, then review and apply": "Pickroute, o editor de perfis Steam. A página Profiles em três passos: o visual que cada conta escolhida recebe, as contas, e depois revisar e aplicar",
+  "pages of the app, real screenshots": "páginas do app, capturas reais",
+  "Every page of the app, as it really looks.": "Todas as páginas do app, como elas são de verdade."
  },
  "is-it-safe": {
   "Is Pickroute safe? What it changes and how to check it": "Pickroute é seguro? O que ele muda e como conferir",
@@ -960,6 +968,34 @@
   "No. The source is public on GitHub so anyone can read it, but the license is All rights reserved: you can download and run the official releases, not copy, modify or redistribute the code or the exe.": "Não. O código é público no GitHub para qualquer um ler, mas a licença é All rights reserved: você pode baixar e usar as releases oficiais, não copiar, modificar nem redistribuir o código ou o exe.",
   "VirusTotal engines that flag it: 1 of 67": "Engines do VirusTotal que sinalizam: 1 de 67",
   "Pickroute, CS2 over your phone's mobile data. The Connection page: the checks, the phone and how the PC connects to it, and the previous IPs": "Pickroute, o CS2 pelos dados móveis do celular. A página Connection: as verificações, o celular e como o PC se conecta a ele, e os IPs anteriores"
+ },
+ "screenshots": {
+  "Pickroute screenshots: CS2 server picker and mobile data": "Pickroute: capturas de tela do server picker e dados móveis",
+  "Real screenshots of Pickroute for Windows: CS2 over your phone's mobile data with your home IP hidden, the CS2 server picker and the other pages.": "Capturas reais do Pickroute para Windows: CS2 pelos dados móveis do celular com o IP de casa escondido, o server picker do CS2 e as outras páginas.",
+  "Pickroute screenshots: every page of the app": "Capturas de tela do Pickroute: todas as páginas do app",
+  "Real screenshots of Pickroute on Windows. Two pages do the main work: Connection plays CS2 community servers over your phone's mobile data with your home IP hidden, and Regions is the server picker for CS2, Dota 2 and Deadlock. Select a screenshot to see it full size.": "Capturas reais do Pickroute no Windows. Duas páginas fazem o trabalho principal: Connection joga nos servidores comunitários de CS2 pelos dados móveis do celular, com o IP de casa escondido, e Regions é o server picker do CS2, Dota 2 e Deadlock. Clique em uma captura para ver em tamanho real.",
+  "Connection: community servers over mobile data": "Connection: servidores comunitários pelos dados móveis",
+  "Regions: the server picker for CS2, Dota 2 and Deadlock": "Regions: o server picker do CS2, Dota 2 e Deadlock",
+  "The other pages": "As outras páginas",
+  "Pages of the app on this page": "Páginas do app nesta página",
+  "<i1></i1>Real screenshots": "<i1></i1>Capturas reais",
+  "Pages of the app on this page: 6": "Páginas do app nesta página: 6",
+  "Taken from the app, with example IPs and names.": "Tiradas do app, com IPs e nomes de exemplo.",
+  "This is where you turn protection on. CS2, Steam and your community servers go through your phone's mobile data, so a server sees the carrier's IP and never your home IP. Banned by IP on a server? Change IP gets you a new one in one click (on an iPhone, Airplane Mode on and off). The kill switch blocks the game if the phone drops, so your home IP doesn't leak.": "É aqui que você liga a proteção. O CS2, a Steam e os seus servidores comunitários passam pelos dados móveis do celular, então o servidor vê o IP da operadora e nunca o IP da sua casa. Tomou ban de IP em um servidor? Change IP te dá um IP novo em um clique (no iPhone, Airplane Mode ligado e desligado). O kill switch bloqueia o jogo se o celular cair, então o IP de casa não vaza.",
+  "Pickroute, the Connection page: protected, the IP servers see is the phone carrier's and your home IP is masked. Example IPs.": "Pickroute, a página Connection: protegido, o IP que os servidores veem é o da operadora do celular e o IP de casa fica mascarado. IPs de exemplo.",
+  "Every matchmaking region with its ping, on a dial and in a list. Turn off the ones you don't want and the game only finds matches in the rest. It is one Windows Firewall rule for the game's exe, so the block stays when the app is closed. You don't need the phone for this page.": "Cada região do matchmaking com o seu ping, em um mostrador e em uma lista. Desligue as que você não quer e o jogo só encontra partidas nas outras. É uma regra do Windows Firewall para o exe do jogo, então o bloqueio continua com o app fechado. Esta página não precisa do celular.",
+  "Pickroute, the Regions page: the CS2 server picker, each region with its ping, and the ones turned off blocked for cs2.exe.": "Pickroute, a página Regions: o server picker do CS2, cada região com o seu ping e as desligadas bloqueadas para o cs2.exe.",
+  "The rest of the app, for the things that come up around a match. Example names on every screenshot.": "O resto do app, para o que aparece em volta de uma partida. Nomes de exemplo em todas as capturas.",
+  "Pickroute, Servers: your community servers with map, players and ping.": "Pickroute, Servers: seus servidores comunitários com mapa, jogadores e ping.",
+  "Pickroute, Accounts: the Steam account switcher, with ban marks per server.": "Pickroute, Accounts: o trocador de contas Steam, com marcas de ban por servidor.",
+  "Pickroute, Configs: copy CS2 settings between accounts, with backups.": "Pickroute, Configs: copie as configurações do CS2 entre contas, com backups.",
+  "Pickroute, Profiles: name and avatar on many Steam accounts at once.": "Pickroute, Profiles: nome e avatar em várias contas Steam de uma vez.",
+  "Are these real screenshots of Pickroute?": "Estas capturas do Pickroute são reais?",
+  "Yes. They are taken from the app itself on Windows, with example IPs and account names, and they are taken again when the app changes.": "Sim. São tiradas do próprio app no Windows, com IPs e nomes de conta de exemplo, e são tiradas de novo quando o app muda.",
+  "What are the two main pages of Pickroute?": "Quais são as duas páginas principais do Pickroute?",
+  "Connection, which plays CS2 community servers over your phone's mobile data with your home IP hidden, and Regions, the server picker for CS2, Dota 2 and Deadlock. You can use either one on its own.": "Connection, que joga nos servidores comunitários de CS2 pelos dados móveis do celular com o IP de casa escondido, e Regions, o server picker do CS2, Dota 2 e Deadlock. Dá para usar qualquer uma sozinha.",
+  "Is Pickroute free?": "O Pickroute é grátis?",
+  "Yes. It is free for Windows 10 and 11, with no account, and the app is in English, Portuguese, Spanish, Russian and Turkish.": "Sim. É grátis para Windows 10 e 11, sem conta, e o app está em inglês, português, espanhol, russo e turco."
  },
  "steam-account-switcher": {
   "Steam account switcher for CS2, with ban marks per server": "Trocador de contas Steam para CS2, com ban por servidor",

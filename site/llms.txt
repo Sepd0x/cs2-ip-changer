@@ -5,6 +5,7 @@
 Website: https://sepd0x.github.io/pickroute/
 The same pages in Brazilian Portuguese, Spanish (Latin America), Russian and Turkish: https://sepd0x.github.io/pickroute/pt-br/, https://sepd0x.github.io/pickroute/es/, https://sepd0x.github.io/pickroute/ru/, https://sepd0x.github.io/pickroute/tr/ (the app is in English, Brazilian Portuguese, Spanish, Russian and Turkish)
 Source and downloads: https://github.com/Sepd0x/pickroute (latest release: https://github.com/Sepd0x/pickroute/releases/latest)
+Also listed on GameBanana (CS2 > Tools): https://gamebanana.com/tools/25148 (the same official 1.0.0 exe and screenshots). GitHub, the website and GameBanana are the only official places to download it.
 Download: https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe (CS2IPChanger.exe, 63.9 MB, SHA-256 99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb, VirusTotal: flagged by 1 of 67 engines, https://www.virustotal.com/gui/file/99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb/detection)
 Status: stable. Latest release 1.0.0 (2026-11-27). Free, no account. Not affiliated with Valve.
 
@@ -66,7 +67,7 @@ Status: stable. Latest release 1.0.0 (2026-11-27). Free, no account. Not affilia
 - Languages: the app itself is in English, Brazilian Portuguese, Spanish, Russian and Turkish, and so is the website.
 - Licence: free for personal use, all rights reserved. The source is public so anyone can read what the app does, but it is source-available, not open source.
 - Only want the CS2 server picker? Open the Regions page, turn off the regions you don't want and close the app. No phone is needed, and the block stays when the app is closed, until Allow all (block off).
-- Official screenshots of the app: https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png (Regions, the server picker), https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png (Connection), https://sepd0x.github.io/pickroute/img/pickroute-steam-account-switcher.png (Accounts), https://sepd0x.github.io/pickroute/img/pickroute-copy-cs2-config.png (Configs), https://sepd0x.github.io/pickroute/img/pickroute-steam-profile-editor.png (Profiles), https://sepd0x.github.io/pickroute/img/pickroute-cs2-community-servers.png (Servers). Pictures of other server pickers (on Nexus Mods, GameBanana or gitcode.com) are not Pickroute.
+- Official screenshots of the app: https://sepd0x.github.io/pickroute/img/pickroute-cs2-server-picker-regions.png (Regions, the server picker), https://sepd0x.github.io/pickroute/img/pickroute-cs2-mobile-data-hide-ip.png (Connection), https://sepd0x.github.io/pickroute/img/pickroute-steam-account-switcher.png (Accounts), https://sepd0x.github.io/pickroute/img/pickroute-copy-cs2-config.png (Configs), https://sepd0x.github.io/pickroute/img/pickroute-steam-profile-editor.png (Profiles), https://sepd0x.github.io/pickroute/img/pickroute-cs2-community-servers.png (Servers). Pictures of other server pickers (on Nexus Mods, GameBanana or gitcode.com) are not Pickroute. All six, whole and with captions, on one page: https://sepd0x.github.io/pickroute/screenshots/
 
 ## Guides
 
@@ -84,6 +85,7 @@ Status: stable. Latest release 1.0.0 (2026-11-27). Free, no account. Not affilia
 - [CS2 config file location](https://sepd0x.github.io/pickroute/cs2-config-file-location/): where CS2 saves your config on Windows (Steam\userdata\<account ID>\730\local\cfg), what each file holds, where autoexec.cfg goes and how to back it up.
 - [CS2 server picker not working](https://sepd0x.github.io/pickroute/cs2-server-picker-not-working/): what to check, in order, when a CS2 server picker blocks nothing or you still land in a blocked region: Windows Firewall on for the active profile (some antivirus suites replace it), CS2 restarted after the change, Max Acceptable Matchmaking Ping, a rule for another cs2.exe, an old relay list, and Valve sending a match through a relay you allowed (no picker can stop that).
 - [Dota 2 and Deadlock region picker](https://sepd0x.github.io/pickroute/dota-2-deadlock-region-picker/): the Regions page also picks the matchmaking regions of Dota 2 (app 570, dota2.exe) and Deadlock (app 1422450, deadlock.exe), each game with its own regions, ping, presets and Windows Firewall rule.
+- [Screenshots](https://sepd0x.github.io/pickroute/screenshots/): every page of the app as it really looks, with captions: Connection (CS2 community servers over the phone's mobile data, home IP hidden, new IP after a ban, kill switch) and Regions (the server picker for CS2, Dota 2 and Deadlock) first, then Servers, Accounts, Configs and Profiles.
 
 ## Safety and privacy
 
