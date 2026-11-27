@@ -248,7 +248,10 @@ there.
 4. **Options** (Settings): the groups' names in a list on the left (`SetNav`, 196 px; the group in view lit in `Lift`, a
    click goes to it; over it, Find a setting, 28 px, whose results take the list's place while it has text: the name over
    its group, a click scrolls to it and blinks it twice; Ctrl+F on the page; a notification that names a group or an option
-   gets Open Settings), the groups one under the other on the right, at most 900 px wide (780 until 27 Nov); on a wide
+   gets Open Settings; each of the six pages has Settings for this page beside its title, `PageSettingsLink`: a 12 px gear
+   and the words in `LinkBtn`, 10 px after the title, which opens Settings with that page's groups listed in the list's
+   place, "Settings for Accounts" and All groups on top, then each group's name once in 11 px SemiBold capitals with its
+   options under it, `PageSettingsGroups` in `MainWindow.SettingsFind.cs`), the groups one under the other on the right, at most 900 px wide (780 until 27 Nov); on a wide
    window the list and the groups sit together in the middle, the scroll bar at the window's edge (`SettingsPad`); the list
    scrolls when the window is short. The list picks the group under a line 40 px from the top, and in the last screen of
    scroll that line slides to the bottom, so the end picks the last group: how you play first (protection,

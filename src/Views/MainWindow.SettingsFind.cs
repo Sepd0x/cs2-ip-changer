@@ -115,6 +115,8 @@ public partial class MainWindow
             foreach (var c in Below(g).OfType<Control>().Where(c => c is CheckBox or Button or ComboBox or TextBox or PasswordBox or Slider))
             {
                 if (c is Button && Ancestors(c).Any(a => a is CheckBox)) continue;
+                // a button that serves a field next to it (the API key's Show and Get key) is part of that field, not an option
+                if (c is Button && LogicalTreeHelper.GetParent(c) is DependencyObject row && Below(row).Any(x => x is TextBox or PasswordBox or ComboBox)) continue;
                 var title = Title(c);
                 if (string.IsNullOrWhiteSpace(title) || title.Length < 3) continue;
                 var around = c is CheckBox or Button ? Words(c) : LogicalTreeHelper.GetParent(c) is DependencyObject p ? Words(p) : "";
@@ -138,11 +140,12 @@ public partial class MainWindow
             for (var p = LogicalTreeHelper.GetParent(d); p != null; p = LogicalTreeHelper.GetParent(p)) yield return p;
         }
         static string Words(DependencyObject d) => string.Join(" ", Below(d).OfType<TextBlock>().Select(t => t.Text));
-        // a switch or button: its own first line; a list or box: the first text beside it in its row
+        // a switch or button: its own first line (not a step's number, "1" to "4" in New IP + next account); a list or box: the
+        // first text beside it in its row
         static string Title(Control c)
         {
             if (c is ContentControl cc)
-                return cc.Content as string ?? Below(cc).OfType<TextBlock>().Select(t => t.Text).FirstOrDefault(t => !string.IsNullOrWhiteSpace(t));
+                return cc.Content as string ?? Below(cc).OfType<TextBlock>().Select(t => t.Text).FirstOrDefault(t => !string.IsNullOrWhiteSpace(t) && !t.All(char.IsDigit));
             for (var p = LogicalTreeHelper.GetParent(c); p != null && p is not HeaderedContentControl; p = LogicalTreeHelper.GetParent(p))
                 if (Below(p).OfType<TextBlock>().FirstOrDefault(t => !string.IsNullOrWhiteSpace(t.Text) && !Below(c).Contains(t)) is { } label) return label.Text;
             return c.ToolTip as string;
@@ -219,6 +222,78 @@ public partial class MainWindow
             if (g >= 0) { SettingsGo(SetGroups.Children.IndexOf(SetGroups.Children.OfType<HeaderedContentControl>().ElementAt(g))); return; }
             if (SettingsIndex().FirstOrDefault(s => Loc.En(s.Title) == english && s.Target.IsVisible) is { } hit) ShowSetting(hit);
         }, DispatcherPriority.Loaded);
+    }
+
+    /// <summary>
+    /// 27 nov. (the owner: "how does someone know the option exists when they want to do something?"): the Settings groups that
+    /// change what each page does, by the page's Tag (the page title's Settings for this page link). In the order they show.
+    /// </summary>
+    public static readonly Dictionary<string, string[]> PageSettingsGroups = new()
+    {
+        ["net"] = ["Protection", "Mobile data", "Change IP", "Hotkeys and sounds"],
+        ["servers"] = ["Protection", "Player flags", "Open with CS2", "Steam"],
+        ["regions"] = ["Protection"],
+        ["accounts"] = ["New IP + next account", "Hotkeys and sounds", "Steam", "Privacy"],
+        ["configs"] = ["Steam", "Open with CS2"],
+        ["profiles"] = ["Steam", "Privacy"],
+    };
+
+    static readonly Dictionary<string, string> PageTitles = new()
+    {
+        ["net"] = "Connection", ["servers"] = "Servers", ["regions"] = "Regions", ["accounts"] = "Accounts", ["configs"] = "Configs", ["profiles"] = "Profiles",
+    };
+
+    void PageSettingsLink_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is not string page || !PageSettingsGroups.TryGetValue(page, out var groups)) return;
+        NavSettings.IsChecked = true;
+        Dispatcher.BeginInvoke(() => ShowPageSettings(PageTitles[page], groups), DispatcherPriority.Loaded);
+    }
+
+    /// <summary>
+    /// Settings with one page's options listed where the groups are (as Find a setting lists its results): a line saying for
+    /// which page, every option of those groups (a click goes to it and blinks it), and All groups to go back. The page scrolls
+    /// to the first of them.
+    /// </summary>
+    void ShowPageSettings(string page, string[] groups)
+    {
+        if (SetFind.Text.Length > 0) SetFind.Clear();
+        SetFound.Children.Clear();
+        // on top: for which page, and All groups to go back
+        SetFound.Children.Add(new TextBlock { Text = Loc.F("Settings for {0}", Loc.T(page)), Foreground = Ui.Muted, FontSize = 12.5, Margin = new Thickness(10, 0, 6, 0) });
+        var all = new Button { Style = (Style)FindResource("LinkBtn"), Content = Loc.T("All groups"), HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(2, 0, 0, 2) };
+        all.Click += (_, _) => { SetFound.Children.Clear(); SetFound.Visibility = Visibility.Collapsed; SetNav.Visibility = Visibility.Visible; };
+        SetFound.Children.Add(all);
+        // then each group once, in capitals like START AND CLOSE on the page, with its options under it
+        var index = SettingsIndex().Where(s => s.Target.IsVisible).ToList();
+        foreach (var g in groups)
+        {
+            var mine = index.Where(s => Loc.En(s.Group) == g).ToList();
+            if (mine.Count == 0) continue;
+            SetFound.Children.Add(new TextBlock { Text = mine[0].Group.ToUpper(System.Globalization.CultureInfo.CurrentUICulture), Foreground = Ui.Muted, FontSize = 11, FontWeight = FontWeights.SemiBold, Margin = new Thickness(10, 10, 6, 2) });
+            foreach (var s in mine)
+            {
+                var b = new Button { Style = (Style)SetFound.FindResource("SetFoundItem"), Tag = s, Content = new TextBlock { Text = s.Title, FontSize = 12.5, TextWrapping = TextWrapping.Wrap } };
+                System.Windows.Automation.AutomationProperties.SetName(b, $"{s.Title}, {s.Group}");
+                b.Click += (_, _) => ShowSetting(s);
+                SetFound.Children.Add(b);
+            }
+        }
+        SetFound.Visibility = Visibility.Visible;
+        SetNav.Visibility = Visibility.Collapsed;
+        SetSide.ScrollToTop();
+        var first = SetGroups.Children.OfType<HeaderedContentControl>().ToList().FindIndex(h => Loc.En(h.Header as string) == groups[0]);
+        if (first >= 0) SettingsGo(SetGroups.Children.IndexOf(SetGroups.Children.OfType<HeaderedContentControl>().ElementAt(first)));
+        Log.Info($"Settings for {page}: {string.Join(", ", groups)}.");
+    }
+
+    /// <summary>Leaving Settings drops a page's list (Settings from the sidebar shows the groups again); a search you typed stays.</summary>
+    void PageSettings_VisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (PageSettings.IsVisible || SetFind.Text.Length > 0) return;
+        SetFound.Children.Clear();
+        SetFound.Visibility = Visibility.Collapsed;
+        SetNav.Visibility = Visibility.Visible;
     }
 
     /// <summary>The English names a notification can point at: the groups and every setting on the page.</summary>

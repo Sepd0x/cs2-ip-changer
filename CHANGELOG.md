@@ -6,6 +6,7 @@ Notable changes to this project are listed here. The format follows [Keep a Chan
 
 ### Added
 - Settings: Find a setting, over the list of groups. Type what you want ("startup", "tray", "sound", "update") and pick a result: the page scrolls to it and it blinks. Ctrl+F on the Settings page goes to the box. A notification that names a place in Settings now has an Open Settings button.
+- Settings for this page, next to the title of Connection, Servers, Regions, Accounts, Configs and Profiles: it opens Settings with the options that change that page listed by group, so you see what you can set without knowing where to look. All groups brings the full list back.
 - Install puts Pickroute in the Start menu (and so in Windows search) and on your desktop, so it is easy to open again after you close it. A copy installed before this gets the Start menu entry with the update. Remove the app takes both away.
 - Website: a guide for when a CS2 server picker doesn't work (blocked regions still show up, or no match at all), with what to check in order, and a guide for picking the regions of Dota 2 and Deadlock. Both are in every language of the site.
 

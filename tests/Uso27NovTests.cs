@@ -127,6 +127,31 @@ static class Uso27NovTests
             && SRT.Program.InstallText(@"C:\Users\x\Downloads", @"C:\Program Files\CS2 IP Changer", false).Contains("Start menu")
             && Src("Core", "Uninstall.cs").Contains("if (installed) Shortcuts.RemoveAll(exe);"), "");
 
+        // 8. "como é que a pessoa sabe que a opção existe": Settings for this page ao lado do título de cada uma das 6 páginas
+        var mw = Src("MainWindow.xaml");
+        var tags = System.Text.RegularExpressions.Regex.Matches(mw, "Style=\"\\{StaticResource PageSettingsLink\\}\" Tag=\"(\\w+)\" Content=\"Settings for this page\" Click=\"PageSettingsLink_Click\"")
+            .Select(m => m.Groups[1].Value).ToList();
+        check("Uso 8: as 6 páginas têm o link, cada uma com o seu Tag, e o Log e as Settings não",
+            tags.SequenceEqual(new[] { "net", "servers", "regions", "accounts", "configs", "profiles" }) && tags.All(MainWindow.PageSettingsGroups.ContainsKey), string.Join(",", tags));
+        var headers = System.Text.RegularExpressions.Regex.Matches(mw, "<HeaderedContentControl (?:x:Name=\"\\w+\" )?Style=\"\\{StaticResource Group\\}\" Header=\"([^\"]+)\"").Select(m => m.Groups[1].Value).ToHashSet();
+        var unknown = MainWindow.PageSettingsGroups.SelectMany(kv => kv.Value.Where(g => !headers.Contains(g)).Select(g => $"{kv.Key}: {g}")).ToList();
+        check("Uso 8: cada grupo para onde um link aponta existe nas Settings", unknown.Count == 0 && headers.Count == 12, string.Join(" | ", unknown) + " / " + headers.Count);
+        check("Uso 8: Connection leva à proteção, aos dados móveis, ao Change IP e às teclas; Accounts ao New IP + next account",
+            MainWindow.PageSettingsGroups["net"].SequenceEqual(new[] { "Protection", "Mobile data", "Change IP", "Hotkeys and sounds" })
+            && MainWindow.PageSettingsGroups["accounts"][0] == "New IP + next account", "");
+        var finder = Src("Views", "MainWindow.SettingsFind.cs");
+        check("Uso 8: a lista da página mostra as opções (não só os grupos), tem All groups e some ao sair das Settings",
+            finder.Contains("Loc.F(\"Settings for {0}\"") && finder.Contains("Loc.T(\"All groups\")") && finder.Contains("void PageSettings_VisibleChanged")
+            && mw.Contains("IsVisibleChanged=\"PageSettings_VisibleChanged\""), "");
+        check("Uso 8: os passos numerados (1 a 4) contam pelo nome, e o Show e o Get key da chave não são opções",
+            finder.Contains("!t.All(char.IsDigit)") && finder.Contains("Below(row).Any(x => x is TextBox or PasswordBox or ComboBox)"), "");
+        foreach (var code in new[] { "pt-BR", "es", "ru", "tr" })
+        {
+            var t = Loc.Load(code);
+            check($"Uso 8: {code} traduz o link, a linha de cima e All groups",
+                t.ContainsKey("Settings for this page") && t.ContainsKey("Settings for {0}") && t.ContainsKey("All groups") && t["Settings for {0}"].Contains("{0}"), "");
+        }
+
         // 7. tamanhos e escalas: a barra lateral numa janela baixa, a lista das Settings, e as Settings numa janela larga
         check("Uso 7: a 660 de altura a barra fica como o dono a quis (linhas de 66, 24 por baixo do logótipo)", MainWindow.NavFit(658) == (66, 24) && MainWindow.NavFit(900) == (66, 24), MainWindow.NavFit(658).ToString());
         foreach (var (h, label) in new[] { (574.0, "1366x768 a 125 %"), (514.0, "1080p a 200 %") })

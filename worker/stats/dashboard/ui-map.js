@@ -33,6 +33,7 @@ const UI = {
         { label: 'lista \'Previous IPs\'', r: [676,353,540,56] },
         { label: 'estado \'Protected\'', r: [112,74,240,22] },
         { label: 'linha \'Connection quality\'', r: [700,249,420,16] },
+        { id: 'PageSettingsLink', label: 'Settings for this page', r: [320,58,147,24], note: '27 nov.: abre as Settings desta pagina' },
       ] },
     { id: 'servers', name: 'Servers', img: 'ui/servers.png', icon: 'server',
       buttons: [
@@ -57,6 +58,7 @@ const UI = {
       text: [
         { label: 'nome do servidor', r: [145,400,260,380] },
         { label: 'coluna Ping', r: [878,400,60,380] },
+        { id: 'PageSettingsLink', label: 'Settings for this page', r: [277,58,147,24], note: '27 nov.: abre as Settings desta pagina' },
       ] },
     { id: 'regions', name: 'Regions', img: 'ui/regions.png', icon: 'globe',
       buttons: [
@@ -74,6 +76,7 @@ const UI = {
         { label: 'Region presets, fechado (beta.15; aberto: Apply, Save, Rename, Remove, Apply when CS2 starts)', r: [114,278,110,18] },
         { label: 'texto \'Max Acceptable Matchmaking Ping\'', r: [600,252,380,16] },
         { label: 'nome da região', r: [156,397,120,272] },
+        { id: 'PageSettingsLink', label: 'Settings for this page', r: [282,58,147,24], note: '27 nov.: abre as Settings desta pagina' },
       ] },
     { id: 'accounts', name: 'Accounts', img: 'ui/accounts.png', icon: 'users',
       buttons: [
@@ -90,6 +93,7 @@ const UI = {
       ],
       text: [
         { label: 'corpo do cartão da conta', r: [120,246,1070,80] },
+        { id: 'PageSettingsLink', label: 'Settings for this page', r: [298,58,147,24], note: '27 nov.: abre as Settings desta pagina' },
       ] },
     { id: 'configs', name: 'Configs', img: 'ui/configs.png', icon: 'books',
       buttons: [
@@ -116,6 +120,7 @@ const UI = {
       text: [
         { label: 'pré-visualização da mira', r: [679,436,30,30] },
         { label: 'linha \'Sync now: 2 copied\'', r: [113,656,280,16] },
+        { id: 'PageSettingsLink', label: 'Settings for this page', r: [281,58,147,24], note: '27 nov.: abre as Settings desta pagina' },
       ] },
     { id: 'profiles', name: 'Profiles', img: 'ui/profiles.png', icon: 'person',
       buttons: [
@@ -145,6 +150,7 @@ const UI = {
       text: [
         { label: 'aviso \'Sign in first.\'', r: [912,342,64,16] },
         { label: 'imagem nova do perfil', r: [706,162,32,330] },
+        { id: 'PageSettingsLink', label: 'Settings for this page', r: [278,58,147,24], note: '27 nov.: abre as Settings desta pagina' },
       ] },
     { id: 'log', name: 'Log', img: 'ui/log.png', icon: 'clock',
       buttons: [
