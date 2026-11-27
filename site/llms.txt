@@ -6,8 +6,8 @@ Website: https://sepd0x.github.io/pickroute/
 The same pages in Brazilian Portuguese, Spanish (Latin America), Russian and Turkish: https://sepd0x.github.io/pickroute/pt-br/, https://sepd0x.github.io/pickroute/es/, https://sepd0x.github.io/pickroute/ru/, https://sepd0x.github.io/pickroute/tr/ (the app is in English, Brazilian Portuguese, Spanish, Russian and Turkish)
 Source and downloads: https://github.com/Sepd0x/pickroute (latest release: https://github.com/Sepd0x/pickroute/releases/latest)
 Also listed on GameBanana (CS2 > Tools): https://gamebanana.com/tools/25148 (the same official 1.0.0 exe and screenshots). GitHub, the website and GameBanana are the only official places to download it.
-Download: https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe (CS2IPChanger.exe, 63.9 MB, SHA-256 99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb, VirusTotal: flagged by 1 of 67 engines, https://www.virustotal.com/gui/file/99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb/detection)
-Status: stable. Latest release 1.0.0 (2026-11-27). Free, no account. Not affiliated with Valve.
+Download: https://github.com/Sepd0x/pickroute/releases/latest/download/Pickroute.exe (Pickroute.exe, 63.9 MB, SHA-256 0073705e03a2aacb96570c7e9bdb22e325f21ff68097052280e43bc7a51a14ca, VirusTotal: flagged by 0 of 67 engines, https://www.virustotal.com/gui/file/0073705e03a2aacb96570c7e9bdb22e325f21ff68097052280e43bc7a51a14ca/detection)
+Status: stable. Latest release 1.0.1 (2026-11-27). Free, no account. Not affiliated with Valve.
 
 ## What people use it for
 

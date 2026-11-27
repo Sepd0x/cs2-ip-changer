@@ -7,7 +7,7 @@
   <a href="https://github.com/Sepd0x/pickroute/releases/latest"><img src="https://img.shields.io/github/v/release/Sepd0x/pickroute?label=stable&color=2b74c2" alt="Latest release"></a>
   <a href="https://github.com/Sepd0x/pickroute/releases"><img src="https://img.shields.io/github/downloads/Sepd0x/pickroute/total?label=downloads&color=2b74c2" alt="Total downloads"></a>
   <a href="#quick-start"><img src="https://img.shields.io/badge/Windows-10%20%7C%2011-2b74c2" alt="Windows 10 and 11"></a>
-  <!--rel:vtbadge--><a href="https://www.virustotal.com/gui/file/99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb/detection"><img src="https://img.shields.io/badge/VirusTotal-1%2F67-2b74c2" alt="VirusTotal: flagged by 1 of 67 engines"></a><!--/rel-->
+  <!--rel:vtbadge--><a href="https://www.virustotal.com/gui/file/0073705e03a2aacb96570c7e9bdb22e325f21ff68097052280e43bc7a51a14ca/detection"><img src="https://img.shields.io/badge/VirusTotal-0%2F67-2b74c2" alt="VirusTotal: flagged by 0 of 67 engines"></a><!--/rel-->
   <a href="https://github.com/Sepd0x/pickroute/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Sepd0x/pickroute/ci.yml?branch=main&label=build" alt="Build and tests"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-personal%20use-2b74c2" alt="License: free for personal use, all rights reserved"></a>
 </p>
@@ -18,14 +18,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe">
+  <a href="https://github.com/Sepd0x/pickroute/releases/latest/download/Pickroute.exe">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/assets/download-button-dark.svg">
       <img src="docs/assets/download-button-light.svg" alt="Download for Windows" width="284" height="56">
     </picture>
   </a>
   <br>
-  <sub><!--rel:line--><a href="https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe">CS2IPChanger.exe</a> · v1.0.0 · 63.9 MB · 27 Nov 2026 · <a href="https://github.com/Sepd0x/pickroute/releases/latest">release notes and checksums</a><!--/rel--></sub>
+  <sub><!--rel:line--><a href="https://github.com/Sepd0x/pickroute/releases/latest/download/Pickroute.exe">Pickroute.exe</a> · v1.0.1 · 63.9 MB · 27 Nov 2026 · <a href="https://github.com/Sepd0x/pickroute/releases/latest">release notes and checksums</a><!--/rel--></sub>
   <br>
   <sub>Official downloads only here, on the website and on <a href="https://gamebanana.com/tools/25148">GameBanana</a>. <a href="#check-your-download">Check your download</a>.</sub>
 </p>
@@ -120,7 +120,7 @@ The app is in English, Brazilian Portuguese, Spanish, Russian and Turkish, and f
 
 **Steps**
 
-1. **Download** [`CS2IPChanger.exe`](https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe) (<!--rel:size-->63.9 MB<!--/rel-->, from the [latest release](https://github.com/Sepd0x/pickroute/releases/latest)). Put it in a folder only admins can change, like `C:\Program Files\CS2 IP Changer`. Started from Downloads or the Desktop, it offers to install itself there in one click.
+1. **Download** [`CS2IPChanger.exe`](https://github.com/Sepd0x/pickroute/releases/latest/download/Pickroute.exe) (<!--rel:size-->63.9 MB<!--/rel-->, from the [latest release](https://github.com/Sepd0x/pickroute/releases/latest)). Put it in a folder only admins can change, like `C:\Program Files\CS2 IP Changer`. Started from Downloads or the Desktop, it offers to install itself there in one click.
 2. **Connect the phone.** Plug it in by USB, turn on USB tethering (Personal Hotspot on an iPhone) and turn off the phone's Wi-Fi.
 3. **Open the app.** It asks for admin. Open **Phone setup** (under Phone): each step checks itself and turns green, and where the app can do a step it has a button. Paste the servers you play on into **Servers**. Then press **Turn on protection** on the Connection page. Protection starts off each time the app opens; Settings > Protection can turn it on by itself.
 4. **Check.** Open **Connection** with CS2 and Steam running. Every check should be green, and the IP servers see must not be your home IP.
@@ -167,7 +167,7 @@ To check only the hash, put the `.sha256` file next to the exe and run this in P
 ```
 </details>
 
-Each release is also scanned on VirusTotal. <!--rel:vt-->1.0.0: flagged by [1 of 67 engines](https://www.virustotal.com/gui/file/99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb/detection)<!--/rel-->.
+Each release is also scanned on VirusTotal. <!--rel:vt-->1.0.1: flagged by [0 of 67 engines](https://www.virustotal.com/gui/file/0073705e03a2aacb96570c7e9bdb22e325f21ff68097052280e43bc7a51a14ca/detection)<!--/rel-->.
 
 <details>
 <summary><b>Why some engines flag it</b></summary>
@@ -359,7 +359,7 @@ Not affiliated with Valve. Counter-Strike and Steam are trademarks of Valve Corp
 </p>
 
 <p align="center">
-  <a href="https://github.com/Sepd0x/pickroute/releases/latest/download/CS2IPChanger.exe">
+  <a href="https://github.com/Sepd0x/pickroute/releases/latest/download/Pickroute.exe">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/assets/download-button-dark.svg">
       <img src="docs/assets/download-button-light.svg" alt="Download for Windows" width="284" height="56">

@@ -38,3 +38,5 @@ Small fixes after 1.0.0: a narrower sidebar, texts that fit on small screens in 
 - Website: a Screenshots page with every page of the app, and Pickroute is on GameBanana (CS2 > Tools).
 
 The full list is in the [CHANGELOG](https://github.com/Sepd0x/pickroute/blob/main/CHANGELOG.md).
+
+VirusTotal: flagged by [0 of 67 engines](https://www.virustotal.com/gui/file/0073705e03a2aacb96570c7e9bdb22e325f21ff68097052280e43bc7a51a14ca/detection).

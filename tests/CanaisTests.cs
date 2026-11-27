@@ -71,8 +71,10 @@ static class CanaisTests
         var rel = File.ReadAllText(Path.Combine(repo, "docs", "RELEASING.md"));
         check("Canais: o RELEASING publica como pre-release e só depois tira o pre-release",
             rel.Contains("--prerelease") && rel.Contains("gh release edit v<version> --prerelease=false --latest"), "");
+        // 27 Nov. 2026, the owner: fixes and small updates go straight out as stable; only something new to try is a pre-release first
         check("Canais: o RELEASING tem a regra para passar a estável",
-            rel.Contains("No version becomes stable without the test suite, the audit and the test rounds with the owner on his PC."), "");
+            rel.Contains("a version of fixes and small updates goes straight out as stable, once the test suite and the audit pass")
+            && rel.Contains("Only a version that brings something new to try goes out first as a pre-release (test), and becomes stable after the test rounds with the owner on his PC."), "");
         check("Canais: o RELEASING puxa uma release com draft, não com pre-release",
             rel.Contains("gh release edit v<version> --draft=true") && !rel.Contains("ticking that on GitHub is enough"), "");
         var key = File.ReadAllText(Path.Combine(repo, "tools", "release-key.mjs"));

@@ -15,7 +15,7 @@ It asks for a passphrase, saves the private key encrypted in your user folder (`
 - **Stable**: the release GitHub marks **Latest**. The Download links of the site and the README (`releases/latest/download`) give it, and the app's update offers it by default.
 - **Test**: a release marked **pre-release**. The app only offers it to people who turned on Settings > App > Get test versions (from beta.12 on). Off, as it comes and in an older settings file, the app only sees the stable releases.
 
-Every new version goes out first as a pre-release (test), and becomes stable only after the test rounds. No version becomes stable without the test suite, the audit and the test rounds with the owner on his PC.
+Since 27 Nov. 2026 (the owner): a version of fixes and small updates goes straight out as stable, once the test suite and the audit pass. Only a version that brings something new to try goes out first as a pre-release (test), and becomes stable after the test rounds with the owner on his PC.
 
 A release taken back is a **draft**: no channel and no Download link sees a draft.
 
@@ -33,7 +33,7 @@ Older copies: beta.11 already leaves the pre-releases out, so it only gets stabl
    node tools/release-key.mjs sign v<version>
    ```
 
-   It downloads both exes and their `.sha256`, checks they match, that they are the same file and that their attestation comes from this repo's Release workflow, asks for the passphrase, signs both, uploads `Pickroute.exe.sha256.sig` and `CS2IPChanger.exe.sha256.sig` and publishes the draft as a **pre-release** (`gh release edit v<version> --draft=false --prerelease`): a test version. `--no-publish` leaves it as a draft. On GitHub, check that the release says Pre-release and that the one marked Latest is still the previous stable version.
+   It downloads both exes and their `.sha256`, checks they match, that they are the same file and that their attestation comes from this repo's Release workflow, asks for the passphrase, signs both, uploads `Pickroute.exe.sha256.sig` and `CS2IPChanger.exe.sha256.sig` and publishes the draft as a **pre-release** (`gh release edit v<version> --draft=false --prerelease`): a test version. For a version of fixes, make it stable right after: `gh release edit v<version> --prerelease=false --latest` (step 6). `--no-publish` leaves it as a draft. On GitHub, check that the release says Pre-release and that the one marked Latest is still the previous stable version.
 4. Publishing starts the VirusTotal workflow (needs the `VT_API_KEY` repository secret): it sends the exe and writes "N of M engines flag it" with the link in the run's summary. Put that line in `README.md` (Safety), `site/is-it-safe` (in `tools/site-pages.mjs`) and the release notes. Again by hand: `gh workflow run virustotal.yml -f tag=v<version>`.
 5. The test rounds: the copies with Get test versions on (the owner's first) update to it. Each round is the owner on his PC with the phone, the [smoke test](SMOKE.md) and what changed in this version. A problem found here is fixed in a new version (`-beta.N+1`), which goes out as a pre-release again from step 1; the one with the problem goes back to a draft (step 1 of [If a release breaks something](#if-a-release-breaks-something)).
 6. Stable, only when the test suite passes, the audit is done and the test rounds with the owner are OK:
