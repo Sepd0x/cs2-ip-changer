@@ -104,7 +104,7 @@ const vtLinks = (s) => s.replace(/https:\/\/www\.virustotal\.com\/gui\/file\/[0-
   const file = join(site, 'llms.txt');
   let s = readText(file);
   if (!/^Status: .*$/m.test(s) || !/^Download: .*$/m.test(s)) throw new Error('site/llms.txt: the Status: or Download: line is missing');
-  s = s.replace(/^Status: .*$/m, `Status: beta. Latest release ${rel.version} (${rel.published}). Free, no account. Not affiliated with Valve.`)
+  s = s.replace(/^Status: .*$/m, `Status: stable. Latest release ${rel.version} (${rel.published}). Free, no account. Not affiliated with Valve.`)
     .replace(/^Download: .*$/m, `Download: ${EXE} (${rel.asset}, ${size}, SHA-256 ${rel.sha256}, VirusTotal: ${vtText} flag it, ${VT})`);
   put(file, s);
 }

@@ -5,8 +5,8 @@
 Website: https://sepd0x.github.io/cs2-ip-changer/
 The same pages in Brazilian Portuguese, Spanish (Latin America), Russian and Turkish: https://sepd0x.github.io/cs2-ip-changer/pt-br/, https://sepd0x.github.io/cs2-ip-changer/es/, https://sepd0x.github.io/cs2-ip-changer/ru/, https://sepd0x.github.io/cs2-ip-changer/tr/ (the app is in English, Brazilian Portuguese, Spanish, Russian and Turkish)
 Source and downloads: https://github.com/Sepd0x/cs2-ip-changer (latest release: https://github.com/Sepd0x/cs2-ip-changer/releases/latest)
-Download: https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe (CS2IPChanger.exe, 63.7 MB, SHA-256 cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b, VirusTotal: 0 of 70 engines flag it, https://www.virustotal.com/gui/file/cebd03a2bdc73fed2c0efdfca30942e02cda2479f1a8f0df35ce0c57d6176d1b/detection)
-Status: beta. Latest release 0.1.0-beta.13 (2026-11-12). Free, no account. Not affiliated with Valve.
+Download: https://github.com/Sepd0x/cs2-ip-changer/releases/latest/download/CS2IPChanger.exe (CS2IPChanger.exe, 63.9 MB, SHA-256 99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb, VirusTotal: 1 of 67 engines flag it, https://www.virustotal.com/gui/file/99bc77fa3778afdd315896f5dd12d476f98536f84733cf2d85773fd111019cfb/detection)
+Status: stable. Latest release 1.0.0 (2026-11-27). Free, no account. Not affiliated with Valve.
 
 ## What people use it for
 
